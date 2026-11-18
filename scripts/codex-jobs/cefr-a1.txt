@@ -1,0 +1,12 @@
+Soạn lộ trình mới: file `data/english-cefr-a1.toml`. id = "english-cefr-a1", title = "Tiếng Anh A1 · Khởi đầu", icon = "A1", color = "#16a34a", group = "Tiếng Anh", area = "english" (KHÔNG có câu code, không khai báo docs/sources).
+Căn cứ: phần **A1** trong `docs/cefr-syllabus.md` (can-do, ngữ pháp, từ vựng, chức năng giao tiếp, đọc–viết, lỗi hay gặp của người Việt).
+Module (đúng id & thứ tự này):
+   - `cefr-a1-be-pronouns`: to be, have got, đại từ & sở hữu, this/that, số ít/số nhiều
+   - `cefr-a1-present-simple`: hiện tại đơn, trạng từ tần suất, can, mệnh lệnh, like + V-ing, hiện tại tiếp diễn cơ bản
+   - `cefr-a1-nouns-articles`: a/an/the, đếm được/không đếm được, some/any, there is/are, giới từ nơi chốn & thời gian, từ để hỏi
+   - `cefr-a1-vocab-everyday`: số, ngày giờ, giá tiền, gia đình, nghề, nhà cửa, đồ ăn, quần áo, thành phố, đánh vần
+   - `cefr-a1-functions`: chào hỏi, giới thiệu, gọi món, mua đồ, hỏi đường, xin nhắc lại, cảm ơn/xin lỗi
+   - `cefr-a1-reading-writing`: đọc biển báo/menu/tin nhắn ngắn, điền form, viết câu giới thiệu, viết hoa & dấu câu
+Quy mô ~60 câu, rải đều các module; dạng single (~45%), multiple (~15%), fill (~25%), essay (2–4 câu: viết câu/đoạn ngắn theo tình huống, chấm theo từ khoá). difficulty trộn 1–3 trong phạm vi bậc. Id câu: `cefr-a1-001`, `cefr-a1-002`…
+Yêu cầu chất lượng: giải thích bằng tiếng Việt, câu/ví dụ bằng tiếng Anh tự nhiên, đúng chuẩn bậc A1 (không dùng từ/cấu trúc vượt bậc trong đề); lựa chọn nhiễu dựa trên lỗi hay gặp của người Việt; fill chỉ 1 đáp án rõ ràng (liệt kê đủ biến thể chấp nhận: viết tắt/đầy đủ như "don't" / "do not"); mỗi module có `lesson` Markdown ≥ 800 ký tự (bảng cấu trúc, ví dụ, lỗi hay gặp, mẹo nhớ). Nội dung tự soạn, không chép sách/tài liệu.
+Không sửa `data/categories.toml` (đã khai báo sẵn các module trên). Làm từng module, chạy `./target/release/bovabon_edu check data/english-cefr-a1.toml` sau mỗi module.

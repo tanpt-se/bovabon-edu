@@ -1,0 +1,515 @@
+[modules.api-http]
+title = "HTTP Fundamentals"
+description = "Methods, safety and idempotency, status codes, key headers, HTTP/2, and HTTP/3."
+lesson = '''
+### Methods
+| Method | Safe | Idempotent | Use |
+|---|---|---|---|
+| GET | ✓ | ✓ | Read |
+| HEAD | ✓ | ✓ | Like GET, but without a body |
+| PUT | ✗ | ✓ | Replace the whole resource |
+| DELETE | ✗ | ✓ | Delete |
+| POST | ✗ | ✗ | Create or perform an action |
+| PATCH | ✗ | Not guaranteed | Partially update |
+
+### Status codes
+- **2xx**: 200 OK, 201 Created (with a `Location` header), 204 No Content
+- **3xx**: 301/308 permanent redirect, 302/307 temporary redirect, **304 Not Modified**
+- **4xx**: 400 Bad Request, **401** unauthenticated, **403** forbidden, 404, 405, 409 Conflict, 422 invalid data, **429** Too Many Requests
+- **5xx**: 500, 502 Bad Gateway, 503 Service Unavailable, 504 Gateway Timeout
+
+HTTP/2 multiplexes multiple requests over one connection and compresses headers with HPACK. HTTP/3 runs over **QUIC** (UDP), avoiding TCP head-of-line blocking.
+'''
+
+[questions.api-001]
+prompt = "A user is signed in but does not have permission to delete someone else's post. Which status should the API return?"
+explanation = "401 means the user is unauthenticated or the token is invalid. 403 means the user is known but not allowed to perform the action. (A server may return 404 to avoid revealing that the resource exists.)"
+
+[questions.api-002]
+prompt = "Which method is **idempotent** but **not safe**?"
+explanation = "Repeated PUT requests have the same effect as one request, but PUT changes server state, so it is not safe."
+
+[questions.api-003]
+prompt = "After `POST /orders` succeeds, the standard response should be:"
+options = ["200 with an empty body", "201 Created, a `Location: /orders/123` header, and usually the newly created resource in the body", "204 No Content", "302 redirect"]
+explanation = "`Location` points to the newly created resource."
+
+[questions.api-004]
+prompt = "What is the difference between 502 Bad Gateway and 504 Gateway Timeout?"
+options = ["They mean the same thing", "502: the proxy/gateway received an **invalid response** from the upstream; 504: the upstream **did not respond in time**", "502 is a client error", "504 is a DNS error"]
+explanation = "These errors commonly occur when Nginx or a load balancer sits in front of an application server."
+
+[questions.api-005]
+prompt = "What are the advantages of HTTP/2 over HTTP/1.1?"
+options = ["Multiplex multiple requests in parallel over one TCP connection", "Header compression (HPACK)", "Binary format (binary framing)", "Runs over UDP", "Does not require TLS in every browser"]
+explanation = "Only HTTP/3 runs over QUIC (UDP). Browsers support HTTP/2 over TLS."
+
+[questions.api-006]
+prompt = '''
+Complete the status code table:
+
+- Too many requests: **{{blank}}** Too Many Requests
+- Version conflict / duplicate data: **{{blank}}** Conflict
+- Resource unchanged after revalidation: **{{blank}}** Not Modified
+'''
+explanation = "Knowing common status codes helps clients respond correctly (retry, refetch, or display an error)."
+
+[modules.api-rest]
+title = "REST API Design"
+description = "Resources and URLs, versioning, pagination, filtering and sorting, idempotency keys, and error formats."
+lesson = '''
+### Principles
+- Use **plural nouns** for resource URLs: `GET /users/42/orders`, not `/getUserOrders`.
+- Use methods for actions and status codes with the right semantics.
+- **Versioning**: use `/v1/...` or a header; avoid breaking existing clients (add fields only).
+- **Pagination**: offset/limit is simple, but can be slow and shift as data changes; **cursor** pagination is stable and efficient for large datasets.
+- Filter and sort with query parameters, for example `?status=paid&sort=-created_at`.
+- Use an **Idempotency-Key** for important POST requests such as payments: the server stores the result by key, so a retry returns the same result.
+- Use a consistent error format, such as **RFC 9457 Problem Details** (`application/problem+json`: `type`, `title`, `status`, `detail`).
+- Document the API with **OpenAPI**.
+'''
+
+[questions.api-020]
+prompt = "Which URL follows REST conventions for retrieving the orders of user 42?"
+options = ["`GET /getOrders?userId=42`", "`GET /users/42/orders`", "`POST /orders/list`", "`GET /user/42/getOrders`"]
+explanation = "Represent resources with plural nouns and express their relationships with nested paths (no more than two levels deep)."
+
+[questions.api-021]
+prompt = "Why is cursor-based pagination better than offset/limit for a large, frequently changing feed?"
+options = ["Cursors are easier to implement", "A large offset makes the database scan/skip many rows (slow) and can **duplicate or omit** items when data is inserted/deleted between requests; a cursor uses a position (e.g. the last `id`/`created_at`) for stable pagination and can use an index", "A cursor lets you jump to any page", "Offset pagination does not support sorting"]
+explanation = "Trade-off: cursor pagination does not support arbitrary page jumps."
+
+[questions.api-022]
+prompt = "What is the purpose of the `Idempotency-Key` header in `POST /payments`?"
+options = ["Authenticate the user", "Let the client retry safely: the server remembers the result for the key and does not create a duplicate payment", "Compress the request", "Choose the API version"]
+explanation = "Stripe, Adyen, and other providers use this pattern."
+
+[questions.api-023]
+prompt = "Which changes are **breaking changes** for existing API clients?"
+options = ["Adding a new field to the response", "Renaming `user_name` to `username`", "Making a previously optional parameter required", "Adding a new endpoint", "Changing the type of `id` from a number to a string"]
+explanation = "Backward-compatible changes include adding fields, endpoints, or optional parameters."
+
+[questions.api-024]
+prompt = "Design a consistent error format for a REST API. Name its components and explain why they are useful."
+keywords = [["status", "http status"], ["code", "error code", "type"], ["message", "detail", "title"], ["field", "errors", "validation details", "field-level errors"], ["request id", "trace", "correlation"], ["problem details", "rfc 9457", "rfc 7807"]]
+model_answer = '''
+Use the **RFC 9457 Problem Details** standard (`application/problem+json`):
+
+```json
+{
+  "type": "https://api.bovabon.edu/errors/validation",
+  "title": "Invalid data",
+  "status": 422,
+  "detail": "Email already exists",
+  "code": "EMAIL_TAKEN",
+  "errors": [{ "field": "email", "message": "is already in use" }],
+  "requestId": "req_8f2a…"
+}
+```
+- **status** matches the HTTP status; **code/type** stay stable so clients can handle errors programmatically without relying on message text.
+- **title/detail** are reader-friendly and can be localized.
+- **Field-level errors** help with form validation.
+- **requestId/traceId** make log searches easier. Do not expose stack traces or internal information.
+'''
+explanation = "A consistent format lets the frontend use one shared error handler."
+
+[questions.api-025]
+title = "Cursor Pagination"
+prompt = '''
+Implement `paginate(items, { limit = 10, cursor = null })` for an `items` array **already sorted by ascending `id`** (where `id` is a number):
+- `cursor` is the **base64** encoding of JSON `{"id": <last id on the previous page>}` (use `btoa`/`atob`).
+- Return `{ data, nextCursor }`: `data` contains at most `limit` items with `id > id in cursor`; `nextCursor` is a cursor for the last item in `data` if **more items remain**, otherwise `null`.
+- An invalid cursor must `throw new Error('invalid cursor')`.
+- Clamp `limit` to `[1, 100]`.
+'''
+hints = ["Filter with `id > after`, then use `slice(0, limit)`.", "More items remain when the number of items after the cursor is greater than `limit`."]
+explanation = "In SQL, use `WHERE id > $after ORDER BY id LIMIT $n + 1` (fetch one extra row to tell whether another page exists)."
+
+[questions.api-026]
+title = "Idempotency-Key Middleware"
+prompt = '''
+Implement `withIdempotency(handler)` to return an `async (req) => response` function:
+- `req = { method, headers, body }`; header names are case-insensitive: `idempotency-key`.
+- Apply it only to `POST` requests with a key; pass other requests directly to `handler`.
+- For the first request with a key, call `handler(req)`, store `{ bodyHash: JSON.stringify(req.body), response }`, and return the response.
+- A retry with the same key and body must return the **stored response** without calling the handler again.
+- The same key with a **different body** must return `{ status: 422, body: { error: 'idempotency key reused with different payload' } }`.
+- If the first request for that key is **still processing**, return `{ status: 409, body: { error: 'request in progress' } }`.
+- If the handler throws, do **not** store the key, so the client can retry.
+'''
+hints = ["Set `pending: true` before `await handler` to detect concurrent requests.", "Normalize header names to lowercase."]
+explanation = "In production, store keys in Redis or a database with a TTL (e.g. 24 hours) and an atomic lock such as `SET NX`."
+
+[modules.api-caching]
+title = "Caching & Performance"
+description = "Cache-Control, ETag/If-None-Match, CDNs, compression, and rate-limit headers."
+lesson = '''
+### Key ideas
+- `Cache-Control: max-age=60` (browser), `s-maxage` (CDN/shared cache), `private` (browser only), `no-cache` (must revalidate), `no-store` (do not store), `stale-while-revalidate`.
+- **ETag** with `If-None-Match` → the server returns **304** with no body when the resource is unchanged. `Last-Modified` with `If-Modified-Since` works similarly.
+- Strong vs. weak ETags (`W/"..."`).
+- `Vary: Accept-Encoding, Authorization` tells caches to distinguish variants.
+- Compress with `br`/`gzip` using `Accept-Encoding`/`Content-Encoding`.
+- For rate limiting, return 429 with `Retry-After`.
+'''
+
+[questions.api-040]
+prompt = "The client sends `If-None-Match: \"abc\"`, and the current ETag on the server is still `\"abc\"`. What does the server return?"
+options = ["200 with the full body", "304 Not Modified, with no body", "204 No Content", "412 Precondition Failed"]
+explanation = "This saves bandwidth; the client uses its cached copy. 412 is used with `If-Match` during updates (optimistic locking)."
+
+[questions.api-041]
+prompt = "A response contains private user data (`/me`). Which `Cache-Control` value should it use so the CDN does **not** cache it?"
+options = ["`public, max-age=3600`", "`private, max-age=60` (or `no-store` for sensitive data)", "`s-maxage=3600`", "`immutable`"]
+explanation = "`private` allows caching only in that user's browser."
+
+[questions.api-042]
+prompt = '''
+Cache a hashed asset filename (`app.3f9a1c.js`) forever:
+
+```
+Cache-Control: public, max-age={{blank}}, {{blank}}
+```
+'''
+explanation = "One year; `immutable` tells the browser it does not need to revalidate the asset, even on reload."
+
+[questions.api-043]
+title = "Conditional GET with ETag"
+prompt = '''
+Implement:
+1. `etagOf(body)` — generate a **strong ETag** in the form `"<hash>"` (including the quotation marks) from `JSON.stringify(body)` using the 32-bit FNV-1a hash, formatted as 8 hexadecimal characters and zero-padded:
+   `h = 0x811c9dc5`; for each character code `c`: `h ^= c; h = Math.imul(h, 0x01000193) >>> 0`
+2. `conditionalGet(req, body)` returns a response:
+   - If the case-insensitive `If-None-Match` header contains the current ETag (comma-separated list, weak form `W/"..."` accepted, or `*`), return `{ status: 304, headers: { ETag } }`.
+   - Otherwise return `{ status: 200, headers: { ETag, 'Cache-Control': 'no-cache' }, body }`.
+'''
+hints = ["`Math.imul` multiplies as a 32-bit integer; `>>> 0` converts the result to an unsigned number.", "Remove the `W/` prefix before comparing (GET uses weak comparison)."]
+explanation = "Express generates a weak ETag for `res.send`; for a large API, consider deriving the ETag from a version or `updated_at` value instead of hashing the entire body."
+
+[modules.api-auth]
+title = "Authentication, Authorization & Security"
+description = "Session cookies vs. tokens, JWT, OAuth 2.0/OIDC, PKCE, CORS, CSRF, and the OWASP API Top 10."
+lesson = '''
+### Key ideas
+- **Authentication** (who you are) ≠ **Authorization** (what you are allowed to do).
+- **Session cookie**: the server stores the session; use cookie attributes `HttpOnly; Secure; SameSite`. Sessions are easy to revoke.
+- **JWT access token** with a short lifetime + **refresh token** (rotate it and store it securely). JWTs are hard to revoke before they expire.
+- **OAuth 2.0** delegates access; use **Authorization Code + PKCE** for SPAs/mobile apps and Client Credentials for service-to-service access. **OIDC** adds an `id_token` for authentication.
+- **CORS** is enforced by browsers; a preflight `OPTIONS` request is sent for requests with certain headers or methods.
+- **OWASP API Top 10**: BOLA (Broken Object Level Authorization — always check resource ownership!), broken authentication, excessive data exposure, missing rate limits, SSRF, and more.
+- Always use HTTPS with `Strict-Transport-Security`.
+'''
+
+[questions.api-060]
+prompt = "The currently recommended OAuth 2.0 flow for SPAs and mobile apps is:"
+explanation = "Implicit and Password grants are discouraged (OAuth 2.1). Client Credentials is for machine-to-machine use."
+
+[questions.api-061]
+prompt = "`GET /api/invoices/1002` returns someone else's invoice just because the ID was changed. What vulnerability is this?"
+explanation = "This is vulnerability #1 in the OWASP API Security Top 10. Always verify that a resource belongs to the current user (for example, `WHERE id = ? AND owner_id = ?`)."
+
+[questions.api-062]
+prompt = "Which request makes a browser send a preflight `OPTIONS` request before calling an API on another origin?"
+options = ["A `GET` request with no custom headers", "A `POST` with `Content-Type: application/json` or an `Authorization` header", "`<img src>`", "A form `POST` with `application/x-www-form-urlencoded` and no additional headers"]
+explanation = "A “simple request” is limited to GET/HEAD/POST with certain content types and headers."
+
+[questions.api-063]
+prompt = "Which cookie attributes help protect a session cookie?"
+options = ["`HttpOnly`", "`Secure`", "`SameSite=Lax`", "`Domain=.com`", "A reasonable `Max-Age`"]
+explanation = "An overly broad `Domain` causes the cookie to be sent to more subdomains than necessary."
+
+[questions.api-064]
+prompt = '''
+Send an access token using the OAuth 2.0 Bearer standard:
+
+```
+{{blank}}: Bearer eyJhbGciOi...
+```
+'''
+explanation = "RFC 6750. Do not put tokens in a query string, where they may be logged."
+
+[questions.api-065]
+prompt = "Compare authentication with a **session cookie** and a **JWT (stateless token)**."
+keywords = [["stateless", "no server-side session", "without server-side state"], ["revoke", "revocation", "logout", "blacklist"], ["cookie", "session cookie"], ["refresh", "refresh token"], ["scale", "scaling", "multiple servers", "microservices"], ["xss", "csrf", "httponly"]]
+model_answer = '''
+- **Session cookie**: the server stores the session in a database or Redis, while the client keeps the session ID in an `HttpOnly` cookie. Sessions are easy to **revoke** by deleting them, but servers need a shared store when **scaling** across multiple instances. Protect against **CSRF** with SameSite and/or a CSRF token.
+- **JWT**: **stateless**; a server only needs to verify the signature, which can suit microservices, mobile apps, and third-party APIs. The drawback is that it is hard to **revoke** before expiry. Use short-lived access tokens with rotating **refresh tokens** (which can be stored server-side for revocation). The payload is readable, and storing tokens in localStorage can expose them to **XSS**.
+- For a web app on one domain, a session cookie is often the simplest and safest choice; APIs serving many kinds of clients may use tokens.
+'''
+explanation = "There is no universally best choice; understanding the trade-offs is what matters."
+
+[questions.api-066]
+title = "CORS Validation"
+prompt = '''
+Implement `corsHeaders(req, { origins, methods, credentials })` to return response headers (or `{}` when access is not allowed):
+- `req = { method, headers }` (lowercase headers: `origin`, `access-control-request-method`).
+- If the origin is not in `origins` (an array; `'*'` means any origin), return `{}`.
+- For an allowed origin, always include `Access-Control-Allow-Origin` and `Vary: 'Origin'`.
+  - If `credentials` is true, use the **origin itself** as the value (never `*`) and add `Access-Control-Allow-Credentials: 'true'`.
+  - If `credentials` is false and `origins` contains `'*'`, use `'*'`; otherwise use the origin.
+- For a preflight (`method === 'OPTIONS'` and `access-control-request-method` is present), return `{}` if the requested method is not in `methods`; otherwise add `Access-Control-Allow-Methods: methods.join(', ')`.
+'''
+hints = ["Check the origin first, then handle preflight requests.", "Set `Vary: Origin` so caches do not mix responses for different origins."]
+explanation = "Understanding CORS makes “blocked by CORS policy” errors easier to debug. Remember that CORS is not an authentication mechanism."
+
+[modules.api-styles]
+title = "REST, GraphQL, gRPC & Realtime"
+description = "Compare API styles, WebSocket, SSE, webhooks, and message queues."
+lesson = '''
+| | REST | GraphQL | gRPC |
+|---|---|---|---|
+| Transport | HTTP + JSON | HTTP (often one POST endpoint) | HTTP/2 + Protobuf |
+| Advantages | Simple, works well with HTTP caching | Clients select fields and can combine resources | Fast, type-safe, supports streaming |
+| Drawbacks | Over-fetching/under-fetching | Harder to cache; N+1 (use DataLoader) | Hard to call directly from a browser |
+
+### Realtime
+- **Polling** is simple but consumes resources.
+- **SSE** (Server-Sent Events) is a one-way stream from server to client over HTTP and reconnects automatically.
+- **WebSocket** is full-duplex and supports communication in both directions.
+- A **webhook** is a server making a callback to your URL when an event occurs. Verify its HMAC signature, handle events idempotently, and return 2xx quickly.
+'''
+
+[questions.api-080]
+prompt = "The **N+1 query** problem in GraphQL is commonly solved with:"
+options = ["Increasing the timeout", "DataLoader — batching and caching loads by key within a request", "Using REST", "Adding an index"]
+explanation = "If each `post.author` resolver makes its own database call, that creates N+1 queries. DataLoader batches them into one query such as `WHERE id IN (...)`."
+
+[questions.api-081]
+prompt = "A dashboard only needs the server to **push** price updates one way to the browser. What is the simplest suitable choice?"
+options = ["Long polling every 100 ms", "Server-Sent Events (EventSource)", "gRPC streaming from the browser", "Webhook"]
+explanation = "SSE uses regular HTTP, reconnects automatically, and supports `Last-Event-ID`. Use WebSocket when you need frequent communication in both directions."
+
+[questions.api-082]
+prompt = "What are best practices when **receiving a webhook** from a third party such as Stripe or GitHub?"
+options = ["Verify the HMAC signature in the header using a secret", "Return 2xx quickly and put heavy processing on a queue", "Handle events idempotently by event ID (webhooks may be delivered more than once)", "Trust every request sent to the webhook URL", "Check the timestamp to prevent replay"]
+explanation = "A webhook URL is public and anyone can call it, so signature verification is required."
+
+[questions.api-083]
+prompt = '''
+Open a WebSocket connection and send a message from the browser:
+
+```js
+const ws = new {{blank}}('wss://chat.bovabon.edu/room/1');
+ws.addEventListener('open', () => ws.{{blank}}(JSON.stringify({ text: 'Xin chào' })));
+```
+'''
+explanation = "Use `wss://` (TLS) in production; add a reconnect strategy and heartbeat."
+
+[questions.api-084]
+prompt = "When should you choose GraphQL over REST, and vice versa?"
+keywords = [["over-fetching", "under-fetching", "fetching too much", "fetching too little", "select fields"], ["multiple clients", "mobile", "multiple screens", "frontend"], ["cache", "http cache", "cdn"], ["simple", "public api", "common"], ["schema", "type system", "types"]]
+model_answer = '''
+**GraphQL** is a good fit when there are **multiple clients** (web, mobile) with different data needs, or a screen needs to combine nested resources. Clients select the fields they need, avoiding **over-fetching** and **under-fetching**. GraphQL also provides a strongly typed **schema** and introspection.
+
+**REST** is a good fit for a **simple/CRUD** API or a **public API** for third parties, when you want to use **HTTP caching/CDNs**, upload files, or keep operations simple. GraphQL needs additional safeguards and work, including solving N+1 queries with DataLoader, limiting query depth/complexity, and handling client-side caching.
+'''
+explanation = "Many systems use both: REST for public APIs and webhooks, and GraphQL as a BFF for frontends."
+
+[modules.web-api-dv-representations]
+title = "Content Negotiation & Range Requests"
+description = "Choose a representation format, handle byte ranges, and resume large downloads."
+lesson = '''
+### Choosing a representation and downloading part of a resource
+
+A resource can have multiple representations. The client uses `Accept` to describe which formats it can receive; the server uses `Content-Type` to describe the actual response body. A request body has its own `Content-Type`, so these two headers are not interchangeable. If the server does not support the request media type, it commonly returns `415 Unsupported Media Type`. If it cannot produce any representation the client accepts, it may return `406 Not Acceptable`. When the response varies by `Accept`, a cache needs to know about the variant through `Vary: Accept`.
+
+| Situation | Header / status | Meaning |
+|---|---|---|
+| Client chooses JSON | `Accept: application/json` | Desired format |
+| Server returns JSON | `Content-Type: application/json` | Actual body format |
+| Partial download | `Range: bytes=100-199` | Request a byte range |
+| Server honors the range | `206 Partial Content` | The body contains only the selected portion |
+| Range cannot be satisfied | `416 Range Not Satisfiable` | No bytes in the requested range are valid |
+
+Ranges are useful for video, large files, and resuming a download after a connection drops. A `206` response commonly includes `Content-Range: bytes 100-199/1000`, where the denominator is the total representation length. `Accept-Ranges: bytes` advertises support. `If-Range` lets a client send a range only while its validator still matches; if the content has changed, the server sends the full representation with `200` so the client does not combine parts from different versions.
+
+For example, a client requests `Range: bytes=0-99`; the server returns `206`, `Content-Range: bytes 0-99/1000`, and the first 100 bytes. Common mistakes include confusing `406` (no acceptable response representation) with `415` (unsupported request body), returning `200` with only a partial body, or failing to limit the number and size of ranges, which can waste resources. For frequently changing data, check the validator before joining downloaded pieces.
+'''
+
+[questions.web-api-dv001]
+prompt = "The client sends `Accept: application/json`, and the server returns JSON. Which description of the two headers is correct?"
+options = ["Request `Content-Type`, response `Accept`", "Request `Accept`, response `Content-Type`", "Both headers describe the response format", "Both headers describe the request format"]
+explanation = "`Accept` states which response type the client wants; `Content-Type` describes the actual media type of a request or response body."
+
+[questions.web-api-dv002]
+prompt = "A client sends a `POST` with `Content-Type: application/xml`, but the endpoint only accepts JSON. What is the most appropriate status?"
+options = ["406 Not Acceptable", "415 Unsupported Media Type", "416 Range Not Satisfiable", "304 Not Modified"]
+explanation = "415 means the server does not support the request body's media type; 406 concerns a response representation that does not satisfy `Accept`."
+
+[questions.web-api-dv003]
+prompt = "An endpoint creates a JSON or XML response depending on `Accept`. Choose the correct behaviors."
+options = ["The response records the selected media type in `Content-Type`", "It may return `406` if no response format is acceptable", "A cache needs `Vary: Accept` when a cacheable response changes based on this header", "`Content-Length` replaces `Content-Type`", "Every request must include both `Accept` and `Content-Type`"]
+explanation = "`Content-Type` describes the representation returned; `Vary` lets caches distinguish responses based on `Accept`."
+
+[questions.web-api-dv004]
+prompt = '''
+The file is 1000 bytes long; the server successfully serves `Range: bytes=100-199`:
+
+- Status: **{{blank}}**
+- `Content-Range: bytes 100-199/{{blank}}`
+- Body `Content-Length`: **{{blank}}**
+'''
+explanation = "A byte range includes both endpoints, so bytes 100–199 make a 100-byte segment."
+
+[questions.web-api-dv005]
+prompt = "The client sends `Range` with `If-Range`, but the current validator no longer matches because the file changed. What should the server do?"
+options = ["Return `206` with part of the new file", "Ignore the range and return the full new representation with `200`", "Return `304` even though the body changed", "Combine bytes from the old and new files"]
+explanation = "If the `If-Range` validator no longer matches, returning the full new version prevents the client from combining ranges from different representations."
+
+[questions.web-api-dv006]
+prompt = "A 100-byte file receives `Range: bytes=100-120`. If the server does not ignore this header, what is the appropriate status?"
+options = ["200 OK", "206 Partial Content", "304 Not Modified", "416 Range Not Satisfiable"]
+explanation = "The highest byte offset is 99, so a range starting at 100 does not overlap the representation."
+
+[questions.web-api-dv007]
+prompt = "In an interview, explain how to design an endpoint that supports JSON/XML and resumable large-file downloads. Describe how the client and server negotiate the format, the important status codes/headers, and one risk to control."
+keywords = [["accept", "content negotiation"], ["content-type"], ["406", "not acceptable"], ["415", "unsupported media type"], ["range", "206", "content-range"], ["if-range", "validator"], ["vary"]]
+model_answer = '''
+The client sends `Accept` to choose a response format; the server uses `Content-Type` to identify the actual format and may return `406 Not Acceptable` if none of the available formats is suitable. `415 Unsupported Media Type` applies when the server does not accept the request body type. If a cacheable representation varies by `Accept`, use `Vary: Accept`. For a large file, the client sends `Range` and the server returns `206 Partial Content` with `Content-Range`. `If-Range` can use a validator to prevent combining chunks from different file versions. The server should validate and limit ranges to prevent excessive resource use.
+'''
+explanation = "A strong answer distinguishes the request and response directions and matches each status to the right situation."
+
+[questions.web-api-dvc01]
+title = "Single Byte Range Response"
+prompt = '''
+Implement `rangeResponse(data, rangeHeader)` for ASCII data in the string `data` and at most one byte range:
+- If there is no header, the unit is not `bytes`, the syntax is invalid, or multiple ranges are present, ignore the header and return `{ status: 200, headers: { 'Accept-Ranges': 'bytes', 'Content-Length': '<length>' }, body: data }`.
+- Accept `bytes=start-end`, `bytes=start-`, and `bytes=-suffixLength`; both range endpoints are inclusive.
+- For a valid range, return `206`, with the selected bytes in the body, `Content-Range: bytes start-end/total`, and the correct body length in `Content-Length`. If `end` exceeds the end of the string, clamp it to the final byte.
+- If a valid range selects no bytes (for example, `start` is beyond the data length or the suffix is zero), return `416`, `Content-Range: bytes */total`, `Content-Length: '0'`, and an empty body.
+- Always include `Accept-Ranges: bytes`. Since the data is ASCII, each character corresponds to one byte.
+'''
+hints = ["Handle suffix ranges separately from start/end ranges; remember that both endpoints are inclusive.", "For invalid syntax, return the full response; for a valid but unsatisfiable range, return 416."]
+explanation = "Byte ranges are often used for media and resumable downloads; in production, limit the number of ranges and the total processing cost."
+
+[modules.web-api-dv-framing]
+title = "Message Framing & Connections"
+description = "How HTTP determines body boundaries, reuses connections, and differs across protocol versions."
+lesson = '''
+### Message framing and connection lifecycle
+
+HTTP/1.1 sends messages over a TCP byte stream, so both ends must agree on where the body ends. `Content-Length` specifies the number of body octets; `Transfer-Encoding: chunked` allows the sender to transmit chunks when the total length is not known in advance. If a request has ambiguous framing, for example conflicting `Content-Length` and `Transfer-Encoding` headers, a reverse proxy and application may disagree about the request boundary. This is a reason to reject and normalize requests at the trust boundary; do not write a simple HTTP parser yourself.
+
+| Version | Transport | Multiplexing unit | Key point |
+|---|---|---|---|
+| HTTP/1.1 | TCP | One request/response at a time, in order | Connections are often reused; body framing must be unambiguous |
+| HTTP/2 | TCP | Multiple streams on one connection | Binary framing, HPACK; TCP packet loss can stall progress across streams |
+| HTTP/3 | QUIC over UDP | Multiple QUIC streams | QPACK; packet loss in one stream does not necessarily block another |
+
+HTTP/1.1 requires `Host` so the server can select the target authority. A connection can normally serve multiple requests if the previous body has been fully read and no instruction closes the connection. `Connection: close` prevents reuse; HTTP/1.0 needs a separate keep-alive mechanism. Do not decide whether to pool a connection from the status code alone: if the body has not been fully read, its remaining bytes could be mistaken for the next response.
+
+A common misconception is that HTTP/2 uses UDP or HTTP/3 is simply faster HTTP/2. HTTP/2 still inherits TCP's ordered byte stream; HTTP/3 uses QUIC to isolate stream progress more effectively, but it still has bandwidth and congestion-control limits. For proxies, prefer an up-to-date server/library, limit header and body sizes, and inspect end-to-end protocol logs rather than inferring the protocol version from an application header.
+'''
+
+[questions.web-api-dv008]
+prompt = "In HTTP/1.1, what does `Content-Length: 120` indicate?"
+options = ["The total number of headers in the message", "The number of octets in the message body", "The maximum connection timeout", "The number of requests allowed on the connection"]
+explanation = "`Content-Length` gives the body length in octets, not the number of Unicode characters or the length of the entire message."
+
+[questions.web-api-dv009]
+prompt = "An HTTP/1.1 server uses one IP address to serve multiple domains. Which request information helps it select the destination authority?"
+options = ["`Accept-Language`", "`Host`", "`Referer`", "`Content-Encoding`"]
+explanation = "`Host` carries the request authority in HTTP/1.1; the server uses it to route to the appropriate virtual host."
+
+[questions.web-api-dv010]
+prompt = "Choose the correct descriptions of HTTP/2 and HTTP/3."
+options = ["HTTP/2 multiplexes multiple streams over one TCP connection", "HTTP/2 uses HPACK for header compression", "HTTP/3 uses QUIC", "HTTP/2 uses UDP as its transport", "HTTP/3 eliminates the need for congestion control"]
+explanation = "HTTP/2 runs over TCP; HTTP/3 runs over QUIC/UDP but still uses congestion control."
+
+[questions.web-api-dv011]
+prompt = "In HTTP/1.1, when a server streams a body without knowing its total length in advance, the common transfer coding is `{{blank}}`."
+explanation = "Chunked framing ends with a zero-length chunk and may then be followed by trailers."
+
+[questions.web-api-dv012]
+prompt = "How can TCP packet loss on an HTTP/2 connection affect its multiplexed streams?"
+options = ["Only the stream with an errored response is affected", "Bytes after the lost packet may have to wait for TCP retransmission, slowing multiple streams on the connection", "HTTP/2 automatically switches to QUIC", "There is no effect because each stream uses its own TCP connection"]
+explanation = "Multiplexing happens at the HTTP/2 layer; underneath it is still one ordered TCP byte stream."
+
+[questions.web-api-dv013]
+prompt = "A reverse proxy detects conflicting message-framing information in a request. What is the safe action at the trust boundary?"
+options = ["Forward it unchanged and let the application choose how to interpret it", "Reject the ambiguous request and close the connection according to server policy", "Trust only whichever header appears last", "Remove the body but leave the framing headers unchanged"]
+explanation = "All hops must agree on message boundaries. Rejecting ambiguous framing avoids different interpretations by the proxy and upstream."
+
+[questions.web-api-dv014]
+prompt = "Explain the practical differences between HTTP/1.1, HTTP/2, and HTTP/3 when serving many concurrent requests. If a user reports that HTTP/2 requests all slow down during packet loss, how would you explain and investigate it?"
+keywords = [["http/2", "http2"], ["tcp"], ["multiplex", "stream"], ["http/3", "http3", "quic"], ["head-of-line", "hol", "packet loss"], ["qpack", "hpack"]]
+model_answer = '''
+HTTP/1.1 commonly processes responses in order on a connection, while HTTP/2 multiplexes multiple streams over one TCP connection and compresses headers with HPACK. Because TCP still delivers bytes in order, packet loss can slow data across multiple streams, even though each stream is independent at the HTTP layer. HTTP/3 uses QUIC to isolate stream progress better when another stream loses a packet; QUIC still performs congestion control, and HTTP/3 uses QPACK. To investigate, measure handshakes, retransmissions, per-stream timing, and the actual protocol version at the client, proxy, and upstream.
+'''
+explanation = "A strong interview answer distinguishes HTTP-layer multiplexing from TCP transport ordering and describes how to observe the behavior in practice."
+
+[questions.web-api-dvc02]
+title = "Deciding Whether to Reuse an HTTP/1.x Connection"
+prompt = '''
+Implement `canReuseHttp1(version, connectionHeader, responseComplete)`:
+- `version` is `'1.0'` or `'1.1'`; return `false` for any other value.
+- A connection can be reused only after the response body has been fully read (`responseComplete === true`).
+- For HTTP/1.1, keep the connection alive by default unless the `Connection` token list contains `close`.
+- For HTTP/1.0, reuse the connection only when the token list contains `keep-alive` and does not contain `close`.
+- `connectionHeader` may be missing. Tokens are comma-separated, trimmed, and case-insensitive. Match whole tokens, not substrings.
+'''
+hints = ["Split `Connection` into comma-separated tokens, trim them, and lowercase them.", "Check for `close` before applying HTTP/1.1's default reuse rule."]
+explanation = "Do not return a connection to the pool until its body is fully consumed, because remaining bytes may belong to the current response."
+
+[modules.web-api-dv-csp]
+title = "CSP & Browser Security Headers"
+description = "Reduce browser content attack surface with CSP and defensive headers."
+lesson = '''
+### Content Security Policy
+
+Content Security Policy (CSP) is a defense layer enforced by the browser based on a policy sent in a response header. CSP can limit where a page loads scripts, images, styles, network connections, and frames. It can reduce the impact of some injection bugs, but it does not replace output encoding, input validation, or fixing XSS in the application.
+
+| Directive | Scope | Remember |
+|---|---|---|
+| `default-src` | Fallback for some fetch directives that are not specified separately | It does not replace `base-uri`, `form-action`, or `frame-ancestors` |
+| `script-src` | Accepted script sources, nonces, or hashes | Avoid broadly allowing inline scripts with `'unsafe-inline'` |
+| `connect-src` | Connections initiated by the page, such as fetch/XHR/WebSocket | Restrict the endpoints page code can call |
+| `frame-ancestors` | Sites allowed to embed this page | `'none'` disallows embedding; this differs from `frame-src` |
+
+An initial policy might be: `default-src 'none'; script-src 'self' 'nonce-<random-per-response>'; connect-src 'self' https://api.example; img-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'`. A nonce must be hard to guess, newly generated for every response, and attached only to scripts trusted by the server. A hash works for static inline scripts with stable content. Do not enable `'unsafe-inline'` just to silence policy errors.
+
+When rolling out CSP on a legacy application, start with `Content-Security-Policy-Report-Only` and configure reporting to observe violations; this policy reports but does not block. After cleaning up legitimate script and connection sources, gradually move to enforcing `Content-Security-Policy`. Common mistakes include assuming `default-src` restricts every behavior, confusing `frame-src` (which frames the page loads) with `frame-ancestors` (who may embed the page), or treating CSP as CORS: CORS controls whether a browser lets a page read a cross-origin response, while CSP limits page behavior and resources.
+
+Other headers address separate concerns: `Strict-Transport-Security` tells a browser to use HTTPS after receiving a secure policy; `X-Content-Type-Options: nosniff` prevents some MIME-type guessing. Correctly configured headers reduce risk, but should be tested against the real page to avoid unintentionally blocking application resources.
+'''
+
+[questions.web-api-dv015]
+prompt = "You need to observe CSP violations in a legacy application before enabling blocking. Which header is appropriate for the initial phase?"
+options = ["`Content-Security-Policy-Report-Only`", "`Content-Security-Policy` with `default-src *`", "`Access-Control-Allow-Origin`", "`X-Content-Type-Options: nosniff`"]
+explanation = "Report-Only lets you observe the policy without blocking resources; configure reporting to receive the reports."
+
+[questions.web-api-dv016]
+prompt = "A policy declares only `default-src 'self'` and does not declare `script-src`. Which conclusion is most accurate?"
+options = ["`script-src` has no fallback and allows every source", "`default-src` is the fallback for scripts; it does not replace directives such as `frame-ancestors`", "`default-src` affects images only", "The browser automatically changes the policy to Report-Only"]
+explanation = "`default-src` is a fallback for fetch directives that are not declared; some directives do not inherit from it."
+
+[questions.web-api-dv017]
+prompt = "Choose the configurations/statements that help build a stricter CSP for a web application."
+options = ["Use a fresh random nonce for each response to allow trusted scripts", "Set `object-src 'none'` if the application does not need object plugins", "Use `frame-ancestors 'none'` when the page must not be embedded", "Add `'unsafe-inline'` to `script-src` to avoid all CSP errors", "Assume CSP replaces output encoding and fixes XSS vulnerabilities"]
+explanation = "A nonce works when it is generated and attached correctly; CSP is still defense in depth and does not fix the root cause of injection."
+
+[questions.web-api-dv018]
+prompt = "To specify which origins are allowed to embed the current page in an iframe, use the `{{blank}}` directive."
+explanation = "`frame-ancestors` controls who can embed the page; `frame-src` controls which frames the page loads."
+
+[questions.web-api-dv019]
+prompt = "Which directive restricts the destinations of connections initiated by JavaScript in the page, such as `fetch` or WebSocket?"
+explanation = "`connect-src` applies to connection APIs initiated by the page, including fetch/XHR and WebSocket."
+
+[questions.web-api-dv020]
+prompt = "An application sends `Content-Security-Policy-Report-Only` with reporting configured. How does the browser handle a violating resource?"
+options = ["It always blocks it immediately", "It records/sends a violation report but does not block the resource just because of the Report-Only policy", "It automatically adds a nonce to the script", "It ignores both the policy and the report"]
+explanation = "Report-Only supports an observational rollout before enabling the enforcing CSP header."
+
+[questions.web-api-dv021]
+prompt = "You need to roll out CSP for a long-lived application with many third-party scripts. Describe the rollout, how to allow trusted scripts, and how to distinguish CSP errors from CORS errors."
+keywords = [["report-only", "report without blocking"], ["nonce", "hash"], ["script-src"], ["unsafe-inline"], ["cors"], ["connect-src"], ["frame-ancestors"]]
+model_answer = '''
+First, send `Content-Security-Policy-Report-Only` with reporting configured to inventory the script sources and connections in use without blocking them. After removing unnecessary sources, apply an enforcing policy with `default-src 'none'` or a suitable baseline, specify `script-src` explicitly, and use a fresh random nonce per response or a hash for static scripts. Restrict `'unsafe-inline'`, specify the required API endpoints in `connect-src`, and set `frame-ancestors` according to the embedding policy. CSP restricts page behavior and resources; CORS controls whether the browser lets JavaScript read a cross-origin response, so diagnose the relevant headers and console messages for each mechanism.
+'''
+explanation = "An observational rollout can uncover legitimate dependencies before enforcement is enabled; nonces and hashes reduce the need to broadly allow inline scripts."
+
+[questions.web-api-dv022]
+prompt = "What is the difference between CSP `frame-src` and `frame-ancestors`?"
+options = ["`frame-src` restricts who can embed this page; `frame-ancestors` restricts images", "`frame-src` restricts frames the page loads; `frame-ancestors` restricts which sites may embed this page", "The two directives are synonymous", "Both apply only to WebSocket"]
+explanation = "One directive controls frames loaded by the page; the other controls whether another site may embed the page."

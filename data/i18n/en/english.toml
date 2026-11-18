@@ -1,0 +1,772 @@
+[modules.en-vocab]
+title = "Technical Vocabulary"
+description = "Everyday words developers encounter: deploy, deprecate, bottleneck, edge case, trade-off, and more."
+lesson = '''
+### Common terms
+| Term | Meaning | Example |
+|---|---|---|
+| **deploy** (v) / deployment (n) | release software to an environment | *We deploy to production every Friday.* |
+| **deprecate** (v) | mark something as discouraged and planned for removal | *This method is **deprecated** and will be removed in v3.* |
+| **backward compatible** | compatible with older clients or versions | *The change is backward compatible.* |
+| **edge case** | an unusual boundary condition | *Empty input is an edge case.* |
+| **bottleneck** | a part of a system that limits performance | *The database is the bottleneck.* |
+| **trade-off** | a situation where gaining one benefit means giving up another | *Caching is a trade-off between speed and freshness.* |
+| **workaround** | a temporary way to avoid a problem | *Here is a workaround until the fix is released.* |
+| **regression** | a new bug that breaks previously working behavior | *This PR introduced a regression.* |
+| **out of scope** | not included in the agreed work | *Dark mode is out of scope for this sprint.* |
+| **roll back** (v) / rollback (n) | return to an earlier version | *Let's roll back the release.* |
+
+### Technical terms, IPA, and collocations
+The IPA below reflects common American pronunciation; primary stress appears before the syllable marked with /ˈ/.
+| Term | IPA | Meaning | IT example |
+|---|---|---|---|
+| **deploy** | /dɪˈplɔɪ/ | release software to an environment | *We deploy the patch after the tests pass.* |
+| **repository** | /rɪˈpɑːzəˌtɔːri/ | a place where source code is stored | *The repository contains the API and its tests.* |
+| **throughput** | /ˈθruːˌpʊt/ | the amount of work completed per unit of time | *The new connection pool improves throughput.* |
+| **query** | /ˈkwɪri/ | a request for data | *This query returns duplicate rows.* |
+| **cache** | /kæʃ/ | temporary storage for faster access | *The cache expires after ten minutes.* |
+| **queue** | /kjuː/ | a list of jobs waiting to be processed | *The worker reads jobs from the queue.* |
+| **reliable** | /rɪˈlaɪəbəl/ | dependable; working consistently | *We need a reliable retry strategy.* |
+| **failure** | /ˈfeɪljər/ | an unsuccessful operation or incident | *The dashboard records each failure.* |
+
+Collocations make sentences sound more natural: **deploy a service**, **run a query**, **raise an issue**, **meet a deadline**, **break backward compatibility**, **handle an edge case**, **reach an agreement**, and **provide feedback**. Say *raise an issue* rather than translating word for word as *open a problem*; say *make a decision* rather than *do a decision*.
+
+Vietnamese learners often drop final consonants: *tests* needs /s/ after /t/, *deploys* ends with /z/, *fixed* ends with /t/, and *merged* ends with /d/. The **-ed** ending is pronounced /ɪd/ after /t/ or /d/ (*tested*), /t/ after a voiceless sound (*fixed*), and /d/ after a voiced sound (*merged*). Do not add an extra vowel, as in *fix-tuh* or *test-it*.
+
+Stress can distinguish words and help listeners recognize them: the noun **REcord** usually has stress on the first syllable, while the verb **reCORD** usually has stress on the second. Some words are easy to confuse: **actually** means “in fact” (not “at present”), **currently** means “at present,” **eventually** means “in the end,” **sensible** means “reasonable,” and **sensitive** means “easily affected.” Avoid word-for-word translation; *The app is running slowly* sounds more natural than *The app runs slow* in professional writing.
+
+### Notes
+- These are **uncountable nouns**: *data* (often treated as singular in IT), *information*, *feedback*, *software*, *code*, and *equipment*. Do **not** add *s*: ~~feedbacks~~, ~~informations~~.
+- *setup* (n) vs. *set up* (v): *The **setup** is easy. — Please **set up** the project.* The same pattern applies to *login / log in*, *backup / back up*, and *rollback / roll back*.
+'''
+
+[questions.en-001]
+prompt = "*“This function is **deprecated** and will be removed in the next major version.”* — what does **deprecated** mean?"
+options = ["broken and unusable", "discouraged and scheduled for removal", "already removed", "only runs in a development environment"]
+explanation = "Deprecated means the feature still works but should no longer be used because it will be removed. A replacement is often suggested: *Use `X` instead.*"
+
+[questions.en-002]
+prompt = "Which word means **\"a boundary case\"** (such as empty input, a negative number, or a one-item list) that needs careful testing?"
+options = ["bottleneck", "edge case", "workaround", "milestone"]
+explanation = "*bottleneck* = a performance constraint; *workaround* = a temporary way around a problem; *milestone* = a project checkpoint."
+
+[questions.en-003]
+prompt = "Which sentences are **grammatically correct** (pay attention to uncountable nouns)?"
+explanation = "*feedback, information, software,* and *code* are uncountable nouns. To refer to quantities, say *a piece of feedback*, *a few lines of code*, or *two code snippets*."
+
+[questions.en-004]
+prompt = '''Fill in the correct form (*setup/set up, login/log in, rollback/roll back*):
+
+1. Please {{blank}} {{blank}} your local environment before the workshop. *(2 words — verb)*
+2. The new release broke checkout, so we decided to {{blank}} {{blank}} to v1.4. *(2 words — verb)*
+3. The {{blank}} page shows an error when the password is empty. *(1 word — noun/adjective)*
+'''
+explanation = "Write the verbs as two words (*set up, roll back, log in*) and the nouns/adjectives as one word (*setup, rollback, login page*)."
+
+[questions.en-005]
+explanation = "*trade-off* means a compromise: you gain one thing and give up another."
+
+[questions.en-x001]
+prompt = "Which collocation naturally says that you need to bring up a problem during a sprint review?"
+explanation = "*Raise an issue* is the natural collocation. Avoid translating word for word from Vietnamese."
+
+[questions.en-x025]
+prompt = "Choose the natural collocation: “We need to ___ a decision before the release.”"
+explanation = "English uses *make a decision*."
+
+[questions.en-x026]
+prompt = "A developer writes, “Actually, the deployment is running now,” intending to say “The deployment is currently running.” Which word is more suitable?"
+explanation = "*Currently* means “at present”; *actually* means “in fact.”"
+
+[questions.en-x035]
+prompt = "Choose the natural verb-noun collocations used in software work."
+explanation = "Use *run a test*, *provide feedback*, and *meet a deadline*. Say *make a decision*, *discuss the design*, and *reach an agreement*."
+
+[questions.en-x048]
+prompt = "Choose the correct word in this false-friend example:\n\n“The service is {{blank}} processing requests; the monitoring alert is current.”\n"
+explanation = "*Currently* means “at present”; *actually* means “in fact.”"
+
+[questions.en-x073]
+explanation = "*Roll back* means to restore an earlier version; *roll out* means to deploy a new version."
+
+[questions.en-x074]
+explanation = "*Out of scope* describes work that falls outside the agreed scope of a ticket or project."
+
+[questions.en-x078]
+explanation = "A hotfix is a change that quickly addresses an urgent issue in an existing release."
+
+[questions.en-x080]
+prompt = "Choose the natural collocations for investigating an incident."
+explanation = "Natural phrases include *investigate an outage*, *collect logs*, *reproduce a bug*, and *perform a rollback*."
+
+[questions.en-c01]
+explanation = "*Criterion* is singular; its irregular plural form is *criteria*."
+
+[modules.en-grammar]
+title = "Grammar for the Workplace"
+description = "Present perfect, passive voice in documentation, conditionals, articles, and phrasal verbs."
+lesson = '''
+### Present perfect
+Use it for something just completed when the result still matters now: *I **have fixed** the bug.* — *The build **has failed** three times today.*
+Use the **simple past** when a specific time is given: *I **fixed** it **yesterday**.*
+
+### Passive voice — common in documentation
+*The request **is sent** over HTTPS.* · *The token **will be refreshed** automatically.* · *This API **was deprecated** in v2.*
+
+### Conditionals
+- Zero conditional (facts or system behavior): *If the cache **is** empty, the app **fetches** fresh data.*
+- First conditional (a realistic possibility): *If the tests **pass**, I **will merge** the PR.*
+- Second conditional (a hypothetical situation): *If we **had** more time, we **would refactor** this module.*
+
+### Articles: a / an / the
+Use *an* before a **vowel sound**: *an API* (/eɪ/), *an HTTP request* (/eɪtʃ/), *an hour*; but use *a URL* (/juː/), *a user*, and *a unique id*.
+
+### Common phrasal verbs
+*look into* (investigate), *figure out* (find the answer), *set up*, *roll out* (release gradually), *clean up*, *break down* (divide into smaller parts), *follow up*, and *come up with* (think of).
+
+### Common sentence-writing mistakes
+- A singular subject in the simple present needs **-s**: *The worker retries the request*, but *The workers retry the request*. Do not drop the final sound when speaking.
+- Use the simple past with a finished time: *We deployed it yesterday*; use the present perfect when no time is stated and the result still matters: *We have deployed the fix*.
+- Choose articles by the first **sound**: *an hour*, *a user*, *an API*, *a URL*. Spelling does not determine whether to use *a* or *an*.
+- English word order is usually subject + verb + object: *The service returns an error*. Do not translate word for word using Vietnamese word order.
+- Use the preposition in each collocation: *depend on*, *responsible for*, *discuss the design* (do not add *about* after *discuss*), and *explain the issue to me*.
+'''
+
+[questions.en-020]
+prompt = "Choose the correct sentence for reporting something **just completed**, without specifying when:"
+explanation = "Use the present perfect for something just completed whose result still matters. With *yesterday*, use the simple past: *I fixed the bug yesterday.*"
+
+[questions.en-021]
+prompt = "Which articles are correct: *“Send ___ HTTP request to ___ URL returned by ___ API.”*"
+explanation = "*HTTP* is pronounced /eɪtʃ/ → **an**; *URL* is pronounced /juː/ → **a**; use **the** for the specific API already identified. Choose by **sound**, not by the first letter."
+
+[questions.en-022]
+prompt = '''Put the verbs in parentheses in the **passive voice** and the correct tense:
+
+1. The access token {{blank}} {{blank}} automatically every hour. *(refresh — present, describing system behavior)*
+2. This endpoint {{blank}} {{blank}} in version 2.0. *(deprecate — past)*
+3. Your data {{blank}} {{blank}} {{blank}} after 30 days. *(delete — future)*
+'''
+explanation = "The passive is formed with *be + past participle*. Technical documentation often uses the passive because it focuses on the **action** rather than on who performs it."
+
+[questions.en-023]
+prompt = "Which conditional sentences are **grammatically correct**?"
+explanation = "Do not use *will* or *would* in the *if*-clause in the first and second conditionals: *If I **knew** the answer, I would tell you.*"
+
+[questions.en-024]
+prompt = "“I'll ______ the issue and get back to you this afternoon.” — Which phrasal verb means **investigate or examine**?"
+explanation = "*look after* = take care of; *look up to* = admire; *look forward to* = anticipate (*I look forward to hearing from you*)."
+
+[questions.en-x002]
+prompt = "You have just deployed a fix and do not specify when. Which sentence is appropriate?"
+explanation = "The present perfect fits a recently completed action whose result still matters; *yesterday* requires the simple past."
+
+[questions.en-x027]
+prompt = "Choose the correct sequence of articles if you pronounce HTTP, URL, and SQL by saying their letter names."
+explanation = "HTTP starts with the sound /eɪtʃ/, URL with /juː/, and SQL when spelled out with /ɛs/; choose by sound."
+
+[questions.en-x028]
+prompt = "Which simple-present sentence is correct?"
+explanation = "A third-person singular subject takes an *-s* or *-es* ending on the verb in the simple present."
+
+[questions.en-x036]
+prompt = "Choose the sentences that are grammatically correct and appropriate for their contexts."
+explanation = "Only a singular subject takes *-s*; *yesterday* goes with the simple past; and the *if*-clause in the first conditional uses the simple present."
+
+[questions.en-x047]
+prompt = '''Fill in the articles based on the first sound when pronouncing HTTP, *user*, and SQL by their letter names:
+
+- {{blank}} HTTP request
+- {{blank}} user account
+- {{blank}} SQL query
+'''
+explanation = "HTTP begins with the vowel sound /eɪtʃ/, *user* with the consonant sound /j/, and SQL when spelled out with /ɛs/."
+
+[questions.en-x076]
+explanation = "*Affect* is a verb meaning “influence.” After the modal verb *may*, use the base form."
+
+[questions.en-c02]
+explanation = "Numbers ending in 1 use the suffix *-st*, except numbers ending in 11, such as *11th*."
+
+[modules.en-reading]
+title = "Reading Documentation and Error Messages"
+description = "RFC keywords (MUST/SHOULD/MAY), common documentation terms, and quick ways to interpret error messages."
+lesson = '''
+### Normative keywords (RFC 2119)
+- **MUST / REQUIRED / SHALL**: an absolute requirement.
+- **MUST NOT**: an absolute prohibition.
+- **SHOULD / RECOMMENDED**: recommended; depart from it only for a valid reason.
+- **MAY / OPTIONAL**: optional.
+
+### Common phrases in documentation
+*out of the box* (available without configuration) · *under the hood* (how something works internally) · *opt in / opt out* · *by default* · *as of v2.0* (starting with v2.0) · *e.g.* (for example) vs. *i.e.* (that is) · *caveat* (a limitation or point to note) · *TL;DR* (summary) · *WIP* (work in progress) · *LGTM* (looks good to me) · *nit* (a minor suggestion).
+
+### Reading error messages
+*Cannot read properties of **undefined** (reading 'map')* → the value is `undefined` when `.map` is called.
+*Unexpected token '<' … is not valid JSON* → the server returned HTML (often an error page) instead of JSON.
+Other common messages include *Permission denied*, *Connection refused*, *Address already in use*, *Request timed out*, and *Too many open files*.
+
+When explaining an error, distinguish the **cause** from the **symptom**: *The request timed out* describes a symptom; it does not prove that the server is broken. **Expected behavior** is what should happen; **actual behavior** is what was observed. Connectors such as *therefore*, *however*, and *for example* make relationships clear; **e.g.** introduces an example, while **i.e.** restates something in equivalent terms.
+
+One false friend to remember is **actually** (“in fact”), which differs from **currently** (“at present”). **Eventually** means “in the end, after some time”; it does not mean “possibly.” Read the whole sentence and check the cause-and-effect relationship instead of translating isolated words.
+'''
+
+[questions.en-040]
+prompt = "In a specification, “Clients **SHOULD** retry the request with exponential backoff” means:"
+options = ["They are required to retry", "Retrying is prohibited", "They should retry and depart from the recommendation only for a valid reason", "Retrying is entirely optional, with no recommendation"]
+explanation = "RFC 2119: MUST = required, SHOULD = a strong recommendation, MAY = optional."
+
+[questions.en-041]
+prompt = "“Uncaught SyntaxError: Unexpected token '<', \"<!DOCTYPE \"... is not valid JSON” — what is the most likely cause?"
+options = ["The JavaScript file is missing a `<` character", "`res.json()` was called, but the server returned an **HTML page** (for example, a 404/500 page or index.html) instead of JSON", "The browser does not support JSON", "A semicolon is missing"]
+explanation = "The first `<` comes from `<!DOCTYPE html>`. Check the URL, status code, and `Content-Type` header before parsing the response."
+
+[questions.en-042]
+prompt = "Match each phrase with its correct meaning:"
+options = ["*out of the box* = available and usable immediately without configuration", "*under the hood* = how something works internally", "*e.g.* = that is; a restatement", "*as of v3* = starting with version 3", "*caveat* = a limitation or point to be aware of"]
+explanation = "*e.g.* = for example; *i.e.* = that is."
+
+[questions.en-043]
+prompt = '''Common abbreviations in code reviews and chat:
+
+- “Looks good to me” → {{blank}}
+- “Work in progress” → {{blank}}
+- “Too long; didn't read” (a short summary) → {{blank}}
+- “In my opinion” → {{blank}}
+'''
+explanation = "Also common: *PTAL* (please take a look), *nit* (a minor, optional suggestion), *AFAIK* (as far as I know), *FYI*, and *ETA*."
+
+[questions.en-044]
+prompt = "The server reports *“Error: listen EADDRINUSE: **address already in use** :::3000”*. What should you do?"
+options = ["Reinstall Node.js", "Find and stop the process using port 3000, or run the app on another port", "Delete the node_modules directory", "Add more RAM"]
+explanation = "*Already in use* means another process is using it. On macOS/Linux, run `lsof -i :3000` to find the PID."
+
+[questions.en-x003]
+prompt = "In a protocol document, what does “Clients SHOULD retry after a temporary network failure” mean?"
+options = ["The client must retry in every case.", "The client is prohibited from retrying.", "The client should retry and should depart from the recommendation only for a valid reason.", "Retrying is not recommended at all."]
+explanation = "SHOULD indicates a strong recommendation, not an absolute requirement like MUST."
+
+[questions.en-x029]
+prompt = "In the sentence “For example (e.g.), the client may retry twice,” what does *e.g.* mean?"
+options = ["In other words / that is.", "For example.", "Eventually.", "Out of scope."]
+explanation = "*E.g.* abbreviates *exempli gratia*, meaning “for example”; *i.e.* means “that is.”"
+
+[questions.en-x037]
+prompt = "Choose the correct interpretations."
+options = ["As of version 3 = starting with version 3.", "Opt out = deliberately choose not to participate.", "A caveat = a limitation or point to be aware of.", "Eventually = possibly.", "Actually = at present."]
+explanation = "*Eventually* means “in the end”; *actually* means “in fact.” *Currently* means “at present.”"
+
+[questions.en-x062]
+prompt = '''Fill in the phrase that describes a default:
+
+“{{blank}}, the access token expires after 15 minutes.”
+'''
+explanation = "*By default* means “as the standard behavior.”"
+
+[questions.en-x075]
+explanation = "A flaky test produces inconsistent results across runs under similar conditions."
+
+[questions.en-x081]
+prompt = "Choose the correct expansions of common workplace abbreviations."
+explanation = "ETA, TBD, FYI, and WIP have the meanings shown; EOD usually means *end of day*."
+
+[modules.en-writing]
+title = "Writing Commits, PRs, Issues, and Emails"
+description = "Imperative mood, Conventional Commits, PR descriptions, bug reports, and polite email."
+lesson = '''
+### Commit messages
+- Write the subject line in the **imperative**: *Fix*, *Add*, *Remove* — not *Fixed*, *Adds*, or *Fixing*. A useful check is whether it reads naturally after “*If applied, this commit will …*”.
+- Keep it to 72 characters or fewer and omit the final period; leave a blank line before the body, which explains **why**.
+- **Conventional Commits** examples: `feat(auth): add password reset`, `fix: handle empty cart`, `docs: …`, `refactor: …`; use `!` or `BREAKING CHANGE:` for a breaking change.
+
+### Pull requests
+Include **What** changed, **Why** it changed, **How to test**, screenshots or video for UI changes, and a related ticket such as *Closes #123*.
+
+### Bug reports (issues)
+Include *Steps to reproduce*, *Expected behavior*, *Actual behavior*, the *Environment* (OS and version), and logs or screenshots.
+
+### Polite email and chat
+Useful phrases include *Could you please take a look at…?*, *Would it be possible to…?*, *Just a friendly reminder…*, *Sorry for the late reply.*, and *Let me know if you have any questions.* Avoid *Please do the needful*, *Revert back*, and *Kindly revert*.
+
+Workplace collocations: **send an update**, **share a link**, **request a review**, **address a comment**, **follow up on an issue**, and **schedule a meeting**. Prefer a specific verb to a long sentence: *I fixed the validation error* is clearer than *A fix was made to the validation error*. A polite tone does not require repeating *please*; state the request, reason, and deadline if there is one.
+'''
+
+[questions.en-060]
+prompt = "Which commit message follows the correct style (imperative mood)?"
+explanation = "Try the sentence: *If applied, this commit will **fix login redirect when session expires*** ✓."
+
+[questions.en-061]
+prompt = "Which phrases are **polite and natural** when asking a colleague for a review?"
+explanation = "*Please do the needful* sounds stiff and unclear to many native speakers; a bare command can come across as rude."
+
+[questions.en-062]
+prompt = '''Complete the bug report template:
+
+**Steps to {{blank}}:**
+1. Open the cart page
+2. Remove the last item
+
+**{{blank}} behavior:** An empty-cart message is shown.
+**{{blank}} behavior:** The page crashes with a white screen.
+'''
+explanation = "A good bug report lets someone else **reproduce** the issue. Include the environment (OS, browser, and version) and logs."
+
+[questions.en-063]
+prompt = "Write a **Pull Request description in English** (4–8 sentences) for this change: *add cursor-based pagination to the `GET /orders` API because offset pagination is slow with large datasets; unit tests have been written; existing clients remain supported.*\n"
+explanation = "The What / Why / Compatibility / How to test structure helps reviewers scan the change quickly."
+
+[questions.en-x004]
+prompt = "Choose the commit subject that uses the imperative and has no final period."
+explanation = "*Fix* is the base form of the verb; it reads naturally as “If applied, this commit will fix timeout handling.”"
+
+[questions.en-x038]
+prompt = "Choose the headers that follow Conventional Commits and use an imperative subject."
+explanation = "Use lowercase for the type and a concise base-form verb for the subject; do not end it with a period."
+
+[questions.en-x061]
+prompt = '''Complete the Conventional Commit header:
+
+“fix(auth): {{blank}} expired sessions”
+'''
+explanation = "The subject uses the base form of the verb; *handle* fits the meaning of dealing with expired sessions."
+
+[questions.en-x079]
+prompt = "Choose the statements that describe technical results cautiously and with evidence."
+explanation = "State the measurement and test environment, or clearly identify what has not been measured. Avoid claims broader than the evidence supports."
+
+[questions.en-c04]
+explanation = "In Conventional Commits, `!` before the colon marks a breaking change."
+
+[modules.en-speaking]
+title = "Meetings, Standups, and Interviews"
+description = "Standup updates, asking for clarification, pronouncing technical terms, and answering interview questions with STAR."
+lesson = '''
+### Standups
+*Yesterday I finished… · Today I'm going to… · I'm blocked by… / No blockers.*
+
+### When you did not hear or understand something
+*Sorry, could you say that again?* · *Could you elaborate on…?* · *Just to make sure I understand, you mean…?* · *Let me get back to you on that.*
+
+### Making suggestions and disagreeing gently
+*What if we…?* · *Have we considered…?* · *I see your point, but…* · *I'd suggest…*
+
+### Common pronunciation mistakes
+**cache** /kæʃ/ (like *cash*) · **Linux** /ˈlɪnəks/ · **SQL** /ˌes.kjuːˈel/ or /ˈsiːkwəl/ · **height** /haɪt/ · **width** /wɪdθ/ · **suite** /swiːt/ · **queue** /kjuː/ · **GUI** /ˈɡuːi/ · **char** /tʃɑːr/ · **null** /nʌl/ · **daemon** /ˈdiːmən/.
+
+### Interviews — the STAR method
+**S**ituation → **T**ask → **A**ction (focus on *I*, not *we*) → **R**esult (numbers help when available).
+
+### Pronunciation colleagues can understand
+Do not drop final sounds when saying *tests*, *builds*, *fixed*, or *deployed*. The plural **-s** is pronounced /s/ after a voiceless sound (*tests*), /z/ after a voiced sound (*builds*), and /ɪz/ after a sibilant (*releases*). The past-tense **-ed** has three pronunciations: /t/ in *fixed*, /d/ in *deployed*, and /ɪd/ in *tested*. These are pronunciation rules, not three different spellings.
+
+Correct stress helps listeners recognize words more quickly: *develop* is stressed on the second syllable (*de-VEL-op*), as is *component* (*com-PO-nent*), while *database* is usually stressed at the beginning (*DA-ta-base*). If unsure, check a pronunciation dictionary and practice the whole phrase instead of reading each letter.
+
+In connected speech, a final consonant may link to the next word's initial vowel: *send it* often flows together, but keep enough of each sound to distinguish the words. The goal is to be understood, not to imitate a particular regional accent.
+'''
+
+[questions.en-080]
+prompt = "Which word is **cache** pronounced like?"
+options = ["catch", "cash", "cake", "cashe /kəˈʃeɪ/"]
+explanation = "/kæʃ/ — like *cash*. Pronouncing it “ca-shay” is a very common mistake."
+
+[questions.en-081]
+prompt = "You are not sure you understood a request correctly in a meeting. Which response is most appropriate?"
+explanation = "Paraphrasing the request both confirms what you heard and shows that you are listening."
+
+[questions.en-082]
+prompt = '''Daily standup update:
+
+“{{blank}} I finished the login form. Today I'm going to write tests for it. I'm {{blank}} by the missing API docs, so I'll follow {{blank}} with the backend team.”
+'''
+explanation = "*Be blocked by* means that something is preventing progress; *follow up with someone* means to contact them again or keep the matter moving."
+
+[questions.en-083]
+prompt = "Interview prompt: ***“Tell me about a challenging bug you fixed.”*** — Answer in English using the **STAR** method (Situation, Task, Action, Result).\n"
+explanation = "Use *I* for the Action, include numbers in the Result, and finish with what you learned."
+
+[questions.en-x005]
+prompt = "During an online meeting, you missed a point. Which response is the most polite and specific?"
+explanation = "This asks clearly and politely for the speaker to repeat the point."
+
+[questions.en-c03]
+explanation = "*Forty* is spelled without a *u* after *for*. When written out, compound numbers from 21 to 99 are usually hyphenated."
+
+[modules.en-email-chat]
+title = "Email and Slack"
+description = "Asking for information, reporting issues, requesting reviews, declining politely, and following up with the right level of formality."
+lesson = '''
+### Choose a tone for the channel and recipient
+Email to a customer or someone you do not know is usually written in complete sentences and includes a greeting. Internal Slack messages can be shorter, but should still provide context and state the needed action.
+| Purpose | Formal email | Moderately casual Slack |
+|---|---|---|
+| Ask | *Could you clarify the deadline for this change?* | *Do we have a deadline for this?* |
+| Report an issue | *I found an issue with the export flow.* | *The export is failing for archived orders.* |
+| Request a review | *Would you be able to review PR #42 by Thursday?* | *Could someone review PR #42 when they have a moment?* |
+| Decline | *I’m afraid I can’t take this on before Friday.* | *I can’t pick this up today, but I can look tomorrow.* |
+| Follow up | *I’m following up on my request below.* | *Quick follow-up: do you have an update?* |
+
+A useful email has a specific subject, brief context, a clear request, and a deadline if needed. Slack messages often omit a long greeting; avoid sending *Any update?* repeatedly. Instead, try *Could you share an update by 3 p.m. so I can unblock the release?* When declining, state your constraint and suggest a workable alternative. **Could you…?**, **Would you mind…?**, and **I’m afraid…** soften a request; do not overuse *kindly* or translate Vietnamese phrases word for word into English.
+'''
+
+[questions.en-x006]
+prompt = "You are emailing a colleague for the first time to ask about a change's deadline. Which subject line is most useful?"
+explanation = "A subject line that immediately describes the topic makes the email easier to find and prioritize."
+
+[questions.en-x007]
+prompt = "You need to follow up once about staging access that is blocking testing. Which sentence is clear and polite?"
+explanation = "Naming the topic, deadline, and reason tells the recipient what is needed; avoid sounding accusatory."
+
+[questions.en-x008]
+prompt = "You cannot take another ticket today but can look at it tomorrow morning. Which response is appropriate?"
+explanation = "Clearly state your constraint and suggest a workable time."
+
+[questions.en-x030]
+prompt = "You are asking for a review on Slack and want to show that you do not need an immediate response. Which sentence is appropriate?"
+explanation = "The sentence makes the request, scope, and urgency clear."
+
+[questions.en-x039]
+prompt = "Choose the sentences that are appropriate for workplace communication."
+explanation = "Appropriate messages adapt their length to the channel and make the request clear. Avoid stiff or redundant phrases such as *revert back*."
+
+[questions.en-x040]
+prompt = "You want to follow up politely and help remove a blocker. Choose the appropriate sentences."
+explanation = "The appropriate sentences state the topic or deadline and reason while keeping a respectful tone."
+
+[questions.en-x049]
+prompt = '''Complete the polite follow-up sentence:
+
+“I'm following {{blank}} {{blank}} the staging access request below.”
+'''
+explanation = "The phrase is *follow up on a request*."
+
+[questions.en-x050]
+prompt = '''Complete the natural review request:
+
+“Could you take a look {{blank}} my PR {{blank}}?”
+'''
+explanation = "Say *take a look at* something; adding *when you have a moment* signals that it does not need immediate attention."
+
+[questions.en-x063]
+prompt = "Write a short email in English asking Maya to review the PR for cursor pagination by Thursday. Mention that you are testing the API, thank the recipient, and keep the tone polite.\n"
+explanation = "The email includes a greeting, context, a request, and a specific deadline."
+
+[questions.en-x064]
+prompt = "Reply in English to politely decline a ticket for today because you are finishing a release. Offer to look at the ticket tomorrow and confirm the deadline if needed.\n"
+explanation = "The reply clearly states your constraint, thanks the requester, and offers an alternative."
+
+[questions.en-x082]
+prompt = "Complete the email invitation to connect: “I'm reaching {{blank}} to ask whether the maintenance window has been approved.”"
+explanation = "*Reach out to someone* means to contact them proactively."
+
+[questions.en-x083]
+prompt = "Complete the sentence promising an update: “We will let you know as soon as the incident is {{blank}}.”"
+explanation = "Both *resolved* and *fixed* can describe an incident that has been dealt with in this context."
+
+[modules.en-meetings]
+title = "Meetings and Collaboration"
+description = "Standups, sprint planning, retrospectives, expressing ideas, disagreeing politely, and confirming details."
+lesson = '''
+### Language for different meetings
+| Situation | Natural phrase |
+|---|---|
+| Standup: yesterday | *Yesterday, I finished the retry logic.* |
+| Standup: today | *Today, I’m going to add integration tests.* |
+| Blocker | *I’m blocked by the staging credentials.* |
+| Planning: estimate | *This looks like a two-point task, assuming the API stays unchanged.* |
+| Expressing an opinion | *I’d suggest keeping the endpoint backward compatible.* |
+| Gentle disagreement | *I see the benefit, but I’m concerned about the migration cost.* |
+| Asking someone to repeat | *Sorry, could you repeat the last part?* |
+
+In a retrospective, describe specific events instead of assigning blame: *The deploy took 40 minutes because the migration ran synchronously.* Then suggest a next step: *Could we test the migration on a copy of production data?* To agree with nuance, use *That makes sense because…*; to disagree, explain the risk and offer an alternative. If you did not hear something, ask for a repeat or restate what you understood: *So the new limit applies to each user, correct?* Do not just say *yes* if something is still unclear.
+'''
+
+[questions.en-x009]
+prompt = "Which standup sentence describes a blocker naturally?"
+explanation = "Use the structure *be blocked by* + cause."
+
+[questions.en-x010]
+prompt = "You disagree with a proposal to store full logs because they could expose sensitive data. Which opening is constructive?"
+explanation = "Acknowledging the goal before stating a specific risk helps keep the discussion focused on a solution."
+
+[questions.en-x011]
+prompt = "You want to confirm that the limit of 100 requests applies to each user. Which sentence is appropriate?"
+explanation = "Restating an assumption and asking for confirmation helps prevent misunderstandings."
+
+[questions.en-x031]
+prompt = "In a retrospective, which statement describes a problem in terms of the process instead of blaming someone?"
+explanation = "A specific observation and a suggested improvement help the team learn from an incident without attacking an individual."
+
+[questions.en-x041]
+prompt = "In sprint planning, choose the estimates that state a condition or assumption clearly."
+explanation = "Stating assumptions and splitting work into smaller tasks help the team evaluate an estimate."
+
+[questions.en-x042]
+prompt = "Choose the useful statements for a standup or retrospective."
+explanation = "The useful statements describe progress, a blocker, or an evidence-based improvement; personal attacks do not help solve the problem."
+
+[questions.en-x051]
+prompt = '''Complete the standup update:
+
+“Yesterday I {{blank}} the retry logic. Today I'm going to {{blank}} integration tests. I'm {{blank}} by the staging credentials.”
+'''
+explanation = "Use the past tense for yesterday's work, *be going to* for today's plan, and *be blocked by* for an obstacle."
+
+[questions.en-x052]
+prompt = '''Ask someone to repeat a point from the meeting:
+
+“Sorry, could you repeat the last {{blank}}?”
+'''
+explanation = "This is a short, polite request that identifies which part you missed."
+
+[questions.en-x065]
+prompt = "During sprint planning, write 3–5 sentences in English agreeing that caching may improve speed, raising a concern about stale data, asking to clarify the freshness requirement, and suggesting a next step.\n"
+explanation = "State a benefit and risk, ask a clarifying question, and propose an action to keep disagreement collaborative."
+
+[questions.en-x066]
+prompt = "Write 3–5 sentences for a retrospective about a migration that made a deploy take longer. Describe the event and its impact without blaming an individual, then suggest an improvement with an owner.\n"
+explanation = "Describe the observed impact and cause, then turn them into an action item with an owner."
+
+[questions.en-x084]
+prompt = "Complete the blocker update: “The release is blocked {{blank}} missing staging credentials.”"
+explanation = "Use *blocked by* + cause to name what is preventing work from continuing."
+
+[modules.en-code-review]
+title = "Code Review and Bug Reports"
+description = "Writing clear review comments, PR descriptions, commit messages, and reproducible bug reports."
+lesson = '''
+### Keep review comments focused on the code
+| Severity | Example | Meaning |
+|---|---|---|
+| Nit | *Nit: could we rename this to `userCount` for consistency?* | A minor suggestion that does not block merging |
+| Suggestion | *Could we move this validation into the service so both callers use it?* | A proposed improvement |
+| Blocking | *This can expose another user’s data. Please check ownership before merging.* | An issue that must be fixed before merging |
+
+Explain **why** and suggest a way to fix the issue when possible. Write *This branch misses the empty-list case* instead of *You forgot…*; critique the change, not its author. A PR description usually includes **What**, **Why**, and **How to test**, plus screenshots or a changelog when useful. A bug report includes a title, environment, numbered reproduction steps, expected behavior, and actual behavior. Make the steps specific enough for someone else to follow; separate observations from guesses about the cause. Use a Conventional Commits header such as *fix(auth): reject expired sessions*; use the base form of the verb and omit a final period.
+'''
+
+[questions.en-x012]
+prompt = "You found a change that could let a user read someone else's data. Which comment correctly marks it as blocking?"
+explanation = "A security risk should be described specifically and addressed before merging; review comments should not attack the author."
+
+[questions.en-x013]
+prompt = "A minor naming issue does not affect behavior or block merging. Which word should begin the comment?"
+explanation = "*Nit* signals a minor suggestion that usually does not have to be fixed before merging."
+
+[questions.en-x014]
+prompt = "Which bug report best helps a teammate reproduce the issue?"
+explanation = "A good report includes the environment, reproduction steps, expected behavior, and actual behavior."
+
+[questions.en-x032]
+prompt = "Choose the review suggestion that gives a reason and a way to improve the code."
+explanation = "The comment focuses on the code and gives a specific suggestion and reason."
+
+[questions.en-x043]
+prompt = "Choose the constructive code review comments."
+explanation = "A good comment describes severity, impact, and reasoning without attacking the author."
+
+[questions.en-x044]
+prompt = "Choose the useful parts of a PR description."
+explanation = "What, Why, How to test, and compatibility notes help reviewers evaluate a change."
+
+[questions.en-x053]
+prompt = '''Add a label for a minor suggestion that does not block merging:
+
+“{{blank}}: could we rename this variable for consistency?”
+'''
+explanation = "*Nit* signals a minor suggestion; do not use it for a blocking issue."
+
+[questions.en-x054]
+prompt = '''Fill in the names of the two parts of a bug report:
+
+- {{blank}} behavior: what should happen
+- {{blank}} behavior: what actually happens
+'''
+explanation = "Expected behavior is what should happen; actual behavior is what was observed."
+
+[questions.en-x067]
+prompt = "Write a PR description in English for a bug fix: two concurrent requests updating a cart could overwrite each other. State What, Why, how to test, and the expected result.\n"
+explanation = "Describing the cause, fix, test, and result helps reviewers understand both the change and its rationale."
+
+[modules.en-docs-writing]
+title = "READMEs and Technical Documentation"
+description = "Write READMEs, ADRs, and technical explanations in plain English, using active voice and scannable structure."
+lesson = '''
+### Write so readers can get things done
+A README usually answers: What does the project do? What are its requirements? How do I install, run, and test it? Where can I get help? An ADR records **Context**, **Decision**, and **Consequences**; explain the chosen decision and its trade-offs, not just list the alternatives.
+
+| Wordy or unclear | Plain English |
+|---|---|
+| *The cache is invalidated by the service.* | *The service clears the cache.* |
+| *In order to run the tests, execute…* | *To run the tests, execute…* |
+| *It should be noted that the token expires…* | *The token expires…* |
+
+Prefer the active voice when the actor matters: *The worker retries the job twice.* Use the passive when the actor is unknown or unimportant: *The token is stored securely.* A paragraph should cover one idea; name sections after the questions readers need answered. Explain a term once, use short examples with realistic data, and distinguish requirements from recommendations. Avoid long, formal words when a familiar verb expresses the same idea clearly.
+'''
+
+[questions.en-x015]
+prompt = "Choose the concise active-voice sentence describing a worker retrying a job."
+explanation = "The active sentence names the actor and action clearly."
+
+[questions.en-x016]
+prompt = "What should the Consequences section of an ADR describe?"
+options = ["Only the author's name.", "The benefits and trade-offs that result from the decision.", "The entire source code.", "A translation of the title."]
+explanation = "An ADR records positive and negative consequences so readers understand the cost of the decision."
+
+[questions.en-x017]
+prompt = "Which sentence uses the clearest plain English?"
+explanation = "Familiar words and specific verbs are often easier to read than long, nominalized sentences."
+
+[questions.en-x033]
+prompt = "What should a README for new users put near the beginning to help them get started quickly?"
+options = ["The installation steps and the basic run/test commands.", "The history of every commit.", "A list of every bug the project has ever had.", "A long biography of the author."]
+explanation = "Readers need the requirements, installation steps, and run instructions before other details."
+
+[questions.en-x045]
+prompt = "Choose the techniques that make technical documentation easier to scan and understand."
+explanation = "Clear headings, concise sentences, and concrete examples help readers complete a task."
+
+[questions.en-x055]
+prompt = '''Complete the README headings that help new users get started:
+
+- {{blank}}: required tools and versions
+- {{blank}}: commands to verify the change
+'''
+explanation = "A README should state the environment requirements and how to run tests."
+
+[questions.en-x056]
+prompt = '''Rewrite the passive sentence in the active voice:
+
+“The service {{blank}} the token {{blank}}.”
+'''
+explanation = "The active sentence clearly names the service as the actor; *securely* describes how it stores the token."
+
+[questions.en-x068]
+prompt = "Write a Quick start section in English for a hypothetical CLI tool. State its purpose, the Node.js prerequisite, the installation command, the run command, and how to run tests. Use short, active sentences.\n"
+explanation = "A good quick-start guide states prerequisites and specific commands; active sentences tell readers what to do."
+
+[modules.en-interview]
+title = "Technical Interviews"
+description = "Use STAR, describe projects and system designs, ask thoughtful questions, and discuss offers in English."
+lesson = '''
+### Give structured answers
+For behavioral questions, use **STAR**: Situation, Task, Action (what you did), and Result. Be specific about **I** to make your individual contribution clear; use numbers only when they are real. When describing a project, start with the user or problem, then explain the architecture, decisions, trade-offs, and outcome.
+
+In a system design interview, clarify requirements first: *How many daily active users should we support?* Then summarize assumptions, the API, data model, main flow, bottlenecks, and failure handling. If you need time to think, say *Let me think through the trade-offs* instead of going silent. If the question is unclear, confirm its scope.
+
+Ask the interviewer about success criteria, the review process, on-call operations, and how the team makes decisions. When negotiating an offer, say thank you, show interest, explain the basis for your request, and ask about the overall package: *Based on the role and my experience, is there flexibility in the base salary?* Do not invent metrics or competing offers; ask for time to consider the offer if needed.
+'''
+
+[questions.en-x018]
+prompt = "In a STAR answer, what should the Action section emphasize?"
+options = ["The specific things you did.", "The company's entire history.", "Only what the team plans to do.", "A list of technologies with no context."]
+explanation = "STAR makes your individual actions and results clear instead of describing only what the team did in general."
+
+[questions.en-x019]
+prompt = "At the start of a system design interview, which step helps prevent designing for the wrong scope?"
+options = ["Choose a database immediately.", "Ask about user count, expected load, and functional requirements.", "Draw every service you have ever used.", "Wait for the interviewer to state every assumption."]
+explanation = "Clarify requirements and assumptions before choosing an architecture."
+
+[questions.en-x020]
+prompt = "You received an offer and want to ask whether the base salary is negotiable. Which sentence is professional?"
+explanation = "Giving a reason and asking an open question starts a respectful, clear negotiation."
+
+[questions.en-x034]
+prompt = "Which question helps you understand how the team operates?"
+explanation = "A specific question about code review and on-call incidents helps you understand the team's real working practices."
+
+[questions.en-x046]
+prompt = "In a system design interview, choose the useful steps to take before settling on an architecture."
+explanation = "Clarifying scale, stating assumptions, and explaining trade-offs make the design well-grounded."
+
+[questions.en-x057]
+prompt = '''Complete the STAR sequence:
+
+Situation → Task → {{blank}} → Result
+'''
+explanation = "Action describes what the candidate did to address the task."
+
+[questions.en-x058]
+prompt = '''Complete the question about the on-call process:
+
+“Could you tell me how the team {{blank}} on-call incidents?”
+'''
+explanation = "Both *handles incidents* and *responds to incidents* are natural phrases."
+
+[questions.en-x069]
+prompt = "Answer in English using STAR: “Tell me about a challenging bug you fixed.” Include the situation, task, main actions you took, a measurable result, and what you learned.\n"
+explanation = "STAR keeps your answer specific and helps the interviewer see your individual contribution and its result."
+
+[questions.en-x070]
+prompt = "Describe a technical project in English in 4–6 sentences: the user problem, your role, the architecture/API, one trade-off, and the result.\n"
+explanation = "A clear project story connects the need, your individual work, the technical decision, and the result."
+
+[questions.en-x071]
+prompt = "Explain in English how you would begin designing a large-scale webhook processing service. Include clarifying questions, assumptions or load, the API or data model, bottlenecks, and failure handling.\n"
+explanation = "Stating assumptions, the data flow, and failure handling helps the interviewer follow your design reasoning."
+
+[questions.en-x072]
+prompt = "Write 4–6 sentences in English to close an interview: thank the interviewer, ask a question about code review/on-call, and politely ask whether the base salary is flexible given your experience and the role's scope.\n"
+explanation = "Ask about how the team works and negotiate using specific reasons in a respectful tone."
+
+[modules.en-pronunciation]
+title = "Technical English Pronunciation"
+description = "Practice stress in technology terms, final -s/-ed sounds, acronym pronunciation, and clear connected speech."
+lesson = '''
+### Technical terms and common American stress patterns
+| Term | Reference IPA | Note |
+|---|---|---|
+| develop | /dɪˈvɛləp/ | stress on the second syllable |
+| component | /kəmˈpoʊnənt/ | stress on the second syllable |
+| database | /ˈdeɪtəˌbeɪs/ | usually stressed at the beginning; *data* also has the variant /ˈdætə/ |
+| cache | /kæʃ/ | rhymes with *cash* |
+| queue | /kjuː/ | one syllable |
+| GUI | /ˌdʒiː juː ˈaɪ/ or /ˈɡuːi/ | say the letters or “goo-ee” |
+| SQL | /ˌɛs kjuː ˈɛl/ or /ˈsiːkwəl/ | both “ess-cue-ell” and “sequel” are used |
+| Linux | /ˈlɪnəks/ | usually stressed on the first syllable in the US |
+| algorithm | /ˈælɡəˌrɪðəm/ | primary stress on the first syllable |
+| architecture | /ˈɑːrkɪˌtɛktʃər/ | primary stress on the first syllable |
+
+The **-s** ending is pronounced /s/ after a voiceless sound (*tests*), /z/ after a voiced sound (*builds*), and /ɪz/ after a sibilant (*branches*). The **-ed** ending is pronounced /t/ (*fixed*), /d/ (*merged*), or /ɪd/ (*tested*), depending on the final sound of the base verb. Do not drop final sounds or add an unnecessary syllable. In connected speech, *check it* may flow together, but both words should still be recognizable. Some IPA transcriptions vary by region; aim for consistent, clear pronunciation rather than one required accent.
+'''
+
+[questions.en-x021]
+prompt = "In common pronunciation, which word does *queue* sound like?"
+explanation = "*Queue* is pronounced /kjuː/, the same as *cue*."
+
+[questions.en-x022]
+prompt = "In common American English, which syllable is stressed in *component*?"
+options = ["The first syllable: COM-ponent.", "The second syllable: com-PO-nent.", "The third syllable: compo-NENT.", "All three syllables are stressed equally."]
+explanation = "*Component* usually has primary stress on the second syllable."
+
+[questions.en-x023]
+prompt = "Which stress pattern is correct for *develop*?"
+options = ["DE-velop", "de-VEL-op", "devel-OP", "Stress all three syllables equally"]
+explanation = "*Develop* is stressed on the second syllable: /dɪˈvɛləp/."
+
+[questions.en-x024]
+prompt = "Which pronunciations of the acronym SQL are accepted?"
+options = ["Only “sequel.”", "Only the letter names “ess-cue-ell.”", "Both “ess-cue-ell” and “sequel” are used.", "Like the word “school.”"]
+explanation = "SQL has two common pronunciations; a team can choose one and use it consistently."
+
+[questions.en-x059]
+prompt = '''Fill in the pronunciation of the -ed ending using IPA:
+
+- fixed: /{{blank}}/
+- merged: /{{blank}}/
+- tested: /{{blank}}/
+'''
+explanation = "The -ed ending is /t/ after a voiceless sound, /d/ after a voiced sound, and /ɪd/ after /t/ or /d/."
+
+[questions.en-x060]
+prompt = '''Fill in the final sound of the plural -s ending:
+
+- tests: /{{blank}}/
+- builds: /{{blank}}/
+- releases: /{{blank}}/
+'''
+explanation = "The ending depends on the final sound of the base word: voiceless /s/, voiced /z/, or an extra syllable /ɪz/ after a sibilant."
+
+[questions.en-x077]
+prompt = "In common American English, where is the primary stress in *algorithm*?"
+options = ["The first syllable: AL-go-rithm.", "The second syllable: al-GO-rithm.", "The third syllable: algo-RITHM.", "All three syllables are stressed equally."]
+explanation = "*Algorithm* usually has primary stress on the first syllable: /ˈælɡəˌrɪðəm/."

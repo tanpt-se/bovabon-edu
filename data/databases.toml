@@ -114,7 +114,7 @@ Lỗi hay gặp: commit giữa chừng; đọc số dư rồi cập nhật mà k
 id = "db-redis"
 title = "Redis & NoSQL"
 description = "Data type, TTL, cache-aside, rate limit và pub/sub."
-sources = ["redis/type/index", "redis/set/index", "redis/hset/index", "redis/lpush/index", "redis/sadd/index", "redis/zadd/index", "redis/expire/index", "redis/ttl/index", "redis/incr/index", "redis/publish/index", "redis/subscribe/index", "redis/xadd/index"]
+sources = ["redis/type/index", "redis/set/index", "redis/hset/index", "redis/lpush/index", "redis/sadd/index", "redis/zadd/index", "redis/expire/index", "redis/ttl/index", "redis/incr/index", "redis/publish/index", "redis/subscribe/index", "redis/xadd/index", "redis/xgroup-create/index", "redis/xreadgroup/index", "redis/xack/index"]
 lesson = '''
 ### Chọn cấu trúc cho truy cập nhanh
 Redis lưu cặp key/value và cung cấp cấu trúc dữ liệu chuyên biệt: String cho giá trị/counter, Hash cho field của object, List cho chuỗi có thứ tự, Set cho phần tử duy nhất, Sorted Set cho xếp hạng theo score, Stream cho log sự kiện. Chọn theo thao tác cần thực hiện, không chỉ theo hình dạng JSON.
@@ -886,3 +886,482 @@ def _():
 hints = ["Giá trị cache chỉ hợp lệ khi now nhỏ hơn expires_at.", "Xoá entry cũ trước khi gọi loader; chỉ ghi cache nếu ttl dương."]
 explanation = "Mô phỏng cache-aside và TTL; hệ thống nhiều tiến trình còn cần xử lý đồng thời và invalidation."
 sources = ["redis/set/index", "redis/expire/index", "redis/ttl/index"]
+
+[[modules]]
+id = "databases-dv-pg-search"
+title = "PostgreSQL full-text search"
+description = "Tạo chỉ mục văn bản, phân tích truy vấn, xếp hạng và chọn cấu hình từ điển."
+sources = ["postgresql~18/textsearch-intro", "postgresql~18/textsearch-controls", "postgresql~18/textsearch-tables", "postgresql~18/textsearch-indexes", "postgresql~18/textsearch-dictionaries"]
+lesson = '''
+### Tìm kiếm theo từ và ngữ nghĩa
+Full-text search chuẩn hoá văn bản thành lexeme để so khớp từ, thay vì quét chuỗi con như LIKE. PostgreSQL dùng tsvector cho nội dung đã phân tích và tsquery cho yêu cầu tìm kiếm; toán tử @@ kiểm tra vector có khớp query hay không. Cấu hình như english hoặc simple quyết định cách tách từ, loại stop word và stemming, vì vậy cần chọn theo ngôn ngữ dữ liệu và giữ nhất quán giữa lúc lập chỉ mục với lúc truy vấn.
+
+| Cách làm | Hành vi | Điểm cần cân nhắc |
+|---|---|---|
+| LIKE / ILIKE | Tìm chuỗi con theo mẫu | Không chuẩn hoá từ; mẫu bắt đầu bằng % thường khó tận dụng B-tree |
+| tsvector @@ tsquery | Khớp lexeme đã phân tích | Hỗ trợ từ dừng, stemming, cụm từ và toán tử |
+| GIN trên tsvector | Tìm nhanh tập lexeme ứng viên | Tăng chi phí ghi; xếp hạng vẫn cần tính trên kết quả |
+
+Ví dụ, có thể tạo cột search_vector từ title và body, dùng coalesce để NULL không làm mất cả biểu thức, rồi tạo GIN index trên cột đó. Truy vấn dùng search_vector @@ websearch_to_tsquery('simple', $1) với tham số đã bind; websearch_to_tsquery nhận cú pháp gần kiểu tìm kiếm web, còn plainto_tsquery phù hợp khi muốn coi input thường như các từ cần đồng thời khớp. ts_rank có thể sắp thứ tự theo mức liên quan; setweight cho phép ưu tiên title hơn body.
+
+Lỗi hay gặp: dùng cấu hình khác nhau khi tạo vector và query; tạo index trên biểu thức nhưng truy vấn biểu thức khác; quên xử lý NULL; nhầm full-text search với substring search; cho rằng GIN tự cung cấp thứ tự relevance. Với dữ liệu đa ngôn ngữ, một cấu hình duy nhất có thể không phù hợp mọi bản ghi.
+'''
+
+[[questions]]
+id = "databases-dv001"
+module = "databases-dv-pg-search"
+type = "single"
+difficulty = 1
+prompt = "Trong PostgreSQL, kiểu nào biểu diễn văn bản đã được phân tích thành lexeme và vị trí để phục vụ full-text search?"
+options = ["tsvector", "tsquery", "jsonb", "bytea"]
+answer = [0]
+explanation = "tsvector lưu các lexeme đã chuẩn hoá; tsquery biểu diễn điều kiện cần tìm."
+sources = ["postgresql~18/textsearch-intro"]
+
+[[questions]]
+id = "databases-dv002"
+module = "databases-dv-pg-search"
+type = "single"
+difficulty = 2
+prompt = "Cần lập chỉ mục cho cột tsvector để tăng tốc phép so khớp @@ trên tập từ lớn. Chọn loại index phù hợp nhất."
+options = ["GIN", "B-tree trên chuỗi gốc", "Hash trên chuỗi query", "Không thể lập chỉ mục"]
+answer = [0]
+explanation = "GIN là lựa chọn thông dụng cho tìm kiếm trên lexeme; nó giúp tìm ứng viên nhưng không sắp sẵn theo điểm relevance."
+sources = ["postgresql~18/textsearch-indexes"]
+
+[[questions]]
+id = "databases-dv003"
+module = "databases-dv-pg-search"
+type = "single"
+difficulty = 2
+prompt = "Một ứng dụng có bản ghi tiếng Anh và tiếng Việt. Vì sao cấu hình text search cần được chọn có chủ đích?"
+options = ["Cấu hình quyết định tokenization, stop word và stemming nên ảnh hưởng cả vector lẫn query", "Cấu hình chỉ đổi kiểu mã hoá byte", "Mỗi cấu hình tự tạo một GIN index riêng", "Cấu hình làm cho @@ không cần tsvector"]
+answer = [0]
+explanation = "Phân tích khác nhau có thể tạo lexeme khác nhau, khiến cùng từ không khớp hoặc bị chuẩn hoá sai."
+sources = ["postgresql~18/textsearch-dictionaries", "postgresql~18/textsearch-controls"]
+
+[[questions]]
+id = "databases-dv004"
+module = "databases-dv-pg-search"
+type = "single"
+difficulty = 3
+prompt = "Truy vấn chỉ xếp hạng kết quả bằng ts_rank nhưng chạy chậm. Nhận định nào đúng nhất?"
+options = ["Lọc ứng viên bằng @@ và index phù hợp trước; ts_rank vẫn phải tính trên các kết quả phù hợp", "GIN tự sắp mọi dòng theo ts_rank", "Đổi GIN thành B-tree luôn giải quyết việc xếp hạng", "Bỏ điều kiện tìm kiếm để PostgreSQL xếp hạng nhanh hơn"]
+answer = [0]
+explanation = "Index hỗ trợ điều kiện so khớp vector; điểm relevance là phép tính riêng trên các dòng được chọn."
+sources = ["postgresql~18/textsearch-indexes", "postgresql~18/textsearch-tables"]
+
+[[questions]]
+id = "databases-dv005"
+module = "databases-dv-pg-search"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các thực hành phù hợp khi nhận câu tìm kiếm do người dùng nhập."
+options = ["Bind input làm tham số cho hàm tạo tsquery", "Dùng websearch_to_tsquery khi muốn cú pháp gần kiểu tìm kiếm web", "Ghép input trực tiếp vào chuỗi SQL", "Dùng coalesce khi ghép các cột có thể NULL", "Coi GIN là thứ tự relevance cuối cùng"]
+answer = [0, 1, 3]
+explanation = "Bind tham số tránh ghép input thành SQL; hàm chuyển query xử lý cú pháp tìm kiếm, còn coalesce giữ lại nội dung không NULL."
+sources = ["postgresql~18/textsearch-controls", "postgresql~18/textsearch-tables"]
+
+[[questions]]
+id = "databases-dv006"
+module = "databases-dv-pg-search"
+type = "multiple"
+difficulty = 3
+prompt = "Những thay đổi nào có thể làm truy vấn full-text search không khớp dự kiến hoặc không dùng được index biểu thức?"
+options = ["Dùng cấu hình khác khi tạo tsvector và khi tạo tsquery", "Thay đổi biểu thức được index nhưng vẫn truy vấn biểu thức cũ", "Thêm GIN index khớp chính xác cột tsvector", "Không xử lý NULL trong phép nối nhiều cột", "Thêm ORDER BY ts_rank sau điều kiện @@"]
+answer = [0, 1, 3]
+explanation = "Cấu hình và biểu thức là một phần của cách tạo vector; index phải khớp cách truy vấn. ORDER BY ts_rank là bước xếp hạng có chủ đích."
+sources = ["postgresql~18/textsearch-controls", "postgresql~18/textsearch-indexes", "postgresql~18/textsearch-tables"]
+
+[[questions]]
+id = "databases-dv007"
+module = "databases-dv-pg-search"
+type = "fill"
+difficulty = 1
+prompt = '''
+Điền toán tử kiểm tra xem tsvector có khớp tsquery hay không:
+
+    search_vector {{blank}} plainto_tsquery('simple', 'database index')
+'''
+blanks = [["@@"]]
+explanation = "@@ là toán tử so khớp của full-text search."
+sources = ["postgresql~18/textsearch-intro"]
+
+[[questions]]
+id = "databases-dv008"
+module = "databases-dv-pg-search"
+type = "essay"
+difficulty = 3
+prompt = "Khi thiết kế tìm kiếm bài viết theo tiêu đề và nội dung trong PostgreSQL, hãy giải thích cách tạo vector, chọn index, xử lý input và xếp hạng kết quả."
+keywords = [["tsvector"], ["tsquery"], ["GIN"], ["ranking", "ts_rank"], ["configuration", "cấu hình"]]
+min_keywords = 4
+model_answer = '''Chuẩn hoá title và body thành tsvector bằng cùng một configuration, xử lý NULL bằng coalesce, sau đó tạo GIN index cho vector. Chuyển input đã bind thành tsquery bằng websearch_to_tsquery hoặc plainto_tsquery rồi lọc với @@. Có thể dùng ts_rank để ranking kết quả và setweight để ưu tiên title; configuration cần phù hợp ngôn ngữ dữ liệu.'''
+explanation = "Thiết kế phải thống nhất quá trình phân tích, cấu hình và biểu thức được lập chỉ mục; GIN tìm ứng viên còn ts_rank tính điểm."
+sources = ["postgresql~18/textsearch-controls", "postgresql~18/textsearch-indexes", "postgresql~18/textsearch-tables"]
+
+[[questions]]
+id = "databases-dvc01"
+module = "databases-dv-pg-search"
+type = "code"
+lang = "python"
+difficulty = 2
+title = "Xếp hạng ứng viên tìm kiếm"
+prompt = '''
+Viết hàm rank_search(documents, terms). documents là danh sách dictionary có các khoá id, title, body; terms là danh sách từ cần tìm.
+Chuẩn hoá bằng cách tách chuỗi theo các nhóm ký tự chữ/số Unicode và so sánh không phân biệt hoa thường. Một tài liệu chỉ được nhận nếu có đủ mọi từ tìm kiếm trong title hoặc body. Tính điểm mô phỏng: mỗi từ có trong title được 2 điểm, mỗi từ có trong body được 1 điểm; một từ xuất hiện ở cả hai nơi cộng cả hai. Trả về danh sách id theo điểm giảm dần; nếu bằng điểm thì giữ thứ tự đầu vào. Bỏ từ trùng trong terms; nếu không còn từ nào thì trả danh sách rỗng.
+Đây là bài mô phỏng bộ lọc và trọng số cơ bản, không yêu cầu tái tạo stemming hay ts_rank của PostgreSQL.
+Ví dụ: tài liệu title là Rust database, body là index, tìm rust và database thì tài liệu được nhận.
+'''
+starter = '''
+import re
+
+def rank_search(documents, terms):
+    return []
+'''
+solution = '''
+import re
+
+def rank_search(documents, terms):
+    def tokens(value):
+        return set(re.findall(r"\w+", value.casefold(), flags=re.UNICODE))
+
+    query_terms = list(dict.fromkeys(
+        token
+        for term in terms
+        for token in re.findall(r"\w+", term.casefold(), flags=re.UNICODE)
+    ))
+    if not query_terms:
+        return []
+
+    ranked = []
+    for position, document in enumerate(documents):
+        title = tokens(document.get("title", ""))
+        body = tokens(document.get("body", ""))
+        if all(term in title or term in body for term in query_terms):
+            score = 2 * sum(term in title for term in query_terms)
+            score += sum(term in body for term in query_terms)
+            ranked.append((-score, position, document["id"]))
+    ranked.sort()
+    return [document_id for _, _, document_id in ranked]
+'''
+tests = '''
+@test("ưu tiên từ xuất hiện ở tiêu đề")
+def _():
+    docs = [
+        {"id": 1, "title": "Rust database", "body": ""},
+        {"id": 2, "title": "", "body": "Rust database"},
+    ]
+    expect(rank_search(docs, ["rust", "database"])).to_equal([1, 2])
+
+@test("cho phép từ truy vấn nằm ở hai trường")
+def _():
+    docs = [{"id": "a", "title": "Rust guide", "body": "database index"}]
+    expect(rank_search(docs, ["rust", "index"])).to_equal(["a"])
+
+@test("yêu cầu mọi từ tìm kiếm")
+def _():
+    docs = [
+        {"id": 1, "title": "Rust database", "body": ""},
+        {"id": 2, "title": "Rust guide", "body": ""},
+    ]
+    expect(rank_search(docs, ["rust", "database"])).to_equal([1])
+
+@test("không phân biệt hoa thường và dấu câu")
+def _():
+    docs = [{"id": 7, "title": "PostgreSQL, INDEX!", "body": ""}]
+    expect(rank_search(docs, ["postgresql", "index"])).to_equal([7])
+
+@test("từ lặp không làm tăng điểm")
+def _():
+    docs = [
+        {"id": 1, "title": "Rust", "body": ""},
+        {"id": 2, "title": "Rust", "body": "Rust"},
+    ]
+    expect(rank_search(docs, ["rust", "rust"])).to_equal([2, 1])
+
+@test("query rỗng trả danh sách rỗng")
+def _():
+    expect(rank_search([{"id": 1, "title": "Rust", "body": ""}], ["!!!"])).to_equal([])
+'''
+hints = ["Dùng re.findall với biểu thức Unicode và casefold để chuẩn hoá từ.", "Tạo set từ title/body; lọc tài liệu đủ mọi từ rồi sắp xếp theo điểm và vị trí ban đầu."]
+explanation = "Bài tập mô phỏng AND search và trọng số trường; PostgreSQL có thêm stemming, cấu hình từ điển và cơ chế xếp hạng riêng."
+sources = ["postgresql~18/textsearch-intro", "postgresql~18/textsearch-tables"]
+
+[[modules]]
+id = "databases-dv-pg-recovery"
+title = "PostgreSQL backup, recovery & replication"
+description = "Chọn logical/physical backup, PITR và replication theo mục tiêu RPO/RTO."
+sources = ["postgresql~18/backup-dump", "postgresql~18/backup-file", "postgresql~18/continuous-archiving", "postgresql~18/logical-replication-quick-setup", "postgresql~18/logical-replication-publication", "postgresql~18/logical-replication-subscription"]
+lesson = '''
+### Khả năng khôi phục và sao chép dữ liệu
+Backup chỉ có giá trị khi khôi phục được trong thời gian chấp nhận được. RPO là lượng dữ liệu tối đa có thể mất; RTO là thời gian tối đa để dịch vụ hoạt động lại. pg_dump tạo logical dump cho một database, thuận tiện khi cần khôi phục chọn lọc hoặc chuyển dữ liệu; pg_dumpall có thể lưu các đối tượng toàn cluster như role. Physical backup như pg_basebackup sao chép cấu trúc cluster, phù hợp dựng standby hoặc làm nền cho khôi phục vật lý.
+
+| Cách làm | Phạm vi / mục đích | Lưu ý |
+|---|---|---|
+| Logical dump | Schema và dữ liệu theo database | Dễ chọn đối tượng; cần quản lý globals riêng |
+| Physical backup | Cluster PostgreSQL | Phù hợp khôi phục vật lý và standby |
+| PITR | Khôi phục tới thời điểm trong quá khứ | Cần base backup cùng chuỗi WAL được lưu liên tục |
+| Logical replication | Chuyển thay đổi hàng được publication chọn | Publisher/subscriber có schema và vòng đời riêng |
+| Physical replication | Phát lại WAL cho standby của cluster | Phù hợp hot standby và failover có điều phối |
+
+Để làm PITR, đội vận hành cần tạo base backup, lưu WAL archive ngoài nơi có thể mất cùng máy chủ, rồi diễn tập khôi phục tới một thời điểm cụ thể. Logical replication khởi tạo bản sao ban đầu rồi gửi thay đổi theo publication/subscription; nó hữu ích cho chọn bảng, tích hợp hoặc nâng cấp, nhưng không tự sao chép mọi DDL và sequence. Bảng có UPDATE/DELETE cần replica identity phù hợp. Replication slot giúp subscriber chậm không mất WAL cần thiết, song slot bị bỏ quên có thể giữ WAL mãi và làm đầy đĩa.
+
+Lỗi hay gặp: nhầm replication với backup; chỉ kiểm tra rằng job backup chạy thành công mà chưa restore; không giám sát WAL archive hoặc slot; cho rằng logical replication tự tạo schema; failover không có kế hoạch promotion và chuyển kết nối. Hãy định kỳ đo thời gian restore, kiểm tra tính nhất quán và ghi lại thứ tự phục hồi.
+'''
+
+[[questions]]
+id = "databases-dv009"
+module = "databases-dv-pg-recovery"
+type = "single"
+difficulty = 1
+prompt = "Cần sao lưu logic một database PostgreSQL để khôi phục chọn bảng hoặc chuyển dữ liệu. Công cụ phù hợp nhất là gì?"
+options = ["pg_dump", "pg_basebackup", "VACUUM", "pg_ctl"]
+answer = [0]
+explanation = "pg_dump tạo logical dump cho một database; pg_basebackup tạo physical backup ở mức cluster."
+sources = ["postgresql~18/backup-dump"]
+
+[[questions]]
+id = "databases-dv010"
+module = "databases-dv-pg-recovery"
+type = "single"
+difficulty = 2
+prompt = "Muốn khôi phục database về một thời điểm trước khi người dùng xoá nhầm dữ liệu, ngoài base backup còn cần gì?"
+options = ["Chuỗi WAL archive liên tục tới thời điểm cần phục hồi", "Một lần chạy ANALYZE sau sự cố", "Bản sao của pg_stat_activity", "Chỉ một bản pg_dump của database khác"]
+answer = [0]
+explanation = "PITR phát lại WAL từ base backup đến recovery target; thiếu đoạn WAL thì không thể tới điểm mong muốn."
+sources = ["postgresql~18/continuous-archiving"]
+
+[[questions]]
+id = "databases-dv011"
+module = "databases-dv-pg-recovery"
+type = "single"
+difficulty = 2
+prompt = "Một standby cần theo kịp toàn bộ thay đổi của cluster chính để phục vụ hot standby. Kiểu replication nào phù hợp nhất?"
+options = ["Physical replication", "Logical replication theo một publication", "Chỉ chạy pg_dump định kỳ", "Tạo foreign key giữa hai server"]
+answer = [0]
+explanation = "Physical replication phát lại WAL ở mức cluster; logical replication chọn thay đổi hàng và đối tượng publication."
+sources = ["postgresql~18/different-replication-solutions", "postgresql~18/hot-standby"]
+
+[[questions]]
+id = "databases-dv012"
+module = "databases-dv-pg-recovery"
+type = "single"
+difficulty = 3
+prompt = "Một replication slot còn tồn tại nhưng subscriber đã ngừng lâu ngày. Rủi ro vận hành đáng chú ý nhất là gì?"
+options = ["WAL cần cho subscriber có thể bị giữ lại và làm tăng dung lượng đĩa", "PostgreSQL tự xoá mọi bảng trên publisher", "Slot tự chuyển thành backup logical", "Mọi transaction mới lập tức bị rollback"]
+answer = [0]
+explanation = "Slot giữ WAL cần thiết cho consumer; cần theo dõi lag và dọn slot không còn sử dụng."
+sources = ["postgresql~18/logical-replication-subscription"]
+
+[[questions]]
+id = "databases-dv013"
+module = "databases-dv-pg-recovery"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các nhận định đúng về backup PostgreSQL."
+options = ["pg_dump thường sao lưu một database theo dạng logical", "Physical backup có thể làm nền để phục hồi cluster hoặc dựng standby", "pg_dump một database luôn bao gồm mọi role toàn cluster", "PITR cần base backup và WAL archive phù hợp", "Một backup thành công chứng minh chắc chắn restore sẽ thành công"]
+answer = [0, 1, 3]
+explanation = "Global objects cần được quản lý riêng; backup phải được diễn tập restore vì lỗi lưu trữ, cấu hình hoặc thiếu WAL có thể chỉ lộ ra khi phục hồi."
+sources = ["postgresql~18/backup-dump", "postgresql~18/backup-file", "postgresql~18/continuous-archiving"]
+
+[[questions]]
+id = "databases-dv014"
+module = "databases-dv-pg-recovery"
+type = "multiple"
+difficulty = 3
+prompt = "Chọn các nhận định đúng về logical replication."
+options = ["Publication xác định các thay đổi/bảng được phát từ publisher", "Subscription nhận thay đổi từ publisher và có thể thực hiện initial copy", "Logical replication tự đồng bộ mọi thay đổi DDL", "Bảng cần replica identity thích hợp để áp dụng UPDATE hoặc DELETE", "Logical replication tự thay thế hoàn toàn quy trình backup"]
+answer = [0, 1, 3]
+explanation = "Logical replication truyền các thay đổi được hỗ trợ, không phải cơ chế sao chép toàn bộ định nghĩa schema hay bản backup độc lập."
+sources = ["postgresql~18/logical-replication-quick-setup", "postgresql~18/logical-replication-publication", "postgresql~18/logical-replication-subscription"]
+
+[[questions]]
+id = "databases-dv015"
+module = "databases-dv-pg-recovery"
+type = "fill"
+difficulty = 1
+prompt = '''
+Điền tên log cần lưu liên tục cùng base backup để hỗ trợ point-in-time recovery:
+
+    Write-Ahead {{blank}}
+'''
+blanks = [["Log", "Logging"]]
+explanation = "WAL archive cho phép phát lại thay đổi sau thời điểm tạo base backup."
+sources = ["postgresql~18/continuous-archiving", "postgresql~18/wal-intro"]
+
+[[questions]]
+id = "databases-dv016"
+module = "databases-dv-pg-recovery"
+type = "essay"
+difficulty = 3
+prompt = "Một dịch vụ cần mất tối đa vài phút dữ liệu và khôi phục trong một giờ. Nêu các thành phần của kế hoạch backup/restore và cách chứng minh kế hoạch đạt mục tiêu."
+keywords = [["base backup"], ["WAL archive", "archived WAL"], ["PITR", "point-in-time recovery"], ["restore test", "test restore"], ["RPO"], ["RTO"]]
+min_keywords = 4
+model_answer = '''Tạo base backup định kỳ và lưu WAL archive liên tục ở nơi độc lập để hỗ trợ PITR. Chọn lịch backup và giám sát độ trễ WAL theo RPO; tối ưu dung lượng, tài nguyên và quy trình phục hồi theo RTO. Định kỳ diễn tập restore, khôi phục tới một recovery target, kiểm tra dữ liệu và đo thời gian hoàn tất. Theo dõi lỗi archive, replication slot và quyền truy cập bản backup.'''
+explanation = "RPO/RTO phải được xác nhận bằng số liệu từ diễn tập khôi phục, không chỉ bằng trạng thái thành công của job."
+sources = ["postgresql~18/backup-file", "postgresql~18/continuous-archiving"]
+
+[[modules]]
+id = "databases-dv-redis-workflows"
+title = "Redis transaction & Stream consumer group"
+description = "Ghép thao tác nguyên tử, phát hiện xung đột và xử lý sự kiện có thể được giao lại."
+sources = ["redis/multi/index", "redis/watch/index", "redis/exec/index", "redis/xgroup-create/index", "redis/xreadgroup/index", "redis/xack/index"]
+lesson = '''
+### Từ thao tác nguyên tử đến xử lý sự kiện
+Redis MULTI xếp các lệnh vào hàng đợi và EXEC chạy chúng liên tiếp như một đơn vị không bị lệnh client khác chen vào. Transaction không tương đương rollback của SQL: nếu một lệnh gặp lỗi lúc thực thi, lệnh đó lỗi nhưng các lệnh còn lại vẫn có thể chạy. WATCH tạo optimistic concurrency: nếu key được theo dõi thay đổi trước EXEC, transaction bị huỷ để ứng dụng đọc lại và thử lại.
+
+| Cơ chế | Đảm bảo | Khi dùng |
+|---|---|---|
+| MULTI / EXEC | Các lệnh không bị xen kẽ bởi client khác | Gom nhiều thao tác Redis có thứ tự |
+| WATCH | Phát hiện key đổi trước EXEC | Cập nhật dựa trên giá trị vừa đọc |
+| Stream consumer group | Phân phối entry và theo dõi entry chưa xác nhận | Worker xử lý nền có thể tiếp tục sau lỗi |
+| XACK | Xác nhận entry đã được xử lý | Xoá entry khỏi pending list của group |
+
+Với Streams, XADD thêm entry, XGROUP CREATE tạo nhóm, XREADGROUP đọc entry mới và đưa chúng vào pending-entry list. Worker chỉ XACK sau khi tác động nghiệp vụ đã được lưu bền vững; entry chưa xác nhận có thể được xem bằng XPENDING và giao lại cho worker khác. Vì vậy consumer cần chịu được giao ít nhất một lần: nếu tiến trình chết sau khi ghi database nhưng trước XACK, sự kiện có thể đến lần nữa. Dùng event id làm khoá idempotency hoặc ràng buộc unique để tránh ghi nhận tác động lặp.
+
+MULTI không tạo transaction phân tán giữa Redis và database. Nếu cần cập nhật cả hai nơi, phải thiết kế retry, outbox/inbox hoặc cơ chế đối soát; thứ tự “ghi DB rồi ACK” vẫn có thể khiến event được giao lại. Giữ lệnh trong transaction ngắn, giới hạn số entry mỗi lần xử lý và có chiến lược claim pending để worker chết không giữ công việc mãi.
+
+Lỗi hay gặp: tưởng lỗi một lệnh sẽ rollback cả EXEC; ACK trước khi side effect đã bền vững; coi Stream consumer group như Pub/Sub; bỏ qua pending entry; giả định mỗi event chỉ giao đúng một lần; cập nhật nhiều hệ thống mà không có idempotency.
+'''
+
+[[questions]]
+id = "databases-dv017"
+module = "databases-dv-redis-workflows"
+type = "single"
+difficulty = 1
+prompt = "MULTI/EXEC trong Redis chủ yếu đảm bảo điều gì?"
+options = ["Các lệnh được chạy liên tiếp mà client khác không chen vào", "Rollback mọi lệnh nếu một lệnh runtime bị lỗi", "Một transaction SQL bao trùm mọi database", "Tự lưu kết quả backup xuống đĩa"]
+answer = [0]
+explanation = "Redis thực thi nhóm lệnh trong EXEC liên tiếp; lỗi khi chạy một lệnh không tự rollback các lệnh khác."
+sources = ["redis/multi/index", "redis/exec/index"]
+
+[[questions]]
+id = "databases-dv018"
+module = "databases-dv-redis-workflows"
+type = "single"
+difficulty = 2
+prompt = "Ứng dụng đọc giá trị key, tính giá trị mới rồi muốn bỏ cập nhật nếu key đã bị client khác sửa. Cơ chế nào phù hợp?"
+options = ["WATCH key rồi MULTI/EXEC, đọc lại khi EXEC bị huỷ", "PUBLISH key rồi giả định không có thay đổi", "XACK key trước khi ghi", "Dùng TTL dài hơn"]
+answer = [0]
+explanation = "WATCH phát hiện thay đổi cạnh tranh trên key và khiến EXEC không áp dụng transaction đã xếp."
+sources = ["redis/watch/index", "redis/exec/index"]
+
+[[questions]]
+id = "databases-dv019"
+module = "databases-dv-redis-workflows"
+type = "single"
+difficulty = 2
+prompt = "Trong Redis Streams, XREADGROUP đọc entry mới cho một consumer group thường đưa entry chưa xác nhận vào đâu?"
+options = ["Pending-entry list của consumer group", "Danh sách subscriber của Pub/Sub", "Hash metadata của key", "WAL archive của PostgreSQL"]
+answer = [0]
+explanation = "Entry đã giao nhưng chưa XACK được theo dõi trong pending-entry list để có thể xem và giao lại."
+sources = ["redis/xreadgroup/index", "redis/xgroup-create/index"]
+
+[[questions]]
+id = "databases-dv020"
+module = "databases-dv-redis-workflows"
+type = "multiple"
+difficulty = 3
+prompt = "Chọn các cách xử lý an toàn hơn cho consumer Redis Stream có thể nhận lại cùng entry."
+options = ["Lưu event id để loại tác động nghiệp vụ lặp", "XACK sau khi side effect đã được lưu bền vững", "XACK trước rồi mới bắt đầu xử lý để giảm pending", "Theo dõi pending entry và có cách claim entry bị bỏ lại", "Giả định consumer group bảo đảm xử lý đúng một lần"]
+answer = [0, 1, 3]
+explanation = "Giao lại entry giúp phục hồi nhưng có thể tạo lần xử lý trùng; idempotency và ACK đúng thời điểm bảo vệ side effect."
+sources = ["redis/xreadgroup/index", "redis/xack/index"]
+
+[[questions]]
+id = "databases-dv021"
+module = "databases-dv-redis-workflows"
+type = "multiple"
+difficulty = 3
+prompt = "Chọn các nhận định đúng về MULTI/EXEC và WATCH."
+options = ["WATCH hỗ trợ optimistic concurrency trên key được theo dõi", "EXEC chạy transaction đã xếp theo thứ tự", "Lỗi runtime của một lệnh luôn rollback toàn bộ transaction", "Key bị thay đổi sau WATCH có thể làm EXEC bị huỷ", "MULTI làm Redis và PostgreSQL commit nguyên tử cùng nhau"]
+answer = [0, 1, 3]
+explanation = "Transaction Redis không phải rollback transaction SQL và không tạo atomic commit xuyên nhiều hệ thống."
+sources = ["redis/multi/index", "redis/watch/index", "redis/exec/index"]
+
+[[questions]]
+id = "databases-dv022"
+module = "databases-dv-redis-workflows"
+type = "fill"
+difficulty = 1
+prompt = '''
+Điền lệnh xác nhận một entry đã được consumer xử lý trong Stream group:
+
+    {{blank}} stream_key group_name entry_id
+'''
+blanks = [["XACK"]]
+explanation = "XACK đánh dấu entry đã xử lý và loại nó khỏi pending-entry list của consumer group."
+sources = ["redis/xack/index"]
+
+[[questions]]
+id = "databases-dv023"
+module = "databases-dv-redis-workflows"
+type = "essay"
+difficulty = 3
+prompt = "Một worker ghi kết quả vào database rồi bị dừng trước khi ACK entry trên Redis Stream. Hãy mô tả cách thiết kế để xử lý việc entry được giao lại mà không tạo tác động nghiệp vụ trùng."
+keywords = [["at-least-once", "ít nhất một lần"], ["idempotent", "idempotency"], ["XACK"], ["pending"], ["event id", "mã sự kiện"]]
+min_keywords = 3
+model_answer = '''Consumer group có thể giao lại entry chưa XACK nên phải giả định at-least-once. Dùng event id làm khoá idempotency hoặc unique constraint để lần nhận lại không áp dụng side effect lần nữa. Ghi tác động nghiệp vụ bền vững trước, sau đó gọi XACK; nếu worker chết giữa hai bước, entry còn pending và lần xử lý tiếp theo sẽ an toàn. Theo dõi pending để claim công việc bị bỏ lại.'''
+explanation = "ACK muộn giữ khả năng retry; idempotency làm cho retry không nhân đôi kết quả."
+sources = ["redis/xreadgroup/index", "redis/xack/index"]
+
+[[questions]]
+id = "databases-dvc02"
+module = "databases-dv-redis-workflows"
+type = "code"
+lang = "python"
+difficulty = 2
+title = "Lọc sự kiện đã xử lý"
+prompt = '''
+Viết select_new_events(event_ids, processed_ids). event_ids là danh sách id nhận từ một lô Redis Stream; processed_ids là tập id đã áp dụng vào hệ thống nghiệp vụ.
+Trả về tuple (accepted, updated_ids). accepted chứa mỗi id chưa xử lý đúng một lần, theo thứ tự xuất hiện đầu tiên trong lô. updated_ids là một tập mới gồm processed_ids và toàn bộ id được nhận. Không thay đổi processed_ids đầu vào. Một event id lặp trong lô hoặc đã có trong processed_ids phải bị bỏ qua.
+Ví dụ: event_ids là ["a", "b", "a"] và processed_ids là {"b"} thì kết quả accepted là ["a"].
+'''
+starter = '''
+def select_new_events(event_ids, processed_ids):
+    return [], set(processed_ids)
+'''
+solution = '''
+def select_new_events(event_ids, processed_ids):
+    updated_ids = set(processed_ids)
+    accepted = []
+    for event_id in event_ids:
+        if event_id not in updated_ids:
+            accepted.append(event_id)
+            updated_ids.add(event_id)
+    return accepted, updated_ids
+'''
+tests = '''
+@test("nhận các id mới theo thứ tự")
+def _():
+    accepted, updated = select_new_events(["a", "b"], {"old"})
+    expect(accepted).to_equal(["a", "b"])
+    expect(updated).to_equal({"old", "a", "b"})
+
+@test("bỏ qua id đã có")
+def _():
+    accepted, updated = select_new_events(["a", "b"], {"a"})
+    expect(accepted).to_equal(["b"])
+    expect(updated).to_equal({"a", "b"})
+
+@test("khử trùng lặp trong cùng lô")
+def _():
+    accepted, updated = select_new_events(["a", "b", "a", "b"], set())
+    expect(accepted).to_equal(["a", "b"])
+    expect(updated).to_equal({"a", "b"})
+
+@test("không sửa tập đầu vào")
+def _():
+    processed = {"done"}
+    select_new_events(["new"], processed)
+    expect(processed).to_equal({"done"})
+
+@test("lô rỗng giữ nguyên trạng thái")
+def _():
+    accepted, updated = select_new_events([], {"done"})
+    expect(accepted).to_equal([])
+    expect(updated).to_equal({"done"})
+'''
+hints = ["Tạo bản sao set của processed_ids để cập nhật mà không sửa input.", "Duyệt event_ids theo thứ tự và thêm id vào set ngay khi nhận để loại bản lặp trong cùng lô."]
+explanation = "Bài tập mô phỏng deduplication phía consumer; hệ thống thực tế cần lưu event id và side effect theo cách bền vững."
+sources = ["redis/xreadgroup/index", "redis/xack/index"]

@@ -1,0 +1,774 @@
+[modules.ops-git]
+title = "Git: Branches, History, and Recovery"
+description = "Branches, merge/rebase, conflicts, reset/restore/revert, cherry-pick, reflog, and collaborative workflows."
+lesson = '''### Git and change history
+Git stores snapshots in commits; the working tree contains files being edited, and the index is the staging area for the next commit. A branch is simply a lightweight pointer to a commit.
+
+| Command | Main effect | Use it when |
+|---|---|---|
+| git merge | Combines histories and may create a merge commit | Updating a shared branch without rewriting history |
+| git rebase | Replays commits onto a new base | Cleaning up a private branch before review |
+| git restore | Restores file contents or unstages changes | Adjusting the working tree or index |
+| git reset | Moves HEAD and may also change the index or working tree | Carefully adjusting local history |
+| git revert | Creates a commit that reverses an earlier change | Safely undoing a change on a shared branch |
+| git cherry-pick | Applies a selected commit to the current branch | Bringing over a specific fix |
+
+A typical workflow is to create a feature branch, make small commits, update from main with merge or rebase according to team conventions, resolve conflicts, and then open a review. Rebase changes commit IDs, so avoid rewriting a branch that other people rely on. Reflog records recent HEAD positions and can help recover a commit that seems lost after a reset. Common mistakes include confusing reset with revert, force-pushing a shared branch, and resolving a conflict without reviewing the diff before committing.'''
+
+[questions.ops-001]
+prompt = "You accidentally edited a file but have not staged it, and you want to discard all of that file's changes and restore its contents from the current commit's working tree. Which command is appropriate?"
+options = ["git restore path/to/file", "git revert HEAD", "git cherry-pick HEAD", "git reflog"]
+explanation = "git restore restores the working-tree file from the index or another specified source; here it discards the file's uncommitted edits."
+
+[questions.ops-002]
+prompt = "Several people use the same release branch. Which way to undo a faulty commit preserves history and makes the change easiest to trace?"
+options = ["git reset --hard HEAD~1 and then force-push", "git revert <commit>", "Delete the .git directory", "git restore --source=HEAD~1 ."]
+explanation = "git revert adds a new commit that reverses the change while preserving the commits already shared."
+
+[questions.ops-003]
+prompt = "Choose all correct statements about Git history operations."
+options = [
+  "Rebase creates new commits when it replays commits onto a different base.",
+  "Merge can combine two histories without changing the existing commit IDs.",
+  "Cherry-pick applies the selected commit's changes to the current branch.",
+  "git reset --hard only clears the staging area and leaves the working tree alone.",
+  "Reflog can help locate an earlier HEAD position that is still recorded."
+]
+explanation = "Rebase creates new commit IDs, while reset --hard updates both the index and working tree. Reflog records local reference updates."
+
+[questions.ops-004]
+prompt = "Fill in the command that creates a new commit to reverse a commit already pushed to a shared branch: git {{blank}} <commit>\n"
+explanation = "Revert records a new reversing change instead of removing the commit from history."
+
+[questions.ops-005]
+title = "Generate a Changelog from git log"
+prompt = "Write generate_changelog(lines), which accepts a list of lines in the format hash followed by a subject from git log --oneline. Classify valid Conventional Commits into a dictionary with exactly these four keys: Breaking Changes, Features, Bug Fixes, and Other. Each value is a list of strings in the format hash + a space + subject, preserving input order. Put feat commits under Features, fix commits under Bug Fixes, and other valid types under Other. A commit with ! immediately before the colon in its header, or with the phrase BREAKING CHANGE: in its subject, belongs under Breaking Changes. Ignore malformed lines and subjects that do not follow Conventional Commits. For example, a1b2 feat(ui): add theme belongs under Features.\n"
+hints = [
+  "Use a regular expression to split the hash and validate the Conventional Commit header.",
+  "Classify breaking changes before checking for feat or fix."
+]
+explanation = "A reliable changelog preserves commit order and helps readers identify changes that may break compatibility."
+
+[questions.ops-006]
+title = "Bump a SemVer Version"
+prompt = "Write bump_version(version, commits). version uses the MAJOR.MINOR.PATCH format and may have a v prefix; commits is a list of Conventional Commit subjects. Increase major if a header has ! or contains BREAKING CHANGE:. Otherwise, increase minor for feat; otherwise, increase patch if there is at least one valid Conventional Commit. If the list is empty or contains no valid commits, leave the version unchanged. Preserve the v prefix if the input has one. Version numbers must not have leading zeroes.\n"
+hints = [
+  "Separate the v prefix from the three version numbers before examining the commits.",
+  "Use this priority order: breaking change, feat, then patch."
+]
+explanation = "SemVer helps users distinguish breaking changes, new features, and compatible fixes."
+
+[modules.ops-linux-bash]
+title = "Linux and Bash"
+description = "File permissions, processes, pipelines, redirection, and writing scripts with controlled error handling."
+lesson = '''### Observing the system and writing scripts
+File permissions are usually shown for the owner, group, and others; `chmod 640 file` gives the owner read and write access, the group read access, and others no access. `ps` and `kill` help inspect processes and send them signals. Confirm the correct PID and try a graceful stop before using SIGKILL.
+
+| Syntax | Meaning |
+|---|---|
+| command > out.txt | Write stdout, replacing the file |
+| command >> out.txt | Append stdout to the file |
+| command 2> err.txt | Write stderr to a separate file |
+| command1 \| command2 | Send the first command's stdout to the next command's stdin |
+| set -euo pipefail | Enable several useful script error checks |
+
+For example, `grep ERROR app.log | sort | uniq -c` counts unique error lines. Double quotes preserve whitespace in a variable expansion, while single quotes keep their contents literal. `set -e` has exceptions depending on context; `pipefail` makes a pipeline fail if a command within it fails, and `-u` catches unset variables. Common mistakes include using `chmod 777`, forgetting to quote variables, or treating `set -e` as a guarantee that every error will be caught.'''
+
+[questions.ops-007]
+prompt = "You need to give the owner read and write access, the group read-only access, and others no access. Which numeric chmod value is correct?"
+options = ["777", "755", "640", "600"]
+explanation = "6 means read plus write, 4 means read-only, and 0 means no permissions."
+
+[questions.ops-008]
+prompt = "In the command grep ERROR app.log | sort, where does grep's stdout go?"
+options = ["To sort's stdin", "To the app.log file", "It is discarded", "To sort's stderr"]
+explanation = "A pipe connects the left command's stdout to the right command's stdin."
+
+[questions.ops-009]
+prompt = "In a script that uses set -euo pipefail, what is the main effect of pipefail?"
+options = ["The pipeline fails if any command in it fails", "It automatically retries failed commands", "It disables stderr", "It terminates every process on the machine"]
+explanation = "By default, a pipeline usually gets the exit status of its last command. pipefail exposes a failure from any command in the pipeline."
+
+[questions.ops-010]
+prompt = "Choose the safe practices for writing a deployment script."
+options = [
+  "Quote variables when paths may contain whitespace.",
+  "Check and handle the exit status of important commands.",
+  "Use chmod 777 to avoid permission errors.",
+  "Use pipefail when failures in the middle of a pipeline must not be hidden.",
+  "Send SIGKILL first whenever a process hangs."
+]
+explanation = "Quoting and error handling make scripts more predictable; least-privilege permissions and graceful signals reduce unintended effects."
+
+[questions.ops-011]
+prompt = "Complete the command to append stdout to a file without replacing its contents: command {{blank}} deploy.log\n"
+explanation = "The >> operator opens the file in append mode."
+
+[questions.ops-012]
+title = "Parse a .env File"
+prompt = '''Write parse_env(text) to return a dictionary from the contents of a .env file. Ignore blank lines and lines beginning with #; allow whitespace around the key and = sign, as well as an optional export prefix. Keys must start with a letter or _, followed by letters, digits, or _; otherwise raise ValueError. An unquoted value ends at # if # is the first character or has whitespace immediately before it. Single-quoted values preserve their contents literally; double-quoted values decode \n, \r, \t, \", and \\. After a closing quote, allow only whitespace or a comment beginning with #. If a key occurs more than once, keep its last value.'''
+hints = [
+  "Separate an unquoted comment before assigning the value.",
+  "For double quotes, scan each character to process escapes and find the closing quote."
+]
+explanation = "A .env parser must distinguish actual comments from # characters inside a value and preserve meaningful escapes."
+
+[modules.ops-docker]
+title = "Docker and Compose"
+description = "Images, containers, layers, build cache, multi-stage builds, volumes, networks, and Compose."
+lesson = '''### From images to services
+An image is a read-only template made of layers; a container is an instance created from an image, with its own writable layer. Build cache can reuse layers when the preceding instructions and their inputs have not changed.
+
+| Component | Role |
+|---|---|
+| Image | Packages a filesystem and metadata for running an application |
+| Container | A running process with its runtime configuration |
+| Volume | Stores persistent data outside the container lifecycle |
+| Network | Lets containers communicate by service or container name |
+| Compose | Defines multiple services and their relationships |
+
+A Dockerfile can copy dependency manifests before source code to make better use of the cache. A multi-stage build uses an early stage to compile the application, then copies only the required artifacts into the runtime image. Compose is convenient for development environments with multiple services. The latest tag does not pin an image version; pin a tag or digest when repeatable builds matter. Common mistakes include storing the only copy of data in the writable layer, putting secrets in an image, or assuming an image is the same thing as a running container.'''
+
+[questions.ops-013]
+prompt = "An application writes database files to the container filesystem, and the data must remain after the container is removed and recreated. Which component is appropriate?"
+options = ["The container's writable layer", "A Docker volume", "The build cache", "The latest tag"]
+explanation = "A volume exists independently of the container lifecycle and is suitable for persistent data."
+
+[questions.ops-014]
+prompt = "A change to the source-code COPY instruction causes later layers to rebuild. Which ordering often improves dependency caching?"
+options = [
+  "Copy all source code before installing dependencies.",
+  "Copy dependency manifests, install dependencies, and then copy frequently changing source code.",
+  "Use the latest tag for every base image.",
+  "Combine every stage into one running container."
+]
+explanation = "A changed input invalidates the cache from that instruction onward. Dependencies change less often, so place them before frequently changing source code."
+
+[questions.ops-015]
+prompt = "Choose all correct statements about Docker."
+options = [
+  "A container has a writable layer, but data that must persist should be stored in a volume or other suitable storage.",
+  "A multi-stage build can leave compilers and build tools out of the runtime image.",
+  "All containers automatically share one writable filesystem layer.",
+  "Compose describes services, configuration, and connections among multiple containers.",
+  "Image and container are two names for the same object."
+]
+explanation = "A container is created from an image but has its own runtime and writable layer; volumes and Compose address different needs."
+
+[questions.ops-016]
+prompt = "In a Dockerfile, the instruction commonly used to select a base image is {{blank}}.\n"
+explanation = "FROM declares the base image and starts a build stage."
+
+[questions.ops-017]
+prompt = "Explain why database data in a container should be stored in a volume, and name one trade-off to consider when managing volumes."
+keywords = [
+  ["container lifecycle", "lifecycle of the container"],
+  ["volume", "persistent volume", "persistent storage"],
+  ["backup", "data management", "data access control"]
+]
+model_answer = '''A volume separates data from the container lifecycle, so the data remains when a container is replaced. The operations team needs an appropriate policy for volume backups, recovery, and access permissions.'''
+explanation = "Containers are often replaced during deployments; volumes need their own backup and management procedures."
+
+[questions.ops-018]
+title = "Dockerfile Best-Practice Warnings"
+prompt = "Write dockerfile_warnings(text) to return a list of warning codes in this order: latest_tag, many_run, root_user. Ignore blank lines and comments. Report latest_tag if any FROM uses the latest tag, has no tag, or uses an image other than scratch without a pinned digest; scratch does not count, and an image with an @sha256: digest is considered pinned. Report many_run when there are at least three RUN instructions. Each FROM starts a new stage; report root_user if the final stage has no USER instruction or its last USER is root, 0, root:root, or 0:0. Instructions are case-insensitive; FROM may have --platform options before the image name.\n"
+hints = [
+  "After removing leading whitespace, separate each instruction from its arguments.",
+  "Reset USER when a new FROM appears because the final stage is the one to evaluate."
+]
+explanation = "Unpinned tags, too many RUN layers, and running as root are useful review signals; they do not replace context-specific evaluation."
+
+[modules.ops-kubernetes]
+title = "Kubernetes"
+description = "Pods, Deployments, Services, Ingress, configuration, probes, rollouts, and HPA."
+lesson = '''### Kubernetes objects and controllers
+A Pod runs one or more containers and provides their basic network resources; a Deployment manages ReplicaSets and the desired number of Pods. A Service provides a stable access point for Pods that match its selector. Ingress describes HTTP(S) routing rules, but an Ingress controller must implement them.
+
+| Object | Responsibility |
+|---|---|
+| ConfigMap | Non-sensitive configuration |
+| Secret | Sensitive data that requires appropriate access controls and encryption |
+| readinessProbe | Determines when a Pod can receive traffic |
+| livenessProbe | Detects when a container needs to be restarted |
+| HPA | Adjusts replicas according to metrics and configured limits |
+
+A Deployment can specify replicas, an image, and resource requests; a Service selects Pods by label. A rolling update replaces Pods in stages to reduce downtime. HPA commonly needs a metrics server and suitable resource requests when using CPU utilization. A Secret is not automatically secure just because the object is named Secret. Common mistakes include an overly aggressive liveness probe, selectors that do not match labels, or assuming Ingress works before a controller is installed.'''
+
+[questions.ops-019]
+prompt = "You need to keep an endpoint name stable even when the Pods behind it are replaced. Which object is appropriate?"
+options = ["Service", "A static Pod IP", "ConfigMap", "A manually managed ReplicaSet"]
+explanation = "A Service provides a stable endpoint and selects Pods through a selector."
+
+[questions.ops-020]
+prompt = "A readiness probe fails while the liveness probe continues to succeed. What should happen?"
+options = [
+  "The Pod is excluded from traffic-serving endpoints until it is ready.",
+  "The container is always removed immediately.",
+  "The Deployment is deleted.",
+  "The node immediately reboots."
+]
+explanation = "Readiness determines whether a Pod can receive traffic; liveness detects when a container needs to be restarted."
+
+[questions.ops-021]
+prompt = "A Deployment needs to move to a new image while keeping the service available as Pods are replaced. Which mechanism should you configure and monitor?"
+options = [
+  "A rolling update",
+  "Delete and recreate the namespace",
+  "Only edit the ConfigMap",
+  "Use a standalone Pod without a controller"
+]
+explanation = "A Deployment supports rolling updates according to the configured strategy and availability limits."
+
+[questions.ops-022]
+prompt = "Choose all correct statements about configuration and access in Kubernetes."
+options = [
+  "ConfigMap is intended for non-sensitive configuration.",
+  "A Secret should be treated as sensitive data, with access restricted.",
+  "Ingress routes traffic by itself even when the cluster has no controller.",
+  "A Service commonly selects Pods through a label selector.",
+  "Liveness and readiness probes serve the same purpose."
+]
+explanation = "Ingress needs a controller; readiness controls traffic eligibility, while liveness detects when a container needs to restart."
+
+[questions.ops-023]
+prompt = "The Kubernetes object that provides a stable endpoint and routes to Pods by selector is a {{blank}}.\n"
+explanation = "A Service decouples clients from Pod addresses, which can change."
+
+[questions.ops-024]
+prompt = "Explain the different roles of readiness probes, liveness probes, and resource requests in a workload monitored by HPA."
+keywords = [
+  ["readiness", "ready to receive traffic"],
+  ["liveness", "restart", "container restart"],
+  ["resource requests", "requests", "cpu request"],
+  ["hpa", "horizontal pod autoscaler"]
+]
+model_answer = '''A readiness probe determines whether a Pod receives traffic, while a liveness probe detects when a container needs to restart. HPA uses metrics to adjust replicas; suitable resource requests make utilization meaningful when the metric is a percentage of the CPU request.'''
+explanation = "These settings affect different areas: routing, self-healing, and autoscaling calculations."
+
+[questions.ops-025]
+title = "Calculate the Target Replica Count for HPA"
+prompt = "Write desired_replicas(current_replicas, current_value, target_value, min_replicas, max_replicas). Use ceil(current_replicas * current_value / target_value), then clamp the result to min_replicas..max_replicas. target_value must be positive, min_replicas must be non-negative and no greater than max_replicas, and max_replicas must be at least 1; raise ValueError if any condition is violated. This function models the basic calculation and does not need to handle tolerance, missing metrics, or a stabilization window.\n"
+hints = [
+  "Use math.ceil to round up to an integer.",
+  "Clamp the result after calculating the formula."
+]
+explanation = "This models the basic replica formula; a real controller also accounts for tolerance, metrics, and scale stabilization."
+
+[modules.ops-nginx]
+title = "Nginx and Reverse Proxy"
+description = "Location matching, upstream proxying, headers, TLS, and configuration checks."
+lesson = '''### Reverse proxies and location matching
+Nginx receives requests from clients and can forward them to an upstream with proxy_pass. A proxy commonly terminates TLS, applies routing and request limits, and records access and error logs. Understand how the URI changes when proxy_pass includes or omits a URI component.
+
+| Location | Selection behavior |
+|---|---|
+| = /health | Exact match; stop searching |
+| ^~ /assets/ | Longest prefix; skip regex checks |
+| /api/ | Regular prefix, compared by longest match |
+| ~ \\.php$ | Case-sensitive regex, checked in declaration order |
+| ~* \\.jpg$ | Case-insensitive regex |
+
+Nginx checks exact matches first. If there is no exact match, it finds the longest prefix. A selected ^~ prefix takes precedence over regex checks; otherwise, regex locations are checked in declaration order before using the selected prefix. For example, a static route can use ^~ to prevent a PHP regex from matching it accidentally. Common mistakes include assuming the longest regex wins, misunderstanding location order, and forgetting to validate the configuration before reloading.'''
+
+[questions.ops-026]
+prompt = "In an Nginx configuration, which modifier does location = /health use?"
+options = ["Exact match", "Longest prefix", "Case-insensitive regex", "Forward the request to an upstream"]
+explanation = "The = modifier requires an exact URI match and ends location searching."
+
+[questions.ops-027]
+prompt = "The URI /assets/app.js matches the prefix ^~ /assets/ and the regex ~ \\.js$. If there is no exact match, which location takes precedence?"
+options = [
+  "^~ /assets/ because this prefix stops regex checks",
+  "~ \\.js$ because regex always takes precedence",
+  "The shortest prefix",
+  "Nginx chooses randomly"
+]
+explanation = "After finding the longest prefix, the ^~ modifier prevents the regex-checking step."
+
+[questions.ops-028]
+prompt = "Choose all correct statements about reverse proxies."
+options = [
+  "Nginx can forward a request to an upstream with proxy_pass.",
+  "A reverse proxy can terminate TLS and apply routing.",
+  "Nginx automatically protects an application from every security flaw in its upstream.",
+  "The configuration should be checked before reloading.",
+  "Regex locations are always selected by pattern length."
+]
+explanation = "A proxy provides an intermediary processing point but does not replace application security; regex locations are checked in declaration order."
+
+[questions.ops-029]
+prompt = "The Nginx modifier that requires an exact URI match is {{blank}}.\\n"
+explanation = "An exact location uses an equals sign immediately after the location keyword."
+
+[questions.ops-030]
+title = "Simulate Nginx Location Selection"
+prompt = "Write select_location(locations, path). locations is a list of tuples (modifier, pattern) in configuration order; modifier is one of \"\", \"=\", \"^~\", \"~\", or \"~*\". Return the selected location tuple or None. An exact = match wins immediately. Otherwise, find the longest prefix among locations with modifier \"\" or \"^~\"; for equal lengths, keep the earlier entry. If a ^~ prefix is selected, do not check regexes. If the selected prefix is not ^~, check case-sensitive ~ and case-insensitive ~* regexes in configuration order, returning the first match; if no regex matches, return the longest prefix. Regex patterns use Python's re syntax.\\n"
+hints = [
+  "Check for exact matches in the first pass.",
+  "Separate prefixes and regexes; preserve configuration order when checking regexes."
+]
+explanation = "Location selection follows explicit precedence rules; ^~ only affects regex checking after its prefix has been selected."
+
+[modules.ops-cicd-terraform]
+title = "CI/CD and Terraform"
+description = "Validation pipelines, controlled deployments, Infrastructure as Code, state, plan, and apply."
+lesson = '''### Automating deployments and infrastructure
+CI runs repeatable checks when changes are made; CD delivers a verified artifact to an environment according to release rules. A pipeline should separate build, test, scan, and deploy stages. Grant credentials only to jobs that need them, with the minimum required permissions, and never print secrets to logs.
+
+| Terraform command | Role |
+|---|---|
+| init | Initializes the working directory and providers |
+| plan | Calculates proposed changes without applying them to infrastructure |
+| apply | Executes an approved infrastructure change |
+| state | Tracks the relationship between configuration and real resources |
+
+Terraform state can contain sensitive data; a remote backend needs suitable access controls and state locking. Review the plan, store state securely, and avoid concurrent applies without locking. For example, a pipeline can run fmt, validate, and plan on a pull request, then apply only after approval for the target environment. Common mistakes include treating a plan as an applied change, editing state carelessly, or storing secrets in the repository.'''
+
+[questions.ops-031]
+prompt = "In Terraform, which command shows proposed changes without applying them?"
+options = ["terraform plan", "terraform apply", "terraform destroy", "terraform init"]
+explanation = "Plan calculates and presents proposed changes; apply executes them."
+
+[questions.ops-032]
+prompt = "Why would a team use remote state with locking for a shared infrastructure environment?"
+options = [
+  "To prevent concurrent operations from corrupting state and to share state in a controlled way.",
+  "So that plans no longer need review.",
+  "To turn state into a public configuration file.",
+  "So Terraform automatically deletes every old resource."
+]
+explanation = "A remote backend enables shared state; locking reduces the risk of multiple people writing state during an apply."
+
+[questions.ops-033]
+prompt = "A pipeline is about to deploy an artifact, but a unit test has failed. Which condition helps prevent a faulty release?"
+options = [
+  "Add a gate so deployment runs only after required checks succeed.",
+  "Ignore exit codes so the pipeline always passes.",
+  "Run deployment in parallel before testing.",
+  "Print every secret to make debugging faster."
+]
+explanation = "A pipeline needs dependencies between validation and deployment; failed checks must block a release."
+
+[questions.ops-034]
+prompt = "A plan shows an unexpected replacement of the production database. What should you do before applying?"
+options = [
+  "Stop the apply, inspect the diff and the reason for the replacement, then adjust the change or request a review.",
+  "Apply immediately to synchronize state.",
+  "Delete the state file and run the command again.",
+  "Disable all validation policies."
+]
+explanation = "A plan helps reveal the blast radius before a real change; replacing a database can cause downtime or data loss."
+
+[questions.ops-035]
+prompt = "Choose the good practices for an IaC and CI/CD workflow."
+options = [
+  "Review the plan before applying it to an important environment.",
+  "Limit credentials to the jobs and environments that need them.",
+  "Commit cloud access secrets to a private repository.",
+  "Use remote state with appropriate access controls and locking for team work.",
+  "Allow multiple pipelines to apply to the same workspace concurrently without controls."
+]
+explanation = "Review, least-privilege access, and controlled state management reduce the risk of unintended changes."
+
+[questions.ops-036]
+prompt = "The Terraform command that executes infrastructure changes from the configuration or plan is terraform {{blank}}.\n"
+explanation = "Apply changes resources; plan only describes what is expected."
+
+[questions.ops-037]
+prompt = "Describe how a CI/CD pipeline can safely deploy Terraform infrastructure through a pull request and into production."
+keywords = [
+  ["plan", "terraform plan"],
+  ["review", "approval", "review and approval"],
+  ["apply", "terraform apply"],
+  ["secret", "credential", "least privilege"],
+  ["state", "locking", "remote state"]
+]
+model_answer = '''A pull request runs configuration checks and creates a Terraform plan for review. After approval, the production pipeline uses credentials with least-privilege access to apply the change; state is stored in a remote backend with access controls and locking.'''
+explanation = "A safe workflow separates planning, review, and execution while protecting credentials and state."
+
+[modules.devops-dv-k8s-rollout]
+title = "Kubernetes: Readiness and Reliable Rollouts"
+description = "Design probes, requests and limits, rolling updates, and PDBs for controlled workload releases."
+lesson = '''### Keeping workloads ready during releases
+Kubernetes uses Pod status and update policies to coordinate traffic, resources, and version changes. Readiness determines whether a Pod receives traffic from a Service; liveness detects when a process needs to restart; a startup probe gives a slow-starting application time to initialize before the other two probes begin. An overly aggressive liveness probe can create a restart loop while the application is still loading its initial data.
+
+| Setting | Meaning | Operational note |
+|---|---|---|
+| requests | Resources used to schedule a Pod and as the basis for some autoscaling calculations | Too low can cause contention; too high can make scheduling difficult |
+| limits | Maximum resources a container may use | CPU may be throttled; exceeding the memory limit usually causes an OOM kill |
+| maxSurge | Temporary extra Pods during a rolling update | Account for quotas and cluster capacity |
+| maxUnavailable | Pods allowed to be unavailable during an update | A higher value speeds up rollout but reduces capacity |
+| PDB | Limits voluntary disruptions during drain or eviction | Does not prevent every failure or every direct deletion |
+
+For example, with three replicas, a readiness probe can succeed only after the application loads its configuration and connects to required dependencies. While a new version is not ready, the Service does not send requests to that Pod. You can monitor kubectl rollout status deployment/api, inspect kubectl describe pod and Events when progress stalls, and use kubectl rollout undo deployment/api if the new version causes problems. A PDB protects a minimum number of replicas during node maintenance, but must be coordinated with capacity and the drain procedure.
+
+Common mistakes include checking only that a process is alive instead of checking whether it can serve requests, setting requests to zero and expecting HPA to calculate CPU utilization accurately, allowing maxUnavailable to remove most capacity, or treating a PDB as an absolute availability guarantee. Check readiness, quotas, Events, and rollout results before declaring a release complete.'''
+
+[questions.devops-dv001]
+prompt = "A Pod is running but has not finished loading its data and should not receive requests yet. Which probe should report it as not ready?"
+options = ["readinessProbe", "livenessProbe", "startupProbe", "No probe is needed"]
+explanation = "Readiness controls whether a Pod is included in serving endpoints; liveness mainly determines when a container needs to restart."
+
+[questions.devops-dv002]
+prompt = "An application takes several minutes to start for the first time. Which configuration avoids a liveness probe restarting the container too early?"
+options = [
+  "Add a startupProbe with suitable thresholds and timing.",
+  "Set readinessProbe to false permanently.",
+  "Increase the replica count dramatically.",
+  "Remove livenessProbe and stop monitoring health."
+]
+explanation = "A startup probe delays liveness and readiness evaluation until the application has started successfully."
+
+[questions.devops-dv003]
+prompt = "What is the key difference between a container's CPU request and CPU limit?"
+options = [
+  "A request supports scheduling and expresses expected allocation; a limit caps the maximum CPU that can be used.",
+  "A request is the upper bound, while a limit is the guaranteed minimum.",
+  "Both are used only to set the replica count.",
+  "A limit guarantees that the Pod is scheduled on a node with spare CPU."
+]
+explanation = "The scheduler uses requests to assess whether a Pod can be placed; a CPU limit caps usage and may throttle the process."
+
+[questions.devops-dv004]
+prompt = "When is a PDB most useful?"
+options = [
+  "To limit how many Pods may be voluntarily disrupted while draining a node.",
+  "To prevent every Pod failure caused by a node losing power.",
+  "To replace a readiness probe.",
+  "To ensure a Deployment never changes its image."
+]
+explanation = "A PodDisruptionBudget regulates some voluntary disruptions through eviction; it does not protect against every unexpected failure."
+
+[questions.devops-dv005]
+prompt = "A Deployment is rolling out, but the new replicas cannot serve requests yet. Choose the steps or settings that reduce release risk."
+options = [
+  "Use a readiness probe so only ready Pods receive traffic.",
+  "Check rollout status, Pod Events, and why the container is not ready.",
+  "Set maxUnavailable to its highest value so rollout always finishes quickly.",
+  "Assess maxSurge against cluster quotas and capacity.",
+  "Treat a PDB as protection from every outage and skip health checks."
+]
+explanation = "Readiness and rollout monitoring help catch problems before traffic shifts; maxSurge must fit available capacity. A PDB does not prevent every kind of failure and cannot replace health checks."
+
+[questions.devops-dv006]
+prompt = "The command to inspect a Deployment update's progress is kubectl rollout {{blank}} deployment/api.\n"
+explanation = "kubectl rollout status waits for and reports the workload rollout status."
+
+[questions.devops-dv007]
+prompt = "Kubernetes schedules a Pod on a node based on the resources declared under resources.{{blank}}.\n"
+explanation = "Requests are declared resources that the scheduler considers when placing a Pod; limits set the runtime maximum."
+
+[questions.devops-dv008]
+prompt = "In an interview, explain how you would investigate a Deployment stuck while rolling out a new version and keep users safe."
+keywords = [
+  ["readiness probe", "readiness"],
+  ["rollout status", "kubectl rollout"],
+  ["events", "describe pod"],
+  ["capacity", "requests", "quota"],
+  ["rollback", "rollout undo"]
+]
+model_answer = '''I check kubectl rollout status, Pod status, and Events to find image, configuration, or resource problems. I confirm that the readiness probe reflects the ability to serve requests and that requests and quotas leave enough capacity. If the new version harms users, I stop the rollout and use a reviewed rollback.'''
+explanation = "A strong answer combines status diagnosis, serving readiness, and a controlled rollback option."
+
+[questions.devops-dvc01]
+title = "Count Ready Pods"
+prompt = '''Write count_ready_pods(pods), which accepts a list of Pod objects represented as Kubernetes JSON dictionaries and returns the number of Pods with at least one condition whose type is Ready and whose status is the string True. Ignore values of the wrong type, entries without status or conditions, and conditions that are not a list. Do not count other conditions or variations in the capitalization of True. For example, a Pod with {"status": {"conditions": [{"type": "Ready", "status": "True"}]}} counts once.
+'''
+hints = [
+  "Read status and conditions only after confirming that each data layer has the expected dictionary or list type.",
+  "Use any to avoid counting a Pod more than once if it has duplicate Ready conditions."
+]
+explanation = "Ready in Pod status tells workloads and Services whether a Pod is ready; this exercise safely handles missing or malformed JSON shapes."
+
+[modules.devops-dv-k8s-security]
+title = "Kubernetes: RBAC and Workload Isolation"
+description = "Design least-privilege access, NetworkPolicies, and safeguards for sensitive information in a cluster."
+lesson = '''### Limiting permissions and communication paths
+Kubernetes separates identities (users, groups, and ServiceAccounts), permissions (Roles and ClusterRoles), and permission assignments (RoleBindings and ClusterRoleBindings). A Role describes permissions in one namespace; a ClusterRole can describe cluster-wide permissions or be referenced within a namespace, depending on the binding. A RoleBinding limits the assigned permissions to its own namespace, even when it references a ClusterRole. Grant only the required verbs and resources; avoid * and cluster-admin for ordinary applications.
+
+| Mechanism | Scope or purpose | What to check |
+|---|---|---|
+| Role + RoleBinding | API permissions in one namespace | Are the subject and binding namespace correct? |
+| ClusterRole + ClusterRoleBinding | Cluster-wide API permissions | Does the workload really need cluster-wide read or write access? |
+| ServiceAccount | API identity for a Pod | Grant only the application's required permissions; disable automatic token mounting if it does not call the API |
+| NetworkPolicy | Filters L3/L4 traffic to and from Pods | Does the cluster's CNI support NetworkPolicy? |
+| Secret | Stores sensitive configuration in the API | RBAC, encryption at rest, logs, and rotation procedures |
+
+For example, an API that only reads ConfigMaps in the app namespace can use a dedicated ServiceAccount, a Role granting only get/list on ConfigMaps, and a RoleBinding assigning that Role to the ServiceAccount. A NetworkPolicy can start with default-deny ingress and then allow only traffic from the gateway and required dependencies; ingress and egress are separate directions. Policies do not filter traffic unless the network plugin implements them.
+
+A Secret's data is not encrypted merely because its values are represented in base64; datastore encryption at rest and restricted read access are still needed. For workloads that do not call the Kubernetes API, consider automountServiceAccountToken: false. Common mistakes include assigning a ClusterRoleBinding just to fix a permission error quickly, using a default ServiceAccount with broad permissions, treating NetworkPolicy as a host firewall, or putting secrets in public manifests. Check permissions with kubectl auth can-i and test both allowed and blocked network paths.'''
+
+[questions.devops-dv009]
+prompt = "An application only needs to read ConfigMaps in the app namespace. Which pair of objects is appropriate for granting narrowly scoped access?"
+options = [
+  "A Role and RoleBinding in the app namespace",
+  "A ClusterRoleBinding to cluster-admin",
+  "PodSecurityContext and Secret",
+  "NetworkPolicy and Ingress"
+]
+explanation = "A Role describes permissions within a namespace, and a RoleBinding assigns them to a subject in that scope."
+
+[questions.devops-dv010]
+prompt = "A Pod needs to call the Kubernetes API using an identity dedicated to the application. Which mechanism should be assigned to the Pod?"
+options = ["ServiceAccount", "Node name", "IngressClass", "PersistentVolumeClaim"]
+explanation = "A ServiceAccount provides an API identity for a workload; required permissions are assigned separately through RBAC."
+
+[questions.devops-dv011]
+prompt = "A default-deny NetworkPolicy is applied, but the Pod can still communicate as before. Which infrastructure cause should you verify first?"
+options = [
+  "Whether the CNI in use implements NetworkPolicy support",
+  "Whether the Deployment uses an image digest",
+  "Whether the cluster has an Ingress object",
+  "Whether the Pod uses a volume"
+]
+explanation = "NetworkPolicy filters traffic only when the cluster's network plugin enforces the policy."
+
+[questions.devops-dv012]
+prompt = "Which statement about Kubernetes Secrets is accurate?"
+options = [
+  "Values are commonly represented as base64 in the API; suitable RBAC and encryption at rest are still needed.",
+  "Base64 provides cryptographic protection by default.",
+  "No cluster user can read any Secret.",
+  "Secrets cannot appear in backups or logs."
+]
+explanation = "Base64 is a data representation, not encryption; access permissions and storage configuration remain important."
+
+[questions.devops-dv013]
+prompt = "Choose the measures that reduce the blast radius if a Pod is compromised."
+options = [
+  "Use a dedicated ServiceAccount and grant only the verbs and resources the application needs.",
+  "Use NetworkPolicy to restrict network paths, after confirming CNI support.",
+  "Grant cluster-admin to every ServiceAccount to avoid operational errors.",
+  "Disable automatic ServiceAccount token mounting for workloads that do not call the API.",
+  "Treat base64 Secrets as encrypted and include them in debug logs."
+]
+explanation = "Dedicated identities, least privilege, network controls, and withholding unneeded tokens reduce blast radius."
+
+[questions.devops-dv014]
+prompt = "The RBAC object that assigns a Role to a ServiceAccount in a namespace is a {{blank}}.\n"
+explanation = "A RoleBinding connects a Role to a subject such as a user, group, or ServiceAccount within a namespace."
+
+[questions.devops-dv015]
+prompt = "The API object used to declare ingress and egress rules for Pods is a {{blank}}.\n"
+explanation = "A NetworkPolicy selects Pods and describes allowed network paths for ingress or egress."
+
+[questions.devops-dv016]
+prompt = "In an interview, describe how you would reduce the blast radius if an application in Kubernetes were compromised."
+keywords = [
+  ["least privilege", "minimum permissions"],
+  ["serviceaccount", "service account"],
+  ["networkpolicy", "network policy"],
+  ["secret encryption", "encryption at rest"],
+  ["automountserviceaccounttoken", "disable token mounting"]
+]
+model_answer = '''I assign a dedicated ServiceAccount and RBAC with least privilege, avoiding cluster-wide permissions if the application only needs one namespace. I use NetworkPolicy to restrict ingress and egress and verify that the CNI enforces the policy. Secrets need strict RBAC, encryption at rest, and rotation; workloads that do not call the API should have automatic token mounting disabled.'''
+explanation = "A strong answer limits API permissions, network paths, and access to sensitive data."
+
+[questions.devops-dvc02]
+title = "Evaluate an RBAC Rule"
+prompt = '''Write rbac_allows(rules, verb, api_group, resource) to check whether a request matches at least one rule assigned to a subject. Each rule may have verbs, apiGroups, and resources lists; the * character matches any value in that field. The core API group is passed as an empty string. A rule with a missing field or a field that is not a list does not grant permission. The function checks only effective rules and does not need to simulate bindings or namespace scope. For example, the rule {"verbs": ["get"], "apiGroups": [""], "resources": ["configmaps"]} allows reading a core API ConfigMap.
+'''
+hints = [
+  "Validate each rule and all three fields before matching.",
+  "Each field supports an exact match or wildcard; all three must match in the same rule."
+]
+explanation = "This models access-control rules with a fail-closed approach: a rule with missing or invalid data grants no permission."
+
+[modules.devops-dv-nginx-edge]
+title = "Nginx: TLS and Traffic Protection"
+description = "Configure end-to-end TLS, request limits, and proxy trust in a controlled way."
+lesson = '''### Hardening an edge reverse proxy
+Nginx commonly terminates TLS, normalizes forwarding headers, and applies request limits before traffic reaches the application. A certificate and a private key are different materials: the certificate can be sent to clients, while the private key must be readable only by the appropriate process or group and must never be placed in an image or log. TLS does not replace application authentication, and the connection from Nginx to an upstream may need separate protection depending on the trust boundary.
+
+| Setting | Role | Risk to avoid |
+|---|---|---|
+| ssl_certificate / ssl_certificate_key | Loads the certificate chain and private key for TLS | Exposing the key or omitting part of the certificate chain |
+| limit_req_zone | Defines a key, shared-memory zone, and request rate | Using a key that does not represent the intended client |
+| limit_req | Applies a zone, burst, and policy for excess requests | Setting the threshold too low and blocking legitimate traffic |
+| set_real_ip_from | Defines trusted proxies allowed to supply client IPs | Trusting every address lets clients spoof their IP through a header |
+| access_log | Records requests for monitoring and investigation | Logging tokens, sensitive query values, or unnecessary personal data |
+
+For example, in the http context you can declare limit_req_zone $binary_remote_addr zone=api:10m rate=10r/s;, then apply limit_req zone=api burst=20 in an API location. burst allows a temporary number of requests above the normal rate. Without nodelay, excess requests are delayed by the algorithm; with nodelay, the burst is admitted immediately while the longer-term rate limit still applies. Observe logs or use dry-run mode before enforcing a limit on an endpoint with real traffic.
+
+If a load balancer is in front, set_real_ip_from should include only proxy CIDRs you control; do not trust X-Forwarded-For directly from the Internet. Nginx should forward Host and the client address chain according to the system's policy, and the upstream should accept connections only from authorized proxies. Before reloading, run nginx -t, inspect configuration errors, and monitor access and error logs after deployment.
+
+Common mistakes include enabling TLS without protecting the private key, trusting client IP headers from every source, treating burst as a fixed per-minute quota, or reloading without checking the configuration. Design rate limits around client identity, the path through proxies, and endpoint behavior, then measure their impact so a protective measure does not cause an availability incident.'''
+
+[questions.devops-dv017]
+prompt = "Nginx is behind a load balancer. How can you avoid trusting a spoofed client address in X-Forwarded-For?"
+options = [
+  "Declare only the trusted proxy CIDRs with set_real_ip_from.",
+  "Trust every address that sends this header.",
+  "Disable the access log.",
+  "Use the client IP as the upstream name."
+]
+explanation = "Only trusted proxies should be allowed to supply the client address; trusting every source allows IP spoofing."
+
+[questions.devops-dv018]
+prompt = "In Nginx rate limiting, what is the main purpose of limit_req_zone?"
+options = [
+  "Define a key, shared-memory zone, and rate for the request limiter.",
+  "Block all HTTP methods except GET.",
+  "Create an upstream server group.",
+  "Require every request to use TLS."
+]
+explanation = "limit_req_zone defines the state zone and rate; limit_req references that zone in the context where the limit is applied."
+
+[questions.devops-dv019]
+prompt = "You have edited the Nginx configuration and need to validate its syntax before reloading. Which command is appropriate?"
+options = ["nginx -t", "nginx -s stop", "nginx -V", "nginx -T | reload"]
+explanation = "nginx -t checks syntax and attempts to open files referenced by the configuration."
+
+[questions.devops-dv020]
+prompt = "Which measure best protects a TLS certificate's private key in production?"
+options = [
+  "Restrict read access to the required process or group and manage the key as a secret.",
+  "Put the key in the image so every replica can share it.",
+  "Write the key to the access log while debugging.",
+  "Serve the private key to clients alongside the certificate."
+]
+explanation = "The private key must be protected from unauthorized reading, kept out of images and logs, and provided only to the Nginx process that needs it."
+
+[questions.devops-dv021]
+prompt = "Choose the configurations and operational practices that make an Nginx reverse proxy deployment safer."
+options = [
+  "Limit set_real_ip_from to CIDRs of proxies that are actually trusted.",
+  "Start rate limiting in observation or dry-run mode when impact needs to be measured.",
+  "Run nginx -t before reloading the configuration.",
+  "Use one limit_req_zone without distinguishing endpoints or client types in every system.",
+  "Write complete access tokens to the access log for faster investigation."
+]
+explanation = "A clear trust boundary, evaluating policies before enforcement, and checking configuration reduce risk; rate-limit keys and log contents must fit the system."
+
+[questions.devops-dv022]
+prompt = "The directive that defines a key, zone, and rate for request limiting is {{blank}}.\n"
+explanation = "limit_req_zone creates the state zone referenced by the limit_req directive."
+
+[questions.devops-dv023]
+prompt = "Check Nginx configuration syntax with nginx {{blank}} before reloading.\n"
+explanation = "The -t option checks the configuration before it is applied by a reload."
+
+[questions.devops-dv024]
+prompt = "Explain how to design rate limiting and identify a trusted client IP when Nginx runs behind a load balancer."
+keywords = [
+  ["trusted proxy", "set_real_ip_from"],
+  ["client ip", "binary_remote_addr"],
+  ["burst", "nodelay"],
+  ["dry run", "limit_req_dry_run", "observation"],
+  ["nginx -t", "configuration check"]
+]
+model_answer = '''I trust only client IPs forwarded by a trusted proxy in a CIDR declared with set_real_ip_from. I choose a key such as binary_remote_addr and set the rate and burst according to endpoint behavior; I can observe with limit_req_dry_run before enforcing the limit, then run nginx -t before reloading.'''
+explanation = "A strong answer clarifies the proxy trust boundary, burst policy, and measurement and validation before enforcement."
+
+[questions.devops-dvc03]
+title = "Resolve a Client Address Through Trusted Proxies"
+prompt = '''Write resolve_client_ip(peer_ip, forwarded_for, trusted_cidrs). peer_ip is the address connected directly to Nginx; forwarded_for is a comma-separated list of IPs; trusted_cidrs is a list of trusted proxy CIDRs. If the peer is not in a trusted CIDR, ignore the header and return the peer. If the peer is trusted, scan the addresses in X-Forwarded-For from right to left, skip IPs in trusted CIDRs, and return the first valid untrusted IP. Ignore malformed addresses and CIDRs. If peer_ip is invalid, return None; if no valid client is found, return the peer. Return the normalized address using str(ipaddress.ip_address(...)). Use only the Python standard library.
+'''
+hints = [
+  "Read X-Forwarded-For only when the connecting peer is in a trusted network.",
+  "Scan the header from the nearest proxy toward the client, continuing to skip trusted hops."
+]
+explanation = "This models the principle of trusting only headers supplied by managed proxies; a real configuration must match the load balancer's ordering and append behavior."
+
+[modules.devops-dv-terraform-modules]
+title = "Terraform: Modules and Controlled Changes"
+description = "Design modules with clear interfaces, stable resource addresses, and tests and plan reviews."
+lesson = '''### Separating configuration into modules with clear interfaces
+A Terraform module is a directory of configuration called by a root module or parent module. A reusable module should accept inputs with clear types and meanings, expose only outputs its caller needs, and have a focused responsibility. Implicit global variables or too many internal outputs make changes harder to review. Choose registry module versions deliberately so an upgrade does not change behavior unexpectedly.
+
+| Approach | Behavior | Good fit when |
+|---|---|---|
+| count | Creates numbered instances using integer indexes | Instances are nearly identical and their order is stable |
+| for_each with a map | Uses named keys in instance addresses | Instances have different configurations or need readable addresses |
+| Input variable | Passes configuration into a module | Values differ by environment or calling component |
+| Output | Exposes a value to the calling module | Creating a small contract between modules |
+| terraform test | Tests configuration with test files and assertions | Validating a module or configuration before sharing or applying it |
+
+Example of a local module:
+~~~hcl
+module "service" {
+  source = "./modules/service"
+  name   = var.service_name
+}
+~~~
+
+For named resources such as databases or buckets, for_each with stable map keys is often easier to understand than count over a list: removing an item in the middle of a list can shift index-based addresses, while map keys preserve instance identity. However, changing a for_each key also gives Terraform a different address. Plan a suitable state migration when changing an address; do not casually edit the key string. Use terraform plan to inspect create, update, delete, and replacement actions, and review destructive changes before applying.
+
+terraform test can run tests in plan or apply mode. Tests that apply real resources need a provider, an isolated environment, least-privilege access, and clear cleanup because they may incur costs or leave infrastructure behind if they fail. Common mistakes include turning a module into a copy of configuration without a contract, exposing too many outputs, changing a module source without reviewing its version, or assuming that a resource address change is a harmless refactor. Keep the module interface small and treat resource addresses and state as part of the migration plan.'''
+
+[questions.devops-dv025]
+prompt = "How does a Terraform module called by a root module receive configuration from its caller?"
+options = ["Input variables", "Remote state locking", "A default provisioner", "The working directory name"]
+explanation = "Input variables define the interface through which a caller passes configuration into a module."
+
+[questions.devops-dv026]
+prompt = "A list of instances has stable names such as api, worker, and scheduler. You want readable resource addresses that depend less on list order. Which approach is appropriate?"
+options = [
+  "Use for_each with a map and stable keys.",
+  "Use count with a list and reorder it freely.",
+  "Use the local-exec provisioner.",
+  "Use a separate state file for every resource."
+]
+explanation = "for_each uses map keys as part of instance addresses, so addresses do not depend on list indexes as they do with count."
+
+[questions.devops-dv027]
+prompt = "You are changing the for_each key of a production resource. What should you consider before applying?"
+options = [
+  "Terraform may treat the new address as a different resource; assess the state migration and plan.",
+  "Changing the key only changes a display label and has no effect on state.",
+  "Terraform always preserves the resource without needing a review.",
+  "Running apply twice automatically joins the old and new addresses."
+]
+explanation = "The key forms part of the instance address; changing it can result in destroy/create unless a suitable state migration is planned."
+
+[questions.devops-dv028]
+prompt = "What is the main purpose of terraform test in an IaC repository?"
+options = [
+  "Run test files and assertions to validate Terraform configuration.",
+  "Replace every terraform plan review.",
+  "Automatically grant production permissions to the provider.",
+  "Delete all state after each init."
+]
+explanation = "terraform test provides a way to test configuration; plan or apply tests still need a suitable environment and provider."
+
+[questions.devops-dv029]
+prompt = "Choose the practices that make Terraform modules reusable and safer to change."
+options = [
+  "Design inputs with clear types and meanings, and expose outputs the caller needs.",
+  "Use stable keys for resources with business identities when using for_each.",
+  "Review the plan for unexpected destroy/create changes before applying.",
+  "Hide all module source changes from the pull request to reduce noise.",
+  "Run tests that apply real resources with default production permissions."
+]
+explanation = "Clear contracts, stable addresses, and plan reviews reduce unintended changes; apply tests need isolated environments and permissions."
+
+[questions.devops-dv030]
+prompt = "To iterate over instances with stable keys in a resource block, use the meta-argument {{blank}}.\n"
+explanation = "for_each creates instances from a map or set of identified values; each key becomes part of the resource address."
+
+[questions.devops-dv031]
+prompt = "The command to run Terraform test files is terraform {{blank}}.\n"
+explanation = "terraform test runs test files to evaluate configuration and assertions."
+
+[questions.devops-dv032]
+prompt = "In an interview, describe how to turn repeated resources into a shared Terraform module while limiting risk to managed infrastructure."
+keywords = [
+  ["input variables", "inputs", "module interface"],
+  ["outputs", "contract"],
+  ["for_each", "stable keys"],
+  ["terraform plan", "plan review"],
+  ["state migration", "migration of state"],
+  ["terraform test", "testing"]
+]
+model_answer = '''I identify the required input variables and outputs to create a small contract, then call the module from a test environment. For resources with business identities, I choose for_each and stable keys. I run terraform test and review terraform plan for destroy/create actions; if an address changes, I prepare a separate state migration before rollout.'''
+explanation = "A strong answer covers the contract, resource identity, testing, and how to preview state impact."
+
+[questions.devops-dvc04]
+title = "Summarize Terraform Plan Changes"
+prompt = '''Write summarize_plan(plan), which accepts a JSON object from terraform show -json and returns a dictionary with keys create, update, delete, replace, read, and no_op, all initially set to 0. Iterate through resource_changes; each entry has change.actions. If actions contains both create and delete, increment replace only, not create or delete. Otherwise, recognize exactly these action lists: ['create'], ['update'], ['delete'], ['read'], and ['no-op']. Ignore malformed entries and unrecognized actions. For example, a replacement ['delete', 'create'] increments only replace.
+'''
+hints = [
+  "Initialize all keys, then validate each dictionary and list level.",
+  "Handle replacements before single actions so they are not counted as create or delete."
+]
+explanation = "A summary helps reviewers identify replacements separately because they often have a larger blast radius than in-place updates."

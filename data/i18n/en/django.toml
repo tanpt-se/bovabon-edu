@@ -1,0 +1,529 @@
+[modules.django-project]
+title = "Project, app, settings & URLconf"
+description = "Project/app structure, settings configuration, URL resolution, FBVs and CBVs."
+lesson = '''
+### Projects and apps
+| Component | Role |
+|---|---|
+| Project | Holds the configuration and connects a website's apps |
+| App | A reusable functional area, such as a blog or billing |
+| settings.py | Configures installed apps, the database, middleware and security |
+| urls.py | Declares URL patterns and routes requests to views |
+
+A project usually has `manage.py` and a configuration package containing `settings.py`, `urls.py`, `asgi.py` and `wsgi.py`. Apps are created separately, added to `INSTALLED_APPS`, and may contain `models.py`, `views.py` and `urls.py`. The project-level URLconf commonly uses `include()` to delegate a URL branch to an app.
+
+~~~python
+urlpatterns = [
+    path("articles/<int:pk>/", views.detail, name="article-detail"),
+    path("news/", include("news.urls")),
+]
+~~~
+
+URL patterns are checked in order. The `int` converter passes `pk` to the view as an integer. An FBV is a function that receives a request and returns a response. A CBV groups behavior in a class; `as_view()` creates a callable that the router can invoke and dispatches according to the HTTP method.
+
+Common mistakes include forgetting to add an app to `INSTALLED_APPS`, placing a general URL pattern before a specific one, and calling a CBV directly instead of using `as_view()`. Do not put secret keys in source code.
+'''
+
+[questions.dj-001]
+prompt = '''A website has blog, billing and accounts areas that share the database configuration, middleware and root URL configuration. Which concept contains these functional areas?'''
+options = ["A Django project", "A migration", "A QuerySet", "A template"]
+explanation = "A project contains the configuration and connects the apps. Each app should focus on a reusable functional area."
+
+[questions.dj-002]
+prompt = '''Two URL patterns can both match `/articles/archive/`. Which pattern is used?'''
+options = ["The first matching pattern in the list", "The most specific matching pattern, regardless of order", "The pattern in the app with the shorter name", "Django chooses randomly"]
+explanation = "Django checks URL patterns in order and uses the first match."
+
+[questions.dj-003]
+prompt = '''For the route `path("articles/<int:pk>/", view)`, what type does the view receive for `pk`?'''
+options = ["The original string", "An integer", "An automatically loaded Model object", "A dict containing the entire request"]
+explanation = "The IntConverter checks that the URL segment contains digits and converts it to an `int`; the view still has to query for an object if needed."
+
+[questions.dj-004]
+prompt = '''How do you connect a class-based view named `ArticleView` to a URLconf?'''
+options = ["ArticleView.as_view()", "ArticleView.dispatch()", "ArticleView.get()", "ArticleView()"]
+explanation = "`as_view()` creates a callable that receives the request, creates an instance and dispatches according to the HTTP method."
+
+[questions.dj-005]
+prompt = '''Select the correct statements about splitting a project's URLconf across apps.'''
+options = ["The project URLconf can use include() to delegate a URL branch", "Each app can declare its own urlpatterns", "include() automatically adds every app to INSTALLED_APPS", "Changing the order of URL patterns never affects the result"]
+explanation = "`include()` delegates to another URLconf; apps still need to be configured separately. Pattern order matters."
+
+[questions.dj-006]
+prompt = '''In the standard configuration package, the `{{blank}}` variable points to the project's root URLconf.'''
+explanation = "`ROOT_URLCONF` points to the module that declares the root URL patterns."
+
+[questions.dj-007]
+prompt = '''Compare FBVs and CBVs, then describe a situation in which each style is a good choice.'''
+keywords = [["function-based view", "fbv"], ["class-based view", "cbv"], ["as_view"], ["dispatch"], ["reuse", "reusability", "mixin"]]
+model_answer = '''An FBV uses a function-based view and is convenient when the request flow is small and explicit. A CBV uses a class-based view, is connected to a URL with `as_view()`, and dispatches by method; behavior can be shared with a mixin. Choose the style that makes the business logic clearest and keeps the code easy to test.'''
+explanation = "Both FBVs and CBVs receive a request and return a response; they differ in how behavior is organized and reused."
+
+[questions.dj-008]
+title = "Simulating a URL resolver"
+prompt = '''Write a function `resolve(path, patterns)` for a set of URL patterns represented as a list of `(route, view_name)` tuples. Neither `route` nor `path` starts with `/`; a trailing `/` must match exactly.
+The function must support static segments and two converters: `<int:pk>` accepts digits only and converts them to an integer; `<slug:slug>` accepts ASCII letters, digits, hyphens and underscores. Return a dict `{"view": view_name, "kwargs": parameter_dict}` for the first matching pattern, or `None` if no pattern matches.
+For example, the route `articles/<int:pk>/` matches `articles/42/` and returns `pk` as the number 42; it does not match `articles/nope/`.
+'''
+explanation = "A URL resolver checks the path structure and converts converter values to the appropriate types before calling the view."
+hints = ["Split the route and path on `/`, then compare the corresponding segments.", "Use `re.fullmatch` to ensure the entire URL segment matches the converter."]
+
+[modules.django-orm]
+title = "Model, migration & QuerySet"
+description = "Schemas through models and migrations, lazy queries, relation optimization, expressions and transactions."
+lesson = '''
+### Models and queries
+A model describes data, fields and relationships; a migration records schema changes. `makemigrations` creates migrations from differences in models, while `migrate` applies them to the database. A QuerySet represents a query and usually does not fetch data until it is evaluated, for example by iteration or conversion to a list.
+
+| Need | Tool |
+|---|---|
+| Fetch a ForeignKey or OneToOne relation in the same query | `select_related` |
+| Fetch a ManyToMany or reverse relation | `prefetch_related` |
+| Compare or update using a value in the database | `F` |
+| Combine complex conditions, including OR | `Q` |
+| Add a value to each object | `annotate` |
+| Compute a single aggregate result | `aggregate` |
+| Group multiple operations into one unit | `transaction.atomic` |
+
+~~~python
+active = Article.objects.filter(published=True).order_by("-created_at")
+~~~
+
+QuerySet operations can be chained and usually still do not execute SQL immediately. Optimizing relations helps avoid N+1 queries; measure queries before adding optimizations. Use `transaction.atomic` for changes that must either all succeed or all roll back.
+
+Common mistakes include confusing `makemigrations` with `migrate`, calling `prefetch_related` for a single ForeignKey, or accessing each relation inside a loop without checking the query count.
+'''
+
+[questions.dj-009]
+prompt = '''A view creates `qs = Article.objects.filter(published=True)` but does not iterate over it, convert it to a list or request any other value. What usually happens?'''
+options = ["The QuerySet executes SELECT as soon as filter is called", "The QuerySet is described; the data is usually not fetched yet", "Django creates a new migration", "Django automatically saves every Article"]
+explanation = "QuerySets are lazy: `filter()` builds a query, while evaluation such as iteration or `list()` fetches the results."
+
+[questions.dj-010]
+prompt = '''A page displays multiple Articles with the same ForeignKey `author` and needs to read `author.name` for each row. What is the most suitable optimization?'''
+options = ["prefetch_related(\"author\")", "select_related(\"author\")", "annotate(\"author\")", "bulk_create(\"author\")"]
+explanation = "`select_related` uses a JOIN for ForeignKey and OneToOne relations; `prefetch_related` is more suitable for many-to-many or reverse relations."
+
+[questions.dj-011]
+prompt = '''After changing a model field, which workflow creates the migration file and then applies the change to the database?'''
+options = ["migrate, then makemigrations", "makemigrations, then migrate", "runserver, then collectstatic", "check, then flush"]
+explanation = "`makemigrations` records schema changes in a migration; `migrate` applies the migration to the database."
+
+[questions.dj-012]
+prompt = '''An operation needs to create an Order and decrement inventory; if either step fails, both changes must roll back. What should you use?'''
+options = ["transaction.atomic()", "select_related()", "get_or_create() for the entire view", "makemigrations"]
+explanation = "`transaction.atomic()` creates a transaction boundary; an unhandled error in the block rolls back its changes."
+
+[questions.dj-013]
+prompt = '''Select the correct statements about ORM expressions.'''
+options = ["Q can combine conditions with OR", "F lets the database compare or update using a field value", "F always fetches every row into Python before comparing", "Q can only be used with aggregates"]
+explanation = "`Q` represents complex conditions such as OR; `F` references a field in SQL to avoid a read-modify-write cycle in Python."
+
+[questions.dj-014]
+prompt = '''Select the two correct descriptions of `annotate()` and `aggregate()`.'''
+options = ["annotate() adds a computed value to each object in the result", "aggregate() returns an aggregate result for the entire QuerySet", "aggregate() automatically adds an attribute to every object", "annotate() always produces a single row"]
+explanation = "`annotate` attaches an expression to each object or group in the result; `aggregate` returns a dict of aggregate values."
+
+[questions.dj-015]
+prompt = '''Fill in the standard context manager used to group database changes in a transaction: `transaction.{{blank}}`'''
+explanation = "`transaction.atomic()` provides a commit/rollback boundary."
+
+[questions.dj-016]
+prompt = '''A list of articles triggers an extra query for each author while rendering. Explain the cause and how to choose a way to reduce N+1 queries.'''
+keywords = [["n+1", "n + 1"], ["select_related"], ["foreign key", "fk", "one-to-one"], ["prefetch_related"], ["many-to-many", "many to many", "reverse relation"]]
+model_answer = '''This is an N+1 query problem: one query fetches the list, then another query runs for each relation. For a ForeignKey or OneToOne relation, use `select_related` to perform a JOIN. For a ManyToMany or reverse relation, use `prefetch_related` to fetch data in batches. Check the query count to confirm the improvement.'''
+explanation = "Choose a strategy based on the relation type; both APIs help avoid repeated queries inside a loop."
+
+[questions.dj-017]
+title = "A minimal lazy QuerySet"
+prompt = '''Create a `QuerySet(rows, metrics=None)` class with `filter(**criteria)`, `exclude(**criteria)`, `order_by(*fields)` and iteration. Each chaining method must return a new QuerySet without modifying the original object. `filter` and `exclude` support exact equality by field name only; `order_by` takes field names, with a `-` prefix for descending order.
+The query must execute only when iteration begins. Each iteration increments `metrics["executions"]` exactly once; if no metrics dict is passed, initialize one with `executions` set to 0. Chained `order_by` calls replace the previous ordering.
+'''
+explanation = "This models QuerySet laziness: chaining describes a query, while iteration executes it."
+hints = ["Store conditions as operations to apply when `__iter__` runs.", "Return a new QuerySet from each method and share the same metrics dict."]
+
+[modules.django-forms]
+title = "Templates, forms & pagination"
+description = "Render HTML safely, clean data per field and across the form, and paginate results."
+lesson = '''
+### Displaying and receiving data
+Django templates separate presentation from views. Autoescaping is enabled by default for variables in HTML, so user data is not interpreted as markup; avoid marking untrusted data as safe. For POST requests that use sessions or cookies, the form needs a CSRF token, and the view must validate data on the server.
+
+Form validation cleans each field, calls `clean_<field>()`, then calls `clean()` for rules involving multiple fields. `is_valid()` runs this process; `cleaned_data` contains normalized values, and `errors` stores field errors while non-field errors may appear under `__all__`. Use only validated data to update a model.
+
+| Task | Approach |
+|---|---|
+| Validate one field | `Field.clean()` or `clean_<field>()` |
+| Compare multiple fields | `Form.clean()` |
+| Display errors | `form.errors` or `field.errors` |
+| Paginate results | `Paginator(queryset, per_page).get_page(number)` |
+
+Paginator page numbers start at 1. `get_page()` handles invalid page numbers gracefully; `page()` is appropriate when you want an `InvalidPage` exception.
+
+Common mistakes include relying only on browser-side validation, forgetting the CSRF token, disabling autoescape casually, or assuming the first page is numbered 0.
+'''
+
+[questions.dj-018]
+prompt = '''A user enters `<script>` in the `title` field and the template renders the variable with the usual syntax. Which default behavior helps make this safer?'''
+options = ["Django template autoescapes HTML content", "Django always removes every tag from the database", "CSRF middleware converts the content to text", "The template automatically encodes the entire response as JSON"]
+explanation = "Autoescaping encodes special characters when rendering variables in HTML; data still needs appropriate validation and should not be marked safe casually."
+
+[questions.dj-019]
+prompt = '''After calling `form.is_valid()` and getting `True`, where should you get the cleaned and converted field values?'''
+options = ["form.cleaned_data", "form.data directly", "request.path", "form.errors"]
+explanation = "`cleaned_data` contains values that passed field cleaning and validation; `form.data` still contains the input."
+
+[questions.dj-020]
+prompt = '''In Django's Paginator, what is the page number of the first page?'''
+options = ["0", "1", "-1", "The number of items"]
+explanation = "Paginator page numbers start at 1."
+
+[questions.dj-021]
+prompt = '''Select the correct statements about Django Form validation.'''
+options = ["Field.clean() converts and validates a field's data", "clean_<field>() is used for a single field's rules", "Form.clean() can check relationships between multiple fields", "is_valid() only checks the HTML in the browser"]
+explanation = "Django performs server-side validation through field cleaning, `clean_<field>()` and `Form.clean()`. Errors are attached to a field or recorded as non-field errors."
+
+[questions.dj-022]
+prompt = '''In a POST form template, fill in the tag that protects against CSRF: `{% {{blank}} %}`'''
+explanation = "The `csrf_token` tag creates a hidden input containing the token that middleware verifies."
+
+[questions.dj-023]
+prompt = '''Fill in the form attribute that contains field errors: `form.{{blank}}`'''
+explanation = "`form.errors` provides errors attached to fields as well as non-field errors."
+
+[questions.dj-024]
+title = "Form validation and field errors"
+prompt = '''Simulate a `RegistrationForm` that accepts a dict with `email`, `password` and `confirm_password`. `is_valid()` must normalize email with `strip()` and `lower()`, require the email to contain `@`, require the password to be at least 8 characters long, and require `confirm_password` to be non-empty and match the password.
+The method returns `True` only when the data is valid. Store cleaned values in `cleaned_data`; `errors` is a dict mapping field names to lists of messages. Attach a password mismatch error to `confirm_password`. Recompute the state each time `is_valid()` is called.
+'''
+explanation = "This simulates field cleaning and cross-field validation; use the data only after `is_valid()` returns `True`."
+hints = ["Use a cleaner for each field and collect `ValueError` in `errors[field]`.", "After cleaning the fields, compare the two passwords in `clean()`. "]
+
+[questions.dj-025]
+title = "Paginating a list"
+prompt = '''Write `paginate(items, page, per_page)` for a Python list. `page` starts at 1 and `per_page` must be a positive integer. Return a dict with `items` (the page's items), `number`, `num_pages`, `has_next` and `has_previous`. An empty list still has one empty page.
+Raise `ValueError` if `page` or `per_page` is invalid, or if `page` is out of range. Do not modify the input list.
+'''
+explanation = "Pagination for users uses page numbers starting at 1; check the range before slicing the list."
+hints = ["Compute `num_pages` with ceiling division, but use at least 1.", "The start index for a page is `(page - 1) * per_page`."]
+
+[modules.django-request]
+title = "Admin, auth, middleware & signals"
+description = "Internal administration, authentication and group permissions, middleware chains, and signals."
+lesson = '''
+### Permissions and the request lifecycle
+The admin creates an administration interface from registered models; users must be authenticated, active and allowed to access the admin. `is_staff` determines whether a user can enter the admin, but it does not replace permissions that control model operations. A group can grant model permissions to multiple users; check permissions with `user.has_perm()` instead of relying on a group name in a view.
+
+Middleware classes wrap the request and response. The first middleware in `settings.MIDDLEWARE` receives the request first; the response passes back through the middleware in reverse order. A middleware factory receives `get_response` and returns a callable. Order affects sessions, authentication, CSRF and the response.
+
+| Component | Purpose |
+|---|---|
+| `authenticate()` | Verify login credentials |
+| `login()` | Attach an authenticated user to the session |
+| Group / Permission | Share permissions and control actions |
+| Signal | Notify components about an event |
+
+Signals can help integrate apps, but core business flows are often easier to understand when a service is called explicitly. Register receivers in `AppConfig.ready()` and avoid duplicate registration.
+
+Common mistakes include confusing login with authorization, treating `is_staff` as permission to edit every model, or hiding important side effects in signals.
+'''
+
+[questions.dj-026]
+prompt = '''With middleware A followed by B in settings, the request passes through A, then B, then the view. In what order does a successful response normally pass back?'''
+options = ["A, then B, then the view", "The view, then A, then B", "The view, then B, then A", "The response does not pass through middleware"]
+explanation = "Middleware forms a nested chain: the request enters in declaration order, and the response returns in reverse order."
+
+[questions.dj-027]
+prompt = '''A user has `is_staff=True` but lacks the permission required to edit a model in the admin. Which conclusion is correct?'''
+options = ["is_staff automatically grants every model permission", "is_staff allows access to the admin, but the operation still requires permission", "is_staff is equivalent to superuser", "The user does not need to log in to the admin"]
+explanation = "`is_staff` is a condition for accessing the admin; add/change/delete/view permissions still determine specific actions."
+
+[questions.dj-028]
+prompt = '''After a user logs in successfully, which API records the authenticated user in the request's session?'''
+options = ["login(request, user)", "authenticate(request, user)", "has_perm(request, user)", "include(request, user)"]
+explanation = "`authenticate()` verifies credentials; `login()` attaches the user to the session."
+
+[questions.dj-029]
+prompt = '''Select the correct statements about permission management in Django.'''
+options = ["A Group can grant model permissions to its members", "user.has_perm() can check a specific permission", "is_staff proves that a user can delete every object", "Authentication and authorization are the same step"]
+explanation = "Groups collect permissions, and `has_perm` checks them. Authentication establishes identity; authorization checks whether an action is allowed."
+
+[questions.dj-030]
+prompt = '''An app uses a signal receiver to integrate behavior when a model is saved. Select two practices that make the code easier to control.'''
+options = ["Register the receiver in AppConfig.ready()", "Use dispatch_uid when needed to avoid registering a receiver more than once", "Put all core business logic in signals so the call flow is hidden", "Use signals instead of validation and access permissions"]
+explanation = "`ready()` is where an app can register signals; `dispatch_uid` helps prevent duplicate connections. Signals should not hide the main business flow."
+
+[questions.dj-031]
+prompt = '''A middleware factory receives the next callable in the chain through a parameter commonly named `{{blank}}`.'''
+explanation = "`get_response` is the next callable; middleware can invoke it to continue processing the request."
+
+[questions.dj-032]
+title = "A middleware chain"
+prompt = '''Write `build_chain(middlewares, view)`. Each middleware is a factory that accepts `get_response` and returns a callable that accepts a request. Nest middleware in list order: the first middleware must wrap all subsequent middleware and the view.
+The result is a callable that accepts a request. A sample middleware may call `get_response(request)`, then process the response before returning it.
+'''
+explanation = "Middleware is a nested chain of wrappers: the request enters from the outside, and the response returns outward."
+hints = ["Initialize the handler with `view`.", "Iterate over the middleware in reverse so the first middleware becomes the outermost layer."]
+
+[modules.django-api-security]
+title = "API, caching, security & deployment"
+description = "DRF concepts, caching, CSRF/XSS/SQL injection, and deployment configuration."
+lesson = '''
+### APIs and operations
+Django REST Framework (DRF) is a separate library used with Django; it is not part of Django core. A serializer converts and validates data; an APIView or ViewSet handles requests; a router can create URLs; authentication establishes identity, permissions determine access, and throttling limits request rates.
+
+Caching can be applied at the site, view or data level. Choose cache keys and expiration times based on the data; distinguish personalized content by user or keep it out of a shared cache. Cache invalidation should be coordinated with data updates.
+
+| Risk | Mitigation |
+|---|---|
+| CSRF | Use a token for state-changing requests based on cookies or sessions |
+| XSS | Keep autoescaping enabled; do not mark untrusted HTML as safe |
+| SQL injection | Use the ORM or parameter binding; do not concatenate input into SQL |
+| Exposed configuration | Set `DEBUG=False`, load secrets from the environment, and configure `ALLOWED_HOSTS` |
+
+Production should use HTTPS, collect and serve static files appropriately, keep secrets out of logs, and run `check --deploy`. Choose a suitable production server for the application's WSGI or ASGI interface.
+
+Common mistakes include assuming CSRF replaces authorization, publicly caching private responses, or deploying the development server with `DEBUG=True`.
+'''
+
+[questions.dj-033]
+prompt = '''What is Django REST Framework in a Django application?'''
+options = ["A separate library that adds tools for building Web APIs", "A required module in Django core", "A database backend", "Middleware that automatically creates every endpoint"]
+explanation = "DRF is an external library, separate from Django core; it commonly provides serializers, API views or viewsets, authentication, permissions and throttling."
+
+[questions.dj-034]
+prompt = '''A view accepts a POST request that changes data and authenticates the user with a session cookie. What is needed to defend against CSRF?'''
+options = ["Require and verify a CSRF token", "Only check that the user is logged in", "Disable CSRF middleware for the entire site", "Convert POST to GET"]
+explanation = "The browser sends cookies automatically; a CSRF token helps establish that the request came from the expected form or application flow. Authentication does not replace CSRF protection."
+
+[questions.dj-035]
+prompt = '''An application is going to production. Which configuration is appropriate?'''
+options = ["DEBUG=False, appropriate ALLOWED_HOSTS, and a secret loaded from the environment", "DEBUG=True to show detailed logs to every user", "Commit SECRET_KEY so every worker can share it", "Use runserver as the production server"]
+explanation = "The production checklist requires DEBUG to be disabled, hosts to be configured, secrets to stay out of source code, and an appropriate deployment server to be used."
+
+[questions.dj-036]
+prompt = '''Select the measures that reduce XSS and SQL injection risk in Django.'''
+options = ["Keep autoescaping enabled when rendering user-provided data", "Use the ORM or parameter binding for query values", "Mark all user content as safe", "Concatenate input directly into raw SQL"]
+explanation = "Autoescaping handles HTML output; the ORM and parameter binding separate input from SQL syntax. Do not trust input data."
+
+[questions.dj-037]
+prompt = '''Which ORM API should be used instead of concatenating SQL strings to filter by input: `Article.objects.{{blank}}(title=user_input)`'''
+explanation = "QuerySet `filter` passes values as query parameters; do not concatenate input into SQL."
+
+[questions.dj-038]
+prompt = '''In production configuration, `DEBUG = {{blank}}`.'''
+explanation = "`DEBUG` must be off in production to avoid exposing error pages and internal information."
+
+[questions.dj-039]
+prompt = '''List the items to check before deploying a Django project to production.'''
+keywords = [["debug=false", "debug = false"], ["allowed_hosts"], ["secret_key", "secret key"], ["https", "tls"], ["check --deploy", "deploy check"], ["static files", "collectstatic"], ["wsgi", "asgi"]]
+model_answer = '''Set `DEBUG=False`, configure `ALLOWED_HOSTS` accurately, and load `SECRET_KEY` from a secret store or the environment. Enable HTTPS, check secure cookie settings, run `check --deploy`, configure static files, and choose an appropriate production WSGI or ASGI server.'''
+explanation = "The production checklist covers configuration, HTTPS, static files, secrets and the application server."
+
+[questions.dj-040]
+title = "Group-based permissions"
+prompt = '''Write `has_permission(user, permission, group_permissions)`. `user` is a dict with `is_active`, `permissions` and `groups`. `group_permissions` maps group names to sets or lists of permissions.
+Return `True` if the user is active and the permission is in the user's direct permissions or in the permissions of at least one group the user belongs to. Always deny an inactive user. `is_staff` does not grant permission in this simulation.
+'''
+explanation = "A group is one source of model permissions; access still needs to be checked on each request."
+hints = ["Deny an inactive user before checking permission sources.", "Iterate through the user's groups and check each one in the mapping."]
+
+[modules.django-dv-testing]
+title = "Testing Django applications"
+description = "Choose the right test case and check requests/responses, database behavior and isolated views."
+lesson = '''
+### Test behavior at the right boundary
+Django provides `unittest`-based test cases, a separate test database and tools for simulating requests. Test observable behavior: status codes, redirects, saved data, access permissions and important query counts. Each test should set up the required data, perform an action and check a result that matters to users.
+
+| Tool | Scope | Use it when |
+|---|---|---|
+| `SimpleTestCase` | Does not use a database | Testing pure logic, templates or responses |
+| `TestCase` | Test database is isolated with transactions and rollback | Testing most models and views |
+| `TransactionTestCase` | Tests real commit, rollback or transaction behavior | Code depends on a commit boundary |
+| `Client` | Goes through the URL resolver and middleware in a test | Testing an integrated HTTP flow |
+| `RequestFactory` | Creates a request to call a view directly | Isolating view logic; middleware does not run automatically |
+
+For example, use `self.client.post()` to submit a form, then verify the status, redirect and database state. `setUpTestData()` creates shared class-level data efficiently when tests do not modify it; use `setUp()` for mutable state that each test needs separately. Use `AsyncClient` when you need to call an asynchronous endpoint.
+
+To detect performance regressions, measure the number of queries for a specific section of code with `assertNumQueries` instead of assuming a query is optimized. External dependencies such as a payment gateway can be replaced with mocks, but the integration contract still needs its own tests.
+
+Common mistakes include using `RequestFactory` and assuming sessions, authentication and middleware have run; sharing mutable objects between tests; checking only the status while ignoring data changes; or using `TransactionTestCase` for every test and making the suite slower than necessary.
+'''
+
+[questions.django-dv001]
+prompt = '''You want to test a POST request that passes through the URL resolver and middleware, then verify a redirect. Which tool is the best fit?'''
+options = ["RequestFactory", "Django Client", "MigrationExecutor", "Paginator"]
+explanation = "The Client simulates a request through Django's processing chain and lets you check the response, redirect and application state. RequestFactory calls the view directly and does not run middleware."
+
+[questions.django-dv002]
+prompt = '''A test needs to confirm that a callback runs only after the database transaction is actually committed. Which option is more appropriate than the usual TestCase?'''
+options = ["SimpleTestCase", "TransactionTestCase", "RequestFactory", "LiveServerTestCase"]
+explanation = "`TestCase` is optimized with transaction isolation; `TransactionTestCase` is suitable when you need to observe real commit or rollback behavior."
+
+[questions.django-dv003]
+prompt = '''Tests in the same class need the same baseline data, which they do not modify. Which setup is usually more efficient?'''
+options = ["Recreate all data in every assertion", "Use setUpTestData()", "Run migrate in every test", "Share a production database"]
+explanation = "`setUpTestData()` creates class-level data once for the class's tests, avoiding repeated expensive setup; mutable per-test state should still be created in `setUp()`."
+
+[questions.django-dv004]
+prompt = '''When using Django's test Client, how is a redirect response handled by default?'''
+options = ["The Client always follows the redirect and returns only the final response", "The Client returns the redirect response; you can ask it to follow with follow=True", "The redirect is converted to a 500 error", "The Client ignores every Location header"]
+explanation = "By default, the Client returns the redirect response so a test can check its status and Location; `follow=True` asks it to follow the redirect chain."
+
+[questions.django-dv005]
+prompt = '''Select the correct statements about RequestFactory.'''
+options = ["It can create a request and call a view directly", "It automatically runs all middleware like the Client", "You may need to attach a session or user manually when the view requires one", "It is useful for testing view logic in isolation"]
+explanation = "RequestFactory isolates a view but does not build the full request pipeline; properties normally added by middleware must be set up in the test."
+
+[questions.django-dv006]
+prompt = '''A group of tests for a payment endpoint is slow and flaky. Select reasonable ways to improve it.'''
+options = ["Mock the payment gateway call in unit tests", "Check both the response and the necessary data changes", "Use TransactionTestCase for every test even when a real transaction is unnecessary", "Keep a smaller set of integration tests to check the external contract"]
+explanation = "Mocks isolate tests from the network and slow services; integration tests are still useful but should focus on flows that need to check real interactions."
+
+[questions.django-dv007]
+prompt = '''In a Django test, which context manager can confirm that a code block runs the expected number of SQL queries: `self.{{blank}}(2)`?'''
+explanation = "`assertNumQueries` helps catch query regressions in a selected section, for example when rendering a list with ORM relations."
+
+[questions.django-dv008]
+prompt = '''How would you design tests for an endpoint that requires login and returns a list of orders, so that you check both access control and results?'''
+keywords = [["test client", "client"], ["authentication", "login", "sign-in"], ["permission", "authorization", "access control"], ["status code", "response"], ["database", "data"]]
+model_answer = '''Use the test client to send a request as a logged-in user, then check the status code and response. Create a user without permission to confirm that access is denied, and a permitted user with order data to verify that the database results contain only orders they are allowed to view.'''
+explanation = "Tests should cover the unauthenticated case, the authenticated but unauthorized case, and the permitted case so they do not check only the happy path."
+
+[questions.django-dvc01]
+title = "Checking the response contract"
+prompt = '''Write `response_issues(status, body, expected_status, required_fields)` for API tests. The function returns a list of error strings in this exact order: add `"status"` if `status` differs from `expected_status`; then, for each missing field in `required_fields`, add `"missing:<field-name>"` in input order. `body` may not be a dict; in that case, treat every required field as missing. Do not add any other errors.
+For example, `response_issues(200, {"id": 4}, 200, ["id", "name"])` returns `["missing:name"]`.
+'''
+explanation = "A small assertion helper makes endpoint tests consistent while keeping error messages in a readable order."
+hints = ["Create an empty list of errors and compare the status first.", "Iterate over `required_fields` and check that `body` is a dict containing each key."]
+
+[modules.django-dv-files]
+title = "Uploads and storage"
+description = "Receive files through forms, process UploadedFile objects, and save through a secure storage backend."
+lesson = '''
+### Receiving and storing files
+An HTML upload form must use `method="post"` and `enctype="multipart/form-data"`; the Django form needs an appropriate field, and a POST template needs a CSRF token. Once the request is parsed, files are available in `request.FILES`. Let a Form or ModelForm validate the data before saving the model, then continue with the UploadedFile or storage API.
+
+| Component | Responsibility | Note |
+|---|---|---|
+| `UploadedFile` | Represents a file received from a request | May be held in memory or in a temporary file |
+| `chunks()` | Reads the file in successive pieces | Better than `read()` for large files |
+| `FileField` | Stores a file reference on a model | The database usually holds the name/path returned by storage |
+| `Storage` | Saves and retrieves file contents | Local, cloud or custom backends can differ |
+| `staticfiles` | Assets shipped with the application | Separate from user-uploaded files |
+
+In a local environment, `MEDIA_ROOT` and `MEDIA_URL` commonly configure where media is stored and served; static assets have a separate workflow such as `collectstatic`. Do not assume storage is always on a filesystem: `.path()` may be unavailable on a remote backend, while `.url()` depends on access configuration.
+
+The filename, extension, size and client-provided `content_type` are all untrusted input. Set size limits, allowlist file types as needed, inspect the actual content with an appropriate parser, use storage keys controlled by the server, and restrict read access. Untrusted files should not be served as executable code from a sensitive same-origin location.
+
+Common mistakes include forgetting `multipart/form-data`, checking only the client-provided extension, reading an entire large file into RAM, joining a filename to an arbitrary path, or using `FileField.path` with non-filesystem storage.
+'''
+
+[questions.django-dv009]
+prompt = '''What does an HTML form need so the browser can send a file to Django?'''
+options = ["method=\"get\" and enctype=\"text/plain\"", "method=\"post\" and enctype=\"multipart/form-data\"", "method=\"put\" and enctype=\"application/json\"", "Only add accept to the input"]
+explanation = "`multipart/form-data` encodes form parts, including files; a POST request also needs CSRF protection when using sessions or cookies."
+
+[questions.django-dv010]
+prompt = '''After Django parses a multipart request containing a file, which request attribute does a view usually use to access it?'''
+options = ["request.GET", "request.COOKIES", "request.FILES", "request.path_info"]
+explanation = "Uploaded files are parsed into `request.FILES`; text data from a POST form is in `request.POST`."
+
+[questions.django-dv011]
+prompt = '''An endpoint receives a large file and needs to stream its contents to storage in pieces. Which method is more suitable than reading all the bytes at once?'''
+options = ["UploadedFile.chunks()", "UploadedFile.name", "UploadedFile.content_type", "UploadedFile.size"]
+explanation = "`chunks()` lets you process a file piece by piece, reducing the need to hold all of its data in application memory."
+
+[questions.django-dv012]
+prompt = '''Which statement about FileField with a remote storage backend is correct?'''
+options = ["The model usually stores a name/path managed by storage; do not assume a local filesystem path exists", "Django always copies the file to the process's current directory", "The database field always contains the entire file as bytes", "A remote storage backend must support path()"]
+explanation = "FileField works with Storage to manage content; the database stores a filename reference, while the backend determines how to access it and may not provide a local path."
+
+[questions.django-dv013]
+prompt = '''Select the appropriate controls when building an upload flow for user-provided files.'''
+options = ["Limit file size and file count", "Trust the content_type sent by the browser completely", "Inspect the content with a parser appropriate to the file type", "Restrict read access and avoid serving untrusted files as executable code"]
+explanation = "Client-provided metadata can be forged; resource limits, content validation and controlled file delivery help reduce risk."
+
+[questions.django-dv014]
+prompt = '''Select the correct statements about static assets and user uploads.'''
+options = ["CSS/JavaScript shipped with the application belongs to the staticfiles workflow", "User-uploaded profile images usually belong to the media/storage workflow", "collectstatic replaces validation of uploaded files", "User-provided files need their own storage and access policies"]
+explanation = "Static files are application assets; user-generated media has separate lifecycle, access and security requirements."
+
+[questions.django-dv015]
+prompt = '''To read an UploadedFile in pieces instead of loading all its contents into memory, call the `{{blank}}()` method.'''
+explanation = "`chunks()` is better suited to processing large uploads, especially when streaming content to storage."
+
+[questions.django-dv016]
+prompt = '''Describe a secure upload pipeline for a user's document in a Django application, from the form through to downloading the file again.'''
+keywords = [["multipart/form-data", "request.files"], ["size limit", "maximum size"], ["validate content", "content validation", "content type"], ["storage", "storage backend"], ["access control", "private", "authorization"], ["chunks", "chunk"]]
+model_answer = '''Use a POST form with multipart/form-data and CSRF protection, enforce a size limit, and validate the file's content on the server instead of trusting client metadata. Save it through a storage backend, using `chunks()` for large files and a server-controlled name, then check access control when the user downloads it.'''
+explanation = "A pipeline needs controls for input, resource use, storage and access to the output."
+
+[questions.django-dvc02]
+title = "Validating upload metadata"
+prompt = '''Write `validate_upload(metadata, max_bytes, allowed_extensions, allowed_types)`. `metadata` is a dict with `name`, `size` and `content_type`. Return `True` when the filename is a non-empty string and contains neither `/` nor `\\`, its extension (case-insensitive) is in `allowed_extensions`, `size` is a positive integer no greater than `max_bytes`, and its MIME type (excluding parameters after `;`) is in `allowed_types`. Return `False` if the metadata has the wrong type or is missing a field. This checks metadata only; it does not establish that the file's bytes are safe.
+'''
+explanation = "Allowlisting metadata is an initial upload-policy check; the application still needs to validate the actual content and control how the file is served."
+hints = ["Validate the metadata and size limits before comparing the extension.", "Normalize the extension and MIME type to lowercase; a client MIME type does not prove the bytes are safe."]
+
+[modules.django-dv-tasks]
+title = "Async support and task framework"
+description = "Distinguish async views from background work, define tasks and track their results."
+lesson = '''
+### Async requests and background work
+An async view is useful when a request waits on multiple I/O operations that can run concurrently and the full middleware and call path support async. It still runs in the request lifecycle: a long-running task does not automatically become a background job. Django 6.0 adds a task framework that standardizes how background work is defined, queued and queried through a backend.
+
+| Need | Mechanism | Behavior |
+|---|---|---|
+| Wait for multiple I/O operations in one request | Async view | The response still depends on the view finishing |
+| Send email or generate a report after the response | Task and `.enqueue()` | The backend/worker handles it outside the request |
+| Enqueue only after saving a transaction | `transaction.on_commit()` | The callback runs only after a successful commit |
+| Track progress or results | `TaskResult` | Status and result storage depend on the backend |
+
+Define a task with the `@task` decorator; call `.enqueue()` to send an execution request through the backend. The framework provides an API and backend contract, but Django core does not provide a production worker that runs the queue. Choose a backend and worker for the environment, and confirm that the backend supports features such as priority or results if the application depends on them.
+
+A task payload should let the worker retrieve durable data; usually pass an ID rather than a model object held in memory. Tasks may be retried or delivered more than once depending on the operational system, so operations with side effects should be idempotent. When a task depends on a newly created record, enqueue it in `transaction.on_commit()` so the worker cannot read the record before the transaction commits.
+
+Common mistakes include treating an async view as a queue, doing long-running work before returning the response, assuming `.enqueue()` means the task has finished, assuming every backend runs tasks immediately, or ignoring retries and repeated side effects.
+'''
+
+[questions.django-dv017]
+prompt = '''An async view calls a report-generation function that takes several minutes before returning a response. If users should get a quick response and a worker should generate the report, which mechanism should you use?'''
+options = ["Convert the view to a template tag", "A task enqueued through a backend", "Use RequestFactory in production", "Enable DEBUG"]
+explanation = "An async view remains in the request lifecycle; the task framework uses a backend to queue background work so the request does not have to wait for completion."
+
+[questions.django-dv018]
+prompt = '''After defining a task with the `@task` decorator, which API sends an execution request through the backend?'''
+options = ["task.enqueue(...)", "task.migrate(...)", "task.render(...)", "task.as_view()"]
+explanation = "`enqueue()` requests that the task be sent to the backend; a successful enqueue does not mean the task has finished."
+
+[questions.django-dv019]
+prompt = '''Which statement correctly describes the task framework boundary in Django 6.0?'''
+options = ["Django core defines an API and backend contract, but does not provide a complete production worker", "Every task always runs synchronously in the web process", "Django starts a worker automatically when runserver is called", "A task backend works with only one specific database"]
+explanation = "The task framework standardizes task definitions and enqueueing; the application needs an appropriate backend and worker for production execution."
+
+[questions.django-dv020]
+prompt = '''A view creates an Order inside a transaction, then enqueues a task to send a confirmation email. How can you prevent the worker from reading the Order before the transaction commits?'''
+options = ["Put the enqueue call in transaction.on_commit()", "Call the task directly before saving the Order", "Increase the request timeout", "Use an async view instead of a transaction"]
+explanation = "`on_commit()` runs the callback after a successful commit; if the transaction rolls back, the callback is not run."
+
+[questions.django-dv021]
+prompt = '''Select the appropriate practices when designing a task that may be retried after a worker error.'''
+options = ["Pass a durable ID and retrieve the required data when the task runs", "Design side effects to be safe when repeated", "Pass an in-memory model object and expect it to survive a restart", "Assume every backend guarantees exactly-once execution"]
+explanation = "Tasks often run outside the web process; durable identifiers and idempotent operations help reduce errors during retries or duplicate delivery."
+
+[questions.django-dv022]
+prompt = '''Select the correct statements about enqueueing, TaskResult and backends.'''
+options = ["Enqueueing requests execution; it does not prove the task has finished", "TaskResult may provide status/results depending on backend capabilities", "Every backend must retain results indefinitely", "Django core does not run a production worker just because a task is defined"]
+explanation = "The result API helps observe tasks, while execution timing, result retention and backend capabilities must be confirmed for the implementation in use."
+
+[questions.django-dv023]
+prompt = '''Which task attribute indicates the earliest time the task should run: `task.{{blank}}`?'''
+explanation = "`run_after` indicates when a task is eligible to run; the backend must support the corresponding scheduling behavior."
+
+[questions.django-dv024]
+prompt = '''Design a background report workflow after a user saves a request. Explain how to enqueue it, handle the transaction and reduce harm if the task runs again.'''
+keywords = [["enqueue", "queue"], ["worker", "backend"], ["on_commit", "after commit", "commit transaction"], ["idempotent", "idempotency"], ["taskresult", "task result", "status"]]
+model_answer = '''The view saves the request, then uses `transaction.on_commit()` to enqueue the task so the worker cannot run before the transaction commits. The task receives the request ID, and the worker reads durable data and updates the status through the backend or TaskResult. Make updates idempotent so a retry does not create duplicate reports or send duplicate notifications.'''
+explanation = "A durable workflow separates response time from long-running processing and handles the relationship between transactions, workers and retries correctly."

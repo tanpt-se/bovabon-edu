@@ -1,0 +1,768 @@
+[modules.fe-js]
+title = '''JavaScript Fundamentals'''
+description = '''Scope, closures, `this`, prototypes, the event loop, Promise/async, and ES2015+.'''
+lesson = '''
+### Key concepts
+- `var` has function scope and is hoisted with the value `undefined`; `let` and `const` have block scope and a **temporal dead zone (TDZ)**.
+- A **closure** is a function that retains access to variables in the scope where it was created.
+- **`this`** depends on how a function is called: `obj.f()` → `obj`; a plain call → `undefined` in strict mode or the global object otherwise; `new` → a new object; an arrow function has **no own `this`** and uses the surrounding scope's value; `call`/`apply`/`bind` set it explicitly.
+- **Event loop**: call stack → finish synchronous code → run **all microtasks** (Promise `.then`, `queueMicrotask`, `await`) → render → **one macrotask** (such as `setTimeout`, I/O, or an event) …
+- `==` performs type coercion; `===` does not. `Object.is(NaN, NaN) === true`.
+- Promise combinators: `all` (fail-fast), `allSettled`, `race`, and `any`.
+'''
+
+[questions.fe-001]
+prompt = '''What is the output order?
+
+```js
+console.log('A');
+setTimeout(() => console.log('B'), 0);
+Promise.resolve().then(() => console.log('C'));
+console.log('D');
+```
+'''
+explanation = '''Synchronous code runs first (`A`, `D`), then the microtask (`C`), then the macrotask (`B`).'''
+
+[questions.fe-002]
+prompt = '''What is printed?
+
+```js
+for (var i = 0; i < 3; i++) {
+  setTimeout(() => console.log(i), 0);
+}
+```
+'''
+explanation = '''`var` has function scope, so all three callbacks refer to the same `i`. By the time they run, `i` is `3`. Use `let` to give each loop iteration its own binding and get `0 1 2`.'''
+
+[questions.fe-003]
+prompt = '''What is printed?
+
+```js
+const obj = {
+  name: 'Bovabon',
+  regular() { return this.name; },
+  arrow: () => this && this.name,
+};
+const f = obj.regular;
+console.log(obj.regular(), obj.arrow(), f());
+```
+(Run in an ES module — strict mode.)
+'''
+options = [ '''Bovabon Bovabon Bovabon''', '''Bovabon undefined → a TypeError when calling f()''', '''Bovabon Bovabon undefined''', '''undefined undefined undefined''' ]
+explanation = '''The arrow function uses the module's `this` (`undefined`), so it returns `undefined`. Calling `f()` as a plain function in strict mode also makes `this` `undefined`; accessing `undefined.name` throws a **TypeError**.'''
+
+[questions.fe-004]
+prompt = '''What is the result of `typeof null`?'''
+explanation = '''This is a historical JavaScript bug from the language's early versions, retained for compatibility.'''
+
+[questions.fe-005]
+prompt = '''What happens when `p2` rejects in `Promise.all([p1, p2, p3])`?'''
+options = [ '''Waits for all promises, then returns an array of results and the error''', '''Rejects immediately with `p2`'s error (fail-fast); `p1` and `p3` keep running, but their results are ignored''', '''Cancels `p1` and `p3`''', '''Resolves with `undefined` at the `p2` position''' ]
+explanation = '''Use `Promise.allSettled` when you need every result. Promises cannot be canceled; use `AbortController` to cancel a fetch request.'''
+
+[questions.fe-006]
+prompt = '''What happens if you access a `let` variable before its declaration in the same block?'''
+explanation = '''`let` and `const` are hoisted too, but remain in the TDZ until their declaration is evaluated.'''
+
+[questions.fe-007]
+prompt = '''Which expressions evaluate to `true`?'''
+explanation = '''`[] == false`: `[]` becomes `''`, then `0`; `false` also becomes `0`. Also, `0.1 + 0.2` is `0.30000000000000004`.'''
+
+[questions.fe-008]
+prompt = '''Use spread syntax to make shallow copies of an object and an array:
+
+```js
+const copy = { {{blank}}obj };
+const arr2 = [{{blank}}arr];
+```
+'''
+explanation = '''Spread makes a shallow, one-level copy. For a deep copy, use `structuredClone(obj)`.'''
+
+[questions.fe-009]
+prompt = '''Cancel a running `fetch` request:
+
+```js
+const controller = new {{blank}}();
+fetch(url, { signal: controller.signal });
+controller.{{blank}}();
+```
+'''
+explanation = '''The fetch promise rejects with an `AbortError`. Use this in a `useEffect` cleanup to avoid race conditions.'''
+
+[questions.fe-010]
+prompt = '''What is a closure? Give an example of a practical use.'''
+keywords = [[ '''scope''', '''lexical scope''' ], [ '''remember''', '''retain access''', '''keep a reference''' ], [ '''private''', '''encapsulation''', '''debounce''', '''memoize''', '''factory''', '''counter''', '''module''', '''hook''' ]]
+model_answer = '''A closure is a function that **remembers and can access variables in the lexical scope** where it was created, even when called outside that scope.
+
+Uses include creating **private variables** (a module pattern or `createCounter()`), **debounce/throttle** functions that retain a `timerId`, **memoization** that retains a cache, function factories, and event handlers in React hooks.
+'''
+explanation = '''Closures are also the source of stale-closure bugs in React.'''
+
+[questions.fe-011]
+prompt = '''Write `debounce(fn, wait)` to return a new function that calls `fn` only after it has **not been called for** `wait` milliseconds.
+- Preserve `this` and the arguments from the **last call**.
+- Add a `cancel()` method to the returned function to cancel the pending call.
+
+The tests use fake timers (`jest.advanceTimersByTime`).
+'''
+explanation = '''Debounce is useful for search fields and resize handlers; throttle is useful for scroll handlers.'''
+hints = [ '''Use `function debounced(...args)` (not an arrow function) to receive the call's `this`.''', '''An arrow function inside `setTimeout` preserves `debounced`'s `this`.''' ]
+
+[questions.fe-012]
+prompt = '''Write `throttle(fn, wait)`: call `fn` **immediately on the first call** (leading), then ignore calls during the next `wait` milliseconds, but call `fn` once more when that interval ends (trailing), using the latest arguments.
+
+Get the time with `Date.now()` or a timer; both are faked in the tests.
+'''
+explanation = '''Throttle limits the maximum call rate, which is useful for scroll, mousemove, and resize handlers.'''
+hints = [ '''Store the most recent call time in `last`.''', '''If the wait period has not elapsed and there is no timer, schedule one for the remaining time.''' ]
+
+[questions.fe-013]
+title = '''Implement `Promise.all`'''
+prompt = '''Write `promiseAll(iterable)` with behavior equivalent to `Promise.all`:
+- Resolve to a result array in the **same order as the input**, not the order of completion.
+- Treat non-promise values as already resolved.
+- Reject immediately with the first rejection reason.
+- An empty iterable resolves to `[]`.
+'''
+explanation = '''This classic interview question checks your understanding of Promises.'''
+hints = [ '''Count the promises still pending and store each result in `results[i]`.''', '''Use `Promise.resolve(item)` to normalize ordinary values into promises.''' ]
+
+[questions.fe-014]
+prompt = '''Write an `EventEmitter` class with these methods:
+- `on(event, listener)` → returns an **unsubscribe** function.
+- `off(event, listener)`
+- `once(event, listener)` → invokes the listener only once.
+- `emit(event, ...args)` → invokes listeners in registration order and returns `true` if any listener was registered, otherwise `false`.
+
+Note: a listener that unsubscribes itself during `emit` must not cause other listeners to be skipped.
+'''
+explanation = '''Pub/sub underlies DOM events, Node.js `EventEmitter`, and many state managers.'''
+hints = [ '''Store listeners in a `Map<string, Function[]>`.''', '''Iterate over a **copy** of the listener array when emitting.''' ]
+
+[questions.fe-015]
+prompt = '''Write `memoize(fn, resolver?)` to cache results by argument:
+- By default, the key is the **first argument**.
+- If `resolver(...args)` is provided, use its result as the key.
+- The returned function has a `cache` property that is a `Map`.
+- Preserve `this`.
+'''
+explanation = '''This is similar to lodash's `_.memoize`.'''
+hints = [ '''Use `cache.has(key)` instead of checking whether `cache.get(key) !== undefined`.''' ]
+
+[questions.fe-dd01]
+prompt = '''You need to call three independent APIs and display **every** result, even if some calls fail. Which function should you use?'''
+explanation = '''`allSettled` never rejects; each item is `{status: 'fulfilled', value}` or `{status: 'rejected', reason}`. `any` returns the first successful result, while `all` rejects as soon as one promise rejects.'''
+
+[questions.fe-dd02]
+prompt = '''Which expressions evaluate to `0`?'''
+explanation = '''`??` substitutes only when the left side is `null` or `undefined`, while `||` also substitutes falsy values such as `0`. `?.` stops and returns `undefined` when it encounters `null` or `undefined`.'''
+
+[questions.fe-dd09]
+title = '''Polyfill `Object.groupBy` and `Promise.allSettled`'''
+prompt = '''Write two functions without using the built-in versions:
+
+1. `groupBy(items, keyFn)` — like `Object.groupBy`: return an object **with no prototype** (`Object.create(null)`); each key is the string form of `keyFn(item, index)`, and each value is an array of matching items in their original order. Accept any iterable.
+2. `allSettled(promises)` — like `Promise.allSettled`: accept an iterable whose elements may not be promises, then resolve to an array of `{ status: 'fulfilled', value }` or `{ status: 'rejected', reason }` objects in the **same order as the input**. An empty iterable resolves to `[]`.
+'''
+explanation = '''An object without a prototype avoids collisions with keys such as `constructor`. Use `Map.groupBy` when keys should not be converted to strings.'''
+hints = [ '''`Object.create(null)` creates an object that does not inherit `toString`, `__proto__`, and similar properties.''', '''Wrap each item with `Promise.resolve(p).then(onOk, onErr)`, then use `Promise.all`.''' ]
+
+[modules.fe-html-css]
+title = '''HTML, CSS, and Accessibility'''
+description = '''Semantic HTML, the box model, specificity, Flexbox/Grid, positioning, responsive design, and accessibility.'''
+lesson = '''
+### CSS
+- **Box model**: `content-box` (the default; `width` applies only to the content) versus `border-box` (`width` includes padding and border).
+- **Specificity**: inline styles (1,0,0,0) > IDs (0,1,0,0) > classes/attributes/pseudo-classes (0,0,1,0) > elements/pseudo-elements (0,0,0,1). `!important` overrides normal declarations (and is resolved against other `!important` declarations by specificity and cascade order).
+- **Positioning**: `relative` (offset from its normal position), `absolute` (relative to the nearest positioned ancestor), `fixed` (usually relative to the viewport), and `sticky`.
+- A **stacking context** can be created by `position` with `z-index`, `opacity < 1`, `transform`, `filter`, and other properties.
+- Flexbox is one-dimensional; Grid is two-dimensional.
+- Units include `rem` (based on the root font size), `em` (based on the relevant element's font size), `vh`/`vw`, `dvh`, `ch`, and `%`.
+
+### HTML and accessibility
+- Use semantic elements such as `header`, `nav`, `main`, `article`, `section`, and `button` instead of patterns such as `div onclick`.
+- Images need appropriate `alt` text; inputs need a `<label for>`; minimum text contrast is **4.5:1** for normal text under WCAG AA.
+- “No ARIA is better than bad ARIA”: prefer native HTML elements.
+'''
+
+[questions.fe-020]
+prompt = '''With `box-sizing: border-box`, `width: 200px; padding: 20px; border: 5px solid`, what is the rendered width?'''
+explanation = '''With `border-box`, the width includes padding and border, so the content width is 200 − 40 − 10 = 150px. With `content-box`, the rendered width would be 250px.'''
+
+[questions.fe-021]
+prompt = '''Which selector has the **highest specificity**?'''
+explanation = '''`#menu a` has specificity (1,0,1): one ID outranks any combination without an ID. `.nav .item a` has (0,2,1).'''
+
+[questions.fe-022]
+prompt = '''What is an element with `position: absolute` positioned relative to?'''
+options = [ '''Always the `body`''', '''Its nearest ancestor whose `position` is not `static` (or the initial containing block if there is none)''', '''Its direct parent''', '''The viewport''' ]
+explanation = '''A common pattern is to set `position: relative` on the parent to establish the containing block. An ancestor with `transform` can also establish a containing block for a fixed-position descendant.'''
+
+[questions.fe-023]
+prompt = '''When should you choose CSS Grid over Flexbox?'''
+options = [ '''For a **two-dimensional** layout (rows and columns together), such as a page layout or gallery''', '''To center a single element''', '''When you need responsive design, because Grid does not support it''', '''When you need animation''' ]
+explanation = '''Flexbox is suited to one-dimensional layouts that follow the content; Grid is suited to two-dimensional layouts organized around a structure.'''
+
+[questions.fe-024]
+prompt = '''Why use `<button>` instead of `<div onclick>` for a button?'''
+options = [ '''Because a `div` cannot receive clicks''', '''A `<button>` already supports keyboard focus, activation with Enter/Space, and the `button` role for screen readers''', '''Because buttons look better''', '''Because a `div` cannot be styled''' ]
+explanation = '''To make a `div` behave equivalently, you would need to add `role="button"`, `tabindex="0"`, and keyboard handling, which is easy to get wrong.'''
+
+[questions.fe-025]
+prompt = '''Which properties create a new **stacking context**?'''
+explanation = '''This explains why `z-index: 9999` sometimes appears not to work: the element is confined to its parent's stacking context.'''
+
+[questions.fe-026]
+prompt = '''Center an element on both axes with Flexbox:
+
+```css
+.parent {
+  display: flex;
+  {{blank}}: center;
+  {{blank}}: center;
+}
+```
+'''
+explanation = '''With Grid, you can also use `display: grid; place-items: center;`.'''
+
+[questions.fe-027]
+prompt = '''Create a responsive grid with three equally flexible columns that wrap automatically and have a minimum width of 200px:
+
+```css
+.grid {
+  display: grid;
+  grid-template-columns: repeat({{blank}}, minmax(200px, 1fr));
+}
+```
+'''
+explanation = '''`auto-fit` collapses empty tracks; `auto-fill` keeps them.'''
+
+[questions.fe-028]
+prompt = '''List the main principles for making a website **accessible** (a11y).'''
+keywords = [[ '''semantic''', '''semantic HTML''', '''HTML elements''' ], [ '''alt''' ], [ '''keyboard''', '''focus''', '''tab order''' ], [ '''contrast''' ], [ '''label''', '''form label''' ], [ '''ARIA''' ]]
+model_answer = '''- Use **semantic HTML** (`button`, `nav`, `main`, and correctly ordered headings).
+- Give images descriptive **alt** text; use `alt=""` for decorative images.
+- Make controls fully usable with a **keyboard**, provide visible **focus**, and keep tab order logical.
+- Ensure sufficient **color contrast** (WCAG AA 4.5:1 for normal text); do not rely on color alone to convey information.
+- Give form fields a **label** and clear error messages.
+- Use **ARIA** only where native elements are insufficient (for example, `aria-live` or `aria-expanded`), and respect `prefers-reduced-motion`.
+'''
+explanation = '''Check with Lighthouse, axe DevTools, and a real screen reader such as VoiceOver or NVDA.'''
+
+[questions.fe-dd03]
+prompt = '''You want a **card** to change its layout based on the **width of its own container** (a narrow sidebar versus a wide main area), independently of the viewport size. What should you use?'''
+options = [ '''`@media (min-width: 600px)`''', '''`container-type: inline-size` on the container, plus `@container (min-width: 400px) { ... }`''', '''`aspect-ratio`''', '''`@supports`''' ]
+explanation = '''Container queries let a component adapt wherever it is placed in the layout.'''
+
+[questions.fe-dd04]
+prompt = '''Give `.field` a red border when it **contains** an invalid input (a CSS “parent” selector):
+
+```css
+.field:{{blank}}(input:invalid) { border-color: red; }
+```
+
+Make the font size fluid: minimum `1rem`, preferred `2.5vw`, maximum `2rem`:
+
+```css
+h1 { font-size: {{blank}}(1rem, 2.5vw, 2rem); }
+```
+
+Declare cascade layer order so library styles always lose to yours:
+
+```css
+{{blank}} reset, vendor, components;
+```
+'''
+explanation = '''`:has()` selects an element based on its descendants or siblings. `clamp(min, preferred, max)` sets a bounded fluid value. With `@layer`, a later-declared layer wins over an earlier one regardless of specificity.'''
+
+[questions.fe-dd08]
+prompt = '''Why use the native `<dialog>` element with `showModal()` instead of building a modal from a `<div>`?'''
+keywords = [[ '''focus''', '''focus trap''', '''focus management''' ], [ '''Esc''', '''Escape''' ], [ '''inert''', '''background interaction''', '''background is not interactive''' ], [ '''::backdrop''', '''backdrop''' ], [ '''top layer''', '''z-index''' ], [ '''accessibility''', '''a11y''', '''screen reader''', '''ARIA''', '''role''' ]]
+model_answer = '''`<dialog>` with `showModal()` provides several behaviors that are difficult to implement correctly by hand:
+- It appears in the **top layer**, so it does not have to compete with `z-index`.
+- The rest of the page becomes **inert** (it cannot be clicked or focused); **focus** moves into the dialog and is restored when it closes.
+- **Esc** closes the dialog (with a `cancel` event), and `<form method="dialog">` can close it and set `returnValue`.
+- The **`::backdrop`** pseudo-element lets you style the background behind it.
+- The browser exposes the modal's role and state to **screen readers**, supporting accessibility.
+'''
+explanation = '''Custom modals often miss focus trapping, Escape handling, and ARIA details; `<dialog>` supplies these behaviors natively.'''
+
+[modules.fe-browser]
+title = '''The Browser and Web Performance'''
+description = '''Critical rendering path, reflow/repaint, Core Web Vitals, HTTP caching, browser storage, and event delegation.'''
+lesson = '''
+### Critical rendering path
+HTML → **DOM**, CSS → **CSSOM** → **render tree** → **layout** (reflow) → **paint** → **composite**.
+- CSS **blocks rendering**; a regular `<script>` usually **blocks HTML parsing**. Use `defer` (runs after parsing, in document order) or `async` (runs as soon as it finishes loading, with no order guarantee).
+- Changes to `transform` or `opacity` often need only compositing, making them inexpensive animation properties.
+
+### Core Web Vitals (2024+)
+| Metric | Measures | Good |
+|---|---|---|
+| **LCP** | How quickly the largest content element appears | ≤ 2.5s |
+| **INP** | Responsiveness to user interactions (replaced FID) | ≤ 200ms |
+| **CLS** | Visual layout stability | ≤ 0.1 |
+
+### Storage and caching
+- `localStorage` (persistent, about 5 MB, synchronous), `sessionStorage` (per tab), cookies (sent with requests; `HttpOnly`, `Secure`, `SameSite`), and IndexedDB (larger, asynchronous).
+- HTTP caching: `Cache-Control: max-age`, `no-cache` (must revalidate), `no-store`, and `ETag`/`If-None-Match` → `304`.
+'''
+
+[questions.fe-040]
+prompt = '''What is the difference between `<script defer>` and `<script async>`?'''
+options = [ '''No difference''', '''`defer` runs after HTML parsing and **in document order**; `async` runs as soon as it finishes loading, with **no order guarantee**''', '''`async` blocks HTML parsing''', '''`defer` is only for modules''' ]
+explanation = '''A script with `type="module"` behaves like a deferred script by default.'''
+
+[questions.fe-041]
+prompt = '''Which Core Web Vital measures **responsiveness to user interactions** (replacing FID in March 2024)?'''
+explanation = '''INP (Interaction to Next Paint) measures responsiveness; a good score is ≤ 200ms.'''
+
+[questions.fe-042]
+prompt = '''Which CSS properties are usually the **least expensive** to change for an animation?'''
+options = [ '''`width`/`height`''', '''`top`/`left`''', '''`transform` and `opacity`''', '''`margin`''' ]
+explanation = '''These changes may require only compositing (which can run on the GPU), without recalculating layout or repainting.'''
+
+[questions.fe-043]
+prompt = '''What does the `Cache-Control: no-cache` header mean?'''
+options = [ '''Never store the response in a cache''', '''The response may be stored, but must be **revalidated** with the server before each use (for example, with ETag or Last-Modified)''', '''Cache forever''', '''Cache only on a CDN''' ]
+explanation = '''`no-store` means the response must not be stored. For assets with hashed filenames, use a long lifetime such as `max-age=31536000, immutable`.'''
+
+[questions.fe-044]
+prompt = '''What is event delegation?'''
+options = [ '''Attach a listener to every child element''', '''Attach one listener to a parent and use event bubbling and `event.target` to handle events from many children, including children added later''', '''Delegate an event to a Web Worker''', '''Call `stopPropagation` everywhere''' ]
+explanation = '''It saves memory and automatically handles dynamically added elements. React also uses delegation at the root.'''
+
+[questions.fe-045]
+prompt = '''Which approaches reduce **CLS** (layout shift)?'''
+options = [ '''Set `width`/`height` or `aspect-ratio` for images and videos''', '''Insert an ad banner above the content after the page loads''', '''Reserve space (for example, with a skeleton) for dynamically loaded content''', '''Use `font-display: optional` or preload fonts, and use `size-adjust` for fallback fonts''', '''Animate `top` instead of `transform`''' ]
+explanation = '''Inserting content that pushes the layout and animating layout properties can both cause CLS.'''
+
+[questions.fe-046]
+prompt = '''Secure session cookie: prevent JavaScript access, send only over HTTPS, and mitigate CSRF:
+
+```
+Set-Cookie: sid=abc; {{blank}}; {{blank}}; SameSite=Lax
+```
+'''
+explanation = '''`HttpOnly` blocks access through `document.cookie` (reducing the impact of XSS); `Secure` sends the cookie only over HTTPS.'''
+
+[questions.fe-047]
+prompt = '''Describe what happens from the moment you enter a URL in the browser until the page is displayed.'''
+keywords = [[ '''DNS''' ], [ '''TCP''', '''TLS''', '''HTTPS''', '''handshake''', '''QUIC''' ], [ '''HTTP request''', '''request''' ], [ '''DOM''' ], [ '''CSSOM''' ], [ '''layout''', '''reflow''' ], [ '''paint''', '''composite''']]
+model_answer = '''1. The browser resolves the domain name through **DNS** (browser cache → OS → resolver).
+2. It establishes a connection with a **TCP + TLS handshake** (or QUIC for HTTP/3).
+3. It sends an **HTTP request** and the server returns an HTML response (possibly through a CDN, redirect, or cache).
+4. The browser parses HTML into the **DOM**. It loads and parses CSS into the **CSSOM**. It also loads and executes scripts (which can block parsing unless they use `defer` or `async`).
+5. The DOM and CSSOM form a render tree, followed by **layout** (calculating positions and sizes), **paint**, and **compositing** layers onto the screen.
+6. The browser continues loading resources such as images and fonts, runs JavaScript, hydrates the page, and so on.
+'''
+explanation = '''This classic interview question can be answered at many levels of detail.'''
+
+[questions.fe-048]
+title = '''Parse a query string'''
+prompt = '''Write `parseQuery(qs)` to convert a query string into an object:
+- Remove a leading `?`, if present.
+- Decode with `decodeURIComponent`; treat `+` as a space.
+- For repeated keys, store an array of values in input order.
+- A key without `=` has the value `''`.
+- Ignore empty segments (for example, `a=1&&b=2`).
+'''
+explanation = '''In production, use `new URLSearchParams(qs)`; implementing this yourself helps explain URL encoding.'''
+hints = [ '''Split on the **first** `=` only (use `indexOf`).''', '''Replace `+` before calling `decodeURIComponent`.''' ]
+
+[questions.fe-dd05]
+prompt = '''What is the most efficient way to lazy-load images or fetch more data when a user scrolls near the end of a list?'''
+options = [ '''Listen for `scroll` and call `getBoundingClientRect()` on every element''', '''Use `IntersectionObserver` to watch a sentinel element with `rootMargin` (for example, `200px`)''', '''Check `scrollTop` every 100ms with `setInterval`''', '''Use `MutationObserver`''' ]
+explanation = '''`IntersectionObserver` runs asynchronously, avoiding a forced reflow on the main thread for every scroll. For a simple image, `loading="lazy"` may be enough.'''
+
+[questions.fe-dd06]
+prompt = '''Cancel the previous request when a user enters a new search term:
+
+```js
+let ctrl;
+async function search(q) {
+  ctrl?.abort();
+  ctrl = new {{blank}}();
+  const res = await fetch('/api/search?q=' + encodeURIComponent(q), { {{blank}}: ctrl.signal });
+  return res.json();
+}
+```
+'''
+explanation = '''A canceled request rejects with an `AbortError`; handle or ignore it when displaying errors. `AbortSignal.timeout(ms)` creates a signal that aborts after the specified delay.'''
+
+[modules.fe-ts]
+title = '''TypeScript'''
+description = '''Basic types, unions/intersections, generics, narrowing, utility types, and `unknown` versus `any`.'''
+lesson = '''
+### Key concepts
+- `unknown` is safer than `any`: you must **narrow** its type before using it.
+- `type` versus `interface`: interfaces support **declaration merging** and `extends`; type aliases are more flexible for unions, mapped types, and conditional types.
+- Narrowing techniques include `typeof`, `instanceof`, `in`, **discriminated unions** (`kind: 'a' | 'b'`), and type guards such as `x is Foo`.
+- Utility types include `Partial`, `Required`, `Readonly`, `Pick`, `Omit`, `Record`, `ReturnType`, `Parameters`, `Awaited`, and `NonNullable`.
+- Use `never` for exhaustive checks in a `switch`.
+- `as const` preserves literal types; `satisfies` checks compatibility without discarding the inferred type.
+'''
+
+[questions.fe-060]
+prompt = '''What is the difference between `unknown` and `any`?'''
+options = [ '''They are the same''', '''`unknown` requires type narrowing before use; `any` disables type checking''', '''`any` is safer''', '''`unknown` can only be used for functions''' ]
+explanation = '''Use `unknown` for data from outside your program, such as JSON or a caught error.'''
+
+[questions.fe-061]
+prompt = '''What type does `Omit<User, 'password'>` create?'''
+options = [ '''A type with only `password`''', '''A type with every `User` property except `password`''', '''A `User` type where `password` is optional''', '''An error''' ]
+explanation = '''The inverse is `Pick<User, 'password'>`.'''
+
+[questions.fe-062]
+prompt = '''What is the purpose of `const _exhaustive: never = shape;` in the default case?
+
+```ts
+type Shape = { kind: 'circle'; r: number } | { kind: 'square'; size: number };
+function area(shape: Shape) {
+  switch (shape.kind) {
+    case 'circle': return Math.PI * shape.r ** 2;
+    case 'square': return shape.size ** 2;
+    default: const _exhaustive: never = shape; return _exhaustive;
+  }
+}
+```
+'''
+options = [ '''To improve runtime speed''', '''An exhaustive check: if a new union member is added without a matching case, TypeScript reports a compile-time error''', '''To throw a runtime error''', '''It has no effect''' ]
+explanation = '''A discriminated union combined with `never` lets the compiler flag a missing case.'''
+
+[questions.fe-063]
+prompt = '''What is a feature that `interface` supports but a `type` alias does not?'''
+options = [ '''Extending another type''', '''Declaration merging (two declarations with the same name are combined)''', '''Generics''', '''Union types''' ]
+explanation = '''Declaration merging is useful for extending library types (module augmentation). Only type aliases can directly express unions, mapped types, and conditional types.'''
+
+[questions.fe-064]
+prompt = '''Which of these are valid **type narrowing** techniques?'''
+options = [ '''`typeof x === 'string'`''', '''`x instanceof Date`''', '''`'id' in x`''', '''`x as string`''', '''A function `isUser(x): x is User`''', '''`switch (x.kind)` with a discriminated union''' ]
+explanation = '''`as` is a type assertion: it changes what the compiler assumes without checking the value at runtime.'''
+
+[questions.fe-065]
+prompt = '''Define a generic function that returns the first element of an array:
+
+```ts
+function first{{blank}}(arr: T[]): T | undefined {
+  return arr[0];
+}
+```
+'''
+explanation = '''TypeScript infers `T` from the argument: `first([1, 2])` has type `number | undefined`.'''
+
+[questions.fe-066]
+prompt = '''Get the return type of a function after unwrapping its Promise:
+
+```ts
+async function getUser() { return { id: 1, name: 'An' }; }
+type User = {{blank}}<ReturnType<typeof getUser>>;
+```
+'''
+explanation = '''`ReturnType` gives `Promise<{...}>`; `Awaited` unwraps it to `{ id: number; name: string }`.'''
+
+[questions.fe-067]
+prompt = '''Explain the `satisfies` operator in TypeScript and how it differs from declaring a type with `const x: T = ...`.'''
+keywords = [[ '''check''', '''type check''', '''validate''', '''validation''' ], [ '''infer''', '''inferred type''', '''literal''', '''preserve type''', '''narrower''' ], [ '''widen''', '''widening''', '''annotation''' ]]
+model_answer = '''`expr satisfies T` **checks** that an expression is compatible with type `T` while **preserving its inferred type**, including narrower literal types and specific keys. By contrast, the annotation `const x: T = ...` makes the type of `x` **widen to `T`**, losing detail (for example, which keys actually exist or whether a value is a particular string or number).
+'''
+explanation = '''For example, `const routes = { home: '/', user: '/u' } satisfies Record<string, string>` keeps a precise type for `routes.home` while reporting misspelled keys.'''
+
+[questions.fe-dd07]
+prompt = '''Given `type User = { id: number; name: string; email?: string }`, which type is **exactly** `{ id: number; name: string }`?
+'''
+explanation = '''A mapped type with an `as ... never` clause removes a key; that is how `Omit` works. `Required` makes `email` mandatory, while `Partial` makes every field optional.'''
+
+[modules.fe-tooling]
+title = '''Tooling, Testing, and Security'''
+description = '''Bundlers, tree-shaking, Vite, the testing pyramid, XSS, CSRF, CORS, and CSP.'''
+lesson = '''
+### Tooling
+- **Bundlers** (Vite/Rollup, webpack, esbuild, Rspack, Turbopack) combine modules, perform **tree-shaking** (which works best with ES modules), split code, and minify output.
+- Vite's development server uses **native ESM** and esbuild to pre-bundle dependencies, which helps it start quickly.
+- A **transpiler** (Babel/SWC/TypeScript) converts newer syntax to older syntax; a **polyfill** supplies a missing API.
+
+### Testing
+- The pyramid/trophy model calls for many **unit and integration** tests and fewer **end-to-end (E2E)** tests (for example, with Playwright or Cypress).
+- Jest/Vitest provide `describe`, `test`, `expect`, mocks (`vi.fn`/`jest.fn`), and fake timers.
+
+### Security
+- **XSS**: injecting a script through unescaped data. React escapes text by default; be careful with `dangerouslySetInnerHTML` and `href="javascript:..."`.
+- **CSRF**: exploiting cookies that are sent automatically with requests. Mitigate it with `SameSite` and CSRF tokens.
+- **CORS**: a **browser-enforced** mechanism that lets a server declare which origins may read a response (`Access-Control-Allow-Origin`). A preflight `OPTIONS` request is used for requests that are not “simple.”
+- **CSP**: a header that restricts the allowed sources for scripts and styles.
+'''
+
+[questions.fe-080]
+prompt = '''Tree-shaking works best when:'''
+options = [ '''You use CommonJS `require`''', '''You use static ES modules (`import`/`export`) and the modules have no side effects (`"sideEffects": false`)''', '''You use `eval`''', '''You bundle everything into one file''' ]
+explanation = '''ES modules have a static structure, so a bundler can determine which exports are unused.'''
+
+[questions.fe-081]
+prompt = '''Who enforces CORS?'''
+options = [ '''The server''', '''The browser''', '''A firewall''', '''DNS''' ]
+explanation = '''The server only **declares** CORS headers; the browser decides whether JavaScript can read the response. CORS does not restrict tools such as curl or Postman.'''
+
+[questions.fe-082]
+prompt = '''Which React code can expose an **XSS** risk?'''
+explanation = '''React escapes text by default. `dangerouslySetInnerHTML` requires sanitization (for example, with DOMPurify). Also be careful with `href={userUrl}` when the URL could use `javascript:`.'''
+
+[questions.fe-083]
+prompt = '''Why does the Vite development server start faster than traditional bundlers?'''
+options = [ '''Because it is written in Rust''', '''It serves source files as **native ESM**, transforming files only when the browser requests them, and pre-bundles dependencies with esbuild''', '''Because it does not support TypeScript''', '''Because it skips CSS''' ]
+explanation = '''For production, Vite builds with Rollup (Rolldown in newer versions).'''
+
+[questions.fe-084]
+prompt = '''Which measures help prevent **CSRF**?'''
+options = [ '''A cookie with `SameSite=Lax/Strict`''', '''A CSRF token in a form or header''', '''Checking the `Origin`/`Referer` header''', '''Storing passwords with MD5''', '''Enabling CORS with `*`''' ]
+explanation = '''MD5 is unrelated (and obsolete). CORS with `*` does not prevent CSRF.'''
+
+[questions.fe-085]
+prompt = '''Mock a function and check that it was called with the expected argument (Vitest):
+
+```js
+const onSave = vi.{{blank}}();
+render(<Form onSave={onSave} />);
+await user.click(screen.getByRole('button', { name: /lưu/i }));
+expect(onSave).{{blank}}({ name: 'An' });
+```
+'''
+explanation = '''Vitest's API is compatible with Jest (`jest.fn` ↔ `vi.fn`).'''
+
+[questions.fe-086]
+prompt = '''What is Content Security Policy (CSP), and which attacks can it help mitigate?'''
+keywords = [[ '''header''', '''meta''' ], [ '''XSS''', '''cross-site scripting''' ], [ '''script-src''', '''source''', '''allowlist''', '''whitelist''', '''domain''' ], [ '''inline''', '''nonce''', '''hash''', '''eval''' ]]
+model_answer = '''CSP is an **HTTP header** (`Content-Security-Policy`) that tells the browser to load or execute resources only from **allowed sources** (`script-src`, `style-src`, `img-src`, `connect-src`, `frame-ancestors`, and others).
+
+It can help mitigate **XSS** by blocking inline scripts and scripts from unknown domains, and by blocking `eval`; trusted scripts can use a **nonce or hash**. `frame-ancestors` can help prevent clickjacking, and a policy can reduce data exfiltration. `Content-Security-Policy-Report-Only` lets you test a policy before enforcing it.
+'''
+explanation = '''CSP is a second layer of defense; you still need to escape or sanitize data.'''
+
+[questions.fe-087]
+title = '''Implement `deepEqual` for test assertions'''
+prompt = '''Write `deepEqual(a, b)` (similar to `toEqual`) for deep comparison:
+- Primitives: compare with `Object.is`.
+- Arrays: require equal lengths and recursively equal elements.
+- Plain objects: require the same set of keys and recursively equal values.
+- Dates: compare with `getTime()`.
+- An array is not an object for this comparison (`[]` differs from `{}`).
+'''
+explanation = '''This is the core of many assertion libraries.'''
+hints = [ '''Handle base cases first (`Object.is` and non-objects).''', '''Recurse over each key.''' ]
+
+[questions.fe-088]
+title = '''Escape HTML to prevent XSS'''
+prompt = '''Write `escapeHtml(str)` to replace these dangerous characters:
+`&` → `&amp;`, `<` → `&lt;`, `>` → `&gt;`, `"` → `&quot;`, `'` → `&#39;`
+
+Also write `safeUrl(url)`: return `url` if its protocol is `http:`, `https:`, or `mailto:`, or if it is a relative path (starts with `/`, `./`, or `#`). Otherwise (for example, `javascript:` or `data:`), return `'about:blank'`. Match protocols case-insensitively and trim leading whitespace.
+'''
+explanation = '''Escape for the output context and use an allowlist for URLs.'''
+hints = [ '''Use one regex, `/[&<>"']/g`, with a replacement function to avoid escaping replacements again.''', '''An allowlist is safer than a blocklist.''' ]
+
+[modules.frontend-dv-forms]
+title = '''HTML Forms and Validation'''
+description = '''Form controls, native constraint validation, FormData, the submit lifecycle, and user-friendly error design.'''
+lesson = '''
+### A form is a data contract
+A good form makes clear where data will be sent, how it will be sent, and what name each value has. `action` sets the destination; `method="get"` suits shareable queries, while `method="post"` is commonly used to submit data that changes state. Each control needs a `name` to become part of the submitted data; `id` is mainly used to associate a `<label for>` and does not replace `name`.
+
+| Validation layer | Role | Limitation |
+|---|---|---|
+| HTML constraints (`required`, `type`, `min`, `pattern`) | Provide early feedback based on the control's semantics | Can be bypassed or changed on the client |
+| Client-side JavaScript | Validate interactions across fields and show contextual errors | Is not a security boundary |
+| Server | Validate data before saving it or taking action | Always needed for untrusted data |
+
+For example, `<label for="email">Email</label><input id="email" name="email" type="email" required>` provides a readable label, a submitted field name, and basic format validation. `autocomplete` helps the browser suggest suitable values. An unchecked checkbox or a disabled control is usually omitted from the submitted data. `FormData` preserves repeated values: use `getAll("topic")` when one name has several values; `get()` returns only one.
+
+For JavaScript handling, listen for the form's `submit` event to validate or send data asynchronously. Call `event.preventDefault()` when the application takes over the default submission behavior. `requestSubmit()` runs constraint validation and dispatches the `submit` event; `form.submit()` skips both. Use `requestSubmit()` when you need the standard submission flow.
+
+Common mistakes include using a placeholder instead of a label, forgetting `name`, leaving a secondary form button without `type="button"` so it submits accidentally, validating only on the client, or calling `submit()` and wondering why the handler did not run. When displaying errors yourself, associate each message with its control and make the error available as text instead of relying only on border color.
+'''
+
+[questions.frontend-dv001]
+prompt = '''An `<input>` has the id `email` and the name `contact`. When the form is submitted, which key represents the input's value?'''
+options = [ '''`email`''', '''`contact`''', '''Both `email` and `contact`''', '''No key if `value` is missing''' ]
+explanation = '''The control's `name` supplies the key in the submitted payload. `id` is useful for labels and DOM access, but does not name the submitted field.'''
+
+[questions.frontend-dv002]
+prompt = '''In a form, a button is only meant to open help, but clicking it reloads the page. What is the best fix?'''
+options = [ '''Set the button's `type=button`''', '''Set the form's `method=get`''', '''Remove `name` from the button''', '''Replace the button with an `<a>`''' ]
+explanation = '''A `<button>` inside a form submits by default. Set `type=button` for a secondary action.'''
+
+[questions.frontend-dv003]
+prompt = '''Which statements about constraint validation and form submission are correct?'''
+options = [ '''`required` can make an empty control invalid before a regular submission.''', '''`type=email` checks every business rule for an email address.''', '''Browser validation can be bypassed, so the server still needs to validate the data.''', '''A `disabled` control is usually omitted from submitted form data.''', '''`id` automatically becomes a `FormData` key even without `name`.''' ]
+explanation = '''Constraint validation improves the user experience, but does not fully validate business rules or replace server-side checks. Controls need a `name` and must not be disabled to be submitted.'''
+
+[questions.frontend-dv004]
+prompt = '''To get every value named `topic` from a `FormData` object, complete the expression:
+
+```js
+const topics = formData.{{blank}}("topic");
+```
+'''
+explanation = '''`getAll(name)` returns an array of all values with that name; `get(name)` returns only one value.'''
+
+[questions.frontend-dv005]
+prompt = '''A handler needs to dispatch the `submit` event and run native HTML validation before submitting through code. Which API should it call?'''
+options = [ '''`form.submit()`''', '''`form.requestSubmit()`''', '''Manually dispatch a click event on the form''', '''`form.checkValidity()` because it submits the form automatically''' ]
+explanation = '''`requestSubmit()` runs validation and the regular submission flow. `submit()` skips validation and the `submit` event; `checkValidity()` only checks validity.'''
+
+[questions.frontend-dv006]
+prompt = '''When handling submission with JavaScript, which statements correctly describe the event APIs?'''
+options = [ '''`preventDefault()` cancels the default submit behavior if the event is cancelable.''', '''`preventDefault()` also stops the event from bubbling to ancestors.''', '''`stopPropagation()` stops further propagation but does not by itself cancel the default behavior.''', '''Once client-side submission is blocked, the server no longer needs to validate the data.''' ]
+explanation = '''Canceling the default behavior and stopping propagation are separate actions. Client-provided data still needs server-side validation.'''
+
+[questions.frontend-dv007]
+prompt = '''For a sign-up form, how would you combine native constraint validation, accessible error messages, and server-side checks?'''
+model_answer = '''Use `required`, `type`, and suitable constraints for basic browser feedback; keep labels and associate clear text error messages with their fields for accessibility. On submit, use `reportValidity()` or handle the event to present errors appropriately. The server must validate every value again because client data cannot be trusted.
+'''
+explanation = '''A strong answer distinguishes client-side UX support from enforcing trusted rules on the server.'''
+
+[questions.frontend-dvc01]
+title = '''Validate sign-up data'''
+prompt = '''Write `validateRegistration(values)` for an object with the fields `name`, `email`, `password`, and `confirmPassword` (all values are strings; treat a missing field as an empty string). Return an object with exactly these four keys; each value should be an error message or `null` if valid.
+- Trim `name` and `email` before checking them; an empty name returns `Name is required`.
+- An empty email returns `Email is required`; a non-empty email must match the simple pattern `local@domain.tld`, otherwise return `Email is invalid`.
+- An empty password returns `Password is required`; fewer than 8 characters returns `Password must be at least 8 characters`.
+- An empty confirmation returns `Please confirm password`; if it differs from the original password, return `Passwords do not match`.
+- This validation supports the interface. The server must still validate the data.
+'''
+explanation = '''Extracting validation into a pure function makes it easier to test and reuse in the interface; the server must still validate independently.'''
+hints = [ '''Default missing fields to empty strings, then trim `name` and `email`.''', '''Check for an empty value before checking its format or length.''' ]
+
+[modules.frontend-dv-motion]
+title = '''CSS Motion and Transitions'''
+description = '''Transitions, keyframe animation, reduced motion, scroll-driven animation, and View Transitions.'''
+lesson = '''
+### Choose the right motion mechanism
+CSS provides several motion tools, each suited to a different kind of input. A transition responds when a style changes state, such as a button moving from its normal style to hover or focus. Use `@keyframes` animation for multiple stages, repetition, or motion that runs independently of direct interaction. Scroll-driven animation maps progress to scrolling or an element's visibility; View Transitions help the browser animate between two visual states of a page.
+
+| Mechanism | Driven by | Good for |
+|---|---|---|
+| `transition` | A computed style change | Hover, focus, opening or closing a state |
+| `@keyframes` + `animation` | A time-based timeline | Multi-step sequences, loops, or autonomous motion |
+| Scroll/view timeline | Scroll position or visibility progress | Reading progress and effects tied to content in the viewport |
+| View Transition | Two interface snapshots | Moving between states or pages |
+
+For example, `.card { transition: transform 180ms ease; } .card:hover { transform: translateY(-2px); }` creates a short transition when the state changes. For animations, `animation-fill-mode: forwards` keeps the final keyframe's style after completion; by default, animation styles are not retained. Transitions affect suitable properties and usually need start and end values that can be interpolated. Avoid `transition: all` when a component may change other properties unexpectedly.
+
+Respect a user's reduced-motion preference with `@media (prefers-reduced-motion: reduce)`: reduce distance or duration, or remove decorative motion, while keeping state changes clear. Using `transform` or `opacity` often reduces layout work, but measure on the actual page because filters, large areas, and many layers can still be expensive. For scroll-driven animations and View Transitions, provide a clear static presentation when the feature is unsupported.
+
+Common mistakes include attaching an effect only to `:hover` so keyboard users get no feedback, expecting `transition` to create multiple stages like keyframes, forgetting `animation-fill-mode`, using large movements to convey important information, or ignoring `prefers-reduced-motion`. Motion should clarify relationships and state without slowing the interface or causing discomfort.
+'''
+
+[questions.frontend-dv008]
+prompt = '''A button changes from `opacity: 0.7` to `opacity: 1` on focus. Which CSS mechanism should smoothly interpolate between the two states?'''
+options = [ '''`transition`''', '''`@keyframes` is required''', '''`@font-face`''', '''`@container`''' ]
+explanation = '''A transition is suited to a style change caused by a state change when you want to interpolate between the old and new values.'''
+
+[questions.frontend-dv009]
+prompt = '''An effect needs to pass through several timed stages and loop forever, independently of hover. Which structure should you use?'''
+options = [ '''Combine `@keyframes` with `animation`''', '''Use only `transition`''', '''Combine `@media` with `display`''', '''Use `animation-timeline: view()` for every case''' ]
+explanation = '''Keyframes describe multiple stages; animation properties set their duration, repetition, direction, and behavior.'''
+
+[questions.frontend-dv010]
+prompt = '''Which media query feature lets a page adapt motion to the operating system's accessibility preference?'''
+explanation = '''`prefers-reduced-motion: reduce` lets a page reduce or remove unnecessary motion according to the user's preference.'''
+
+[questions.frontend-dv011]
+prompt = '''Which principles make interface motion more accessible?'''
+options = [ '''Provide a reduced-motion version when `prefers-reduced-motion` is `reduce`.''', '''Keep state information in text or structure instead of communicating it only through animation.''', '''Remove every focus indicator when the user requests reduced motion.''', '''Provide appropriate feedback for keyboard actions, not only hover.''' ]
+explanation = '''Reducing motion does not mean removing feedback or state information; focus and other essential cues must remain clear.'''
+
+[questions.frontend-dv012]
+prompt = '''Choose the correct descriptions of scroll-linked motion and View Transitions.'''
+options = [ '''A scroll timeline can link animation progress to scroll position.''', '''A view timeline relates progress to an element entering or passing through the viewport.''', '''A View Transition uses snapshots of the old and new states to animate a change.''', '''These features make every CSS animation automatically respect reduced-motion preferences.''', '''Provide a clear static presentation if the effect does not run.''' ]
+explanation = '''Scroll and view timelines change the source of animation progress; they do not replace the product's reduced-motion policy or fallback.'''
+
+[questions.frontend-dv013]
+prompt = '''An old and a new component need separate identities in a View Transition so their snapshots can be styled separately. Which property names the transition group for an element?'''
+explanation = '''`view-transition-name` names an element so it can be matched with the corresponding View Transition pseudo-elements.'''
+
+[questions.frontend-dv014]
+prompt = '''Keep the style from the final keyframe after the animation completes:
+
+```css
+.toast {
+  animation-fill-mode: {{blank}};
+}
+```
+'''
+explanation = '''`forwards` keeps the style defined at the final keyframe until the animation is removed or another style overrides it.'''
+
+[questions.frontend-dv015]
+prompt = '''In an interview, explain when to choose a transition, keyframe animation, or scroll-driven animation, and how to accommodate users who prefer reduced motion.'''
+keywords = [[ '''transition''', '''state change''' ], [ '''keyframes''', '''multiple stages''', '''animation''' ], [ '''scroll timeline''', '''view timeline''', '''scroll-driven''' ], [ '''prefers-reduced-motion''', '''reduced motion''' ]]
+model_answer = '''A transition suits styles that change with a state; `@keyframes` describes multiple stages over time; a scroll timeline suits progress tied to scrolling or an element in the viewport. With `prefers-reduced-motion`, reduce or remove decorative movement while keeping state information and feedback clear.
+'''
+explanation = '''A strong answer connects the chosen technique to its progress source and accessibility needs.'''
+
+[modules.frontend-dv-tsconfig]
+title = '''TypeScript Modules and Project Setup'''
+description = '''ES modules, module resolution, compiler options, declaration files, and project references.'''
+lesson = '''
+### Configure TypeScript for the runtime
+TypeScript checks and transforms code, but does not determine every runtime rule. A file with a top-level `import` or `export` is treated as a module; a script file without them can leak declarations into the global scope. In modern projects, use explicit ES module syntax and configure the compiler for the actual runtime or bundler that will run the code.
+
+| Option | Main purpose | Choose based on |
+|---|---|---|
+| `target` | JavaScript syntax level emitted by TypeScript | Runtime support requirements |
+| `lib` | API declarations available for type-checking; it does not add APIs to the runtime | Actual browser/server environment and polyfills |
+| `module` | Module format preserved or emitted | How the application is bundled or run |
+| `moduleResolution` | How imported files are located | Whether the project uses Node.js or a bundler |
+
+For example, an app bundled by a bundler usually needs import resolution that matches that bundler; Node.js code should use a current Node configuration compatible with how Node handles ESM and CommonJS. `module` and `moduleResolution` are related, so do not choose a value only to silence an error without checking the runtime. `noEmit` is suitable when another bundler is responsible for generating JavaScript; TypeScript can still type-check the code.
+
+When a library publishes types for its users, `declaration` generates `.d.ts` files. A declaration describes an API during compilation; it does not provide a runtime implementation. Large projects can be split into multiple projects connected by project references. Each referenced project has a clear build boundary and commonly enables `composite`; `tsc --build` orders the builds and rebuilds only what is needed.
+
+Common mistakes include expecting `lib` to polyfill browser APIs, setting `target` without checking runtime support, using a `moduleResolution` that does not match Node or the bundler, treating `.d.ts` as executable JavaScript, or adding project references without configuring build dependencies. A good configuration describes the development and deployment environments instead of hiding import errors behind arbitrary options.
+'''
+
+[questions.frontend-dv016]
+prompt = '''In `tsconfig`, what is the main difference between `target` and `lib`?'''
+options = [ '''`target` selects the output JavaScript syntax; `lib` supplies type declarations for environment APIs''', '''Both automatically install runtime polyfills''', '''`lib` selects the module format; `target` selects how imports are resolved''', '''`target` only enables strict type checking''' ]
+explanation = '''`lib` affects which APIs TypeScript recognizes during type-checking, while `target` controls the emitted syntax level; neither option installs runtime polyfills.'''
+
+[questions.frontend-dv017]
+prompt = '''A browser app bundled with Vite needs TypeScript to resolve imports according to the bundler's rules. Which `moduleResolution` value is the best fit?'''
+options = [ '''`bundler`''', '''`classic`''', '''`node10` for every new project''', '''`system`''' ]
+explanation = '''The `bundler` mode models how modern bundlers resolve imports; configure it together with `module` according to the TypeScript guidance.'''
+
+[questions.frontend-dv018]
+prompt = '''Vite is responsible for transforming and emitting JavaScript. The project still wants TypeScript to type-check but not produce duplicate JavaScript files. Which option should it consider?'''
+explanation = '''`noEmit` prevents `tsc` from writing output files while TypeScript can still be used for type-checking; the bundler performs the transformation.'''
+
+[questions.frontend-dv019]
+prompt = '''A file without imports or exports is unintentionally sharing global declarations with another file. What is the most direct way to mark it as a module?'''
+options = [ '''Add `export {}`''', '''Add `target: ESNext`''', '''Change the extension to `.d.ts`''', '''Add `declare global`''' ]
+explanation = '''A top-level import or export makes a file a module; `export {}` is the minimal way to create that module boundary.'''
+
+[questions.frontend-dv020]
+prompt = '''Which statements about project references in a TypeScript monorepo are correct?'''
+options = [ '''A project can declare a build dependency on another project using `references`.''', '''`tsc --build` can build projects in dependency order.''', '''A referenced project commonly needs `composite` enabled.''', '''Project references automatically install missing package dependencies.''', '''Splitting a project always makes every build faster, regardless of configuration or scale.''' ]
+explanation = '''References describe project boundaries and build dependencies; they do not replace a package manager, and their benefits depend on the project structure.'''
+
+[questions.frontend-dv021]
+prompt = '''Which statement about a `.d.ts` declaration file is correct?'''
+options = [ '''It describes API types for TypeScript to check at compile time.''', '''It replaces the JavaScript implementation needed when the application runs.''', '''It can help TypeScript use a JavaScript library that has no bundled types.''', '''It changes `target` to polyfill missing runtime APIs.''' ]
+explanation = '''Declaration files provide type information; they do not implement functionality or add APIs to the runtime.'''
+
+[questions.frontend-dv022]
+prompt = '''To enable TypeScript's group of strict checks, enter the compiler option name:
+
+```json
+{
+  "{{blank}}": true
+}
+```
+'''
+explanation = '''`strict` enables the group of strict type-checking options; you can refine individual options when there is a specific reason.'''
+
+[questions.frontend-dv023]
+prompt = '''How would you explain and choose `target`, `lib`, `moduleResolution`, `noEmit`, and project references for an application bundled by a bundler?'''
+keywords = [[ '''target''', '''syntax output''', '''emitted syntax''' ], [ '''lib''', '''type declarations''', '''API declarations''' ], [ '''moduleResolution''', '''bundler''' ], [ '''noEmit''', '''bundler emit''' ], [ '''project references''', '''composite''', '''build graph''' ]]
+model_answer = '''Choose `target` for the supported runtime and `lib` for the APIs that actually exist in the environment; type declarations are not polyfills. Choose `moduleResolution` to match the bundler and coordinate it with `module`. If the bundler emits JavaScript, `noEmit` can keep `tsc` focused on type-checking. Project references and `composite` are useful for dividing a monorepo into projects with clear build dependencies.
+'''
+explanation = '''The configuration should describe both the runtime environment and the build pipeline, rather than merely making an import error disappear.'''

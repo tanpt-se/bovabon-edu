@@ -1,0 +1,587 @@
+[modules.next-routing]
+title = "App Router and Route Conventions"
+description = "Pages, layouts, route groups, dynamic segments, loading states, and error boundaries."
+lesson = '''
+### From the folder tree to URLs
+In the App Router, folders inside `app` create route segments. A `page` makes a segment accessible as a route, while a `layout` wraps its descendants and can preserve UI state during navigation within that branch. The root layout provides the `html` and `body` elements.
+
+| File or segment | Role |
+|---|---|
+| page.tsx | Route content |
+| layout.tsx | UI shared by child routes |
+| loading.tsx | Fallback while a segment waits for data |
+| error.tsx | Segment error boundary; must be a Client Component |
+| (marketing) | Route group that does not appear in the URL |
+| [id] | A single dynamic segment |
+| [...slug] / [[...slug]] | Required / optional catch-all |
+
+For example, `app/(shop)/products/[id]/page.tsx` matches `/products/42`; `(shop)` only organizes the layout. A catch-all captures multiple segments and must be the final route segment. `loading.tsx` creates a nearby pending state; `error.tsx` can retry with `reset()`. Common mistakes include putting `page.tsx` and `route.ts` in the same segment or assuming a route group adds a URL segment.
+'''
+
+[questions.next-001]
+prompt = "In the App Router, which URL matches `app/(shop)/products/[id]/page.tsx` when `id` is 42?"
+options = ["/(shop)/products/42", "/shop/products/42", "/products/42", "/products/[id]/42"]
+explanation = "A parenthesized route group organizes routes without creating a URL segment; `[id]` matches one segment."
+
+[questions.next-002]
+prompt = "What is the main role of `layout.tsx` in an App Router branch?"
+options = ["Create an HTTP endpoint for the branch", "Wrap child route UI and potentially preserve its state during navigation within the branch", "Replace every `page.tsx` with static content", "Automatically create a dynamic segment"]
+explanation = "A layout shares UI across child routes; the root layout provides the `html` and `body` structure."
+
+[questions.next-003]
+prompt = "A route at `app/docs/[[...slug]]/page.tsx` must match both `/docs` and `/docs/setup/install`. Which convention is this?"
+options = ["A regular dynamic segment", "A required catch-all", "An optional catch-all", "A route group"]
+explanation = "The double brackets make the catch-all optional, so it also matches when there are no following segments."
+
+[questions.next-004]
+prompt = "Which statements about `loading.tsx` and `error.tsx` in the App Router are correct?"
+options = ["`loading.tsx` provides a pending fallback for a segment", "`error.tsx` is an error boundary for its branch", "`error.tsx` must be a Server Component", "`error.tsx` can provide a retry action with `reset`"]
+explanation = "The error boundary convention requires a Client Component and can call `reset` to retry rendering the branch."
+
+[questions.next-005]
+prompt = "A documentation page is under `app/(docs)/guide/[...slug]/page.tsx`. Which URLs can match?"
+options = ["/guide/start", "/guide/api/auth", "/docs/guide/start", "/guide"]
+explanation = "The `(docs)` route group does not appear in the URL; a required catch-all needs at least one segment."
+
+[questions.next-006]
+prompt = '''
+Complete the dynamic segment so the route matches `/users/abc` with exactly one dynamic value:
+app/users/{{blank}}/page.tsx
+'''
+explanation = "A pair of square brackets represents one dynamic segment; the application chooses the parameter name."
+
+[questions.next-007]
+prompt = "Explain how route groups and layouts can organize two different UI areas without putting the group names in the URLs."
+keywords = [["route group", "route grouping"], ["does not appear in the url", "does not change the url", "no url segment"], ["separate layout", "own layout"], ["shared ui", "shared interface"]]
+model_answer = '''
+A route group such as `(marketing)` or `(admin)` organizes routes without putting its name in the URL. Each group can have its own layout, while a parent layout provides shared UI for its child pages.
+'''
+explanation = "Route groups separate structure and layouts without adding an address segment."
+
+[questions.next-008]
+title = "Match App Router Patterns"
+prompt = '''
+Write `matchesAppRoute(pathname, filePattern)` to return a boolean.
+- `pathname` and `filePattern` are paths with a leading `/`; ignore a trailing `/`.
+- A `(name)` segment in `filePattern` is a route group and does not occupy a URL segment.
+- `[id]` matches exactly one non-empty segment.
+- A final `[...slug]` matches one or more segments; a final `[[...slug]]` matches zero or more segments.
+- All other segments must match exactly. You do not need to handle query strings or percent-encoding.
+
+For example, `/products/42` matches `/(shop)/products/[id]`.
+'''
+hints = ["Remove route group segments before comparing.", "A catch-all is valid only at the end of the pattern; an optional catch-all may consume no segments."]
+explanation = "This exercise models App Router file-based routing and shows that route groups do not affect URLs."
+
+[modules.next-render-cache]
+title = "Server Components, Actions, and Data"
+description = "Choose server/client boundaries, handle mutations, and design caching, revalidation, ISR, and streaming."
+lesson = '''
+### Choose where code runs and when data refreshes
+Server Components are the default in the App Router. They work well for reading data on the server and keeping credentials out of the browser bundle. Add `use client` at the smallest boundary that needs state, event handlers, or browser APIs; every module imported from that boundary also becomes part of the client bundle. Props passed across the boundary must be serializable.
+
+Do not assume `fetch` is always cached. Choose an explicit policy: use `force-cache` for reusable data, or `next: { revalidate: 60, tags: ['posts'] }` when a time limit or tag is needed. ISR serves a generated version and regenerates it over time or when revalidated. `revalidateTag('posts', 'max')` marks data with that tag as stale for profile-based refresh; this differs from immediately invalidating a specific route.
+
+| Need | Approach |
+|---|---|
+| Mostly static data | Cache and revalidate after an interval |
+| Data that varies by user | Avoid a shared cache with the wrong scope |
+| A slow part of the page | Use Suspense or `loading.tsx` to stream a fallback |
+
+A Server Action is an entry point that can be called through a request; authentication and authorization must still be checked inside the action. Common mistakes include putting secrets in a Client Component or assuming `use server` automatically enforces access control.
+'''
+
+[questions.next-009]
+prompt = "A component needs `useState` and click handling in the App Router. What is the most appropriate change?"
+options = ["Mark the component file with `use client` at the top of the module", "Put `use server` in the component", "Rename the file to `client.tsx`", "Convert every layout to a Client Component"]
+explanation = "`use client` creates a client boundary for state and events; keep that boundary small to limit client bundle growth."
+
+[questions.next-010]
+prompt = "A Server Action changes a user's profile. What must the action itself do?"
+options = ["Only check that the submit button is disabled", "Authenticate the caller and check their permission on the target data before writing", "Trust that the action is only called from the page's form", "Put the secret in a client module so the action can reuse it"]
+explanation = "A Server Action can be called through a request, so authorization must be checked on the server at the mutation point."
+
+[questions.next-011]
+prompt = "A `fetch` request returns data that changes frequently for each user. What is the safest choice?"
+options = ["Use one shared cache for everyone", "Do not rely on implicit caching; explicitly choose an uncached policy or an appropriately scoped cache", "Set TanStack Query's `staleTime` to 0; that is enough for server `fetch`", "Change the endpoint to GET to guarantee the data is not cached"]
+explanation = "Server caching and client caching are separate mechanisms; private data needs an explicit policy with the correct scope."
+
+[questions.next-012]
+prompt = "A request tagged `posts` should be refreshed using the modern stale-while-revalidate profile. Which choice fits?"
+options = ["`revalidateTag('posts', 'max')`", "`revalidatePath('/posts')` even though invalidation by tag is needed", "`router.refresh('posts')`", "`cacheTag('posts', 0)`"]
+explanation = "`revalidateTag` refreshes data by tag; the `max` profile can serve stale data while revalidation follows its policy."
+
+[questions.next-013]
+prompt = "Which choices help stream the UI while part of the data is loading slowly?"
+options = ["Wrap the slow region in Suspense with a fallback", "Put `loading.tsx` at the appropriate segment", "Convert every component to a Client Component", "Wait for every request to finish before rendering the entire page"]
+explanation = "Suspense and the `loading` convention can send a fallback first, then stream the content when it is ready."
+
+[questions.next-014]
+prompt = '''
+To use `fetch` with reusable cached data rather than treating every request as uncached, the explicit cache value is {{blank}}.
+'''
+explanation = "Stating the cache policy at the request makes its behavior explicit and avoids incorrect assumptions about defaults."
+
+[questions.next-015]
+prompt = '''
+The directive at the top of a module that creates a client boundary for components using state and event handlers is {{blank}}.
+'''
+explanation = "This directive belongs at the top of the module; components imported from it are also part of the client bundle."
+
+[questions.next-016]
+title = "Revalidate Cache by Tag"
+prompt = '''
+Write `revalidateByTag(entries, tag)` for a plain JavaScript cache model. `entries` is an array of objects with `path`, `tags` (an array of strings), and other fields.
+- For each entry containing the tag, set `stale` to `true`.
+- Preserve all other fields and the array order.
+- Return the paths that were marked, in their original order.
+- Do not modify entries that do not contain the tag.
+
+This exercise models tag-based invalidation: data is marked stale so it can be revalidated on the next read.
+'''
+hints = ["Iterate over `entries` once and check with `includes`.", "Change only the `stale` field on entries that actually have the tag."]
+explanation = "In a real application, tags are attached to fetched or cached data; `revalidateTag` marks tagged content stale according to a profile."
+
+[modules.next-route-platform]
+title = "Route Handlers, Middleware, and Metadata"
+description = "Create endpoints, control matchers, and optimize metadata, images, and fonts."
+lesson = '''
+### Endpoints and presentation
+`route.ts` defines HTTP handlers through exported functions such as `GET` or `POST`; they receive a `Request` and return a `Response` or `NextResponse`. A Route Handler is an endpoint, and `page.tsx` cannot share the same segment with `route.ts`. Middleware runs before a request is completed and can be scoped with `config.matcher`; matchers should be declared statically so the framework can analyze them at build time. Middleware is useful for redirects, rewrites, or preliminary checks, but it does not replace authorization where data is read or written.
+
+> **Next.js 16:** `middleware.ts` was renamed to `proxy.ts` (exporting a `proxy` function and running on the Node.js runtime); `config.matcher`, redirects, and rewrites work the same way. The `npx @next/codemod@latest middleware-to-proxy` codemod can help migrate.
+
+Static metadata uses `metadata`; metadata that depends on data can be generated with `generateMetadata`. `next/image` can optimize images; when using `fill`, provide suitable `sizes` so the browser can select the right variant. `next/font` helps self-host fonts at build time.
+
+| Tool | Consideration |
+|---|---|
+| Route Handler | Return the appropriate status, headers, and body |
+| config.matcher | Run middleware only for routes that need it |
+| Metadata | Set a title and description for each route |
+| Images and fonts | Consider dimensions, alt text, sizes, and layout shift |
+
+For example, a matcher for `/dashboard/:path*` covers both `/dashboard` and its child pages. Common mistakes include using a broad matcher that sends every request through expensive logic, or protecting only the UI while forgetting permission checks in a handler or action.
+'''
+
+[questions.next-017]
+prompt = "In the App Router, which file declares an HTTP endpoint at `/api/health`?"
+options = ["`app/api/health/page.tsx`", "`app/api/health/route.ts`", "`app/api/health/layout.tsx`", "`app/route.ts`"]
+explanation = "`route.ts` contains HTTP handlers for a route segment; `page.tsx` creates a UI."
+
+[questions.next-018]
+prompt = "A post page's title must depend on data loaded from its slug. Which API is appropriate?"
+options = ["Export fixed `metadata` for every post", "Export `generateMetadata` based on params or data", "Use `useEffect` to change the title after rendering", "Set the title in a middleware matcher"]
+explanation = "`generateMetadata` supports metadata that depends on the route and its data; use the `metadata` export for static metadata."
+
+[questions.next-019]
+prompt = "A hero image uses `fill` with `next/image`, but the browser downloads an oversized image on mobile. Which field describes the expected display size?"
+options = ["`sizes`", "`priorityMode`", "`cacheTag`", "`fontDisplay`"]
+explanation = "`sizes` helps the browser choose an image variant suited to the layout and viewport."
+
+[questions.next-020]
+prompt = "Which statements about middleware and route protection are correct?"
+options = ["`config.matcher` limits which requests middleware handles", "Matchers should be static configuration so the framework can analyze them", "Middleware replaces permission checks in a Server Action", "Data access permissions still need to be verified where data is read or written"]
+explanation = "Middleware is a useful request-processing layer, but it is not the final authorization boundary for data."
+
+[questions.next-021]
+prompt = '''
+To self-host fonts using Next.js optimization, the commonly used package is {{blank}}.
+'''
+explanation = "`next/font` downloads and self-hosts fonts during the build rather than depending on a runtime request to the font provider."
+
+[questions.next-022]
+prompt = '''
+A Route Handler that supports reading HTTP data exports a function named after the method {{blank}}.
+'''
+explanation = "A Route Handler exports functions such as `GET`, `POST`, `PUT`, or `DELETE` to handle the corresponding methods."
+
+[questions.next-023]
+prompt = "Name two appropriate uses for middleware and explain why it should not be the only place that authorizes data access."
+keywords = [["redirect", "redirecting"], ["rewrite", "rewriting"], ["matcher", "route filtering", "limiting routes"], ["authorization", "permission check", "access control"], ["server action", "route handler", "read boundary", "write boundary"], ["request", "middleware"]]
+model_answer = '''
+Middleware can use a matcher to limit requests, redirect them, or rewrite them before the route completes. Data still needs authorization checks in a Route Handler, Server Action, or data access layer because a client can call an endpoint directly.
+'''
+explanation = "UI and middleware do not replace authorization at the data boundary."
+
+[questions.next-024]
+title = "Simulate a Middleware Matcher"
+prompt = '''
+Write `matchesMiddleware(pathname, matcher)` for an intentionally limited subset of matchers:
+- `matcher` is a string or an array of strings; for an array, any one matching pattern is enough.
+- The pattern `/dashboard` matches that exact path.
+- A `:id` segment matches exactly one non-empty segment.
+- A final `:path*` segment matches zero or more segments.
+- Ignore a trailing `/` when comparing; do not handle query strings, regular expressions, or locale prefixes.
+
+For example, `matchesMiddleware('/dashboard/users/2', '/dashboard/:path*')` returns true.
+'''
+hints = ["Normalize each path into an array of segments before comparing.", "Handle `:path*` separately because it is valid only at the end and can match zero segments."]
+explanation = "This is a basic matcher simulation; the real Next.js matcher also supports expressions and other configuration options."
+
+[modules.tanstack-query]
+title = "TanStack Query and Client-Side Caching"
+description = "Query keys, freshness, retention, invalidation, optimistic updates, and pagination."
+lesson = '''
+### Cache data by query identity
+`queryKey` is an array that describes the data and every input used by the query function, for example `['projects', { teamId, page }]`. TanStack Query hashes objects in a key consistently, so object property order does not change identity; the order of array elements still matters. Leaving an input out of the key can make different requests share the same cache entry.
+
+| Option | Meaning |
+|---|---|
+| `staleTime` | How long data is considered fresh |
+| `gcTime` | How long to retain cache with no observers |
+| `invalidateQueries` | Marks matching queries stale and usually refetches active queries |
+
+Requests with the same key that are already in flight are deduplicated. For an optimistic mutation, snapshot the cache before updating it, restore the snapshot on error, and invalidate when the mutation settles. Pagination usually puts the page in the key and uses `placeholderData: keepPreviousData`; an infinite query uses `initialPageParam` with `getNextPageParam`. Common mistakes include confusing `staleTime` with cache deletion time or mutating a cached object in place so the old value cannot be restored.
+'''
+
+[questions.next-025]
+prompt = "A query has `staleTime: 30_000` and `gcTime: 300_000`. Which interpretation is correct?"
+options = ["Data is removed from the cache after 30 seconds", "30 seconds is the fresh period; `gcTime` retains cache that has no observers", "`gcTime` determines when in-flight requests are deduplicated", "The two options have the same meaning"]
+explanation = "`staleTime` controls freshness; `gcTime` controls how long a query without observers remains cached."
+
+[questions.next-026]
+prompt = "A query function fetches orders by `userId` and `status`. Which query key describes all of its inputs?"
+options = ["`['orders']`", "`['orders', userId, status]`", "`['orders', Date.now()]`", "`['orders', queryFn]`"]
+explanation = "Every variable that affects the query result should be in the key so the cache does not mix different data."
+
+[questions.next-027]
+prompt = "A mutation successfully updates a post. Which API marks the post list query stale so it can synchronize again?"
+options = ["`invalidateQueries`", "`setGcTime`", "`removeObserver`", "`resetStaleTime`"]
+explanation = "Invalidation marks matching queries stale and usually refetches those that are active."
+
+[questions.next-028]
+prompt = "Which statements about hashing `queryKey` are correct?"
+options = ["Object property order does not change the hash of equivalent keys", "The order of array elements in the key still matters", "Include filter variables that affect the result in the key", "Every query should use the same key to make cache reuse easier"]
+explanation = "Stable object hashing lets equivalent keys share a cache entry, but array order and input variables still express query identity."
+
+[questions.next-029]
+prompt = "An infinite query uses a cursor. Which parts belong to the correct pattern?"
+options = ["Define `initialPageParam`", "Use `getNextPageParam` to derive the next cursor", "Use `hasNextPage` to determine whether another page exists", "Create a different query key for every call to `fetchNextPage`"]
+explanation = "An infinite query keeps its pages in one query; the page parameter changes on each load without requiring a new query key for every page."
+
+[questions.next-030]
+prompt = '''
+In `useQuery`, the required field that holds the array describing the data's identity is {{blank}}.
+'''
+explanation = "The query key identifies a cache entry and should include variables that affect the data."
+
+[questions.next-031]
+title = "Stable Hashing and a Mini QueryClient"
+prompt = '''
+Write `stableQueryKeyHash(key)` and `MiniQueryClient`.
+- Hash an array key as JSON after recursively sorting object properties; preserve array order.
+- `new MiniQueryClient({ staleTime })` stores a cache in memory.
+- `fetchQuery(queryKey, queryFn, { staleTime })` returns cached data if it is still fresh. The `staleTime` option overrides the client's default; at the exact `staleTime` boundary, data is stale.
+- Calls with the same hash and an unfinished request must share one Promise and call `queryFn` only once.
+- `getQueryData(key)` reads data; `setQueryData(key, value)` writes data.
+- `invalidateQueries(prefix)` marks every query key that starts with `prefix` stale; the next fetch must call `queryFn` again. Compare each prefix part using the stable hash.
+
+The tests use `Date.now()` for the clock; fake timers are available.
+'''
+hints = ["Normalize keys recursively: sort object keys and preserve array order.", "Store the original `queryKey` with each cache entry for prefix invalidation; register in-flight requests before calling `queryFn`."]
+explanation = "This exercise models core query-cache concepts: stable identity, freshness, deduplication, and invalidation."
+
+[questions.next-032]
+title = "Optimistic Update with Rollback"
+prompt = '''
+Write `optimisticMutation(cache, key, update, mutation)` where `cache` is a `Map`.
+- Snapshot the old value and immediately update the cache with `update(previousValue)`.
+- If `mutation` resolves, return its result and keep the optimistic value.
+- If `mutation` rejects, restore the old value and rethrow the same error.
+- If the key was absent from the `Map` and the mutation fails, delete the key instead of storing `undefined`.
+
+This is a plain JavaScript model of a snapshot in `onMutate` and rollback in `onError`; a real application commonly invalidates queries after the mutation settles.
+'''
+hints = ["Use `Map.has` to distinguish a missing key from a key whose value is `undefined`.", "Rollback in `catch`, then rethrow the same error so the caller can still handle it."]
+explanation = "A snapshot lets the UI respond immediately while restoring consistent state if the request fails."
+
+[modules.tanstack-router]
+title = "TanStack Router: Type-Safe Routing"
+description = "Define a route tree, validate search parameters, and load data with loaders."
+lesson = '''
+### A typed route tree and data from the URL
+TanStack Router infers path parameters, search parameters, and context from the registered route tree. When configured correctly, `Link` and `navigate` can report invalid routes or missing parameters early. File-based routing can generate a route tree; code-based routing declares routes through the API.
+
+`validateSearch` normalizes and validates the query string into typed data; because a URL is untrusted input, handle missing or invalid values. A loader receives parsed params, search, and context to preload data, determine pending or error UI, and support preloading during navigation.
+
+| Location | Use |
+|---|---|
+| Path params | Identify a resource such as `/posts/$postId` |
+| Search params | Filters, sorting, and page number that can be shared through the URL |
+| Loader | Load data before the route renders |
+
+For example, `/posts/42?page=2` separates `postId` from `page`; a loader can use both to call an API. Common mistakes include leaving the query string unvalidated or keeping filters only in component state so a refresh or shared link loses them. Type-safe routing helps catch client-side mistakes, but does not replace server-side authentication.
+'''
+
+[questions.next-033]
+prompt = "What is the main benefit of a typed, registered route tree in TanStack Router?"
+options = ["Automatically create a server API", "Infer and validate routes and params when using `Link` or `navigate`", "Remove the need to validate input on the server", "Automatically replace the Next.js App Router in every project"]
+explanation = "The router can infer valid routes from the route tree; data still needs to be trusted and validated at the appropriate layer."
+
+[questions.next-034]
+prompt = "A page's filters and page number must stay in the URL, be shareable, and be type-checked before use. Where should the main logic go?"
+options = ["The route's `validateSearch`", "Local state that is not synchronized with the URL", "A `useEffect` in the root layout", "Next.js middleware"]
+explanation = "`validateSearch` parses and normalizes search params so routes and loaders can use more reliable data."
+
+[questions.next-035]
+prompt = "A route needs to load data from path params before its component appears. Which route mechanism is the best fit?"
+options = ["`loader`", "`validateSearch`", "`Link`", "`Outlet`"]
+explanation = "A loader receives params and context to load data before the route renders and supports pending and error states."
+
+[questions.next-036]
+prompt = "A loader uses `search.page` to call an API. What should happen before the loader uses that value?"
+options = ["Trust every query-string value as a valid integer", "Validate and normalize the search params in the route", "Move `page` into component state after rendering", "Remove search params from the URL"]
+explanation = "Search params come from the URL, so they should be parsed and validated first; the route can provide a type and default value."
+
+[questions.next-037]
+prompt = "Which tasks fit a TanStack Router loader and route context?"
+options = ["Read path params to load the corresponding resource", "Use validated search params for filters", "Use context provided to the router or route", "Trust that a loader automatically grants permission to read backend data"]
+explanation = "A loader coordinates params, search, and context; authorization still needs to be checked at the backend or data boundary."
+
+[questions.next-038]
+prompt = '''
+The route option that parses, validates, and normalizes a query string is named {{blank}}.
+'''
+explanation = "A route uses `validateSearch` to turn URL data into validated search state."
+
+[questions.next-039]
+prompt = "Explain the relationship between validated search params and a loader on a filtered, paginated list page."
+keywords = [["validate search", "validatesearch", "search validation"], ["typed", "type-safe", "typed value"], ["loader"], ["filter", "filtering"], ["pagination", "page number"], ["url", "query string"]]
+model_answer = '''
+`validateSearch` reads and normalizes the query string into typed values; it can supply defaults or reject invalid data. A loader uses validated search together with params and context to load the requested filters and page. The URL remains shareable and can be reloaded.
+'''
+explanation = "Separating URL parsing from data loading gives the route loader clear inputs."
+
+[questions.next-040]
+title = "Validate Search and Call a Route Loader"
+prompt = '''
+Write `loadPostRoute(input, fetchPost)` to model a route contract:
+- `input` has `{ params, search }`, where `params.postId` is a string and `search` is an object.
+- `search.page` defaults to 1. Accept a positive integer or a string containing a positive integer; otherwise throw `Error('invalid page')`.
+- `search.q` defaults to an empty string. If it is a string, trim whitespace; otherwise throw `Error('invalid query')`.
+- Call `fetchPost(postId, { page, q })` and return its result. If `postId` is missing or not a string, throw `Error('invalid post id')`.
+- You may await `fetchPost` if it returns a Promise.
+'''
+hints = ["Validate params and search before calling `fetch`.", "Convert `page` to a number and then check that it is a positive integer; do not coerce `q`."]
+explanation = "A route loader should receive normalized params and search data so loading from the URL has predictable behavior."
+
+[modules.nextjs-dv-authz]
+title = "Authentication and Data Protection"
+description = "Distinguish authentication from authorization, protect Server Actions, and enforce resource-level permissions on the server."
+lesson = '''
+### Authentication and server-side authorization
+Authentication answers “who does this request belong to?”; authorization decides what that identity may do with a specific resource. The App Router can read a session in a Server Component, Route Handler, or Server Action, but each data-changing operation must still check permission where it is handled. A Server Action is an entry point that can be called through a request, so hiding a button in the UI is not a way to protect data.
+
+| Layer | Responsibility | Example check |
+|---|---|---|
+| UI | User experience and navigation | Hide an edit button when the user lacks permission |
+| Proxy/Middleware | Early filtering or redirecting | Send a signed-out visitor to the sign-in page |
+| Server Action / Route Handler | Authenticate the request and check permission | May this user edit this project? |
+| Data access layer | Limit returned or updated data | Query only resources in an allowed tenant |
+
+For example, an action that receives `projectId` from a client must read the session on the server, load the project, and compare its owner or role; it must not trust a `userId` sent in the form. Permission checks can be centralized in data-access functions so different call paths use the same policy. Session cookies commonly need `HttpOnly`, `Secure`, and `SameSite`; environment variables prefixed with `NEXT_PUBLIC_` are exposed to the client and must not contain secrets.
+
+Common mistakes include treating middleware or a route guard as the only security boundary, assuming a form's types validate its input, or serializing a whole user object with sensitive fields into a Client Component. Check identity, permission on the specific resource, and input data in the server-side read or write path.
+'''
+
+[questions.nextjs-dv001]
+prompt = "How do authentication and authorization differ?"
+options = ["Authentication identifies the user; authorization determines their permissions on an action or resource", "Authentication checks permissions; authorization creates a session", "They are two names for the same concept", "Authorization applies only to the UI"]
+explanation = "First identify who is making the request, then check whether they may perform the specific action on the resource."
+
+[questions.nextjs-dv002]
+prompt = "A Server Action receives `projectId` from a form and updates the project. Which check must happen before writing?"
+options = ["Trust a `userId` from the form if its type is string", "Read the session on the server and check the user's permission on the loaded project", "Only check that the edit button is hidden from other users", "Only check that the URL starts with `/dashboard`"]
+explanation = "Client input can be changed; the action must authenticate the request and authorize access to the actual resource on the server."
+
+[questions.nextjs-dv003]
+prompt = "Why should a secret API key not be placed in an environment variable prefixed with `NEXT_PUBLIC_`?"
+options = ["That variable exists only in tests", "Next.js exposes its value in the client bundle", "That variable can only be read from CSS", "The prefix automatically encrypts its value"]
+explanation = "The `NEXT_PUBLIC_` prefix marks a value for client use, so it is not appropriate for a secret."
+
+[questions.nextjs-dv004]
+prompt = "Which practices help protect a data-editing operation?"
+options = ["Check the session and permission on the resource in a server-side action", "Hide the edit button on the client and treat that as complete access control", "Validate form data before using it", "Trust a client-supplied `ownerId` if it matches a TypeScript type"]
+explanation = "The UI and TypeScript do not verify a request when it reaches the server; the server must check identity, permission, and input."
+
+[questions.nextjs-dv005]
+prompt = "Which attributes are commonly considered for a session cookie?"
+options = ["`HttpOnly` to keep client-side JavaScript from reading the cookie directly", "`Secure` to send it only over HTTPS", "`SameSite` to reduce some unwanted cross-site requests", "Store the session secret in the cookie name so the client can recover it easily"]
+explanation = "These cookie attributes help protect a session; they do not replace server-side authorization checks."
+
+[questions.nextjs-dv006]
+prompt = "In addition to authenticating the user's identity, the server must check {{blank}} before allowing them to edit a resource."
+blanks = [["authorization", "permission checking", "access control"]]
+explanation = "Being signed in only identifies the caller; the server must still check their permission on the specific resource."
+
+[questions.nextjs-dv007]
+prompt = "In an interview, explain why hiding a client-side button or redirecting with Proxy/Middleware is not enough to protect an update. State where permission should be checked and which request data should not be trusted."
+keywords = [["authorization", "access control"], ["server action", "route handler"], ["data access layer", "data access code"], ["client", "client-side"], ["input validation", "validate input"]]
+model_answer = '''
+Hiding a client-side button and redirecting early improve the user experience only. A Server Action or Route Handler must still authenticate the session, check authorization on the resource in the data access layer, and perform input validation; do not trust a `userId` or `ownerId` supplied by the client.
+'''
+explanation = "Any request can be called directly; apply the access policy where the server reads or writes data."
+
+[questions.nextjs-dv008]
+prompt = "Proxy/Middleware redirects a signed-out visitor away from `/dashboard`, but a Route Handler that updates the profile does not check the session. Which statement is correct?"
+options = ["The profile is protected because every request must go through the dashboard page", "The handler is missing a check; it can be called independently and must authenticate and authorize the request itself", "Only TypeScript needs to be added to the handler", "A Client Component authenticates the handler when it renders"]
+explanation = "Filtering or redirecting at the navigation layer does not replace security checks in the handler that processes data."
+
+[questions.nextjs-dvc01]
+title = "Check Project Edit Permissions"
+prompt = '''
+Write `canEditProject(user, project)` to return a boolean.
+- `user` must be an object whose `id` is a non-empty string; otherwise deny access.
+- `project` must be an object whose `ownerId` is a non-empty string; otherwise deny access.
+- Allow access if `user.id === project.ownerId` or `user.roles` is an array containing `"admin"`.
+- Return `false` in all other cases.
+
+This is a server-side permission check; do not use a client-supplied `userId` in place of an authenticated identity.
+'''
+hints = ["Validate the user and project data before reading `roles`.", "Allow an admin only when `roles` is an array containing the exact string `admin`."]
+explanation = "Authorization must use an authenticated identity and the actual resource, and deny by default when required data is invalid."
+
+[modules.nextjs-dv-query-ssr]
+title = "TanStack Query: SSR and Hydration"
+description = "Prefetch data on the server, safely transfer cache state to the client, and avoid needless refetches or data leaks across requests."
+lesson = '''
+### Transfer query cache from the server to the browser
+Server rendering with TanStack Query usually has three steps: create a `QueryClient` for the current request, prefetch the queries needed by the route, and serialize the state with `dehydrate`. In React, wrap the component tree in a `HydrationBoundary` with that state; `useQuery` on the client can reuse the cache rather than starting empty. The `queryKey` and query options must be consistent between prefetching and the component that reads the data.
+
+| Step | Action | Consideration |
+|---|---|---|
+| Server | Create a QueryClient and call `prefetchQuery` | User-specific data belongs in that request's cache |
+| Transfer state | Call `dehydrate(queryClient)` | Send only data that is safe and serializable for the client |
+| Client | Hydrate with `HydrationBoundary`, then call `useQuery` | Use the same query key to find the right cache entry |
+
+Do not use one global `QueryClient` for a long-running server process: requests from two users could see the same cache. `staleTime` determines when data is considered stale; the default of zero can make a query stale as soon as it hydrates and trigger a refetch when the client mounts. Choose a freshness period that fits the domain instead of disabling refetch indefinitely. When several queries are independent, start prefetching them in parallel to reduce waterfalls; preserve ordering only when one query depends on another's result.
+
+Common mistakes include using different query keys on the server and client, passing only `initialData` and losing cache timestamp metadata, or serializing an object containing a secret or token. Hydration continues with already loaded data; it does not replace access control, server cache policy, or API authentication.
+'''
+
+[questions.nextjs-dv010]
+prompt = "In a server process serving multiple users, why should one global `QueryClient` not be shared across requests?"
+options = ["A QueryClient only works inside a component", "One request might read another request's cache, including user-specific data", "A QueryClient can hold only one query", "Hydration always fails when a cache exists"]
+explanation = "A server QueryClient needs a request-appropriate scope to avoid sharing cache state across users."
+
+[questions.nextjs-dv011]
+prompt = "In an SSR workflow, what does `dehydrate(queryClient)` mainly do?"
+options = ["Delete the query cache after rendering", "Create cache state that can be transferred to a React tree for hydration", "Permanently disable client refetching", "Authenticate the current user automatically"]
+explanation = "Prefetched data becomes hydration state so React Query on the client can continue using that cache."
+
+[questions.nextjs-dv012]
+prompt = "The server prefetches `['posts', { page: 2 }]`, but the client component calls `useQuery` with `['posts', { page: 1 }]`. What is the most likely result?"
+options = ["The client uses the page 2 cache because both keys contain `posts`", "The client looks for a different cache entry and may fetch page 1", "The query key is automatically changed to match", "Hydration rejects the entire application"]
+explanation = "Each query key identifies different data; a different page value means a different cache entry."
+
+[questions.nextjs-dv013]
+prompt = "A query has been hydrated but uses the default `staleTime` of zero. Which interpretation is appropriate?"
+options = ["The data stays fresh indefinitely", "The data can be stale immediately and refetch when the query mounts on the client", "The query is deleted before hydration", "All later requests use the cache without revalidation"]
+explanation = "Hydration transfers state to the client, but freshness still depends on `staleTime`; the default of zero makes data stale immediately."
+
+[questions.nextjs-dv014]
+prompt = "Which choices are appropriate when transferring a query cache from the server to the client?"
+options = ["Create a separate cache for each server request", "Put an access token or secret in dehydrated state to make client API calls easier", "Prefetch with a query key that matches the client query", "Serialize only data allowed to be sent to the browser"]
+explanation = "Cache state must be isolated per request, query identity must match, and serialized data must be safe for the client."
+
+[questions.nextjs-dv015]
+prompt = "How can you reduce request waterfalls when SSR prefetches multiple queries?"
+options = ["Start independent query prefetches in parallel", "Always wait for each independent query before starting the next", "Sequence only the queries that truly depend on a previous result", "Use one global QueryClient for all requests"]
+explanation = "Independent queries can run concurrently; only real dependencies require ordering."
+
+[questions.nextjs-dv016]
+prompt = '''
+Fill in the helper that creates state to pass to `HydrationBoundary`:
+
+```js
+const state = {{blank}}(queryClient)
+```
+'''
+explanation = "`dehydrate` extracts suitable state from a QueryClient for hydration."
+
+[questions.nextjs-dv017]
+prompt = "Describe TanStack Query's SSR/hydration flow for a route and explain how to avoid sharing cache between users, needless client refetching, or exposing sensitive data."
+keywords = [["queryclient per request", "fresh queryclient", "request-scoped"], ["prefetch", "prefetchquery"], ["dehydrate", "dehydrated state"], ["hydrationboundary", "hydrate"], ["same query key", "matching query key"], ["staleTime", "freshness"], ["sensitive data", "secret"]]
+model_answer = '''
+Create a request-scoped `QueryClient` for each server request, prefetch the required data, and transfer its state with `dehydrate` into a `HydrationBoundary`. The client component uses the same query key to read the cache; configure `staleTime` for the domain to avoid an unnecessary immediate refetch. Serialize only data allowed in the browser, and keep secrets or tokens out of dehydrated state.
+'''
+explanation = "A good answer connects cache scope, query identity, freshness, and the client/server data boundary into one workflow."
+
+[questions.nextjs-dv018]
+prompt = "The `profile` and `notifications` queries do not depend on each other. Which prefetch approach reduces total wait time?"
+options = ["Wait for profile to finish before starting notifications", "Start both prefetch tasks before waiting for their results", "Combine them under one key even though they contain different data", "Set `staleTime` to zero for both"]
+explanation = "Independent queries can run concurrently; separate keys preserve each data set's identity."
+
+[modules.nextjs-dv-router-auth]
+title = "TanStack Router: Context and Route Guards"
+description = "Pass typed dependencies through the route tree, guard navigation with `beforeLoad`, and organize authentication across route branches."
+lesson = '''
+### Shared context and protected routes
+TanStack Router lets you pass shared dependencies through router context, such as a `queryClient` or information about the authenticated user. You can define the context type on the root route so `beforeLoad`, loaders, and route components receive a typed contract. A route can add context, and its descendants inherit the accumulated context from parent branches. This lets a protected layout share logic with the screens beneath it.
+
+| Mechanism | When | Role |
+|---|---|---|
+| Router context | When creating or updating the router | Share dependencies such as the current user or client cache |
+| `beforeLoad` | Before a route's loader | Check navigation conditions, add route context, or throw a redirect |
+| Loader | When a route needs data | Load data from params, search, and available context |
+| Server/API | When reading or writing data | Re-authenticate and enforce actual authorization |
+
+For example, a parent route at `/app` can check `context.auth.user`; if no user is present, it can throw a redirect to `/login`. Child routes in the branch can use that context to load data or display the appropriate UI. If login or logout changes the user, update the router context and invalidate route state as needed so guards and loaders run again.
+
+A client-side route guard improves navigation flow only. Users can still call an API directly, so the server must enforce permissions on each resource. Common mistakes include using React context in a component when a loader cannot access that dependency, keeping stale auth state after login, or assuming a redirect replaces server-side authorization.
+'''
+
+[questions.nextjs-dv019]
+prompt = "What is router context most useful for in TanStack Router?"
+options = ["Sharing typed dependencies such as auth state or a QueryClient with route hooks and loaders", "Automatically saving all component state in the URL", "Replacing authentication in the server API", "Creating the HTML `<head>` for each route"]
+explanation = "Router context provides shared dependencies in the route tree; it does not replace server-side access control."
+
+[questions.nextjs-dv020]
+prompt = "A route should redirect a signed-out user to `/login` before its loader runs. Which mechanism is the best fit?"
+options = ["`beforeLoad` checks context and throws a redirect", "A `useEffect` in a child component after data renders", "`validateSearch` creates a session automatically", "`Link` checks API permissions automatically"]
+explanation = "`beforeLoad` runs before the loader and can control navigation with a redirect when a condition is not met."
+
+[questions.nextjs-dv021]
+prompt = "Several child routes under `/app` need the same sign-in check. Which organization reduces repeated logic?"
+options = ["Put a guard on the appropriate parent route or layout and let child routes inherit context", "Repeat the same check in every `Link` button", "Check only each route's query string", "Hide the entire route tree from TypeScript"]
+explanation = "A parent route can group shared branch logic, while the server remains responsible for checking data access."
+
+[questions.nextjs-dv022]
+prompt = "The client redirects away from an admin route when a user lacks a role. What must the admin API still do?"
+options = ["Nothing, because the route tree is type-safe", "Authenticate the request and check permission on every data operation", "Check only the browser's referrer", "Trust a role supplied in the query string"]
+explanation = "A route guard handles UX; server-side authorization must protect the endpoint and resource even when the API is called directly."
+
+[questions.nextjs-dv023]
+prompt = "Which statements about context and `beforeLoad` are correct?"
+options = ["Root context can define types for required dependencies", "A client-side route guard replaces server authorization checks", "`beforeLoad` can check conditions before a loader runs", "A child route can use context accumulated from its parent branch"]
+explanation = "Context and `beforeLoad` organize dependencies and navigation in the router; data permissions still need server-side verification."
+
+[questions.nextjs-dv024]
+prompt = "Which choices are appropriate when building a branch of routes that requires sign-in?"
+options = ["Put the user information needed by the UI in router context and limit sensitive data", "After login or logout changes context, consider updating the context and invalidating route state", "Use a role value in the URL as the authority for permissions", "Have the API recheck the session and permission on the resource"]
+explanation = "Router context should be updated with auth state; URLs are untrusted and the server must still enforce authorization."
+
+[questions.nextjs-dv025]
+prompt = "The route hook that runs before the loader to check navigation conditions is named {{blank}}."
+explanation = "`beforeLoad` is suitable for route conditions such as checking context or redirecting."
+
+[questions.nextjs-dv026]
+prompt = "In an interview, explain how router context and `beforeLoad` work together to protect a route branch; state the limits of a client-side guard and what the server must do."
+keywords = [["router context", "context"], ["beforeLoad", "route guard"], ["redirect", "redirecting"], ["child routes", "nested routes"], ["server authorization", "server-side authorization", "server permission check"]]
+model_answer = '''
+Router context passes typed auth state to a route branch. `beforeLoad` checks the user and can redirect before a loader runs; child routes inherit context from their parent. This guard only controls client navigation, so the server API must still authenticate the session and check authorization on the resource.
+'''
+explanation = "A complete answer distinguishes client-side navigation from the server-side data access boundary."
+
+[questions.nextjs-dvc02]
+title = "Decide Route Access"
+prompt = '''
+Write `getRouteAccess(context, requiredRole)` to return one of three strings: `"login"`, `"allow"`, or `"forbidden"`.
+- If `context.user` is not an object with a non-empty string `id`, return `"login"`.
+- If the user is signed in and `requiredRole` is `null` or `undefined`, return `"allow"`.
+- If a role is required, return `"allow"` only when `context.user.roles` is an array containing that role; otherwise return `"forbidden"`.
+
+This models a client-side `beforeLoad` decision; the server API still needs its own permission check.
+'''
+hints = ["Check identity before checking roles.", "If `requiredRole` is absent, you do not need to compare the roles array."]
+explanation = "`beforeLoad` can use a policy result to redirect; a decision in the browser does not replace permission checks at the API."

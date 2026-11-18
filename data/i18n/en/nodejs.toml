@@ -1,0 +1,616 @@
+[modules.node-core]
+title = '''Runtime & Event Loop'''
+description = '''libuv, event loop phases, nextTick vs. microtasks vs. setImmediate, worker_threads, and cluster.'''
+lesson = '''
+### Key ideas
+- Node runs JavaScript on a **single thread** (V8) and uses **libuv** (a default four-thread pool for fs, dns.lookup, crypto, and zlib).
+- Event loop phases: **timers** → pending callbacks → poll (I/O) → **check** (`setImmediate`) → close callbacks.
+- After **each callback**, Node drains the `process.nextTick` queue, then runs **Promise microtasks**.
+- Inside an I/O callback, `setImmediate` always runs before `setTimeout(fn, 0)`.
+- CPU-heavy work blocks the event loop. Use **worker_threads** for CPU-bound work; use **cluster** or multiple processes (PM2, containers) to use multiple cores for a server.
+- **ESM** (`import`, `"type": "module"`, top-level await) vs. **CommonJS** (`require`, `module.exports`).
+- Recent Node versions include `fetch`, `node:test`, `--watch`, `--env-file`, and `AbortSignal.timeout()`.
+'''
+
+[questions.node-001]
+prompt = '''What is the output order in Node.js (a directly executed CommonJS file)?
+
+```js
+setTimeout(() => console.log('timeout'), 0);
+setImmediate(() => console.log('immediate'));
+Promise.resolve().then(() => console.log('promise'));
+process.nextTick(() => console.log('nextTick'));
+console.log('sync');
+```
+'''
+options = [
+  '''sync, nextTick, promise, then timeout/immediate (the order of the last two is not guaranteed in the main module)''',
+  '''sync, promise, nextTick, timeout, immediate''',
+  '''nextTick, sync, promise, immediate, timeout''',
+  '''sync, timeout, immediate, nextTick, promise''',
+]
+explanation = '''The nextTick queue runs before Promise microtasks. In the main module, `setTimeout 0` and `setImmediate` depend on when the event loop starts; inside an I/O callback, `setImmediate` always runs first.'''
+
+[questions.node-002]
+prompt = '''A Node API computes a bcrypt hash synchronously (`bcrypt.hashSync`) for every request. What is the problem?'''
+options = [
+  '''There is no problem because Node is multithreaded''',
+  '''It blocks the event loop, making every other request wait; use the asynchronous version (which runs on the thread pool) or worker_threads''',
+  '''It causes a memory leak''',
+  '''It is only slow on Windows''',
+]
+explanation = '''The golden rule is: “Don't block the event loop.”'''
+
+[questions.node-003]
+prompt = '''What is the difference between `worker_threads` and `cluster`?'''
+options = [
+  '''They are the same''',
+  '''`worker_threads`: multiple threads in one process that can share memory (`SharedArrayBuffer`), suited to CPU-bound work; `cluster`: multiple processes sharing a server port, suited to scaling HTTP across cores''',
+  '''`cluster` only runs on Linux''',
+  '''`worker_threads` is for reading files''',
+]
+explanation = '''In a container or Kubernetes deployment, it is common to run one process per container and scale with replicas.'''
+
+[questions.node-004]
+prompt = '''Which statements about ES Modules in Node.js are correct?'''
+options = [
+  '''They can be enabled with the `.mjs` extension or `"type": "module"` in package.json''',
+  '''They support top-level `await`''',
+  '''They provide `__dirname` automatically, as CommonJS does''',
+  '''Relative imports must include the file extension (`./db.js`)''',
+  '''`require()` is always available in an ESM file''',
+]
+explanation = '''In ESM, use `import.meta.dirname` or `import.meta.url`. To call `require` from ESM, use `createRequire`.'''
+
+[questions.node-005]
+prompt = '''Cancel `fetch` if it takes longer than 3 seconds (Node 18+):
+
+```js
+const res = await fetch(url, { signal: AbortSignal.{{blank}}(3000) });
+```
+'''
+explanation = '''The thrown error has `name === 'TimeoutError'`.'''
+
+[questions.node-006]
+prompt = '''Explain how Node.js can handle many concurrent connections even though JavaScript runs on a single thread.'''
+keywords = [
+  ["event loop"],
+  ["non-blocking", "asynchronous", "async"],
+  ["libuv", "thread pool", "epoll", "kqueue", "operating system"],
+  ["callback", "promise"],
+  ["i/o"],
+]
+model_answer = '''Node uses **non-blocking I/O** coordinated by the **event loop**. When it encounters I/O (such as network or file operations), Node delegates the work to the operating system (epoll/kqueue/IOCP) or **libuv's thread pool**, then continues handling other requests. When the I/O completes, a **callback or Promise** is queued for the event loop to run.
+
+Because a web server spends most of its time waiting for I/O, one JavaScript thread can serve thousands of connections. The limitation is **CPU-heavy** work, which blocks the event loop; use worker_threads or a separate service for that work.
+'''
+explanation = '''This is a classic Node.js interview question.'''
+
+[questions.node-007]
+title = '''Promisify a callback-style API'''
+prompt = '''Write `promisify(fn)`, similar to `util.promisify`: convert an **error-first** callback function `fn(...args, (err, value) => {})` into a function that returns a Promise.
+- Preserve `this`.
+- If `err` is truthy, reject; otherwise, resolve with `value`.
+- If `fn` throws synchronously, reject.
+'''
+explanation = '''Modern Node.js provides promise-based versions of most APIs (`fs/promises`, `timers/promises`).'''
+hints = [
+  '''Return `function (...args)` (not an arrow function) to preserve `this`.''',
+  '''Append the callback to the argument list.''',
+]
+
+[modules.node-io]
+title = '''Streams, Buffers & I/O'''
+description = '''Readable/Writable/Transform, backpressure, pipeline, Buffer, fs/promises, and EventEmitter.'''
+lesson = '''
+### Key ideas
+- **Streams** process data in chunks, keeping memory use steady when handling large files.
+- Four types: Readable, Writable, Duplex, and Transform.
+- **Backpressure**: `write()` returns `false` when the buffer is full, so wait for the `'drain'` event. `stream.pipeline()` handles backpressure, errors, and cleanup automatically (and is preferable to `.pipe()`).
+- **Buffer** stores binary data outside the V8 heap (`Buffer.from('hi')`, `buf.toString('base64')`).
+- For an `EventEmitter`, emitting `'error'` without a listener **throws an error and can crash the process**.
+- Use `fs/promises` with `async/await`; avoid `fs.readFileSync` in a request handler.
+'''
+
+[questions.node-020]
+prompt = '''Why stream a 2 GB file instead of calling `fs.readFile` and then `res.end(data)`?'''
+options = [
+  '''`readFile` cannot read files larger than 1 MB''',
+  '''`readFile` loads the entire file into RAM; a stream processes chunks, using less memory and letting the client receive data sooner''',
+  '''Streams always compress data''',
+  '''There is no difference''',
+]
+explanation = '''`pipeline(fs.createReadStream(path), res)` handles backpressure and errors automatically.'''
+
+[questions.node-021]
+prompt = '''What is “backpressure” in a stream?'''
+options = [
+  '''An error that occurs when a stream is closed''',
+  '''A mechanism that tells the data source to stop writing when the destination is slower (`write()` returns false, so wait for `'drain'`)''',
+  '''Data compression''',
+  '''Writing data in reverse''',
+]
+explanation = '''Ignoring backpressure can make the buffer grow until the process runs out of memory.'''
+
+[questions.node-022]
+prompt = '''An EventEmitter emits an `'error'` event without any listener. What happens?'''
+options = [
+  '''The event is ignored''',
+  '''The error is thrown; if it is not caught, the process can crash''',
+  '''A warning is printed''',
+  '''The operation is retried automatically''',
+]
+explanation = '''Always attach `.on('error', ...)` to a stream or emitter, or use `pipeline` or `events.once`.'''
+
+[questions.node-023]
+prompt = '''Safely connect streams (automatically destroy the streams and return an error if any step fails):
+
+```js
+import { {{blank}} } from 'node:stream/promises';
+await {{blank}}(fs.createReadStream('in.log'), zlib.createGzip(), fs.createWriteStream('in.log.gz'));
+```
+'''
+explanation = '''`stream/promises` provides a Promise-based version of `pipeline`.'''
+
+[questions.node-024]
+title = '''Process data in chunks (line splitter)'''
+prompt = '''Simulate a Transform stream that splits lines. Write `createLineSplitter(onLine)` to return an object:
+- `write(chunk: string)` — data arrives in **arbitrary chunks** (a line may be split across two chunks); call `onLine(line)` for each **complete line** (ending in `\n`, with a trailing `\r` removed if present).
+- `end()` — if a non-empty remainder has no `\n`, call `onLine` with it.
+'''
+explanation = '''This is the logic behind `readline` and stream-based log or NDJSON parsers.'''
+hints = [
+  '''Keep the remainder in a buffer between calls to `write`.''',
+  '''Split only at `\n` and keep the part after it.''',
+]
+
+[modules.node-express]
+title = '''Express & API Architecture'''
+description = '''Middleware, routers, error-handling middleware, async errors, validation, and project structure.'''
+lesson = '''
+### Key ideas
+- **Middleware** `(req, res, next)` runs in registration order; it must call `next()` or finish the response.
+- **Error-handling middleware** has **four parameters** `(err, req, res, next)` and should be registered **last**.
+- In Express 5, errors and rejected Promises in `async` handlers are forwarded to error middleware automatically. In Express 4, wrap handlers with an `asyncHandler` or call `next(err)`.
+- `express.json()` parses JSON request bodies; `express.Router()` splits routes into modules.
+- Layering: route → controller → service → repository; validate input (with zod/joi) at the boundary.
+- Security: use `helmet`, rate limiting, and a body-size limit; do not return stack traces in production.
+'''
+
+[questions.node-040]
+prompt = '''How does Express identify error-handling middleware?'''
+options = [
+  '''The function name starts with `error`''',
+  '''The function has **four parameters**: `(err, req, res, next)`''',
+  '''It is registered with `app.error()`''',
+  '''It is placed in an errors directory''',
+]
+explanation = '''It must also be registered **after** the other routes.'''
+
+[questions.node-041]
+prompt = '''A middleware neither calls `next()` nor sends a response. What happens?'''
+options = [
+  '''Express calls `next()` automatically''',
+  '''The request hangs until the client times out''',
+  '''A 404 response is returned''',
+  '''A 500 response is returned''',
+]
+explanation = '''Every middleware must finish the request (`res.send/json/end`) or pass control with `next()`.'''
+
+[questions.node-042]
+prompt = '''In **Express 4**, what happens if an `async` handler throws (its Promise rejects)?'''
+options = [
+  '''The error is forwarded to error middleware automatically''',
+  '''It is not caught: it can become an unhandled rejection and leave the request hanging; use `try/catch` with `next(err)` or a wrapper''',
+  '''A 400 response is returned''',
+  '''Express 4 does not support async functions''',
+]
+explanation = '''Express 5 automatically forwards rejected Promises to `next(err)`.'''
+
+[questions.node-043]
+prompt = '''Which measures help secure an Express API in production?'''
+options = [
+  '''Use `helmet()` to set security headers''',
+  '''Limit body size with `express.json({ limit: '100kb' })`''',
+  '''Return `err.stack` to the client to make debugging easier''',
+  '''Rate-limit login endpoints''',
+  '''Validate input with a schema (zod/joi)''',
+]
+explanation = '''Log stack traces on the server only.'''
+
+[questions.node-044]
+prompt = '''Read a route parameter and return 404:
+
+```js
+app.get('/users/:id', async (req, res) => {
+  const user = await repo.find(req.{{blank}}.id);
+  if (!user) return res.{{blank}}(404).json({ error: 'Not found' });
+  res.json(user);
+});
+```
+'''
+explanation = '''`req.query` contains query-string values; `req.body` contains the body (and requires `express.json()`).'''
+
+[questions.node-045]
+title = '''Compose middleware (onion model)'''
+prompt = '''Write `compose(middlewares)` like `koa-compose`: return a function `(ctx) => Promise`.
+- Each middleware has the form `async (ctx, next) => {}`. Calling `await next()` runs the next middleware; code after `await next()` runs on the way back out (the **onion** model).
+- If any middleware fails, the Promise rejects (so an outer middleware can catch the error with `try/catch`).
+- If a middleware calls `next()` **twice**, reject with `Error('next() called multiple times')`.
+'''
+explanation = '''Koa uses this model. Express has a similar callback-style `next`, but does not provide an `await`-based return path.'''
+hints = [
+  '''Write a recursive `dispatch(i)` that calls middleware i with `next = () => dispatch(i + 1)`.''',
+  '''Store the index of the most recently run middleware to detect a second call to `next`.''',
+]
+
+[questions.node-046]
+title = '''Mini Express router with params'''
+prompt = '''Write `createRouter()` to return `{ get(path, handler), post(path, handler), handle(method, url) }`:
+- A path may contain parameters such as `:name` (for example, `/users/:id/posts/:postId`).
+- `handle(method, url)`: remove the query string, find the **first** route matching the method and path, call `handler(req)` with `req = { method, path, params, query }`, and return the handler's result.
+- Parse `query` from the query string (`a=1&b=x` → `{ a: '1', b: 'x' }`); values are strings and URL-decoded.
+- If no path matches, return `{ status: 404 }`; if the path matches but the method does not, return `{ status: 405 }`.
+'''
+explanation = '''Express uses `path-to-regexp` to compile routes in a similar way.'''
+hints = [
+  '''Convert `/users/:id` into a regex such as `^/users/([^/]+)/?$` and keep the parameter names in order.''',
+  '''Track a `pathMatched` variable to distinguish 404 from 405.''',
+]
+
+[modules.node-ops]
+title = '''Performance & Operations'''
+description = '''Caching, rate limiting, retry/backoff, graceful shutdown, logging, and environment variables.'''
+lesson = '''
+### Key ideas
+- **Caching**: use an in-memory LRU cache for hot data; use Redis across multiple instances.
+- **Rate limiting**: use a token bucket or sliding window, backed by Redis when scaling horizontally.
+- Retry with **exponential backoff + jitter** only for transient errors and idempotent operations.
+- **Graceful shutdown**: handle `SIGTERM` → `server.close()` → close the DB pool → `process.exit`.
+- For unhandled errors, `process.on('unhandledRejection'|'uncaughtException')` should log and then **exit** so the process manager can restart the process; do not try to keep running.
+- Use structured logs (pino) and configure the application through environment variables (12-factor).
+'''
+
+[questions.node-060]
+prompt = '''When an `uncaughtException` occurs, the recommended response is to:'''
+options = [
+  '''Ignore it and keep running''',
+  '''Log the error, do minimal cleanup, then **exit the process** so the process manager (PM2/K8s) can restart it''',
+  '''Restart the event loop''',
+  '''Send the error to the client''',
+]
+explanation = '''After an uncaught exception, the application's state can no longer be trusted.'''
+
+[questions.node-061]
+prompt = '''Why should retries use **exponential backoff + jitter**?'''
+options = [
+  '''To make the code shorter''',
+  '''To increase the wait between attempts so a failing service can recover, while jitter prevents clients from retrying **at the same time** (a thundering herd)''',
+  '''To increase the number of retries''',
+  '''It is required by the HTTP specification''',
+]
+explanation = '''Retry only transient errors (timeouts, 503, 429) and idempotent operations.'''
+
+[questions.node-062]
+title = '''Token-bucket rate limiter'''
+prompt = '''Write `createRateLimiter({ capacity, refillPerSec, now })`:
+- Each **key** (for example, an IP address) has its own bucket, initially filled to `capacity` tokens.
+- Tokens refill over time at `refillPerSec` tokens per second (which may be fractional), up to `capacity`.
+- `take(key)` returns `{ allowed, remaining, retryAfterMs }`:
+  - If at least 1 token remains, subtract 1, set `allowed: true`, and set `retryAfterMs: 0`.
+  - If the bucket is empty, set `allowed: false`; `retryAfterMs` is the time in milliseconds, rounded up, until one token is available.
+- `remaining` is the number of whole tokens left (`Math.floor`).
+- `now()` returns the current time in milliseconds and is provided for testing.
+'''
+explanation = '''When the API returns 429, set the `Retry-After` header using `retryAfterMs`. With multiple instances, store buckets in Redis (for example, with an atomic Lua script).'''
+hints = [
+  '''Store `{ tokens, last }` for each key; on each call to `take`, add tokens based on the elapsed time.''',
+  '''Tokens can be fractional; apply `floor` only when returning `remaining`.''',
+]
+
+[questions.node-063]
+title = '''LRU cache with TTL'''
+prompt = '''Write a class `LRUCache` with `constructor(max, { ttlMs = Infinity, now = Date.now } = {})`:
+- `get(key)` returns the value or `undefined`. Access makes the key the **most recently used**. If the key has expired (`now() - setAt >= ttlMs`), delete it and return `undefined`.
+- `set(key, value)` deletes the **least recently used** key if the cache exceeds `max`.
+- Support `has(key)` (does not update order, but respects TTL), `delete(key)`, and the `size` property.
+
+Hint: `Map` preserves insertion order.
+'''
+explanation = '''The widely used npm package `lru-cache` implements this idea with further optimizations.'''
+hints = [
+  '''`map.delete(key); map.set(key, v)` moves the key to the end (most recent).''',
+  '''The oldest key is `map.keys().next().value`.''',
+]
+
+[modules.nodejs-dv-modules]
+title = '''ESM, CommonJS & Package Contracts'''
+description = '''Distinguish module formats, configure package.json, use conditional exports, and define a public API boundary.'''
+lesson = '''
+### Choose a module format and define the public API deliberately
+Node supports two main module systems. CommonJS loads with `require()` and exports through `module.exports`; ECMAScript Modules (ESM) use `import`/`export`, support static analysis, and allow top-level await. Clear rules avoid relying on guesses based on syntax or runtime version.
+
+| Signal | Format | Note |
+|---|---|---|
+| `.mjs` | ESM | Explicit; does not depend on package.json |
+| `.cjs` | CommonJS | Explicit; does not depend on package.json |
+| `.js` | Determined by the nearest package.json `type`; if absent, by the runtime's default or detection rules | Declare it explicitly to avoid ambiguity |
+
+Example package.json: `{"type":"module","exports":{".":{"import":"./dist/index.js","require":"./dist/index.cjs"},"./client":"./dist/client.js"}}`
+
+In ESM, relative file paths generally need an explicit extension; `__dirname` and `__filename` are not available automatically as they are in CommonJS. To call `require` from ESM, create it with `createRequire(import.meta.url)` from `node:module`. The `exports` field defines the entry points consumers may import and can select targets based on conditions such as `import` or `require`. When this field exists, an undeclared deep import may fail with `ERR_PACKAGE_PATH_NOT_EXPORTED`. The `imports` field is for internal aliases that start with `#`.
+
+Common mistakes include setting `type=module` and still using `module.exports`, omitting extensions from relative imports, or importing an internal file that is not listed in `exports`. For a package that supports both formats, check each entry point separately and do not assume both formats always share the same object state.
+'''
+
+[questions.nodejs-dv001]
+prompt = '''A package declares `type=module` in its nearest package.json. Which format does `src/index.js` use under that configuration?'''
+options = [
+  '''ESM''',
+  '''CommonJS''',
+  '''Node chooses randomly based on how the file is run''',
+  '''The file cannot be loaded''',
+]
+explanation = '''For `.js`, Node uses the `type` field in the nearest package.json; `.mjs` and `.cjs` are more explicit indicators.'''
+
+[questions.nodejs-dv002]
+prompt = '''In a package with `type=module`, which file does Node still explicitly interpret as CommonJS?'''
+options = [
+  '''index.js''',
+  '''index.mjs''',
+  '''index.cjs''',
+  '''index.json''',
+]
+explanation = '''The `.cjs` extension identifies CommonJS even when the package defaults to ESM.'''
+
+[questions.nodejs-dv003]
+prompt = '''A library adds an `exports` field to package.json. Which consequences are correct?'''
+options = [
+  '''It can declare different entry points for `import` and `require` conditions''',
+  '''Node automatically converts CommonJS code to ESM''',
+  '''Undeclared subpaths may be blocked when a consumer uses a deep import''',
+  '''Every file in the package directory automatically becomes public API''',
+  '''`exports` must always point to exactly one file''',
+]
+explanation = '''`exports` can use conditional exports and restrict public subpaths; it does not compile formats or expose the entire directory automatically.'''
+
+[questions.nodejs-dv004]
+prompt = '''For `.js` files, which package.json field declares the default format for files in the package: {{blank}}?'''
+explanation = '''`type` accepts `module` or `commonjs`; use `.mjs` or `.cjs` when the format should be explicit in the file name.'''
+
+[questions.nodejs-dv005]
+prompt = '''In ESM, which API from `node:module` creates a `require` function tied to the current module's URL: {{blank}}?'''
+explanation = '''`createRequire(import.meta.url)` is useful when a module needs to remain compatible with a CommonJS API.'''
+
+[questions.nodejs-dv006]
+prompt = '''In Node ESM, what is the appropriate way to import the relative JavaScript file `db.js`?'''
+options = [
+  '''`import db from './db'`''',
+  '''`import db from './db.js'`''',
+  '''`import db from 'db.js'`''',
+  '''`require('./db.js')` is always available without setup''',
+]
+explanation = '''In typical cases, Node ESM requires an explicit extension for relative file paths; a bare specifier such as `db.js` is resolved as a package.'''
+
+[questions.nodejs-dv007]
+prompt = '''In an interview, explain practical differences between CommonJS and ESM in Node, then describe how you would design a package to support consumers without exposing internal files.'''
+keywords = [
+  ["commonjs", "cjs", "module.exports"],
+  ["esm", "ecmascript modules", "import/export"],
+  ["package.json type", "type field"],
+  ["exports", "conditional exports"],
+  ["public api", "interoperability", "compatibility"],
+]
+model_answer = '''CommonJS uses `require()` and `module.exports`, while ESM uses `import`/`export` with static linking. If a package supports both formats, the `type` setting and `.cjs`/`.mjs` extensions help Node distinguish them clearly. I declare `exports` to define the public API and can use conditional exports for consumers using `import` or `require`. This keeps implementation files from being treated as a stable API, so they can change independently.'''
+explanation = '''A good answer distinguishes syntax, resolution rules, and the package contract instead of merely naming the two module systems.'''
+
+[questions.nodejs-dvc01]
+title = '''Parse a bare package specifier'''
+prompt = '''Write `parsePackageSpecifier(specifier)` for a Node bare package specifier. Return `{ packageName, subpath }`, where the package root has subpath `"."`, while a subpath such as `pkg/fs/read` has subpath `"./fs/read"`. Support scoped packages such as `@team/logger` and `@team/logger/json`.
+
+Return `null` if the input is not a valid string for this exercise: it is empty, contains whitespace, is a relative or absolute path, starts with `node:`, contains a backslash, `?`, or `#`, has a missing scope or package name, or has an empty, `.` or `..` path segment. You do not need to resolve packages on the filesystem or apply `exports`.
+'''
+explanation = '''This exercise models how to split a package name from its subpath; resolving the actual target also depends on package.json, `exports`, and the filesystem.'''
+hints = [
+  '''Split the segments on `/`; a scoped package uses the first two segments.''',
+  '''Check for empty, `.` or `..` segments before building the subpath.''',
+]
+
+[modules.nodejs-dv-http]
+title = '''HTTP Server, Client & Headers'''
+description = '''Node http/https/http2, request-response flow, socket reuse, timeouts, and correct header lifecycle handling.'''
+lesson = '''
+### HTTP as a request-response stream
+The `node:http` module provides a low-level API for serving and sending HTTP/1.1. The `createServer` callback receives an `IncomingMessage` (Readable) and a `ServerResponse` (Writable); the body is delivered in chunks and is not automatically parsed as JSON. Call `write()` to send multiple chunks and `end()` to finish the response. Headers must be set before they are sent; use `headersSent` to avoid writing a status or headers a second time.
+
+| Need | API | Note |
+|---|---|---|
+| HTTP/1.1 server | `http.createServer()` | Receives `req` and `res` streams |
+| TLS server | `https.createServer()` | Configure the certificate and key for your infrastructure |
+| HTTP/2 | `http2.createServer()` or `createSecureServer()` | Uses a different API/session from HTTP/1.1; TLS is typical on the public Internet |
+| Outbound client | `http.request()` / `https.request()` | An Agent can reuse and limit sockets |
+
+Example: `http.createServer((req, res) => { res.writeHead(200, {'content-type':'application/json'}); res.end(JSON.stringify({ok:true})); }).listen(3000)`.
+
+For large files, do not collect the entire body in an unbounded string or Buffer; process it as a stream and preserve backpressure. Limit request sizes and configure `headersTimeout` and `requestTimeout` for the endpoint. `headersTimeout` limits how long headers may take to arrive; `requestTimeout` limits receipt of the entire request. A socket timeout is a separate concept. A client may disconnect, so handle errors and `close` events, and do not keep writing to a response that has already ended.
+
+Common mistakes include calling `writeHead()` after `write()`, forgetting `end()`, assuming the request body is automatically a JSON object, or believing a socket timeout also limits body size. Express adds routing and middleware on top of the HTTP server, but understanding the stream, socket, and response lifecycle is still necessary.
+'''
+
+[questions.nodejs-dv008]
+prompt = '''In the callback passed to `http.createServer`, what is `req`?'''
+options = [
+  '''A Readable stream representing the incoming request''',
+  '''Already-parsed JSON''',
+  '''The Writable stream for the response''',
+  '''A worker thread''',
+]
+explanation = '''`IncomingMessage` is a Readable stream; the body may arrive in multiple chunks and must be read or piped.'''
+
+[questions.nodejs-dv009]
+prompt = '''You need to know whether a response has started sending headers to avoid setting the status again. Which property should you check?'''
+options = [
+  '''`res.headersSent`''',
+  '''`res.writableEnded`''',
+  '''`req.complete`''',
+  '''`req.aborted`''',
+]
+explanation = '''`ServerResponse.headersSent` indicates whether the headers have been sent to the client.'''
+
+[questions.nodejs-dv010]
+prompt = '''What can a client-side HTTP Agent help with?'''
+options = [
+  '''Reusing sockets with keep-alive''',
+  '''Limiting the number of concurrent sockets to an origin''',
+  '''Retrying every failed request without considering idempotency''',
+  '''Parsing JSON responses into objects''',
+  '''Managing an outbound socket pool''',
+]
+explanation = '''An Agent manages client-side sockets and can reuse or limit them; retrying and parsing the response body are separate responsibilities.'''
+
+[questions.nodejs-dv011]
+prompt = '''After writing the body with `res.write()`, which method ends the response? `res.{{blank}}()`'''
+explanation = '''`response.end()` signals that no more data will be written.'''
+
+[questions.nodejs-dv012]
+prompt = '''In Node, which module provides `createServer()` for an HTTPS server using TLS? `node:{{blank}}`'''
+explanation = '''`node:https` wraps HTTP in TLS; configure the certificate and key appropriately.'''
+
+[questions.nodejs-dv013]
+prompt = '''You need to create an HTTP/2 server with TLS. Which API is correct?'''
+options = [
+  '''`https.createServer()`''',
+  '''`http2.createSecureServer()`''',
+  '''`http.createServer({ http2: true })`''',
+  '''`net.createServer({ tls: true })`''',
+]
+explanation = '''`node:http2` provides `createSecureServer()` for HTTP/2 over TLS. It also has `createServer()` for unencrypted connections in suitable environments.'''
+
+[questions.nodejs-dv014]
+prompt = '''Describe the request-response lifecycle in Node core HTTP, then explain when you would choose HTTP/1.1, HTTPS, HTTP/2, or Express and what to consider with large bodies, timeouts, and client disconnections.'''
+keywords = [
+  ["incomingmessage", "readable stream", "request stream"],
+  ["serverresponse", "writable stream", "response"],
+  ["backpressure", "stream"],
+  ["timeout", "headerstimeout", "requesttimeout"],
+  ["https", "tls"],
+  ["http2", "multiplexing"],
+  ["express", "middleware"],
+]
+model_answer = '''In `node:http`, `IncomingMessage` is a Readable stream and `ServerResponse` is a Writable stream. The request body can arrive in chunks, and the response must be finished with `end()`. For a large body, I use streams to preserve backpressure instead of collecting everything in RAM, and I handle errors when the client disconnects. I configure `headersTimeout` and `requestTimeout` for the endpoint because they measure different periods of receiving data. I choose HTTPS when TLS is needed; HTTP/2 has its own API and session, while Express is useful for routing and middleware but still relies on the HTTP server.'''
+explanation = '''A strong answer connects the abstractions to the real lifecycle and resource limits.'''
+
+[questions.nodejs-dvc02]
+title = '''Merge a Vary header'''
+prompt = '''Write `mergeVary(current, field)`. `current` is the current Vary value (a string or `undefined`); `field` is one valid header name. Return the updated Vary string:
+- Split the current list on commas, trim extra whitespace, and preserve its original order.
+- Add `field` only if an equivalent name is not already present, comparing case-insensitively.
+- If `current` already contains `*`, or if `field` is `*`, return `*`.
+- If the list is empty, return `field`.
+
+You do not need to validate header-name syntax.
+'''
+explanation = '''Vary describes which request headers affect the cached representation. A wildcard has special meaning and should not be combined like an ordinary header name.'''
+hints = [
+  '''Split `current` on commas, trim each name, and compare them in lowercase.''',
+  '''Handle the wildcard before combining any other names.''',
+]
+
+[modules.nodejs-dv-express-prod]
+title = '''Express Production Boundaries & Readiness'''
+description = '''Configure a trusted reverse proxy, harden the application, and implement health checks and shutdown with request draining.'''
+lesson = '''
+### Trust the right reverse proxy and shut down in a controlled way
+When Express runs behind a load balancer or reverse proxy, `X-Forwarded-*` headers can provide the original client IP, protocol, and hostname. Express uses this information according to the `trust proxy` setting. If the application trusts every connection but can also be reached directly from the Internet, a client may forge these headers and falsify `req.ip`, `req.protocol`, or `req.hostname`. Limit trust to proxies you control, and configure the edge proxy to overwrite headers supplied by clients.
+
+| Concern | How to handle it | What to avoid |
+|---|---|---|
+| Proxy identity | Set `trust proxy` to match the actual subnet/hop topology | Setting it to `true` without controlling the network path |
+| Liveness | Report whether the application/process is alive | Depending on every external service |
+| Readiness | Stop accepting traffic during shutdown or when an essential dependency fails | Returning internal error details to the Internet |
+| SIGTERM | Mark the app not ready, close the listener, drain requests, then close pools | Exiting immediately and cutting off in-flight requests |
+
+Example configuration for a particular deployment network: `app.set('trust proxy', ['loopback', '10.0.0.0/8'])`. The list must match the real infrastructure; do not copy it unchanged if the proxy uses different subnets. Liveness only confirms that the process is still serving; readiness checks whether it can accept new work. On `SIGTERM`, first mark readiness as failed, then close the HTTP server to stop accepting connections and wait for in-flight requests, and finally close the database/message-broker pools. Add a deadline so the supervisor can terminate the process if draining gets stuck.
+
+Production hardening also includes keeping Express and supported dependencies updated, using TLS at the proxy or application, Helmet/security headers, body limits, input validation, and risk-based rate limits. Monitor latency, errors, and saturation; do not log tokens or sensitive data. Common mistakes include setting `trust proxy=true` by copying a guide, making a readiness endpoint depend on too many services, or closing the DB pool before in-flight requests finish.
+'''
+
+[questions.nodejs-dv015]
+prompt = '''Express runs behind a load balancer. Why must `trust proxy` match the actual topology?'''
+options = [
+  '''So Express can conditionally trust forwarded headers when determining the client IP, protocol, and hostname''',
+  '''To automatically enable HTTPS between every service''',
+  '''To replace authentication middleware''',
+  '''To automatically limit request body size''',
+]
+explanation = '''`trust proxy` affects how Express interprets information forwarded by a proxy; trusting too broadly may allow clients to forge that information.'''
+
+[questions.nodejs-dv016]
+prompt = '''What is the main difference between liveness and readiness checks?'''
+options = [
+  '''Liveness reports whether the process is alive; readiness reports whether the instance can accept new traffic''',
+  '''Readiness only runs during deployment, while liveness only runs locally''',
+  '''Liveness must always query the database; readiness must never access a dependency''',
+  '''Both endpoints must return the same status code''',
+]
+explanation = '''Readiness often switches to not-ready during shutdown or when an essential dependency fails. Liveness should avoid repeated restarts just because an external dependency is unavailable.'''
+
+[questions.nodejs-dv017]
+prompt = '''An Express application is behind a reverse proxy managed by your team. Which configuration reduces the risk of forged forwarded headers?'''
+options = [
+  '''The edge proxy removes or overwrites client-supplied `X-Forwarded-*` headers before setting trusted values''',
+  '''Limit `trust proxy` to subnets/hops that match the topology''',
+  '''Assume `req.ip` is always the original socket address under every configuration''',
+  '''Ensure the app cannot be reached directly while relying on forwarded headers''',
+  '''Always set `trust proxy=true`, even when the proxy chain is unknown''',
+]
+explanation = '''Limit both what Express trusts and the network paths into the app; incorrect trust settings may let clients forge IP or protocol information.'''
+
+[questions.nodejs-dv018]
+prompt = '''During a deployment, which sequence after receiving `SIGTERM` helps avoid cutting off requests already being processed?'''
+options = [
+  '''Mark readiness as failed, stop accepting new connections, drain in-flight requests, then close dependency pools''',
+  '''Close the database first, then continue accepting HTTP requests''',
+  '''Call `process.exit` immediately''',
+  '''Ignore the signal and wait for the supervisor to send `SIGKILL`''',
+]
+explanation = '''Mark the app not ready first, then close the listener and let in-flight requests finish before closing dependencies.'''
+
+[questions.nodejs-dv019]
+prompt = '''Which measures are appropriate when hardening Express for production?'''
+options = [
+  '''Update the framework and dependencies through a supported process''',
+  '''Limit body size and validate input at the boundary''',
+  '''Return `err.stack` to the client to help with debugging''',
+  '''Use security headers and rate limits appropriate to the endpoint''',
+  '''Write access tokens verbatim to logs for reference''',
+]
+explanation = '''Do not expose stack traces or credentials in responses or logs. Updates, input limits, validation, and security headers reduce common risks.'''
+
+[questions.nodejs-dv020]
+prompt = '''The topology is fixed: the app only receives connections from one trusted reverse proxy. What hop-count value can be used in this configuration? `app.set('trust proxy', {{blank}})`'''
+explanation = '''One hop matches the stated topology. If the path has a variable number of hops or the app can be reached directly, use a more specific proxy configuration.'''
+
+[questions.nodejs-dv021]
+prompt = '''Outline how to deploy Express securely behind a reverse proxy and how to handle shutdown during deployment. Include the trust boundary, forwarded headers, readiness/liveness, and the order for draining requests and closing dependencies.'''
+keywords = [
+  ["trust proxy", "trusted proxy"],
+  ["forwarded headers", "x-forwarded-for", "x-forwarded-proto"],
+  ["readiness", "not-ready"],
+  ["liveness"],
+  ["sigterm", "graceful shutdown", "shutdown"],
+  ["drain", "in-flight requests"],
+  ["close database", "close the pool"],
+]
+model_answer = '''I configure `trust proxy` for the actual subnet or hop count and ensure the edge proxy overwrites client-supplied forwarded headers. The application must not have a route that bypasses the proxy if it relies on those headers. Readiness switches to not-ready as deployment begins, while liveness only reports whether the process is still running. On `SIGTERM`, the app stops accepting new connections, drains in-flight requests, then closes database and message-broker pools; a deadline lets the supervisor terminate it if draining gets stuck. Health endpoints return only the minimum status and do not expose configuration or internal errors.'''
+explanation = '''A good answer clearly identifies the trust boundary and shutdown order, and distinguishes readiness from liveness.'''
+
+[questions.nodejs-dv022]
+prompt = '''A health endpoint returns database error details, internal hostnames, and environment variables to every client. Which assessment is appropriate?'''
+options = [
+  '''Return only the minimum status needed by the probe; keep operational details in controlled telemetry or logs''',
+  '''This is a good way for clients to repair the database themselves''',
+  '''Add an access token so the probe can authenticate''',
+  '''A health endpoint does not need content limits because it has no user data''',
+]
+explanation = '''An overly detailed public health endpoint creates another information exposure surface; probes only need the required status.'''

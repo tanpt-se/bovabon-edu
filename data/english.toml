@@ -3,6 +3,7 @@ title = "Tiếng Anh cho Developer"
 icon = "🇬🇧"
 color = "#14b8a6"
 group = "Ngoại ngữ"
+area = "english"            # khu Tiếng Anh: không có bài code
 description = "Từ vựng kỹ thuật, ngữ pháp dùng trong công việc, đọc tài liệu & thông báo lỗi, viết commit/PR/email, họp standup và phỏng vấn bằng tiếng Anh."
 
 # ============================================================ MODULES
@@ -601,263 +602,6 @@ explanation = "Dùng *I* cho phần Action, đưa số liệu vào Result, và k
 
 # ============================================================ CODE (xử lý tiếng Anh bằng JS)
 [[questions]]
-id = "en-c01"
-module = "en-vocab"
-type = "code"
-difficulty = 2
-title = "Số nhiều tiếng Anh (pluralize)"
-prompt = '''
-Viết `pluralize(word)` trả về dạng số nhiều theo các quy tắc (theo thứ tự ưu tiên):
-
-1. **Bất quy tắc**: child→children, person→people, man→men, woman→women, mouse→mice, foot→feet, tooth→teeth, criterion→criteria
-2. **Không đếm được** → giữ nguyên: data, information, feedback, software, code, equipment, news
-3. Tận cùng **-is** → **-es** (analysis → analyses)
-4. Tận cùng **s, x, z, ch, sh** → thêm **es** (class → classes, box → boxes, branch → branches)
-5. **Phụ âm + y** → **ies** (query → queries); nguyên âm + y chỉ thêm s (key → keys)
-6. **-f / -fe** trong danh sách leaf, life, knife, wife, half, shelf, wolf → **ves**
-7. **-o** trong danh sách hero, potato, tomato, echo → thêm **es**
-8. Còn lại thêm **s**
-
-Giữ **chữ hoa đầu**: `pluralize('Person') === 'People'`. So khớp danh sách không phân biệt hoa thường.
-'''
-starter = '''
-function pluralize(word) {
-  return word + 's';
-}
-'''
-solution = '''
-const IRREGULAR = {
-  child: 'children', person: 'people', man: 'men', woman: 'women',
-  mouse: 'mice', foot: 'feet', tooth: 'teeth', criterion: 'criteria',
-};
-const UNCOUNTABLE = new Set(['data', 'information', 'feedback', 'software', 'code', 'equipment', 'news']);
-const F_TO_VES = new Set(['leaf', 'life', 'knife', 'wife', 'half', 'shelf', 'wolf']);
-const O_ES = new Set(['hero', 'potato', 'tomato', 'echo']);
-
-function pluralize(word) {
-  const w = word.toLowerCase();
-  let out;
-  if (IRREGULAR[w]) out = IRREGULAR[w];
-  else if (UNCOUNTABLE.has(w)) out = w;
-  else if (w.endsWith('is')) out = w.slice(0, -2) + 'es';
-  else if (/(s|x|z|ch|sh)$/.test(w)) out = w + 'es';
-  else if (/[^aeiou]y$/.test(w)) out = w.slice(0, -1) + 'ies';
-  else if (F_TO_VES.has(w)) out = w.replace(/fe?$/, 'ves');
-  else if (O_ES.has(w)) out = w + 'es';
-  else out = w + 's';
-  const upper = word[0] !== word[0].toLowerCase();
-  return upper ? out[0].toUpperCase() + out.slice(1) : out;
-}
-'''
-tests = '''
-test('quy tắc thường', () => {
-  expect(['bug', 'key', 'commit', 'photo'].map(pluralize)).toEqual(['bugs', 'keys', 'commits', 'photos']);
-});
-test('s, x, z, ch, sh → es', () => {
-  expect(['class', 'box', 'branch', 'hash', 'bus'].map(pluralize)).toEqual(['classes', 'boxes', 'branches', 'hashes', 'buses']);
-});
-test('phụ âm + y → ies', () => {
-  expect(['query', 'dependency', 'day'].map(pluralize)).toEqual(['queries', 'dependencies', 'days']);
-});
-test('bất quy tắc & không đếm được', () => {
-  expect(['child', 'person', 'mouse', 'criterion'].map(pluralize)).toEqual(['children', 'people', 'mice', 'criteria']);
-  expect(['feedback', 'information', 'software'].map(pluralize)).toEqual(['feedback', 'information', 'software']);
-});
-test('-is, -f/-fe, -o', () => {
-  expect(['analysis', 'leaf', 'knife', 'hero', 'video'].map(pluralize)).toEqual(['analyses', 'leaves', 'knives', 'heroes', 'videos']);
-});
-test('giữ chữ hoa đầu', () => {
-  expect(pluralize('Person')).toBe('People');
-  expect(pluralize('Branch')).toBe('Branches');
-});
-'''
-hints = ["Kiểm tra theo đúng thứ tự ưu tiên; bất quy tắc và không đếm được trước tiên.", "Regex `/[^aeiou]y$/` bắt phụ âm + y."]
-explanation = "Thư viện như `pluralize` (npm) hay Rails ActiveSupport dùng đúng cách này: danh sách ngoại lệ + quy tắc regex."
-
-[[questions]]
-id = "en-c02"
-module = "en-grammar"
-type = "code"
-difficulty = 1
-title = "Số thứ tự (1st, 2nd, 3rd…)"
-prompt = '''
-Viết `ordinal(n)` cho số nguyên `n ≥ 0`, trả về chuỗi số thứ tự tiếng Anh:
-`1 → "1st"`, `2 → "2nd"`, `3 → "3rd"`, `4 → "4th"`, `11 → "11th"`, `12 → "12th"`, `13 → "13th"`, `21 → "21st"`, `112 → "112th"`.
-
-(Quy tắc: nếu hai chữ số cuối là 11, 12, 13 → *th*; ngược lại xét chữ số cuối 1/2/3 → *st/nd/rd*, còn lại *th*.)
-'''
-starter = '''
-function ordinal(n) {
-  return n + 'th';
-}
-'''
-solution = '''
-function ordinal(n) {
-  const last2 = n % 100;
-  if (last2 >= 11 && last2 <= 13) return n + 'th';
-  const suffix = { 1: 'st', 2: 'nd', 3: 'rd' }[n % 10] || 'th';
-  return n + suffix;
-}
-'''
-tests = '''
-test('1–4', () => {
-  expect([1, 2, 3, 4].map(ordinal)).toEqual(['1st', '2nd', '3rd', '4th']);
-});
-test('11, 12, 13 là ngoại lệ', () => {
-  expect([11, 12, 13].map(ordinal)).toEqual(['11th', '12th', '13th']);
-});
-test('21, 22, 23, 101, 111, 112', () => {
-  expect([21, 22, 23, 101, 111, 112].map(ordinal)).toEqual(['21st', '22nd', '23rd', '101st', '111th', '112th']);
-});
-test('0 và số tròn', () => {
-  expect([0, 10, 100, 1000].map(ordinal)).toEqual(['0th', '10th', '100th', '1000th']);
-});
-'''
-hints = ["Xét `n % 100` trước, rồi mới tới `n % 10`."]
-explanation = "Khi hiển thị ngày/xếp hạng, có thể dùng `Intl.PluralRules(\"en\", { type: \"ordinal\" })` để lấy loại one/two/few/other."
-
-[[questions]]
-id = "en-c03"
-module = "en-speaking"
-type = "code"
-difficulty = 3
-title = "Đọc số thành chữ (number to words)"
-prompt = '''
-Viết `toWords(n)` cho số nguyên `0 ≤ n < 1 000 000 000`, trả về cách đọc tiếng Anh kiểu Mỹ, chữ thường:
-
-- `0 → "zero"`, `7 → "seven"`, `15 → "fifteen"`
-- Từ 21–99 có **gạch nối**: `42 → "forty-two"`
-- **Không** dùng "and": `105 → "one hundred five"`
-- Nhóm nghìn/triệu: `1200 → "one thousand two hundred"`, `2000005 → "two million five"`, `999999999 → "nine hundred ninety-nine million nine hundred ninety-nine thousand nine hundred ninety-nine"`
-- Các từ cách nhau đúng **một** khoảng trắng.
-'''
-starter = '''
-function toWords(n) {
-  return String(n);
-}
-'''
-solution = '''
-const ONES = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten',
-  'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen'];
-const TENS = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'];
-
-function under1000(n) {
-  const parts = [];
-  if (n >= 100) { parts.push(ONES[Math.floor(n / 100)] + ' hundred'); n %= 100; }
-  if (n >= 20) parts.push(TENS[Math.floor(n / 10)] + (n % 10 ? '-' + ONES[n % 10] : ''));
-  else if (n > 0) parts.push(ONES[n]);
-  return parts.join(' ');
-}
-
-function toWords(n) {
-  if (n === 0) return 'zero';
-  const scales = [[1000000, 'million'], [1000, 'thousand'], [1, '']];
-  const parts = [];
-  for (const [size, name] of scales) {
-    const chunk = Math.floor(n / size) % 1000;
-    if (chunk) parts.push(under1000(chunk) + (name ? ' ' + name : ''));
-  }
-  return parts.join(' ');
-}
-'''
-tests = '''
-test('0–20', () => {
-  expect([0, 7, 13, 15, 20].map(toWords)).toEqual(['zero', 'seven', 'thirteen', 'fifteen', 'twenty']);
-});
-test('gạch nối 21–99', () => {
-  expect([21, 42, 99, 30].map(toWords)).toEqual(['twenty-one', 'forty-two', 'ninety-nine', 'thirty']);
-});
-test('hàng trăm, không dùng and', () => {
-  expect(toWords(105)).toBe('one hundred five');
-  expect(toWords(310)).toBe('three hundred ten');
-  expect(toWords(999)).toBe('nine hundred ninety-nine');
-});
-test('nghìn & triệu', () => {
-  expect(toWords(1200)).toBe('one thousand two hundred');
-  expect(toWords(2000005)).toBe('two million five');
-  expect(toWords(1000000)).toBe('one million');
-  expect(toWords(40017)).toBe('forty thousand seventeen');
-});
-test('số lớn nhất', () => {
-  expect(toWords(999999999)).toBe('nine hundred ninety-nine million nine hundred ninety-nine thousand nine hundred ninety-nine');
-});
-'''
-hints = ["Tách số thành các nhóm 3 chữ số (triệu, nghìn, đơn vị) và viết hàm đọc số < 1000.", "Bỏ qua nhóm bằng 0 để không sinh ra \"zero thousand\"."]
-explanation = "Đây cũng là cách luyện đọc số khi thuyết trình: chia nhóm ba chữ số và đọc từng nhóm kèm *thousand/million*."
-
-[[questions]]
-id = "en-c04"
-module = "en-writing"
-type = "code"
-difficulty = 3
-title = "Linter cho commit message"
-prompt = '''
-Viết `lintCommit(message)` trả về **mảng mã lỗi** (rỗng nếu hợp lệ). Dòng đầu là *header*:
-
-1. Header phải khớp `type(scope)!: subject` — `(scope)` và `!` tuỳ chọn, sau `:` đúng **một** khoảng trắng, subject không rỗng. Sai → trả ngay `['format']`
-2. `type` thuộc: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert — ngược lại thêm `'type'`
-3. Subject bắt đầu bằng chữ **in hoa** (A–Z) → `'lowercase'` (subject phải viết thường đầu câu)
-4. Subject kết thúc bằng dấu `.` → `'period'`
-5. Từ đầu tiên của subject (viết thường) kết thúc bằng `ed` hoặc `ing`, hoặc kết thúc bằng `s` nhưng không phải `ss`/`us` → `'imperative'`
-6. Header dài hơn **72** ký tự → `'length'`
-7. Có nhiều hơn một dòng mà dòng thứ hai **không rỗng** → `'blank-line'`
-
-Mã lỗi theo đúng thứ tự trên.
-'''
-starter = '''
-function lintCommit(message) {
-  return [];
-}
-'''
-solution = '''
-const TYPES = ['feat', 'fix', 'docs', 'style', 'refactor', 'perf', 'test', 'build', 'ci', 'chore', 'revert'];
-
-function lintCommit(message) {
-  const lines = message.split('\n');
-  const header = lines[0];
-  const m = header.match(/^([a-z]+)(\([^()\s]+\))?(!)?: (\S.*)$/i);
-  if (!m) return ['format'];
-  const errors = [];
-  const [, type, , , subject] = m;
-  if (!TYPES.includes(type)) errors.push('type');
-  if (/^[A-Z]/.test(subject)) errors.push('lowercase');
-  if (subject.endsWith('.')) errors.push('period');
-  const first = subject.split(/\s+/)[0].toLowerCase();
-  if (/(ed|ing)$/.test(first) || (/s$/.test(first) && !/(ss|us)$/.test(first))) errors.push('imperative');
-  if (header.length > 72) errors.push('length');
-  if (lines.length > 1 && lines[1] !== '') errors.push('blank-line');
-  return errors;
-}
-'''
-tests = '''
-test('hợp lệ', () => {
-  expect(lintCommit('feat(auth): add password reset')).toEqual([]);
-  expect(lintCommit('fix!: handle empty cart\n\nThe app crashed when the cart was empty.')).toEqual([]);
-  expect(lintCommit('docs: focus on setup steps')).toEqual([]);
-});
-test('sai định dạng', () => {
-  expect(lintCommit('add login page')).toEqual(['format']);
-  expect(lintCommit('feat:add login')).toEqual(['format']);
-  expect(lintCommit('feat: ')).toEqual(['format']);
-});
-test('type không hợp lệ', () => {
-  expect(lintCommit('feature: add login')).toEqual(['type']);
-});
-test('viết hoa, dấu chấm, thể mệnh lệnh', () => {
-  expect(lintCommit('fix: Fixed the login bug.')).toEqual(['lowercase', 'period', 'imperative']);
-  expect(lintCommit('feat: adding dark mode')).toEqual(['imperative']);
-  expect(lintCommit('fix: handles null user')).toEqual(['imperative']);
-  expect(lintCommit('chore: process images in parallel')).toEqual([]);
-});
-test('độ dài & dòng trống', () => {
-  expect(lintCommit('refactor: ' + 'x'.repeat(70))).toEqual(['length']);
-  expect(lintCommit('fix: update deps\nmore details')).toEqual(['blank-line']);
-});
-'''
-hints = ["Regex header: `/^([a-z]+)(\\([^()\\s]+\\))?(!)?: (\\S.*)$/i`.", "Kiểm tra từng quy tắc độc lập và đẩy mã lỗi theo thứ tự."]
-explanation = "Công cụ thật: **commitlint** + husky. Viết commit message tốt bằng tiếng Anh là kỹ năng được đánh giá cao khi làm việc với team quốc tế."
-
-[[questions]]
 id = "en-x001"
 module = "en-vocab"
 type = "single"
@@ -1062,10 +806,10 @@ id = "en-x021"
 module = "en-pronunciation"
 type = "single"
 difficulty = 1
-prompt = "Từ cache được phát âm thế nào trong tiếng Anh thông dụng?"
-options = ["/kæʃ/ (giống cash)", "/keɪtʃ/ (giống catch)", "/kəˈʃeɪ/", "/keɪk/"]
+prompt = "Trong cách đọc thông dụng, queue được phát âm giống từ nào?"
+options = ["cue", "quote", "cow", "coo"]
 answer = [0]
-explanation = "Cache đọc /kæʃ/, vần với cash."
+explanation = "Queue đọc /kjuː/, cùng cách đọc với cue."
 
 [[questions]]
 id = "en-x022"
@@ -1202,7 +946,7 @@ id = "en-x035"
 module = "en-vocab"
 type = "multiple"
 difficulty = 2
-prompt = "Chọn các collocation tiếng Anh tự nhiên."
+prompt = "Chọn các cụm động từ–danh từ tự nhiên trong công việc phát triển phần mềm."
 options = ["run a test", "provide feedback", "meet a deadline", "do a decision", "discuss about the design", "open an agreement"]
 answer = [0, 1, 2]
 explanation = "Dùng run a test, provide feedback và meet a deadline. Nói make a decision, discuss the design, reach an agreement."
@@ -1753,426 +1497,164 @@ Thank you for walking me through the role; I appreciate the conversation. Could 
 explanation = "Hỏi về cách làm việc của team và thương lượng bằng cơ sở cụ thể, giọng tôn trọng."
 
 [[questions]]
-id = "en-xc01"
-module = "en-docs-writing"
-type = "code"
-difficulty = 2
-lang = "javascript"
-title = "Tách câu cho tài liệu"
-prompt = '''
-Viết splitSentences(text) trả về mảng câu theo quy tắc đơn giản: dấu ., ? hoặc ! kết thúc câu nếu ngay sau nó là khoảng trắng hoặc hết chuỗi. Giữ dấu kết câu, bỏ khoảng trắng thừa quanh mỗi câu, bỏ phần tử rỗng. Nếu đoạn cuối không có dấu câu, vẫn trả nó như một câu. Chuỗi chỉ có khoảng trắng trả về mảng rỗng. Không cần nhận diện chữ viết tắt như e.g. hoặc số thập phân.
-Ví dụ: splitSentences("Ship it. Is CI green? Yes!") trả về ["Ship it.", "Is CI green?", "Yes!"].
-'''
-starter = '''
-function splitSentences(text) {
-  return text.trim() ? [text.trim()] : [];
-}
-'''
-solution = '''
-function splitSentences(text) {
-  const sentences = [];
-  let start = 0;
-  for (let i = 0; i < text.length; i++) {
-    if ('.!?'.includes(text[i]) && (i + 1 === text.length || /\s/.test(text[i + 1]))) {
-      const sentence = text.slice(start, i + 1).trim();
-      if (sentence) sentences.push(sentence);
-      start = i + 1;
-    }
-  }
-  const tail = text.slice(start).trim();
-  if (tail) sentences.push(tail);
-  return sentences;
-}
-'''
-tests = '''
-test('tách theo ba dấu kết câu', () => {
-  expect(splitSentences('Ship it. Is CI green? Yes!')).toEqual(['Ship it.', 'Is CI green?', 'Yes!']);
-});
-test('bỏ khoảng trắng thừa và bỏ phần rỗng', () => {
-  expect(splitSentences('  First.   Second!  ')).toEqual(['First.', 'Second!']);
-});
-test('giữ câu cuối không có dấu câu', () => {
-  expect(splitSentences('One sentence. Final sentence')).toEqual(['One sentence.', 'Final sentence']);
-});
-test('chuỗi rỗng hoặc chỉ có whitespace', () => {
-  expect(splitSentences('')).toEqual([]);
-  expect(splitSentences(' \n  ')).toEqual([]);
-});
-test('dấu chấm lặp kết thúc một câu', () => {
-  expect(splitSentences('Wait... Really?')).toEqual(['Wait...', 'Really?']);
-});
-'''
-hints = ["Duyệt từng ký tự và ghi nhận vị trí bắt đầu câu.", "Sau khi gặp dấu kết thúc, trim đoạn vừa lấy rồi bỏ nếu rỗng."]
-explanation = "Cách tách có quy tắc rõ phù hợp cho đoạn văn đơn giản; nhận diện viết tắt cần một bộ quy tắc từ vựng riêng."
+id = "en-x073"
+module = "en-vocab"
+type = "single"
+difficulty = 1
+prompt = "The new release caused repeated errors, so the team decided to ______ to version 2.4."
+options = ["roll out", "roll back", "set up", "back up"]
+answer = [1]
+explanation = "Roll back nghĩa là hoàn nguyên về phiên bản trước; roll out là triển khai bản mới."
 
 [[questions]]
-id = "en-xc02"
-module = "en-docs-writing"
-type = "code"
-difficulty = 2
-lang = "javascript"
-title = "Đếm từ và ước lượng thời gian đọc"
-prompt = '''
-Viết wordCount(text) và readingMinutes(text, wordsPerMinute = 200). Từ là chuỗi chữ cái hoặc chữ số; dấu nháy đơn bên trong từ và từ ghép nối bằng dấu gạch ngang vẫn tính là một từ, ví dụ don't và end-to-end. Dấu câu không tính. Thời gian đọc trả về số phút làm tròn lên; văn bản không có từ trả về 0. Giả sử wordsPerMinute là số nguyên dương.
-Ví dụ: wordCount("Fix the end-to-end test.") trả về 4; readingMinutes("one two three", 2) trả về 2.
-'''
-starter = '''
-function wordCount(text) {
-  return 0;
-}
-
-function readingMinutes(text, wordsPerMinute = 200) {
-  return 0;
-}
-'''
-solution = '''
-function wordCount(text) {
-  const words = text.match(/[A-Za-z0-9]+(?:['-][A-Za-z0-9]+)*/g);
-  return words ? words.length : 0;
-}
-
-function readingMinutes(text, wordsPerMinute = 200) {
-  const count = wordCount(text);
-  return count === 0 ? 0 : Math.ceil(count / wordsPerMinute);
-}
-'''
-tests = '''
-test('đếm từ và bỏ dấu câu', () => {
-  expect(wordCount('Fix the end-to-end test.')).toBe(4);
-});
-test('contraction và từ ghép tính là một từ', () => {
-  expect(wordCount("Don't break the build")).toBe(4);
-});
-test('không có từ', () => {
-  expect(wordCount('... -- !!!')).toBe(0);
-  expect(readingMinutes('   ')).toBe(0);
-});
-test('làm tròn phút và dùng tốc độ mặc định', () => {
-  expect(readingMinutes('one two three', 2)).toBe(2);
-  expect(readingMinutes(Array(201).fill('word').join(' '))).toBe(2);
-});
-test('một phút tối thiểu nếu có từ', () => {
-  expect(readingMinutes('hello')).toBe(1);
-});
-'''
-hints = ["Dùng match với regex lấy token, thay vì đếm khoảng trắng.", "Số phút là Math.ceil(số từ / tốc độ); xử lý văn bản rỗng trước."]
-explanation = "Ước lượng đọc hữu ích để viết README và PR vừa đủ ngắn; đây là ước lượng theo tốc độ cố định."
+id = "en-x074"
+module = "en-vocab"
+type = "single"
+difficulty = 1
+prompt = "A request for dark mode was not included in this ticket. It is ______."
+options = ["out of scope", "on behalf", "in advance", "under control"]
+answer = [0]
+explanation = "Out of scope mô tả việc nằm ngoài phạm vi đã thống nhất của ticket hoặc dự án."
 
 [[questions]]
-id = "en-xc03"
-module = "en-docs-writing"
-type = "code"
+id = "en-x075"
+module = "en-reading"
+type = "single"
 difficulty = 2
-lang = "javascript"
-title = "Title case cho tiêu đề kỹ thuật"
-prompt = '''
-Viết titleCase(title). Chuẩn hóa nhiều khoảng trắng thành một; viết hoa chữ đầu và chữ cuối; các từ nhỏ a, an, the, and, but, or, for, nor, on, at, to, from, by, of, in, with viết thường nếu không ở đầu/cuối. Các từ khác viết hoa chữ đầu và viết thường phần còn lại. Giữ dấu câu gắn với từ; chuẩn hóa token API, HTTP, SQL, GUI, UI, URL và ID thành chữ hoa. Một từ ghép có dấu gạch nối được xử lý như một token. Chuỗi rỗng trả về chuỗi rỗng.
-Ví dụ: "the api and the ui" → "The API and the UI".
-'''
-starter = '''
-function titleCase(title) {
-  return title;
-}
-'''
-solution = '''
-const SMALL_WORDS = new Set(['a', 'an', 'the', 'and', 'but', 'or', 'for', 'nor', 'on', 'at', 'to', 'from', 'by', 'of', 'in', 'with']);
-const ACRONYMS = new Set(['api', 'http', 'sql', 'gui', 'ui', 'url', 'id']);
-
-function titleCase(title) {
-  const words = title.trim().split(/\s+/).filter(Boolean);
-  return words.map((word, index) => {
-    const match = word.match(/[A-Za-z0-9]+(?:[.'’_-][A-Za-z0-9]+)*/);
-    if (!match) return word;
-    const start = match.index;
-    const core = match[0];
-    const before = word.slice(0, start);
-    const after = word.slice(start + core.length);
-    const lower = core.toLowerCase();
-    if (index > 0 && index < words.length - 1 && SMALL_WORDS.has(lower)) return before + lower + after;
-    if (ACRONYMS.has(lower)) return before + core.toUpperCase() + after;
-    return before + core[0].toUpperCase() + core.slice(1).toLowerCase() + after;
-  }).join(' ');
-}
-'''
-tests = '''
-test('viết hoa từ đầu, cuối và từ chính', () => {
-  expect(titleCase('the rise and fall of api')).toBe('The Rise and Fall of API');
-});
-test('giữ từ nhỏ ở giữa câu', () => {
-  expect(titleCase('a guide to the service')).toBe('A Guide to the Service');
-});
-test('giữ dấu câu và acronym kỹ thuật', () => {
-  expect(titleCase('the http api, for ui teams')).toBe('The HTTP API, for UI Teams');
-});
-test('chuẩn hóa whitespace và chữ hoa lẫn lộn', () => {
-  expect(titleCase('  a GUIDE   to sql  ')).toBe('A Guide to SQL');
-});
-test('chuỗi rỗng', () => {
-  expect(titleCase('   ')).toBe('');
-});
-'''
-hints = ["Tách token theo whitespace, nhưng giữ riêng phần dấu câu trước và sau từ.", "Kiểm tra từ nhỏ trước khi viết hoa; từ đầu và cuối luôn được viết hoa."]
-explanation = "Title case của nhiều style guide khác nhau; bài này định nghĩa một quy tắc nhỏ, ổn định cho tiêu đề."
+prompt = "What does it mean when a test is flaky?"
+options = ["It fails intermittently without a consistent code change.", "It always fails with the same assertion.", "It only runs against production data.", "It is skipped by the test runner."]
+answer = [0]
+explanation = "Flaky test cho kết quả không ổn định giữa các lần chạy trong điều kiện tương tự."
 
 [[questions]]
-id = "en-xc04"
+id = "en-x076"
 module = "en-grammar"
-type = "code"
+type = "single"
 difficulty = 2
-lang = "javascript"
-title = "Chọn a hay an theo âm đầu"
-prompt = '''
-Viết articleBefore(phrase) trả về "a" hoặc "an" theo cách phát âm của từ đầu tiên. Nếu phrase rỗng hoặc chỉ có dấu câu thì trả về chuỗi rỗng. Dùng ngoại lệ đã biết: an hour, honest, honor, heir, API, HTTP, SQL (đọc từng chữ), FBI, MRI, XML; a user, URL, USB, university, unique, unit, European, one, once. Với từ khác, dùng chữ cái đầu: a trước phụ âm, an trước a/e/i/o/u. Không cần xử lý acronym ngoài danh sách.
-Ví dụ: "hour" → "an", "user account" → "a", "SQL query" → "an".
-'''
-starter = '''
-function articleBefore(phrase) {
-  return /^[aeiou]/i.test(phrase.trim()) ? 'an' : 'a';
-}
-'''
-solution = '''
-const AN_WORDS = new Set(['hour', 'honest', 'honor', 'heir', 'api', 'http', 'sql', 'fbi', 'mri', 'xml']);
-const A_WORDS = new Set(['user', 'url', 'usb', 'university', 'unique', 'unit', 'european', 'one', 'once']);
-
-function articleBefore(phrase) {
-  const first = phrase.trim().split(/\s+/)[0].replace(/^[^A-Za-z]+/, '').toLowerCase();
-  if (!first) return '';
-  if (AN_WORDS.has(first)) return 'an';
-  if (A_WORDS.has(first)) return 'a';
-  return /^[aeiou]/.test(first) ? 'an' : 'a';
-}
-'''
-tests = '''
-test('ngoại lệ bắt đầu bằng âm nguyên âm', () => {
-  expect(articleBefore('hour')).toBe('an');
-  expect(articleBefore('an honest error')).toBe('an');
-});
-test('ngoại lệ bắt đầu bằng âm phụ âm', () => {
-  expect(articleBefore('user account')).toBe('a');
-  expect(articleBefore('university server')).toBe('a');
-  expect(articleBefore('URL')).toBe('a');
-});
-test('acronym đọc theo tên chữ cái', () => {
-  expect(articleBefore('SQL query')).toBe('an');
-  expect(articleBefore('API client')).toBe('an');
-  expect(articleBefore('USB drive')).toBe('a');
-});
-test('fallback theo nguyên âm và phụ âm', () => {
-  expect(articleBefore('umbrella')).toBe('an');
-  expect(articleBefore('database')).toBe('a');
-});
-test('input rỗng', () => {
-  expect(articleBefore('')).toBe('');
-  expect(articleBefore('...')).toBe('');
-});
-'''
-hints = ["Chuẩn hóa từ đầu tiên về chữ thường rồi kiểm tra tập ngoại lệ.", "Fallback theo chữ cái chỉ là quy ước cho từ chưa có trong danh sách."]
-explanation = "A/an phụ thuộc âm đầu; các acronym được chọn theo cách đọc đã ghi rõ trong đề."
+prompt = "Choose the correct word: “The new cache may ______ response times.”"
+options = ["affect", "effect", "affects", "effected"]
+answer = [0]
+explanation = "Affect là động từ có nghĩa là ảnh hưởng; sau may dùng động từ nguyên mẫu."
 
 [[questions]]
-id = "en-xc05"
+id = "en-x077"
+module = "en-pronunciation"
+type = "single"
+difficulty = 2
+prompt = "Trong cách đọc Anh–Mỹ phổ biến, từ algorithm nhấn trọng âm chính ở đâu?"
+options = ["Âm tiết thứ nhất: AL-go-rithm.", "Âm tiết thứ hai: al-GO-rithm.", "Âm tiết thứ ba: algo-RITHM.", "Nhấn đều cả ba âm tiết."]
+answer = [0]
+explanation = "Algorithm thường có trọng âm chính ở âm tiết đầu: /ˈælɡəˌrɪðəm/."
+
+[[questions]]
+id = "en-x078"
+module = "en-vocab"
+type = "single"
+difficulty = 1
+prompt = "A hotfix is usually a change that:"
+options = ["quickly addresses an urgent issue in an existing release.", "adds a feature planned for a future major version.", "replaces the entire development process.", "documents a feature without changing the software."]
+answer = [0]
+explanation = "Hotfix là bản sửa khẩn cấp, thường có phạm vi hẹp để xử lý lỗi nghiêm trọng."
+
+[[questions]]
+id = "en-x079"
 module = "en-writing"
-type = "code"
+type = "multiple"
 difficulty = 2
-lang = "javascript"
-title = "Chuẩn hóa Conventional Commit"
-prompt = '''
-Viết normalizeCommit(type, subject, scope = ''). Trả về header Conventional Commits dạng type(scope): subject; bỏ phần scope nếu rỗng. Chuẩn hóa type và scope thành chữ thường; gom whitespace trong subject thành một dấu cách, bỏ khoảng trắng và dấu chấm cuối, rồi chuyển subject thành chữ thường. Chỉ chấp nhận type feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert. Scope nếu có chỉ gồm chữ cái, chữ số và dấu gạch ngang. Trả null nếu type không hợp lệ, subject rỗng hoặc scope sai.
-Ví dụ: normalizeCommit("FIX", " Add Password Reset. ", "Auth") → "fix(auth): add password reset".
-'''
-starter = '''
-function normalizeCommit(type, subject, scope = '') {
-  return type + ': ' + subject;
-}
-'''
-solution = '''
-const COMMIT_TYPES = new Set(['feat', 'fix', 'docs', 'style', 'refactor', 'perf', 'test', 'build', 'ci', 'chore', 'revert']);
-
-function normalizeCommit(type, subject, scope = '') {
-  const normalizedType = type.trim().toLowerCase();
-  const normalizedScope = scope.trim().toLowerCase();
-  const normalizedSubject = subject.trim().replace(/\s+/g, ' ').replace(/\.+$/, '').toLowerCase();
-  if (!COMMIT_TYPES.has(normalizedType) || !normalizedSubject) return null;
-  if (normalizedScope && !/^[a-z0-9-]+$/.test(normalizedScope)) return null;
-  return normalizedType + (normalizedScope ? '(' + normalizedScope + ')' : '') + ': ' + normalizedSubject;
-}
-'''
-tests = '''
-test('chuẩn hóa type, scope và subject', () => {
-  expect(normalizeCommit('FIX', ' Add Password Reset. ', 'Auth')).toBe('fix(auth): add password reset');
-});
-test('không có scope', () => {
-  expect(normalizeCommit('Docs', '  Explain   local setup  ')).toBe('docs: explain local setup');
-});
-test('reject type hoặc subject không hợp lệ', () => {
-  expect(normalizeCommit('feature', 'add export')).toBeNull();
-  expect(normalizeCommit('fix', '   ')).toBeNull();
-});
-test('scope chỉ nhận chữ, số và dấu gạch ngang', () => {
-  expect(normalizeCommit('fix', 'handle timeout', 'API-v2')).toBe('fix(api-v2): handle timeout');
-  expect(normalizeCommit('fix', 'handle timeout', 'api v2')).toBeNull();
-});
-'''
-hints = ["Dùng Set cho danh sách type hợp lệ.", "Chuẩn hóa và kiểm tra đầu vào trước khi ghép header."]
-explanation = "Chuẩn hóa header giúp commit history nhất quán và dễ lọc theo type/scope."
+prompt = "Chọn các câu mô tả kết quả kỹ thuật thận trọng, có căn cứ."
+options = [
+  "In staging, the patch reduced median latency by 12% across 200 requests.",
+  "The patch may reduce latency; we have not measured production traffic yet.",
+  "This patch makes the API infinitely fast.",
+  "The staging result proves latency will fall for every user.",
+  "We should deploy immediately because it feels faster."
+]
+answer = [0, 1]
+explanation = "Nêu số đo và môi trường kiểm thử, hoặc nói rõ điều chưa được đo; tránh khẳng định rộng hơn bằng chứng."
 
 [[questions]]
-id = "en-xc06"
+id = "en-x080"
+module = "en-vocab"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các collocation tự nhiên khi điều tra sự cố."
+options = ["investigate an outage", "collect logs", "reproduce a bug", "perform a rollback", "make an outage"]
+answer = [0, 1, 2, 3]
+explanation = "Các cụm tự nhiên gồm investigate an outage, collect logs, reproduce a bug và perform a rollback."
+
+[[questions]]
+id = "en-x081"
+module = "en-reading"
+type = "multiple"
+difficulty = 1
+prompt = "Chọn các cách mở rộng chữ viết tắt công việc đúng."
+options = ["ETA = estimated time of arrival", "TBD = to be decided", "FYI = for your information", "WIP = work in progress", "EOD = end of deployment"]
+answer = [0, 1, 2, 3]
+explanation = "ETA, TBD, FYI và WIP có các nghĩa trên; EOD thường là end of day."
+
+[[questions]]
+id = "en-x082"
 module = "en-email-chat"
-type = "code"
-difficulty = 2
-lang = "javascript"
-title = "Làm mềm câu chat thiếu lịch sự"
-prompt = '''
-Viết softenPhrase(text). Với các câu sau, trả về cách nói lịch sự tương ứng, không phân biệt hoa thường, khoảng trắng thừa hoặc dấu .?! cuối:
-- "review my pr now" → "Could you review my PR when you have a moment?"
-- "you are wrong" → "I see it differently; could we check the requirement?"
-- "this makes no sense" → "Could you clarify the reasoning behind this?"
-- "fix this asap" → "Could you take a look at this when you can? It is time-sensitive."
-- "do this today" → "Would it be possible to finish this today?"
-Câu không nằm trong danh sách phải được trả về nguyên văn, gồm cả whitespace.
-'''
-starter = '''
-function softenPhrase(text) {
-  return text;
-}
-'''
-solution = '''
-const POLITE_PHRASES = {
-  'review my pr now': 'Could you review my PR when you have a moment?',
-  'you are wrong': 'I see it differently; could we check the requirement?',
-  'this makes no sense': 'Could you clarify the reasoning behind this?',
-  'fix this asap': 'Could you take a look at this when you can? It is time-sensitive.',
-  'do this today': 'Would it be possible to finish this today?',
-};
-
-function softenPhrase(text) {
-  const key = text.trim().replace(/[.!?]+$/, '').toLowerCase().replace(/\s+/g, ' ');
-  return Object.prototype.hasOwnProperty.call(POLITE_PHRASES, key) ? POLITE_PHRASES[key] : text;
-}
-'''
-tests = '''
-test('thay câu mệnh lệnh bằng lời nhờ lịch sự', () => {
-  expect(softenPhrase('review my pr now')).toBe('Could you review my PR when you have a moment?');
-  expect(softenPhrase('do this today')).toBe('Would it be possible to finish this today?');
-});
-test('nhận diện không phân biệt hoa thường và dấu câu cuối', () => {
-  expect(softenPhrase('  FIX THIS ASAP!  ')).toBe('Could you take a look at this when you can? It is time-sensitive.');
-});
-test('các câu khác nhau có cách diễn đạt phù hợp', () => {
-  expect(softenPhrase('you are wrong.')).toBe('I see it differently; could we check the requirement?');
-  expect(softenPhrase('this makes no sense?')).toBe('Could you clarify the reasoning behind this?');
-});
-test('giữ nguyên câu không nằm trong danh sách', () => {
-  expect(softenPhrase('  Thanks for checking.  ')).toBe('  Thanks for checking.  ');
-});
-'''
-hints = ["Chuẩn hóa bản dùng để tra cứu nhưng giữ nguyên text gốc nếu không tìm thấy.", "So khớp cả cụm để không thay một từ nằm bên trong câu khác."]
-explanation = "Một danh sách câu mẫu nhỏ phù hợp cho bài tập; trong sản phẩm thật, cách nói cần xét thêm ngữ cảnh."
+type = "fill"
+difficulty = 1
+prompt = "Hoàn thành lời mời kết nối trong email: “I'm reaching {{blank}} to ask whether the maintenance window has been approved.”"
+blanks = [["out"]]
+explanation = "Reach out to someone nghĩa là chủ động liên hệ với người đó."
 
 [[questions]]
-id = "en-xc07"
-module = "en-code-review"
-type = "code"
-difficulty = 2
-lang = "javascript"
-title = "Định dạng bug report"
-prompt = '''
-Viết formatBugReport(report), nhận object có title, environment, steps (mảng chuỗi), expected và actual. Trim các trường text, đánh số bước bắt đầu từ 1, rồi trả về đúng cấu trúc sau, mỗi mục một dòng:
-Title: <title>
-Environment: <environment>
-Steps to reproduce:
-1. <step>
-Expected behavior: <expected>
-Actual behavior: <actual>
-Có thể có nhiều bước; đề bài giả sử các trường đều là chuỗi không rỗng và steps có ít nhất một phần tử.
-'''
-starter = '''
-function formatBugReport(report) {
-  return report.title;
-}
-'''
-solution = '''
-function formatBugReport(report) {
-  const lines = [
-    'Title: ' + report.title.trim(),
-    'Environment: ' + report.environment.trim(),
-    'Steps to reproduce:',
-  ];
-  for (let i = 0; i < report.steps.length; i++) {
-    lines.push((i + 1) + '. ' + report.steps[i].trim());
-  }
-  lines.push('Expected behavior: ' + report.expected.trim());
-  lines.push('Actual behavior: ' + report.actual.trim());
-  return lines.join('\n');
-}
-'''
-tests = '''
-test('tạo bug report với một bước', () => {
-  expect(formatBugReport({ title: 'Crash', environment: 'macOS', steps: ['Open app'], expected: 'Home appears', actual: 'App closes' })).toBe('Title: Crash\nEnvironment: macOS\nSteps to reproduce:\n1. Open app\nExpected behavior: Home appears\nActual behavior: App closes');
-});
-test('đánh số nhiều bước', () => {
-  const report = formatBugReport({ title: 'Export fails', environment: 'Chrome 130', steps: ['Sign in', 'Open exports', 'Click Run'], expected: 'A file downloads', actual: 'A 500 error appears' });
-  expect(report).toContain('2. Open exports');
-  expect(report).toContain('3. Click Run');
-});
-test('trim các trường và bước', () => {
-  const report = formatBugReport({ title: '  Timeout  ', environment: ' staging ', steps: [' retry request '], expected: ' success ', actual: ' error ' });
-  expect(report).toContain('Title: Timeout');
-  expect(report).toContain('1. retry request');
-  expect(report).toContain('Expected behavior: success');
-});
-test('có đủ expected và actual behavior', () => {
-  const report = formatBugReport({ title: 'Wrong total', environment: 'Linux', steps: ['Add item'], expected: 'Total is 10', actual: 'Total is 0' });
-  expect(report).toContain('Expected behavior: Total is 10');
-  expect(report).toContain('Actual behavior: Total is 0');
-});
-'''
-hints = ["Tạo mảng dòng bắt đầu bằng title, environment và heading của steps.", "Duyệt steps với chỉ số để đánh số từ 1, sau đó join bằng newline."]
-explanation = "Template nhất quán giúp bug report có thể tái hiện và phân biệt điều mong đợi với điều quan sát được."
+id = "en-x083"
+module = "en-email-chat"
+type = "fill"
+difficulty = 1
+prompt = "Hoàn thành câu cam kết thời điểm thông báo: “We will let you know as soon as the incident is {{blank}}.”"
+blanks = [["resolved", "fixed"]]
+explanation = "Resolved và fixed đều có thể diễn tả sự cố đã được xử lý trong ngữ cảnh này."
 
 [[questions]]
-id = "en-xc08"
-module = "en-interview"
-type = "code"
+id = "en-x084"
+module = "en-meetings"
+type = "fill"
+difficulty = 1
+prompt = "Hoàn thành cập nhật blocker: “The release is blocked {{blank}} missing staging credentials.”"
+blanks = [["by"]]
+explanation = "Blocked by + nguyên nhân nêu yếu tố đang ngăn công việc tiếp tục."
+
+[[questions]]
+id = "en-c01"
+module = "en-vocab"
+type = "single"
 difficulty = 2
-lang = "javascript"
-title = "Định dạng câu trả lời STAR"
-prompt = '''
-Viết formatSTAR(answer) với object có bốn chuỗi situation, task, action, result. Trim mỗi giá trị và trả về bốn dòng theo đúng thứ tự, gắn nhãn "Situation: ", "Task: ", "Action: ", "Result: ". Ví dụ object có situation="Cart totals were wrong" phải bắt đầu bằng "Situation: Cart totals were wrong".
-'''
-starter = '''
-function formatSTAR(answer) {
-  return answer.situation + ' ' + answer.task + ' ' + answer.action + ' ' + answer.result;
-}
-'''
-solution = '''
-function formatSTAR(answer) {
-  return [
-    'Situation: ' + answer.situation.trim(),
-    'Task: ' + answer.task.trim(),
-    'Action: ' + answer.action.trim(),
-    'Result: ' + answer.result.trim(),
-  ].join('\n');
-}
-'''
-tests = '''
-test('giữ thứ tự và nhãn STAR', () => {
-  expect(formatSTAR({ situation: 'Cart totals were wrong', task: 'Find the cause', action: 'Added a version check', result: 'Errors fell to zero' })).toBe('Situation: Cart totals were wrong\nTask: Find the cause\nAction: Added a version check\nResult: Errors fell to zero');
-});
-test('trim nội dung từng phần', () => {
-  expect(formatSTAR({ situation: ' issue ', task: ' task ', action: ' fix ', result: ' done ' })).toBe('Situation: issue\nTask: task\nAction: fix\nResult: done');
-});
-test('có đủ bốn phần', () => {
-  const answer = formatSTAR({ situation: 'S', task: 'T', action: 'A', result: 'R' });
-  expect(answer).toContain('Situation: S');
-  expect(answer).toContain('Task: T');
-  expect(answer).toContain('Action: A');
-  expect(answer).toContain('Result: R');
-});
-test('mỗi thành phần nằm trên một dòng', () => {
-  expect(formatSTAR({ situation: 'one', task: 'two', action: 'three', result: 'four' }).split('\n')).toHaveLength(4);
-});
-'''
-hints = ["Tạo bốn dòng riêng theo thứ tự Situation, Task, Action, Result.", "Trim trước khi ghép để không mang khoảng trắng thừa vào câu trả lời."]
-explanation = "Khung STAR giúp người học trình bày có cấu trúc; nội dung và số liệu vẫn cần do ứng viên cung cấp."
+prompt = "Choose the correct plural form of “criterion”."
+options = ["criterions", "criteria", "criterias", "criteriones"]
+answer = [1]
+explanation = "Criterion là danh từ số ít; dạng số nhiều bất quy tắc là criteria."
+
+[[questions]]
+id = "en-c02"
+module = "en-grammar"
+type = "single"
+difficulty = 1
+prompt = "Choose the correctly written ordinal number: “This is the ___ deployment of the service.”"
+options = ["21th", "21st", "21rd", "21nd"]
+answer = [1]
+explanation = "Số tận cùng bằng 1 dùng hậu tố -st, trừ các số tận cùng bằng 11 như 11th."
+
+[[questions]]
+id = "en-c03"
+module = "en-speaking"
+type = "single"
+difficulty = 1
+prompt = "In standard American English, how do you read 42 aloud?"
+options = ["fourty-two", "forty-two", "forty second", "four-two"]
+answer = [1]
+explanation = "Forty được viết không có chữ u sau for; các số ghép từ 21 đến 99 thường được nối bằng gạch ngang khi viết."
+
+[[questions]]
+id = "en-c04"
+module = "en-writing"
+type = "single"
+difficulty = 2
+prompt = "In the Conventional Commit header “feat(api)!: require authentication”, what does the exclamation mark indicate?"
+options = ["The change introduces a breaking change.", "The change is only a documentation update.", "The author has not finished the commit message.", "The change has no effect on existing behavior."]
+answer = [0]
+explanation = "Dấu ! trước dấu hai chấm là ký hiệu breaking change trong Conventional Commits."

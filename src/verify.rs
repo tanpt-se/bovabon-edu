@@ -6,7 +6,7 @@
 //! - giao diện công khai không lộ đáp án; số ô trống khớp
 //! - (tuỳ chọn) đường dẫn `sources` tồn tại trong chỉ mục DevDocs đã tải về thư mục `.devdocs/`
 
-use crate::bank::{Bank, QType, Question, TrackFile};
+use crate::bank::{Bank, QType, Question, TrackFile, valid_devdocs_path};
 use crate::{grade, runner};
 use serde_json::json;
 use std::collections::{HashMap, HashSet};
@@ -31,16 +31,30 @@ pub fn verify_tracks(tracks: &[&TrackFile], opts: &Options) -> Vec<String> {
     let mut code_qs: Vec<&Question> = Vec::new();
     for t in tracks {
         let ctx = format!("[{}]", t.id);
-        for ty in [QType::Single, QType::Multiple, QType::Fill, QType::Essay, QType::Code] {
-            if !t.questions.iter().any(|q| q.qtype == ty) {
+        // Lập trình: đủ 5 dạng. Tiếng Anh: trắc nghiệm + điền (tự luận tuỳ chọn), không có bài code.
+        let required: &[QType] = match t.area.as_str() {
+            "dev" => &[QType::Single, QType::Multiple, QType::Fill, QType::Essay, QType::Code],
+            "english" => &[QType::Single, QType::Multiple, QType::Fill],
+            other => {
+                errs.push(format!("{ctx} area không hợp lệ: {other:?} (dev | english)"));
+                &[]
+            }
+        };
+        for ty in required {
+            if !t.questions.iter().any(|q| q.qtype == *ty) {
                 errs.push(format!("{ctx} thiếu dạng câu hỏi {ty:?}"));
+            }
+        }
+        if t.area == "english" {
+            for q in t.questions.iter().filter(|q| q.qtype == QType::Code) {
+                errs.push(format!("{ctx} {} là bài code — khu Tiếng Anh không có bài code", q.id));
             }
         }
         for m in &t.modules {
             if !t.questions.iter().any(|q| q.module == m.id) {
                 errs.push(format!("{ctx} module {} chưa có câu hỏi", m.id));
             }
-            if m.lesson.trim().len() < 200 {
+            if !lesson_is_valid(&m.lesson) {
                 errs.push(format!("{ctx} module {} cần bài học (lesson) >= 200 ký tự", m.id));
             }
         }
@@ -166,6 +180,7 @@ fn check_sources(t: &TrackFile, dir: &Path, errs: &mut Vec<String>) {
     if !dir.is_dir() {
         return;
     }
+    let canonical_dir = dir.canonicalize().ok();
     let mut cache: HashMap<String, Option<HashSet<String>>> = HashMap::new();
     let mut paths: Vec<(String, &str)> = Vec::new();
     for d in &t.docs {
@@ -182,9 +197,18 @@ fn check_sources(t: &TrackFile, dir: &Path, errs: &mut Vec<String>) {
         }
     }
     for (ctx, p) in paths {
+        if !valid_devdocs_path(p) {
+            errs.push(format!("{ctx}: '{p}' không phải đường dẫn DevDocs tương đối hợp lệ"));
+            continue;
+        }
         let (slug, rest) = p.split_once('/').unwrap_or((p, ""));
         let idx = cache.entry(slug.to_string()).or_insert_with(|| {
-            let txt = std::fs::read_to_string(dir.join(format!("{slug}.json"))).ok()?;
+            let root = canonical_dir.as_ref()?;
+            let path = root.join(format!("{slug}.json")).canonicalize().ok()?;
+            if !path.starts_with(root) {
+                return None;
+            }
+            let txt = std::fs::read_to_string(path).ok()?;
             let v: serde_json::Value = serde_json::from_str(&txt).ok()?;
             Some(
                 v["entries"]
@@ -210,11 +234,15 @@ fn check_sources(t: &TrackFile, dir: &Path, errs: &mut Vec<String>) {
 /// Lệnh `check`: nạp kho nhúng sẵn + các file chỉ định (file trùng tên sẽ thay thế),
 /// kiểm tra toàn kho (trùng id…) rồi kiểm định chi tiết các lộ trình trong file chỉ định.
 pub fn check_files(files: &[String], opts: &Options) -> Result<(usize, usize), String> {
-    let mut sources: Vec<(String, String)> =
-        crate::bank::EMBEDDED.iter().map(|(n, t)| (n.to_string(), t.to_string())).collect();
+    let mut sources: Vec<(String, String)> = std::iter::once((
+        crate::bank::CATEGORIES_FILE.to_string(),
+        crate::bank::EMBEDDED_CATEGORIES.to_string(),
+    ))
+    .chain(crate::bank::EMBEDDED.iter().chain(crate::bank::EMBEDDED_I18N.iter()).map(|(n, t)| (n.to_string(), t.to_string())))
+    .collect();
     let mut targets = Vec::new();
     for f in files {
-        let name = Path::new(f).file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_else(|| f.clone());
+        let name = source_name(f);
         let txt = std::fs::read_to_string(f).map_err(|e| format!("Không đọc được {f}: {e}"))?;
         sources.retain(|(n, _)| n != &name);
         sources.push((name.clone(), txt));
@@ -227,7 +255,7 @@ pub fn check_files(files: &[String], opts: &Options) -> Result<(usize, usize), S
         // id lộ trình của các file chỉ định
         sources
             .iter()
-            .filter(|(n, _)| targets.contains(n))
+            .filter(|(n, _)| targets.contains(n) && n != crate::bank::CATEGORIES_FILE && !n.starts_with("i18n/"))
             .filter_map(|(n, t)| {
                 if n.ends_with(".toml") {
                     toml::from_str::<TrackFile>(t).ok().map(|x| x.id)
@@ -239,6 +267,98 @@ pub fn check_files(files: &[String], opts: &Options) -> Result<(usize, usize), S
     };
     let tracks: Vec<&TrackFile> = bank.tracks.iter().filter(|t| ids.contains(&t.id)).collect();
     let nq = tracks.iter().map(|t| t.questions.len()).sum();
-    let errs = verify_tracks(&tracks, opts);
+    let mut errs = verify_tracks(&tracks, opts);
+    if targets.is_empty() || targets.iter().any(|n| n.starts_with("i18n/")) {
+        errs.extend(verify_locales(&bank));
+    }
     if errs.is_empty() { Ok((tracks.len(), nq)) } else { Err(errs.join("\n")) }
+}
+
+/// Kiểm định bản dịch: đáp án chuẩn vẫn chấm đúng, đáp án rỗng vẫn sai, số ô trống khớp…
+pub fn verify_locales(bank: &Bank) -> Vec<String> {
+    let mut errs = Vec::new();
+    for (lang, lb) in &bank.locales {
+        for t in &lb.tracks {
+            for m in &t.modules {
+                if !lesson_is_valid(&m.lesson) {
+                    errs.push(format!("[i18n/{lang}][{}] module {} cần bài học (lesson) >= 200 ký tự", t.id, m.id));
+                }
+            }
+            for q in t.questions.iter().filter(|q| q.qtype != QType::Code) {
+                let mut e = Vec::new();
+                check_question(q, &mut e);
+                errs.extend(e.into_iter().map(|x| format!("[i18n/{lang}] {x}")));
+            }
+        }
+    }
+    errs
+}
+
+fn lesson_is_valid(lesson: &str) -> bool {
+    lesson.trim().chars().count() >= 200
+}
+
+fn source_name(path: &str) -> String {
+    let normalized = path.replace('\\', "/");
+    let parts: Vec<&str> = normalized.split('/').filter(|p| !p.is_empty()).collect();
+    let filename = parts.last().copied().unwrap_or(path);
+    match parts.iter().rposition(|p| *p == "i18n") {
+        Some(i) if i + 2 < parts.len() => format!("i18n/{}/{filename}", parts[i + 1]),
+        _ => filename.to_string(),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{Options, check_sources, source_name, verify_tracks};
+    use crate::bank::TrackFile;
+    use serde_json::json;
+
+    #[test]
+    fn i18n_paths_accept_windows_separators() {
+        assert_eq!(source_name(r"data\i18n\en\track.toml"), "i18n/en/track.toml");
+    }
+
+    #[test]
+    fn lesson_length_counts_unicode_characters() {
+        let track: TrackFile = serde_json::from_value(json!({
+            "id": "unicode-test",
+            "title": "Test",
+            "icon": "",
+            "color": "",
+            "description": "",
+            "modules": [{"id": "m1", "title": "M", "description": "D", "lesson": "é".repeat(100)}],
+            "questions": []
+        })).unwrap();
+        let errs = verify_tracks(&[&track], &Options { devdocs_dir: None, jobs: 1 });
+        assert!(errs.iter().any(|e| e.contains("lesson")));
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn devdocs_symlinks_cannot_escape_index_directory() {
+        use std::os::unix::fs::symlink;
+
+        let unique = format!("bovabon-verify-{}-{}", std::process::id(), std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos());
+        let base = std::env::temp_dir().join(unique);
+        let root = base.join("indexes");
+        let outside = base.join("outside.json");
+        std::fs::create_dir_all(&root).unwrap();
+        std::fs::write(&outside, r#"{"entries":[{"path":"reference"}]}"#).unwrap();
+        symlink(&outside, root.join("react.json")).unwrap();
+        let track: TrackFile = serde_json::from_value(json!({
+            "id": "t",
+            "title": "T",
+            "icon": "",
+            "color": "",
+            "description": "",
+            "docs": ["react"],
+            "modules": [],
+            "questions": []
+        })).unwrap();
+        let mut errs = Vec::new();
+        check_sources(&track, &root, &mut errs);
+        assert!(errs.iter().any(|e| e.contains("chưa có chỉ mục DevDocs")));
+        std::fs::remove_dir_all(base).unwrap();
+    }
 }

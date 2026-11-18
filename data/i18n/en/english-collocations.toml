@@ -1,0 +1,399 @@
+# English overlay for data/english-collocations.toml (text fields only)
+
+# ─────────────────────────────────────────────────────────────
+[modules.col-preferences-time]
+title = "Wants, choices & time"
+description = "want / prefer / tend to / opt for / prioritise / be inclined to; have time for, make time for, afford, have access to, within / out of reach."
+lesson = '''
+A simple idea like "I like…" or "I can't pay for…" can be said at different levels of formality. Learn the whole phrase, including the preposition and the verb form that follows.
+
+### Talking about wants and choices
+| Phrase | Followed by | Nuance | Example |
+|---|---|---|---|
+| want to / would like to | base verb | informal / polite | *I'd like to change my seat.* |
+| prefer A **to** B | noun or V-ing | like A more than B | *She prefers trains to planes.* |
+| prefer to V (rather than V) | base verb | would rather do | *I prefer to walk rather than wait for the bus.* |
+| tend to | base verb | usually, as a pattern | *Prices tend to rise before Tết.* |
+| opt for | noun / V-ing | choose after thinking | *Most guests opted for the vegetarian menu.* |
+| prioritise (AmE prioritize) | noun | put first | *The school prioritises safety.* |
+| be inclined to | base verb | lean towards, slightly want | *I'm inclined to agree with you.* |
+
+**Note:** *prefer A to B* — never *than*. With two verbs: *prefer cooking to eating out* (both V-ing) or *prefer to cook rather than eat out*.
+
+### Time, money and access
+| Phrase | Meaning | Example |
+|---|---|---|
+| have time for + N / have time to V | have enough time | *I don't have time for a long lunch today.* |
+| make time for + N | create time even when busy | *He always makes time for his kids.* |
+| (can't) afford + N / afford **to** V | (not) have enough money or means | *We can't afford to repair the roof this year.* |
+| have access to + N | be able to use or reach | *Every student has access to the lab.* |
+| within reach (of) | achievable, close enough | *A first job in IT is within reach if you build a portfolio.* |
+| out of reach (of) | not achievable | *Housing in the city centre is out of reach for many young families.* |
+
+*afford* always takes **to V**, never V-ing: ~~afford buying~~ → *afford to buy*.
+
+### Putting it into sentences
+- *Many young workers **prefer** flexible hours **to** a higher salary, and they **tend to** change jobs more often.*
+- *When money is tight, families **opt for** cheaper brands and **prioritise** basic needs.*
+- *Even with a busy schedule, try to **make time for** exercise.*
+'''
+
+[questions.col-001]
+explanation = "*prefer A to B*: like A more than B. *tend* needs *to V*, *opt* needs *for*, and *prioritise* does not take the *A to B* pattern."
+
+[questions.col-002]
+explanation = "*opt for + N*: choose after careful thought. The other options have a missing or wrong preposition/structure."
+
+[questions.col-003]
+prompt = '''
+Fill in **one verb** to describe a general tendency:
+
+Young people {{blank}} to spend more time online than older adults.
+'''
+explanation = "*tend to + V*: usually do something, as a general pattern."
+
+[questions.col-004]
+prompt = "Which sentences use *afford* and *make time* correctly? Select all that apply."
+explanation = "*afford* takes a noun or *to V*, not V-ing. *make time for + N* is correct."
+
+[questions.col-005]
+explanation = "*within reach*: achievable. *in reach of* needs an object and means something else; *reachable to* and *out of access* are not natural collocations."
+
+[questions.col-006]
+explanation = "*give / have access to + N*: be allowed or able to use something."
+
+[questions.col-007]
+explanation = "*make time for*: find time for something even when you are busy."
+
+[questions.col-008]
+prompt = "Which sentence is the **most formal** way to say you lean towards agreeing in a meeting?"
+explanation = "*be inclined to + V* is polite and careful; the others are either too casual or ungrammatical."
+
+[questions.col-009]
+prompt = '''
+Write **two English sentences** about how you like to study (when, where…) and why. Use *prefer … to …* or *tend to*, and give a reason.
+'''
+explanation = "Combining a preference/tendency structure with a reason clause makes the answer clear."
+
+# ─────────────────────────────────────────────────────────────
+[modules.col-problems-causes]
+title = "Problems, causes & effects"
+description = "find it difficult, struggle, deal with, address, overcome; because of, make + adj, lead to, result in / from, contribute to, be associated with."
+lesson = '''
+### Talking about problems and solutions
+| Phrase | Structure | Example |
+|---|---|---|
+| find it difficult / hard to | find **it** + adj + to V | *Many freshers find it hard to manage their money.* |
+| have difficulty (in) | + V-ing | *He had difficulty finding a parking space.* |
+| struggle to / struggle with | + V / + N | *She struggled to stay awake. · They struggle with deadlines.* |
+| ask for help | ask (sb) for + N | *Don't be afraid to ask for help.* |
+| deal with / cope with | + N | *The team dealt with the complaint quickly.* |
+| address + N | **no** preposition | *The report addresses the issue of noise.* |
+| overcome + N | get past a difficulty | *She overcame her fear of flying.* |
+| tackle + N | start dealing with | *The city is tackling air pollution.* |
+
+### Causes and effects
+| Phrase | Direction | Example |
+|---|---|---|
+| because of / due to + N | cause | *The match was delayed because of the rain.* |
+| because + clause | cause | *The match was delayed because it was raining.* |
+| make + O + adj | cause a state | *Long meetings make people tired.* |
+| lead to + N / V-ing | cause → effect | *Skipping breakfast can lead to poor focus.* |
+| A **result in** B | cause → effect | *The storm resulted in power cuts.* |
+| B **result from** A | effect ← cause | *The power cuts resulted from the storm.* |
+| contribute to + N / **V-ing** | be one of several causes | *Tourism contributes to creating jobs.* |
+| be associated with | linked (not necessarily a cause) | *Late nights are associated with lower grades.* |
+
+### Key distinctions
+- *result in* ≠ *result from*: swap the direction and you swap the meaning.
+- *contribute to* and *lead to*: **to** is a preposition, so a noun or V-ing follows (~~contribute to reduce~~).
+- *be associated with* only says there is **a link**; to claim a cause, use *cause / lead to* — and you need strong evidence.
+'''
+
+[questions.col-010]
+explanation = "*find it + adj + to V*: *it* is a dummy object and cannot be left out."
+
+[questions.col-011]
+explanation = "*address + N* takes no preposition. *deal* must be *deal with*; *solve with* is wrong."
+
+[questions.col-012]
+explanation = "*lead to / contribute to + N*: cause / help cause."
+
+[questions.col-013]
+explanation = "Fuel prices are the cause → *result in* + effect. *result from* reverses the direction; *leaded* does not exist (the past is *led*)."
+
+[questions.col-014]
+prompt = "Which sentences use common verb and noun collocations correctly? Select all that apply."
+explanation = "*because* + clause; before a noun use *because of*: *because of the storm*."
+
+[questions.col-015]
+explanation = "*overcome a fear / a problem*: get past it."
+
+[questions.col-016]
+prompt = "A survey only shows that two things happen together. Which sentence describes the result **at the right strength**?"
+explanation = "A correlational survey only supports *is associated with*; the other three claim cause and effect."
+
+[questions.col-017]
+explanation = "The *to* in *contribute to* is a preposition → follow it with V-ing."
+
+[questions.col-018]
+prompt = '''
+Write **2–3 English sentences** about a problem in your city: give its cause, its effect and what should be done. Use phrases from at least two groups in the lesson (cause, effect, solution).
+'''
+explanation = "One sentence gives the cause (*because of*), another the effect (*lead to*) and the way forward (*address*)."
+
+# ─────────────────────────────────────────────────────────────
+[modules.col-change-compare]
+title = "Change & comparison"
+description = "get better / worse, increase / fall from A to B, by vs to, level off, give way to; the same as, different from, compared with, unlike, outweigh, on a par with."
+lesson = '''
+### Describing change
+| Trend | Verbs | Nouns |
+|---|---|---|
+| go up | increase, rise, grow, go up | an increase / a rise **in** + N |
+| go down | fall, drop, decline, go down | a fall / a drop **in** + N |
+| become steady after changing | level off, stabilise | — |
+| stay the same | remain stable, stay the same | — |
+| go up and down | fluctuate | fluctuation |
+| get better / worse | improve, get better / get worse, deteriorate | improvement |
+| be gradually replaced | give way to + N | — |
+
+**by or to?** — *by* gives **the size of the change**, *to* gives **the final level**:
+- *Visitors increased **from** 400 **to** 600.* (start → end)
+- *Visitors increased **by** 200.* (the difference)
+- *There was **a rise of** 50% **in** online orders.*
+
+### Comparing
+| Phrase | Example |
+|---|---|
+| the same as | *My schedule is the same as yours.* |
+| similar **to** | *The new logo is similar to the old one.* |
+| different **from** | *City life is very different from village life.* |
+| compared with / to | *Compared with 2020, rents are much higher.* |
+| unlike + N (at the start) | *Unlike her sister, Lan loves maths.* |
+| whereas / while + clause | *Hà Nội has four seasons, whereas Sài Gòn has two.* |
+| outweigh | *The advantages outweigh the disadvantages.* |
+| on a par with | *Their salaries are now on a par with those in Singapore.* |
+
+**Common mistakes:** ~~similar with~~ → *similar to*; ~~different with~~ → *different from*; ~~the same like~~ → *the same as*.
+'''
+
+[questions.col-019]
+explanation = "*from A to B*: from the starting level to the final level."
+
+[questions.col-020]
+explanation = "60 is **the difference** → *increase by*. For the final level, say *increased to 260*."
+
+[questions.col-021]
+explanation = "*level off*: stop rising or falling and stay steady."
+
+[questions.col-022]
+explanation = "*Unlike + N* at the start of a sentence shows contrast."
+
+[questions.col-023]
+prompt = "Which sentences use the right prepositions in comparison phrases? Select all that apply."
+explanation = "*similar* goes with *to*: *similar to the old one*."
+
+[questions.col-024]
+explanation = "*outweigh*: be greater or more important than (the benefits are bigger than the risks)."
+
+[questions.col-025]
+explanation = "*give way to + N*: gradually be replaced by."
+
+[questions.col-026]
+explanation = "*on a par with*: equal to, at the same level as."
+
+[questions.col-027]
+prompt = '''
+A chart shows library visitors: 500 (2020), 900 (2023) and still 900 (2024). Write **2 English sentences** describing the trend and comparing it with 2020.
+'''
+explanation = "Use *from … to …* for the rise, *level off* for the steady period and *compared with* for the comparison."
+
+# ─────────────────────────────────────────────────────────────
+[modules.col-learning-work]
+title = "Learning, work & responsibility"
+description = "learn to, get used to, keep up with, put into practice, build on; care about, get on with, rely on, be responsible for, take for granted, take into account."
+lesson = '''
+### Learning and adapting
+| Phrase | Followed by | Example |
+|---|---|---|
+| learn to / learn how to | V | *Kids learn to swim faster than adults.* |
+| get used to / be used to | **V-ing** / N | *I'm getting used to waking up early.* |
+| used to | V (past habit) | *I used to live in Huế.* |
+| keep up with | N | *It's hard to keep up with new frameworks.* |
+| catch up with | N | *I missed a week, so I need to catch up with the class.* |
+| put sth into practice | — | *Put the new grammar into practice in your emails.* |
+| develop an understanding of | N | *The course helps you develop an understanding of data.* |
+| build on | N | *Lesson 2 builds on the ideas from lesson 1.* |
+
+**Three forms people mix up:** *used to + V* (did regularly in the past) · *be used to + V-ing* (am accustomed to) · *get used to + V-ing* (am becoming accustomed to).
+
+### Relationships and responsibility
+| Phrase | Meaning | Example |
+|---|---|---|
+| care about | think something is important | *She really cares about her students.* |
+| get on (well) with | have a good relationship with | *I get on well with my flatmates.* |
+| rely on / depend on | trust, need | *You can rely on Minh to fix it.* |
+| be responsible **for** + N / V-ing | have the duty of | *Who is responsible for booking the room?* |
+| take sth for granted | assume it will always be there, not value it | *We often take electricity for granted.* |
+| take sth into account | consider it | *Take the traffic into account when you plan.* |
+
+~~responsible of~~ is a very common mistake — always use **for**.
+'''
+
+[questions.col-028]
+explanation = "*get used to + V-ing*: gradually become accustomed to doing something."
+
+[questions.col-029]
+explanation = "*keep up with*: move at the same speed as, stay up to date."
+
+[questions.col-030]
+explanation = "*be responsible for + V-ing / N*."
+
+[questions.col-031]
+explanation = "*put sth into practice*: apply it in real situations."
+
+[questions.col-032]
+prompt = "Which sentences use a collocation or phrasal verb correctly? Select all that apply."
+explanation = "The correct phrase is *take sth for granted* (participle *granted*)."
+
+[questions.col-033]
+explanation = "*take sth for granted*: assume it will always be there and so not value it."
+
+[questions.col-034]
+explanation = "*build on sth*: develop further from an existing base."
+
+[questions.col-035]
+explanation = "A past habit that no longer happens → *used to + V*."
+
+[questions.col-036]
+prompt = '''
+Write **2–3 English sentences** about when you started at a new school or job: what you had to get used to, what you had to keep up with, and who you relied on.
+'''
+explanation = "Combine *get used to + V-ing*, *keep up with* and *rely on* to tell a story about adapting."
+
+# ─────────────────────────────────────────────────────────────
+[modules.col-usefulness-opinion]
+title = "Usefulness, opinions & evidence"
+description = "useful for, worth + V-ing, benefit from, meet needs, effective vs efficient; I think, not sure whether, seem to, suggest that, provide evidence, rule out."
+lesson = '''
+### Benefits and effectiveness
+| Phrase | Followed by | Example |
+|---|---|---|
+| useful for + N / V-ing | purpose | *This app is useful for learning new words.* |
+| (be) worth + **V-ing** / N | deserve doing | *The museum is worth visiting.* · *It's worth the money.* |
+| benefit from + N / V-ing | gain from | *Shy students benefit from working in pairs.* |
+| be of benefit to + sb | be helpful to | *The new park is of benefit to everyone.* |
+| meet sb's needs | satisfy what someone needs | *The service doesn't meet customers' needs.* |
+| effective (in V-ing) | **produces** the desired result | *The medicine was effective in reducing pain.* |
+| efficient | **wastes little** time / money / energy | *An efficient way to travel is by metro.* |
+
+**effective vs efficient:** a method can be *effective* (it works) but not *efficient* (it takes too much effort).
+
+### Opinions and certainty (hedging)
+| Purpose | Phrases |
+|---|---|
+| give a view | *I think / I believe / In my opinion,* |
+| not sure | *I'm not sure whether / if…* |
+| careful claim | *It seems that… / X seems to + V / It is likely that…* |
+| cite evidence | *The data suggest(s) that + clause · The study provides evidence for / of + N* |
+| exclude | *rule out + N* (remove a possibility) |
+
+- *suggest* + clause or V-ing, **not** *suggest sb to V*: ~~suggests us to buy~~ → *suggests that we buy*.
+- In essays, use *seem to / it is likely that* when the evidence is not strong, instead of *prove* or *always*.
+'''
+
+[questions.col-037]
+explanation = "*be worth + V-ing*."
+
+[questions.col-038]
+explanation = "This is about **the result** (it prevented the disease) → *effective*. The high cost suggests it was not really *efficient*."
+
+[questions.col-039]
+explanation = "The focus is on **saving** water and time → *efficient*."
+
+[questions.col-040]
+explanation = "*benefit from + N*: gain an advantage from."
+
+[questions.col-041]
+prompt = "Choose **the sentences that hedge** — suitable when the evidence is not certain."
+explanation = "*prove* and *always* make absolute claims; they are not hedging."
+
+[questions.col-042]
+explanation = "*rule out*: exclude a possibility; the present perfect needs *ruled*."
+
+[questions.col-043]
+explanation = "*suggest that + clause*. *suggest* does not take *to V* or a personal object as in ~~suggest us~~."
+
+[questions.col-044]
+explanation = "*meet sb's needs*: satisfy what someone needs."
+
+[questions.col-045]
+prompt = '''
+Write **2 English sentences** giving your view on online learning for working adults. State your opinion, use a hedging phrase, and mention evidence and a benefit.
+'''
+explanation = "A good answer gives a view, stays appropriately careful (*seem to*) and notes the limits of the evidence."
+
+# ─────────────────────────────────────────────────────────────
+[modules.col-practice-mistakes]
+title = "Using the phrases & common mistakes"
+description = "Combine the phrases into a coherent paragraph and fix common mistakes: afford to, worth V-ing, contribute to V-ing, responsible for, by vs to, effective vs efficient, correlation vs causation."
+lesson = '''
+### Building a paragraph from the phrases
+A short paragraph (IELTS, an email, a report) usually has 4 steps. Each step has a ready-made "phrase kit" from the earlier lessons:
+
+| Step | Function | Suggested phrases |
+|---|---|---|
+| 1. Topic sentence | state a trend / choice | *tend to, prefer … to …, opt for* |
+| 2. Reasons | causes, difficulties | *because of, struggle to, find it hard to* |
+| 3. Results | effects, comparison | *lead to, result in, compared with, outweigh* |
+| 4. Evaluation | careful conclusion | *seem to, it is likely that, worth + V-ing* |
+
+**Sample paragraph:** *Many retired people now **opt for** smaller flats in the city. They often **find it hard to** look after a large house, and moving **leads to** lower living costs. **Compared with** life in the suburbs, city flats also give them easier **access to** hospitals. Overall, downsizing **seems to** be **worth considering** for older couples.*
+
+### Common mistakes
+| Wrong | Right | Remember |
+|---|---|---|
+| ~~can't afford buying~~ | can't afford **to buy** | afford + to V |
+| ~~worth to read~~ | worth **reading** | worth + V-ing |
+| ~~get used to work~~ | get used to **working** | *to* is a preposition |
+| ~~contributed to reduce~~ | contributed to **reducing** | *to* is a preposition |
+| ~~responsible of~~ | responsible **for** | |
+| ~~prefer tea than coffee~~ | prefer tea **to** coffee | |
+| ~~discuss about the plan~~ | **discuss** the plan | discuss takes no preposition |
+| ~~address to the issue~~ | **address** the issue | |
+| increased **to** 50 (final level) | increased **by** 50 (amount of rise) | two different meanings |
+| ~~an effective way to save time~~ (when you mean saving) | an **efficient** way | efficient = little waste |
+| ~~X causes Y~~ (with only correlational data) | X **is associated with** Y | correlation ≠ causation |
+'''
+
+[questions.col-046]
+prompt = "Choose the **grammatically correct** sentence."
+explanation = "*contribute to + V-ing*: *to* is a preposition."
+
+[questions.col-047]
+explanation = "*prefer A to B*, not *than*."
+
+[questions.col-048]
+prompt = "Which sentences use adjective-preposition pairs or common expressions correctly? Select all that apply."
+explanation = "Corrections: *responsible **for** their children's safety*; *discussed the budget* (no *about*)."
+
+[questions.col-049]
+prompt = "We need to {{blank}} the issue of late deliveries before the holiday season. (one verb, no preposition)"
+explanation = "*address / tackle / solve the issue* — these verbs take the object directly."
+
+[questions.col-050]
+explanation = "The data only show a correlation → *is associated with*. It could be that people who sleep less drink more coffee, not the other way round."
+
+[questions.col-051]
+explanation = "15,000 is **the amount of increase** → *by*. For the final level, say *increased to 65,000*."
+
+[questions.col-052]
+prompt = "Choose the **correct** sentence."
+explanation = "*get used to + V-ing*."
+
+[questions.col-053]
+prompt = '''
+Write **a 3–4 sentence English paragraph** about working from home. Use **at least four different groups** of phrases: choice/tendency, time/cost, effect, comparison, certainty, adapting.
+'''
+explanation = "The model paragraph follows 4 steps: trend (*prefer … to*), benefit (*time for, lead to*), comparison (*compared with*), careful evaluation (*seems to*)."

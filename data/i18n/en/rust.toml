@@ -1,0 +1,495 @@
+[modules.rs-ownership]
+title = "Ownership, borrowing & lifetimes"
+description = "Ownership, immutable and mutable borrowing, slices, and lifetime relationships."
+lesson = '''
+### Ownership and borrowing
+Every value has an owner; when the owner leaves scope, the value is dropped. Assigning a `String` usually moves ownership, while `Copy` types such as `i32` are copied. Borrowing lets code use data without taking ownership.
+
+| Use | Syntax | Main rule |
+|---|---|---|
+| Read-only borrow | `&T` | Multiple immutable references may coexist |
+| Mutable borrow | `&mut T` | Only one mutable reference may be active at a time, with no other active references to the same data |
+| Slice | `&str`, `&[T]` | A non-owning view into part of some data |
+
+~~~rust
+fn longest<'a>(left: &'a str, right: &'a str) -> &'a str {
+    if left.len() >= right.len() { left } else { right }
+}
+~~~
+
+The lifetime `'a` expresses that the result cannot outlive the related input references; it does not extend the data's lifetime. Common mistakes include using a value after it has been moved, keeping an immutable borrow active while trying to mutate through a mutable borrow, or returning a reference to a local variable.
+'''
+
+[questions.rs-001]
+prompt = "After `let alias = name;` when `name: String`, what is true if you do not call `clone()`?"
+options = ["Both variables own the same String", "Ownership moves to alias, so name can no longer be used", "String is always copied like i32", "The compiler automatically makes a deep copy"]
+explanation = "String is not Copy. Assignment moves ownership to alias; use an explicit clone if you need two independent values."
+
+[questions.rs-002]
+prompt = "A function holds `&mut values`. Which condition preserves memory safety?"
+options = ["Any number of references may read values at the same time", "No other reference may be used to read or mutate the same data while the mutable borrow is active", "Every mutable reference has a static lifetime", "A mutable borrow automatically transfers ownership"]
+explanation = "Rust enforces exclusive access: either multiple read-only references or one active mutable reference."
+
+[questions.rs-003]
+prompt = "A function only needs to read a string and does not need to own it. Which parameter type is more flexible and idiomatic than `&String`?"
+options = ["String", "&str", "&mut String", "Box<String>"]
+explanation = "`&str` is a borrowed string slice. It accepts both string literals and `String` values through deref coercion, without requiring the function to own the data."
+
+[questions.rs-004]
+prompt = "Why does `fn longest<'a>(x: &'a str, y: &'a str) -> &'a str` need a lifetime parameter?"
+options = ["To allocate both strings on the heap", "To describe that the returned reference is valid no longer than the related input references", "To make the compiler extend the inputs' lifetimes", "To require both strings to have the same contents"]
+explanation = "A lifetime annotation describes relationships among references; it does not change how long the underlying values actually live."
+
+[questions.rs-017]
+prompt = "Select all correct statements about borrowing."
+options = ["Multiple immutable references may exist at the same time", "A mutable reference to data cannot be used at the same time as another reference to that data", "A reference cannot outlive the data it points to", "Every reference transfers ownership"]
+explanation = "Borrowing grants access without transferring ownership. The aliasing rules help prevent data races and dangling references."
+
+[questions.rs-023]
+prompt = "If you need to borrow a value through a reference so you can modify it, use the syntax {{blank}}."
+explanation = "A mutable borrow uses `&mut T` and must follow the exclusive-access rule."
+
+[questions.rs-029]
+prompt = "Explain how ownership, borrowing, and lifetimes work together to prevent a dangling reference when a function returns a reference."
+keywords = [["ownership", "owner"], ["borrow", "borrowing"], ["lifetime", "lifetimes"], ["dangling", "dangling reference"]]
+model_answer = '''Ownership determines where a value is held and dropped. Borrowing lets a function read or modify data without taking ownership. Lifetimes describe relationships between references, so the compiler rejects a returned reference that would dangle after a local value is dropped. An annotation does not extend a lifetime; it only constrains the related references.'''
+explanation = "A complete answer connects ownership, borrowing, lifetimes, and how they prevent dangling references."
+
+[questions.rs-031]
+title = "Choose the longer string with a lifetime"
+prompt = "Write `longest<'a>(left: &'a str, right: &'a str) -> &'a str`. Return the string with the greater byte length; if their lengths are equal, return `left`. Do not allocate a new string."
+hints = ["Use the same lifetime parameter `'a` for both inputs and the returned reference.", "Compare lengths with `str::len`; do not return a newly allocated `String`."]
+explanation = "The lifetime expresses that the result is borrowed from one of the two inputs and cannot outlive them."
+
+[modules.rs-types]
+title = "Structs, enums, pattern matching & Result"
+description = "Organize data, handle every branch, and propagate errors with Option, Result, and the `?` operator."
+lesson = '''
+### Data types and control flow
+A struct groups named fields; an enum represents one of several variants. Rust uses standard enums to make missing values and errors explicit instead of relying on null or implicit exceptions.
+
+| Type | Meaning | Example |
+|---|---|---|
+| `Option<T>` | A value may or may not be present | `Some(value)`, `None` |
+| `Result<T, E>` | Success or a typed error | `Ok(value)`, `Err(error)` |
+| Custom enum | One of a listed set of states | `Status::Ready` |
+
+`match` must cover every branch; use `_` when the remaining cases share one handling path. `if let Some(x) = value` is useful when only one pattern matters. In a function returning `Result`, `?` returns an error early and converts it when the target error type supports `From`.
+
+~~~rust
+fn parse_count(text: &str) -> Result<usize, std::num::ParseIntError> {
+    let count = text.parse::<usize>()?;
+    Ok(count)
+}
+~~~
+
+Common mistakes include calling `unwrap()` on untrusted input, forgetting an enum branch, or using `?` in a function whose return type is incompatible.
+'''
+
+[questions.rs-005]
+prompt = "When you add a variant to an enum handled by `match`, what does the compiler require?"
+options = ["Add a branch for the new variant or a covering branch such as `_`", "Add a default after the match", "Change the enum into a struct", "Wrap every branch in Option"]
+explanation = "A `match` must be exhaustive so that every variant has a defined handling path."
+
+[questions.rs-006]
+prompt = "Which type is suitable for representing a search result that may be absent without being an error?"
+options = ["Result<T, E>", "Option<T>", "Box<T>", "String"]
+explanation = "`Option<T>` represents `Some(T)` or `None`; `Result` represents success or a typed error."
+
+[questions.rs-007]
+prompt = "In a function returning `Result<User, AppError>`, what happens if `load_user(id)?` returns `Err`?"
+options = ["The function panics immediately", "The error is returned early and can be converted to AppError if a suitable From implementation exists", "The error is ignored and a default User is created", "The `?` operator only works with Option"]
+explanation = "The `?` operator unwraps the success case or returns the error early; the source error must be convertible to the function's error type."
+
+[questions.rs-018]
+prompt = "Select explicit ways to handle Option/Result without panicking when a value is absent."
+options = ["Use `match` to handle the branches", "Use `if let` when only one variant matters", "Use `map` to transform the value inside Some/Ok", "Call `unwrap` on all external data"]
+explanation = "`match`, `if let`, and `map` keep the absent or error case represented in the type; `unwrap` can panic."
+
+[questions.rs-024]
+prompt = "The standard enum type for representing a value that may be absent is {{blank}}."
+explanation = "`Option<T>` has two variants: `Some(T)` and `None`."
+
+[questions.rs-025]
+prompt = "In Rust, the standard return type for expressing either success `T` or error `E` is {{blank}}."
+explanation = "`Result<T, E>` requires the caller to handle the `Ok` or `Err` branch."
+
+[questions.rs-032]
+title = "Parse and validate a score"
+prompt = "Define an `InputError` enum with the variants `Missing`, `InvalidInteger`, and `OutOfRange`. Implement `parse_score(input: Option<&str>) -> Result<u8, InputError>`: return `Missing` for `None`; return `Ok` for an integer string from 0 through 100; return `InvalidInteger` if parsing fails; and return `OutOfRange` for an integer outside that range. Trim leading and trailing whitespace before parsing."
+hints = ["Use `ok_or` to convert Option to Result, then use `?` to return an error early.", "Parse as `i32` before checking the range, then cast to `u8`."]
+explanation = "Result distinguishes missing input, invalid integer syntax, and an out-of-range business value."
+
+[modules.rs-traits]
+title = "Traits, generics & trait objects"
+description = "Share behavior, constrain generic types, and use static dispatch or trait objects."
+lesson = '''
+### Reusable behavior
+A trait describes behavior that a type can implement. Generics let you write an algorithm for many types; trait bounds restrict which operations the algorithm can use.
+
+| Form | Example | Dispatch |
+|---|---|---|
+| Generic | `fn print<T: Display>(x: T)` | Usually monomorphized at compile time |
+| Opaque return | `fn items() -> impl Iterator<Item = i32>` | Concrete type is hidden |
+| Trait object | `Box<dyn Shape>` | Dynamic dispatch through a vtable |
+
+A trait object is useful when one collection needs to hold multiple types that implement the same trait. A trait used as an object must be object-safe; for example, a generic method cannot be called through `dyn Trait`. A generic struct such as `Stack<T>` can work with many types without duplicating its structure.
+
+~~~rust
+trait Shape {
+    fn area(&self) -> f64;
+}
+~~~
+
+Common mistakes include omitting a trait bound, assuming `dyn Trait` knows the concrete type, or forgetting that a trait object has dynamic-dispatch overhead and usually needs a pointer such as `&dyn Trait` or `Box<dyn Trait>`.
+'''
+
+[questions.rs-008]
+prompt = "A generic function calls `item.area()`. What must be declared so the compiler knows the call is valid?"
+options = ["A trait bound requiring T to implement a trait with an area method", "Add `mut` before T", "Use Box<T> in every case", "Remove the generic and use Any"]
+explanation = "A trait bound such as `T: Shape` constrains the accepted types and tells the compiler which methods are available."
+
+[questions.rs-009]
+prompt = "A `Vec<Box<dyn Shape>>` contains Circle and Rectangle values. Which mechanism is typically used to call `area` through `dyn Shape`?"
+options = ["Static dispatch that creates a new type for each element", "Dynamic dispatch through a vtable", "A macro that runs at runtime", "Pattern matching that automatically generates an enum"]
+explanation = "A trait object stores a data pointer and metadata for dynamically dispatching to the concrete implementation."
+
+[questions.rs-010]
+prompt = "What is a common benefit of a generic function with a trait bound compared with `&dyn Trait`?"
+options = ["The compiler often monomorphizes each concrete type, enabling static dispatch", "Generics always use less memory", "Generics accept every type, even those that do not implement the trait", "Generics remove type checking"]
+explanation = "Generics are usually monomorphized at compile time, though this can increase binary size."
+
+[questions.rs-019]
+prompt = "Select the correct statements about generics, trait bounds, and trait objects."
+options = ["A trait bound constrains a generic type by behavior", "Generics are usually monomorphized at compile time", "`Box<dyn Shape>` can hold values of multiple types that implement Shape", "Trait objects always use static dispatch"]
+explanation = "Trait objects allow different concrete types behind the same interface and typically use dynamic dispatch."
+
+[questions.rs-028]
+prompt = "Fill in the keyword to declare a trait object: `Box<dyn {{blank}}>` ."
+explanation = "`dyn Shape` represents a concrete type that is not known at compile time but implements the Shape trait."
+
+[questions.rs-033]
+title = "Shape trait object and generic stack"
+prompt = "Define a `Shape` trait with `area(&self) -> f64`, then implement it for `Circle { radius: f64 }` and `Rectangle { width: f64, height: f64 }`. Write `total_area(shapes: &[Box<dyn Shape>]) -> f64`. Also define `Stack<T>` with `new`, `push`, `pop`, `len`, and `is_empty`; `pop` must follow LIFO order. Use πr² for Circle."
+hints = ["Keep the trait object separate from `Stack<T>`: the stack only needs to store `Vec<T>`.", "Use `std::f64::consts::PI` and `Vec::pop` to preserve the formula and LIFO order."]
+explanation = "This exercise combines dynamic dispatch through `Box<dyn Shape>` with the generic `Stack<T>` data structure."
+
+[modules.rs-collections]
+title = "Collections, iterators & closures"
+description = "Process data with HashMap, VecDeque, lazy iterators, and closures."
+lesson = '''
+### Working with collections
+`Vec<T>` stores an ordered sequence; `HashMap<K, V>` looks up values by key; and `VecDeque<T>` supports adding and removing elements at both ends. When counting frequencies with a `HashMap`, its entry API combines looking up a key with updating its value.
+
+| Tool | Good fit for | Note |
+|---|---|---|
+| `Vec<T>` | A sequence of elements, indexed access | Appending is usually efficient |
+| `HashMap<K, V>` | Lookup by key | Iteration order is not guaranteed |
+| `VecDeque<T>` | A queue or LRU ordering | Efficient operations at both ends |
+
+Iterator adapters such as `map`, `filter`, and `take` are lazy: they run only when consumed by an operation such as `collect`, `sum`, or `for_each`. A closure can borrow a variable, borrow it mutably, or take ownership; `move` captures values by value.
+
+~~~rust
+let doubled: Vec<i32> = values.iter().map(|value| value * 2).collect();
+~~~
+
+Common mistakes include assuming `map` ran before consuming the iterator, relying on a `HashMap` iteration order, or using a reference after its collection has changed.
+'''
+
+[questions.rs-011]
+prompt = "When counting word frequencies in a HashMap, why is `*counts.entry(word).or_insert(0) += 1` useful?"
+options = ["It creates or retrieves the value for a key, then updates it in place", "It keeps the HashMap in insertion order", "It automatically normalizes letter case", "It allows duplicate keys"]
+explanation = "The entry API combines key lookup and value update; word normalization still needs to be done separately."
+
+[questions.rs-012]
+prompt = "The expression `values.iter().map(|x| x * 2);` does not use its result. What is true?"
+options = ["`map` runs immediately and changes values", "Iterator adapters are lazy, so no transformation has been consumed", "values is moved out of scope", "Rust reports an error because map only works with Vec"]
+explanation = "An iterator adapter creates a new iterator; a consumer such as `collect` or `sum` is needed to execute the transformations."
+
+[questions.rs-013]
+prompt = "A closure increments an outer variable named `total` each time it is called. Which trait is typically required?"
+options = ["Fn", "FnMut", "FnOnce only", "Copy"]
+explanation = "`FnMut` lets a closure mutate captured state through a mutable borrow; `Fn` is for calls that do not need to mutate captures."
+
+[questions.rs-020]
+prompt = "Select the correct statements about iterators and closures."
+options = ["Iterator adapters such as `map` are usually lazy", "`collect` consumes an iterator to create a collection", "A `move` closure captures values by value", "`map` always runs in parallel"]
+explanation = "Standard iterators do not run in parallel by default; adapters execute only when consumed."
+
+[questions.rs-026]
+prompt = "Complete the iterator chain to collect the doubled values into a Vec: `values.iter().map(|x| x * 2).{{blank}}::<Vec<_>>()`."
+explanation = "`collect` is a consumer that turns an iterator into a collection whose type can be inferred or specified."
+
+[questions.rs-027]
+prompt = "In `counts.entry(word).{{blank}}(0)`, which method returns an existing value or inserts a default value?"
+explanation = "`or_insert` returns a mutable reference to the existing value or the value just inserted."
+
+[questions.rs-034]
+title = "Count word frequencies"
+prompt = "Write `word_frequency(text: &str) -> HashMap<String, usize>`. Split on whitespace, remove punctuation from the beginning and end of each token, convert tokens to lowercase, discard empty tokens, and count how often each token occurs. Do not use external crates."
+hints = ["Use `split_whitespace`, `trim_matches` with a predicate on `char`, and `to_lowercase`.", "Use `fold` with `entry(...).or_insert(0)` to accumulate the HashMap."]
+explanation = "Iterators and closures transform tokens, while a HashMap stores counts without a separate lookup loop."
+
+[questions.rs-035]
+title = "LRU cache with HashMap and VecDeque"
+prompt = "Implement `LruCache<K, V>` with `new(capacity)`, `put(key, value)`, `get(&key) -> Option<V>`, and `len()`. Keys require `Eq + Hash + Clone`, and values implement `Clone`. A successful `get` and a `put` for an existing key must both make that key the most recently used. When capacity is exceeded, evict the least recently used key; capacity 0 must always leave the cache empty."
+hints = ["Use a `VecDeque` to keep keys ordered from least recently used at the front to most recently used at the back.", "When a key is accessed, find and remove its old position, then `push_back`; when full, `pop_front` and remove that key from the HashMap."]
+explanation = "An LRU cache tracks usage order separately because a HashMap does not guarantee iteration order."
+
+[modules.rs-errors-modules]
+title = "Errors, modules, crates & Cargo"
+description = "Design typed errors, split code into modules, manage visibility, and use Cargo workflows."
+lesson = '''
+### Organizing code and representing errors
+Expected business errors should be represented with `Result<T, E>` and a specific error enum. `?` propagates an error to the caller, which can decide whether to retry, report it, or use a fallback value. Reserve `panic!` for states that cannot continue or violated invariants, not ordinary control flow.
+
+| Concept | Role |
+|---|---|
+| Package | A Cargo unit with a `Cargo.toml` manifest |
+| Crate | A compilation unit, either a binary or a library |
+| Module | Groups items and controls scope |
+| `pub` | Makes an item public according to the module tree |
+
+Use `mod` to declare a module, `use` to bring a path into scope, and make only the necessary API public. Cargo manages dependencies, build profiles, and commands such as `cargo check`, `cargo test`, and `cargo build`. For applications, commit `Cargo.lock` to reproduce the resolved dependency versions.
+
+Common mistakes include making every item public, confusing a package with a crate, or swallowing errors with `unwrap()` instead of handling them at the right layer.
+'''
+
+[questions.rs-014]
+prompt = "In a Rust module tree, items are usually private by default. Which keyword makes an item accessible to permitted code outside its scope?"
+options = ["export", "public", "pub", "global"]
+explanation = "`pub` exposes an item according to the module tree's visibility rules; make public only the API that is needed."
+
+[questions.rs-015]
+prompt = "What is the appropriate role of `cargo check` in a development loop?"
+options = ["Quickly check compilation, usually without producing a final binary", "Run all release benchmarks", "Automatically update every dependency to the latest version", "Replace behavioral tests"]
+explanation = "`cargo check` skips some machine-code generation steps, so it often reports compilation errors quickly."
+
+[questions.rs-021]
+prompt = "Select the correct statements about errors and modules."
+options = ["`Result<T, E>` represents success or a typed error", "`?` can propagate an error when a suitable From conversion exists", "`pub` controls visibility according to the module tree", "`panic` is appropriate for every expected input error"]
+explanation = "Expected errors should be returned with a type; `panic` is better suited to violated invariants or situations that cannot continue."
+
+[modules.rs-concurrency]
+title = "Concurrency & async fundamentals"
+description = "Threads, channels, Arc/Mutex, Send/Sync, and the Future model."
+lesson = '''
+### Sharing work safely
+`thread::spawn` runs a closure on a new thread and usually requires data to be moved into that thread. Channels pass messages between producers and consumers. Shared state uses `Arc<T>` for shared ownership across threads and `Mutex<T>` to protect mutable access.
+
+| Mechanism | Use it when | Keep in mind |
+|---|---|---|
+| Thread + channel | Sending results or commands | Message passing often reduces shared state |
+| `Arc<Mutex<T>>` | Multiple threads need to update the same data | Keep locks short and avoid deadlocks |
+| `Send` | A value can safely move across threads | The compiler checks this automatically |
+| `Sync` | `&T` can safely be shared across threads | `T: Sync` permits sharing references |
+
+`async` represents work as a `Future`; an executor polls the future so it can make progress. Async does not create one thread per task, and the standard library provides the `Future` trait but no general-purpose executor. Use threads for suitable CPU-bound or blocking work; use async when a runtime is available and many I/O tasks spend time waiting.
+
+Common mistakes include assuming `Arc` makes every contained type thread-safe, holding a `Mutex` lock for too long, or forgetting that threads require suitable ownership and lifetimes.
+'''
+
+[questions.rs-016]
+prompt = "What do Send and Sync mean?"
+options = ["Send permits sharing references; Sync permits moving ownership", "Send permits moving a value between threads; Sync permits safely sharing `&T` between threads", "Both automatically lock all data", "They only apply to async functions"]
+explanation = "These marker traits express the conditions for safely moving values or sharing references across threads."
+
+[questions.rs-022]
+prompt = "Select the correct statements about concurrency in Rust."
+options = ["Channels support message passing between threads", "Arc makes every contained type thread-safe even if it lacks the required traits", "Mutex synchronizes and protects mutable access", "An async Future must be polled by an executor to make progress"]
+explanation = "Arc provides atomic shared ownership; the contained type's `Send` and `Sync` implementations still determine how it can be used safely."
+
+[questions.rs-030]
+prompt = "Compare threads using channels with shared state using `Arc<Mutex<T>>`, then explain how both relate to async."
+keywords = [["channel", "message passing"], ["mutex", "lock"], ["send", "transfer a value"], ["sync", "share references"], ["future", "async"]]
+model_answer = '''Channels use message passing to transfer data between threads; `Send` determines whether a value can be moved safely. `Arc<Mutex<T>>` uses shared ownership and a lock to synchronize state; `Sync` relates to sharing references. Async represents a task as a `Future` that an executor polls, which is useful when many I/O operations are waiting and does not mean one thread per task.'''
+explanation = "Channels pass messages; Arc/Mutex share state; an async Future needs an executor and uses a different progress model from threads."
+
+[questions.rs-036]
+title = "Combine thread totals through a channel"
+prompt = "Write `parallel_sums(chunks: Vec<Vec<i32>>) -> Vec<i32>`. Run one thread for each chunk, sum that chunk, send `(index, sum)` back through `std::sync::mpsc`, and return the sums in the original chunk order even if threads finish in a different order. An empty chunk sums to 0; empty input returns an empty Vec."
+hints = ["Clone the sender for each thread; the receiver finishes only after every sender has been dropped.", "Send the index along with the result so you can restore the original order when receiving messages."]
+explanation = "Each thread takes ownership of its chunk with `move`; the channel sends the index/result pair back to the calling thread and preserves output order."
+
+[modules.rust-dv-smart-pointers]
+title = "Smart pointers & interior mutability"
+description = "Choose Box, Rc, RefCell, Arc, and Mutex based on ownership, threading, and mutation needs."
+lesson = '''
+### Choosing the right smart pointer
+A smart pointer is a type that owns or manages access to other data and may provide behavior such as dereferencing, reference counting, or resource cleanup. `Box<T>` provides single ownership and places a value on the heap; it is useful for recursive types whose size is not known at compile time, or for transferring ownership without copying large data. `Rc<T>` allows multiple owners on a single thread. `RefCell<T>` permits mutation through a shared reference but checks borrowing rules at runtime. In multithreaded programs, `Arc<T>` provides thread-safe reference counting; mutable access is commonly paired with `Mutex<T>` or `RwLock<T>`.
+
+| Type | Ownership / sharing | Mutation | Use it when |
+|---|---|---|---|
+| `Box<T>` | One owner | Ordinary borrowing rules | Heap allocation, recursive types, trait objects |
+| `Rc<T>` | Multiple owners, one thread | Does not enable mutation by itself | Sharing a read-only graph |
+| `RefCell<T>` | One owner, one thread | Runtime borrow checking | Mutation is needed through an API that takes `&self` |
+| `Arc<Mutex<T>>` | Multiple threads | Runtime locking | Sharing mutable state across threads |
+
+For example, `Rc<RefCell<Node>>` can model a mutable graph on one thread. If the graph has a back edge, use `Weak<T>` for a non-owning edge to avoid a reference cycle that keeps memory alive indefinitely. `Deref` provides convenient access to the target value; `Drop` runs when the final owner is released. `RefCell` panics if a mutable borrow overlaps with another active borrow, so keep the guard's scope short.
+
+Common mistakes include treating `Rc` as thread-safe, forgetting that a `RefCell` borrow conflict may only appear at runtime, or creating an `Rc` cycle without `Weak`. Prefer ordinary ownership and borrowing; add a smart pointer when the data model truly needs sharing or interior mutation.
+'''
+
+[questions.rust-dv001]
+prompt = "A tree structure can contain child nodes of the same type, so its direct size is unknown at compile time. Which type usually provides suitable indirection and single ownership?"
+options = ["Box<Node>", "Rc<Node>", "RefCell<Node>", "Mutex<Node>"]
+explanation = "Box places data on the heap and has one owner; indirection lets a recursive type have a known size."
+
+[questions.rust-dv002]
+prompt = "An immutable graph needs several nodes to own the same value on one thread. Which choice is the best fit?"
+options = ["Rc<T>", "Arc<Mutex<T>>", "Box<T>", "RefCell<T>"]
+explanation = "`Rc<T>` counts references for multiple owners on one thread; use `Arc` when ownership is shared across threads."
+
+[questions.rust-dv003]
+prompt = "A method takes `&self` but needs to update an internal counter in a single-threaded program. Which type performs borrow checking at runtime?"
+options = ["RefCell<T>", "Rc<T>", "Box<T>", "Cell<T> only when T is not Copy"]
+explanation = "`RefCell<T>` performs dynamic borrow checking and panics on a conflict. `Cell<T>` supports mutation through `set`/`get` for Copy types, not arbitrary types."
+
+[questions.rust-dv004]
+prompt = "Select the correct statements about `Rc<T>` and `Weak<T>`."
+options = ["`Rc<T>` allows multiple owners on one thread", "`Rc<T>` automatically makes every value thread-safe", "`Weak<T>` does not increase the strong reference count like `Rc<T>`", "Using `Weak<T>` for a back edge can help prevent a reference cycle from keeping data alive forever"]
+explanation = "Rc is not thread-safe; Weak does not strongly own its target, so it is suitable for non-owning links in a graph."
+
+[questions.rust-dv005]
+prompt = "A service shares mutable state across multiple OS threads. Which statements apply?"
+options = ["`Arc<T>` can share ownership across threads when T satisfies the required traits", "`Mutex<T>` protects mutation with a lock when accessed correctly", "`Rc<RefCell<T>>` is a thread-safe replacement for `Arc<Mutex<T>>`", "Keep the lock held briefly to reduce contention and the risk of deadlock"]
+explanation = "Arc combined with Mutex is a common pattern for shared mutable state; Rc and RefCell are for single-threaded use."
+
+[questions.rust-dv006]
+prompt = "Fill in the smart pointer that allows multiple owners on one thread: `std::rc::{{blank}}<T>`."
+explanation = "Rc stands for reference counting; it cannot be used as a thread-safe sharing mechanism."
+
+[questions.rust-dv007]
+prompt = "In an interview, explain when to choose Box, Rc/Weak, RefCell, or Arc<Mutex<T>>. Include trade-offs and one mistake to avoid."
+keywords = [["box", "boxed"], ["rc", "reference counted"], ["refcell", "interior mutability"], ["single thread", "single-threaded"], ["arc", "arc mutex"], ["weak", "reference cycle"]]
+model_answer = '''`Box<T>` fits when you need indirection or single ownership. `Rc<T>` shares ownership on a single thread; `Weak<T>` is useful for non-owning edges that prevent reference cycles. `RefCell<T>` provides interior mutability with runtime borrow checking and can panic on conflicting borrows. For sharing across threads, `Arc<Mutex<T>>` combines thread-safe ownership with locked mutation; keep the lock short to avoid contention and deadlocks.'''
+explanation = "A strong answer distinguishes owner count, thread safety, and when borrow checking occurs instead of treating smart pointers as interchangeable."
+
+[questions.rust-dvc01]
+title = "Shared counter on one thread"
+prompt = "Implement `SharedCounter` using `Rc<RefCell<i32>>`. `new(value)` creates a counter; `clone_handle(&self)` returns a new handle to the same counter; `increment(&self)` increases the value by one; and `get(&self)` reads the current value. Cloned handles must observe the same state. Use only the standard library."
+hints = ["Use `Rc::clone` to create another owner of the same RefCell.", "`borrow_mut()` returns a mutable guard; dereference it to update the integer."]
+explanation = "Rc shares ownership on one thread, while RefCell allows mutation with runtime borrow checking."
+
+[modules.rust-dv-testing-cli]
+title = "Testing & CLI applications"
+description = "Organize unit and integration tests, and build a CLI with clear configuration, errors, and exit codes."
+lesson = '''
+### Maintainable tests and CLIs
+Rust supports unit and integration tests through Cargo. Unit tests are often placed in a child `tests` module in the source file; they can test private items according to the module's visibility rules. Integration tests live in the `tests/` directory, compile as a separate crate, and can use only the library's public API. Use `assert!`, `assert_eq!`, and `assert_ne!` to check results; tests should describe observable behavior, run independently of order, and avoid shared mutable state.
+
+| Test organization | What it can see | Good fit for |
+|---|---|---|
+| Unit test in `src` | Private details in the parent module | Small functions and internal invariants |
+| Integration test in `tests/` | The crate's public API, as a real user would see it | Contracts between modules |
+| Doc test | Examples in documentation are compiled and run | Ensuring examples stay accurate |
+
+`#[should_panic]` asserts that a test must panic; add `expected = "..."` so an unrelated panic does not make it pass. A test may return `Result<(), E>` and use `?` to fail when an error occurs. `cargo test` runs tests by default; arguments after `--` are passed to the test harness, such as `-- --nocapture` to show output. Tests run in parallel, so avoid relying on order or having them write to the same file.
+
+For a CLI, separate argument parsing, configuration parsing, and business logic into testable functions. Invalid input is an expected error: return a `Result` with a clear message, then let the outer layer decide what to print to stderr and which nonzero exit code to use. Do not use `unwrap()` for user-provided arguments. Use `std::env::args_os()` when paths that are not UTF-8 must be accepted; `args()` assumes arguments can be converted to UTF-8 strings.
+
+Common mistakes include putting every test in a binary so integration tests cannot import the crate, matching panics too broadly, or letting tests depend on environment variables or the working directory without isolating them. A pure parser that takes an argument slice makes missing, repeated, invalid, and valid cases easy to test without launching a process.
+'''
+
+[questions.rust-dv008]
+prompt = "What scope can an integration test in `tests/` typically use when interacting with a crate's library?"
+options = ["Only the public API", "Every private item in every module", "Local variables from the running binary", "Internal test macros that are not exported"]
+explanation = "An integration test compiles as a separate crate, so it can check the public contract as a library client would use it."
+
+[questions.rust-dv009]
+prompt = "When does a test using `#[should_panic(expected = \"invalid length\")]` pass?"
+options = ["Whenever any panic occurs", "When the test panics with a message matching the expected text", "When the function returns Err", "When the test finishes before a timeout"]
+explanation = "The expected text checks the panic message so the test does not pass because of an unrelated panic."
+
+[questions.rust-dv010]
+prompt = "A CLI parser receives `--file` without a value. Which design helps the app report a friendly error and makes the parser testable?"
+options = ["Call `unwrap()` so the process panics", "Return Result from the parser, then let the CLI layer print the error to stderr and choose an appropriate exit code", "Ignore the flag and use an empty file", "Print the error to stdout and continue processing"]
+explanation = "Invalid input is an expected error; Result keeps the parser pure, while the process boundary decides how to display it and set the exit status."
+
+[questions.rust-dv011]
+prompt = "Select the correct statements about Rust tests."
+options = ["Unit tests can be placed in a child `tests` module in the source file", "Integration tests usually live in `tests/` and can access only the public API", "Tests always run sequentially in declaration order by default", "Arguments after `--` in `cargo test` are passed to the test harness"]
+explanation = "Tests run in parallel by default, so do not rely on their order. The `--` separator distinguishes Cargo options from harness options."
+
+[questions.rust-dv012]
+prompt = "Choose appropriate practices when building a CLI that accepts a file name from the user."
+options = ["Separate argument parsing from business logic so the parser can be tested directly", "Use `args_os()` when operating-system paths that are not UTF-8 must be preserved", "Use `unwrap()` for every required value to make the error message shorter", "Keep tests independent of order and shared filesystem state"]
+explanation = "A pure parser is easy to test; args_os supports non-UTF-8 OS arguments; unwrap is unsuitable for potentially invalid input."
+
+[questions.rust-dv013]
+prompt = "Fill in the attribute that marks a function as a test: `#[{{blank}}]`."
+explanation = "The test harness recognizes a function with the `#[test]` attribute."
+
+[questions.rust-dv014]
+prompt = "Explain how to divide unit and integration tests for a CLI library. Describe how to handle invalid input and keep tests reliable when they run in parallel."
+keywords = [["unit test", "unit tests"], ["integration test", "integration tests"], ["public api"], ["result", "error handling"], ["parallel"], ["stderr", "exit code"]]
+model_answer = '''Place unit tests near the code to check functions and internal invariants; put integration tests in `tests/` to verify the library's public API as a client would use it. A CLI parser should return `Result` instead of panicking on invalid input; the `main` layer can print the error to stderr and choose a nonzero exit code. Because tests run in parallel, each test needs isolated data and must not rely on order, environment variables, or shared files.'''
+explanation = "A good answer distinguishes the visibility available to the two test types, handles invalid input clearly, and explains independence under parallel execution."
+
+[questions.rust-dvc02]
+title = "Parse CLI search options"
+prompt = "Implement `parse_search_args(args: &[&str]) -> Result<SearchConfig, String>`. The slice contains options only, not the program name. Require exactly one `--query <text>` and one `--file <path>` with nonempty values; `--ignore-case` is an optional flag that may appear at most once. Return Err if a required option is missing or repeated, a value is missing, an unknown flag appears, or a required value is empty. `SearchConfig` has fields `query: String`, `file: String`, and `ignore_case: bool`. Do not read the filesystem or environment."
+hints = ["Iterate over the slice by index so each option can read the value at the next position.", "Use `Option<String>` to detect a missing or repeated required option."]
+explanation = "A pure parser returning Result makes valid and invalid inputs testable without launching a process or accessing the filesystem."
+
+[modules.rust-dv-patterns]
+title = "Advanced patterns & let-else"
+description = "Use destructuring, match guards, refutability, and patterns in control-flow constructs."
+lesson = '''
+### Patterns inspect and extract data
+Patterns appear in more than `match`: Rust also uses them in `let`, function parameters, `if let`, `while let`, `for`, and `let-else`. An **irrefutable** pattern always matches a value of its type, such as `let (x, y) = pair`; a **refutable** pattern may fail, such as `Some(value)`. Therefore, `let` usually requires an irrefutable pattern, while `if let` and `match` handle a pattern that may not match.
+
+| Syntax | Refutability | Use it when |
+|---|---|---|
+| `let (x, y) = pair` | Irrefutable | Destructuring is guaranteed to succeed |
+| `if let Some(x) = value` | Refutable | Only one variant needs handling |
+| `match value { ... }` | Refutable; must be exhaustive | Every case or group of cases needs handling |
+| `let Some(x) = value else { return; }` | Refutable | Extracting a value early; the else branch must diverge |
+
+`match` must be exhaustive so no state is missed; the compiler also warns about an unreachable branch when an earlier one already covers it. `_` ignores a value that is not needed, while `..` ignores the remaining fields or elements during destructuring. A match guard such as `Some(n) if n > 0` adds a condition after a pattern matches; the compiler does not use guards to prove exhaustiveness. A binding such as `name @ pattern` both checks a shape and keeps the matched value, which is useful when it must be used afterward.
+
+For example, an event parser could destructure `Event::Retry { code, .. } if code >= 500` to retry only server errors, then handle other statuses in separate branches. Use `let-else` when an invalid case should exit early, but its `else` branch must end with `return`, `break`, `continue`, or a panic so the binding is guaranteed to exist afterward.
+
+Common mistakes include using a pattern that can fail directly in `let`, using `_` too early and losing needed data, assuming a match guard proves that every value is covered, or putting a general branch before a specific one and making the latter unreachable. Choose `match` when the state space needs clear accounting, and use `if let` or `let-else` when they make the control flow simpler.
+'''
+
+[questions.rust-dv015]
+prompt = "Why is `let Some(value) = maybe_value;` invalid when `maybe_value: Option<T>`?"
+options = ["`Some(value)` is a refutable pattern and may not match", "`let` does not allow new bindings", "Option<T> can only be used in match", "value must be mutable"]
+explanation = "An ordinary `let` requires an irrefutable pattern. Use `match`, `if let`, or `let-else` to handle the None case."
+
+[questions.rust-dv016]
+prompt = "In `Some(code) if code >= 500 => retry()`, what does the match guard do?"
+options = ["It adds a condition after the pattern matches; the compiler does not treat a guard as proof of exhaustiveness", "It marks code as mutable", "It replaces every missing match branch", "It requires code to have type u32"]
+explanation = "A guard further filters a matched pattern at runtime; the branches must still make the match exhaustive."
+
+[questions.rust-dv017]
+prompt = "What is required of the `else` branch in `let Some(value) = input else { ... }`?"
+options = ["It must diverge, for example by returning or panicking", "It must assign a value to value", "It must return Option<T>", "It cannot contain an expression"]
+explanation = "let-else guarantees that the binding exists after the statement, so a non-matching branch must end control flow."
+
+[questions.rust-dv018]
+prompt = "Select the correct statements about `match` and patterns."
+options = ["Match branches must cover every possible value", "A general branch placed first can make a later specific branch unreachable", "A match guard always lets the compiler prove that an enum is fully covered", "`_` matches the remaining cases without binding their values"]
+explanation = "The compiler checks pattern exhaustiveness but does not use guards to prove coverage, because a guard is evaluated at runtime."
+
+[questions.rust-dv019]
+prompt = "Where can patterns be used in Rust?"
+options = ["Function parameters", "A `for` loop pattern", "`if let` / `while let`", "Only in `match`"]
+explanation = "Patterns appear in many binding and control-flow constructs, not only in match."
+
+[questions.rust-dv020]
+prompt = "In a match, which pattern matches every value without creating a new binding? `{{blank}} => fallback()`"
+explanation = "The wildcard pattern ignores a value and is often used for the remaining cases."
+
+[questions.rust-dv021]
+prompt = "Compare refutable and irrefutable patterns in a code review. Explain when to use match, if let, or let-else, and the role of exhaustiveness."
+keywords = [["refutable", "may fail to match"], ["irrefutable", "always matches"], ["let-else", "let else"], ["if let"], ["exhaustive", "exhaustiveness", "all branches"], ["match guard", "guard"]]
+model_answer = '''An irrefutable pattern always matches, so it works with an ordinary `let`; a refutable pattern can fail and needs `match` or `if let`. Use `let-else` to bind a value and exit early when the pattern does not match; its else branch must diverge. A match must be exhaustive so every state is handled, while a match guard adds a runtime condition and does not replace exhaustive branch coverage.'''
+explanation = "A complete answer connects each pattern type to a control-flow construct and explains why the compiler requires exhaustive matches."
+
+[questions.rust-dvc03]
+title = "Filter readings to the valid range"
+prompt = "Write `valid_readings(readings: &[Option<i32>]) -> Vec<i32>`. Return, in the original order, the readings that are present and in the inclusive range 0..=100. Skip `None`, negative values, and values greater than 100. Use pattern matching to extract the value and check the range."
+hints = ["Iterate over each `&Option<i32>` and match after dereferencing, since i32 is Copy.", "Use a binding such as `value @ 0..=100` to check the range while keeping the reading."]
+explanation = "A range pattern checks the limit during destructuring; a wildcard can skip None and values outside the range."

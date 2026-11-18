@@ -1,0 +1,571 @@
+[modules.go-basics]
+title = "Syntax, Types & Interfaces"
+description = "Zero values, slices/maps, structs, methods, implicit interfaces, and generics."
+lesson = '''
+### Key ideas
+- **Zero values**: an uninitialized variable receives its type's default value (`0`, `""`, `false`, or `nil`). A nil map can be read, but writing to it **panics**.
+- A **slice** is a view (pointer, length, capacity) over an underlying array. `append` may allocate a new array when capacity is exceeded, so always assign the result: `s = append(s, x)`.
+- Map iteration order is unspecified, and ordinary maps are not safe for concurrent writes.
+- A **pointer receiver**, such as `func (u *User) Rename()`, can modify the original struct.
+- Types satisfy interfaces **implicitly**; there is no `implements` declaration. Small interfaces are usually easier to compose (`io.Reader`, `fmt.Stringer`).
+- **Generics** (Go 1.18+): `func Map[T, U any](s []T, f func(T) U) []U`; constraints include `cmp.Ordered` and `comparable`.
+- The `slices` and `maps` packages (Go 1.21+) provide helpers such as `slices.Sort`, `slices.Contains`, and `maps.Keys`.
+
+> For code exercises, write code in `package main` (do not define `main`). Tests use `var _ = Test("name", func(t *T) { ... })` with `t.Errorf`/`t.Fatalf`, like `testing.T`.
+'''
+
+[questions.go-001]
+prompt = "What happens when you write to a `nil` map (`var m map[string]int; m[\"a\"] = 1`)?"
+options = ["The map is initialized automatically", "Panic: assignment to entry in nil map", "Nothing happens", "Compilation error"]
+explanation = "Reading from a nil map returns the zero value, but writing panics. Initialize it with `make(map[string]int)` or a literal such as `map[string]int{}`."
+
+[questions.go-002]
+prompt = '''
+What does this print?
+
+```go
+a := []int{1, 2, 3}
+b := a[:2]
+b[0] = 99
+fmt.Println(a[0])
+```
+'''
+explanation = "`b` is a slice that shares the same underlying array as `a`. For an independent copy, use `slices.Clone(a)` or `copy`."
+
+[questions.go-003]
+prompt = "When does a type satisfy an interface in Go?"
+options = ["When it declares `implements`", "When it has all the interface's methods (implicitly, without a declaration)", "When it embeds that interface", "When it is registered with the runtime"]
+explanation = "Implicit structural typing keeps packages decoupled. Interfaces are commonly declared by the package that uses them."
+
+[questions.go-004]
+prompt = "When should you use a **pointer receiver** such as `func (s *Stack) Push(v int)`?"
+options = ["Never", "When the method must modify the receiver or the struct is large (to avoid copying); receiver style should be consistent across a type's methods", "Only with interfaces", "Only when the struct is empty"]
+explanation = "A value receiver gets a **copy**, so changes do not affect the original value."
+
+[questions.go-005]
+prompt = "Which statements about Go are correct?"
+options = ["The iteration order of `for k := range m` over a map is unspecified and must not be relied on", "Unexported fields (starting with a lowercase letter) are not encoded by `encoding/json`", "Go has try/catch exceptions", "`s = append(s, x)` may return a slice pointing to a new underlying array", "An unused declared variable is only a warning"]
+explanation = "Go has no try/catch; it uses error values and `panic`/`recover`. Unused variables and imports are **compilation errors**."
+
+[questions.go-006]
+prompt = '''
+Declare and initialize a map, then check whether a key exists:
+
+```go
+ages := {{blank}}(map[string]int)
+age, {{blank}} := ages["an"]
+```
+'''
+explanation = "The comma-ok idiom is `v, ok := m[k]`; `ok` is false when the key is absent."
+
+[questions.go-007]
+prompt = '''
+Write a generic function that finds the largest value using a constraint from the `cmp` package:
+
+```go
+func Max[T {{blank}}](xs []T) T { ... }
+```
+'''
+explanation = "`cmp.Ordered` includes types that support `<` and `>` such as numbers and strings. `comparable` only guarantees support for `==`."
+
+[questions.go-008]
+prompt = '''
+Implement these generic functions:
+
+- `Map[T, U any](s []T, f func(T) U) []U`
+- `Filter[T any](s []T, keep func(T) bool) []T` — always return a **non-nil** slice (use `[]T{}` when empty)
+- `GroupBy[T any, K comparable](s []T, key func(T) K) map[K][]T` — preserve the order of items within each group
+'''
+hints = ["`make([]U, 0, len(s))` preallocates enough capacity.", "With a map, `append(out[k], v)` works even when `out[k]` does not exist yet (it is a nil slice)."]
+explanation = "Go 1.21 provides `slices` and `maps`; implementing these helpers yourself is useful for understanding generics and nil versus empty slices."
+
+[questions.go-009]
+title = "Generic stack with empty-state handling"
+prompt = '''
+Implement `Stack[T any]` with these methods (using pointer receivers):
+- `Push(v T)`
+- `Pop() (T, bool)` — when empty, return the zero value and `false`
+- `Peek() (T, bool)`
+- `Len() int`
+
+The zero value `Stack[T]{}` must be ready to use.
+'''
+hints = ["Read the last element with `s.items[len(s.items)-1]`, then shorten the slice with `s.items[:len-1]`."]
+explanation = "Assigning the zero value to the slot just popped lets the garbage collector reclaim the referenced object (important when `T` is a pointer)."
+
+[modules.go-errors]
+title = "Error handling"
+description = "Errors as values, wrapping with `%w`, `errors.Is`/`As`, sentinel errors, `panic`/`recover`, and `defer`."
+lesson = '''
+### Key ideas
+- An error is a **value**: functions return `(T, error)`. Check `if err != nil` promptly.
+- **Wrap** an error with context: `fmt.Errorf("load user %d: %w", id, err)`.
+- `errors.Is(err, ErrNotFound)` searches through an error-wrapping chain; `errors.As(err, &target)` finds an error by **type**.
+- A **sentinel error** is a package-level value such as `var ErrNotFound = errors.New("not found")`.
+- `defer` runs when the function returns, in **LIFO** order. Deferred call arguments are evaluated **when the defer statement is reached**.
+- Use `panic` for unrecoverable programming errors; `recover()` only works when called by a deferred function.
+'''
+
+[questions.go-020]
+prompt = "What is the difference between `fmt.Errorf(\"...: %v\", err)` and `fmt.Errorf(\"...: %w\", err)`?"
+options = ["There is no difference", "`%w` wraps the original error so `errors.Is`/`As` can still find it; `%v` only inserts its text and loses the error chain", "`%w` prints a stack trace", "`%v` causes a panic"]
+explanation = "Wrap an error to add context while preserving the ability to inspect the original error and its type."
+
+[questions.go-021]
+prompt = '''
+What does this print?
+
+```go
+for i := 0; i < 3; i++ {
+    defer fmt.Print(i)
+}
+```
+'''
+explanation = "Deferred calls run in LIFO order, and the argument `i` is evaluated when each `defer` is executed."
+
+[questions.go-022]
+prompt = "When does `recover()` take effect?"
+options = ["Whenever it is called", "Only when called directly by a deferred function in the goroutine that is panicking", "Only inside `main`", "Only inside another goroutine"]
+explanation = "A parent goroutine cannot recover a panic from another goroutine. Each goroutine must recover its own panic (for example, in an HTTP handler)."
+
+[questions.go-023]
+prompt = '''
+Check an error against a **sentinel** and by its **type**:
+
+```go
+if errors.{{blank}}(err, sql.ErrNoRows) { ... }
+
+var pe *fs.PathError
+if errors.{{blank}}(err, &pe) { log.Println(pe.Path) }
+```
+'''
+explanation = "`Is` compares an error value through the chain; `As` assigns the first error of a matching type to the target."
+
+[questions.go-024]
+prompt = "Why does Go use errors as values instead of exceptions? Describe best practices for handling errors in Go."
+keywords = [["explicit", "clear", "explicit control flow"], ["wrap", "%w", "context"], ["errors.is", "errors.as", "sentinel error"], ["panic"], ["if err != nil", "check immediately", "early return", "do not ignore errors"]]
+model_answer = '''
+Errors are values, which makes failure paths **explicit** in function signatures and requires callers to handle them instead of relying on hidden control flow like exceptions.
+
+Best practices:
+- Check `if err != nil` promptly and **return early**; do not ignore errors with `_`.
+- **Wrap** errors with context using `fmt.Errorf("...: %w", err)`. Log at the topmost layer to avoid duplicate logs.
+- Use **sentinel errors** or custom error types and inspect them with `errors.Is` / `errors.As`; do not compare error strings.
+- Reserve `panic` for unrecoverable programming errors; recover at a boundary such as HTTP middleware.
+'''
+explanation = "Go 1.20+ provides `errors.Join` to combine multiple errors."
+
+[questions.go-025]
+prompt = '''
+Implement a user repository:
+
+1. Declare the sentinel `ErrNotFound = errors.New("not found")`.
+2. Define `ValidationError{Field string}` with an `Error()` method that returns `"invalid " + Field`.
+3. Implement `FindUser(db map[int]string, id int) (string, error)`:
+   - If `id <= 0`, return `&ValidationError{Field: "id"}`.
+   - If the ID is absent from the map, wrap `ErrNotFound` with context: `fmt.Errorf("user %d: %w", id, ErrNotFound)`.
+   - If found, return the name and `nil`.
+'''
+hints = ["Import `fmt` to use `fmt.Errorf`.", "Use `%w` (not `%v`) to wrap the error."]
+explanation = "A common pattern is for the repository layer to return contextual errors and for the handler to use `errors.Is`/`As` to map them to HTTP status codes (404, 400)."
+
+[modules.go-concurrency]
+title = "Concurrency"
+description = "Goroutines, channels, `select`, `sync.WaitGroup`/`Mutex`, context, worker pools, and race conditions."
+lesson = '''
+### Key ideas
+- A **goroutine** (`go f()`) is lightweight, with a small stack, and is scheduled M:N by the Go runtime.
+- **Channels**: an unbuffered send and receive rendezvous; a buffered send blocks when the buffer is full. Only the **sender** should close a channel. Receiving from a closed channel returns the zero value immediately (`v, ok := <-ch`).
+- `select` waits on multiple channel operations; `default` makes it non-blocking.
+- `sync.WaitGroup` waits for a group of goroutines; `sync.Mutex` protects shared data; `sync.Once` runs an operation once.
+- **`context.Context`** propagates cancellation, deadlines, and request-scoped values across call layers. Always `defer cancel()`. Pass `ctx context.Context` as a function's first parameter.
+- “Don't communicate by sharing memory; share memory by communicating.”
+- Detect data races with `go test -race`.
+'''
+
+[questions.go-040]
+prompt = "Sending to an **unbuffered channel** when no goroutine is receiving will:"
+options = ["Temporarily store the value in a buffer", "Block until a receiver is ready", "Panic", "Discard the value"]
+explanation = "If no other goroutine can receive the value, the runtime reports `fatal error: all goroutines are asleep - deadlock!`."
+
+[questions.go-041]
+prompt = "Who should call `close(ch)`?"
+options = ["The receiver", "The sender, when there will be no more sends", "Anyone", "The garbage collector closes it automatically"]
+explanation = "Sending to a closed channel panics. Closing it lets `for v := range ch` know that sending is finished."
+
+[questions.go-042]
+prompt = "What is the primary purpose of `context.Context` in a Go server?"
+options = ["Store global configuration", "Propagate cancellation signals, deadlines, and request-scoped values across function calls and goroutines", "Replace mutexes", "Write logs"]
+explanation = "`r.Context()` is canceled when the client disconnects, allowing downstream database queries and HTTP calls to stop as well."
+
+[questions.go-043]
+prompt = "Which code patterns have a **data race** or another concurrency bug?"
+options = ["Multiple goroutines increment a shared `count++` without a mutex", "Multiple goroutines write to the same ordinary `map`", "Each goroutine writes to a different `results[i]` in a sufficiently allocated slice", "Use `atomic.AddInt64(&count, 1)`", "Call `wg.Add(1)` **inside** the new goroutine instead of before `go`"]
+explanation = "Writing to different slice indexes is safe. A `wg.Add` inside a goroutine may run after `wg.Wait()` has already returned."
+
+[questions.go-044]
+prompt = '''
+Set a two-second timeout for an operation:
+
+```go
+ctx, cancel := context.{{blank}}(context.Background(), 2*time.Second)
+{{blank}} cancel()
+```
+'''
+explanation = "Always `defer cancel()` to release the timer and related resources, even if the operation finishes early."
+
+[questions.go-045]
+prompt = "Compare using **channels** and **mutexes** to share data between goroutines. When should you use each?"
+keywords = [["channel"], ["mutex", "lock"], ["data transfer", "ownership", "pipeline", "communication", "communicate"], ["state", "cache", "counter", "map"]]
+model_answer = '''
+- **Channels** are useful for **transferring data or ownership** between goroutines and coordinating workflows such as pipelines, worker pools, fan-in/fan-out, and done/cancel signals.
+- **Mutexes** are useful when several goroutines read or write simple **shared state** such as a counter, cache, or map; they are often simpler and faster.
+- Follow “share memory by communicating,” but do not force everything through channels. Choose the clearest approach and check it with `-race`.
+'''
+explanation = "The Go wiki advises using whichever approach is most expressive and simplest for the situation."
+
+[questions.go-046]
+title = "Worker pool that preserves result order"
+prompt = '''
+Implement `ParallelMap(inputs []int, workers int, f func(int) int) []int`:
+- Run `f` concurrently with **at most** `workers` goroutines.
+- Return results in the **same order** as `inputs`.
+- Treat `workers <= 0` as 1.
+
+Use a jobs channel and `sync.WaitGroup`.
+'''
+hints = ["Send **indexes** through the jobs channel and have each worker write to `results[i]`; only one goroutine writes to each index, so there is no race.", "Remember to `close(jobs)` so the workers can exit their `range` loops."]
+explanation = "A worker pool limits resource use (such as database connections or CPU). In production, `errgroup.Group` with `SetLimit` is another option."
+
+[questions.go-047]
+title = "Call a function with a context timeout"
+prompt = '''
+Implement `WithTimeout(ctx context.Context, d time.Duration, f func(ctx context.Context) (string, error)) (string, error)`:
+- Create a child context with timeout `d`, then call `f` in a goroutine.
+- If `f` finishes first, return its result.
+- If the deadline expires or the parent context is canceled first, return `"", ctx.Err()` from the child context (`context.DeadlineExceeded` or `context.Canceled`).
+- Do not leak a goroutine that could remain blocked forever; use a channel buffered to 1.
+'''
+hints = ["Use `select` to wait on the result channel and `ctx.Done()`.", "A buffer of 1 lets the goroutine send its result and exit even when no receiver remains."]
+explanation = "The `select` plus `ctx.Done()` pattern is fundamental to implementing timeouts for I/O in Go."
+
+[modules.go-web]
+title = "`net/http` & JSON"
+description = "`http.Handler`, Go 1.22 `ServeMux` patterns, middleware, `encoding/json`, struct tags, and graceful shutdown."
+lesson = '''
+### Key ideas
+- `http.Handler` is an interface with `ServeHTTP(w http.ResponseWriter, r *http.Request)`. `http.HandlerFunc` adapts a function to a handler.
+- Since Go 1.22, `ServeMux` supports methods and wildcards: `mux.HandleFunc("GET /users/{id}", h)` lets the handler read `r.PathValue("id")`.
+- **Middleware** has the shape `func(next http.Handler) http.Handler`.
+- Call `w.WriteHeader(code)` **before** `w.Write`; set headers before writing the body.
+- For JSON, use `json.NewDecoder(r.Body).Decode(&v)` and `json.NewEncoder(w).Encode(v)`. A struct tag can be `json:"name,omitempty"`; only **exported** fields are encoded.
+- For production servers, set `ReadTimeout` and `WriteTimeout`; use `srv.Shutdown(ctx)` for graceful shutdown.
+'''
+
+[questions.go-060]
+prompt = "Which method does the `http.Handler` interface require?"
+options = ["`Handle(req)`", "`ServeHTTP(w http.ResponseWriter, r *http.Request)`", "`Serve(port int)`", "`Do(req) (*Response, error)`"]
+explanation = "`http.HandlerFunc(fn)` adapts a function with that signature into a `Handler`."
+
+[questions.go-061]
+prompt = "Since Go 1.22, how do you register the `GET /users/{id}` route with `http.ServeMux` and read `id`?"
+options = ["`mux.Get(\"/users/:id\", h)` and `r.Param(\"id\")`", "`mux.HandleFunc(\"GET /users/{id}\", h)` and `r.PathValue(\"id\")`", "It is not possible; an external library is required", "`mux.Route(\"/users/*\")`"]
+explanation = "The newer `ServeMux` supports methods, `{name}` wildcards, and `{path...}` wildcards, which is enough for many APIs without an external router."
+
+[questions.go-062]
+prompt = "Which struct field will appear in JSON produced by `json.Marshal`?"
+options = ["`password string`", "`Email string `json:\"email,omitempty\"`` (when `Email` is non-empty)", "`Token string `json:\"-\"``", "`internal int`"]
+explanation = "Only exported fields are included; the `-` tag omits a field, and `omitempty` omits it when it has its zero value."
+
+[questions.go-063]
+prompt = '''
+Return JSON with status 201:
+
+```go
+w.Header().Set("Content-Type", "application/json")
+w.{{blank}}(http.StatusCreated)
+json.{{blank}}(w).Encode(user)
+```
+'''
+explanation = "Set headers before calling `WriteHeader`; the status cannot be changed after the body is written."
+
+[questions.go-064]
+title = "API key middleware and JSON handler"
+prompt = '''
+Implement the following:
+
+1. `RequireAPIKey(key string, next http.Handler) http.Handler` — if the `X-API-Key` header does not match `key`, return **401** with the JSON body `{"error":"unauthorized"}`; otherwise call `next`.
+2. `HelloHandler` (of type `http.HandlerFunc`) — read the `name` query parameter (default to `"world"`) and return **200** with JSON `{"message":"hello, <name>"}` and the `Content-Type: application/json` header.
+
+Use `net/http/httptest` in your tests.
+'''
+hints = ["Return `http.HandlerFunc(func(w, r) { ... next.ServeHTTP(w, r) })` from the middleware.", "Remember to `return` after writing the 401 response."]
+explanation = "Middleware with the shape `func(http.Handler) http.Handler` can be composed in layers, for example logging → authentication → handler."
+
+[questions.go-065]
+prompt = "Describe how to perform a **graceful shutdown** of a Go HTTP server."
+keywords = [["signal", "sigterm", "sigint", "os/signal", "notifycontext"], ["shutdown"], ["timeout", "context", "deadline"], ["in-flight requests", "active requests", "finish", "existing connections"]]
+model_answer = '''
+1. Run `srv.ListenAndServe()` in a goroutine.
+2. Listen for **SIGINT/SIGTERM** using `signal.NotifyContext`.
+3. When a signal arrives, create a `context.WithTimeout` (for example, 10 seconds) and call `srv.Shutdown(ctx)`. The server stops accepting new connections and waits for **in-flight requests** to finish, or until the timeout expires.
+4. Close other resources such as the database pool and queue, then exit. `ListenAndServe` returns `http.ErrServerClosed`, which should not be treated as an error.
+'''
+explanation = "Graceful shutdown matters during deployments on Kubernetes, where a rolling update sends SIGTERM."
+
+[modules.go-dv-database]
+title = "`database/sql` & transactions"
+description = "Connection pooling, context-aware queries, parameterized statements, rows, and transactions."
+lesson = '''
+### `sql.DB` is a connection pool
+`*sql.DB` is a handle that is safe for concurrent use and manages a connection pool; it does not represent one connection. `sql.Open` usually checks only the driver configuration and may not establish a connection, so an application that needs to verify connectivity at startup should call `PingContext`. Create one long-lived `DB`, tune pool limits for the workload, and call `Close` when the application shuts down.
+
+| API | Use it when | Result to handle |
+|---|---|---|
+| `QueryContext` | A query may return multiple rows | `Rows`, then `Next`, `Scan`, and `Err` |
+| `QueryRowContext` | A query returns at most one row | Call `Scan`; no matching row produces `sql.ErrNoRows` |
+| `ExecContext` | Running INSERT/UPDATE/DELETE without reading rows | `sql.Result` and `RowsAffected` |
+
+Pass a `context.Context` to operations so a query can time out or be canceled with the request. Pass data through placeholders and arguments, for example `db.QueryContext(ctx, "SELECT id FROM users WHERE email = ?", email)`. Placeholder syntax depends on the database driver; never interpolate input into SQL with `fmt.Sprintf`.
+
+When using `Rows`, call `defer rows.Close()` as soon as you have checked the error from creating the rows. After the `for rows.Next()` loop, check `rows.Err()`. For several operations that must be atomic, start a transaction with `BeginTx`, defer `Rollback` for cleanup on every path, and call `Commit` only after all steps succeed. Common mistakes include ignoring a `Scan` error, skipping `Rows.Err`, or using `db` instead of `tx` midway through a transaction, which can run a query on a different connection.
+'''
+
+[questions.go-dv001]
+prompt = "A service calls `sql.Open` successfully, but its first query reports that it cannot connect to the database. Which conclusion is correct?"
+options = ["`sql.Open` always opens and verifies a connection", "`sql.Open` may only create a pool handle; use `PingContext` to verify connectivity", "`sql.Open` has already called `BeginTx`", "`sql.Open` can only be used by one goroutine"]
+explanation = "`sql.DB` manages a pool, and `Open` usually does not verify a live connection. `PingContext` checks connectivity explicitly and can use the context deadline."
+
+[questions.go-dv002]
+prompt = "A repository needs to fetch at most one user by email and distinguish the case where no row exists. Which API is appropriate?"
+options = ["Call `db.ExecContext` and cast the result to a user", "Call `db.QueryContext` without calling `Next`", "Call `db.QueryRowContext` and then `Scan`, handling `sql.ErrNoRows`", "Call `db.BeginTx` and read a field from `sql.Tx`"]
+explanation = "`QueryRowContext` is suitable for zero or one row; `Scan` reports `sql.ErrNoRows` when there is no result."
+
+[questions.go-dv003]
+prompt = "After `for rows.Next() { rows.Scan(&id) }`, what check is still needed to detect an error that occurred while reading?"
+options = ["`rows.Err()`", "`rows.Close()` returns the row count", "Call `db.PingContext` for each row", "No further check is needed"]
+explanation = "`Next` stops both when there are no more rows and when an error occurs. Check `Rows.Err` after the loop."
+
+[questions.go-dv004]
+prompt = "Choose the safe practices for running queries with request data."
+options = ["Pass `context.Context` to `QueryContext` or `ExecContext`", "Pass data through placeholder arguments", "Use `fmt.Sprintf` to insert the email directly into SQL", "Close `Rows` and check `Rows.Err()`", "Open a new `sql.DB` for every request"]
+explanation = "Context supports timeouts and cancellation, arguments prevent SQL injection, and `Rows` must be closed and checked for errors. Reuse `sql.DB` as a shared pool."
+
+[questions.go-dv005]
+prompt = '''
+The query returns multiple rows. After checking `err`, iterate over them and check for a final error:
+
+```go
+rows, err := db.{{blank}}Context(ctx, query, status)
+defer rows.Close()
+for rows.{{blank}}() {
+    var id int
+    _ = rows.Scan(&id)
+}
+err = rows.Err()
+```
+'''
+explanation = "`QueryContext` returns `*Rows`; `Next` advances to each row, and `Err` reports errors encountered during iteration. In real code, return immediately if `QueryContext` fails before deferring `rows.Close()`."
+
+[questions.go-dv006]
+prompt = '''
+Start a transaction with a context and confirm success after all statements finish:
+
+```go
+tx, err := db.{{blank}}(ctx, nil)
+if err != nil { return err }
+defer tx.Rollback()
+if err := tx.{{blank}}(); err != nil { return err }
+```
+'''
+explanation = "Deferring `Rollback` cleans up the transaction on every path. After `Commit`, the deferred rollback only returns `sql.ErrTxDone`, which is usually ignored."
+
+[questions.go-dv007]
+prompt = "In an interview, describe how to write a safe `database/sql` repository for both multi-row queries and updates across several tables in one operation."
+model_answer = '''
+Reuse one `*sql.DB` as a connection pool and pass `context.Context` down to queries to support timeouts and cancellation. Use placeholders with arguments instead of interpolating data into SQL. For multiple rows, call `QueryContext`, close `Rows`, iterate with `Next`, handle `Scan` errors, and check `Rows.Err` after the loop. For updates across several tables that must be atomic, call `BeginTx`, defer `Rollback` to clean up on every path, and call `Commit` only after every step succeeds.
+'''
+explanation = "A strong answer covers connection lifecycle, query safety, and transaction cleanup, not just API names."
+
+[questions.go-dvc01]
+title = "Build a parameterized IN query"
+prompt = '''
+Implement `BuildFindUsersQuery(statuses []string) (string, []any)` for a SQL driver that uses `?` placeholders:
+- Always start with `SELECT id, name FROM users`.
+- If `statuses` is empty, return the base query and an empty argument list.
+- Otherwise, append ` WHERE status IN (?, ...)` with exactly one `?` for each item.
+- Return the statuses in the same order in `[]any`; never insert their values into the SQL string.
+
+For example, `[]string{"active", "paused"}` should produce the query `SELECT id, name FROM users WHERE status IN (?, ?)` and the arguments `[]any{"active", "paused"}`.
+'''
+hints = ["Create placeholders based on the number of items, not on the status values.", "Create a `[]any` with the same length and assign each value by index."]
+explanation = "Keeping SQL structure separate from data lets the driver bind arguments safely and helps prevent SQL injection."
+
+[modules.go-dv-testing]
+title = "Testing, benchmarks & fuzzing"
+description = "Unit tests, table-driven subtests, cleanup, benchmarks, fuzz tests, and race checks."
+lesson = '''
+### Tests should be repeatable
+Go recognizes tests in `*_test.go` files through functions named `TestXxx(t *testing.T)`. A test should check observable behavior, have a name that describes the scenario, and not depend on execution order. `t.Error` records a failure and continues the current test; `t.Fatal` marks it as failed and stops the test goroutine. Do not call `Fatal` from a helper goroutine; report errors to the test goroutine or synchronize first.
+
+| Tool | Purpose | Use it for |
+|---|---|---|
+| Table-driven tests + `t.Run` | Apply the same rules to many inputs | Boundary, invalid, and ordinary cases |
+| `t.Cleanup` / `t.TempDir` | Release resources after a test | Temporary files, fake servers, fixtures |
+| `BenchmarkXxx(*testing.B)` | Measure repeated work | Comparing performance changes |
+| `FuzzXxx(*testing.F)` | Explore unusual inputs | Parsers, decoders, validators |
+
+For table-driven tests, define cases with a name, input, and expected result, then run each case with `t.Run(tc.name, ...)`. Subtests identify exactly which case failed. Use `t.Cleanup` to close resources; `TempDir` removes the temporary directory when the test ends. Avoid `time.Sleep` for synchronization and real network calls because they make tests slow and unreliable.
+
+A benchmark should repeat work `b.N` times rather than using a fixed iteration count; do setup before the measured loop or call `b.ResetTimer`. A fuzz test adds seeds with `f.Add`, then its callback should check invariants for every input. Run `go test ./...`, use `-race` to find data races, and use `-bench` for benchmarks; one benchmark run does not prove that every production workload will be faster. Common mistakes include testing only the happy path, ignoring returned errors, or depending on global state.
+'''
+
+[questions.go-dv008]
+prompt = "Which function is recognized by `go test` as a regular test?"
+options = ["`func testParser(t *testing.T)` in any file", "`func TestParser(t *testing.T)` in a `*_test.go` file", "`func TestParser()` in `main.go`", "`func BenchmarkParser(t *testing.T)`"]
+explanation = "A regular test starts with `Test`, accepts `*testing.T`, and is in a `*_test.go` file."
+
+[questions.go-dv009]
+prompt = "In a subtest, what is the best choice when an assertion fails but later checks in the same test are still useful?"
+options = ["Call `t.Error` to record the failure and continue", "Call `t.Fatal` from every goroutine", "Skip the assertion", "Call `os.Exit(1)`"]
+explanation = "`Error` marks the test as failed but continues; `Fatal` stops the current test goroutine and should not be called from a helper goroutine."
+
+[questions.go-dv010]
+prompt = "Which value should a Go benchmark use for the loop count so `go test` can adjust the number of iterations?"
+options = ["`b.N`", "`runtime.NumCPU()`", "`testing.Short()`", "`t.Parallel()`"]
+explanation = "A benchmark uses a loop such as `for i := 0; i < b.N; i++` so the framework can calibrate the measurement duration."
+
+[questions.go-dv011]
+prompt = "Choose the practices that make Go tests easier to maintain and more reliable."
+options = ["Put multiple inputs and expected results in a table, and name each case with `t.Run`", "Use `t.Cleanup` to register resource cleanup", "Use a long `time.Sleep` to synchronize every goroutine", "Use `t.TempDir` when a file test needs a temporary directory", "Make every test use the same fixed file in the working directory"]
+explanation = "Table-driven subtests make cases clear, while cleanup and temporary directories isolate resources. Sleeps and shared files make tests flaky and prone to collisions."
+
+[questions.go-dv012]
+prompt = '''
+Run each case as a named subtest:
+
+```go
+t.{{blank}}("empty input", func(t *testing.T) {
+    got, ok := ParsePort("")
+    if ok || got != 0 { t.Errorf("got %d, %v", got, ok) }
+})
+```
+'''
+explanation = "`T.Run` names and executes a subtest, making reports show exactly which case failed."
+
+[questions.go-dv013]
+prompt = '''
+A benchmark must use the iteration count calibrated by the framework:
+
+```go
+func BenchmarkParse(b *testing.B) {
+    for i := 0; i < b.{{blank}}; i++ {
+        ParsePort("8080")
+    }
+}
+```
+'''
+explanation = "`b.N` changes based on run duration to provide an appropriate benchmark measurement resolution."
+
+[questions.go-dv014]
+prompt = "In an interview, describe how you would test a parser that accepts valid, boundary, and invalid inputs; when would you use a benchmark or fuzzing?"
+keywords = [["table-driven"], ["subtest", "t.run"], ["edge case", "boundary case", "invalid input"], ["deterministic", "stable", "repeatable"], ["benchmark", "b.n"], ["fuzz", "fuzzing", "f.add"]]
+model_answer = '''
+I would create table-driven cases containing inputs and expected results, then run each case as a subtest so a failure identifies the scenario. In addition to valid inputs, I would cover empty strings, boundary values, malformed formats, and overflow. Tests should be deterministic and should not depend on the network or timing. To compare execution cost, I would write a benchmark that loops over `b.N`; for a parser with a broad input space, I would seed fuzzing with `f.Add` and check invariants to find panics or invalid results.
+'''
+explanation = "A good answer describes a testing strategy and boundary cases, and distinguishes the purpose of benchmarks from fuzzing."
+
+[questions.go-dvc02]
+title = "Parse and validate a port"
+prompt = '''
+Implement `ParsePort(input string) (int, bool)`:
+- Trim whitespace from both ends.
+- Accept only one or more ASCII decimal digits; reject `+`, `-`, decimal points, and the empty string.
+- The value must be in the inclusive range 1 through 65535.
+- For valid input, return the integer and `true`; for invalid input or overflow, return `0, false`.
+
+For example, `" 8080 "` returns `8080, true`; `"0"` and `"80x"` are invalid.
+'''
+hints = ["After `strings.TrimSpace`, check that every byte is between `'0'` and `'9'`.", "Use `strconv.Atoi` to detect overflow, then check the port range."]
+explanation = "A small, pure function with clearly defined boundary inputs is a good fit for table-driven unit tests."
+
+[modules.go-dv-io]
+title = "I/O, buffering & file handling"
+description = "`io.Reader`/`Writer`, streaming, `bufio.Scanner`, file lifecycle, and read errors."
+lesson = '''
+### Read as a stream
+The small `io.Reader` and `io.Writer` interfaces let functions work with files, memory buffers, networks, or test doubles without depending on a particular source. `Read(p)` returns the number of bytes read along with an error; process the `n` bytes before handling `err`, because a call can return valid data and `io.EOF` together. Never assume one `Read` fills the buffer.
+
+| API | How to use it | Trade-off |
+|---|---|---|
+| `os.ReadFile` / `io.ReadAll` | Load the entire input into memory | Simple, but unsuitable for large or unbounded data |
+| `io.Copy(dst, src)` | Transfer data sequentially between streams | Low memory use; suitable for large files |
+| `bufio.Scanner` | Split input into lines or tokens | Convenient, with a token-size limit that may need configuration |
+| `bufio.Reader` | Read chunks, peek, or control delimiters | More flexible, but requires careful EOF handling |
+
+For line-by-line reading, open the file with `os.Open`, defer `Close`, create a `bufio.Scanner`, and loop over `Scan`. After the loop, check `scanner.Err()`. If a line may exceed the default limit, configure `scanner.Buffer` with an appropriate maximum; input beyond that limit is still an error. `ScanLines` removes newlines and the carriage return before a newline, preserves empty lines, and returns a final line even when it has no trailing newline.
+
+Choose `ReadFile` for small configuration files with a known size. For uploads or large logs, stream the data or limit it with `io.LimitReader`. Common mistakes include ignoring the final Scanner error, calling `ReadAll` on untrusted unbounded input and exhausting memory, failing to close a file, or assuming `io.EOF` always means that a read returned no data.
+'''
+
+[questions.go-dv015]
+prompt = "A call to `Read(p)` returns `n > 0` together with `io.EOF`. What should the caller do?"
+options = ["Discard `p[:n]` because EOF always means no data was returned", "Process `p[:n]` first, then handle EOF", "Call `Read` again until `n == len(p)` without checking errors", "Turn EOF into a panic"]
+explanation = "The `io.Reader` interface allows data and an end-of-stream error to be returned together. The bytes read must still be consumed."
+
+[questions.go-dv016]
+prompt = "You need to copy a large file from `src io.Reader` to `dst io.Writer` without loading the whole file into RAM. Which API is appropriate?"
+options = ["`io.Copy(dst, src)`", "Call `io.ReadAll(src)` and keep the byte slice", "Call `os.ReadFile` with a path that does not exist", "Use `bufio.Scanner` regardless of the data format"]
+explanation = "`io.Copy` transfers data as a stream; `ReadAll` keeps all bytes in memory."
+
+[questions.go-dv017]
+prompt = "`bufio.Scanner` stops before reading a very long line. What is the appropriate response?"
+options = ["Ignore `scanner.Err()`", "Increase the buffer and set an appropriate token limit with `scanner.Buffer`, while still checking `Err`", "Call `Scan` once more to remove the limit", "Use `io.ReadAll` for every unbounded input"]
+explanation = "Scanner limits token size. Raise the limit deliberately or use `bufio.Reader` when you need more control over long lines."
+
+[questions.go-dv018]
+prompt = "Choose the correct practices for reading a file line by line in Go."
+options = ["Close the file with `defer file.Close()` after it opens successfully", "Check `scanner.Err()` after the `Scan` loop", "Assume `Read` always fills the buffer", "Increase Scanner's limit if valid lines may exceed the default", "Use `io.ReadAll` on an unbounded client body"]
+explanation = "Close the file, check Scanner's final error, and adjust the token limit to fit the data. `Read` may return fewer bytes than the buffer can hold; unbounded input should not all be loaded into memory."
+
+[questions.go-dv019]
+prompt = '''
+Stream data from a reader to a writer:
+
+```go
+n, err := io.{{blank}}(dst, src)
+```
+'''
+explanation = "`io.Copy` returns the number of bytes written and an error if the stream transfer fails."
+
+[questions.go-dv020]
+prompt = '''
+After the `for scanner.Scan()` loop, get the final read error with:
+
+```go
+if err := scanner.{{blank}}(); err != nil {
+    return err
+}
+```
+'''
+explanation = "`Scan` returns false both at end of input and on an error; `Err` distinguishes the error case."
+
+[questions.go-dv021]
+prompt = "In an interview, choose between `os.ReadFile`, `io.Copy`, `bufio.Scanner`, and `bufio.Reader` for different kinds of input; explain how to handle EOF and errors."
+keywords = [["readfile", "readall", "entire contents in memory", "full contents in memory"], ["io.copy", "stream"], ["scanner", "buffer", "token limit"], ["reader", "delimiter"], ["eof", "io.eof", "process returned bytes"], ["error", "scanner.err", "close the file", "close"]]
+model_answer = '''
+`os.ReadFile` or `io.ReadAll` is convenient for small input with a known limit, but keeps the entire contents in memory. `io.Copy` is a good fit for large files because it streams between a `Reader` and a `Writer`. `bufio.Scanner` is convenient for lines or tokens; raise its buffer limit if valid tokens are long. Use `bufio.Reader` when you need delimiter control or incremental reads. With `Read`, process the returned bytes even when the error is `io.EOF`; after a Scan loop, check `scanner.Err`. Close each file you open.
+'''
+explanation = "Choose based on input size, how it should be split, and memory limits; do not ignore the final stream error."
+
+[questions.go-dvc03]
+title = "Read lines from an `io.Reader`"
+prompt = '''
+Implement `ReadLines(r io.Reader) ([]string, error)` using the standard library:
+- Split lines using `bufio.Scanner` rules: preserve empty lines, remove `\n` and the `\r` in CRLF, and keep a final line without a newline.
+- Empty input returns an empty slice and a `nil` error.
+- Support lines up to 1 MiB; if the reader fails or a line exceeds the limit, return `nil, error`.
+- Do not close `r`; this function does not own the reader.
+'''
+hints = ["Use `bufio.Scanner` and configure its maximum buffer size to 1 MiB.", "Always check `scanner.Err()` after `Scan` finishes."]
+explanation = "This function processes a stream borrowed from the caller, follows explicit line rules, and returns read errors instead of silently dropping data."

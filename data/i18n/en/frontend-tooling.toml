@@ -1,0 +1,487 @@
+[modules.tool-tailwind]
+title = "Tailwind CSS"
+description = "Utility-first styling, responsive and state variants, themes, and arbitrary values."
+lesson = '''### Utility-first styling and variants
+Tailwind combines small utilities directly in markup; `flex items-center gap-4` describes a layout without requiring a separate selector for each component. A variant adds a condition to a utility: `hover:bg-sky-700`, `focus-visible:ring-2`, or `md:grid-cols-2`. Breakpoints are generally mobile-first: classes without a prefix apply by default, while `md:` overrides them from that breakpoint upward.
+
+| Need | Example | Meaning |
+|---|---|---|
+| State | `disabled:opacity-50` | applies only when disabled |
+| Screen size | `lg:flex` | applies from the `lg` breakpoint |
+| Arbitrary value | `w-[37rem]` | a value outside the theme scale |
+
+In modern Tailwind, a theme can be declared in CSS with `@theme`, for example `@theme { --color-brand: #06b6d4; }`, and the corresponding utility can then be used. The class scanner needs to see complete class names in source; concatenating strings such as `bg-` + a runtime color may prevent the CSS from being generated. For dynamic values, map data to static class strings or declare the complete source explicitly. Common mistakes include treating `sm:` as a mode only for small screens and overusing arbitrary values until the theme becomes inconsistent.'''
+
+[questions.tool-001]
+prompt = "In Tailwind's mobile-first approach, what does `md:grid-cols-2` mean?"
+options = ["Applies only below the md breakpoint", "Applies from the md breakpoint upward", "Always applies at every size", "Applies only on hover"]
+explanation = "A utility without a prefix applies by default; a breakpoint prefix applies from that threshold upward."
+
+[questions.tool-002]
+prompt = "A JavaScript snippet builds a class with `const c = 'bg-' + color + '-600'`. These classes are missing from the production CSS. What is the most likely cause?"
+options = ["Tailwind reads CSS files only", "The complete class names are not present for the scanner to detect", "Color utilities cannot be used with JavaScript", "The `bg-` prefix is always removed from the output"]
+explanation = "A class scanner that relies on static source text generally cannot infer every runtime string combination; use a map of complete class names or declare the corresponding sources."
+
+[questions.tool-003]
+prompt = "You need an exact width of 37rem, but that value is not part of the theme scale. Which Tailwind syntax is appropriate?"
+options = ["`w(37rem)`", "`w-[37rem]`", "`width:37rem` as a class", "`w-37rem`"]
+explanation = "An arbitrary value uses square brackets in the utility name; use this deliberately to keep the theme cohesive."
+
+[questions.tool-004]
+prompt = "In modern Tailwind CSS, where is an appropriate place to add a CSS-first theme token?"
+options = ["In `@theme` in a stylesheet", "In any `#theme` selector", "In an HTML `theme` attribute", "It can only be declared in JavaScript"]
+explanation = "Modern Tailwind supports declaring a theme in CSS with `@theme`; older versions and configurations may use a different approach."
+
+[questions.tool-005]
+prompt = "Which classes correctly demonstrate combining a utility with a responsive or state variant?"
+options = ["`hover:bg-sky-700`", "`md:grid-cols-2`", "`focus-visible:ring-2`", "`hover:md:` by itself, with no utility", "`@media:` as an HTML class"]
+explanation = "A variant prefixes a utility to add a state or breakpoint condition; a variant by itself does not create a style."
+
+[questions.tool-006]
+prompt = "A runtime color palette is missing utilities in production. Which approaches keep class names statically discoverable?"
+options = ["Map each color to a complete class string", "Concatenate `bg-` with a runtime suffix and expect the scanner to run JavaScript", "Declare the required sources/classes using the mechanism supported by the Tailwind version", "Include a complete set of class names in source"]
+explanation = "Complete utility names can be found by the scanner, and source configuration can provide any required classes. Concatenating string fragments does not guarantee that CSS will be generated."
+
+[questions.tool-007]
+prompt = '''Fill in the state variant so the utility applies only while the pointer is hovering:
+```html
+<button class="{{blank}}:bg-sky-700">Save</button>
+```'''
+explanation = "`hover:` adds a hover condition to the following utility."
+
+[questions.tool-008]
+prompt = "Why can Tailwind classes assembled dynamically from multiple fragments disappear in production, and how would you address this?"
+keywords = [["complete class name", "full class name"], ["static scan", "static scanning", "source detection"], ["mapping", "map"], ["safelist", "declared source"]]
+model_answer = "The static scanner needs to see a complete class name in source, so a runtime string-concatenation expression may not provide a complete utility name for detection. Use a map from data to complete class strings, or explicitly declare the required sources/classes using the mechanism supported by the Tailwind version in use."
+explanation = "The answer should explain static class detection and give one way to provide complete utility names."
+
+[questions.tool-009]
+title = "Merge Utility Classes"
+prompt = '''Write `cn(...values)` with the following behavior:
+- Accept strings, nonzero numbers, nested arrays, and objects; include an object key when its value is truthy. Ignore `null`, `undefined`, booleans, and zero.
+- Split strings on whitespace.
+- Merge conflicts within these groups: `p`, `px`, `py`, `pt`, `pr`, `pb`, `pl`, `m`, `mx`, `my`, `mt`, `mr`, `mb`, `ml`. Two utilities in the same group with the same variant string before `:` conflict; keep the later utility. For example, `p-2 p-4` becomes `p-4`, while `p-4 px-2` keeps both.
+- Utilities outside these groups should be removed only when they are exact duplicates. Preserve the order of all remaining utilities.'''
+hints = ["Split strings into tokens, then traverse nested arrays and objects.", "Build a conflict key from the variant and utility group; mark an earlier token for removal before adding the new token."]
+explanation = "This merger handles only the groups listed in the prompt; a production Tailwind merger must account for many more groups and complex conflict relationships."
+
+[modules.tool-sass]
+title = "Sass and CSS Modules"
+description = "Variables, nesting, mixins, modules with @use/@forward, and functions."
+lesson = '''### Structured Sass
+Sass adds syntax and abstractions to CSS. A variable such as `$space: 1rem` stores a reusable value; nesting expresses selector relationships, but should stay shallow to avoid long selectors and hard-to-control specificity. A mixin is useful for a reusable group of declarations or one that accepts parameters; a function calculates and returns a value for use in an expression.
+
+| Mechanism | Use it when | Note |
+|---|---|---|
+| `$variable` | a value is reused | scope and definition order matter |
+| `@mixin` / `@include` | inserting a group of declarations | parameters are supported |
+| `@function` / `@return` | calculating a value | it does not replace a selector |
+| `@use` / `@forward` | organizing modules | clear namespaces and an intentionally exported API |
+
+```scss
+@use "tokens" as t;
+.card { padding: t.$space; }
+```
+
+`@use` loads a module with a namespace to avoid global name collisions; `@forward` provides a public entry point for a directory's API. New projects should use this module system instead of the old Sass `@import`. Common mistakes include nesting deeply to mirror the HTML structure or using mixins to generate too much duplicate CSS, which makes stylesheets grow.'''
+
+[questions.tool-010]
+prompt = "In the Sass module system, which syntax loads a module API under a namespace?"
+options = ["`@use`", "`@forward`", "`@include`", "`@return`"]
+explanation = "`@use` loads a module and, by default, accesses its members through a namespace to avoid global names."
+
+[questions.tool-011]
+prompt = "A Sass file needs to aggregate and expose tokens from several modules to clients of its directory. Which directive is appropriate?"
+options = ["`@forward`", "`@extend`", "`@return`", "`@media`"]
+explanation = "`@forward` exposes a module API through a central entry point; `@use` is how a module consumes another module."
+
+[questions.tool-012]
+prompt = "When should you prefer a Sass function over a mixin?"
+options = ["When you need a calculated value to use in a CSS expression", "When you need to insert multiple selectors into a stylesheet", "When you want to replace every variable with a selector", "When you need to load a module"]
+explanation = "A function returns a value with `@return`; a mixin inserts a group of declarations where it is included."
+
+[questions.tool-013]
+prompt = "Which statements about Sass modules and nesting are correct?"
+options = ["`@use` provides namespaced access to members", "`@forward` can create an aggregated API", "Deeper nesting is always better", "The old Sass `@import` is recommended for new projects"]
+explanation = "Namespaces and aggregated APIs are goals of `@use` and `@forward`. Deep nesting makes selectors and specificity harder to manage, while the old Sass `@import` has been replaced by the module system."
+
+[questions.tool-014]
+prompt = '''Complete the Sass variable declaration:
+```scss
+{{blank}}brand-color: #06b6d4;
+```'''
+explanation = "A Sass variable name starts with `$`."
+
+[modules.tool-bundlers]
+title = "Vite, webpack, and Dependency Graphs"
+description = "ESM dev server, HMR, production builds, environment variables, code splitting, loaders, and plugins."
+lesson = '''### Development and bundling
+Vite uses the browser's ESM support during development to serve modules on demand; dependencies may be pre-bundled for compatibility and to reduce the number of requests. HMR replaces modules that can be updated without reloading the entire page in many cases. A production build analyzes the dependency graph, bundles and splits output into suitable assets; the internal bundler details depend on the Vite version.
+
+| Concept | Role | Example |
+|---|---|---|
+| HMR | updates during development | editing CSS without reloading the entire page |
+| Env | configuration by mode | only variables prefixed with `VITE_` are exposed to the client |
+| Dynamic import | creates an asynchronous loading boundary | `import('./editor.js')` |
+| webpack loader | transforms a module type | handling CSS or TypeScript |
+| webpack plugin | extends the compiler lifecycle | analyzing or emitting an asset |
+
+Do not put secrets in frontend environment variables: users can inspect every value accessible to the client. webpack commonly uses `module.rules` to attach loaders, while plugins operate at the compiler or compilation level. Common mistakes include confusing the dev server with a production server, or adding too many chunk split points so the application makes many small requests and slows down from overhead.'''
+
+[questions.tool-015]
+prompt = "During development, what is the main benefit of Vite serving ESM on demand?"
+options = ["No browser support for JavaScript is required", "The entire application does not need to be bundled before each dev server startup", "A dependency graph is unnecessary", "A production build is no longer needed"]
+explanation = "Vite uses browser ESM to serve modules on demand during development; a production build is still needed for deployment."
+
+[questions.tool-016]
+prompt = "An environment variable must be read by Vite client-side code. Which rule is correct?"
+options = ["Name it with the `VITE_` prefix and do not store secrets in it", "Every operating-system variable is automatically safe to expose to the client", "Use the `SECRET_` prefix so Vite encrypts it", "Only variables in `.env.production` are accessible"]
+explanation = "Only variables with a public prefix such as `VITE_` are exposed to client code, so credentials and secrets must not be stored in them."
+
+[questions.tool-017]
+prompt = "In webpack, which task is best suited to a loader?"
+options = ["Transforming the contents of a module during the build", "Managing the team's entire release process", "Specifying runtime API access permissions", "Replacing the browser with a compiler"]
+explanation = "A loader transforms a resource or module so webpack can process it; a plugin extends the compiler more broadly."
+
+[questions.tool-018]
+prompt = "A route should load an editor only when the user opens it. Which choice commonly creates an asynchronous loading boundary?"
+options = ["`import('./editor.js')`", "Adding every file to the main entry", "Renaming the file with an `.async` extension", "Adding a comment before a static import"]
+explanation = "A dynamic import expresses asynchronous loading and is commonly used by a bundler as a chunk-splitting point."
+
+[questions.tool-019]
+prompt = "Choose the correct statements about Vite and webpack."
+options = ["HMR can update a module during development without reloading the entire page", "Webpack loaders and plugins are the same mechanism with the same scope", "A dynamic import can mark code for asynchronous loading", "Vite variables exposed to the client should be considered public"]
+explanation = "HMR updates modules when possible, and dynamic imports create asynchronous loading points. Loaders transform modules, while plugins extend the compiler lifecycle. Values accessible to client code are not secrets."
+
+[questions.tool-020]
+prompt = '''Complete the JavaScript syntax for loading a module on demand:
+```js
+const editor = await {{blank}}('./editor.js');
+```'''
+explanation = "`import()` is a dynamic import and returns a Promise."
+
+[questions.tool-021]
+prompt = '''In `vite.config.js`, which property is commonly used to register a `myPlugin()` plugin?
+```js
+export default { {{blank}}: [myPlugin()] }
+```'''
+explanation = "Vite plugins are declared in the `plugins` property of the configuration."
+
+[questions.tool-022]
+prompt = "Explain the different roles of webpack loaders and plugins, and give an example of a suitable task for each."
+keywords = [["loader", "loaders"], ["module transformation", "transform module", "module content"], ["plugin", "plugins"], ["compiler", "compilation", "lifecycle"]]
+model_answer = "A loader transforms the contents of a module according to a rule, for example by processing CSS or converting TypeScript syntax for webpack to consume. A plugin extends the compiler or compilation through hooks, for example by emitting a manifest or analyzing output. The two mechanisms have different scopes and purposes."
+explanation = "The answer should distinguish module transformation from extending the compiler and provide an example of each."
+
+[questions.tool-023]
+title = "Match Simple SemVer Ranges"
+prompt = '''Write `satisfies(version, range)` to return a boolean. Support standard `major.minor.patch` versions using non-negative integers with no leading zeroes (except `0`), and no prerelease or build metadata. Support exactly these three range forms: `^x.y.z`, `~x.y.z`, and `>=x.y.z`; return `false` for invalid input or an unsupported range.
+- `^`: versions at or above the given version and below the next version according to caret rules: increase major if major > 0; if major = 0 and minor > 0, increase minor; if both are 0, increase patch.
+- `~`: versions at or above the given version and below `x.(y+1).0`.
+- `>=`: versions at or above the given version, with no upper bound.'''
+hints = ["Separate parsing, comparison of the three components, and choosing the upper bound for each operator.", "The caret upper bound depends on the first nonzero component."]
+explanation = "This matcher supports only the three operators listed; it is not a replacement for a full SemVer library with prereleases, wildcards, unions, or peer dependencies."
+
+[questions.tool-024]
+title = "Sort an Import Graph"
+prompt = '''Write `topoSort(graph)` to order modules so dependencies come before their importers. `graph` is an object mapping module names to arrays of module names that they import. A module that appears only in an import list is treated as a leaf node with no dependencies. The result does not need to be lexicographically ordered, but it must be stable with respect to input traversal order. Ignore duplicate imports within the same list. If there is a cycle, throw `Error('cycle')`.
+For example, `{ app: ['ui'], ui: ['tokens'], tokens: [] }` must place `tokens` before `ui`, and `ui` before `app`.'''
+hints = ["Count the dependencies that have not yet been processed for each node.", "Build a list of importers for each dependency, then use a queue of nodes with no remaining dependencies."]
+explanation = "Kahn's algorithm runs in O(V + E); if the number of output nodes is smaller than the total node count, the remaining graph contains a cycle."
+
+[modules.tool-quality]
+title = "ESLint, Prettier, and TypeScript ESLint"
+description = "Flat config, rules, parsers, plugins, and the distinction between linting and formatting."
+lesson = '''### Code checks and formatting
+ESLint flat config currently uses files such as `eslint.config.js` or `eslint.config.mjs` and commonly exports an array of configurations. Each item can be scoped with `files`, set `languageOptions`, declare `plugins`, and enable `rules`; configuration order matters when several entries match the same file. A rule can have a severity of `off`, `warn`, or `error`, and a custom rule can report diagnostics from the AST.
+
+| Tool | Focus | Example |
+|---|---|---|
+| ESLint | correctness issues and conventions | unused variables, unsafe APIs |
+| Prettier | presentation | whitespace, commas |
+| typescript-eslint | TypeScript syntax and semantics | parser and TypeScript rules |
+
+ESLint and Prettier can be used together; avoid configuring both tools to compete over the same formatting rule. For TypeScript, configure a suitable parser and plugin so ESLint understands the syntax and can use compatible rules. When writing a rule, its visitor should target the intended node and return stable diagnostics. Common mistakes include applying a TypeScript parser to every file or putting an ignore setting at the wrong level so unintended files are skipped during linting.'''
+
+[questions.tool-025]
+prompt = "In ESLint flat config, why does the configuration commonly export an array of objects?"
+options = ["The objects can apply to different files and are combined in order", "Each object is a separate process", "ESLint supports arrays only to run Prettier", "The array makes every rule a warning"]
+explanation = "Flat config is a list of configuration objects; file patterns and order determine which settings apply to each file."
+
+[questions.tool-026]
+prompt = "An ESLint rule is enabled at the `warn` level. What does that indicate?"
+options = ["The issue is reported as a warning rather than an error", "The rule is completely disabled", "ESLint automatically fixes every instance", "The rule runs only in production"]
+explanation = "A rule's severity can be off, warn, or error; warn reports an issue without the same blocking severity as error."
+
+[questions.tool-027]
+prompt = "How does Prettier's primary role differ from ESLint's?"
+options = ["Prettier formats consistently; ESLint detects code issues and enforces conventions", "Prettier checks types while ESLint compiles", "Both tools are only for minification", "ESLint completely replaces formatters in every project"]
+explanation = "A formatter determines presentation, while a linter evaluates code structure and rules. A project can use both with configuration that avoids overlap."
+
+[questions.tool-028]
+prompt = "When a custom ESLint rule needs to report `console.log()`, which implementation approach is reasonable?"
+options = ["Recognize a CallExpression whose callee is a MemberExpression for console.log", "Traverse the AST structure and report a diagnostic", "Search for the text `console.log` in every comment as the only method", "Limit the rule to appropriate files and parsers in the config"]
+explanation = "A rule should use the AST rather than blind text searching; the config needs a suitable parser for the syntax being linted."
+
+[questions.tool-029]
+prompt = '''In an ESLint rule configuration, which value disables a rule?
+```js
+rules: { 'no-unused-vars': {{blank}} }
+```'''
+explanation = "A rule can be disabled with `off` or the numeric severity `0`."
+
+[questions.tool-030]
+prompt = "Describe how you would separate ESLint configuration for JavaScript and TypeScript, and explain why Prettier should not be treated as another set of lint rules."
+keywords = [["flat config", "eslint.config"], ["files", "file pattern"], ["parser", "typescript parser"], ["plugin", "typescript-eslint"], ["formatting", "formatter"], ["lint", "rule"]]
+model_answer = "In flat config, array entries can use `files` to apply the appropriate parser, plugin, and rules to JavaScript or TypeScript. TypeScript configuration needs a compatible parser and plugin such as typescript-eslint. ESLint checks lint rules for issues and conventions; Prettier is a formatter focused on presentation, so configure them to avoid competing over the same formatting rule."
+explanation = "The answer should mention file-scoped configuration, a TypeScript parser/plugin, and the difference between linting and formatting."
+
+[questions.tool-031]
+title = "AST Rule to Disallow console.log"
+prompt = '''Write `findConsoleLog(ast)` for a simple AST object. A node may contain child objects or arrays of nodes. Detect each `CallExpression` whose `callee` is a `MemberExpression` of the form `console.log`, where `object` and `property` are `Identifier` nodes and `computed` is not `true`. Return one diagnostic per call, in preorder traversal order:
+`{ ruleId: 'no-console-log', message: 'Avoid console.log', nodeType: 'CallExpression' }`.
+Skip `parent`, `loc`, and `tokens` during traversal because they are not part of the syntax tree to inspect. Do not modify the AST.'''
+hints = ["Recursively traverse objects and arrays, using a Set to avoid visiting the same node more than once.", "Check the callee structure using the `Identifier` and `MemberExpression` types."]
+explanation = "A real ESLint rule usually returns `context.report` from a visitor; this exercise models AST recognition and diagnostic creation as a pure function for easier testing."
+
+[modules.tool-performance]
+title = "Frontend Performance and Caching"
+description = "Tree shaking, lazy loading, bundle analysis, chunk sizing, and cache busting."
+lesson = '''### Optimize based on evidence
+Tree shaking removes unused exports when the bundler can analyze static dependencies; ESM and accurate side-effect declarations help it work effectively. Lazy loading with `import()` delays code that is only needed for a route or interaction. A bundle analyzer shows which modules take up space, helping you address measured causes instead of guessing.
+
+| Technique | Effect | Trade-off |
+|---|---|---|
+| Tree shaking | removes unused code | ambiguous side effects can limit effectiveness |
+| Lazy loading | reduces initial loading | opening a feature may take longer |
+| Chunking | separates independently loaded code | too many small chunks add overhead |
+| Content hash | changes a filename when content changes | the new URL must be referenced from HTML or a manifest |
+
+Asset filenames with content hashes support long-lived caching because changed content gets a new name; HTML usually needs a shorter cache lifetime so it can point to the current manifest. Chunk size should balance user flows and cacheability rather than optimize only one aggregate number. Common mistakes include splitting every module into its own chunk or applying long-lived caching to HTML without a way to update it.'''
+
+[questions.tool-032]
+prompt = "Which condition commonly helps tree shaking remove unused code more effectively?"
+options = ["Static ESM dependencies and accurate side-effect declarations", "Importing every module through an unknown runtime string", "Putting all code into one global script", "Disabling all package metadata"]
+explanation = "Static ESM lets the bundler analyze exports; inaccurate side-effect declarations can make it keep or remove the wrong code."
+
+[questions.tool-033]
+prompt = "Why are assets with content hashes often suitable for long-lived caching?"
+options = ["The URL changes when the asset content changes", "A hash forces the browser to reload on every visit", "The hash contains credentials to authenticate the file", "The URL no longer needs to be recorded in HTML"]
+explanation = "A new filename tied to new content allows long-lived caching; HTML or a manifest still needs to reference the current asset name."
+
+[questions.tool-034]
+prompt = "Which approaches help you choose bundle optimizations based on evidence?"
+options = ["Use a bundle analyzer to find large modules", "Identify routes that could be lazy loaded with dynamic imports", "Split every module into the smallest possible chunk", "Measure initial loading and the experience of opening a feature after the change"]
+explanation = "Analyzing output and measuring user flows help select optimizations; tiny chunks can increase overhead and request counts."
+
+[questions.tool-035]
+prompt = '''Fill in the syntax for asynchronously loading a module and commonly creating a split point:
+```js
+const chart = {{blank}}('./chart.js');
+```'''
+explanation = "Dynamic `import()` returns a Promise and is used by bundlers as an asynchronous loading boundary."
+
+[questions.tool-036]
+title = "Name a File with a Content Hash"
+prompt = '''Write `hashedFileName(fileName, content)` to replace the final filename component with an 8-character hexadecimal hash while preserving its directory and final extension. If there is no extension, append the hash to the end. Use FNV-1a 32-bit over each UTF-16 code unit: start at `2166136261`; for each character update with `Math.imul(hash ^ charCode, 16777619) >>> 0`; format the result in lowercase hexadecimal, left-padded with zeroes to 8 characters.
+For example, `hashedFileName('app.js', 'hello')` returns `app.4f9f2cab.js`. This hash is for a lesson about asset filenames, not a cryptographic hash.'''
+hints = ["Iterate over code units with `charCodeAt` and update the 32-bit integer with `Math.imul`.", "Find the last dot only in the basename so a dot in a directory is not mistaken for an extension."]
+explanation = "In production, a bundler uses its own content-hash algorithm and format; the filename changes when the content changes to support cache busting."
+
+[questions.tool-037]
+title = "Chunk Items by Size Limit"
+prompt = '''Write `chunkBySize(items, maxSize)` where `items` is an array of `{ id, size }` objects. Process items in input order, adding each to the current chunk if the total size does not exceed `maxSize`; otherwise, start a new chunk. An item larger than the limit must be alone in its chunk. Return an array of chunks, where each chunk is an array of `id` values. Do not create empty chunks. `maxSize` must be a finite positive number; every item `size` must be finite and non-negative. Otherwise, throw `Error('invalid size')`.'''
+hints = ["Track the current chunk's total size; flush it before adding an item that would exceed the limit.", "Handle an oversized item separately so it is not combined with the next item."]
+explanation = "This is a greedy model that preserves input order; real bundlers also consider the dependency graph, entry points, caching, and request overhead."
+
+[modules.frontend-tooling-dv-layout]
+title = "Tailwind Layout, Spacing, and Typography"
+description = "Combine Flexbox, Grid, spacing, sizing, and typography utilities to build maintainable responsive layouts."
+lesson = '''### Building layouts with utilities
+Tailwind provides utilities for core CSS properties. Choose `flex` when elements are arranged along one axis and need alignment or space distribution; choose `grid` when you need to define rows, columns, and two-dimensional relationships. `items-*` aligns along the cross axis of a flex container, while `justify-*` distributes items along the main axis; when `flex-row` changes to `flex-col`, those axes change as well.
+
+| Need | Utility group | Example |
+|---|---|---|
+| Flexible columns | Flexbox | `flex items-center gap-3` |
+| Grid by breakpoint | Grid | `grid grid-cols-1 md:grid-cols-3` |
+| Consistent spacing | Gap | `gap-4` or `gap-x-6` |
+| Content width | Sizing | `w-full max-w-3xl` |
+| Text rhythm | Typography | `text-sm leading-6` |
+
+Example card list: `grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3`. Utilities without a breakpoint set the default layout; a breakpoint adds a change from its corresponding threshold. Prefer the theme's spacing and sizing scales for consistency, and use arbitrary values only when there is a measurable requirement. Common mistakes include specifying `grid-cols-*` without enabling `grid`, confusing `items-*` with `justify-*`, or adding breakpoints based on device names rather than when the content needs a layout change. If a flex or grid child overflows, check the content's minimum size and constrain its width before adding `overflow-hidden` to mask the issue.'''
+
+[questions.frontend-tooling-dv001]
+prompt = "In a horizontal Flexbox row, which utility aligns items along the cross axis?"
+options = ["`items-center`", "`justify-center`", "`gap-x-4`", "`grid-cols-2`"]
+explanation = "With `flex-row`, `items-*` controls cross-axis alignment, while `justify-*` controls the main axis."
+
+[questions.frontend-tooling-dv002]
+prompt = "You need a one-column list on small screens, two columns from `md`, and three columns from `xl`. Which class list correctly specifies both the display mode and column count?"
+options = ["`grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3`", "`grid-cols-1 md:grid-cols-2 xl:grid-cols-3`", "`flex grid-cols-1 md:grid-cols-2 xl:grid-cols-3`", "`grid grid-cols-3 md:grid-cols-2 xl:grid-cols-1`"]
+explanation = "`grid` enables CSS Grid; the column utilities change at breakpoints using a mobile-first default."
+
+[questions.frontend-tooling-dv003]
+prompt = "In Grid, which utility sets horizontal spacing between columns only?"
+options = ["`gap-x-6`", "`gap-y-6`", "`space-y-6`", "`items-x-6`"]
+explanation = "`gap-x-*` corresponds to column gap; `gap-y-*` sets spacing between rows."
+
+[questions.frontend-tooling-dv004]
+prompt = "A long heading makes a Grid card wider than expected and pushes other columns. What should you check first?"
+options = ["Allow the track to shrink, for example with `minmax(0, 1fr)`, and control text overflow", "Add `justify-between` to the heading", "Increase `gap` until the columns are balanced", "Remove `grid` and make every item a block"]
+explanation = "Long content can impose a large minimum size on a track; control the minimum size and overflow rather than only increasing spacing."
+
+[questions.frontend-tooling-dv005]
+prompt = "Which utilities are generally suitable for a card list that should wrap when the viewport is narrow?"
+options = ["`grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3`", "`flex flex-wrap gap-4`", "`grid-cols-3 gap-4` without a utility that enables Grid", "`items-center justify-between` without a utility that enables Flexbox or Grid"]
+explanation = "Grid can change its column count at breakpoints, and Flexbox can wrap. Alignment utilities alone do not enable either layout mode."
+
+[questions.frontend-tooling-dv006]
+prompt = "Which statements about Flexbox and spacing utilities are correct?"
+options = ["`items-center` aligns along the flex container's cross axis", "`justify-between` distributes items along the main axis", "`gap-x-4` sets horizontal spacing between items", "`justify-center` always centers items vertically regardless of `flex-direction`"]
+explanation = "The main axis depends on `flex-direction`, so `justify-*` does not always correspond to horizontal or vertical alignment."
+
+[questions.frontend-tooling-dv007]
+prompt = '''Fill in the utility for horizontal spacing between columns:
+```html
+<div class="grid {{blank}}-4">...</div>
+```'''
+explanation = "The `gap-x` prefix sets column gap; the `4` suffix selects a value from the spacing scale."
+
+[questions.frontend-tooling-dv008]
+prompt = "A card grid overflows horizontally when a heading is long, even though several responsive columns are configured. What would you check, in order, in the layout utilities and the content?"
+keywords = [["minmax(0, 1fr)", "min-width", "minimum size"], ["overflow", "content overflow"], ["responsive", "breakpoint"], ["grid"]]
+model_answer = "I would check the grid track and the minimum size imposed by its content; `minmax(0, 1fr)` or `min-w-0` may allow a column to shrink. Then I would control `overflow` or how the heading wraps, and verify that the responsive column count changes at the breakpoints where the content needs a different layout."
+explanation = "The answer should connect overflow to content sizing and describe how to verify the layout at breakpoints."
+
+[modules.frontend-tooling-dv-sass-flow]
+title = "Sass Control Flow and Collections"
+description = "Use lists, maps, conditionals, and loops to generate CSS in a controlled way."
+lesson = '''### Generating CSS from Sass data
+Sass control flow runs while the stylesheet is compiled. A list is suitable for an ordered sequence of values; a map stores key/value pairs such as token names and colors. `@each` iterates over items in a list or map, `@for` loops over a numeric range, and `@if` selects a branch based on a Sass value. These features are useful for generating a patterned set of utilities or tokens, but each loop can add more CSS to the output.
+
+| Structure | Use it when | Note |
+|---|---|---|
+| List + `@each` | iterating over names or values | items are processed in order |
+| Map + `@each` | pairing keys with values such as tokens | use `map.get` when lookup is needed |
+| `@for ... through` | generating a numeric range including its endpoint | `to` excludes the endpoint |
+| `@if` / `@else` | selecting CSS based on a build-time condition | it is not a browser runtime branch |
+
+```scss
+@use "sass:map";
+$palette: (brand: #087f8c, warning: #a85d00);
+
+@each $name, $color in $palette {
+  .text-#{$name} { color: $color; }
+}
+```
+
+`#{$name}` interpolates a variable into a selector; the variable retains its Sass type until it is converted to CSS. Use modules with clear namespaces when calling built-in functions, and organize tokens behind a stable public entry point with `@use` and `@forward`. Common mistakes include iterating over a map with only one variable and losing the key, forgetting interpolation in a selector name, or generating hundreds of selectors from an unbounded loop. Decide how many utilities are actually needed and inspect the compiled CSS, because a short Sass program can still produce a very large output.'''
+
+[questions.frontend-tooling-dv009]
+prompt = "Which directive is suitable for iterating over each key/value pair in a Sass map and generating a selector from the token name?"
+options = ["`@each $name, $value in $tokens`", "`@for $name from $tokens`", "`@if $name in $tokens`", "`@use $name from $tokens`"]
+explanation = "`@each` can receive a key and value when iterating over a map; `@for` uses a numeric range, while `@use` loads a module."
+
+[questions.frontend-tooling-dv010]
+prompt = "In `@for $i from 1 through 4`, which values does `$i` take?"
+options = ["1, 2, 3, 4", "1, 2, 3", "0, 1, 2, 3", "Only 1 and 4"]
+explanation = "`through` includes the upper bound; `to` stops before the upper bound."
+
+[questions.frontend-tooling-dv011]
+prompt = '''A stylesheet uses `map.get($palette, "brand")`. How do you explicitly load the built-in module that contains `map.get`?'''
+options = ["`@use \"sass:map\";`", "`@import \"sass:map\";`", "`@forward \"sass:map\";`", "`@include \"sass:map\";`"]
+explanation = "`@use` loads the built-in module and allows its functions to be called through the `map` namespace."
+
+[questions.frontend-tooling-dv012]
+prompt = "When is `@if` in Sass evaluated?"
+options = ["When Sass is compiled to choose the output CSS", "Each time a user hovers in the browser", "Each time JavaScript changes the DOM", "When the browser loads a font"]
+explanation = "Sass control flow runs at build time; compiled CSS does not retain a Sass runtime branch."
+
+[questions.frontend-tooling-dv013]
+prompt = "Which statements about Sass control flow are correct?"
+options = ["`@each` can iterate over a list or map", "`@for ... through` includes the upper bound", "`@if` chooses a branch while Sass is compiled", "`@each` generates CSS dynamically in the browser as data changes"]
+explanation = "Sass transforms stylesheets at build time; generated CSS does not rerun directives when a user interacts with the page."
+
+[questions.frontend-tooling-dv014]
+prompt = "A team wants to generate color utilities from design tokens. Which choices help control the structure and output?"
+options = ["Use a map to associate token names with values", "Use `@each` to create selectors for each key/value pair", "Limit the token set and inspect the compiled CSS", "Use an unbounded loop because the compiler will keep only classes used at runtime"]
+explanation = "Maps and `@each` make the data structure clear; limiting the inputs prevents excessive CSS. Sass does not remove selectors based on the runtime DOM."
+
+[questions.frontend-tooling-dv015]
+prompt = '''Fill in the interpolation syntax that inserts `$name` into a selector:
+```scss
+.#{{{blank}}} { color: $color; }
+```'''
+explanation = "Selector interpolation uses `.#{$name}`; the Sass value is inserted during compilation."
+
+[questions.frontend-tooling-dv016]
+prompt = "When would you generate CSS utilities from a Sass map with `@each`, and how would you keep the stylesheet from becoming too large or hard to maintain?"
+keywords = [["map", "token map"], ["@each", "each loop"], ["CSS output", "compiled CSS"], ["limit", "small token set"], ["namespace", "module namespace"]]
+model_answer = "Use a map when each token needs an associated name and value, then use `@each` to generate selectors from the key/value pairs. Limit the token set to control CSS output, inspect the stylesheet after compilation, and keep the data in a namespaced Sass module to avoid a hard-to-track global API."
+explanation = "A good answer names a data-driven use case for generating utilities and at least one way to control output size or module structure."
+
+[modules.frontend-tooling-dv-graph]
+title = "Dependency Graphs, Resolvers, and Assets"
+description = "Trace entries and imports, understand resolution rules, and follow how a bundler turns source files into output assets."
+lesson = '''### From entry point to output asset
+A bundler starts from one or more entry points and follows imports to build a dependency graph. Each module is a node; an import relationship is an edge. A resolver decides which file a specifier such as `./panel` or `library` refers to based on its path, package metadata, aliases, and extension configuration. A loader or transform then processes the module; asset modules such as CSS, images, and fonts also enter the build pipeline according to the tool's rules.
+
+| Concept | Role | Example |
+|---|---|---|
+| Entry | starting point for graph traversal | `./src/main.js` |
+| Resolver | maps a specifier to a file | `resolve.extensions` |
+| Static import | an edge known during analysis | `import './theme.css'` |
+| Dynamic import | asynchronous loading boundary | `import('./editor.js')` |
+| Asset import | adds a file to the pipeline | `import logo from './logo.svg'` |
+
+Vite serves modules through ESM during development and pre-bundles dependencies when needed; during a build, static and dynamic imports help determine output assets or chunks. Vite also handles imported assets differently from assets in `public`. webpack has its own entry, resolve, module rules, and output configuration, but still builds a graph from dependencies. Common mistakes include assuming a file is bundled only if it appears in HTML, forgetting that CSS can import images or fonts, or creating variable import paths that the bundler cannot analyze. When debugging a missing file, trace entry → import → resolver → transform/output and check the configuration for the correct dev or production environment.'''
+
+[questions.frontend-tooling-dv017]
+prompt = "In webpack, what role does an entry point play when building the dependency graph?"
+options = ["It specifies the root module from which dependencies are traversed", "It defines CSS order in the browser", "It replaces all resolver rules", "It requires every module to load through a dynamic import"]
+explanation = "A bundler starts from an entry point and follows imports to identify the modules related to the build."
+
+[questions.frontend-tooling-dv018]
+prompt = "A JavaScript module imports `./logo.svg` and uses the imported value in a `src` attribute. Which interpretation fits Vite's asset pipeline?"
+options = ["The asset is resolved and processed during the build; the imported value can be an output URL", "SVG files can only be read when inlined in HTML", "Image imports are always omitted from the dependency graph", "The browser finds files in the source directory without bundler involvement"]
+explanation = "Vite supports importing assets from source and turns them into URLs appropriate for development or a build."
+
+[questions.frontend-tooling-dv019]
+prompt = "What is the main purpose of dependency pre-bundling during Vite development?"
+options = ["Normalize or optimize package dependencies so the browser can load them more efficiently", "Replace the production build and application deployment", "Automatically rewrite all application source to TypeScript", "Delete every dependency not called directly from HTML"]
+explanation = "Vite optimizes package dependencies for development; this is separate from building the application for production."
+
+[questions.frontend-tooling-dv020]
+prompt = "In webpack, which field controls the list of extensions tried when resolving an import that has no extension?"
+options = ["`resolve.extensions`", "`output.filename`", "`module.rules`", "`optimization.minimize`"]
+explanation = "`resolve.extensions` configures the order of file extensions the resolver tries for extensionless imports."
+
+[questions.frontend-tooling-dv021]
+prompt = "Which statements about imports and assets in a dependency graph are correct?"
+options = ["Static imports generally tell the bundler about dependencies during analysis", "A dynamic `import()` can create an asynchronous loading boundary", "A CSS import can bring assets such as fonts or images into the pipeline", "Every dependency must be listed manually in HTML"]
+explanation = "The graph is built from import relationships; dependencies do not always need to be declared separately in HTML."
+
+[questions.frontend-tooling-dv022]
+prompt = "When debugging an import that cannot be found in production, which steps help isolate the cause?"
+options = ["Confirm the import is reachable from an entry or another dependency", "Check the resolver, aliases, and actual filename/casing", "Check that the rule or transform handles the module or asset type", "Only change the dev server because a successful dev run guarantees production behaves identically"]
+explanation = "The dev server and production build have different pipelines; trace the graph, resolver, and asset processing in the relevant mode."
+
+[questions.frontend-tooling-dv023]
+prompt = '''Fill in the webpack field that configures the root module for the build:
+```js
+export default { {{blank}}: './src/main.js' }
+```'''
+explanation = "`entry` declares the starting point from which the bundler traverses the dependency graph."
+
+[questions.frontend-tooling-dv024]
+prompt = "Explain how a bundler moves from an entry point to assets or chunks, and why a dynamic import or an incorrect resolver can change the build output."
+keywords = [["entry point", "entry"], ["dependency graph"], ["resolve", "resolver"], ["dynamic import"], ["asset"]]
+model_answer = "A bundler starts from an entry point, follows imports to build a dependency graph, then resolves each specifier to a real file before transforming it and emitting assets or chunks. A dynamic import can create an asynchronous loading boundary; if the resolver maps to the wrong file or cannot find one, the output modules and assets change as well."
+explanation = "The answer should connect the entry point, graph/resolution, and the resulting assets or chunks."
+
+[questions.frontend-tooling-dvc01]
+title = "Order Modules by Dependency"
+prompt = '''Write `orderModules(graph)` where `graph` is an object shaped like `{ moduleName: [dependencyName, ...] }`. Return an array of module names ordered so each dependency comes before the module that uses it. Traverse root keys in object order and dependencies in array order to keep the result stable; include each module only once. For example, `{ app: ['view'], view: ['utils'], utils: [] }` may return `['utils', 'view', 'app']`.
+If a dependency has no corresponding key in the graph, throw an `Error` whose message begins with `Unknown dependency`. If the graph contains a cycle, throw `Error('Dependency cycle')`. The input graph has a valid structure; you do not need to handle other data types.'''
+hints = ["Use depth-first search with three states: unvisited, visiting, and complete.", "Add a module to the result after visiting its dependencies; the visiting state helps detect cycles."]
+explanation = "Topological ordering models part of dependency ordering in a bundler; a real build also handles chunks, side effects, and asset emission."

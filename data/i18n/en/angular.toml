@@ -1,0 +1,607 @@
+[modules.ng-components]
+title = "Components & Templates"
+description = "Standalone components, binding, modern control flow, and the input/output/model APIs."
+lesson = '''
+### Components and templates
+Standalone components declare their template dependencies in `imports`; this is the default organization for new components. Templates connect data to a property with `[value]`, handle events with `(click)`, or bind two ways with `[(ngModel)]` or an appropriate model signal.
+
+| Syntax | Role | Example |
+|---|---|---|
+| `[value]="name()"` | Property binding | Sync a value into the DOM |
+| `(click)="save()"` | Event binding | Invoke an action from the template |
+| `@if` / `@switch` | Branch selection | Render based on state |
+| `@for (item of items(); track item.id)` | Keyed iteration | Keep the DOM stable |
+
+Example: `@if (user(); as current) { <p>{{ current.name }}</p> } @else { <p>Not signed in</p> }`. Use a durable key such as `id` for `track` so Angular can identify items as the list changes.
+
+Common mistakes include omitting `track` for a large list or using the index as a key when order can change, calling expensive functions in a template, confusing `[value]` with `(value)`, and creating an output solely for two-way synchronization when `model()` already expresses the intent.
+'''
+
+[questions.ng-001]
+prompt = "Which statement about standalone components is correct in modern Angular?"
+options = ["New components can be standalone by default and declare their own template dependencies", "Standalone components cannot use services", "Standalone components must be declared in an NgModule", "Standalone components only run when Zone.js is enabled"]
+explanation = "Standalone describes how a component declares dependencies; it does not need to be declared in an NgModule. Services can still be injected normally."
+
+[questions.ng-002]
+prompt = "To pass the value of the `title` variable to the DOM `title` property, which syntax is property binding?"
+options = ["[title]=\"title\"", "(title)=\"title\"", "{{title}} in the attribute name", "bind:title=\"title\""]
+explanation = "Square brackets indicate property binding from an expression in the component to the target property."
+
+[questions.ng-003]
+prompt = "A list may be reordered while many existing items remain. Why should `@for` use `track item.id`?"
+options = ["It lets Angular associate items with stable views and reduces DOM recreation", "It forces the list to stay sorted by id", "It makes id a security key", "It makes Angular run change detection at least once"]
+explanation = "`track` provides identity so Angular can match items across updates; a stable id is usually better than an item's position in the list."
+
+[questions.ng-004]
+prompt = "You need to render one of three branches based on a `role` state. Which modern template structure is the best fit?"
+options = ["`@switch` with `@case` branches and `@default`", "`@for` with three placeholder items", "`@defer` for every branch", "Three click event bindings"]
+explanation = "`@switch` expresses mutually exclusive choices based on one expression; `@if` is a better fit for a simple condition."
+
+[questions.ng-005]
+prompt = "Select the correct statements about `input()`, `output()`, and `model()` in a component."
+options = ["`input()` declares read-only signal input data", "`output()` emits events from the component", "`model()` represents a value that can be synchronized two-way with the parent component", "Every `output()` automatically becomes an input of the parent component", "`model()` replaces every shared service"]
+explanation = "The three APIs have different purposes: `input()` receives data, `output()` emits events, and `model()` supports two-way binding for a specific value."
+
+[questions.ng-006]
+prompt = '''Complete the control flow to iterate over `users` and identify each item by `id`:
+
+~~~html
+{{blank}} (user of users; {{blank}} user.id) {
+  <p>{{ user.name }}</p>
+}
+~~~'''
+explanation = "Control flow uses `@for` and `track` to associate each view with a stable identity."
+
+[modules.ng-signals]
+title = "Signals & Change Detection"
+description = "`signal`, `computed`, `effect`, `linkedSignal`, OnPush, and zoneless applications."
+lesson = '''
+### Reactive state
+`signal()` stores writable state; `computed()` creates a cached derived value and recalculates only when a dependency changes. Use `effect()` to synchronize with an external side effect, such as local storage or a non-reactive API; do not use an effect to copy state that can be represented with `computed`. `linkedSignal()` stores writable state while recalculating when its source dependency changes.
+
+| API | Intent | Notes |
+|---|---|---|
+| `signal` | Writable state | Use `set()` or `update()` |
+| `computed` | Derived value | Lazy and read-only |
+| `effect` | Synchronize a side effect | Tracks signals that are read |
+| `linkedSignal` | Writable derived value | Resets based on its source |
+
+Example: `const total = computed(() => price() * quantity());` `total` is automatically invalidated when a dependency changes. With `ChangeDetectionStrategy.OnPush`, Angular checks a component in response to its inputs, events, and other appropriate triggers. A zoneless application can be configured with `provideZonelessChangeDetection()`.
+
+Common mistakes include using an effect to update another signal instead of using `computed`, mutating an object inside a signal without calling `set()` or `update()`, assuming OnPush means a component is never checked, and enabling zoneless mode while keeping update patterns that do not notify Angular.
+'''
+
+[questions.ng-007]
+prompt = "`total` is just `price` multiplied by `quantity` and does not need to be written directly. Which API is the best fit?"
+options = ["`computed()`", "`effect()`", "`linkedSignal()` in every case", "`setTimeout()`"]
+explanation = "`computed()` represents a derived value, caches it, and automatically invalidates it when a dependency changes."
+
+[questions.ng-008]
+prompt = "When is `effect()` a better choice than `computed()`?"
+options = ["When synchronizing a signal with an external side effect, such as writing to local storage", "When naming a variable", "When directly changing the DOM on every render", "When copying one signal into another"]
+explanation = "Use an effect to synchronize a side effect with an external system; internal derived state usually belongs in `computed`."
+
+[questions.ng-009]
+prompt = "A user selects a tab from a list. When the tab list reloads, the old selection may no longer be valid and should reset to the new default tab. Which API best models this state?"
+options = ["`linkedSignal()` that depends on the tab list", "`effect()` that copies every change into another signal", "A computed value that cannot be written", "A non-reactive global variable"]
+explanation = "`linkedSignal` represents writable state that refreshes based on a source dependency when that source changes."
+
+[questions.ng-010]
+prompt = "Select the correct statements about using OnPush and configuring a zoneless application."
+options = ["OnPush helps limit when a component is checked to appropriate triggers", "A zoneless application must notify Angular about updates through a mechanism the framework understands", "OnPush means the component is never checked again", "Zoneless mode removes the need to manage state", "`provideZonelessChangeDetection()` is one way to configure zoneless mode"]
+explanation = "OnPush does not disable change detection; zoneless mode changes how the framework learns that work needs to be updated."
+
+[questions.ng-011]
+prompt = '''Fill in the API that creates writable signal state:
+
+~~~ts
+const count = {{blank}}(0);
+~~~'''
+explanation = "`signal()` creates a writable signal. Read its value by calling `count()` and update it with `set()` or `update()`."
+
+[questions.ng-012]
+prompt = "Interview question: Distinguish `signal`, `computed`, and `effect`. Describe how to avoid loops or duplicated state when designing an update flow."
+keywords = [["signal", "writable state"], ["computed", "derived value"], ["effect", "side effect"], ["dependency", "reactive dependency"], ["duplicate state", "duplicated state"]]
+model_answer = '''A `signal` stores writable state and acts as a dependency for computations. `computed` creates a cached derived value and is marked dirty when a dependency changes. `effect` tracks the signals it reads to synchronize an external side effect. Avoid copying state with an effect because it can create circular dependencies or duplicate data; prefer one source of state and use `computed` for derived values.'''
+explanation = "A strong answer explains each API's role and how to choose one without maintaining the same data in multiple places."
+
+[questions.ng-c02]
+title = "Mini Signal, Computed, and Effect"
+prompt = '''Implement three plain JavaScript functions:
+
+- `signal(initialValue)` returns a read function with `set(value)` and `update(fn)` methods.
+- `computed(fn)` returns a cached read function. Evaluation must be lazy, become dirty when a dependency changes, and only recalculate when read.
+- `effect(fn)` runs immediately once, then reruns when a signal read inside it changes. Return an object with `destroy()` to stop tracking.
+- Do not notify observers when setting a value equal to the current value according to `Object.is`.
+
+Example: `const count = signal(2); const doubled = computed(() => count() * 2);` `doubled()` returns 4; after `count.set(3)`, the next read returns 6.
+'''
+hints = ["Temporarily track the current dependency collector with a module-level variable.", "Each node needs `Set`s of dependencies and observers so invalidation can propagate from a computed value to an effect."]
+explanation = "This miniature version models a dependency graph: `computed` lazily keeps a cache, while an effect subscribes to the signals it reads."
+
+[modules.ng-di]
+title = "Dependency Injection & Services"
+description = "`inject()`, provider scope, hierarchical injectors, and `InjectionToken`."
+lesson = '''
+### Dependency injection
+A service separates reusable logic from a component. `@Injectable({providedIn: 'root'})` usually creates a shared instance in the root injector; a provider registered on a component or route creates a child scope and can override a dependency for that branch. Call `inject()` in an injection context, such as a field initializer, constructor, or provider factory.
+
+| Declaration | Typical scope | Use when |
+|---|---|---|
+| `providedIn: 'root'` | Entire application | The service is shared |
+| Route-level `providers` | A route branch | State belongs to an area |
+| Component-level `providers` | Component and descendants | State belongs to a view tree |
+| `InjectionToken` | Values without a runtime class | Configuration or an interface |
+
+Example: `export const API_URL = new InjectionToken<string>('api-url');` Then provide a value for the environment and inject `API_URL` in a service. A child injector checks its local providers first, then continues up to its parent.
+
+Common mistakes include providing the same service on a component and unintentionally creating a separate instance for each component, creating new `InjectionToken`s in multiple places instead of sharing one token, calling `inject()` arbitrarily from a function outside an injection context, and confusing provider scope with security access control.
+'''
+
+[questions.ng-013]
+prompt = "When both a child injector and its parent provide the same token, which instance does the child injector usually return?"
+options = ["The instance in the child injector", "The instance in the parent injector", "It always creates a new uncached instance", "The token cannot be resolved"]
+explanation = "Resolution starts at the nearest injector; a local provider in the child injector shadows a provider with the same token in its parent."
+
+[questions.ng-014]
+prompt = "What does it usually mean when a service is declared with `providedIn: 'root'`?"
+options = ["The service is provided in the root injector and can be shared across the application", "Every injection always creates a new instance", "The service can only be used in the root component", "Angular automatically sends the service to the server"]
+explanation = "`providedIn: 'root'` provides the service at the root scope; a more specific provider scope can create a separate instance."
+
+[questions.ng-015]
+prompt = "You need to inject configuration typed as an interface, not a runtime class. Which mechanism is a good fit?"
+options = ["`InjectionToken`", "Injecting a TypeScript interface directly at runtime", "`RouterLink`", "`ChangeDetectionStrategy`"]
+explanation = "TypeScript interfaces are erased at runtime; an `InjectionToken` provides a stable runtime identity for a configuration value."
+
+[questions.ng-016]
+prompt = "In which places can `inject()` usually be called in Angular?"
+options = ["A field initializer in an injectable or component", "A provider factory running in an injection context", "A constructor while Angular is creating the instance", "An arbitrary callback that runs after a timer", "An arbitrary utility function without an injection context"]
+explanation = "`inject()` requires an injection context; a standalone callback that runs later does not automatically have one."
+
+[questions.ng-017]
+prompt = '''Fill in the commonly used scope for providing a service shared across an application:
+
+~~~ts
+@Injectable({ providedIn: '{{blank}}' })
+~~~'''
+explanation = "`root` is the application-wide injector commonly used for a shared service."
+
+[questions.ng-018]
+prompt = "Interview question: Explain hierarchical dependency injection, how a child injector finds a dependency, and when to provide a service at the root, route, or component level."
+keywords = [["hierarchical", "injector hierarchy"], ["parent", "parent injector"], ["child", "child injector"], ["scope", "provider scope"], ["override", "shadow"]]
+model_answer = '''Angular uses hierarchical dependency injection with a tree of injectors. When a dependency is requested, a child injector checks its own scope first; if no provider is found, it moves up to the parent injector. A nearer provider can override a provider in a parent. Provide a service at the root when one instance should be shared across the application, at a route when state belongs to a navigation area, or at a component when the instance should live only within that component tree.'''
+explanation = "A strong answer describes the lookup direction and relates scope to the instance lifecycle."
+
+[questions.ng-c03]
+title = "Parent and Child Injectors"
+prompt = '''Implement `createInjector(providers, parent)` for a small dependency injection container in plain JavaScript.
+
+- `providers` is a list of `[token, value]` pairs.
+- `injector.get(token)` returns the nearest provider. If the current injector has none, look up the parent.
+- Throw an `Error` if no provider exists anywhere in the tree.
+- `injector.createChild(providers)` creates a child injector; a child provider can shadow a token from its parent.
+- A provided value must retain its identity across multiple lookups.
+'''
+hints = ["Use a `Map` to support object tokens and check for exact key presence.", "Close over the current injector in `createChild` so the parent-child tree retains the correct scope."]
+explanation = "An injector looks up a token from the nearest scope toward its parent and keeps local providers within each injector."
+
+[modules.ng-router-forms]
+title = "Router & Forms"
+description = "Route configuration, lazy components, function-based guards and resolvers, and typed reactive forms."
+lesson = '''
+### Routing and forms
+Routes map URLs to components. `loadComponent` loads a standalone component on demand, a guard decides whether navigation can proceed, and a resolver prepares data before a route is activated. Client-side guards improve the user experience but do not replace authorization checks on the server.
+
+| Tool | Responsibility |
+|---|---|
+| `loadComponent` | Lazy-load a component |
+| `CanActivateFn` | Allow, reject, or redirect |
+| `ResolveFn` | Load data before a route becomes active |
+| `FormControl` / `FormGroup` | Form state and values |
+| `Validators` | Client-side validation rules |
+
+Example: `const routes = [{ path: 'profile', loadComponent: () => import('./profile').then(m => m.Profile) }].` Typed reactive forms infer types from `FormControl` and `FormGroup`; use `nonNullable` when a value must not become `null`.
+
+Common mistakes include returning only `false` from a guard when a redirect URL is needed, putting all large data in the route config, using `any` or `UntypedFormGroup` and losing type checks, and treating browser-side validation as the only protection for data.
+'''
+
+[questions.ng-019]
+prompt = "A rarely visited route contains a large standalone component. Which loading strategy can defer loading that component's code?"
+options = ["`loadComponent`", "An eager `component` import in the entry bundle", "`Validators.required`", "`FormControl`"]
+explanation = "`loadComponent` loads a standalone component when its route needs to be activated."
+
+[questions.ng-020]
+prompt = "A guard detects that a user is not signed in and wants to send them to the sign-in page. What should it return?"
+options = ["A `UrlTree` or `RedirectCommand` so the router can redirect", "`true`, then manually edit the URL in every component", "An Observable that never emits", "A `FormControl` with an invalid status"]
+explanation = "A guard can return a `UrlTree` or `RedirectCommand` so the router handles the redirect within the same navigation flow."
+
+[questions.ng-021]
+prompt = "When is a resolver a better fit than loading data after the route component appears?"
+options = ["When the route needs data before activation and the view should rely on that data", "When data will only be used by a click event later", "When replacing authorization on the server", "When a form has no fields"]
+explanation = "A resolver provides data before the route component is activated; important data still needs protection on the server."
+
+[questions.ng-022]
+prompt = "A `FormControl<string>` is initialized with a default value and does not declare `nonNullable`. What should you keep in mind with typed forms?"
+options = ["Reset may set its value back to `null` by default", "A `FormControl` cannot emit `valueChanges`", "Validators are disabled", "Angular automatically converts a string to a number"]
+explanation = "Typed forms represent whether a value can be null; use `nonNullable` when reset must not return `null`."
+
+[questions.ng-023]
+prompt = "Select the correct statements about reactive forms and validation."
+options = ["`FormGroup` combines controls into a typed structure", "Client-side validators improve the experience, but the server still has to validate data", "Typed forms can catch some type errors at compile time", "`Validators.required` prevents every forged request with empty data from reaching an API", "Reactive forms can only be used with template-driven forms"]
+explanation = "Typed forms improve type safety; browser validation can be bypassed, so the backend needs to validate data too."
+
+[questions.ng-024]
+prompt = '''Fill in the API name used to load a standalone component on demand in a route:
+
+~~~ts
+{ path: 'settings', {{blank}}: () => import('./settings').then(m => m.Settings) }
+~~~'''
+explanation = "`loadComponent` defers loading a standalone component for a route."
+
+[questions.ng-025]
+prompt = "Interview question: Design a typed profile form with validation. Explain the roles of `FormControl` and `FormGroup`, client-side validators, and server-side checks."
+keywords = [["typed forms", "strongly typed forms"], ["formcontrol", "form control"], ["formgroup", "form group"], ["validator", "validation"], ["server", "backend"]]
+model_answer = '''Typed forms use `FormControl` for individual fields and `FormGroup` to combine a profile structure with specific types. Validators provide early feedback for cases such as required fields or invalid formats, and the UI can show errors based on the control state. The server still has to validate the data because the client can be modified or bypassed. Use `nonNullable` for fields that do not accept `null`.'''
+explanation = "A strong answer distinguishes UX validation from the server trust boundary and mentions data types."
+
+[modules.rxjs-core]
+title = "RxJS Fundamentals"
+description = "Observable, Observer, Subscription, Subject, cold/hot streams, and pipeable operators."
+lesson = '''
+### Observables and subscriptions
+An Observable describes a stream that can emit zero or more values and then complete or error. `subscribe()` starts receiving data and returns a `Subscription` that can be canceled; teardown releases a timer, listener, or connection when the stream completes or is unsubscribed. A pipeable operator takes an Observable and returns a new Observable.
+
+| Concept | Meaning |
+|---|---|
+| Observable | A data source over time |
+| Observer | Handles `next`, `error`, and `complete` |
+| Subscription | A cancellable right to receive data |
+| Subject | Both emits data and acts as an Observable |
+
+Example: `source.pipe(map(x => x * 2), filter(x => x > 4), take(3))`. Two subscriptions to a cold Observable usually run separate producers; a hot Observable can share an ongoing source.
+
+Common mistakes include forgetting to unsubscribe from a long-lived stream, assuming every Observable is asynchronous, using a Subject for current state when late subscribers need the latest value, and ignoring the error channel so failures become hard to observe.
+'''
+
+[questions.ng-026]
+prompt = "A cold Observable creates a timer inside its producer. What usually happens when two consumers subscribe separately?"
+options = ["Each subscription runs an independent producer", "There is always only one shared timer", "The second subscription automatically replays every earlier value", "A cold Observable cannot emit values"]
+explanation = "A cold Observable starts its producer for each subscription; share or multicast it if you need to reuse one source."
+
+[questions.ng-027]
+prompt = "What should `Subscription.unsubscribe()` do when a source has a pending timer?"
+options = ["Stop delivering data and run teardown to release the timer", "Replay every value from the beginning", "Automatically retry the source until it succeeds", "Turn the source into a `BehaviorSubject`"]
+explanation = "Unsubscribing stops the observer, and teardown should release resources created by the producer."
+
+[questions.ng-028]
+prompt = "Select the correct characteristics of `Subject`, `BehaviorSubject`, and `ReplaySubject`."
+options = ["A `Subject` multicasts values to its current observers", "A `BehaviorSubject` stores its current value and emits it to new subscribers", "A `ReplaySubject` can replay a configured number of earlier values", "A `Subject` always retains every value since it was created", "Unsubscribing one observer must complete the `Subject` for every observer"]
+explanation = "A `BehaviorSubject` stores the current value; a `ReplaySubject` stores configured history; a basic `Subject` does not replay by itself."
+
+[questions.ng-029]
+prompt = "Which actions are reasonable responsibilities for an Observable consumer?"
+options = ["Register `next`/`error`/`complete` handlers as needed", "Unsubscribe from a long-lived subscription when it is no longer needed", "Use a pipeable operator to transform a stream before subscribing", "Assume every source completes after one value", "Use `subscribe` when a side effect or a result is needed"]
+explanation = "An Observable can be long-lived and may not complete; consumers need to manage its lifecycle and should use operators to transform streams."
+
+[questions.ng-030]
+prompt = '''Fill in the callbacks in order to create an observer:
+
+~~~js
+source.subscribe({ {{blank}}: onValue, {{blank}}: onError, {{blank}}: onDone });
+~~~'''
+explanation = "The three common Observer notifications are `next`, `error`, and `complete`."
+
+[questions.ng-031]
+prompt = "Interview question: Compare cold and hot Observables in a search feature. Explain their effects on request execution, data sharing, and subscriptions."
+keywords = [["cold"], ["hot"], ["subscription", "subscriber"], ["sharing", "multicast"], ["request"]]
+model_answer = '''A cold Observable usually starts a separate producer for each subscription, so two subscribers can create two search requests. A hot Observable emits from an active source, and multiple subscribers can receive the same new data. To share one request, multicast or use `share`, and define connection timing, caching, errors, and teardown when no subscribers remain.'''
+explanation = "A strong answer connects source semantics to request count and subscription lifecycle management."
+
+[questions.ng-c01]
+title = "Mini Observable and Pipeable Operators"
+prompt = '''Using plain JavaScript, implement `MiniObservable`, `MiniSubscription`, and three pipeable operators: `map(project)`, `filter(predicate)`, and `take(count)`.
+
+- `subscribe(next, error, complete)` returns a subscription with `unsubscribe()` and `closed`.
+- The producer receives an observer with `next`, `error`, and `complete`, and may return a teardown function.
+- Teardown runs exactly once on unsubscribe or when the stream terminates.
+- `pipe(...operators)` applies operators from left to right.
+- `take(0)` completes immediately; `take(n)` emits no more than `n` values and cleans up the source subscription.
+- `map` and `filter` catch callback errors and forward them to the error handler.
+'''
+hints = ["A subscription must accept teardown even when the producer completes synchronously before returning.", "In `take`, handle the case where the source emits synchronously before `sourceSub` is assigned."]
+explanation = "This exercise models the Observable lifecycle, pipeable operators, and resource cleanup on termination."
+
+[questions.ng-c04]
+title = "Mini BehaviorSubject"
+prompt = '''Implement `MiniBehaviorSubject(initialValue)` in plain JavaScript.
+
+- `getValue()` returns the current value; `next(value)` updates it and emits to active observers.
+- `subscribe(next, error, complete)` immediately emits the current value to a new subscriber.
+- `unsubscribe()` stops only the corresponding observer.
+- `complete()` completes current observers; later calls to `next()` emit nothing.
+- A subscriber added after completion receives only `complete`, not the current value.
+'''
+hints = ["Store each subscription with its observer in a `Set` so that each one can be removed independently.", "Track whether the subject has completed separately from the state of each subscription."]
+explanation = "A `BehaviorSubject` multicasts new values and replays its current value to late subscribers."
+
+[modules.rxjs-angular]
+title = "Advanced RxJS & Angular"
+description = "Higher-order mapping, debouncing, stream combination, lifecycle management, and HTTP/signals integration."
+lesson = '''
+### Choose an operator by its behavior
+Higher-order operators determine how inner Observables are handled. `switchMap` cancels the previous inner stream before switching to a new one; `mergeMap` runs inner streams concurrently; `concatMap` queues them; `exhaustMap` ignores new input while the current inner stream is still running. `debounceTime` waits for a quiet period before emitting the latest value.
+
+| Operator | Behavior | Example |
+|---|---|---|
+| `switchMap` | Keep only the latest inner stream | Search by keyword |
+| `mergeMap` | Process concurrently | Load independent images |
+| `concatMap` | Process sequentially in order | Send commands one at a time |
+| `exhaustMap` | Ignore duplicate calls while busy | Prevent repeated submits |
+
+`combineLatest` emits after every source has emitted a value; `forkJoin` waits for all sources to complete and then emits their final results. `catchError` replaces an errored stream with another stream; `retry` can rerun a source, so consider its side effects. In Angular, `takeUntilDestroyed` ties a subscription to a lifecycle context; `toSignal` and `toObservable` convert between signals and Observables; `HttpClient` uses functional interceptors for shared request handling.
+
+Common mistakes include using `switchMap` for a write operation that must not be canceled, retrying a non-idempotent request, calling `toSignal` multiple times for the same source, forgetting to register an interceptor, and handling an error at the wrong layer.
+'''
+
+[questions.ng-032]
+prompt = "A search stream receives a new keyword, and results from the previous request are no longer needed. Which higher-order operator is usually a good fit?"
+options = ["`switchMap`", "`concatMap`", "`mergeMap`", "`exhaustMap`"]
+explanation = "`switchMap` unsubscribes from the inner stream before switching to the one for the new value."
+
+[questions.ng-033]
+prompt = "You are loading several independent images and accept that they may finish in a different order from the input. Which operator is a good fit?"
+options = ["`mergeMap`", "`switchMap`", "`concatMap`", "`exhaustMap`"]
+explanation = "`mergeMap` lets inner Observables run concurrently; limit concurrency when needed."
+
+[questions.ng-034]
+prompt = "A user clicks Submit several times while the first request is still running. You want to ignore later clicks until it finishes. Which operator should you choose?"
+options = ["`exhaustMap`", "`switchMap`", "`mergeMap`", "`concatMap`"]
+explanation = "`exhaustMap` ignores new input while the current inner Observable has not completed."
+
+[questions.ng-035]
+prompt = "Select the correct statements about combining streams and handling errors."
+options = ["`combineLatest` waits for every source to emit at least once, then emits a combined value when a source changes", "`forkJoin` usually emits final results after all sources complete", "`catchError` can replace an errored source with another Observable", "`retry` can repeat a request with side effects without considering idempotency", "`concatMap` preserves inner processing order by queuing work"]
+explanation = "Consider side effects and idempotency when using `retry`; the other operators behave as described."
+
+[questions.ng-036]
+prompt = '''In an Angular component, fill in the operator that ties a subscription to the component lifecycle:
+
+~~~ts
+source.pipe({{blank}}()).subscribe();
+~~~'''
+explanation = "`takeUntilDestroyed` completes a subscription when the corresponding `DestroyRef` is destroyed."
+
+[questions.ng-037]
+prompt = '''Fill in the two Angular APIs that convert an Observable into a readable signal and a signal into an Observable:
+
+- Observable to signal: {{blank}}
+- Signal to Observable: {{blank}}
+'''
+explanation = "`toSignal` converts Observable values into a signal; `toObservable` emits signal changes as an Observable."
+
+[questions.ng-c05]
+title = "switchMap Cancels the Previous Inner Stream"
+prompt = '''Implement `MiniObservable` and `switchMap(project)` in plain JavaScript.
+
+- The Observable constructor accepts `producer(observer)`. `subscribe(next, error, complete)` returns a subscription with `unsubscribe()`.
+- `switchMap` forwards values only from the newest inner Observable.
+- Every new outer value must unsubscribe from the previous inner Observable and run its teardown.
+- When the outer Observable completes, complete downstream only after the current inner Observable completes.
+- Unsubscribing downstream must cancel both the outer subscription and the current inner subscription.
+'''
+hints = ["Store the current inner subscription and increment an index whenever the outer source emits a value.", "An outer completion does not mean downstream should complete while the current inner stream is still running."]
+explanation = "`switchMap` switches to a new inner stream by canceling the old inner subscription, preventing stale results from reaching the consumer."
+
+[questions.ng-c06]
+title = "debounceTime with Fake Timers"
+prompt = '''Implement `MiniObservable` and `debounceTime(delay)` in plain JavaScript.
+
+- Each new value cancels the previous timer and starts the waiting period again.
+- Emit the latest value after no new value has arrived for `delay` milliseconds.
+- When the source completes, immediately emit any pending value and then complete.
+- When the source errors, cancel the timer and forward the error to the observer.
+- Unsubscribing must clean up the source subscription and timer.
+'''
+hints = ["Call `clearTimeout` before starting a new timer for each `next` value.", "Completion and error are different termination paths: completion flushes a pending value, while an error discards it."]
+explanation = "`debounceTime` waits for a quiet period to combine successive values and must handle its timer correctly at termination."
+
+[questions.ng-038]
+prompt = "What is a common use for a functional `HttpClient` interceptor?"
+options = ["Apply shared request/response logic, such as headers or controlled logging", "Replace server-side validation", "Create a component from a response", "Ignore every network error"]
+explanation = "An interceptor centralizes shared HTTP logic; do not put secrets or trusted authorization decisions only on the client."
+
+[questions.ng-039]
+prompt = "Why should you avoid blindly retrying a data-writing request before you know whether it is idempotent?"
+options = ["The request may repeat its side effects", "Retry turns an Observable into a signal", "Retry always deletes data on the server", "`HttpClient` does not emit errors"]
+explanation = "Retrying after an error with an unknown outcome can duplicate an operation; design an appropriate idempotency mechanism or retry policy."
+
+[modules.angular-dv-http]
+title = "HTTP & Server Data"
+description = "Configuring `HttpClient`, request streams, interceptors, `httpResource`, and error handling."
+lesson = '''
+### Calling APIs in Angular
+`HttpClient` provides typed request methods and returns an Observable. A request is usually sent when subscribed to; subscribing again usually creates another request. A generic such as `get<User>()` helps TypeScript check usage at compile time, but does not validate the actual JSON received from the network. When external data must be trusted, validate its shape at the application boundary.
+
+| Tool | Role | Notes |
+|---|---|---|
+| `HttpClient` | Create requests and receive responses | Observables can be canceled |
+| `HttpParams` / `HttpHeaders` | Build query parameters and headers | Immutable API; keep the returned value |
+| Functional interceptor | Apply shared policies | Register through `HttpClient` configuration |
+| `httpResource` | Read data reactively in the UI | Useful for loading, error, and data states |
+
+For search, `switchMap` can replace an old request when the keyword changes; unsubscribing from an in-flight request allows the backend to stop waiting for its result. For a form that writes data, avoid blind retries because the server may have processed the request even if the client did not receive a response. Put `catchError` at the right level: catching an error inside each search request lets the outer keyword stream continue.
+
+Common mistakes include treating a TypeScript generic as a runtime schema, subscribing repeatedly and accidentally sending multiple requests, calling `params.set()` but discarding the new object, retrying every status or method, and putting screen-specific error handling in a global interceptor.
+'''
+
+[questions.angular-dv001]
+prompt = "In `HttpClient`, does a generic such as `get<User>()` guarantee at runtime that the actual JSON response has the `User` shape?"
+options = ["Yes, Angular checks every field before returning the response", "No, the generic only gives TypeScript a type expectation at compile time", "Yes, but only when an interceptor is enabled", "No, because `HttpClient` always returns a string"]
+explanation = "TypeScript does not validate network data at runtime; if the shape must be guaranteed, the application needs to validate data at the receiving boundary."
+
+[questions.angular-dv002]
+prompt = "An Observable created by `HttpClient` is subscribed to twice independently. What usually happens?"
+options = ["The request is sent only once because Observables always share their response", "Each subscription can send a new request", "The second subscription automatically uses the browser cache", "The Observable emits a response before anyone subscribes"]
+explanation = "An `HttpClient` Observable is lazy, and each subscription usually starts a separate request; explicitly share or cache the result when it should be reused."
+
+[questions.angular-dv003]
+prompt = "A search box sends a request for each keyword; once a new keyword arrives, results for the old one are no longer needed. Which approach is a good fit?"
+options = ["Use `switchMap` to switch to the new request and cancel the old request subscription", "Use `concatMap` to keep every result in order", "Use `mergeMap` so every request always finishes", "Nest `subscribe` calls without retaining the subscriptions"]
+explanation = "`switchMap` keeps only the latest inner stream; when the source emits a new value, the previous request subscription is canceled."
+
+[questions.angular-dv004]
+prompt = "In a standalone application, how do you register a functional interceptor with `HttpClient`?"
+options = ["Pass the interceptor to `withInterceptors()` in `provideHttpClient()`", "Declare the interceptor as a `FormGroup` validator", "Call the interceptor directly from each template", "Add the interceptor to the routes list"]
+explanation = "Register a functional interceptor through the `HttpClient` configuration, usually with `provideHttpClient(withInterceptors([...]))`."
+
+[questions.angular-dv005]
+prompt = "Select the correct statements about `HttpClient` and in-flight requests."
+options = ["Each independent subscription can start a new request", "`HttpParams.set()` mutates the current object and always returns `void`", "`HttpParams` and `HttpHeaders` are immutable; use the returned object", "Unsubscribing can cancel a pending `HttpClient` request", "A generic `get<User>()` checks JSON at runtime"]
+explanation = "A subscription usually starts a request; params and headers are immutable; unsubscribing can cancel a pending request. TypeScript generics do not validate JSON at runtime."
+
+[questions.angular-dv006]
+prompt = "Select the correct statements about handling errors in a request stream."
+options = ["`HttpErrorResponse` can represent a server response error or a network error", "Putting `catchError` inside `switchMap` can let the outer keyword stream continue after one request fails", "Because an `HttpClient` Observable is cold, retrying a POST is always safe", "An interceptor can replace server-side data and access checks"]
+explanation = "`HttpErrorResponse` covers HTTP and network error cases; the placement of `catchError` determines which stream can recover. A cold Observable does not make a write operation idempotent."
+
+[questions.angular-dv007]
+prompt = "`HttpClient` methods such as `get()` return an {{blank}} that can be subscribed to in order to send a request."
+explanation = "`HttpClient` represents request results as Observables; subscribing usually starts the request."
+
+[questions.angular-dv008]
+prompt = "Interview question: Describe how you would design an `HttpClient` search flow while the user types continuously. Explain how to cancel an old request, where to handle errors, and how to decide whether to retry."
+keywords = [["cancellation", "unsubscribe", "request cancellation"], ["idempotent", "idempotency"], ["error handling", "catchError"]]
+model_answer = '''Use `switchMap` so the latest request replaces the old one; unsubscribing cancels the previous request. Place `catchError` inside the inner stream if the input stream should continue after a request error. Retry only when the error policy is appropriate and the operation is idempotent or has a mechanism to prevent duplicate submissions.'''
+explanation = "A strong answer relates subscription lifecycle to the request, distinguishes one request's error from an error in the whole stream, and avoids repeating side effects."
+
+[questions.angular-dvc01]
+title = "HTTP Request Retry Policy"
+prompt = '''Implement `shouldRetryHttp(method, status)` for a conservative automatic retry policy. Return `true` only when the method is `GET`, `HEAD`, `PUT`, `DELETE`, or `OPTIONS` and the status is `408`, `429`, `500`, `502`, `503`, or `504`. The method may be lowercase or uppercase. Return `false` for every other combination; this policy does not consider an `Idempotency-Key` for `POST`.'''
+hints = ["Normalize the method with `toUpperCase()` before comparing it.", "Use two allowlists and return `true` only when both the method and status match."]
+explanation = "Automatic retries should account for whether a method is safe to repeat and whether a status may indicate a temporary failure."
+
+[modules.angular-dv-ssr]
+title = "SSR, Prerendering & Hydration"
+description = "Choose a rendering strategy for each route and prevent mismatches between the server and browser."
+lesson = '''
+### Server rendering and per-route strategies
+Angular can generate HTML on the server for each request, generate HTML at build time, or render in the browser. Hybrid rendering lets you choose a strategy for each route: relatively stable content pages are often good candidates for prerendering; pages personalized per request usually need server rendering; an interactive area intended only for the client can use client rendering. Server rendering makes content available earlier, but does not replace access control in the backend.
+
+| Strategy | When HTML is generated | Typical use |
+|---|---|---|
+| Client rendering | In the browser | Content after sign-in or strongly dependent on the client |
+| Server rendering | Per request on the server | Dynamic content that needs initial HTML |
+| Prerendering | At build time | Public pages with stable data |
+| Hydration | After server HTML reaches the client | Attach Angular behavior to existing DOM |
+
+Hydration lets the browser reuse server-rendered DOM instead of rebuilding everything. For both sides to match, the initial template should be based on the same data; avoid content that depends on the current time or unstable ordering. Code running on the server also does not have browser-only APIs such as `window` and `document`. Access them only in an appropriate client context, and inspect side effects to avoid duplicate requests when the client takes over the page.
+
+Common mistakes include prerendering routes with private data or data that changes for each user, reading `window` during server rendering, using random values that make server and client HTML differ, and assuming SSR automatically secures an API or always makes a page faster.
+'''
+
+[questions.angular-dv010]
+prompt = "A public documentation page changes only when a new version is released. Which rendering strategy is usually a good fit for generating its HTML ahead of time?"
+options = ["Prerendering", "Server rendering for every request", "Client rendering only", "Hydration without initial HTML"]
+explanation = "Stable public content can often be generated at build time, reducing work during requests."
+
+[questions.angular-dv011]
+prompt = "A profile page must be rendered using a cookie and the latest request data. Which rendering approach is a better fit than public prerendering?"
+options = ["Server rendering per request", "Prerender one shared version for everyone", "Generate content only at build time", "Disable all rendering"]
+explanation = "Content that depends on a request or user should not be built as one shared HTML version."
+
+[questions.angular-dv012]
+prompt = "A service running during server rendering needs to read the screen size using `window`. What is the main issue?"
+options = ["`window` exists only in a browser, so it cannot be assumed to exist on the server", "`window` only works inside an `HttpInterceptor`", "Angular automatically turns every `window` access into an HTTP request", "SSR prohibits every service that has a dependency"]
+explanation = "Server code runs without a browser DOM; isolate browser APIs in an appropriate client context."
+
+[questions.angular-dv013]
+prompt = "What does hydration primarily let an application do after server-rendered HTML has been downloaded?"
+options = ["Reuse the existing DOM and attach Angular behavior on the client", "Authorize requests instead of the backend", "Recreate all HTML at build time", "Turn every route into a prerendered route"]
+explanation = "Hydration connects the client application to the DOM created by the server, avoiding a rebuild of the entire UI tree."
+
+[questions.angular-dv014]
+prompt = "Select the correct statements about hybrid rendering and SSR."
+options = ["Different routes can use different rendering modes", "SSR automatically replaces server-side authorization checks", "The initial server and client render should be consistent for reliable hydration", "Every browser API is available during server rendering"]
+explanation = "Hybrid rendering selects a strategy per route, and hydration needs consistent initial DOM. SSR does not replace backend security, and browser APIs are not available on the server."
+
+[questions.angular-dv015]
+prompt = "Select practices that help prevent problems when enabling server rendering and hydration."
+options = ["Avoid initial content that depends on random values that differ between the server and client", "Put personal data into shared prerendered HTML", "Access browser APIs only in an appropriate client context", "Inspect side effects to avoid duplicate requests when the client takes over the page"]
+explanation = "Consistent markup, environment-appropriate APIs, and controlled side effects help make the transition from server to client reliable."
+
+[questions.angular-dv016]
+prompt = "In a `ServerRoute` configuration, a public page that should have its HTML generated at build time can use `RenderMode.{{blank}}`."
+explanation = "Prerendering generates HTML for a route during the build."
+
+[questions.angular-dv017]
+prompt = "The process of attaching the client-side Angular application to server-rendered DOM is called {{blank}}."
+explanation = "Hydration reuses existing HTML/DOM to connect client-side behavior."
+
+[questions.angular-dv018]
+prompt = "Interview question: How would you choose client rendering, server rendering, or prerendering for different routes? Describe risks to address when hydration starts in the browser."
+keywords = [["render mode", "rendering mode"], ["hydration"], ["browser api", "window", "document"], ["server-side rendering", "ssr"]]
+model_answer = '''I choose a rendering mode based on the route's data and personalization needs: stable public routes can be prerendered, routes that change per request can use server-side rendering, and areas that depend heavily on the client can use client rendering. When hydration runs, server and client markup must be consistent; use browser APIs such as `window` and `document` only in an appropriate client context.'''
+explanation = "A strong answer connects the rendering strategy to route data and recognizes the different server and client environments."
+
+[modules.angular-dv-testing]
+title = "Angular Testing"
+description = "`TestBed`, component and service testing, and mocking HTTP requests."
+lesson = '''
+### Testing component and service behavior
+`TestBed` creates a testing environment for dependency injection and components without running the entire application. A good test observes a user-visible result or a service contract: configure inputs, trigger a change, then check the resulting content, state, or request. For a component, `ComponentFixture` provides the instance and DOM; `detectChanges()` runs the bindings and lifecycle work needed for a test cycle.
+
+| Tool | Purpose | Example |
+|---|---|---|
+| `TestBed` | Configure providers and the component under test | Configure a component for testing |
+| `ComponentFixture` | Read the instance/DOM and trigger change detection | `detectChanges()` |
+| `HttpTestingController` | Capture requests sent by `HttpClient` | `expectOne()`, `flush()` |
+| `verify()` | Detect unhandled requests | Call after each HTTP test |
+
+For HTTP tests, register `provideHttpClient()` before `provideHttpClientTesting()`, call the service method, use `expectOne()` to check the URL and method, then use `flush()` to provide a mock response. Finally, `verify()` helps detect unexpected requests. This does not access a real network and lets you test both success and error states. In a component test, replace out-of-scope dependencies with mock providers when the goal is to test component behavior; test the service separately for data logic.
+
+Common mistakes include forgetting to call `detectChanges()` before reading the DOM, leaving a mock request unflushed, checking only internal implementation instead of the result, combining the component, router, and backend in one huge test, and sharing state across tests so results depend on execution order.
+'''
+
+[questions.angular-dv019]
+prompt = "What is the most useful role of `TestBed` in an Angular unit test?"
+options = ["Create a configured testing environment with the dependencies and component under test", "Replace all browser end-to-end testing", "Send a real request to a production API", "Automatically generate random test data for every service"]
+explanation = "`TestBed` configures a small Angular environment for creating a component and providing the dependencies needed by a unit test."
+
+[questions.angular-dv020]
+prompt = "After creating a `ComponentFixture`, you need to run bindings and lifecycle work before reading the initial rendered result. Which API do you usually call?"
+options = ["`fixture.detectChanges()`", "`fixture.destroy()`", "`TestBed.resetTestingModule()`", "`HttpTestingController.verify()`"]
+explanation = "`detectChanges()` asks the fixture to run change detection and update the view from the component state."
+
+[questions.angular-dv021]
+prompt = "When configuring HTTP tests with provider functions, which order lets the testing backend replace the real backend?"
+options = ["`provideHttpClient()` before `provideHttpClientTesting()`", "`provideHttpClientTesting()` before `provideHttpClient()`", "Register only `provideHttpClientTesting()`", "Register both providers in the component template"]
+explanation = "Configure `HttpClient` first, then let the testing provider replace the backend with a mock backend."
+
+[questions.angular-dv022]
+prompt = "What is `HttpTestingController.expectOne('/api/users')` most useful for confirming?"
+options = ["Exactly one matching request was made, and retrieving it for inspection", "The production server successfully saved the user", "The component has no remaining subscriptions", "The route was prerendered"]
+explanation = "`expectOne()` finds a matching request and fails if none or more than one matching request exists."
+
+[questions.angular-dv023]
+prompt = "Select the correct steps for testing a service that calls `HttpClient` with a mock backend."
+options = ["Call a service method to issue the request", "Use `expectOne()` to retrieve the request to inspect", "Use `flush()` to provide a mock response", "Ignore all pending requests because they close automatically when the test ends"]
+explanation = "The test issues a request through the service, checks it with `expectOne()`, provides a mock response with `flush()`, and finally checks for unhandled requests."
+
+[questions.angular-dv024]
+prompt = "Select practices that keep component tests focused and less dependent on implementation details."
+options = ["Check content or behavior visible to a user or consumer", "Replace out-of-scope services with mock providers when appropriate for the test goal", "Inspect every private field so the test always knows internal details", "Create separate state for each test to avoid order dependencies"]
+explanation = "Focusing on observable contracts, isolating out-of-scope dependencies, and keeping tests independent makes them more robust."
+
+[questions.angular-dv025]
+prompt = "To synchronize bindings and update a component fixture's DOM in a test, call `fixture.{{blank}}()`."
+explanation = "`detectChanges()` runs change detection for the fixture."
+
+[questions.angular-dv026]
+prompt = "After handling the expected requests, call `HttpTestingController.{{blank}}()` to detect unhandled requests."
+explanation = "`verify()` checks that no open or unexpected requests remain in the test."
+
+[questions.angular-dv027]
+prompt = "Interview question: How would you separate component and service tests, and test an `HttpClient` request without making a real network call?"
+keywords = [["testbed"], ["observable behavior", "user-visible behavior"], ["httptestingcontroller"], ["flush"], ["verify"]]
+model_answer = '''I use `TestBed` to configure the component or service with its required dependencies, then test observable behavior instead of private implementation details. For a request, `HttpTestingController.expectOne()` checks it, `flush()` supplies a mock response, and `verify()` detects leftover requests.'''
+explanation = "A strong answer shows the unit-test boundary and the process for controlling mock requests."

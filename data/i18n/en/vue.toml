@@ -1,0 +1,651 @@
+[modules.vue-template]
+title = "Templates and Directives"
+description = "Template syntax, bindings, events, conditions, lists, and custom directives."
+lesson = '''
+### Templates and directives
+Vue templates let you describe the interface with near-standard HTML. Expressions inside `{{ }}` are for expressions, not multi-step statements. `v-bind` (shorthand `:`) connects an attribute to data, while `v-on` (shorthand `@`) attaches an event listener. `v-if` creates or removes a branch; `v-show` keeps the element in the DOM and changes its CSS `display` property.
+
+| Syntax | Purpose | Note |
+|---|---|---|
+| `:href="url"` | Bind an attribute | The value updates when state changes |
+| `@click="save"` | Listen for an event | A modifier such as `.once` limits the behavior |
+| `v-for="item in items"` | Iterate over a list | Use a stable, unique `:key` |
+| `v-model="name"` | Synchronize a form field | Shorthand for a prop and an event |
+
+Example: `<li v-for="task in tasks" :key="task.id">{{ task.title }}</li>`. Avoid using the index as a key when a list can be reordered or items can be inserted in the middle, because Vue may reuse the wrong DOM node. Avoid putting `v-if` and `v-for` on the same node; filter the data with a computed value instead. `v-html` inserts raw HTML, so use it only with trusted content to avoid XSS. Custom directives suit low-level DOM operations; they do not replace components or composables.
+'''
+
+[questions.vue-001]
+prompt = "In a template, which shorthand binds a DOM attribute to a reactive expression?"
+explanation = "The colon is shorthand for `v-bind`; `@` is shorthand for `v-on`."
+
+[questions.vue-002]
+prompt = "A table has a few thousand rows. Its content rarely changes, but a filter may be toggled often. Which conditional display directive avoids recreating the nodes each time it is toggled?"
+options = ["`v-if`", "`v-show`", "`v-html`", "`v-once`"]
+explanation = "`v-show` keeps the node and changes its CSS display; `v-if` removes and reinserts the node, so it is a better fit when the condition changes rarely."
+
+[questions.vue-003]
+prompt = "A task list allows items to be inserted, deleted, and reordered. What should you use for `:key`?"
+options = ["The current loop index", "A stable, unique ID for the task", "A new `Math.random()` value on every render", "No key is needed"]
+explanation = "A stable key helps Vue preserve the identity of each node when the list order changes."
+
+[questions.vue-004]
+prompt = "Choose the correct statements about template bindings and directives."
+options = ["`@click` is shorthand for `v-on:click`", "`v-html` inserts content as escaped text", "`.once` can limit a listener to handling an event once", "`v-if` and `v-for` should be placed on the same node so Vue can filter each item", "`v-show` usually keeps a hidden node in the DOM"]
+explanation = "`v-html` inserts raw HTML, while combining `v-if` and `v-for` on one node can make the logic hard to understand; filter with a computed value instead."
+
+[questions.vue-005]
+prompt = '''
+Fill in the directive name to render a list and key each item by its ID:
+```html
+<li {{blank}}="task in tasks" :key="task.id">{{ task.title }}</li>
+```
+'''
+explanation = "`v-for` iterates over the list; the key is bound separately with `:key`."
+
+[questions.vue-006]
+prompt = "A page renders a username from free-form user input with `v-html`. What is the main risk, and how should it be fixed?"
+options = ["There is no risk when the content is a string; leave it as is", "HTML injection/XSS; use interpolation if only text is needed", "Vue automatically removes every dangerous tag; no change is needed", "Just add a `:key` to the element"]
+explanation = "`v-html` inserts raw HTML and does not sanitize the data; interpolation escapes text content."
+
+[modules.vue-reactivity]
+title = "Reactivity"
+description = "ref, reactive, computed, watch, watchEffect, toRefs, and shallowRef."
+lesson = '''
+### The reactivity system
+`ref()` wraps a value in `.value`; `reactive()` creates a proxy for an object. In templates, a top-level ref is usually unwrapped automatically, but in JavaScript you read or assign `.value`. Directly destructuring a primitive property from a reactive object loses the reactive connection; `toRefs()` creates linked refs that can be destructured safely. `shallowRef()` tracks changes to `.value` itself, but does not deeply proxy the object inside it.
+
+| API | Use when | Main behavior |
+|---|---|---|
+| `ref` / `reactive` | State changes | Records dependencies when values are read |
+| `computed` | A derived value is needed | Lazy and cached until a dependency changes |
+| `watch` | Reacting to a specific source | Receives new and old values and supports cleanup |
+| `watchEffect` | Dependencies are easy to infer from the function body | Runs immediately and tracks values read synchronously |
+
+Example: `const total = computed(() => price.value * quantity.value)`. Do not call a helper with side effects inside a computed getter: the getter should be pure and only calculate a value. `watch` suits requests or external synchronization; register cleanup to cancel old work. `watchEffect` does not make every async dependency reactive: values first read after `await` are not tracked like values read during the initial synchronous run. Choose `shallowRef` for large data or external objects when you want to avoid deep proxying.
+'''
+
+[questions.vue-007]
+prompt = "How do you read a value created with `ref(0)` in JavaScript?"
+options = ["`count.value`", "`count.current`", "`count.get()`", "`count[0]`"]
+explanation = "In JavaScript, a ref uses the `.value` property; templates usually unwrap a top-level ref automatically."
+
+[questions.vue-008]
+prompt = "`computed(() => price.value * quantity.value)` has not been read yet. If its dependencies change several times before the first read, what does Vue usually do?"
+options = ["Recomputes immediately after every change", "Marks it dirty and computes it when read, then caches it until the next invalidation", "Runs it every frame", "Computes it only once for the entire application lifetime"]
+explanation = "Computed values are lazy and cached by dependency; several changes before a read do not force the getter to run after each one."
+
+[questions.vue-009]
+prompt = "Why can destructuring `const { count } = reactiveState` break the reactive connection between `count` and the original property?"
+options = ["Destructuring always clones every object", "`count` becomes a local primitive value that is no longer read through the proxy", "Vue forbids destructuring in JavaScript", "`reactive` only works with arrays"]
+explanation = "Destructuring a primitive property separates its value from the proxy; use `toRefs(reactiveState)` if you need to destructure while preserving the connection."
+
+[questions.vue-010]
+prompt = "Choose the accurate statements about watchers and shallow reactivity."
+options = ["`watch` tracks the explicitly declared source by default", "`watchEffect` runs immediately to collect synchronous dependencies", "`shallowRef` deeply proxies every property of its object", "Cleanup can cancel an old timer or request before the next run", "A dependency first read after `await` in `watchEffect` is always tracked"]
+explanation = "`shallowRef` tracks only `.value`; in an async effect, a dependency read after `await` is outside the initial synchronous tracking run."
+
+[questions.vue-011]
+prompt = '''
+Fill in the API that converts a reactive object's properties into linked refs so they can be safely destructured:
+```js
+const state = reactive({ count: 0 })
+const { count } = {{blank}}(state)
+```
+'''
+explanation = "`toRefs` creates refs for the existing enumerable properties on the proxy."
+
+[questions.vue-012]
+title = "Mini Reactivity with Lazy Computed Values"
+prompt = '''
+Implement `createMiniReactivity()` so it returns `{ ref, computed, effect }` using plain JavaScript.
+- `ref(value)` returns an object with `.value`; when the value changes, dependent effects run again.
+- `computed(getter)` returns an object with `.value`; the getter runs only when needed, caches its result, and is marked dirty when a dependency changes.
+- `effect(fn)` runs `fn` immediately, tracks refs/computed values read by it, reruns when they change, and returns a runner that can be called manually.
+- Only synchronous dependencies and scalar values need to be supported; no scheduler or `stop` is required.
+'''
+explanation = "This exercise models the core of dependency tracking: reads register dependencies, writes trigger them, and computed values cache results until invalidated."
+hints = ["Each dependency can store a set of runners; a runner should remember and remove its old dependencies before it runs again.", "A computed value needs an internal lazy effect whose scheduler only marks it dirty and notifies consumers."]
+
+[questions.vue-013]
+title = "Watch with Cleanup"
+prompt = '''
+Implement `createSignal(initialValue)` and `watch(source, callback)` to model a synchronous watcher for one source.
+- A signal has a `.value` property. Its setter notifies listeners only when the value changes according to `Object.is`, and `subscribe(listener)` returns an unsubscribe function.
+- `watch` does not call the callback during initialization. Whenever the source changes, call `callback(newValue, oldValue, onCleanup)`.
+- A cleanup registered by the callback must run before the next callback and when the stop function is called. Calling stop more than once must not run cleanup repeatedly.
+- `watch` returns the stop function; the callback may register one cleanup for each run.
+'''
+explanation = "Cleanup lets you cancel resources from an earlier watch run, such as a timer or request, before reacting to a new value."
+hints = ["Store listeners in a Set and notify a copy of the set so listeners can unsubscribe safely during notification.", "Cleanup belongs to the previous callback run; take it and clear the reference before invoking it to prevent duplicate calls."]
+
+[modules.vue-components]
+title = "Components, Props, and v-model"
+description = "Component communication through props, emits, slots, v-model, and provide/inject."
+lesson = '''
+### Component boundaries
+A child component receives data through `props` and notifies its parent through `emits`. Props are read-only inputs, so a child should not modify a prop object to update the parent. In `<script setup>`, `defineProps()` and `defineEmits()` are compiler macros and do not need to be imported. Declaring emits makes the component contract clear and helps avoid confusion between component events and fallthrough listeners.
+
+| Mechanism | Data flow | Example |
+|---|---|---|
+| prop | parent → child | `<UserCard :user="user" />` |
+| emit | child → parent | `emit('save', form)` |
+| slot | parent provides content | `<Panel><template #title>...</template></Panel>` |
+| provide/inject | ancestor → descendant | A service or configuration scoped to a tree |
+
+By default, `v-model` corresponds to the `modelValue` prop and the `update:modelValue` event. The child emits the new value instead of mutating the prop. Vue 3.4+ provides `defineModel()` to shorten the common pattern; understanding the prop/event contract is still useful when integrating older components or multiple named models. Slots let the parent customize presentation, while a scoped slot passes data from the child into the slot content. Provide/inject helps avoid prop drilling through a deep tree, but should not become a global state store in place of clear state design.
+'''
+
+[questions.vue-014]
+prompt = "A child component wants to ask its parent to update `modelValue`. Which event is the default for `v-model`?"
+options = ["`change:modelValue`", "`update:modelValue`", "`set:modelValue`", "`input:value`"]
+explanation = "By default, `v-model` connects the `modelValue` prop to the `update:modelValue` event."
+
+[questions.vue-015]
+prompt = "A child component needs to report that the user saved a form. Which communication contract is the best fit?"
+options = ["The child directly edits the `form` prop and hopes the parent notices", "The child emits a `save` event, which the parent listens for", "The child finds the parent component through the DOM", "The child writes to any global variable"]
+explanation = "Props pass data from parent to child; emits send an intentional notification from child to parent."
+
+[questions.vue-016]
+prompt = "Choose the correct statements about props, slots, and provide/inject."
+options = ["Props are read-only inputs to a child component", "A scoped slot can receive data provided by the child component", "Provide/inject can only pass data to a direct child component", "`defineProps` and `defineEmits` in `<script setup>` are compiler macros", "Every slot makes the parent the owner of the child's state"]
+explanation = "Provide/inject can pass values through the component tree to descendants; slots customize content but do not transfer ownership of state."
+
+[questions.vue-017]
+prompt = '''
+Fill in the default prop that lets a child component receive the value from an unnamed `v-model`:
+```js
+const props = defineProps({ {{blank}}: String })
+```
+'''
+explanation = "`v-model` uses the `modelValue` prop and `update:modelValue` event by default."
+
+[questions.vue-018]
+prompt = "Describe the data flow when a parent uses `v-model` with a child component, and explain why the child should not mutate the prop directly."
+keywords = [["`modelValue`", "`modelValue` prop"], ["`update:modelValue`", "`update:modelValue` event"], ["`emit`", "emit an event", "event emission"], ["read-only props", "props are read-only", "do not mutate props"]]
+model_answer = '''The parent passes the value through the `modelValue` prop. The child emits the `update:modelValue` event with the new value; the parent receives the event and updates its source state. Props are read-only inputs, so mutating a prop makes the one-way data flow harder to follow and does not reliably update the parent's state.'''
+explanation = "A good answer explains that the prop flows from parent to child, the event flows from child to parent, and props should not be mutated."
+
+[questions.vue-019]
+title = "Simulating emit and v-model"
+prompt = '''
+Implement `createModelBinding(initialValue)` to model a parent connecting `v-model` to a child component.
+- Return an object containing `props`, `emit`, `emitted`, and a `value` getter.
+- `props.modelValue` must always reflect the parent's current value.
+- Accept only the `update:modelValue` event. Record that event as `{ event, payload }`, update the parent's value, and return `true`.
+- Other events must not change state, must not be added to `emitted`, and must return `false`.
+'''
+explanation = "This exercise models the default `v-model` contract: the `modelValue` prop and the `update:modelValue` event."
+hints = ["Use a closure variable to hold the parent's state; the prop can be a getter that reads it.", "Check the event name before recording the payload."]
+
+[modules.vue-composables]
+title = "Composition API and Composables"
+description = "Organize logic with setup, lifecycle hooks, and composables; use VueUse utilities."
+lesson = '''
+### Composition API and reusable logic
+In the Composition API, `setup()` or `<script setup>` is where you declare state and logic associated with a component. Lifecycle hooks such as `onMounted()` must be called while a component is active. A composable is a function, usually named with a `use` prefix, that packages state/reactivity and may register lifecycle hooks. Each call usually creates its own state unless you intentionally share state at module scope.
+
+A composable should have clear inputs, return the refs/computed values callers need, and clean up timers, listeners, or subscriptions when they are no longer needed. VueUse provides utilities for common details such as `refDebounced`, `useDebounceFn`, and debounced watchers. Check their cancel/flush behavior and update timing instead of assuming every utility has the same API.
+
+| Pattern | Responsibility |
+|---|---|
+| `useSearch(query)` | Combines search state and loading status |
+| `refDebounced(source, ms)` | Provides a delayed value to reduce updates |
+| `onUnmounted(cleanup)` | Releases resources tied to the component lifecycle |
+
+Do not call a composable conditionally if it depends on lifecycle hooks; call it consistently in `setup()`. For async effects, cancel old requests during cleanup so a late response cannot overwrite a newer result. A composable should address one reusable concern rather than collecting all application state into one large function.
+'''
+
+[questions.vue-020]
+prompt = "A composable installs a `window` listener during setup. What should it do to prevent a leak when the component is unmounted?"
+options = ["Register cleanup with `onUnmounted`", "Store the listener in a computed value", "Call the listener one more time", "Move the listener to `v-memo`"]
+explanation = "A composable called during setup can register a lifecycle hook to release resources when the component is unmounted."
+
+[questions.vue-021]
+prompt = "A search box sends a request after every keystroke and is calling the server too often. Which VueUse utility provides a ref that updates only after a quiet interval?"
+options = ["`refDebounced`", "`refThrottled`, which updates only after a quiet interval", "`useEventListener`", "`useClipboard`"]
+explanation = "`refDebounced` creates a delayed ref from a source ref; throttling limits frequency but does not have the same wait-until-quiet behavior."
+
+[questions.vue-022]
+prompt = "Choose appropriate practices when writing a composable."
+options = ["Use the `use...` naming convention to identify reusable logic", "Call it consistently in setup if it registers lifecycle hooks", "Always put all state in a module variable so every component shares it", "Clean up timers or listeners created by the composable", "Organize composables around clear concerns"]
+explanation = "Module-level state is appropriate only when sharing is intentional; by default, many composables should keep state local to each call."
+
+[questions.vue-023]
+prompt = '''
+Fill in the name of the VueUse function that creates a debounced function:
+```js
+const submitLater = {{blank}}(submit, 300)
+```
+'''
+explanation = "`useDebounceFn` wraps a function so it runs after the quiet interval."
+
+[questions.vue-024]
+prompt = "Design a search composable with debounce and an asynchronous request. Explain how to keep an old response from overwriting a newer result and how to clean up resources."
+keywords = [["debounce", "debounced request"], ["cleanup", "cancel request", "abort"], ["stale", "stale response", "old response"], ["watch", "watcher"]]
+model_answer = '''The composable can watch the query and debounce it before sending a request, reducing the number of calls. Before starting a new run, cleanup should cancel the old timer or request with an `AbortController`; if the API cannot be cancelled, use a request ID to discard stale responses. On component unmount, cleanup should also clear timers and listeners.'''
+explanation = "Combine debounce with cleanup or a way to discard stale results; debounce alone does not handle responses that arrive out of order."
+
+[questions.vue-025]
+title = "useDebouncedRef with Fake Timers"
+prompt = '''
+Implement `useDebouncedRef(initialValue, delayMs)` with the standard timer APIs and no library.
+- Return an object with a `.value` getter/setter and `cancel()` and `flush()` methods.
+- Assigning `.value` schedules an update after `delayMs`; until then, the getter returns the committed value.
+- Multiple assignments during the wait should commit only the last value, with the wait interval restarted from the latest assignment.
+- `cancel()` discards the pending value; `flush()` commits it immediately and returns the current value.
+'''
+explanation = "This exercise models a minimal debounced ref; fake timers allow exact boundary checks without waiting in real time."
+hints = ["Store the timer ID, pending value, and a flag indicating whether a value is pending; clear the timer before each assignment.", "Both `flush` and the timer callback should clear the pending state so the same value is not committed twice."]
+
+[modules.vue-router]
+title = "Vue Router"
+description = "Static and dynamic routes, params, catch-all routes, lazy loading, and navigation guards."
+lesson = '''
+### Defining routes and navigating
+A dynamic route uses a segment such as `/users/:id`; its value is available in `route.params`, unlike a query string in `route.query`. A modern catch-all route is commonly written as `/:pathMatch(.*)*`. Route order and specificity affect matching; when using a custom matcher, place general routes after specific ones.
+
+| Mechanism | Role | Example |
+|---|---|---|
+| `:id` | Matches one dynamic segment | `/users/42` |
+| `*` / catch-all | Matches the remaining path | A 404 page |
+| Lazy route | Loads a component when needed | `component: () => import('./Page.vue')` |
+| Navigation guard | Allows, cancels, or redirects | `beforeEach((to, from) => ...)` |
+
+A guard can return `false` to cancel, `true` or `undefined` to continue, or a location to redirect. Async guards are awaited in order. Return-based guards are usually clearer and less error-prone than the `next` callback pattern. A guard is not the only place to check permissions: the server must still authenticate and authorize requests. Lazy route components split the bundle; do not wrap an async route component with `defineAsyncComponent` when the Router already handles the dynamic import. When adding a route while the application is running, explicitly update the matcher.
+'''
+
+[questions.vue-026]
+prompt = "For the route `/users/:id`, where is `42` usually found when the URL is `/users/42`?"
+options = ["`route.params.id`", "`route.query.id`", "`route.hash.id`", "`route.meta.id`"]
+explanation = "A dynamic segment is placed in params; the query string and fragment are separate parts of the URL."
+
+[questions.vue-027]
+prompt = "An authentication guard denies access to a protected page and wants to send the user to `/login`. What should a return-based guard return?"
+options = ["`false`", "`true`", "`'/login'`", "Call `next()` twice"]
+explanation = "Return a location to redirect; `false` cancels the current navigation."
+
+[questions.vue-028]
+prompt = "An SPA needs to reduce its initial bundle by loading the reports page only when the user opens that route. Which configuration is appropriate?"
+options = ["Declare `component: () => import('./Reports.vue')` in the route", "Synchronously import the component into every entry point", "Use `v-html` to load the component", "Put the route inside `v-memo`"]
+explanation = "A dynamic import lazy-loads the route component; the Router handles the component promise."
+
+[questions.vue-029]
+prompt = "Choose the correct statements about Vue Router."
+options = ["`to.params` contains dynamic segment values such as `:id`", "The Router waits for an async global guard before completing navigation", "A guard returning `false` asks the Router to continue navigation", "A dynamic import for a route component supports lazy loading", "A navigation guard replaces server-side authorization"]
+explanation = "`false` cancels navigation; a client-side guard improves the user experience but does not replace server-side authorization checks."
+
+[questions.vue-030]
+prompt = "Choose reasonable steps when adding a dynamic route to a running router."
+options = ["Update the route matcher with the add-route API", "If needed, remove the old route with the disposer function that is returned", "Assume that editing the original configuration array updates the router automatically", "Put the catch-all route before specific routes so specific ones take precedence", "Check the conditions to avoid adding the same route repeatedly"]
+explanation = "The Router provides runtime APIs to add and remove routes; changing the original configuration does not automatically update the existing matcher."
+
+[questions.vue-031]
+prompt = '''
+Fill in the route parameter name for matching one dynamic segment:
+```js
+{ path: '/users/:{{blank}}', component: UserPage }
+```
+'''
+explanation = "`:id` declares a parameter named `id`, which can be read from `route.params.id`."
+
+[questions.vue-032]
+title = "Route Matcher with Params and Wildcards"
+prompt = '''
+Implement `createRouteMatcher(routes)` so it returns a `match(path)` function.
+- A route has the form `{ path, name }`. Support static segments, `:param` segments, and `*` to capture the rest of the path.
+- A path may begin with `/`; remove the query string and fragment before matching.
+- Return `{ name, params }` for the first matching route. Dynamic params are strings, and the wildcard stores the remaining path under the `pathMatch` key.
+- Return `null` when no route matches. Visit routes in declaration order; place the wildcard after specific routes.
+'''
+explanation = "This exercise models the core of route matching to clarify params and catch-all routes; Vue Router also has ranking rules and a richer pattern syntax."
+hints = ["Split the path into segments after removing the query and fragment; discard empty segments caused by the leading slash.", "A dynamic param consumes one segment, while a wildcard collects the remaining segments from its position."]
+
+[questions.vue-033]
+title = "Navigation Guard Pipeline"
+prompt = '''
+Implement async `runGuards(guards, to, from)` to run guards in order.
+- Each guard receives `(to, from)` and may return a plain value or a Promise.
+- `undefined` or `true` allows the next guard to run.
+- `false` stops the pipeline and returns `{ status: 'cancelled' }`.
+- A string or location object stops the pipeline and returns `{ status: 'redirect', target: result }`.
+- If every guard allows navigation, return `{ status: 'allowed' }`. Propagate errors from a guard.
+'''
+explanation = "The guard pipeline stops as soon as a guard cancels or redirects, reflecting the navigation decision before the new route renders."
+hints = ["Use a `for...of` loop to preserve order and `await` each result.", "Distinguish the three outcomes—continue, cancel, and redirect—and do not run later guards after a terminal result."]
+
+[modules.vue-performance-state]
+title = "Performance and State"
+description = "Pinia, KeepAlive, v-memo, render profiling, and measurement-driven optimization."
+lesson = '''
+### State and performance
+Keep state in the narrowest scope that serves its users: component state for local UI, a composable for reusable logic, and a store such as Pinia for state shared across areas or when explicit tooling/devtools are useful. Pinia organizes state, getters, and actions into stores; there is no need to build a custom global reactive object when the application already uses a store.
+
+`<KeepAlive>` caches dynamic component instances to preserve state while switching tabs or routes; `include`, `exclude`, and `max` control the cached set. `v-memo` skips subtree updates when values in its dependency array have not changed, but should be used only after measuring a rendering bottleneck. A missing dependency can leave the UI showing stale data.
+
+| Tool | Use | Risk to avoid |
+|---|---|---|
+| Pinia | Structured shared state | An overly broad store or circular dependencies |
+| KeepAlive | Preserve a component while switching away and back | Caching too many instances |
+| `v-memo` | A large subtree that rarely changes | Missing a dependency |
+
+Start optimization with small components, stable data, and good list keys; investigate with Vue DevTools or browser profiling. Caching reduces setup work but retains memory, and cached state may still need synchronization. Do not add memoization just because an expression looks complex: measure, find the cause, and then choose the smallest effective change.
+'''
+
+[questions.vue-034]
+prompt = "Several screens need to read and update the same cart, with actions and devtools available. Which option is appropriate for organizing shared state?"
+options = ["A Pinia store", "A local variable in one template", "`v-memo`", "`KeepAlive` for all state"]
+explanation = "Pinia organizes shared state in stores with state, getters, actions, and devtools integration."
+
+[questions.vue-035]
+prompt = "A tabbed component should preserve its form state when the user temporarily switches to another tab. Which built-in mechanism is appropriate?"
+options = ["`<KeepAlive>`", "`v-html`", "`watchEffect`", "`shallowRef` for every prop"]
+explanation = "KeepAlive caches dynamic component instances, preserving their state when they are deactivated and then activated again."
+
+[questions.vue-036]
+prompt = "A `v-memo` skips subtree updates, but the UI keeps an old value after `selectedId` changes. What is the most likely cause?"
+options = ["The dependency array is missing `selectedId`", "`v-memo` automatically makes state immutable", "Pinia blocks every render", "Every ref needs to be changed to reactive"]
+explanation = "`v-memo` invalidates only when a dependency in its array changes; a missing dependency can prevent the subtree from updating."
+
+[questions.vue-037]
+prompt = "Choose the correct statements about Vue state and performance."
+options = ["Pinia suits structured shared state", "KeepAlive can retain component instances in memory", "Add `v-memo` before measuring any rendering issue", "A missing `v-memo` dependency can make the UI stale", "Component caching has no resource limits"]
+explanation = "KeepAlive uses memory; optimization should be based on measurement, and `v-memo` requires a complete dependency list."
+
+[questions.vue-038]
+prompt = '''
+Fill in the built-in component that caches a dynamic component across screen switches:
+```html
+<{{blank}}><component :is="currentTab" /></{{blank}}>
+```
+'''
+explanation = "`KeepAlive` caches dynamic component instances; use `include`, `exclude`, or `max` to limit the cache."
+
+[questions.vue-039]
+prompt = "Propose how to optimize a large Vue list that renders slowly. Explain how to measure it, give at least two approaches, and name one risk of memoization or caching."
+keywords = [["profile", "measure", "profiling"], ["stable key", "key"], ["virtualization", "virtual"], ["memoization", "v-memo", "memo"], ["cache", "KeepAlive", "memory"]]
+model_answer = '''Use Vue DevTools or a browser profiler to measure which component or subtree is causing slow renders. Check for a stable key, reduce unnecessary component updates, and paginate or use virtualization for very long lists; try `v-memo` only after measuring. Missing memoization dependencies can leave the UI stale, while caching too many KeepAlive instances increases memory use.'''
+explanation = "Good optimization starts with measurement, selects a solution based on the cause, and states a concrete tradeoff."
+
+[modules.vue-dv-render]
+title = "Async Components, Teleport, and Transitions"
+description = "Organize lazily loaded components, render modals outside the DOM tree, and animate entering, leaving, or list changes."
+lesson = '''
+### Lazy components and built-in rendering
+Vue provides built-in components for interface problems that are awkward to handle with ordinary components alone: loading code on demand, placing an interface branch elsewhere in the DOM, and coordinating CSS transition classes or lifecycle. `defineAsyncComponent()` accepts a loader that returns a Promise; the component needs to load only when it appears in the render tree. This splits the bundle, but loading, error, and retry states should be designed for a real user experience.
+
+| API | Use case | Remember |
+|---|---|---|
+| `defineAsyncComponent` | An infrequently used screen or widget | The loader returns a Promise; loading/error components can be configured |
+| `<Teleport>` | Modal, popover, toast | Changes the DOM location while remaining in the original component tree |
+| `<Transition>` | An element or component entering/leaving | CSS classes are applied during transition phases |
+| `<TransitionGroup>` | A list whose items change | Each item needs a stable `key`; no wrapper is added by default |
+
+Example: `const ReportsPage = defineAsyncComponent(() => import('./ReportsPage.vue'))` creates a lazy-loading boundary; route-level splitting is also an option when the Router selects the screen. A modal is often teleported to an overlay near `body` to avoid clipping from an ancestor's `overflow` or stacking context. The DOM location changes, but component relationships, props, and events still follow the original Vue tree. `<TransitionGroup>` helps when rows are added, removed, or reordered; using the index as a key can make Vue reuse the wrong node and produce incorrect-looking effects.
+
+A common mistake is to assume Teleport manages focus, Escape, or scroll locking; those are still responsibilities of the modal design. A transition also will not run if the condition does not make the element enter or leave, and the CSS classes must match the transition name. Avoid creating a new async component during every render, and provide sensible loading and error states. `<Suspense>` exists but remains an experimental API; do not rely on it as a stable contract unless the project accepts the risk of changes.
+'''
+
+[questions.vue-dv001]
+prompt = "A modal is inside a component clipped by an ancestor's `overflow: hidden`. What problem does `Teleport` solve?"
+options = ["It renders the DOM node at another target while keeping its place in the Vue component tree", "It creates a separate Vue app for the modal", "It automatically locks scrolling and manages focus", "It moves the component into a Web Worker"]
+explanation = "Teleport changes where a node is rendered in the DOM; state, props, and events remain in the original component tree. Focus and scrolling still need separate handling."
+
+[questions.vue-dv002]
+prompt = "What is the main benefit of `defineAsyncComponent(() => import('./ReportsPage.vue'))`?"
+options = ["It loads the component code when needed and supports bundle splitting", "It automatically creates a route from the file name", "It automatically caches the instance after unmount", "It turns the component into a server component"]
+explanation = "A dynamic import returns a Promise, and `defineAsyncComponent` wraps the loader as a component that loads on demand; a route still needs to be declared separately if you use the Router."
+
+[questions.vue-dv003]
+prompt = "A list needs movement effects as items are added, deleted, and reordered. Which option is the best fit?"
+options = ["`TransitionGroup` with a stable `key` for each item", "`Transition` around each node without a `key`", "`Teleport` for every row", "`KeepAlive` for the entire list"]
+explanation = "`TransitionGroup` coordinates effects across multiple changing nodes; stable keys let Vue identify each item correctly."
+
+[questions.vue-dv004]
+prompt = "Choose the correct statements about Vue's built-in rendering components."
+options = ["`Transition` suits one element or component entering/leaving", "`TransitionGroup` uses stable keys for repeated children", "Teleport removes the component's relationship to its ancestors in the Vue tree", "`TransitionGroup` always adds a DOM wrapper"]
+explanation = "Transition handles one entering/leaving branch; TransitionGroup handles a keyed list of children. Teleport changes only the DOM location, and TransitionGroup adds no wrapper by default."
+
+[questions.vue-dv005]
+prompt = "When configuring an async component for a large reports page, choose appropriate practices."
+options = ["The loader returns a Promise, often from a dynamic import", "Consider loading and error components for loading states", "Define a new component during every render to force it to reload", "Use an async component instead of declaring a route and access control"]
+explanation = "An async loader and loading/error UI make bundle splitting clearer to users. Repeatedly creating components can destabilize their identity; an async component does not replace routing or access control."
+
+[questions.vue-dv006]
+prompt = '''
+Fill in the API that wraps a loader to create an async component:
+```js
+const ReportsPage = {{blank}}(() => import('./ReportsPage.vue'))
+```
+'''
+explanation = "`defineAsyncComponent` turns a loader that returns a Promise into an async component."
+
+[questions.vue-dv007]
+prompt = "In an interview, describe how to build a modal that renders outside the page container while remaining integrated with a Vue component. Explain Teleport's role, the open/close effect, and at least two accessibility responsibilities you must handle yourself."
+keywords = [["Teleport", "move the DOM location"], ["Transition", "enter/leave effect"], ["focus", "focus trap"], ["Escape", "keyboard"], ["scroll", "scroll lock"]]
+model_answer = '''Use `Teleport` to render the modal into an overlay near `body` while the component keeps its props and events in the Vue tree. Wrap its content in `Transition` if an enter/leave effect is needed. The modal should move focus inside, keep a focus trap, and return focus to the trigger when closed; it should support Escape and manage scroll locking. Teleport does not implement these accessibility behaviors.'''
+explanation = "The answer should distinguish moving the DOM location from managing keyboard interaction and modal focus."
+
+[questions.vue-dvc01]
+title = "Shared Async Loader with Retry"
+prompt = '''
+Implement `createAsyncLoader(load)` so it returns a `loadOnce()` function.
+- `load` may return a value or a Promise.
+- Call `load` only when `loadOnce()` is called for the first time; concurrent calls must share the in-flight Promise.
+- After success, store the result so later calls return it without calling `load` again.
+- If `load` fails, clear the in-flight state so a later call can retry; propagate the error to the caller.
+'''
+explanation = "A shared loader avoids duplicate loads when multiple parts of the interface request the same module; an error should not be cached permanently."
+hints = ["Track whether a result exists separately from its value, because `null` can be a valid result.", "Keep the in-flight Promise; clear it after rejection so the next call can retry."]
+
+[modules.vue-dv-router-data]
+title = "Route Metadata and Data Fetching"
+description = "Design nested metadata, fetch data during navigation, and wrap route views."
+lesson = '''
+### Route metadata and page data
+A route record can describe policies or presentation details in addition to its `path` and `component`. The `meta` field suits declarative data such as a sign-in requirement, page title, or required permission. For nested routes, Vue Router creates `route.meta` by shallowly merging the matched records from parent to child; a child value replaces the parent's value for the same key. This is not a deep merge for nested objects.
+
+| Strategy | Navigation behavior | Suitable when |
+|---|---|---|
+| Fetch after entering the route | Show loading in the page, then update it | The interface should respond early or keep the previous screen visible |
+| Fetch before entering the route | A guard waits for the data before continuing | The page cannot render without the data |
+| `route.meta` | Read the shallowly merged metadata | A simple title or policy is needed |
+| `route.matched` | Visit each matched parent/child record | Every ancestor constraint must be considered |
+
+For example, `to.matched.some(record => record.meta.requiresAuth)` detects sign-in metadata on any record in the branch. Reading `to.meta.requiresAuth` uses the merged value; a child setting it to `false` can override the parent. A guard controls the client-side experience but does not replace authentication and authorization in the API.
+
+`RouterView` has a slot that exposes the current route component so it can be wrapped in `Transition` or `KeepAlive`. Consider the key when an effect should run again between different routes. `scrollBehavior` separates scroll restoration from the component; an app can return a new position or restore `savedPosition` on back/forward navigation. Common mistakes include fetching the same data in both a guard and a component, assuming metadata is deeply merged, or letting a guard wait forever when a request has no timeout or cancellation. Choose one owner for each request and represent loading, error, and retry states clearly.
+'''
+
+[questions.vue-dv008]
+prompt = "A parent route has `meta: { requiresAuth: true }`, and a child route declares `meta: { requiresAuth: false }`. What is the child's `route.meta.requiresAuth` value?"
+options = ["`false`, because metadata is shallowly merged and the child replaces a value with the same key", "`true`, because the parent always has priority", "An array `[true, false]`", "The route configuration is invalid"]
+explanation = "`route.meta` is shallowly merged from parent to child; a child value replaces the parent value for the same key."
+
+[questions.vue-dv009]
+prompt = "A page can render a skeleton before showing its data. Which fetching strategy lets navigation finish before the request completes?"
+options = ["Fetch after entering the route and manage loading state in the component", "Block navigation with a guard until every request finishes", "Fetch data only in `scrollBehavior`", "Put the data in `route.meta` so the Router calls the API automatically"]
+explanation = "Fetching after navigation lets the component show a loading state immediately; fetching before navigation waits for the data before switching screens."
+
+[questions.vue-dv010]
+prompt = "You need to apply `Transition` around the current route component. Which API exposes the component rendered by `RouterView`?"
+options = ["The `RouterView` slot's `Component` variable", "`route.matched[0].path`", "`router.currentRoute.component`", "`route.meta.view`"]
+explanation = "The RouterView slot exposes the route component so it can be wrapped in a dynamic component such as `Transition` or `KeepAlive`."
+
+[questions.vue-dv011]
+prompt = "Choose reasonable ways to ensure a child route inherits the sign-in requirement from every parent route."
+options = ["Iterate over `to.matched` and check each record's `meta.requiresAuth`", "Use a guard to redirect to the sign-in page when the user is unauthenticated", "Treat the client navigation guard as the only protection for the data", "Assume `route.meta` deeply merges every nested object"]
+explanation = "Iterating over matched records reveals policies on ancestors, and a guard can direct the user appropriately. The server API must still authenticate and authorize requests."
+
+[questions.vue-dv012]
+prompt = "Choose the correct statements about data fetching and scrolling during navigation."
+options = ["Fetching after navigation lets the component show a loading state", "Fetching before navigation can keep the current route visible until the request finishes", "`scrollBehavior` is only used to call an API for page data", "The previous scroll position can be restored on back/forward navigation"]
+explanation = "The two fetching strategies produce different navigation experiences; `scrollBehavior` manages scroll position and can use a saved position."
+
+[questions.vue-dv013]
+prompt = '''
+Fill in the property used to check the sign-in requirement on every matched route record in the branch:
+```js
+const requiresAuth = to.{{blank}}.some((record) => record.meta.requiresAuth)
+```
+'''
+explanation = "`to.matched` contains the parent and child route records that matched the URL."
+
+[questions.vue-dv014]
+prompt = "Interview question: Design a data-fetching flow for a detail route that can be opened directly and navigated between IDs repeatedly. Compare fetching before and after navigation, explain the roles of metadata and guards, and describe how to prevent an old response from corrupting the screen."
+keywords = [["before navigation", "pre-navigation fetch"], ["after navigation", "post-navigation fetch"], ["route.meta", "route metadata"], ["navigation guard", "guard"], ["stale response", "old response", "cancel request"]]
+model_answer = '''Fetching after navigation lets the page render a skeleton and error state early; fetching before navigation in a navigation guard keeps the old route visible until the data is ready. Use `route.meta` to declare requirements or policies, while the guard controls redirection. When the ID changes quickly, cancel the previous request during cleanup or attach a request ID so stale responses can be discarded. The server API must still check permissions.'''
+explanation = "A strong answer explains the UX tradeoff between the two strategies and handles race conditions when the route changes quickly."
+
+[questions.vue-dvc02]
+title = "Merge Route Record Metadata"
+prompt = '''
+Implement `mergeRouteMeta(records)`, receiving matched route records in parent-to-child order.
+- A record may have `meta` as an object or may have no `meta` field.
+- Return a new object containing keys from all metadata objects.
+- If multiple records have the same key, the later record replaces the earlier value using a shallow merge.
+- Do not modify any input `meta` object.
+'''
+explanation = "Modeling the shallow merge of route metadata makes the parent/child override rule explicit."
+hints = ["Iterate through records from left to right and assign each key to a new result object.", "A shallow merge replaces the entire value for a key; it does not need to recurse into nested objects."]
+
+[modules.vue-dv-state]
+title = "VueUse State, Storage, and History"
+description = "Share state intentionally, persist reactive values, and undo data changes."
+lesson = '''
+### Shared state and persistence with VueUse
+Component-local state suits data with a single owner. When several screens need the same state, choose its sharing scope and lifecycle deliberately instead of putting everything in one global variable. VueUse provides helpers for shared state, storage synchronization, value history, and async tasks. These helpers reduce repetition but do not replace decisions about data ownership.
+
+| API | Purpose | Scope or note |
+|---|---|---|
+| `useStorage` | Synchronize a ref with storage | Values must be serializable/parseable; storage belongs to the browser environment |
+| `useRefHistory` | Keep snapshots for undo/redo | Use `deep: true` to track nested changes inside an object |
+| `createGlobalState` | Reuse state across multiple calls | It can live as long as the module/app; consider SSR |
+| `createSharedComposable` | Share one composable among consumers | Shared until no consumers remain under scope management |
+| `useAsyncState` | Represent an async task's result | The UI still needs loading, error, retry, and request-order policies |
+
+For example, `const settings = useStorage('settings', { theme: 'light' })` synchronizes a preference with client-side storage. Serialization is an important boundary for objects: functions, circular references, or values that do not fit JSON are poor defaults for persisted data. Do not store high-value secrets in localStorage, because scripts from the same origin can read it. In SSR, mutable state at module scope may be shared between requests; check the scope or initialize it per request.
+
+`useRefHistory` is useful for undo or inspecting changes. If it tracks object replacement but nested properties are mutated, enable deep tracking or replace objects immutably. Common mistakes include confusing `createGlobalState` with component-local state or accidentally sharing data between different users. Choose persistence when data must survive reloads, history when a user needs to undo changes in a session, and a shared composable when multiple consumers should observe the same source with a defined lifecycle.
+'''
+
+[questions.vue-dv015]
+prompt = "A preference must remain available after the user reloads the page. Which VueUse API is the best fit?"
+explanation = "`useStorage` synchronizes a ref with storage; state shared only in memory does not survive a reload."
+
+[questions.vue-dv016]
+prompt = "`useRefHistory` watches a ref containing an object. Changing `state.value.profile.name` is not recorded in history. Which configuration should you consider?"
+options = ["Enable deep tracking with `deep: true`", "Change the ref to `shallowRef`", "Call `createGlobalState`", "Disable serialization"]
+explanation = "Deep tracking lets history observe nested changes; tracking ref changes by default does not mean every nested mutation creates a snapshot."
+
+[questions.vue-dv017]
+prompt = "A composable should share one instance among several mounted components, then dispose of its scope when the last consumer leaves. Which helper best matches this goal?"
+explanation = "`createSharedComposable` shares a composable instance among consumers and manages its lifecycle by scope; global state may live longer than intended."
+
+[questions.vue-dv018]
+prompt = "Choose the correct statements about using VueUse to manage state."
+options = ["`useStorage` requires values that can be serialized in the chosen storage format", "`useRefHistory` can support undo/redo with snapshots", "`createGlobalState` always creates state unique to each calling component", "`createSharedComposable` can share a composable result among consumers"]
+explanation = "Storage values must be representable, ref history keeps snapshots, and a shared composable reuses an instance. `createGlobalState` intentionally reuses state across calls."
+
+[questions.vue-dv019]
+prompt = "A page has a preference that persists across reloads, an undo feature for form edits, and a request started by a button click. Choose suitable combinations."
+options = ["Use `useStorage` for a preference suited to browser storage", "Use `useRefHistory` for snapshots needed for undo", "Use `useAsyncState` to represent the async task's state", "Use one `createGlobalState` for all data, including data belonging to individual users"]
+explanation = "Each helper serves a different need; global state should not indiscriminately contain data with different owners or lifecycles."
+
+[questions.vue-dv020]
+prompt = '''
+Fill in the composable that persists a reactive preference in storage:
+```js
+const preferences = {{blank}}('preferences', { theme: 'light' })
+```
+'''
+explanation = "`useStorage` creates reactive state synchronized with storage."
+
+[questions.vue-dv021]
+prompt = "Interview question: Design state for a preference that must survive reloads, form data that needs undo, and state shared by several components. Explain how to choose VueUse APIs, which serialization/lifecycle boundaries to check, and one SSR-specific concern."
+keywords = [["useStorage", "storage"], ["useRefHistory", "history", "undo"], ["shared composable", "createSharedComposable", "createGlobalState"], ["serialization", "serialize"], ["SSR", "request scope"]]
+model_answer = '''Use `useStorage` for a serializable preference that must survive reloads; avoid storing secrets in browser storage. Use `useRefHistory` for snapshots that support undo, enabling deep tracking when nested values are mutated. For shared state, choose `createSharedComposable` or `createGlobalState` according to the intended lifecycle. In SSR, ensure mutable state is not accidentally shared between requests.'''
+explanation = "A good answer maps the APIs to persistence, history, and sharing, while considering serialization and state scope."
+
+[questions.vue-dvc03]
+title = "JSON-Backed Storage Ref"
+prompt = '''
+Implement `createStorageRef(storage, key, initialValue)` using a `storage` object with `getItem(key)` and `setItem(key, value)`.
+- When created, use the parsed value if the key contains valid JSON; use `initialValue` if the key is missing or the JSON is invalid.
+- Return an object with a `.value` getter/setter.
+- When `.value` is assigned, update the current value and write `JSON.stringify(value)` to storage.
+- You do not need to simulate reactivity or storage events from another tab.
+'''
+explanation = "This exercise models basic serialization at the storage boundary; a real application also needs to consider SSR, quota, and multi-tab synchronization."
+hints = ["Distinguish `getItem` returning `null` from a valid JSON string that represents `null`.", "Wrap `JSON.parse` in try/catch so invalid or outdated data does not break initialization."]
+
+[modules.vue-dv-network]
+title = "VueUse Network and Browser APIs"
+description = "Choose composables for HTTP, event streams, WebSockets, and browser capabilities."
+lesson = '''
+### Network connections and browser capabilities
+VueUse packages common browser operations as reactive composables, but each API has a different communication model and environment constraints. Choose based on data direction, lifecycle, and how the browser grants permission. Even when state is wrapped in refs, a request can fail, be cancelled, arrive out of order, or be unsupported in the current environment.
+
+| API | Communication pattern | Suitable for |
+|---|---|---|
+| `useFetch` | HTTP request/response | Loading or sending data in a finite request |
+| `useEventSource` | Server sends events to the client | One-way updates such as progress or notifications |
+| `useWebSocket` | Long-lived, bidirectional connection | Chat or realtime data that must be sent and received |
+| `useClipboard` | Browser capability | Copying text when the environment permits it |
+| `usePermission` | Browser permission state | Showing current capability, not authorizing server access |
+
+For example, `useFetch('/api/profile')` suits a finite response. A dashboard receiving continuous notifications may use EventSource, while chat usually needs bidirectional communication through WebSocket. For long-lived connections, show status, handle network loss, limit reconnect attempts, and close the connection when its scope is no longer used. Avoid sending tokens or sensitive data in query strings when a more suitable authentication mechanism is available.
+
+Clipboard and permission APIs depend on the browser, secure context, user activation, or page policy; check support and handle errors instead of assuming success. Browser permission is not API authorization. Common mistakes include using WebSocket for a one-time fetch, failing to clean up a socket/listener, or letting an old response overwrite a newer request's result. For requests tied to rapidly changing input, cancel the old request when possible or compare request IDs before updating state. In SSR, do not access browser APIs when the module is imported; use them only in an appropriate environment.
+'''
+
+[questions.vue-dv022]
+prompt = "A screen fetches JSON in a finite request and needs reactive data/loading/error state. Which composable is the best fit?"
+explanation = "`useFetch` is designed for HTTP request/response; WebSocket and EventSource suit realtime connections, while Clipboard is a browser capability."
+
+[questions.vue-dv023]
+prompt = "A server only needs to continuously push one-way notifications to a dashboard. Which API is usually a better fit than WebSocket when the client does not need to send realtime messages?"
+explanation = "EventSource suits a one-way event stream from server to client; WebSocket supports a long-lived, bidirectional connection."
+
+[questions.vue-dv024]
+prompt = "`usePermission` reports whether the browser currently grants clipboard permission. Which conclusion is safe and accurate?"
+options = ["It indicates a client-side capability; the server API must still check access to its data", "Clipboard permission means the user is allowed to read all server data", "Permission is always supported and requires no error handling", "Server authentication can be skipped when the client uses a permission composable"]
+explanation = "The Permission API reflects browser permission for a capability; it is not an authorization mechanism for the backend."
+
+[questions.vue-dv025]
+prompt = "Match each need to the appropriate VueUse composable. Select every correct option."
+options = ["HTTP request/response for profile data: `useFetch`", "One-way events pushed by the server: `useEventSource`", "A chat that sends and receives realtime messages: `useWebSocket`", "Copy text to the clipboard: `usePermission`"]
+explanation = "The three network APIs have different communication models; clipboard operations use `useClipboard`, while `usePermission` only observes browser permission state."
+
+[questions.vue-dv026]
+prompt = "A composable has a request tied to a rapidly changing query and a WebSocket that lives as long as its component. Choose appropriate measures."
+options = ["Ignore an old request response using a request ID or cancellation", "Show loading/error states and allow an appropriate retry", "Close the connection or remove its listener when the scope is no longer used", "Treat browser permission state as backend access authorization"]
+explanation = "Requests can arrive out of order; long-lived connections need lifecycle and status management. Browser permission does not replace server authorization."
+
+[questions.vue-dv027]
+prompt = '''
+Fill in the composable for one-way server-sent events:
+```js
+const stream = {{blank}}('/api/events')
+```
+'''
+explanation = "`useEventSource` wraps a Server-Sent Events connection from server to client."
+
+[questions.vue-dv028]
+prompt = "Interview question: Design a page that first displays HTTP data, then receives realtime updates, and has a button to copy the result. Choose a composable for each part, explain error and lifecycle handling, and describe the limits of browser permission."
+keywords = [["useFetch", "http"], ["useEventSource", "server-sent events"], ["useWebSocket", "websocket"], ["loading", "error", "retry"], ["permission", "authorization", "server authorization"]]
+model_answer = '''Use `useFetch` for the initial HTTP data and show loading/error/retry states. If the server only pushes one-way updates, choose `useEventSource`; if the client also needs to send realtime messages, consider `useWebSocket`. Close the connection when the component scope ends. Use `useClipboard` when the user asks to copy and handle capability errors; browser permission does not replace server authorization.'''
+explanation = "The answer should choose a transport based on communication direction, manage errors and lifecycle, and distinguish browser permission from backend authorization."
+
+[questions.vue-dvc04]
+title = "Accept Only the Latest Request Result"
+prompt = '''
+Implement `createLatestRequestState()` so it returns `{ state, begin, resolve, reject, cancel }`.
+- `state` starts as `{ requestId: 0, loading: false, data: null, error: null }`.
+- `begin()` increments the request ID, sets `loading` to true, clears `error`, keeps `data` unchanged, and returns the new ID.
+- `resolve(id, value)` accepts a result only when the ID is current and a request is loading; if accepted, update `data`, turn off loading, and return `true`.
+- `reject(id, error)` follows the same rule, saves the error, turns off loading, and returns `true`.
+- A stale result or repeated settlement must return `false` without changing state. `cancel(id)` cancels only the current loading request, increments the ID to invalidate the old token, turns off loading, and returns `true`; otherwise return `false`.
+'''
+explanation = "A request ID protects state when requests compete; in a real app, prefer cancelling old work when the transport supports it."
+hints = ["Increment `requestId` and settle only when the token is still current and loading is true.", "Cancelling must invalidate the old token so a late callback cannot write to state."]

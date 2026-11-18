@@ -1,0 +1,520 @@
+[modules.py-flask]
+lesson = '''### Key concepts
+- `@app.route("/users/<int:user_id>", methods=["GET", "POST"])` — converters include `int`, `float`, `path` and `uuid`.
+- **Request context**: `request` and `session` are available only while a request is being handled.
+- **Application context**: `current_app` and `g` (temporary request-scoped storage, e.g. a database connection). Outside a request (CLI, tests), use `with app.app_context():`.
+- By default, `session` is a **signed cookie** (requires `SECRET_KEY`): users can read its contents but cannot modify them.
+- **Blueprints** split an app into modules; an **application factory**, `create_app(config)`, helps with testing and multiple configurations.
+- Returning a dict lets Flask convert it to JSON. Use `abort(404)` and `@app.errorhandler(404)` for error handling.
+- Hooks include `before_request`, `after_request` and `teardown_appcontext`.
+- Testing: `app.test_client()`.
+- Production: run behind a WSGI server (such as gunicorn or waitress); do not use `app.run()`.
+'''
+
+[questions.py-001]
+prompt = '''Which Flask route matches the URL `/users/42` and passes `42` to the function as an **int**?'''
+explanation = '''Flask uses the `<converter:name>` syntax. `{name}` is FastAPI syntax.'''
+
+[questions.py-002]
+prompt = '''What is `flask.g` used for?'''
+options = ["Store permanent global data across requests", "Store temporary data in the **application context for a single request** (e.g. a database connection or the current user)", "Store session cookies", "Configure the application"]
+explanation = '''A new `g` is created for each request; clean up resources in `teardown_appcontext`.'''
+
+[questions.py-003]
+prompt = '''Calling `current_app.config` in a CLI script (outside a request) raises "Working outside of application context". How should you fix it?'''
+options = ["Use a global variable", "Wrap it in `with app.app_context():`", "Call `app.run()` first", "Import Flask again"]
+explanation = '''The context is pushed automatically while handling a request; outside a request, you must push it yourself.'''
+
+[questions.py-004]
+prompt = '''Where is data in `flask.session` stored by default?'''
+options = ["In the server's RAM", "In a client-side cookie **signed** with `SECRET_KEY` (readable but not modifiable)", "In a database", "In localStorage"]
+explanation = '''Do not put secrets in the default session. For server-side sessions, use an extension such as Flask-Session with Redis.'''
+
+[questions.py-005]
+prompt = '''What are the benefits of an **application factory**, `create_app()`?'''
+options = ["Create multiple app instances with different configurations (test, dev, prod)", "Avoid circular imports when registering blueprints or extensions", "Double request-processing speed", "Make it easier to test with a dedicated configuration", "Eliminate the need for `SECRET_KEY`"]
+explanation = '''Initialize extensions inside the factory, for example with `db.init_app(app)`.'''
+
+[questions.py-006]
+prompt = '''Complete the route that accepts JSON and returns status 201:
+
+```python
+@app.post("/todos")
+def create_todo():
+    data = request.{{blank}}()
+    todo = {"id": 1, "title": data["title"]}
+    return todo, {{blank}}
+```
+'''
+explanation = '''Return `(body, status)`; Flask automatically converts a dict to JSON.'''
+
+[questions.py-007]
+title = "Flask-style route matcher"
+prompt = '''Write `match_route(rule, path)` to simulate how Flask matches URLs:
+
+- `rule` contains static segments and variables in the form `<name>` or `<converter:name>`. Support the `string` converter (the default; cannot contain `/`), `int` (digits), and `path` (may contain `/`, only at the end).
+- On a match, return a `dict` of variables, converting `int` values to `int`; otherwise return `None`.
+- Match the entire path, with no extra or missing characters.
+
+```python
+match_route("/users/<int:id>", "/users/42")  # {"id": 42}
+match_route("/files/<path:p>", "/files/a/b.txt")  # {"p": "a/b.txt"}
+```
+'''
+hints = ["Convert the rule to a regex with named groups such as `(?P<name>...)`, then use `re.fullmatch`.", "Remember to use `re.escape` for static text (for example, the `.` in `/a.b`)."]
+explanation = '''Werkzeug, the foundation Flask uses, compiles rules into similar regular expressions and caches them.'''
+
+[modules.py-fastapi]
+lesson = '''### Key concepts
+- FastAPI is built on **Starlette** (ASGI), **Pydantic** (data validation) and **type hints**.
+- Function parameters: names in the path are **path parameters**; simple types (`int`, `str`) not in the path are **query parameters**; a Pydantic model is a **request body**.
+- Invalid data types automatically produce **422 Unprocessable Entity** with details.
+- `response_model=UserOut` filters response fields (for example, so `password` is not exposed).
+- `Depends(get_db)` provides **dependency injection** for reusable logic such as database sessions, authentication and pagination; a dependency with `yield` can clean up resources.
+- Raise `HTTPException(status_code=404, detail="...")` to return an error.
+- OpenAPI documentation is generated at `/docs` (Swagger UI) and `/redoc`.
+- `BackgroundTasks` is for lightweight work after the response; use a queue (Celery, RQ, Arq) for heavy jobs.
+- Testing: `TestClient(app)` (built on httpx).
+'''
+
+[questions.py-020]
+prompt = '''For the endpoint below, where does `skip` come from?
+
+```python
+@app.get("/items/{item_id}")
+async def read(item_id: int, skip: int = 0, item: Item | None = None): ...
+```
+'''
+explanation = '''`item_id` is in the path, so it is a path parameter; `skip` is a simple type, so it is a query parameter; `item` is a Pydantic model, so it comes from the body.'''
+
+[questions.py-021]
+prompt = '''Send `GET /items/abc` to an endpoint with `item_id: int`. What status does FastAPI return?'''
+explanation = '''Invalid input during validation produces **422 Unprocessable Entity**, with JSON describing the field error.'''
+
+[questions.py-022]
+prompt = '''What does `response_model=UserOut` do in `@app.post('/users', response_model=UserOut)`?'''
+options = ["Validate the request body", "Convert and **filter** the response data according to `UserOut` (e.g. remove the `password` field) and describe the schema in OpenAPI", "Speed up serialization", "Require the client to send a header"]
+explanation = '''A common pattern is to use `UserIn` (with a password) for input and `UserOut` (without a password) for output.'''
+
+[questions.py-023]
+prompt = '''A dependency written as a generator with `yield` (e.g. `get_db`) is used to:'''
+options = ["Return multiple values", "Provide a resource to an endpoint and **clean it up after the request finishes** (close a database session); code after `yield` runs after the response", "Run tasks in parallel", "Cache results forever"]
+explanation = '''This is similar to a context manager. By default, the same dependency is cached and called once within a request.'''
+
+[questions.py-024]
+prompt = '''Which statements about FastAPI are correct?'''
+options = ["Automatically generates OpenAPI/Swagger documentation at `/docs`", "Built on Starlette (ASGI) and Pydantic", "Supports only `async def` endpoints", "Use `raise HTTPException(status_code=404, detail=...)` to return an error", "`BackgroundTasks` is suitable for jobs that run for hours"]
+explanation = '''A regular `def` endpoint typically runs in a thread pool. Heavy jobs should use a separate task queue.'''
+
+[questions.py-025]
+prompt = '''Inject an authentication dependency into the endpoint:
+
+```python
+@app.get("/me")
+async def me(user: User = {{blank}}(get_current_user)):
+    return user
+```
+'''
+explanation = '''Dependencies can be nested: `get_current_user` may itself depend on `oauth2_scheme`.'''
+
+[questions.py-026]
+prompt = '''Declare a Pydantic model for a request body:
+
+```python
+from pydantic import {{blank}}
+
+class Item({{blank}}):
+    name: str
+    price: float
+    tags: list[str] = []
+```
+'''
+explanation = '''Pydantic v2 uses `model_dump()` and `model_validate()` in place of `.dict()` and `parse_obj`.'''
+
+[questions.py-027]
+title = "Pydantic-style data validation"
+prompt = '''Without using a library, write `validate(schema, data)` that returns `(clean, errors)`:
+
+- `schema` is a dict mapping `field` to `(type, required, default)`; `type` is `int`, `float`, `str` or `bool`.
+- A missing required field produces `{"loc": field, "msg": "field required"}`.
+- A missing optional field uses `default`.
+- Coerce types in a "lax" manner like Pydantic: `"42"` → `int` 42, `"3.5"` → float; `int` accepts an integer or a numeric string; `bool` accepts `True`/`False` or the strings `"true"`/`"false"`. If coercion fails, produce `{"loc": field, "msg": "invalid <type name>"}` (e.g. `invalid int`).
+- Ignore fields in `data` that are not in the schema.
+- If there are errors, `clean` is `None`; `errors` is a list in schema field order.
+'''
+hints = ["Extract a helper `_coerce(tp, value)` that raises `ValueError` when coercion fails.", "Be careful: `bool` is a subclass of `int` in Python."]
+explanation = '''Pydantic v2 does this much faster with its Rust core, and FastAPI turns `errors` into a 422 response.'''
+
+[questions.py-028]
+prompt = '''Simulate FastAPI's `Depends` system:
+
+- A `Depends(dependency)` class stores a dependency function.
+- `solve(func, overrides=None)` calls `func`; for each parameter whose default is `Depends(dep)`:
+  - resolve `dep` **recursively** (it may also have dependencies declared with `Depends`);
+  - if `dep` is in `overrides` (a dict), use the replacement function (like `app.dependency_overrides` in tests);
+  - **cache within one call to `solve`**: call each dependency only once.
+- Parameters that are not `Depends` use their ordinary default values.
+- Return the result of `func`.
+
+Hint: `inspect.signature(func).parameters`.
+'''
+hints = ["Iterate over `inspect.signature(func).parameters.items()` and check `isinstance(p.default, Depends)`.", "Pass the same cache dict through recursive calls."]
+explanation = '''This is how FastAPI builds a dependency graph for each request; `app.dependency_overrides` is especially useful in tests.'''
+
+[modules.py-async]
+title = "Async Python & Performance"
+description = "async/await, event loop, def vs async def in FastAPI, asyncio.gather, Semaphore, WSGI vs ASGI."
+lesson = '''### Key concepts
+- **WSGI** (classic Flask and Django): synchronous, with one worker or thread per request. **ASGI** (FastAPI, Starlette): asynchronous and supports WebSockets.
+- An `async def` endpoint runs **on the event loop** — never call blocking I/O (`requests`, `time.sleep`, a synchronous database driver) there.
+- A regular `def` endpoint typically runs in FastAPI's **thread pool**, so it can use blocking libraries.
+- `await asyncio.gather(*coros)` runs coroutines concurrently; `asyncio.Semaphore(n)` limits the number of simultaneous tasks; `asyncio.wait_for(coro, timeout)` sets a timeout.
+- For CPU-bound work (image processing, ML), use a process pool or separate worker because of the **GIL** (except in free-threaded Python 3.13+ builds).
+- Use multiple Uvicorn/Gunicorn worker processes to use multiple CPUs.
+'''
+
+[questions.py-040]
+prompt = '''In FastAPI, what happens if you call `time.sleep(5)` inside an `async def` endpoint?'''
+options = ["Only that request waits for 5 seconds", "It **blocks the event loop** — every other request on that worker is also stalled for 5 seconds", "FastAPI automatically moves it to a thread", "A syntax error"]
+explanation = '''Use `await asyncio.sleep(5)`, or declare the endpoint as `def` so it runs in the thread pool.'''
+
+[questions.py-041]
+prompt = '''What is the main difference between WSGI and ASGI?'''
+options = ["ASGI is only for Django", "WSGI is synchronous (one request per worker); ASGI supports asynchronous code, WebSockets and long-lived connections", "WSGI is faster in every case", "There is no difference"]
+explanation = '''Flask uses WSGI (it supports `async def` views, but each request still occupies a worker). FastAPI uses ASGI.'''
+
+[questions.py-042]
+prompt = '''Call three APIs concurrently and wait for all of them:
+
+```python
+users, posts, tags = await asyncio.{{blank}}(fetch_users(), fetch_posts(), fetch_tags())
+```
+'''
+explanation = '''Python 3.11+ also provides `asyncio.TaskGroup`, which cancels the remaining tasks if one task fails.'''
+
+[questions.py-043]
+title = "Concurrency-limited gather"
+prompt = '''Write `async def gather_limited(funcs, limit)`:
+- `funcs` is a list of zero-argument functions that return coroutines (e.g. `lambda: fetch(i)`).
+- Run them concurrently, but run **at most `limit`** coroutines at a time (use `asyncio.Semaphore`).
+- Return a list of results in the **same order** as the input.
+- If an error occurs, raise it (like `asyncio.gather` by default).
+'''
+hints = ["Wrap each coroutine in `async with sem:`.", "`asyncio.gather` keeps results in input order."]
+explanation = '''Limiting concurrency helps avoid overloading external APIs or a database connection pool.'''
+
+[questions.py-044]
+prompt = '''When should a FastAPI endpoint be declared as `async def`, and when should it be `def`?'''
+keywords = [["await", "async library"], ["blocking", "synchronous", "requests", "time.sleep"], ["threadpool", "thread pool"], ["event loop"]]
+model_answer = '''Use **`async def`** when the endpoint calls only libraries that support async and awaits them, such as httpx.AsyncClient or asyncpg. Requests share the **event loop**, which can serve many I/O-bound connections. Use **`def`** when you need a **blocking** or synchronous library, such as requests or a synchronous database driver: FastAPI runs a `def` function in a **threadpool** so it does not block the event loop. Never call blocking code inside `async def`. Move CPU-heavy work to a separate process or worker.'''
+explanation = '''If you are unsure, `def` is the safer choice.'''
+
+[modules.py-security]
+title = "API Authentication & Security"
+description = "Password hashing, JWT, OAuth2 password flow, CORS, rate limiting, secrets."
+lesson = '''### Key concepts
+- Passwords: use **slow, salted hashes** (`bcrypt`, `argon2`) — never MD5/SHA1 or plaintext storage.
+- **JWT** = `base64url(header).base64url(payload).signature`. The payload is **not encrypted**, only **signed** (HMAC/RSA), so do not put sensitive data in it. Check `exp`, the algorithm and the signature.
+- Compare signatures and tokens with `hmac.compare_digest` to prevent timing attacks.
+- FastAPI: `OAuth2PasswordBearer(tokenUrl="token")` + `Depends(get_current_user)`.
+- **CORS**: configure `CORSMiddleware(allow_origins=[...])` — do not use `*` when `allow_credentials=True`.
+- Read secrets from environment variables; do not commit them to git.
+'''
+
+[questions.py-060]
+prompt = '''Which statement about JWT (JWS, HS256) is correct?'''
+options = ["The payload is encrypted, so it is safe to store passwords in it", "The payload is only base64url-encoded and **signed**; anyone can read it, but it cannot be modified without the secret", "A JWT cannot expire", "The server must store every JWT in a database to validate it"]
+explanation = '''Use JWE to encrypt content. Always check `exp` and pin the algorithm to prevent attacks such as `alg: none`.'''
+
+[questions.py-061]
+prompt = '''What is the correct way to store a user's password?'''
+options = ["Plaintext", "`hashlib.md5(password)`", "A slow salted hash such as **bcrypt/argon2** (passlib, pwdlib)", "Encrypt with AES and store the key beside the database"]
+explanation = '''Fast hashes (plain MD5 or SHA-256) are easy to brute-force with a GPU.'''
+
+[questions.py-062]
+prompt = '''Which CORS configurations are **unsafe or invalid**?'''
+options = ["`allow_origins=[\"https://app.bovabon.edu\"]`", "`allow_origins=[\"*\"]` together with `allow_credentials=True`", "Reflect any supplied `Origin` into `Access-Control-Allow-Origin` while allowing credentials", "Allow only the methods that are needed"]
+explanation = '''Browsers reject `*` when credentials are included. Reflecting arbitrary origins lets any website read the user's data.'''
+
+[questions.py-063]
+prompt = '''Compare signatures safely against timing attacks:
+
+```python
+import hmac
+if not hmac.{{blank}}(expected_sig, given_sig):
+    raise HTTPException(status_code={{blank}})
+```
+'''
+explanation = '''A comparison using `==` stops at the first differing byte, which can leak information through response timing.'''
+
+[questions.py-064]
+title = "Signing and verifying JWT HS256"
+prompt = '''Using only the standard library (`hmac`, `hashlib`, `base64`, `json`), write:
+
+- `b64url(data: bytes) -> str` — base64url-encode and **remove `=` padding**.
+- `sign(payload: dict, secret: str) -> str` — use the header `{"alg":"HS256","typ":"JWT"}`, compact JSON (`separators=(",", ":")`), and an HMAC-SHA256 signature over `"<header>.<payload>"`.
+- `verify(token: str, secret: str, now: int) -> dict` — return the payload if valid; otherwise raise `ValueError` with the message:
+  - `"malformed"` if there are not exactly three parts;
+  - `"bad algorithm"` if the header's `alg` is not `HS256`;
+  - `"bad signature"` if the signature is incorrect (use `hmac.compare_digest`);
+  - `"expired"` if `exp` exists and `now >= exp`.
+'''
+hints = ["When decoding, restore padding with `s + '=' * (-len(s) % 4)`.", "Check the algorithm **before** verifying the signature."]
+explanation = '''In production, use PyJWT or python-jose; implementing this yourself helps explain why the algorithm must be pinned and comparisons must take constant time.'''
+
+[modules.python-backend-dv-flask-structure]
+title = "Flask: Application Structure & Testing"
+description = "Blueprints, application factories, environment-specific configuration and the test client."
+lesson = '''### Organizing a Flask application by responsibility
+
+As an application grows, putting every route in one file makes imports, configuration and testing harder to manage. A **Blueprint** groups routes and hooks for a functional area; it is not a standalone app and only works after registration with a Flask application. When registering it, you can add a **url_prefix** to create a clear URL namespace.
+
+| Component | Role | Example |
+|---|---|---|
+| Application factory | Creates an app and applies configuration on each call | `create_app(test_config)` |
+| Blueprint | Groups routes by function | `users`, `admin` |
+| Test client | Sends simulated requests through the app | `client.get("/health")` |
+| `TESTING` config | Enables behavior suited to tests | `app.config.update(TESTING=True)` |
+
+Example structure:
+
+~~~python
+from flask import Blueprint, Flask
+
+api = Blueprint("api", __name__)
+
+@api.get("/health")
+def health():
+    return {"ok": True}
+
+def create_app(config=None):
+    app = Flask(__name__)
+    app.config.from_mapping(SECRET_KEY="replace-in-deployment")
+    if config:
+        app.config.update(config)
+    app.register_blueprint(api, url_prefix="/api")
+    return app
+~~~
+
+In a test, call the factory with a dedicated configuration, then use `app.test_client()` to exercise Flask routing and middleware without opening a network port. Each test can create a fresh app to prevent configuration or global state from leaking into other tests. Check status, headers and JSON responses; use `session_transaction()` when you need to prepare a session.
+
+Common mistakes include importing route modules before the factory is configured and creating a global app, which makes tests harder to isolate; forgetting to register a Blueprint, causing its routes to return 404; and using `app.run()` as a production server. A factory creates apps consistently, while production needs a separately configured WSGI server. Do not put real secrets in source code or test configuration.
+'''
+
+[questions.python-backend-dv001]
+prompt = '''What is the best description of a Flask Blueprint?'''
+options = ["An independent Flask app that listens on its own port", "A group of routes and hooks that can be registered with an app", "A shared database connection", "A simulated HTTP test client"]
+explanation = '''A Blueprint organizes functionality into modules, but must be registered with a Flask application before its routes work.'''
+
+[questions.python-backend-dv002]
+prompt = '''Why is an application factory useful when testing the same application with different configurations?'''
+options = ["Each call can create a new app with its own configuration", "The factory creates a production database automatically", "The factory skips all middleware", "The factory turns Flask into ASGI"]
+explanation = '''A factory can create independent apps, for example with `TESTING` enabled or a dummy secret, without changing another app configuration.'''
+
+[questions.python-backend-dv003]
+prompt = '''When is the Flask test client a good fit?'''
+options = ["Sending requests through the app in a test without starting a network server", "Measuring latency from a real browser over the Internet", "Starting Gunicorn in production", "Creating a database migration"]
+explanation = '''The test client calls the application in the test process, which is useful for checking routes and responses without binding a port.'''
+
+[questions.python-backend-dv004]
+prompt = '''How do you register a Blueprint named `api` with the `/v1` prefix?'''
+options = ['app.register_blueprint(api, url_prefix="/v1")', 'api.run(prefix="/v1")', 'app.config["BLUEPRINT"] = api', 'Blueprint("/v1", app)']
+explanation = '''The prefix is applied when the Blueprint is registered with the app.'''
+
+[questions.python-backend-dv005]
+prompt = '''What are common benefits of splitting a Flask application with Blueprints?'''
+options = ["Group routes by functional domain", "Add a prefix when registering", "Make the Blueprint an independent process", "Register the same Blueprint with multiple suitable apps"]
+explanation = '''Blueprints help organize and reuse route configuration; they are not separate processes or servers.'''
+
+[questions.python-backend-dv006]
+prompt = '''A test needs to check the `/api/health` endpoint and a session. Choose appropriate practices.'''
+options = ["Create the app with a factory and `TESTING=True`", "Use `app.test_client()` to send the request", "Use `session_transaction()` if a session needs to be prepared", "Run `app.run()` on a public port in every test"]
+explanation = '''A factory and test client keep tests lightweight and isolated; `session_transaction` helps set up a session for a test.'''
+
+[questions.python-backend-dv007]
+prompt = '''Complete the Blueprint registration:
+
+~~~python
+app.{{blank}}(api, url_prefix="/v1")
+~~~
+'''
+explanation = '''Attach a Blueprint to a Flask app with `register_blueprint`.'''
+
+[questions.python-backend-dv008]
+prompt = '''In a Flask codebase with multiple functional areas, explain how an application factory, Blueprints and the test client work together to keep the application extensible and testable.'''
+keywords = [["application factory", "create_app"], ["blueprint"], ["test client", "testing"], ["isolated configuration", "test configuration"]]
+model_answer = '''An application factory creates an app and accepts a test configuration, so each test can run with isolated state. A Blueprint groups routes by function and is registered in the factory, often with a `url_prefix`. The test client sends requests through the app to verify status and responses without starting a network server.'''
+explanation = '''A good answer explains the distinct roles of the factory, Blueprint and test client, and how test configuration avoids affecting another app.'''
+
+[questions.python-backend-dvc01]
+title = "Combining configuration for an app factory"
+prompt = '''Write `build_config(defaults, environment, overrides)` to return a new configuration dict. Merge values in this order: start with `defaults`, then override them with `environment`, and finally with `overrides`. Do not modify any input dict.'''
+hints = ["Create a new dict from `defaults` before updating it.", "Call `update` in the correct priority order."]
+explanation = '''A factory can apply defaults, then environment configuration, then test configuration; making a new copy prevents state from leaking between apps.'''
+
+[modules.python-backend-dv-fastapi-deps]
+title = "FastAPI: Dependency Lifecycle & Testing"
+description = "Dependency graphs, cleanup with yield, request-scoped caching and dependency overrides."
+lesson = '''### Dependencies as replaceable boundaries
+
+FastAPI uses **Depends** to declare dependencies in an endpoint signature. A dependency can have its own dependencies, so the framework builds a graph and resolves it before calling the endpoint. This is a suitable place to provide an authenticated user, configuration, a database session or shared logic without tying a route to the way a resource is created.
+
+| Pattern | Effect | When to use it |
+|---|---|---|
+| Regular dependency function | Creates or returns a value | Configuration, authorization |
+| Dependency with `yield` | Provides a resource, then cleans it up | Database session, file, lock |
+| Sub-dependency | Reuses another dependency | User depends on token |
+| `dependency_overrides` | Replaces a dependency in tests | Fake database or user |
+
+Example of a resource that must be closed even if the endpoint fails:
+
+~~~python
+def get_connection():
+    connection = open_connection()
+    try:
+        yield connection
+    finally:
+        connection.close()
+
+@app.get("/items")
+def list_items(connection = Depends(get_connection)):
+    return query_items(connection)
+~~~
+
+FastAPI runs the code before `yield` to prepare the resource and the `finally` block to clean it up according to the dependency lifecycle. Dependencies reused within one request are usually cached, so referencing the same dependency from multiple branches does not necessarily create multiple connections. When needed, caching can be disabled with `use_cache=False`; do not rely on this cache to share state between requests.
+
+In a test, `TestClient` sends a request through the app, while `app.dependency_overrides` maps the original dependency function to a replacement. This lets a test avoid a real database or token and create deterministic data. Restore or clear overrides after the test so they do not affect later tests. Common mistakes include overriding the wrong dependency object, forgetting to clear an override, or opening a resource without putting its close operation in `finally`. Use dependencies to share logic with a clear boundary; middleware is a better fit for behavior that applies broadly to most requests, such as measuring duration.
+'''
+
+[questions.python-backend-dv009]
+prompt = '''An endpoint needs to reuse a function that retrieves the current user and checks permissions. How does FastAPI usually declare that dependency?'''
+options = ["Put `Depends(get_current_user)` in the endpoint signature", "Create a global variable and modify it in each request", "Call `app.run()` from the endpoint", "Pass the dependency through a query string"]
+explanation = '''`Depends` declares a dependency explicitly so FastAPI can resolve it and provide its result to the endpoint.'''
+
+[questions.python-backend-dv010]
+prompt = '''Why does a dependency that manages a database session often use `try/finally` around `yield`?'''
+options = ["To close the session after use, including when an exception occurs", "To automatically turn a synchronous endpoint into an asynchronous one", "To skip request validation", "To store the session in a cookie"]
+explanation = '''The `finally` block in a dependency with `yield` provides reliable cleanup after the resource has been supplied.'''
+
+[questions.python-backend-dv011]
+prompt = '''How does FastAPI usually handle the same dependency being referenced multiple times within one request?'''
+options = ["It caches the result within the request by default", "It calls the dependency exactly once for the entire process lifetime", "It stores the result in a cookie", "It rejects the request because the dependency is duplicated"]
+explanation = '''FastAPI caches dependencies within a request by default; that cache is not shared state across requests.'''
+
+[questions.python-backend-dv012]
+prompt = '''What is a suitable way for a test endpoint to use a fake repository instead of the real repository dependency?'''
+options = ["Assign the fake function in `app.dependency_overrides` under the original dependency", "Modify the endpoint function directly in production", "Change every response to status 204", "Create a random token in a query string"]
+explanation = '''`dependency_overrides` lets a test app replace the exact dependency without changing the endpoint code.'''
+
+[questions.python-backend-dv013]
+prompt = '''Why are dependency overrides useful in API tests?'''
+options = ["Avoid connecting to the real database", "Provide a test user with known permissions", "Keep the endpoint signature the same as in production", "Precisely verify production performance automatically"]
+explanation = '''An override replaces a dependency at the test boundary; it is not a substitute for performance testing the production system.'''
+
+[questions.python-backend-dv014]
+prompt = '''Choose the correct statements about dependencies with `yield`.'''
+options = ["They can manage a resource lifecycle", "Putting cleanup in `finally` helps it run if request handling raises an error", "Every request always shares the same dependency object with every other request", "Dependencies can be nested to split setup into smaller steps"]
+explanation = '''`yield` supports setup and cleanup, and a dependency can have sub-dependencies; default caching is scoped to a request.'''
+
+[questions.python-backend-dv015]
+prompt = '''Fill in the attribute used to map an original dependency to a fake dependency in a test:
+
+~~~python
+app.{{blank}}[get_db] = get_test_db
+~~~
+'''
+explanation = '''FastAPI exposes `dependency_overrides` on the app to replace dependencies during testing.'''
+
+[questions.python-backend-dv016]
+prompt = '''Explain how a dependency with `yield` and a dependency override help an endpoint use resources safely in production while remaining independently testable.'''
+model_answer = '''Dependency injection lets an endpoint receive a resource through `Depends` instead of creating it directly. A dependency with `yield` prepares the resource and puts cleanup in `finally`, closing the session even if an error occurs. In a test, dependency overrides replace a real database or user with a fake that has deterministic data. The test should restore the override afterward to keep tests isolated and prevent it from affecting other tests.'''
+explanation = '''Mention setup and cleanup with `yield`, and controlled replacement of a dependency in a test.'''
+
+[questions.python-backend-dvc02]
+title = "Scoped override registry"
+prompt = '''Write a context manager `override_scope(registry, replacements)`. On entering the `with` block, update `registry` with `replacements`. On exit, always restore the original values of keys that existed and remove keys that were added, even if the `with` block raises an exception. Support nested scopes. Use only the standard library.'''
+hints = ["Save each key's old value; use a unique sentinel to distinguish a missing key from a value of `None`.", "Restore values in `finally` so cleanup also runs if the `with` block fails."]
+explanation = '''Test overrides are temporary app state; a context manager ensures the registry is cleaned up even if a request or assertion raises an error.'''
+
+[modules.python-backend-dv-sqlite]
+title = "SQLite: Safe Queries & Transactions"
+description = "Parameter binding, connection management and atomic data updates."
+lesson = '''### Using SQLite safely in Python applications
+
+`sqlite3` is the standard library for storing relational data in a file or a temporary in-memory database. A Connection holds a connection and transaction boundary; `execute()` runs SQL, while a Cursor reads results. In a web app, a connection is usually created for the request scope and closed when the request ends, rather than sharing a global cursor.
+
+| Need | Approach | Avoid |
+|---|---|---|
+| Pass values to SQL | `?` placeholders and a parameter tuple | Concatenating user input |
+| Group related changes | One transaction | Committing after each related statement |
+| Finish successfully | `commit` or a context manager | Leaving changes uncommitted |
+| Handle an error midway | Roll back the transaction | Leaving data partially updated |
+
+Example parameterized query:
+
+~~~python
+row = connection.execute(
+    "SELECT id, email FROM users WHERE email = ?",
+    (email,),
+).fetchone()
+~~~
+
+Placeholders are for **values** only; they cannot replace table or column names. If you need to select a column, use a fixed allowlist rather than inserting arbitrary text into SQL. Do not use an f-string to concatenate input into a query, because that can create SQL injection.
+
+A transaction makes multiple statements succeed together or roll back together. A bank transfer is an example: subtract from the source account, then add to the destination; if the destination does not exist, the subtraction must roll back. With a connection context manager, an error in the block rolls back the transaction, and a normal exit commits if a transaction is open; the context manager does not close the connection. Set the autocommit or transaction mode explicitly in the connection configuration to avoid relying on legacy defaults.
+
+SQLite has more flexible storage types than many database servers, so applications should validate input and use integers for money in the smallest unit rather than floats. Enable foreign key enforcement on each connection if the schema relies on foreign keys. Common mistakes include forgetting to commit, committing too early and breaking the atomicity of a multi-step operation, using a connection concurrently inappropriately, and swallowing `sqlite3.Error` without noticing a failed transaction.
+'''
+
+[questions.python-backend-dv017]
+prompt = '''What is a safe way to put a user-supplied email address into a SQL condition?'''
+options = ["Use a `?` placeholder and pass the email separately in a tuple", "Concatenate the email directly with an f-string", "Use `repr(email)` to construct the SQL", "Remove single quotes and then concatenate the string"]
+explanation = '''Parameter binding separates data from SQL syntax and helps prevent SQL injection.'''
+
+[questions.python-backend-dv018]
+prompt = '''An update subtracts money from A and then adds it to B. If the addition fails, what is most important?'''
+options = ["Roll back to undo the subtraction too", "Commit the subtraction first and ignore the error", "Close the cursor to restore the data automatically", "Retry only the addition without checking the state"]
+explanation = '''A transaction makes a multi-step operation atomic and prevents a state where money was subtracted but not added.'''
+
+[questions.python-backend-dv019]
+prompt = '''Which statement about the `sqlite3` connection context manager is correct?'''
+options = ["It may commit when the block exits normally and roll back on error if a transaction is open", "It always closes the connection when leaving the block", "It starts a separate SQLite server automatically", "It converts all data to JSON automatically"]
+explanation = '''The context manager handles commit or rollback for the transaction, but it does not close the connection.'''
+
+[questions.python-backend-dv020]
+prompt = '''A `balance` column stores money in cents. Which type should the application use to avoid floating-point errors?'''
+options = ["`INTEGER` containing the number of cents", "`REAL` for all monetary calculations", "A formatted string with commas", "A `BLOB` containing a float representation"]
+explanation = '''Storing the smallest unit as an integer avoids floating-point rounding errors.'''
+
+[questions.python-backend-dv021]
+prompt = '''Which practices make SQLite queries safer and easier to maintain?'''
+options = ["Bind input with placeholders", "Use a transaction for related multi-step updates", "Put a user-supplied column name directly into a value placeholder", "Close the connection according to the application's lifecycle"]
+explanation = '''Placeholders protect values; if identifiers must be dynamic, select them from an allowlist. Connections need a clear lifecycle.'''
+
+[questions.python-backend-dv022]
+prompt = '''A bank transfer transaction fails after the source account has been debited. Choose the correct handling.'''
+options = ["Roll back the entire transaction", "Check both the source balance and the destination update", "Catch the error and commit the unfinished changes", "Keep both updates in the same transaction"]
+explanation = '''Both changes must belong to the same transaction; committing a partial state breaks atomicity.'''
+
+[questions.python-backend-dv023]
+prompt = '''Complete the safe parameterized query:
+
+~~~python
+row = connection.execute(
+    "SELECT id FROM users WHERE email = {{blank}}",
+    (email,),
+).fetchone()
+~~~
+'''
+explanation = '''A qmark placeholder receives a value from the parameter tuple instead of concatenating input into SQL.'''
+
+[questions.python-backend-dv024]
+prompt = '''Describe how to implement a safe money transfer with `sqlite3`, from parameter binding to transaction error handling.'''
+model_answer = '''Use placeholders and bind parameters so user data is not concatenated into SQL. Subtract from the source and add to the destination in the same transaction to make the operation atomic. If either update fails, roll back to restore the original balances; commit only when both steps succeed.'''
+explanation = '''Connect safe parameter binding with rollback/commit and the atomicity of the operation.'''
+
+[questions.python-backend-dvc03]
+title = "Atomic money transfer"
+prompt = '''Write `transfer(connection, source_id, target_id, amount)` for a table `accounts(id INTEGER PRIMARY KEY, balance INTEGER NOT NULL)`. `amount` is a positive integer number of cents, and the two IDs must differ. Return `True` if the transfer succeeds. Return `False` if `amount` is invalid, the source does not exist or lacks sufficient funds, or the target does not exist. If any update step fails, do not leave a partial change. Use placeholders for every SQL value.'''
+hints = ["Use an `UPDATE` with the condition `balance >= amount` and check `rowcount`.", "If updating the source or target does not affect exactly one row, raise an exception inside `with` so SQLite rolls back."]
+explanation = '''Two `UPDATE` statements in the same transaction make the operation atomic; parameter binding keeps input separate from SQL syntax.'''

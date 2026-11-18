@@ -52,7 +52,7 @@ Server Action là điểm vào có thể được gọi qua request; xác thực
 id = "next-route-platform"
 title = "Route Handler, Middleware và metadata"
 description = "Tạo endpoint, kiểm soát matcher và tối ưu metadata, ảnh, font."
-sources = ["nextjs/app/building-your-application/routing/route-handlers", "nextjs/app/api-reference/file-conventions/middleware", "nextjs/app/api-reference/file-conventions/metadata", "nextjs/app/building-your-application/optimizing/images", "nextjs/app/building-your-application/optimizing/fonts", "nextjs/app/building-your-application/optimizing/metadata"]
+sources = ["nextjs/app/building-your-application/routing/route-handlers", "nextjs/app/api-reference/file-conventions/middleware", "nextjs/messages/middleware-upgrade-guide", "nextjs/app/api-reference/file-conventions/metadata", "nextjs/app/building-your-application/optimizing/images", "nextjs/app/building-your-application/optimizing/fonts", "nextjs/app/building-your-application/optimizing/metadata"]
 lesson = '''
 ### Endpoint và lớp trình bày
 route.ts định nghĩa HTTP handler bằng các hàm export như GET hoặc POST, nhận Request và trả Response/NextResponse. Route Handler là endpoint; không đặt page.tsx cùng segment với route.ts. Middleware chạy trước khi hoàn tất request và có thể giới hạn phạm vi bằng config.matcher; matcher nên khai báo tĩnh để framework phân tích lúc build. Middleware hữu ích cho redirect, rewrite hoặc kiểm tra sơ bộ, nhưng không thay thế phân quyền ở nơi đọc/ghi dữ liệu.
@@ -107,6 +107,68 @@ validateSearch chuẩn hoá và xác thực query string thành dữ liệu có 
 | Loader | Nạp dữ liệu trước khi route render |
 
 Ví dụ /posts/42?page=2 tách postId khỏi page; loader có thể lấy cả hai để gọi API. Lỗi thường gặp là để query string không validate, hoặc giữ bộ lọc chỉ trong component state khiến refresh/link chia sẻ mất trạng thái. Type-safe routing giúp phát hiện lỗi phía client, không thay thế xác thực ở server.
+'''
+
+[[modules]]
+id = "nextjs-dv-authz"
+title = "Authentication và bảo vệ dữ liệu"
+description = "Phân biệt xác thực với phân quyền, bảo vệ Server Action và kiểm soát quyền theo resource ở phía server."
+sources = ["nextjs/app/building-your-application/authentication", "nextjs/app/building-your-application/data-fetching/server-actions-and-mutations", "nextjs/app/building-your-application/configuring/environment-variables", "nextjs/app/building-your-application/configuring/content-security-policy", "nextjs/app/building-your-application/routing/middleware"]
+lesson = '''
+### Xác thực và kiểm tra quyền tại server
+Authentication trả lời “request thuộc về ai”; authorization quyết định danh tính đó được làm gì trên resource cụ thể. App Router có thể đọc session trong Server Component, Route Handler hoặc Server Action, nhưng mỗi thao tác thay đổi dữ liệu vẫn phải kiểm tra quyền tại nơi xử lý. Server Action là điểm vào được gọi qua request, nên không nên dựa vào việc nút bị ẩn trong giao diện để bảo vệ dữ liệu.
+
+| Lớp | Trách nhiệm | Ví dụ kiểm tra |
+|---|---|---|
+| UI | Trải nghiệm và điều hướng | Ẩn nút sửa khi người dùng không có quyền |
+| Proxy/Middleware | Lọc hoặc chuyển hướng sớm | Đưa khách chưa đăng nhập tới trang đăng nhập |
+| Server Action / Route Handler | Xác thực request và kiểm tra quyền | User có được sửa project này không? |
+| Data access layer | Giới hạn dữ liệu trả về hoặc cập nhật | Chỉ truy vấn resource thuộc tenant được phép |
+
+Ví dụ, action nhận `projectId` từ client phải lấy session ở server, tải project rồi so sánh chủ sở hữu hoặc vai trò; không tin `userId` do form gửi lên. Có thể gom kiểm tra vào hàm truy cập dữ liệu để các đường gọi khác nhau cùng dùng một chính sách. Cookie session thường cần cân nhắc `HttpOnly`, `Secure` và `SameSite`; biến môi trường có tiền tố `NEXT_PUBLIC_` được đưa ra client nên không chứa secret.
+
+Lỗi hay gặp là coi middleware hoặc route guard là ranh giới bảo mật duy nhất, tin rằng type của form đã xác thực input, hay serialize toàn bộ object user có trường nhạy cảm sang Client Component. Hãy kiểm tra danh tính, quyền trên đúng resource và dữ liệu đầu vào ngay trong đường đọc/ghi phía server.
+'''
+
+[[modules]]
+id = "nextjs-dv-query-ssr"
+title = "TanStack Query: SSR và hydration"
+description = "Prefetch dữ liệu phía server, chuyển cache an toàn sang client và tránh refetch hoặc rò dữ liệu giữa request."
+sources = ["tanstack_query/framework/react/guides/ssr", "tanstack_query/framework/react/guides/advanced-ssr", "tanstack_query/framework/react/guides/prefetching"]
+lesson = '''
+### Chuyển cache query từ server sang trình duyệt
+Server rendering với TanStack Query thường gồm ba bước: tạo `QueryClient` phù hợp với request hiện tại, prefetch các query cần cho route, rồi serialize trạng thái bằng `dehydrate`. Phía React bọc cây component bằng `HydrationBoundary` với state đó; `useQuery` trên client dùng lại cache thay vì bắt đầu từ trạng thái rỗng. `queryKey` và cách tạo query options phải nhất quán giữa chỗ prefetch và component đọc dữ liệu.
+
+| Bước | Việc làm | Lưu ý |
+|---|---|---|
+| Server | Tạo QueryClient và `prefetchQuery` | Dữ liệu người dùng phải nằm trong cache của request đó |
+| Chuyển trạng thái | Gọi `dehydrate(queryClient)` | Chỉ đưa dữ liệu an toàn và có thể serialize sang client |
+| Client | Hydrate trong `HydrationBoundary` rồi gọi `useQuery` | Dùng cùng query key để tìm đúng cache entry |
+
+Không dùng một `QueryClient` toàn cục cho server process lâu dài: request của hai người dùng có thể thấy cùng cache. `staleTime` quyết định khi nào dữ liệu được coi là cũ; mặc định bằng 0 có thể khiến query stale ngay khi hydrate và refetch lúc client mount. Chọn thời hạn fresh theo nghiệp vụ thay vì tắt refetch vô thời hạn. Với nhiều query độc lập, bắt đầu prefetch song song để giảm waterfall; query phụ thuộc kết quả query trước thì cần giữ thứ tự phụ thuộc đó.
+
+Lỗi hay gặp là khác query key giữa server và client, chỉ truyền `initialData` nhưng bỏ mất metadata thời điểm cache, hoặc serialize object chứa secret/token. Hydration giúp nối tiếp dữ liệu đã tải, không thay thế kiểm soát quyền truy cập, chính sách cache của server hay xác thực ở API.
+'''
+
+[[modules]]
+id = "nextjs-dv-router-auth"
+title = "TanStack Router: context và route guard"
+description = "Truyền dependency có kiểu qua route tree, chặn điều hướng trong beforeLoad và tổ chức authentication cho các nhánh route."
+sources = ["tanstack_router/guide/authenticated-routes", "tanstack_router/guide/router-context", "tanstack_router/guide/data-loading", "tanstack_router/guide/preloading", "tanstack_router/how-to/setup-authentication"]
+lesson = '''
+### Context dùng chung và route được bảo vệ
+TanStack Router cho phép truyền dependency dùng chung qua router context, ví dụ `queryClient` hoặc thông tin user đã xác thực. Có thể định nghĩa kiểu context ở root route để `beforeLoad`, loader và component route nhận hợp đồng có kiểu. Route có thể tạo context bổ sung; các route con kế thừa context tích luỹ từ nhánh cha, nhờ đó một layout được bảo vệ có thể dùng chung logic cho các màn hình bên dưới.
+
+| Cơ chế | Thời điểm | Vai trò |
+|---|---|---|
+| Router context | Khi khởi tạo hoặc cập nhật router | Chia sẻ dependency như user hiện tại, client cache |
+| `beforeLoad` | Trước loader của route | Kiểm tra điều kiện điều hướng, thêm route context hoặc ném redirect |
+| Loader | Khi route cần dữ liệu | Nạp dữ liệu theo params, search và context đã có |
+| Server/API | Khi đọc hoặc ghi dữ liệu | Xác thực lại danh tính và authorization thực sự |
+
+Ví dụ, route cha `/app` có thể kiểm tra `context.auth.user`; nếu thiếu user thì ném redirect tới `/login`. Route con trong nhánh có thể dùng context đó để tải dữ liệu hoặc hiển thị giao diện phù hợp. Nếu user đăng nhập/đăng xuất làm context thay đổi, cập nhật context của router và invalidate route state khi cần để các guard/loaders chạy lại.
+
+Route guard phía client chỉ cải thiện luồng điều hướng. Người dùng vẫn có thể gọi trực tiếp API, nên server phải thực thi quyền trên từng resource. Lỗi hay gặp là dùng React context ở một component nhưng loader không truy cập được dependency đó, giữ auth state cũ sau khi đăng nhập, hoặc tin rằng redirect đã thay thế kiểm tra quyền ở server.
 '''
 
 [[questions]]
@@ -442,6 +504,388 @@ options = ["config.matcher giới hạn request cần middleware xử lý", "Mat
 answer = [0, 1, 3]
 explanation = "Middleware là lớp xử lý request hữu ích nhưng không phải ranh giới phân quyền cuối cùng cho dữ liệu."
 sources = ["nextjs/app/api-reference/file-conventions/middleware"]
+
+[[questions]]
+id = "nextjs-dv019"
+module = "nextjs-dv-router-auth"
+type = "single"
+difficulty = 1
+prompt = "Router context thường hữu ích nhất cho việc nào trong TanStack Router?"
+options = ["Chia sẻ dependency có kiểu như auth state hoặc QueryClient với route hooks/loaders", "Tự lưu mọi state component vào URL", "Thay thế xác thực ở API server", "Tạo HTML `<head>` cho mỗi route"]
+answer = [0]
+explanation = "Router context cung cấp dependency dùng chung trong cây route; nó không thay thế quyền được kiểm tra ở server."
+sources = ["tanstack_router/guide/router-context", "tanstack_router/api/router/createrootroutewithcontextfunction"]
+
+[[questions]]
+id = "nextjs-dv020"
+module = "nextjs-dv-router-auth"
+type = "single"
+difficulty = 2
+prompt = "Một route cần chuyển user chưa đăng nhập tới `/login` trước khi loader chạy. Cơ chế phù hợp nhất là gì?"
+options = ["`beforeLoad` kiểm tra context và ném redirect", "`useEffect` trong component con sau khi render dữ liệu", "`validateSearch` tự tạo session", "`Link` tự kiểm tra quyền ở API"]
+answer = [0]
+explanation = "`beforeLoad` chạy trước loader và có thể điều khiển điều hướng bằng redirect khi điều kiện không đạt."
+sources = ["tanstack_router/guide/authenticated-routes", "tanstack_router/guide/router-context"]
+
+[[questions]]
+id = "nextjs-dv021"
+module = "nextjs-dv-router-auth"
+type = "single"
+difficulty = 2
+prompt = "Nhiều route con trong `/app` cần cùng kiểm tra đăng nhập. Cách tổ chức nào giảm lặp logic?"
+options = ["Đặt guard tại route cha/layout phù hợp và cho các route con kế thừa context", "Lặp cùng một kiểm tra trong mọi nút Link", "Chỉ kiểm tra query string của từng route", "Ẩn toàn bộ route tree khỏi TypeScript"]
+answer = [0]
+explanation = "Một route cha có thể gom logic chung cho nhánh, còn server vẫn chịu trách nhiệm kiểm tra quyền truy cập dữ liệu."
+sources = ["tanstack_router/guide/authenticated-routes", "tanstack_router/guide/router-context"]
+
+[[questions]]
+id = "nextjs-dv022"
+module = "nextjs-dv-router-auth"
+type = "single"
+difficulty = 3
+prompt = "Ứng dụng đã redirect khỏi route quản trị ở client khi user thiếu role. API quản trị còn cần làm gì?"
+options = ["Không cần kiểm tra thêm vì route tree đã type-safe", "Tự xác thực và kiểm tra quyền trên mỗi thao tác dữ liệu", "Chỉ kiểm tra referrer của browser", "Tin role do query string gửi lên"]
+answer = [1]
+explanation = "Route guard xử lý UX; authorization phía server phải bảo vệ endpoint và resource ngay cả khi API bị gọi trực tiếp."
+sources = ["tanstack_router/guide/authenticated-routes", "tanstack_router/how-to/setup-authentication"]
+
+[[questions]]
+id = "nextjs-dv023"
+module = "nextjs-dv-router-auth"
+type = "multiple"
+difficulty = 2
+prompt = "Những nhận định nào đúng về context và `beforeLoad`?"
+options = ["Root context có thể khai báo kiểu dependency mà route cần", "Route guard phía client thay thế kiểm tra authorization của server", "`beforeLoad` có thể kiểm tra điều kiện trước khi loader chạy", "Route con có thể dùng context tích luỹ từ nhánh cha"]
+answer = [0, 2, 3]
+explanation = "Context và beforeLoad tổ chức dependency/điều hướng trong router; quyền dữ liệu vẫn cần được xác minh ở server."
+sources = ["tanstack_router/guide/router-context", "tanstack_router/guide/authenticated-routes", "tanstack_router/guide/data-loading"]
+
+[[questions]]
+id = "nextjs-dv024"
+module = "nextjs-dv-router-auth"
+type = "multiple"
+difficulty = 3
+prompt = "Khi xây nhánh route yêu cầu đăng nhập, lựa chọn nào phù hợp?"
+options = ["Đưa thông tin user cần cho UI vào router context và giới hạn dữ liệu nhạy cảm", "Sau khi login/logout làm context đổi, cân nhắc cập nhật context và invalidate route state", "Chỉ dùng giá trị role trong URL làm nguồn quyền", "Để API kiểm tra lại session và quyền trên resource"]
+answer = [0, 1, 3]
+explanation = "Router context cần cập nhật theo trạng thái auth; URL không đáng tin và server vẫn phải thực thi authorization."
+sources = ["tanstack_router/guide/router-context", "tanstack_router/guide/authenticated-routes", "tanstack_router/how-to/setup-authentication"]
+
+[[questions]]
+id = "nextjs-dv025"
+module = "nextjs-dv-router-auth"
+type = "fill"
+difficulty = 1
+prompt = "Hook route chạy trước loader để kiểm tra điều kiện điều hướng có tên là {{blank}}."
+blanks = [["beforeLoad"]]
+explanation = "`beforeLoad` thích hợp cho logic điều kiện route như kiểm tra context hoặc redirect."
+sources = ["tanstack_router/guide/authenticated-routes", "tanstack_router/guide/data-loading"]
+
+[[questions]]
+id = "nextjs-dv026"
+module = "nextjs-dv-router-auth"
+type = "essay"
+difficulty = 3
+prompt = "Trong phỏng vấn, hãy giải thích cách router context và `beforeLoad` phối hợp để bảo vệ một nhánh route; nêu giới hạn của guard phía client và bước cần có ở server."
+keywords = [["router context", "context của router"], ["beforeLoad", "route guard"], ["redirect", "chuyển hướng"], ["child routes", "route con"], ["server authorization", "authorization phía server", "kiểm tra quyền ở server"]]
+min_keywords = 4
+model_answer = '''Router context truyền auth state có kiểu tới nhánh route. beforeLoad kiểm tra user và có thể redirect trước loader; route con kế thừa context từ cha. Guard này chỉ điều khiển client navigation, vì vậy API server vẫn phải xác thực session và kiểm tra authorization trên resource.'''
+explanation = "Một câu trả lời đầy đủ phân biệt điều hướng phía client với ranh giới quyền dữ liệu phía server."
+sources = ["tanstack_router/guide/router-context", "tanstack_router/guide/authenticated-routes", "tanstack_router/how-to/setup-authentication"]
+
+[[questions]]
+id = "nextjs-dvc02"
+module = "nextjs-dv-router-auth"
+type = "code"
+difficulty = 2
+title = "Quyết định truy cập route"
+lang = "javascript"
+prompt = '''
+Viết `getRouteAccess(context, requiredRole)` trả về một trong ba chuỗi: `"login"`, `"allow"`, `"forbidden"`.
+- Nếu `context.user` không phải object có `id` là chuỗi không rỗng, trả về `"login"`.
+- Nếu đã đăng nhập và `requiredRole` là `null` hoặc `undefined`, trả về `"allow"`.
+- Nếu có role bắt buộc, chỉ trả về `"allow"` khi `context.user.roles` là mảng chứa role đó; nếu không thì trả `"forbidden"`.
+
+Đây là mô hình quyết định cho `beforeLoad` phía client; API server vẫn cần kiểm tra quyền riêng.
+'''
+starter = '''
+function getRouteAccess(context, requiredRole) {
+  return 'allow';
+}
+'''
+solution = '''
+function getRouteAccess(context, requiredRole) {
+  const user = context && context.user;
+  if (!user || typeof user.id !== 'string' || user.id.length === 0) return 'login';
+  if (requiredRole === null || requiredRole === undefined) return 'allow';
+  if (Array.isArray(user.roles) && user.roles.includes(requiredRole)) return 'allow';
+  return 'forbidden';
+}
+'''
+tests = '''
+test('khách chưa đăng nhập cần login', () => {
+  expect(getRouteAccess({}, null)).toBe('login');
+});
+test('user không có id hợp lệ bị xem là chưa xác thực', () => {
+  expect(getRouteAccess({ user: { id: '' } }, null)).toBe('login');
+});
+test('user đã đăng nhập được vào route không yêu cầu role', () => {
+  expect(getRouteAccess({ user: { id: 'u1' } }, null)).toBe('allow');
+});
+test('role phù hợp được cho phép', () => {
+  expect(getRouteAccess({ user: { id: 'u1', roles: ['editor'] } }, 'editor')).toBe('allow');
+});
+test('thiếu role bắt buộc bị từ chối', () => {
+  expect(getRouteAccess({ user: { id: 'u1', roles: ['reader'] } }, 'admin')).toBe('forbidden');
+});
+'''
+hints = ["Kiểm tra danh tính trước khi xét role.", "Nếu requiredRole vắng mặt thì không cần so sánh mảng roles."]
+explanation = "beforeLoad có thể dùng kết quả chính sách để redirect; quyết định trong browser không thay kiểm tra quyền tại API."
+sources = ["tanstack_router/guide/authenticated-routes", "tanstack_router/guide/router-context"]
+
+[[questions]]
+id = "nextjs-dv010"
+module = "nextjs-dv-query-ssr"
+type = "single"
+difficulty = 2
+prompt = "Trong server process phục vụ nhiều người dùng, vì sao không nên chia sẻ một QueryClient toàn cục giữa các request?"
+options = ["QueryClient chỉ hoạt động trong component", "Cache của một request có thể bị request khác đọc nhầm, kể cả dữ liệu theo user", "Mỗi QueryClient chỉ chứa được một query", "Hydration tự động tạo lỗi nếu có cache"]
+answer = [1]
+explanation = "QueryClient server cần phạm vi phù hợp với request để tránh dùng chung trạng thái cache giữa người dùng."
+sources = ["tanstack_query/framework/react/guides/ssr", "tanstack_query/framework/react/guides/advanced-ssr"]
+
+[[questions]]
+id = "nextjs-dv011"
+module = "nextjs-dv-query-ssr"
+type = "single"
+difficulty = 1
+prompt = "Trong quy trình SSR, `dehydrate(queryClient)` chủ yếu làm gì?"
+options = ["Xoá query cache sau khi render", "Tạo trạng thái cache có thể chuyển sang cây React để hydrate", "Tắt refetch trên client vĩnh viễn", "Tự xác thực người dùng hiện tại"]
+answer = [1]
+explanation = "Dữ liệu đã prefetch được đưa vào trạng thái hydration để React Query trên client có thể tiếp tục dùng cache đó."
+sources = ["tanstack_query/framework/react/guides/ssr"]
+
+[[questions]]
+id = "nextjs-dv012"
+module = "nextjs-dv-query-ssr"
+type = "single"
+difficulty = 2
+prompt = "Server prefetch `['posts', { page: 2 }]`, nhưng component client gọi `useQuery` với `['posts', { page: 1 }]`. Kết quả có khả năng nhất là gì?"
+options = ["Client dùng cache page 2 vì cùng tên `posts`", "Client tìm một cache entry khác và có thể fetch page 1", "Query key bị tự động sửa thành giống nhau", "Hydration từ chối toàn bộ ứng dụng"]
+answer = [1]
+explanation = "Mỗi query key định danh riêng dữ liệu; khác biến page nghĩa là khác cache entry."
+sources = ["tanstack_query/framework/react/guides/ssr", "tanstack_query/framework/react/guides/query-keys"]
+
+[[questions]]
+id = "nextjs-dv013"
+module = "nextjs-dv-query-ssr"
+type = "single"
+difficulty = 2
+prompt = "Một query được hydrate nhưng dùng `staleTime` mặc định bằng 0. Cách hiểu nào phù hợp?"
+options = ["Dữ liệu được xem là fresh vô thời hạn", "Dữ liệu có thể stale ngay và refetch khi query mount trên client", "Query bị xoá trước khi hydrate", "Mọi request tiếp theo đều dùng cache không revalidate"]
+answer = [1]
+explanation = "Hydration mang state sang client nhưng freshness vẫn phụ thuộc staleTime; mặc định 0 khiến dữ liệu stale ngay."
+sources = ["tanstack_query/framework/react/guides/ssr", "tanstack_query/framework/react/guides/important-defaults"]
+
+[[questions]]
+id = "nextjs-dv014"
+module = "nextjs-dv-query-ssr"
+type = "multiple"
+difficulty = 3
+prompt = "Những lựa chọn nào phù hợp khi đưa query cache từ server sang client?"
+options = ["Tạo cache riêng cho từng request server", "Đưa access token hoặc secret vào dehydrated state để client gọi API tiện hơn", "Prefetch bằng query key tương ứng với query phía client", "Chỉ serialize dữ liệu được phép gửi cho trình duyệt"]
+answer = [0, 2, 3]
+explanation = "Cache cần cô lập theo request, định danh query phải khớp và dữ liệu serialize phải an toàn cho client."
+sources = ["tanstack_query/framework/react/guides/ssr", "tanstack_query/framework/react/guides/advanced-ssr"]
+
+[[questions]]
+id = "nextjs-dv015"
+module = "nextjs-dv-query-ssr"
+type = "multiple"
+difficulty = 2
+prompt = "Cách nào giúp giảm request waterfall khi SSR nhiều query?"
+options = ["Bắt đầu prefetch song song các query độc lập", "Bắt buộc đợi từng query độc lập hoàn tất rồi mới bắt đầu query kế", "Chỉ tuần tự hoá những query thật sự phụ thuộc kết quả của query trước", "Tạo một QueryClient toàn cục để mọi request dùng chung"]
+answer = [0, 2]
+explanation = "Query độc lập có thể chạy đồng thời; dependency thực sự mới cần thứ tự."
+sources = ["tanstack_query/framework/react/guides/ssr", "tanstack_query/framework/react/guides/prefetching"]
+
+[[questions]]
+id = "nextjs-dv016"
+module = "nextjs-dv-query-ssr"
+type = "fill"
+difficulty = 1
+prompt = '''
+Điền helper tạo trạng thái có thể truyền vào `HydrationBoundary`:
+
+```js
+const state = {{blank}}(queryClient)
+```
+'''
+blanks = [["dehydrate"]]
+explanation = "`dehydrate` trích xuất trạng thái phù hợp từ QueryClient để dùng cho hydration."
+sources = ["tanstack_query/framework/react/guides/ssr"]
+
+[[questions]]
+id = "nextjs-dv017"
+module = "nextjs-dv-query-ssr"
+type = "essay"
+difficulty = 3
+prompt = "Hãy mô tả luồng SSR/hydration của TanStack Query cho một route và nêu cách tránh cache dùng chung giữa người dùng, client fetch lại không cần thiết, hoặc lộ dữ liệu nhạy cảm."
+keywords = [["queryclient per request", "fresh queryclient", "request-scoped"], ["prefetch", "prefetchquery"], ["dehydrate", "dehydrated state"], ["hydrationboundary", "hydrate"], ["same query key", "cùng query key"], ["staleTime", "freshness"], ["sensitive data", "secret", "dữ liệu nhạy cảm"]]
+min_keywords = 4
+model_answer = '''Tạo QueryClient riêng cho mỗi request server, prefetch dữ liệu cần thiết rồi chuyển state bằng dehydrate vào HydrationBoundary. Component client dùng cùng query key để đọc cache; cấu hình staleTime theo nghiệp vụ để tránh refetch ngay không cần thiết. Chỉ serialize dữ liệu được phép gửi tới trình duyệt, không đưa secret hoặc token vào dehydrated state.'''
+explanation = "Câu trả lời tốt nối phạm vi cache, query identity, freshness và ranh giới dữ liệu client/server thành một quy trình."
+sources = ["tanstack_query/framework/react/guides/ssr", "tanstack_query/framework/react/guides/advanced-ssr"]
+
+[[questions]]
+id = "nextjs-dv018"
+module = "nextjs-dv-query-ssr"
+type = "single"
+difficulty = 2
+prompt = "Hai query `profile` và `notifications` không phụ thuộc nhau. Cách prefetch nào giảm thời gian chờ tổng thể tốt hơn?"
+options = ["Chờ profile xong rồi mới bắt đầu notifications", "Bắt đầu cả hai tác vụ prefetch trước khi chờ kết quả", "Gộp hai query vào một key dù dữ liệu khác nhau", "Đặt staleTime bằng 0 cho cả hai"]
+answer = [1]
+explanation = "Các query độc lập có thể chạy đồng thời; key riêng vẫn giữ đúng danh tính từng loại dữ liệu."
+sources = ["tanstack_query/framework/react/guides/prefetching", "tanstack_query/framework/react/guides/ssr"]
+
+[[questions]]
+id = "nextjs-dv001"
+module = "nextjs-dv-authz"
+type = "single"
+difficulty = 1
+prompt = "Authentication và authorization khác nhau thế nào?"
+options = ["Authentication xác định danh tính; authorization quyết định quyền trên hành động hoặc resource", "Authentication kiểm tra quyền; authorization tạo session", "Hai khái niệm chỉ khác tên", "Authorization chỉ áp dụng cho giao diện"]
+answer = [0]
+explanation = "Cần xác định người gọi là ai trước, rồi kiểm tra họ có được làm thao tác cụ thể trên resource hay không."
+sources = ["nextjs/app/building-your-application/authentication"]
+
+[[questions]]
+id = "nextjs-dv002"
+module = "nextjs-dv-authz"
+type = "single"
+difficulty = 2
+prompt = "Một Server Action nhận `projectId` từ form và cập nhật project. Kiểm tra nào phải xảy ra trước khi ghi?"
+options = ["Tin `userId` gửi kèm trong form nếu kiểu là string", "Đọc session phía server và kiểm tra quyền của user trên project đã tải", "Chỉ kiểm tra nút submit đã bị ẩn với user khác", "Chỉ kiểm tra URL có bắt đầu bằng `/dashboard`"]
+answer = [1]
+explanation = "Input client có thể bị sửa; action phải xác thực request và kiểm tra authorization trên resource thật ở phía server."
+sources = ["nextjs/app/building-your-application/authentication", "nextjs/app/building-your-application/data-fetching/server-actions-and-mutations"]
+
+[[questions]]
+id = "nextjs-dv003"
+module = "nextjs-dv-authz"
+type = "single"
+difficulty = 2
+prompt = "Vì sao không nên đặt API key bí mật trong biến môi trường có tiền tố `NEXT_PUBLIC_`?"
+options = ["Biến đó chỉ tồn tại trong test", "Next.js đưa giá trị đó ra bundle phía client", "Biến đó chỉ đọc được trong CSS", "Prefix này tự động mã hoá giá trị"]
+answer = [1]
+explanation = "Prefix `NEXT_PUBLIC_` đánh dấu giá trị cần dùng ở client và không phù hợp cho secret."
+sources = ["nextjs/app/building-your-application/configuring/environment-variables"]
+
+[[questions]]
+id = "nextjs-dv004"
+module = "nextjs-dv-authz"
+type = "multiple"
+difficulty = 2
+prompt = "Những thực hành nào giúp bảo vệ thao tác sửa dữ liệu?"
+options = ["Kiểm tra session và quyền trên resource trong server-side action", "Ẩn nút sửa ở client rồi coi đó là kiểm soát quyền đầy đủ", "Xác thực dữ liệu nhận từ form trước khi dùng", "Tin `ownerId` do client gửi nếu khớp kiểu TypeScript"]
+answer = [0, 2]
+explanation = "UI và TypeScript không xác minh request khi tới server; server cần kiểm tra danh tính, quyền và input."
+sources = ["nextjs/app/building-your-application/authentication", "nextjs/app/building-your-application/data-fetching/server-actions-and-mutations"]
+
+[[questions]]
+id = "nextjs-dv005"
+module = "nextjs-dv-authz"
+type = "multiple"
+difficulty = 2
+prompt = "Thuộc tính nào thường được cân nhắc cho cookie session?"
+options = ["`HttpOnly` để JavaScript phía client không đọc cookie trực tiếp", "`Secure` để chỉ gửi qua HTTPS", "`SameSite` để giảm một số request cross-site không mong muốn", "Lưu session secret trong tên cookie để client tiện khôi phục"]
+answer = [0, 1, 2]
+explanation = "Các thuộc tính cookie này hỗ trợ bảo vệ session; chúng không thay thế kiểm tra authorization ở server."
+sources = ["nextjs/app/building-your-application/authentication"]
+
+[[questions]]
+id = "nextjs-dv006"
+module = "nextjs-dv-authz"
+type = "fill"
+difficulty = 1
+prompt = "Ngoài xác thực danh tính, server phải kiểm tra {{blank}} trước khi cho phép user sửa một resource."
+blanks = [["authorization", "phân quyền", "quyền truy cập"]]
+explanation = "Đăng nhập chỉ cho biết ai đang gọi; server vẫn cần kiểm tra quyền của họ trên resource cụ thể."
+sources = ["nextjs/app/building-your-application/authentication"]
+
+[[questions]]
+id = "nextjs-dv007"
+module = "nextjs-dv-authz"
+type = "essay"
+difficulty = 3
+prompt = "Trong phỏng vấn, hãy giải thích vì sao ẩn nút ở client hoặc redirect bằng Proxy/Middleware chưa đủ để bảo vệ một thao tác cập nhật. Nêu nơi nên kiểm tra quyền và dữ liệu nào không nên tin từ request."
+keywords = [["authorization", "phân quyền"], ["server action", "route handler"], ["data access layer", "lớp truy cập dữ liệu"], ["client", "phía client"], ["input validation", "validate input"]]
+min_keywords = 3
+model_answer = '''Ẩn nút phía client và redirect sớm chỉ cải thiện trải nghiệm. Server Action hoặc Route Handler vẫn phải xác thực session, kiểm tra authorization trên resource trong data access layer và validate input; không tin userId hay ownerId do client gửi.'''
+explanation = "Mọi request có thể được gọi trực tiếp; chính sách quyền phải được áp dụng tại nơi server đọc hoặc ghi dữ liệu."
+sources = ["nextjs/app/building-your-application/authentication", "nextjs/app/building-your-application/data-fetching/server-actions-and-mutations", "nextjs/app/building-your-application/routing/middleware"]
+
+[[questions]]
+id = "nextjs-dv008"
+module = "nextjs-dv-authz"
+type = "single"
+difficulty = 3
+prompt = "Proxy/Middleware chuyển khách chưa đăng nhập khỏi `/dashboard`, nhưng Route Handler cập nhật hồ sơ không kiểm tra session. Nhận định nào đúng?"
+options = ["Hồ sơ vẫn được bảo vệ vì mọi request đều phải qua trang dashboard", "Handler còn thiếu kiểm tra; có thể bị gọi độc lập và phải tự xác thực/phân quyền", "Chỉ cần thêm TypeScript vào handler", "Client Component tự xác thực handler khi render"]
+answer = [1]
+explanation = "Lọc hoặc redirect ở tầng điều hướng không thay kiểm tra bảo mật ngay trong handler xử lý dữ liệu."
+sources = ["nextjs/app/building-your-application/authentication", "nextjs/app/building-your-application/routing/middleware"]
+
+[[questions]]
+id = "nextjs-dvc01"
+module = "nextjs-dv-authz"
+type = "code"
+difficulty = 2
+title = "Kiểm tra quyền sửa project"
+lang = "javascript"
+prompt = '''
+Viết `canEditProject(user, project)` trả về boolean.
+- `user` phải là object có `id` là chuỗi không rỗng; nếu thiếu hoặc sai kiểu thì từ chối.
+- `project` phải là object có `ownerId` là chuỗi không rỗng; nếu thiếu hoặc sai kiểu thì từ chối.
+- Cho phép nếu `user.id === project.ownerId` hoặc `user.roles` là mảng có phần tử `"admin"`.
+- Các trường hợp khác trả về `false`.
+
+Đây là phần kiểm tra quyền phía server; không dùng một `userId` do client tự khai báo thay cho danh tính đã xác thực.
+'''
+starter = '''
+function canEditProject(user, project) {
+  return Boolean(user && project);
+}
+'''
+solution = '''
+function canEditProject(user, project) {
+  if (!user || typeof user.id !== 'string' || user.id.length === 0) return false;
+  if (!project || typeof project.ownerId !== 'string' || project.ownerId.length === 0) return false;
+  if (Array.isArray(user.roles) && user.roles.includes('admin')) return true;
+  return user.id === project.ownerId;
+}
+'''
+tests = '''
+test('cho phép chủ sở hữu', () => {
+  expect(canEditProject({ id: 'u1', roles: [] }, { ownerId: 'u1' })).toBe(true);
+});
+test('cho phép admin hợp lệ', () => {
+  expect(canEditProject({ id: 'admin-1', roles: ['admin'] }, { ownerId: 'u2' })).toBe(true);
+});
+test('từ chối user không phải chủ sở hữu', () => {
+  expect(canEditProject({ id: 'u1', roles: ['member'] }, { ownerId: 'u2' })).toBe(false);
+});
+test('từ chối khi thiếu user hoặc project', () => {
+  expect(canEditProject(null, { ownerId: 'u1' })).toBe(false);
+  expect(canEditProject({ id: 'u1' }, null)).toBe(false);
+});
+test('từ chối ownerId rỗng', () => {
+  expect(canEditProject({ id: 'u1', roles: ['admin'] }, { ownerId: '' })).toBe(false);
+});
+'''
+hints = ["Kiểm tra dữ liệu user và project trước khi đọc roles.", "Admin chỉ được chấp nhận khi roles là mảng có chứa đúng chuỗi `admin`."]
+explanation = "Phân quyền phải dựa trên danh tính đã xác thực và resource thực tế, với từ chối mặc định khi dữ liệu cần thiết không hợp lệ."
+sources = ["nextjs/app/building-your-application/authentication", "nextjs/app/building-your-application/data-fetching/server-actions-and-mutations"]
 
 [[questions]]
 id = "next-025"

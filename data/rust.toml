@@ -10,7 +10,7 @@ description = "Nền tảng Rust từ ownership, kiểu dữ liệu và trait đ
 id = "rs-ownership"
 title = "Ownership, borrowing & lifetime"
 description = "Quyền sở hữu, mượn bất biến/mutable, slice và quan hệ lifetime."
-sources = ["rust/book/ch04-00-understanding-ownership", "rust/book/ch04-02-references-and-borrowing", "rust/book/ch10-03-lifetime-syntax"]
+sources = ["rust/book/ch04-00-understanding-ownership", "rust/book/ch04-02-references-and-borrowing", "rust/book/ch04-03-slices", "rust/book/ch10-03-lifetime-syntax"]
 lesson = '''
 ### Quyền sở hữu và mượn
 Mỗi giá trị có một owner; khi owner rời scope, giá trị được giải phóng. Gán một String thường chuyển quyền sở hữu, còn kiểu Copy như i32 được sao chép. Mượn cho phép dùng dữ liệu mà không chuyển ownership.
@@ -34,7 +34,7 @@ Lifetime 'a diễn tả rằng kết quả không sống lâu hơn các tham chi
 id = "rs-types"
 title = "Struct, enum, pattern matching & Result"
 description = "Tổ chức dữ liệu, xử lý mọi nhánh và lan truyền lỗi bằng Option, Result, và toán tử ?."
-sources = ["rust/book/ch05-00-structs", "rust/book/ch06-00-enums", "rust/book/ch09-02-recoverable-errors-with-result"]
+sources = ["rust/book/ch05-00-structs", "rust/book/ch05-03-method-syntax", "rust/book/ch06-00-enums", "rust/book/ch06-03-if-let", "rust/book/ch09-02-recoverable-errors-with-result"]
 lesson = '''
 ### Kiểu dữ liệu và luồng điều khiển
 Struct gom các field có tên; enum biểu diễn một trong nhiều biến thể. Rust dùng enum chuẩn để làm rõ trường hợp thiếu dữ liệu và lỗi thay vì dùng null hay exception ngầm.
@@ -132,7 +132,7 @@ Lỗi thường gặp là làm mọi item thành public, nhầm package với cr
 id = "rs-concurrency"
 title = "Concurrency & async căn bản"
 description = "Thread, channel, Arc/Mutex, Send/Sync và mô hình Future."
-sources = ["rust/book/ch16-01-threads", "rust/book/ch16-02-message-passing", "rust/book/ch16-03-shared-state", "rust/book/ch16-04-extensible-concurrency-sync-and-send", "rust/book/ch17-00-async-await"]
+sources = ["rust/book/ch16-01-threads", "rust/book/ch16-02-message-passing", "rust/book/ch16-03-shared-state", "rust/book/ch16-04-extensible-concurrency-sync-and-send", "rust/book/ch17-00-async-await", "rust/book/ch17-01-futures-and-syntax", "rust/book/ch17-02-concurrency-with-async"]
 lesson = '''
 ### Chia sẻ công việc an toàn
 thread::spawn chạy closure trên thread mới và thường yêu cầu dữ liệu được move vào thread. Channel truyền message giữa producer và consumer; shared state dùng Arc<T> cho ownership chung giữa thread và Mutex<T> để bảo vệ truy cập mutable.
@@ -147,6 +147,27 @@ thread::spawn chạy closure trên thread mới và thường yêu cầu dữ li
 async biểu diễn công việc dưới dạng Future; executor poll Future để tiến triển. Async không tự tạo một thread cho mỗi tác vụ, và thư viện chuẩn cung cấp trait Future nhưng không cung cấp executor tổng quát. Chọn thread cho tác vụ CPU/blocking phù hợp; chọn async khi có runtime và nhiều tác vụ I/O chờ đợi.
 
 Lỗi thường gặp là nghĩ Arc tự làm mọi dữ liệu thread-safe, giữ Mutex lock quá lâu, hoặc quên rằng thread cần ownership/lifetime phù hợp.
+'''
+
+[[modules]]
+id = "rust-dv-smart-pointers"
+title = "Smart pointer & interior mutability"
+description = "Chọn Box, Rc, RefCell, Arc và Mutex theo ownership, luồng chạy và nhu cầu mutation."
+sources = ["rust/book/ch15-00-smart-pointers", "rust/book/ch15-01-box", "rust/book/ch15-02-deref", "rust/book/ch15-04-rc", "rust/book/ch15-05-interior-mutability", "rust/book/ch15-06-reference-cycles"]
+lesson = '''
+### Chọn smart pointer đúng mục đích
+Smart pointer là kiểu dữ liệu sở hữu hoặc quản lý truy cập tới dữ liệu khác, đồng thời cung cấp hành vi như dereference, đếm tham chiếu hay giải phóng tài nguyên. `Box<T>` tạo ownership đơn và đặt giá trị trên heap; nó hữu ích với kiểu đệ quy có kích thước chưa biết tại thời điểm biên dịch, hoặc khi muốn chuyển ownership mà không sao chép dữ liệu lớn. `Rc<T>` cho phép nhiều owner trong cùng một thread. `RefCell<T>` cho phép mutation qua shared reference nhưng kiểm tra quy tắc borrow lúc chạy. Trong chương trình đa luồng, `Arc<T>` là reference counting thread-safe; để sửa dữ liệu thường ghép với `Mutex<T>` hoặc `RwLock<T>`.
+
+| Kiểu | Ownership / chia sẻ | Mutation | Dùng khi |
+|---|---|---|---|
+| `Box<T>` | Một owner | Theo borrow thông thường | Heap, kiểu đệ quy, trait object |
+| `Rc<T>` | Nhiều owner, một thread | Không tự cho phép sửa | Chia sẻ graph chỉ đọc |
+| `RefCell<T>` | Một owner, một thread | Kiểm tra borrow lúc chạy | Cần mutation qua API dùng `&self` |
+| `Arc<Mutex<T>>` | Nhiều thread | Khoá lúc chạy | Chia sẻ trạng thái mutable giữa thread |
+
+Ví dụ, `Rc<RefCell<Node>>` có thể mô hình một graph mutable trong một thread; khi graph có cạnh quay lại, dùng `Weak<T>` cho cạnh không sở hữu để tránh reference cycle giữ bộ nhớ mãi. `Deref` cho phép truy cập giá trị đích thuận tiện; `Drop` chạy khi owner cuối cùng được giải phóng. `RefCell` sẽ panic nếu borrow mutable chồng lấn với borrow đang hoạt động, nên scope của guard cần ngắn.
+
+Lỗi hay gặp là dùng `Rc` như thể nó thread-safe, chọn `RefCell` rồi quên xung đột borrow có thể chỉ xuất hiện lúc chạy, hoặc tạo chu trình `Rc` không có `Weak`. Ưu tiên ownership và borrowing thông thường; thêm smart pointer khi mô hình dữ liệu thực sự cần chia sẻ hay mutation nội bộ.
 '''
 
 [[questions]]
@@ -949,3 +970,520 @@ tests = '''bovabon_tests! {
 hints = ["Clone sender cho mỗi thread; receiver chỉ kết thúc khi mọi sender đã drop.", "Gửi index cùng kết quả để khôi phục thứ tự ban đầu khi nhận message."]
 explanation = "Thread sở hữu chunk qua move; channel chuyển cặp index/kết quả về thread gọi và giữ thứ tự đầu ra."
 sources = ["rust/book/ch16-01-threads", "rust/book/ch16-02-message-passing"]
+
+[[questions]]
+id = "rust-dv001"
+module = "rust-dv-smart-pointers"
+type = "single"
+difficulty = 2
+prompt = "Một cấu trúc cây có thể chứa node con cùng kiểu, khiến kích thước trực tiếp không xác định tại compile time. Kiểu nào thường tạo indirection và ownership đơn phù hợp?"
+options = ["Box<Node>", "Rc<Node>", "RefCell<Node>", "Mutex<Node>"]
+answer = [0]
+explanation = "Box đặt dữ liệu trên heap và giữ một owner; indirection giúp kiểu đệ quy có kích thước xác định."
+sources = ["rust/book/ch15-01-box"]
+
+[[questions]]
+id = "rust-dv002"
+module = "rust-dv-smart-pointers"
+type = "single"
+difficulty = 2
+prompt = "Một graph bất biến cần nhiều node cùng sở hữu một giá trị trong một thread. Lựa chọn nào phù hợp nhất?"
+options = ["Rc<T>", "Arc<Mutex<T>>", "Box<T>", "RefCell<T>"]
+answer = [0]
+explanation = "Rc<T> đếm reference cho nhiều owner trong một thread; Arc cần thiết khi chia sẻ ownership giữa thread."
+sources = ["rust/book/ch15-04-rc"]
+
+[[questions]]
+id = "rust-dv003"
+module = "rust-dv-smart-pointers"
+type = "single"
+difficulty = 3
+prompt = "Một method nhận `&self` nhưng cần cập nhật bộ đếm nội bộ trong chương trình đơn luồng. Thành phần nào cho phép kiểm tra borrow lúc chạy?"
+options = ["RefCell<T>", "Rc<T>", "Box<T>", "Cell<T> chỉ khi T không Copy"]
+answer = [0]
+explanation = "RefCell<T> thực hiện dynamic borrow checking; xung đột sẽ panic lúc chạy. Cell<T> phù hợp với mutation qua set/get cho kiểu Copy, không phải kiểu bất kỳ."
+sources = ["rust/book/ch15-05-interior-mutability"]
+
+[[questions]]
+id = "rust-dv004"
+module = "rust-dv-smart-pointers"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các phát biểu đúng về `Rc<T>` và `Weak<T>`."
+options = [
+  "Rc<T> cho phép nhiều owner trong một thread",
+  "Rc<T> tự làm mọi giá trị thread-safe",
+  "Weak<T> không giữ strong reference count tăng lên như Rc<T>",
+  "Dùng Weak<T> cho cạnh quay lại có thể giúp tránh reference cycle giữ dữ liệu sống mãi",
+]
+answer = [0, 2, 3]
+explanation = "Rc không thread-safe; Weak không sở hữu mạnh nên phù hợp cho liên kết không sở hữu trong graph."
+sources = ["rust/book/ch15-04-rc", "rust/book/ch15-06-reference-cycles"]
+
+[[questions]]
+id = "rust-dv005"
+module = "rust-dv-smart-pointers"
+type = "multiple"
+difficulty = 3
+prompt = "Một service chia sẻ trạng thái mutable giữa nhiều OS thread. Những nhận định nào phù hợp?"
+options = [
+  "Arc<T> có thể chia sẻ ownership giữa thread khi T đáp ứng các trait cần thiết",
+  "Mutex<T> bảo vệ mutation bằng khóa khi được truy cập đúng cách",
+  "Rc<RefCell<T>> là thay thế thread-safe cho Arc<Mutex<T>>",
+  "Nên giữ khóa trong thời gian ngắn để giảm contention và nguy cơ deadlock",
+]
+answer = [0, 1, 3]
+explanation = "Arc kết hợp Mutex là mẫu phổ biến cho shared mutable state; Rc và RefCell chỉ phục vụ mô hình đơn luồng."
+sources = ["rust/book/ch15-05-interior-mutability", "rust/book/ch16-03-shared-state"]
+
+[[questions]]
+id = "rust-dv006"
+module = "rust-dv-smart-pointers"
+type = "fill"
+difficulty = 1
+prompt = "Điền smart pointer cho phép nhiều owner trong một thread: `std::rc::{{blank}}<T>`."
+blanks = [["Rc"]]
+explanation = "Rc viết tắt của reference counting; nó không thể dùng như cơ chế chia sẻ thread-safe."
+sources = ["rust/book/ch15-04-rc"]
+
+[[questions]]
+id = "rust-dv007"
+module = "rust-dv-smart-pointers"
+type = "essay"
+difficulty = 3
+prompt = "Trong phỏng vấn, hãy giải thích khi nào chọn Box, Rc/Weak, RefCell, hoặc Arc<Mutex<T>>; nêu trade-off và một lỗi cần tránh."
+keywords = [["box", "boxed"], ["rc", "reference counted"], ["refcell", "interior mutability"], ["single thread", "single-threaded"], ["arc", "arc mutex"], ["weak", "reference cycle"]]
+min_keywords = 4
+model_answer = '''Box<T> phù hợp khi cần indirection hoặc ownership đơn. Rc<T> chia sẻ ownership trong single thread; Weak<T> phù hợp với cạnh không sở hữu để tránh reference cycle. RefCell<T> cung cấp interior mutability với borrow check lúc chạy và có thể panic khi borrow xung đột. Khi chia sẻ giữa thread, Arc<Mutex<T>> kết hợp ownership thread-safe với mutation được khóa; cần giữ lock ngắn để tránh contention và deadlock.'''
+explanation = "Câu trả lời tốt phân biệt số owner, thread-safety và thời điểm kiểm tra borrow thay vì xem các smart pointer là hoán đổi cho nhau."
+sources = ["rust/book/ch15-01-box", "rust/book/ch15-04-rc", "rust/book/ch15-05-interior-mutability"]
+
+[[questions]]
+id = "rust-dvc01"
+module = "rust-dv-smart-pointers"
+type = "code"
+difficulty = 2
+lang = "rust"
+title = "Bộ đếm dùng chung trong một thread"
+prompt = '''Cài `SharedCounter` bằng `Rc<RefCell<i32>>`. `new(value)` tạo bộ đếm; `clone_handle(&self)` trả về handle mới cùng trỏ tới bộ đếm; `increment(&self)` tăng giá trị một đơn vị; `get(&self)` đọc giá trị hiện tại. Clone handle phải quan sát cùng trạng thái. Chỉ dùng thư viện chuẩn.'''
+starter = '''use std::cell::RefCell;
+use std::rc::Rc;
+
+struct SharedCounter {
+    value: Rc<RefCell<i32>>,
+}
+
+impl SharedCounter {
+    fn new(value: i32) -> Self {
+        Self { value: Rc::new(RefCell::new(value)) }
+    }
+
+    fn clone_handle(&self) -> Self {
+        Self { value: Rc::new(RefCell::new(0)) }
+    }
+
+    fn increment(&self) {}
+
+    fn get(&self) -> i32 {
+        0
+    }
+}'''
+solution = '''use std::cell::RefCell;
+use std::rc::Rc;
+
+struct SharedCounter {
+    value: Rc<RefCell<i32>>,
+}
+
+impl SharedCounter {
+    fn new(value: i32) -> Self {
+        Self { value: Rc::new(RefCell::new(value)) }
+    }
+
+    fn clone_handle(&self) -> Self {
+        Self { value: Rc::clone(&self.value) }
+    }
+
+    fn increment(&self) {
+        *self.value.borrow_mut() += 1;
+    }
+
+    fn get(&self) -> i32 {
+        *self.value.borrow()
+    }
+}'''
+tests = '''bovabon_tests! {
+    "đọc giá trị khởi tạo" => {
+        let counter = SharedCounter::new(7);
+        assert_eq!(counter.get(), 7);
+    },
+    "tăng giá trị" => {
+        let counter = SharedCounter::new(0);
+        counter.increment();
+        assert_eq!(counter.get(), 1);
+    },
+    "handle clone chia sẻ trạng thái" => {
+        let counter = SharedCounter::new(3);
+        let other = counter.clone_handle();
+        other.increment();
+        assert_eq!(counter.get(), 4);
+    },
+    "nhiều lần tăng qua các handle" => {
+        let counter = SharedCounter::new(-2);
+        let other = counter.clone_handle();
+        counter.increment();
+        other.increment();
+        assert_eq!(counter.get(), 0);
+        assert_eq!(other.get(), 0);
+    },
+}'''
+hints = ["Dùng Rc::clone để tạo thêm owner của cùng RefCell.", "borrow_mut() trả guard mutable; dereference guard để cập nhật số nguyên."]
+explanation = "Rc chia sẻ ownership đơn luồng, còn RefCell cho phép mutation với kiểm tra borrow lúc chạy."
+sources = ["rust/book/ch15-04-rc", "rust/book/ch15-05-interior-mutability"]
+
+[[modules]]
+id = "rust-dv-testing-cli"
+title = "Kiểm thử & ứng dụng dòng lệnh"
+description = "Tổ chức unit/integration test và xây CLI có cấu hình, thông báo lỗi, mã thoát rõ ràng."
+sources = ["rust/book/ch11-00-testing", "rust/book/ch11-01-writing-tests", "rust/book/ch11-02-running-tests", "rust/book/ch11-03-test-organization", "rust/book/ch12-01-accepting-command-line-arguments", "rust/book/ch12-03-improving-error-handling-and-modularity"]
+lesson = '''
+### Kiểm thử và CLI dễ bảo trì
+Rust hỗ trợ unit test và integration test qua Cargo. Unit test thường đặt trong module con `tests` của file nguồn; chúng có thể kiểm tra item private theo quy tắc visibility của module. Integration test nằm trong thư mục `tests/`, biên dịch như crate riêng và chỉ dùng API public của library. Dùng `assert!`, `assert_eq!`, `assert_ne!` để kiểm tra kết quả; test nên mô tả một hành vi quan sát được, độc lập với thứ tự chạy và không phụ thuộc trạng thái dùng chung.
+
+| Cách tổ chức | Nhìn thấy gì | Hợp với |
+|---|---|---|
+| Unit test trong `src` | Có thể truy cập chi tiết private trong module cha | Hàm nhỏ, invariant nội bộ |
+| Integration test trong `tests/` | Public API của crate như người dùng thật | Hợp đồng giữa các module |
+| Doc test | Ví dụ trong documentation được biên dịch/chạy | Đảm bảo hướng dẫn vẫn đúng |
+
+`#[should_panic]` xác nhận test phải panic; thêm `expected = "..."` để tránh pass do một panic không liên quan. Có thể trả `Result<(), E>` từ test và dùng `?` để lỗi làm test thất bại. `cargo test` chạy test mặc định; đối số sau `--` được chuyển cho test harness, ví dụ `-- --nocapture` để hiện output. Các test chạy song song, nên tránh dựa vào thứ tự hoặc cùng ghi một file.
+
+Với CLI, tách đọc đối số, phân tích cấu hình và xử lý nghiệp vụ thành hàm có thể kiểm thử. Dữ liệu đầu vào sai là lỗi có thể dự kiến: trả `Result` với thông báo rõ, để tầng trên quyết định in ra stderr và dùng exit code khác 0. Không dùng `unwrap()` cho đối số người dùng. Dùng `std::env::args_os()` nếu cần chấp nhận đường dẫn không phải UTF-8; `args()` giả định các đối số chuyển được thành chuỗi UTF-8.
+
+Lỗi hay gặp là đặt mọi test trong binary nên integration test không thể import crate, kiểm tra panic quá rộng, hoặc để test phụ thuộc biến môi trường/working directory mà không cô lập chúng. Thiết kế parser thuần nhận slice đối số giúp test các trường hợp thiếu, lặp, sai và hợp lệ mà không cần chạy process thật.
+'''
+
+[[questions]]
+id = "rust-dv008"
+module = "rust-dv-testing-cli"
+type = "single"
+difficulty = 2
+prompt = "Một integration test trong `tests/` thường tương tác với library của crate qua phạm vi nào?"
+options = ["Chỉ API public", "Mọi item private trong từng module", "Biến cục bộ của binary đang chạy", "Macro test nội bộ không được export"]
+answer = [0]
+explanation = "Integration test biên dịch như crate riêng nên kiểm tra được hợp đồng public như client sử dụng thư viện."
+sources = ["rust/book/ch11-03-test-organization"]
+
+[[questions]]
+id = "rust-dv009"
+module = "rust-dv-testing-cli"
+type = "single"
+difficulty = 2
+prompt = '''Một test dùng `#[should_panic(expected = "invalid length")]` thành công khi nào?'''
+options = ["Bất kỳ panic nào xảy ra", "Test panic với thông điệp khớp chuỗi mong đợi", "Hàm trả về Err", "Test kết thúc trước timeout"]
+answer = [1]
+explanation = "Expected kiểm tra nội dung panic để test không pass nhầm do lỗi panic khác với hành vi dự kiến."
+sources = ["rust/book/ch11-01-writing-tests"]
+
+[[questions]]
+id = "rust-dv010"
+module = "rust-dv-testing-cli"
+type = "single"
+difficulty = 2
+prompt = "Parser nhận đối số CLI thiếu giá trị cho `--file`. Cách thiết kế nào giúp ứng dụng báo lỗi thân thiện và kiểm thử được?"
+options = ["Gọi unwrap() để process panic", "Trả Result từ parser và để tầng CLI in lỗi ra stderr rồi đặt exit code phù hợp", "Bỏ qua flag và dùng file rỗng", "Ghi lỗi ra stdout rồi tiếp tục xử lý"]
+answer = [1]
+explanation = "Lỗi input là lỗi dự kiến; Result giữ parser thuần, còn biên process quyết định cách hiển thị và exit status."
+sources = ["rust/book/ch12-03-improving-error-handling-and-modularity"]
+
+[[questions]]
+id = "rust-dv011"
+module = "rust-dv-testing-cli"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các phát biểu đúng về Rust test."
+options = [
+  "Unit test có thể đặt trong module con `tests` của file nguồn",
+  "Integration test thường nằm trong thư mục `tests/` và chỉ thấy API public",
+  "Test mặc định luôn chạy tuần tự theo thứ tự khai báo",
+  "Đối số sau dấu `--` trong `cargo test` được chuyển cho test harness",
+]
+answer = [0, 1, 3]
+explanation = "Test chạy song song mặc định; không nên dựa vào thứ tự chạy. Dấu `--` tách tùy chọn Cargo và tùy chọn harness."
+sources = ["rust/book/ch11-02-running-tests", "rust/book/ch11-03-test-organization"]
+
+[[questions]]
+id = "rust-dv012"
+module = "rust-dv-testing-cli"
+type = "multiple"
+difficulty = 3
+prompt = "Chọn cách làm phù hợp khi xây CLI nhận tên file từ người dùng."
+options = [
+  "Tách parse đối số khỏi xử lý nghiệp vụ để test parser trực tiếp",
+  "Dùng `args_os()` nếu cần giữ đường dẫn hệ điều hành không phải UTF-8",
+  "Dùng `unwrap()` cho mọi giá trị bắt buộc để thông báo lỗi ngắn hơn",
+  "Giữ test độc lập với thứ tự và trạng thái filesystem dùng chung",
+]
+answer = [0, 1, 3]
+explanation = "Parser thuần dễ test; args_os hỗ trợ đối số hệ điều hành không UTF-8; unwrap không phù hợp với input có thể sai."
+sources = ["rust/book/ch12-01-accepting-command-line-arguments", "rust/book/ch11-02-running-tests"]
+
+[[questions]]
+id = "rust-dv013"
+module = "rust-dv-testing-cli"
+type = "fill"
+difficulty = 1
+prompt = "Điền thuộc tính đánh dấu một hàm là test: `#[{{blank}}]`."
+blanks = [["test"]]
+explanation = "Test harness nhận diện hàm có thuộc tính #[test]."
+sources = ["rust/book/ch11-01-writing-tests"]
+
+[[questions]]
+id = "rust-dv014"
+module = "rust-dv-testing-cli"
+type = "essay"
+difficulty = 3
+prompt = "Giải thích cách chia unit test và integration test cho một CLI library; nêu cách xử lý input lỗi và giữ test ổn định khi chạy song song."
+keywords = [["unit test", "unit tests"], ["integration test", "integration tests"], ["public api", "api public"], ["result", "error handling"], ["parallel", "song song"], ["stderr", "exit code"]]
+min_keywords = 4
+model_answer = '''Đặt unit test gần code để kiểm tra hàm và invariant nội bộ; đặt integration test trong tests/ để xác nhận public API của library hoạt động như client sử dụng. Parser CLI nên trả Result thay vì panic khi input sai; tầng main có thể in lỗi ra stderr và chọn exit code khác 0. Vì test chạy parallel, mỗi test cần dữ liệu cô lập và không dựa vào thứ tự, biến môi trường hay file dùng chung.'''
+explanation = "Trả lời nên phân biệt visibility của hai loại test, xử lý lỗi đầu vào rõ ràng và nêu tính độc lập khi chạy song song."
+sources = ["rust/book/ch11-03-test-organization", "rust/book/ch12-03-improving-error-handling-and-modularity"]
+
+[[questions]]
+id = "rust-dvc02"
+module = "rust-dv-testing-cli"
+type = "code"
+difficulty = 2
+lang = "rust"
+title = "Phân tích tùy chọn tìm kiếm CLI"
+prompt = '''Cài `parse_search_args(args: &[&str]) -> Result<SearchConfig, String>`. Slice chỉ chứa tùy chọn, không có tên chương trình. Bắt buộc nhận đúng một `--query <text>` và một `--file <path>` với giá trị không rỗng; `--ignore-case` là cờ tùy chọn, xuất hiện tối đa một lần. Trả Err nếu thiếu/lặp tùy chọn, thiếu giá trị, gặp cờ lạ hoặc giá trị bắt buộc rỗng. `SearchConfig` có các field `query: String`, `file: String`, `ignore_case: bool`. Không đọc filesystem hay environment.'''
+starter = '''struct SearchConfig {
+    query: String,
+    file: String,
+    ignore_case: bool,
+}
+
+fn parse_search_args(_args: &[&str]) -> Result<SearchConfig, String> {
+    Err("invalid arguments".to_string())
+}'''
+solution = '''struct SearchConfig {
+    query: String,
+    file: String,
+    ignore_case: bool,
+}
+
+fn parse_search_args(args: &[&str]) -> Result<SearchConfig, String> {
+    let mut query = None;
+    let mut file = None;
+    let mut ignore_case = false;
+    let mut index = 0;
+
+    while index < args.len() {
+        match args[index] {
+            "--query" => {
+                if query.is_some() {
+                    return Err("duplicate --query".to_string());
+                }
+                let value = args.get(index + 1).ok_or_else(|| "missing --query value".to_string())?;
+                if value.is_empty() {
+                    return Err("empty --query value".to_string());
+                }
+                query = Some((*value).to_string());
+                index += 2;
+            }
+            "--file" => {
+                if file.is_some() {
+                    return Err("duplicate --file".to_string());
+                }
+                let value = args.get(index + 1).ok_or_else(|| "missing --file value".to_string())?;
+                if value.is_empty() {
+                    return Err("empty --file value".to_string());
+                }
+                file = Some((*value).to_string());
+                index += 2;
+            }
+            "--ignore-case" => {
+                if ignore_case {
+                    return Err("duplicate --ignore-case".to_string());
+                }
+                ignore_case = true;
+                index += 1;
+            }
+            _ => return Err("unknown argument".to_string()),
+        }
+    }
+
+    Ok(SearchConfig {
+        query: query.ok_or_else(|| "missing --query".to_string())?,
+        file: file.ok_or_else(|| "missing --file".to_string())?,
+        ignore_case,
+    })
+}'''
+tests = '''bovabon_tests! {
+    "hai tùy chọn bắt buộc" => {
+        let config = parse_search_args(&["--query", "rust", "--file", "notes.txt"]).unwrap();
+        assert_eq!(config.query, "rust");
+        assert_eq!(config.file, "notes.txt");
+        assert!(!config.ignore_case);
+    },
+    "cờ không phân biệt hoa thường" => {
+        let config = parse_search_args(&["--ignore-case", "--file", "a.txt", "--query", "Hi"]).unwrap();
+        assert!(config.ignore_case);
+    },
+    "thiếu query" => { assert!(parse_search_args(&["--file", "a.txt"]).is_err()); },
+    "thiếu giá trị của file" => { assert!(parse_search_args(&["--query", "x", "--file"]).is_err()); },
+    "giá trị rỗng" => { assert!(parse_search_args(&["--query", "", "--file", "a.txt"]).is_err()); },
+    "cờ lạ và cờ lặp đều bị từ chối" => {
+        assert!(parse_search_args(&["--query", "x", "--file", "a.txt", "--verbose"]).is_err());
+        assert!(parse_search_args(&["--query", "x", "--file", "a.txt", "--ignore-case", "--ignore-case"]).is_err());
+    },
+}'''
+hints = ["Duyệt slice bằng index để mỗi option có thể đọc giá trị ở vị trí kế tiếp.", "Dùng Option<String> để phát hiện option bắt buộc bị thiếu hoặc bị lặp."]
+explanation = "Parser thuần trả Result giúp kiểm thử input hợp lệ và lỗi mà không khởi chạy process hay truy cập filesystem."
+sources = ["rust/book/ch12-01-accepting-command-line-arguments", "rust/book/ch12-03-improving-error-handling-and-modularity"]
+
+[[modules]]
+id = "rust-dv-patterns"
+title = "Pattern nâng cao & let-else"
+description = "Dùng destructuring, match guard, refutability và pattern trong các vị trí điều khiển luồng."
+sources = ["rust/book/ch19-00-patterns", "rust/book/ch19-01-all-the-places-for-patterns", "rust/book/ch19-02-refutability", "rust/book/ch19-03-pattern-syntax", "rust/book/ch06-03-if-let"]
+lesson = '''
+### Pattern là cách kiểm tra và lấy cấu trúc dữ liệu
+Pattern không chỉ xuất hiện trong `match`: Rust còn dùng chúng ở `let`, tham số hàm, `if let`, `while let`, `for`, và `let-else`. Một pattern **irrefutable** luôn khớp với mọi giá trị có kiểu đó, như `let (x, y) = pair`; một pattern **refutable** có thể không khớp, như `Some(value)`. Vì vậy `let` thường yêu cầu pattern irrefutable, còn `if let` và `match` xử lý trường hợp pattern không khớp.
+
+| Cú pháp | Refutability | Dùng khi |
+|---|---|---|
+| `let (x, y) = pair` | Irrefutable | Destructure chắc chắn thành công |
+| `if let Some(x) = value` | Refutable | Chỉ cần xử lý một variant |
+| `match value { ... }` | Refutable, phải exhaustive | Xử lý mọi trường hợp hoặc nhóm trường hợp |
+| `let Some(x) = value else { return; }` | Refutable | Lấy giá trị sớm, nhánh else phải diverge |
+
+`match` yêu cầu exhaustive để không bỏ sót trạng thái; compiler cảnh báo nhánh không thể tới nếu nhánh trước đã bao phủ nó. `_` chỉ bỏ qua phần không cần dùng, còn `..` bỏ qua các field/phần tử còn lại khi destructure. Match guard như `Some(n) if n > 0` thêm điều kiện sau khi pattern khớp; compiler không dùng guard để chứng minh exhaustive. Binding `name @ pattern` vừa xác nhận dạng vừa giữ toàn bộ giá trị con, hữu ích khi cần kiểm tra rồi tiếp tục dùng nó.
+
+Ví dụ, parser sự kiện có thể destructure `Event::Retry { code, .. } if code >= 500` để chỉ retry lỗi máy chủ; các status khác được xử lý ở nhánh riêng. Dùng `let-else` khi trường hợp không hợp lệ cần thoát sớm, nhưng nhánh `else` phải kết thúc bằng `return`, `break`, `continue` hoặc panic để binding sau đó chắc chắn tồn tại.
+
+Lỗi thường gặp là dùng pattern có thể thất bại trực tiếp trong `let`, dùng `_` quá sớm làm mất dữ liệu cần thiết, nghĩ match guard giúp chứng minh mọi giá trị đã được bao phủ, hoặc viết nhánh tổng quát trước nhánh cụ thể khiến nhánh sau unreachable. Hãy chọn `match` khi cần kiểm kê trạng thái rõ ràng và `if let`/`let-else` khi cấu trúc điều khiển thực sự đơn giản hơn.
+'''
+
+[[questions]]
+id = "rust-dv015"
+module = "rust-dv-patterns"
+type = "single"
+difficulty = 2
+prompt = "Vì sao `let Some(value) = maybe_value;` không hợp lệ khi `maybe_value: Option<T>`?"
+options = ["`Some(value)` là pattern refutable nên có thể không khớp", "let không cho phép tạo binding mới", "Option<T> chỉ dùng trong match", "value bắt buộc phải là mutable"]
+answer = [0]
+explanation = "Một let thông thường cần pattern irrefutable. Dùng match, if let hoặc let-else để xử lý trường hợp None."
+sources = ["rust/book/ch19-02-refutability"]
+
+[[questions]]
+id = "rust-dv016"
+module = "rust-dv-patterns"
+type = "single"
+difficulty = 3
+prompt = "Trong `Some(code) if code >= 500 => retry()`, match guard có vai trò gì?"
+options = ["Thêm điều kiện sau khi pattern khớp; compiler không xem guard là bằng chứng exhaustiveness", "Đánh dấu code là mutable", "Thay thế mọi nhánh còn thiếu trong match", "Buộc code có kiểu u32"]
+answer = [0]
+explanation = "Guard lọc thêm trường hợp đã khớp pattern; các nhánh vẫn phải đảm bảo match exhaustive."
+sources = ["rust/book/ch19-03-pattern-syntax"]
+
+[[questions]]
+id = "rust-dv017"
+module = "rust-dv-patterns"
+type = "single"
+difficulty = 2
+prompt = "Điều kiện nào bắt buộc với nhánh `else` của `let Some(value) = input else { ... }`?"
+options = ["Nhánh phải diverge, chẳng hạn return hoặc panic", "Nhánh phải gán giá trị cho value", "Nhánh phải trả về Option<T>", "Nhánh không được chứa biểu thức"]
+answer = [0]
+explanation = "let-else đảm bảo binding tồn tại sau câu lệnh; vì thế nhánh pattern không khớp phải kết thúc luồng điều khiển."
+sources = ["rust/book/ch19-02-refutability", "rust/book/ch06-03-if-let"]
+
+[[questions]]
+id = "rust-dv018"
+module = "rust-dv-patterns"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các phát biểu đúng về `match` và pattern."
+options = [
+  "Các nhánh match phải bao phủ mọi giá trị có thể xảy ra",
+  "Nhánh tổng quát đặt trước có thể khiến nhánh cụ thể phía sau unreachable",
+  "Match guard luôn giúp compiler chứng minh một enum đã được bao phủ hết",
+  "`_` khớp phần còn lại mà không tạo binding cho giá trị đó",
+]
+answer = [0, 1, 3]
+explanation = "Compiler kiểm tra exhaustiveness của pattern, nhưng không dùng guard để chứng minh coverage vì điều kiện guard được đánh giá khi chạy."
+sources = ["rust/book/ch19-03-pattern-syntax"]
+
+[[questions]]
+id = "rust-dv019"
+module = "rust-dv-patterns"
+type = "multiple"
+difficulty = 3
+prompt = "Ở những vị trí nào pattern có thể được dùng trong Rust?"
+options = ["Tham số hàm", "Nhánh for", "if let / while let", "Chỉ trong match"]
+answer = [0, 1, 2]
+explanation = "Pattern xuất hiện ở nhiều cấu trúc binding và điều khiển luồng, không giới hạn trong match."
+sources = ["rust/book/ch19-01-all-the-places-for-patterns"]
+
+[[questions]]
+id = "rust-dv020"
+module = "rust-dv-patterns"
+type = "fill"
+difficulty = 1
+prompt = "Trong match, pattern nào khớp mọi giá trị nhưng không tạo binding mới? `{{blank}} => fallback()`"
+blanks = [["_"]]
+explanation = "Wildcard pattern bỏ qua giá trị và thường dùng cho trường hợp còn lại."
+sources = ["rust/book/ch19-03-pattern-syntax"]
+
+[[questions]]
+id = "rust-dv021"
+module = "rust-dv-patterns"
+type = "essay"
+difficulty = 3
+prompt = "So sánh refutable và irrefutable pattern trong review code. Nêu khi nào dùng match, if let hoặc let-else, và giải thích vai trò của exhaustiveness."
+keywords = [["refutable", "có thể không khớp"], ["irrefutable", "luôn khớp"], ["let-else", "let else"], ["if let"], ["exhaustive", "exhaustiveness", "đầy đủ nhánh"], ["match guard", "guard"]]
+min_keywords = 4
+model_answer = '''Irrefutable pattern luôn khớp nên phù hợp với let thông thường; refutable pattern có thể thất bại và cần match hoặc if let. Dùng let-else khi cần lấy binding rồi thoát sớm nếu không khớp; nhánh else phải diverge. Match cần exhaustive để mọi trạng thái được xử lý, còn match guard lọc thêm lúc chạy và không thay thế việc kiểm tra đầy đủ nhánh.'''
+explanation = "Câu trả lời cần liên hệ loại pattern với cấu trúc điều khiển và giải thích vì sao compiler yêu cầu match exhaustive."
+sources = ["rust/book/ch19-02-refutability", "rust/book/ch19-03-pattern-syntax"]
+
+[[questions]]
+id = "rust-dvc03"
+module = "rust-dv-patterns"
+type = "code"
+difficulty = 2
+lang = "rust"
+title = "Lọc số đo trong ngưỡng hợp lệ"
+prompt = '''Viết `valid_readings(readings: &[Option<i32>]) -> Vec<i32>`. Trả về theo thứ tự ban đầu các số đo hiện diện và nằm trong khoảng đóng 0..=100. Bỏ qua `None`, số âm và số lớn hơn 100. Dùng pattern matching để tách giá trị và kiểm tra khoảng.'''
+starter = '''fn valid_readings(_readings: &[Option<i32>]) -> Vec<i32> {
+    Vec::new()
+}'''
+solution = '''fn valid_readings(readings: &[Option<i32>]) -> Vec<i32> {
+    let mut accepted = Vec::new();
+    for reading in readings {
+        match *reading {
+            Some(value @ 0..=100) => accepted.push(value),
+            _ => {}
+        }
+    }
+    accepted
+}'''
+tests = '''bovabon_tests! {
+    "giữ thứ tự các số hợp lệ" => {
+        assert_eq!(valid_readings(&[Some(18), Some(4), None, Some(70)]), vec![18, 4, 70]);
+    },
+    "nhận cả hai biên" => {
+        assert_eq!(valid_readings(&[Some(0), Some(100)]), vec![0, 100]);
+    },
+    "bỏ none và giá trị ngoài ngưỡng" => {
+        assert_eq!(valid_readings(&[None, Some(-1), Some(101)]), Vec::<i32>::new());
+    },
+    "lọc xen kẽ" => {
+        assert_eq!(valid_readings(&[Some(-3), Some(25), Some(130), None, Some(99)]), vec![25, 99]);
+    },
+    "input rỗng" => { assert!(valid_readings(&[]).is_empty()); },
+}'''
+hints = ["Duyệt từng `&Option<i32>` và match sau khi dereference vì i32 là Copy.", "Dùng binding `value @ 0..=100` để vừa ràng buộc khoảng vừa giữ số đo."]
+explanation = "Pattern có range kiểm tra ngưỡng ngay khi destructure; wildcard bỏ qua None và các giá trị ngoài phạm vi."
+sources = ["rust/book/ch19-03-pattern-syntax", "rust/book/ch19-01-all-the-places-for-patterns"]

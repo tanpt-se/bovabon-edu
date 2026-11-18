@@ -272,6 +272,7 @@ test('không dùng giá trị implementation không phải hàm', () => {
 '''
 hints = ["Khởi tạo mảng calls một lần khi tạo spy.", "Ghi lại args trước khi gọi implementation."]
 explanation = "Spy vừa giữ lịch sử đối số vừa chuyển tiếp lời gọi tới implementation nếu có."
+sources = ["vitest/guide/mocking", "jest/mock-function-api"]
 
 [[questions]]
 id = "tst-016"
@@ -332,12 +333,13 @@ test('ném lỗi khi giá trị lồng nhau khác', () => {
 '''
 hints = ["So sánh primitive trước khi duyệt key.", "Array phải được phân biệt với object thường."]
 explanation = "Deep equality đi đệ quy trên key và value; `Object.is` xử lý primitive, cùng identity và một số trường hợp như NaN."
+sources = ["vitest/api/expect", "jest/expect"]
 
 [[modules]]
 id = "testing-components"
 title = "Test component và hook"
 description = "Ưu tiên hành vi người dùng, truy vấn theo role/name và kiểm tra hook trong ngữ cảnh phù hợp."
-sources = ["vitest/guide/browser/component-testing", "react/reference/react/act", "playwright/locators"]
+sources = ["vitest/guide/browser/component-testing", "playwright/locators"]
 lesson = '''
 ### Kiểm tra điều người dùng quan sát
 Component test nên tương tác và xác minh nội dung, trạng thái hoặc callback có ý nghĩa, thay vì phụ thuộc vào tên class nội bộ hay cấu trúc implementation. Với Testing Library, truy vấn theo role và accessible name thường diễn đạt đúng mục đích: ví dụ tìm button có tên “Lưu” rồi kích hoạt nó.
@@ -374,7 +376,7 @@ prompt = "Khi một custom hook quản lý trạng thái form, lựa chọn nào
 options = ["Kiểm tra component sử dụng hook qua nhập liệu, hiển thị lỗi và submit; dùng renderHook nếu cần kiểm tra hook độc lập", "Đọc trực tiếp mọi biến private trong closure", "Chỉ snapshot mã nguồn hook", "Gọi hook trực tiếp trong test mà không có renderer"]
 answer = [0]
 explanation = "Kiểm tra qua component thường phản ánh hành vi người dùng; `renderHook` là lựa chọn phù hợp khi cần cô lập logic tái sử dụng."
-sources = ["vitest/guide/browser/component-testing", "react/reference/react/act"]
+sources = ["vitest/guide/browser/component-testing"]
 
 [[questions]]
 id = "tst-019"
@@ -481,6 +483,7 @@ test('nếu trùng kết quả thì ném lỗi', () => {
 '''
 hints = ["Tích luỹ node khớp thay vì trả ngay kết quả đầu tiên.", "Duyệt children chỉ khi đó là mảng."]
 explanation = "Truy vấn getByRole kiểu get-by phải phát hiện cả trường hợp thiếu và mơ hồ; mô hình này cố ý chỉ hỗ trợ cây object được mô tả."
+sources = ["vitest/guide/browser/component-testing", "playwright/locators"]
 
 [[modules]]
 id = "testing-e2e"
@@ -656,6 +659,7 @@ test('retry khi check tạm thời ném lỗi', async () => {
 '''
 hints = ["Dùng Date.now() để tính phần timeout còn lại.", "Gọi check trước khi lên lịch timer đầu tiên."]
 explanation = "Polling ngay lập tức rồi dùng fake timers trong test giúp xác minh cả lần thử lại lẫn timeout mà không đợi đồng hồ thật."
+sources = ["vitest/guide/learn/async", "playwright/test-assertions"]
 
 [[modules]]
 id = "testing-strategy"
@@ -800,6 +804,7 @@ test('trả mảng rỗng khi history rỗng', () => {
 '''
 hints = ["Chỉ giữ test có cả hai trạng thái pass và fail.", "Map kết quả đã lọc sang id để giữ thứ tự."]
 explanation = "Lịch sử kết hợp pass và fail là tín hiệu không ổn định; test luôn fail cần sửa nhưng chưa đủ dữ liệu để gọi là flaky."
+sources = ["vitest/config/retry", "playwright/test-retries"]
 
 [[questions]]
 id = "tst-036"
@@ -847,3 +852,528 @@ test('không có dòng executable trả 0', () => {
 hints = ["Tính tỉ lệ covered chia total rồi nhân 100.", "Nhân thêm 100 trước Math.round để làm tròn 2 chữ số phần trăm."]
 explanation = "Line coverage là phần trăm dòng executable đã chạy; nó không đồng nghĩa mọi hành vi hoặc nhánh đều được xác minh."
 sources = ["vitest/guide/coverage"]
+
+[[modules]]
+id = "testing-dv-network"
+title = "Kiểm soát network trong test"
+description = "Mock request ở đúng ranh giới, giả lập response ổn định và xác minh hành vi UI khi API thành công hoặc lỗi."
+sources = ["vitest/guide/mocking/requests", "jest/manual-mocks", "playwright/network", "playwright/mock", "cypress/api/commands/intercept"]
+lesson = '''
+### Giữ request có thể dự đoán
+Test có network thật dễ chập chờn vì phụ thuộc dịch vụ ngoài, dữ liệu thay đổi, quota và thời gian phản hồi. Thay vì chờ một số mili giây cố định, hãy kiểm soát response ở ranh giới HTTP và đồng bộ với request hoặc trạng thái UI cần kiểm tra.
+
+| Nhu cầu | Cách thường dùng | Phần vẫn được kiểm tra |
+|---|---|---|
+| Unit test code gọi API client | Mock module hoặc dependency | Nhánh xử lý của consumer |
+| Kiểm tra request qua ứng dụng | MSW ở request boundary | Code tạo request, parse response và cập nhật state |
+| E2E trình duyệt với response giả | Playwright `page.route` hoặc Cypress `cy.intercept` | Luồng UI khi nhận response đã kiểm soát |
+
+Ví dụ với Playwright: `await page.route('**/api/orders', (route) => route.fulfill({ status: 503, body: '{"message":"Unavailable"}' }));`. Đăng ký route trước khi điều hướng, sau đó kiểm tra thông báo lỗi mà người dùng nhìn thấy. Với Cypress, `cy.intercept('GET', '/api/orders', { fixture: 'orders.json' }).as('orders')` có thể stub response; bỏ response handler để chỉ quan sát request. Jest manual mock hữu ích khi unit test cần thay module API, nhưng không xác minh giao thức HTTP thực.
+
+### Lỗi hay gặp
+- Gọi `wait(2000)` thay vì chờ alias, locator hoặc assertion có điều kiện.
+- Đăng ký route sau khi request đã phát ra, hoặc dùng URL pattern không khớp query/path thật.
+- Chỉ assert request đã gửi mà không kiểm tra UI xử lý thành công, lỗi, loading và dữ liệu rỗng.
+- Mock mọi tầng khiến test xanh dù URL, header hoặc chuyển đổi response trong code thật bị sai.
+- Dùng chung handler có state thay đổi giữa các test mà không reset lại.
+'''
+
+[[questions]]
+id = "testing-dv001"
+module = "testing-dv-network"
+type = "single"
+difficulty = 1
+prompt = "Một unit test kiểm tra hàm xử lý kết quả từ API nhưng không cần xác minh URL hay HTTP. Cách thay phụ thuộc nào thường phù hợp nhất?"
+options = ["Mock API client/module tại ranh giới của hàm", "Khởi chạy production API thật cho từng test", "Chờ cố định vài giây trước khi assert", "Tắt toàn bộ assertion để tránh lỗi mạng"]
+answer = [0]
+explanation = "Mock dependency giúp test consumer nhanh và cô lập; nếu cần kiểm chứng request hoặc tích hợp HTTP, hãy thêm test ở ranh giới phù hợp thay vì buộc mọi unit test dùng mạng thật."
+sources = ["vitest/guide/mocking/requests", "jest/manual-mocks"]
+
+[[questions]]
+id = "testing-dv002"
+module = "testing-dv-network"
+type = "single"
+difficulty = 2
+prompt = "Trong Playwright, test cần giả lập API trả lỗi 503 khi trang tải. Khi nào nên đăng ký `page.route`?"
+options = ["Trước khi điều hướng hoặc trước khi thao tác phát request", "Sau khi assertion lỗi đã chạy", "Chỉ sau khi test kết thúc", "Chỉ trong `afterAll`, sau khi browser đóng"]
+answer = [0]
+explanation = "Route phải tồn tại trước khi request cần chặn được gửi; sau đó test kiểm tra UI phản ứng với response giả."
+sources = ["playwright/network", "playwright/mock"]
+
+[[questions]]
+id = "testing-dv003"
+module = "testing-dv-network"
+type = "single"
+difficulty = 2
+prompt = "Một test Cypress gọi `cy.intercept(...).as('orders')` trước `cy.visit`. `cy.wait('@orders')` giúp test điều gì trực tiếp nhất?"
+options = ["Đồng bộ với request đã alias và cho phép kiểm tra request/response", "Đảm bảo mọi animation trên trang đã hoàn tất", "Thay thế mọi assertion về UI", "Xác minh database production đã ghi dữ liệu"]
+answer = [0]
+explanation = "Alias cho phép đợi request cụ thể và kiểm tra dữ liệu của nó; assertion về nội dung UI vẫn cần thiết nếu mục tiêu là hành vi người dùng."
+sources = ["cypress/api/commands/intercept"]
+
+[[questions]]
+id = "testing-dv004"
+module = "testing-dv-network"
+type = "multiple"
+difficulty = 2
+prompt = "Test luồng danh sách đơn hàng cần ổn định khi API lỗi. Những lựa chọn nào giúp test vừa xác định vừa có ý nghĩa?"
+options = ["Stub response lỗi ở ranh giới request", "Assert thông báo lỗi hoặc hành động phục hồi trên UI", "Dùng delay cố định rồi giả định API đã lỗi", "Mock mọi hàm nội bộ và bỏ qua trạng thái hiển thị"]
+answer = [0, 1]
+explanation = "Response có kiểm soát và assertion hành vi UI kiểm tra được cả đầu vào lẫn kết quả. Delay và mock quá sâu không đồng bộ theo điều kiện và có thể che lỗi tích hợp."
+sources = ["vitest/guide/mocking/requests", "playwright/network", "cypress/api/commands/intercept"]
+
+[[questions]]
+id = "testing-dv005"
+module = "testing-dv-network"
+type = "multiple"
+difficulty = 3
+prompt = "Khi dùng network stub cho test E2E, lựa chọn nào là thực hành tốt?"
+options = ["Dùng dữ liệu response rõ ràng và ổn định", "Tách test stub khỏi một số test tích hợp với backend thật", "Xác minh request/response quan trọng khi đó là yêu cầu của test", "Coi test stub là bằng chứng duy nhất rằng backend production hoạt động đúng"]
+answer = [0, 1, 2]
+explanation = "Stub làm E2E xác định và nhanh hơn nhưng không xác minh backend thật; một số integration test vẫn cần kiểm tra hợp đồng ở ranh giới dịch vụ."
+sources = ["playwright/mock", "cypress/api/commands/intercept", "vitest/guide/mocking/requests"]
+
+[[questions]]
+id = "testing-dv006"
+module = "testing-dv-network"
+type = "fill"
+difficulty = 1
+prompt = '''Trong callback của `page.route`, gọi phương thức nào để trả response giả cho request?
+```js
+await page.route('**/api/profile', (route) => route.{{blank}}({ status: 200, body: '{"name":"Sam"}' }));
+```'''
+blanks = [["fulfill"]]
+explanation = "`route.fulfill` hoàn tất request bằng response do test cung cấp."
+sources = ["playwright/network"]
+
+[[questions]]
+id = "testing-dv007"
+module = "testing-dv-network"
+type = "fill"
+difficulty = 1
+prompt = '''Trong Cypress, tên alias `orders` được chờ bằng lệnh:
+```js
+cy.wait('@{{blank}}')
+```'''
+blanks = [["orders"]]
+explanation = "`cy.wait` nhận alias đã gắn với request qua `.as('orders')`."
+sources = ["cypress/api/commands/intercept"]
+
+[[questions]]
+id = "testing-dv008"
+module = "testing-dv-network"
+type = "essay"
+difficulty = 3
+prompt = "Trong phỏng vấn, hãy giải thích cách bạn chọn giữa mock API client, mock ở network boundary và gọi backend thật; nêu cách giữ test ổn định mà vẫn phát hiện lỗi tích hợp."
+keywords = [["network boundary", "request boundary", "ranh giới network"], ["deterministic response", "controlled response", "response ổn định"], ["over-mocking", "mock quá sâu", "mock mọi phụ thuộc"], ["integration test", "kiểm thử tích hợp"]]
+min_keywords = 3
+model_answer = "Tôi dùng mock API client cho unit test consumer, MSW hoặc network boundary stub để chạy code tạo request và parse response với deterministic response, rồi giữ integration test gọi backend thật cho các hợp đồng quan trọng. Tránh over-mocking để URL, serialization và xử lý lỗi thực vẫn được kiểm tra."
+explanation = "Câu trả lời tốt phân biệt các ranh giới kiểm thử, nêu dữ liệu response xác định và thừa nhận stub không thay thế integration test."
+sources = ["vitest/guide/mocking/requests", "playwright/network", "cypress/api/commands/intercept"]
+
+[[questions]]
+id = "testing-dvc01"
+module = "testing-dv-network"
+type = "code"
+difficulty = 2
+lang = "javascript"
+title = "Chọn response stub theo request"
+prompt = '''Viết `findStub(request, stubs)` để tìm response stub đầu tiên khớp với request.
+- `request` có `method` và `url`; mỗi stub có `method`, `url`, `status`, `body`.
+- So sánh method không phân biệt chữ hoa/thường, nhưng URL phải khớp chính xác.
+- Trả về object mới chỉ gồm `status` và `body` của stub khớp đầu tiên; nếu không có thì trả `null`.
+- Không thay đổi request hoặc mảng stubs.
+
+Ví dụ: request `GET /api/items` khớp stub `get /api/items` và trả `{ status: 200, body: [] }`.
+'''
+starter = '''
+function findStub(request, stubs) {
+  return null;
+}
+'''
+solution = '''
+function findStub(request, stubs) {
+  const match = stubs.find((stub) =>
+    stub.method.toUpperCase() === request.method.toUpperCase() && stub.url === request.url
+  );
+  return match ? { status: match.status, body: match.body } : null;
+}
+'''
+tests = '''
+test('khớp method không phân biệt hoa thường', () => {
+  expect(findStub({ method: 'GET', url: '/api/items' }, [{ method: 'get', url: '/api/items', status: 200, body: [] }])).toEqual({ status: 200, body: [] });
+});
+
+test('URL phải khớp chính xác', () => {
+  const stubs = [{ method: 'GET', url: '/api/items', status: 200, body: [] }];
+  expect(findStub({ method: 'GET', url: '/api/items?page=2' }, stubs)).toBeNull();
+});
+
+test('chọn stub đầu tiên khi có nhiều stub cùng route', () => {
+  const stubs = [
+    { method: 'POST', url: '/api/items', status: 201, body: { id: 1 } },
+    { method: 'post', url: '/api/items', status: 202, body: { id: 2 } }
+  ];
+  expect(findStub({ method: 'POST', url: '/api/items' }, stubs)).toEqual({ status: 201, body: { id: 1 } });
+});
+
+test('không khớp method hoặc danh sách rỗng thì trả null', () => {
+  expect(findStub({ method: 'DELETE', url: '/api/items' }, [{ method: 'GET', url: '/api/items', status: 200, body: [] }])).toBeNull();
+  expect(findStub({ method: 'GET', url: '/api/items' }, [])).toBeNull();
+});
+'''
+hints = ["Dùng `find` để giữ thứ tự và chỉ lấy phần tử khớp đầu tiên.", "Tạo object kết quả mới để không trả cả metadata của stub."]
+explanation = "Chọn response theo method và URL mô phỏng ranh giới request có kiểm soát; test vẫn cần xác minh ứng dụng dùng response đúng cách."
+sources = ["vitest/guide/mocking/requests", "playwright/network"]
+
+[[modules]]
+id = "testing-dv-state"
+title = "Fixture, dữ liệu và trạng thái xác thực"
+description = "Quản lý vòng đời test fixture, dữ liệu tái lập và trạng thái đăng nhập mà không tạo phụ thuộc giữa các test."
+sources = ["playwright/test-fixtures", "playwright/auth", "cypress/api/commands/session", "cypress/api/commands/fixture", "vitest/config/setupfiles", "jest/configuration#setupfiles-array"]
+lesson = '''
+### Tách dữ liệu, setup và trạng thái đăng nhập
+Fixture cung cấp tài nguyên hoặc dữ liệu cho test theo một vòng đời xác định. Fixture của Playwright có thể được giới hạn theo test hoặc worker; fixture built-in như `page` được chuẩn bị trước test và đóng gọn sau đó. Cypress `cy.fixture` đọc dữ liệu tĩnh từ file, còn `cy.session` lưu và khôi phục cookie cùng web storage theo session key. Hai khái niệm này giải quyết nhu cầu khác nhau: dữ liệu đầu vào không đồng nghĩa với phiên đăng nhập.
+
+| Nhu cầu | Cơ chế | Ranh giới cần nhớ |
+|---|---|---|
+| Dữ liệu mẫu ít thay đổi | Playwright fixture hoặc Cypress `cy.fixture` | Không sửa object dùng chung giữa test |
+| Đăng nhập nhanh cho E2E | Playwright `storageState` hoặc Cypress `cy.session` | Key phải phân biệt user/role/tenant; tạo state bằng quy trình đáng tin cậy |
+| Matcher hoặc setup chung | Vitest/Jest setup file | Chạy trước test file; không phải kho dữ liệu riêng cho từng test |
+| Tài nguyên cần đóng | Fixture có teardown | Dọn sau test hoặc sau worker theo đúng scope |
+
+Ví dụ Playwright: cấu hình `use: { storageState: 'playwright/.auth/member.json' }` để test bắt đầu ở trạng thái đã đăng nhập. Test vẫn nên tạo đơn hàng riêng hoặc dùng seed có thể lặp lại, vì session dùng chung không cô lập dữ liệu backend. Trong Jest, `setupFiles` chạy trước khi framework test được cài đặt; `setupFilesAfterEnv` chạy sau, phù hợp đăng ký matcher hoặc hook chung.
+
+### Lỗi hay gặp
+- Dùng một fixture có thể mutate cho nhiều test rồi phụ thuộc thứ tự chạy.
+- Dùng chung user hoặc tenant khiến test tranh chấp record khi chạy song song.
+- Dùng session cache với key thiếu role/tenant, khiến test vô tình nhận state của user khác.
+- Đặt seed data từng test trong global setup nhưng không có cơ chế dọn hoặc tạo mới.
+- Coi `setupFiles` là setup một lần cho toàn bộ suite; setup thường gắn với từng test file.
+'''
+
+[[questions]]
+id = "testing-dv009"
+module = "testing-dv-state"
+type = "single"
+difficulty = 1
+prompt = "Trong Playwright, test nhận `{ page }` từ fixture built-in. Lợi ích quan trọng của fixture là gì?"
+options = ["Quản lý setup/teardown của tài nguyên theo scope test", "Tự động làm mọi assertion đúng", "Chia sẻ cùng một DOM giữa toàn bộ test bất kể cấu hình", "Bỏ qua lỗi khi browser đóng"]
+answer = [0]
+explanation = "Fixture tạo tài nguyên trước test và quản lý teardown theo scope, giúp mỗi test có ngữ cảnh rõ ràng."
+sources = ["playwright/test-fixtures"]
+
+[[questions]]
+id = "testing-dv010"
+module = "testing-dv-state"
+type = "single"
+difficulty = 2
+prompt = "Một bộ E2E cần bắt đầu ở trang đã đăng nhập trong Playwright. Cách nào phù hợp để tái sử dụng browser authentication state?"
+options = ["Lưu state bằng `storageState` rồi cấu hình cho context/project phù hợp", "Dùng cùng một page toàn cục cho mọi worker", "Tắt assertion về quyền truy cập", "Đặt mật khẩu tài khoản vào tên test"]
+answer = [0]
+explanation = "`storageState` cho phép tạo context với state xác thực đã lưu; dữ liệu nghiệp vụ vẫn cần được cô lập riêng."
+sources = ["playwright/auth", "playwright/test-configuration"]
+
+[[questions]]
+id = "testing-dv011"
+module = "testing-dv-state"
+type = "single"
+difficulty = 2
+prompt = "Cypress `cy.session(id, setup, options)` hữu ích nhất trong tình huống nào?"
+options = ["Lưu và khôi phục browser session để tránh lặp lại bước đăng nhập", "Đọc một JSON fixture từ ổ đĩa", "Thay thế mọi test isolation", "Khởi chạy server ứng dụng trong mỗi assertion"]
+answer = [0]
+explanation = "`cy.session` cache/restore trạng thái xác thực theo key; nó không thay việc cô lập trang và dữ liệu nghiệp vụ."
+sources = ["cypress/api/commands/session"]
+
+[[questions]]
+id = "testing-dv012"
+module = "testing-dv-state"
+type = "multiple"
+difficulty = 2
+prompt = "Một suite chạy song song thường xuyên lỗi do test sửa cùng một dữ liệu mẫu. Cách nào giúp giảm phụ thuộc chéo?"
+options = ["Tạo record riêng theo test hoặc worker", "Reset trạng thái backend trước/sau test theo hợp đồng rõ", "Giữ fixture bất biến và tạo bản sao khi cần sửa", "Dựa vào thứ tự chạy để test trước khôi phục dữ liệu"]
+answer = [0, 1, 2]
+explanation = "Dữ liệu riêng, reset rõ ràng và fixture bất biến giúp test độc lập. Dựa vào thứ tự chạy che vấn đề và không ổn định khi parallel."
+sources = ["playwright/test-fixtures", "cypress/api/commands/fixture"]
+
+[[questions]]
+id = "testing-dv013"
+module = "testing-dv-state"
+type = "multiple"
+difficulty = 3
+prompt = "Các nhận định nào đúng về `setupFiles` và `setupFilesAfterEnv` của Jest?"
+options = ["`setupFiles` chạy trước khi framework test được cài trong môi trường test", "`setupFilesAfterEnv` chạy sau khi framework test được cài", "Cả hai loại setup được thực hiện trước nội dung test file", "`setupFiles` tự tạo dữ liệu riêng cho mỗi test case"]
+answer = [0, 1, 2]
+explanation = "Hai nhóm setup khác nhau ở thời điểm framework test sẵn sàng và được chạy trước nội dung test file; chúng không tự tạo fixture riêng cho từng case."
+sources = ["jest/configuration#setupfiles-array", "jest/configuration#setupfilesafterenv-array"]
+
+[[questions]]
+id = "testing-dv014"
+module = "testing-dv-state"
+type = "fill"
+difficulty = 2
+prompt = '''Trong Playwright, tùy chọn nào nhận đường dẫn tới state đã lưu để context bắt đầu ở trạng thái đăng nhập?
+```js
+test.use({ {{blank}}: 'playwright/.auth/member.json' });
+```'''
+blanks = [["storageState"]]
+explanation = "`storageState` nạp cookie và web storage đã lưu vào browser context."
+sources = ["playwright/auth"]
+
+[[questions]]
+id = "testing-dv015"
+module = "testing-dv-state"
+type = "fill"
+difficulty = 1
+prompt = '''Cypress dùng lệnh nào để cache và khôi phục browser session theo một id?
+```js
+cy.{{blank}}('member', setupLogin);
+```'''
+blanks = [["session"]]
+explanation = "`cy.session` cache/restore trạng thái session theo id được cung cấp."
+sources = ["cypress/api/commands/session"]
+
+[[questions]]
+id = "testing-dv016"
+module = "testing-dv-state"
+type = "essay"
+difficulty = 3
+prompt = "Trong phỏng vấn, hãy mô tả cách thiết kế fixture và trạng thái đăng nhập cho E2E chạy song song; nêu cách tránh test dùng chung dữ liệu mutable."
+keywords = [["test-scoped fixture", "fixture theo test", "fixture scope"], ["storage state", "authentication state", "trạng thái đăng nhập"], ["test isolation", "state isolation", "cô lập test"], ["teardown", "cleanup", "dọn dữ liệu"]]
+min_keywords = 3
+model_answer = "Tôi dùng test-scoped fixture cho tài nguyên riêng, tạo storage state theo user/role cần thiết và giữ test isolation bằng record riêng theo test hoặc worker. Fixture dữ liệu nền nên bất biến; teardown hoặc cleanup dọn tài nguyên do test tạo để suite chạy song song không tranh chấp."
+explanation = "Câu trả lời cần đề cập scope fixture, tái sử dụng auth có chủ đích và dữ liệu/teardown độc lập khi chạy song song."
+sources = ["playwright/test-fixtures", "playwright/auth", "cypress/api/commands/session"]
+
+[[questions]]
+id = "testing-dvc02"
+module = "testing-dv-state"
+type = "code"
+difficulty = 1
+lang = "javascript"
+title = "Ghép dữ liệu fixture mà không mutate"
+prompt = '''Viết `mergeTestData(defaults, overrides)` để tạo object fixture cho một test.
+- Sao chép các property của hai plain object ở mức nông.
+- Giá trị trong `overrides` ghi đè property cùng tên trong `defaults`.
+- Trả về object mới và không mutate hai input.
+- Không cần clone các object lồng nhau.
+
+Ví dụ: `mergeTestData({ role: 'member', active: true }, { role: 'admin' })` trả `{ role: 'admin', active: true }`.
+'''
+starter = '''
+function mergeTestData(defaults, overrides) {
+  return defaults;
+}
+'''
+solution = '''
+function mergeTestData(defaults, overrides) {
+  return { ...defaults, ...overrides };
+}
+'''
+tests = '''
+test('giữ field mặc định và thêm field mới', () => {
+  expect(mergeTestData({ role: 'member' }, { active: true })).toEqual({ role: 'member', active: true });
+});
+
+test('giá trị override thắng giá trị mặc định', () => {
+  expect(mergeTestData({ role: 'member', active: false }, { role: 'admin' })).toEqual({ role: 'admin', active: false });
+});
+
+test('không mutate input và trả object mới', () => {
+  const defaults = { role: 'member' };
+  const overrides = { active: true };
+  const result = mergeTestData(defaults, overrides);
+  expect(result).not.toBe(defaults);
+  expect(defaults).toEqual({ role: 'member' });
+  expect(overrides).toEqual({ active: true });
+});
+
+test('hai object rỗng tạo fixture rỗng mới', () => {
+  const result = mergeTestData({}, {});
+  expect(result).toEqual({});
+});
+'''
+hints = ["Spread object theo đúng thứ tự: mặc định trước, override sau.", "Tạo một object literal mới để tránh sửa input."]
+explanation = "Fixture ghép ở mức nông giúp tùy biến dữ liệu theo test mà không làm thay đổi object mặc định dùng chung."
+sources = ["playwright/test-fixtures", "cypress/api/commands/fixture"]
+
+[[modules]]
+id = "testing-dv-projects"
+title = "Project matrix và môi trường chạy"
+description = "Tổ chức nhiều cấu hình test trong một suite để kiểm tra browser, runtime hoặc package với lựa chọn rõ ràng."
+sources = ["vitest/config/projects", "vitest/config/environment", "jest/configuration#projects-arraystring--projectconfig", "playwright/test-projects", "playwright/test-configuration", "cypress/api/plugins/configuration-api"]
+lesson = '''
+### Một suite, nhiều project có chủ đích
+Project gom một cấu hình chạy với tên và tùy chọn riêng. Chúng hữu ích khi cùng test cần chạy trên nhiều browser, runtime, package hoặc bộ biến cấu hình. Project matrix làm rõ những tổ hợp được kiểm tra và cho phép chọn subset trong lúc phát triển; mỗi project cũng có thể cần setup và dữ liệu phù hợp.
+
+| Công cụ | Cách tổ chức | Hữu ích khi |
+|---|---|---|
+| Vitest | Khai báo `test.projects` với cấu hình con | Monorepo hoặc test nhiều môi trường |
+| Jest | Khai báo `projects` trong config | Nhiều package hoặc cấu hình suite trong một lần chạy |
+| Playwright | `projects` có `name` và `use` riêng | Chạy cùng test trên browser/device hoặc cấu hình khác |
+| Cypress | Cấu hình project và Node event hooks | Tùy biến lifecycle, task hoặc cấu hình runner |
+
+Ví dụ Playwright có project `chromium` và `firefox`, mỗi project đặt browser option riêng nhưng dùng chung spec; có thể chọn một project khi debug, rồi chạy ma trận cần thiết trên CI. `testEnvironment` trong Jest hoặc `environment` trong Vitest quyết định API runtime như `window`, nên một test cần DOM không thể mặc định chạy như test thuần Node. Môi trường là một chiều của cấu hình, còn project là cách đóng gói nhiều chiều cấu hình thành các lần chạy có tên.
+
+### Lỗi hay gặp
+- Tạo mọi tổ hợp browser × locale × role dù không thêm giá trị, khiến CI chậm và khó tìm lỗi.
+- Tưởng khai báo nhiều project tự chứng minh mọi browser đã được chạy; phải xem lệnh và filter CI thực tế.
+- Chạy test DOM trong Node environment rồi nhầm lỗi thiếu global với lỗi ứng dụng.
+- Dùng một test data hoặc account mutable chung cho các project chạy song song.
+- Để project config lệch nhau về timeout, setup hoặc base URL mà không biết khác biệt đó có chủ ý hay không.
+'''
+
+[[questions]]
+id = "testing-dv017"
+module = "testing-dv-projects"
+type = "single"
+difficulty = 1
+prompt = "Trong Playwright, project có `name` và `use` riêng thường được dùng để làm gì?"
+options = ["Chạy suite với cấu hình browser/device khác nhau trong cùng config", "Tạo một database production cho mỗi assertion", "Tắt tự động chờ của mọi locator", "Đổi thứ tự các test thành một hợp đồng bắt buộc"]
+answer = [0]
+explanation = "Projects mô tả các cấu hình chạy có tên, thường dùng để kiểm tra cùng suite trên nhiều browser hoặc thiết bị."
+sources = ["playwright/test-projects", "playwright/test-configuration"]
+
+[[questions]]
+id = "testing-dv018"
+module = "testing-dv-projects"
+type = "single"
+difficulty = 2
+prompt = "Một repository có package Node và package browser cần chạy bằng Jest trong cùng lệnh. Tính năng nào phù hợp để gom các cấu hình?"
+options = ["`projects`", "`snapshotFormat`", "`testTimeout`", "`clearMocks`"]
+answer = [0]
+explanation = "Jest `projects` cho phép chạy nhiều project/config trong một invocation, phù hợp monorepo hoặc nhiều môi trường."
+sources = ["jest/configuration#projects-arraystring--projectconfig"]
+
+[[questions]]
+id = "testing-dv019"
+module = "testing-dv-projects"
+type = "single"
+difficulty = 2
+prompt = "Test dùng `window` thất bại khi chạy trong môi trường Node của Vitest. Hướng xử lý nào đúng nhất?"
+options = ["Chọn môi trường browser-like phù hợp cho test cần DOM", "Thêm retry để Node tự có `window`", "Mock mọi assertion thành pass", "Tăng timeout mà không đổi môi trường"]
+answer = [0]
+explanation = "Environment quyết định các global/API có sẵn; tăng timeout không thể cung cấp API DOM còn thiếu."
+sources = ["vitest/config/environment"]
+
+[[questions]]
+id = "testing-dv020"
+module = "testing-dv-projects"
+type = "multiple"
+difficulty = 2
+prompt = "Khi nào project matrix thường đem lại giá trị thực tế?"
+options = ["Chạy cùng luồng quan trọng trên các browser được hỗ trợ", "Tách cấu hình Node và DOM khi test cần API khác nhau", "Nhân đôi mọi tổ hợp dù không có khác biệt hoặc rủi ro", "Cho phép chọn một project cụ thể khi debug"]
+answer = [0, 1, 3]
+explanation = "Matrix hữu ích để xác minh khác biệt có ý nghĩa và chọn subset khi phát triển; thêm tổ hợp vô ích chỉ làm suite chậm."
+sources = ["playwright/test-projects", "vitest/config/projects", "jest/configuration#projects-arraystring--projectconfig"]
+
+[[questions]]
+id = "testing-dv021"
+module = "testing-dv-projects"
+type = "multiple"
+difficulty = 3
+prompt = "Một suite có test DOM và test thuần Node. Những lựa chọn nào giúp cấu hình dễ hiểu và đáng tin cậy?"
+options = ["Gán environment phù hợp theo loại test/project", "Đặt tên project để report cho biết cấu hình đã chạy", "Giả định mọi runner cung cấp cùng global/API", "Xác minh lệnh CI không lọc mất project cần kiểm tra"]
+answer = [0, 1, 3]
+explanation = "Environment phù hợp và tên project giúp phân biệt lần chạy; kiểm tra filter CI đảm bảo matrix được thực thi thật."
+sources = ["vitest/config/environment", "vitest/config/projects", "playwright/test-projects"]
+
+[[questions]]
+id = "testing-dv022"
+module = "testing-dv-projects"
+type = "fill"
+difficulty = 1
+prompt = '''Lệnh Playwright nào chọn riêng project có tên `chromium`?
+```sh
+npx playwright test --project={{blank}}
+```'''
+blanks = [["chromium"]]
+explanation = "Tùy chọn `--project` giới hạn lần chạy vào project được đặt tên trong config."
+sources = ["playwright/test-projects"]
+
+[[questions]]
+id = "testing-dv023"
+module = "testing-dv-projects"
+type = "fill"
+difficulty = 2
+prompt = '''Trong cấu hình Vitest, thuộc tính nào nhận danh sách cấu hình project con?
+```js
+test: { {{blank}}: [/* project configs */] }
+```'''
+blanks = [["projects"]]
+explanation = "`test.projects` gom các project configuration được chạy bởi Vitest."
+sources = ["vitest/config/projects"]
+
+[[questions]]
+id = "testing-dv024"
+module = "testing-dv-projects"
+type = "essay"
+difficulty = 3
+prompt = "Trong phỏng vấn, hãy mô tả cách bạn quyết định project matrix cho CI; cân bằng browser/runtime coverage với thời gian chạy và khả năng điều tra lỗi."
+keywords = [["project matrix", "configuration matrix", "matrix"], ["runtime cost", "execution time", "CI duration"], ["targeted subset", "smoke suite", "focused smoke"], ["browser coverage", "environment coverage", "coverage matrix"]]
+min_keywords = 3
+model_answer = "Tôi xây project matrix theo browser coverage và môi trường có rủi ro thực, không nhân mọi tổ hợp mặc định. CI có thể chạy targeted subset hoặc smoke suite nhanh ở mỗi commit và ma trận rộng hơn theo lịch, theo dõi CI duration và báo project cụ thể để điều tra lỗi."
+explanation = "Câu trả lời cần nêu tiêu chí chọn matrix, cách kiểm soát thời gian CI và cách chọn subset hoặc chia lịch chạy."
+sources = ["playwright/test-projects", "vitest/config/projects", "jest/configuration#projects-arraystring--projectconfig"]
+
+[[questions]]
+id = "testing-dvc03"
+module = "testing-dv-projects"
+type = "code"
+difficulty = 2
+lang = "javascript"
+title = "Tạo project matrix có thứ tự"
+prompt = '''Viết `buildProjectMatrix(browsers, locales)` để tạo các cấu hình cho mọi cặp browser-locale.
+- Mỗi phần tử có dạng `{ name, browser, locale }`, với `name` bằng `browser + '-' + locale`.
+- Duyệt browsers theo thứ tự đầu vào; bên trong mỗi browser duyệt locales theo thứ tự đầu vào.
+- Nếu một đầu vào rỗng, trả mảng rỗng.
+- Không thay đổi hai mảng đầu vào.
+
+Ví dụ `buildProjectMatrix(['chromium'], ['en', 'vi'])` trả hai project `chromium-en` và `chromium-vi`.
+'''
+starter = '''
+function buildProjectMatrix(browsers, locales) {
+  return [];
+}
+'''
+solution = '''
+function buildProjectMatrix(browsers, locales) {
+  const projects = [];
+  for (const browser of browsers) {
+    for (const locale of locales) {
+      projects.push({ name: browser + '-' + locale, browser, locale });
+    }
+  }
+  return projects;
+}
+'''
+tests = '''
+test('tạo tích Descartes theo đúng thứ tự đầu vào', () => {
+  expect(buildProjectMatrix(['chromium', 'firefox'], ['en', 'vi'])).toEqual([
+    { name: 'chromium-en', browser: 'chromium', locale: 'en' },
+    { name: 'chromium-vi', browser: 'chromium', locale: 'vi' },
+    { name: 'firefox-en', browser: 'firefox', locale: 'en' },
+    { name: 'firefox-vi', browser: 'firefox', locale: 'vi' }
+  ]);
+});
+
+test('một cặp tạo một project', () => {
+  expect(buildProjectMatrix(['webkit'], ['ja'])).toEqual([{ name: 'webkit-ja', browser: 'webkit', locale: 'ja' }]);
+});
+
+test('đầu vào rỗng tạo danh sách rỗng', () => {
+  expect(buildProjectMatrix([], ['en'])).toEqual([]);
+  expect(buildProjectMatrix(['chromium'], [])).toEqual([]);
+});
+
+test('không sửa các mảng đầu vào', () => {
+  const browsers = ['chromium'];
+  const locales = ['en', 'vi'];
+  buildProjectMatrix(browsers, locales);
+  expect(browsers).toEqual(['chromium']);
+  expect(locales).toEqual(['en', 'vi']);
+});
+'''
+hints = ["Dùng vòng lặp lồng nhau để giữ thứ tự browser trước locale.", "Khởi tạo mảng kết quả mới, không push vào input."]
+explanation = "Sinh matrix có thứ tự giúp cấu hình chạy nhất quán và làm rõ số tổ hợp mà suite sẽ kiểm tra."
+sources = ["playwright/test-projects", "vitest/config/projects"]

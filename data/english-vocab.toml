@@ -3,6 +3,7 @@ title = "Từ vựng tiếng Anh IT theo chủ đề"
 icon = "📖"
 color = "#7c3aed"
 group = "Ngoại ngữ"
+area = "english"            # khu Tiếng Anh: không có bài code
 description = "Học từ vựng tiếng Anh dùng trong phát triển phần mềm, vận hành, bảo mật và giao tiếp nơi công sở qua ngữ cảnh IT."
 
 [[modules]]
@@ -295,56 +296,6 @@ model_answer = '''The new export requirement was larger than we expected. Our es
 explanation = '''Một mô tả rõ ràng nêu yêu cầu, nguyên nhân ảnh hưởng kế hoạch và cách giảm rủi ro phát hành.'''
 
 [[questions]]
-id = "voc-c01"
-module = "vocab-workflow"
-type = "code"
-difficulty = 3
-lang = "javascript"
-title = "Lập lịch ôn thẻ từ vựng"
-prompt = '''
-Viết hàm reviewCard(card, grade) cho lịch ôn tập đơn giản. card có dạng { interval, repetitions, easeFactor }; grade là số nguyên từ 0 đến 5.
-- Nếu grade < 3: đặt repetitions = 0 và interval = 1.
-- Nếu grade >= 3: tăng repetitions lên 1. Khi repetitions cũ là 0, interval mới là 1; khi repetitions cũ là 1, interval mới là 6; các lần sau lấy Math.round(interval cũ * easeFactor).
-- Luôn cập nhật easeFactor theo công thức max(1.3, easeFactor + 0.1 - (5 - grade) * (0.08 + (5 - grade) * 0.02)).
-- Trả về object mới có đủ ba trường, không sửa object đầu vào.
-'''
-starter = '''
-function reviewCard(card, grade) {
-  return { interval: 1, repetitions: 0, easeFactor: card.easeFactor };
-}
-'''
-solution = '''
-function reviewCard(card, grade) {
-  const easeFactor = Math.max(1.3, card.easeFactor + 0.1 - (5 - grade) * (0.08 + (5 - grade) * 0.02));
-  if (grade < 3) return { interval: 1, repetitions: 0, easeFactor };
-  const interval = card.repetitions === 0 ? 1 : card.repetitions === 1 ? 6 : Math.round(card.interval * card.easeFactor);
-  return { interval, repetitions: card.repetitions + 1, easeFactor };
-}
-'''
-tests = '''
-test('lần nhớ đúng đầu tiên được ôn sau một ngày', () => {
-  expect(reviewCard({ interval: 0, repetitions: 0, easeFactor: 2.5 }, 4)).toEqual({ interval: 1, repetitions: 1, easeFactor: 2.5 });
-});
-test('lần nhớ đúng thứ hai dùng khoảng sáu ngày', () => {
-  expect(reviewCard({ interval: 1, repetitions: 1, easeFactor: 2.5 }, 5).interval).toBe(6);
-});
-test('các lần sau nhân interval cũ với easeFactor', () => {
-  expect(reviewCard({ interval: 6, repetitions: 2, easeFactor: 2.5 }, 5).interval).toBe(15);
-});
-test('trả lời sai đặt lại tiến độ và giảm easeFactor', () => {
-  expect(reviewCard({ interval: 12, repetitions: 4, easeFactor: 2.5 }, 2)).toEqual({ interval: 1, repetitions: 0, easeFactor: 2.18 });
-});
-test('easeFactor không thấp hơn 1.3 và input không bị sửa', () => {
-  const card = { interval: 4, repetitions: 2, easeFactor: 1.3 };
-  reviewCard(card, 0);
-  expect(card).toEqual({ interval: 4, repetitions: 2, easeFactor: 1.3 });
-  expect(reviewCard(card, 0).easeFactor).toBe(1.3);
-});
-'''
-hints = ["Tính easeFactor mới cho cả câu đúng và câu sai.", "Interval của lần đúng tiếp theo phụ thuộc repetitions cũ."]
-explanation = '''Lịch ôn khoảng cách dùng chất lượng câu trả lời để quyết định lúc xem lại thẻ; đây là phiên bản rút gọn để luyện logic.'''
-
-[[questions]]
 id = "voc-009"
 module = "vocab-frontend"
 type = "single"
@@ -420,62 +371,6 @@ difficulty = 1
 prompt = '''Add descriptive labels so the form is more {{blank}} to screen reader users.'''
 blanks = [["accessible"]]
 explanation = '''Accessible là tính từ; accessibility là danh từ.'''
-
-[[questions]]
-id = "voc-c02"
-module = "vocab-frontend"
-type = "code"
-difficulty = 2
-lang = "javascript"
-title = "Tìm thẻ từ theo chủ đề"
-prompt = '''
-Viết searchTerms(terms, query, topic). Mỗi phần tử trong terms là object có word, meaning và topic.
-- Nếu topic khác null, chỉ giữ các mục có topic bằng topic; so sánh topic chính xác.
-- query được trim và so sánh không phân biệt hoa thường; nếu query rỗng thì không lọc theo từ khóa.
-- Nếu query không rỗng, giữ mục mà word hoặc meaning chứa query như một chuỗi con.
-- Giữ nguyên thứ tự và không sửa mảng đầu vào.
-'''
-starter = '''
-function searchTerms(terms, query, topic) {
-  return terms;
-}
-'''
-solution = '''
-function searchTerms(terms, query, topic) {
-  const q = query.trim().toLowerCase();
-  return terms.filter((item) => {
-    if (topic !== null && item.topic !== topic) return false;
-    if (!q) return true;
-    return item.word.toLowerCase().includes(q) || item.meaning.toLowerCase().includes(q);
-  });
-}
-'''
-tests = '''
-const terms = [
-  { word: 'Endpoint', meaning: 'điểm cuối API', topic: 'backend' },
-  { word: 'Responsive', meaning: 'thích ứng màn hình', topic: 'frontend' },
-  { word: 'Payload', meaning: 'dữ liệu gửi đi', topic: 'backend' },
-];
-test('tìm không phân biệt hoa thường trong từ', () => {
-  expect(searchTerms(terms, 'END', null).map((x) => x.word)).toEqual(['Endpoint']);
-});
-test('tìm trong nghĩa tiếng Việt', () => {
-  expect(searchTerms(terms, 'dữ liệu', null).map((x) => x.word)).toEqual(['Payload']);
-});
-test('lọc đồng thời theo topic và query', () => {
-  expect(searchTerms(terms, 'dữ liệu', 'frontend')).toEqual([]);
-  expect(searchTerms(terms, 'api', 'backend').map((x) => x.word)).toEqual(['Endpoint']);
-});
-test('query rỗng chỉ lọc theo topic', () => {
-  expect(searchTerms(terms, '  ', 'backend').map((x) => x.word)).toEqual(['Endpoint', 'Payload']);
-});
-test('không sửa mảng đầu vào và giữ thứ tự', () => {
-  expect(searchTerms(terms, '', null)).toEqual(terms);
-  expect(terms.map((x) => x.word)).toEqual(['Endpoint', 'Responsive', 'Payload']);
-});
-'''
-hints = ["Chuẩn hóa query một lần bằng trim và toLowerCase.", "Thực hiện các điều kiện lọc trong một filter để giữ thứ tự."]
-explanation = '''Tìm kiếm từ vựng theo chủ đề giúp giao diện flashcard hiển thị đúng nội dung mà không thay đổi dữ liệu gốc.'''
 
 [[questions]]
 id = "voc-017"
@@ -557,74 +452,6 @@ model_answer = '''The search endpoint had high latency even though overall throu
 explanation = '''Câu trả lời phân biệt được độ trễ của một request và throughput toàn hệ thống.'''
 
 [[questions]]
-id = "voc-c03"
-module = "vocab-backend-data"
-type = "code"
-difficulty = 3
-lang = "javascript"
-title = "Tra từ điển IT có stemming đơn giản"
-prompt = '''
-Viết lookup(word, dictionary), trong đó dictionary là object ánh xạ từ gốc viết thường tới nghĩa tiếng Việt.
-- So khớp không phân biệt hoa thường; ưu tiên từ chính xác.
-- Nếu không có từ chính xác, lần lượt thử các dạng gốc: đổi đuôi ies thành y; bỏ ing (thử cả dạng bỏ phụ âm kép cuối nếu có); bỏ ed (cũng thử bỏ phụ âm kép); bỏ es; bỏ s; bỏ ly.
-- Chỉ trả nghĩa nếu dạng gốc có trong dictionary; nếu không tìm thấy, trả null.
-- Không cần xử lý nhiều hậu tố cùng lúc.
-'''
-starter = '''
-function lookup(word, dictionary) {
-  return dictionary[word] || null;
-}
-'''
-solution = '''
-function lookup(word, dictionary) {
-  const w = word.toLowerCase();
-  if (dictionary[w] !== undefined) return dictionary[w];
-  const candidates = [];
-  if (w.endsWith('ies')) candidates.push(w.slice(0, -3) + 'y');
-  if (w.endsWith('ing')) {
-    const stem = w.slice(0, -3);
-    candidates.push(stem);
-    if (stem.length > 1 && stem[stem.length - 1] === stem[stem.length - 2]) candidates.push(stem.slice(0, -1));
-  }
-  if (w.endsWith('ed')) {
-    const stem = w.slice(0, -2);
-    candidates.push(stem);
-    if (stem.length > 1 && stem[stem.length - 1] === stem[stem.length - 2]) candidates.push(stem.slice(0, -1));
-  }
-  if (w.endsWith('es')) candidates.push(w.slice(0, -2));
-  if (w.endsWith('s')) candidates.push(w.slice(0, -1));
-  if (w.endsWith('ly')) candidates.push(w.slice(0, -2));
-  for (const candidate of candidates) {
-    if (dictionary[candidate] !== undefined) return dictionary[candidate];
-  }
-  return null;
-}
-'''
-tests = '''
-const dictionary = { query: 'truy vấn', deploy: 'triển khai', run: 'chạy', fix: 'sửa', secure: 'bảo mật' };
-test('ưu tiên khớp chính xác và không phân biệt hoa thường', () => {
-  expect(lookup('QUERY', dictionary)).toBe('truy vấn');
-});
-test('ies trở về y và ing được bỏ', () => {
-  expect(lookup('queries', dictionary)).toBe('truy vấn');
-  expect(lookup('deploying', dictionary)).toBe('triển khai');
-});
-test('xử lý phụ âm kép trong running', () => {
-  expect(lookup('running', dictionary)).toBe('chạy');
-});
-test('bỏ ed và es', () => {
-  expect(lookup('fixed', dictionary)).toBe('sửa');
-  expect(lookup('fixes', dictionary)).toBe('sửa');
-});
-test('bỏ ly và từ lạ trả null', () => {
-  expect(lookup('securely', dictionary)).toBe('bảo mật');
-  expect(lookup('unknown', dictionary)).toBeNull();
-});
-'''
-hints = ["Tạo danh sách candidate theo đúng thứ tự đề bài rồi trả nghĩa của candidate đầu tiên có trong dictionary.", "Với running, sau khi bỏ ing cần thử cả runn và run."]
-explanation = '''Stemming ở đây chỉ mô phỏng tìm dạng gốc cho bài học; nó không thay thế bộ phân tích ngôn ngữ hoàn chỉnh.'''
-
-[[questions]]
 id = "voc-025"
 module = "vocab-devops-cloud"
 type = "single"
@@ -701,71 +528,6 @@ difficulty = 1
 prompt = '''The status page reported a service {{blank}} while the database cluster was recovering.'''
 blanks = [["outage"]]
 explanation = '''Outage là sự gián đoạn khiến dịch vụ không sẵn sàng trong một khoảng thời gian.'''
-
-[[questions]]
-id = "voc-c04"
-module = "vocab-devops-cloud"
-type = "code"
-difficulty = 3
-lang = "javascript"
-title = "Trộn đáp án quiz có seed"
-prompt = '''
-Viết seededShuffle(items, seed) trả về bản sao đã xáo trộn theo thứ tự giả ngẫu nhiên xác định.
-- Cùng danh sách và seed phải luôn cho cùng thứ tự.
-- Không sửa mảng đầu vào, không thêm hoặc mất phần tử.
-- Hỗ trợ seed là số nguyên; seed 0 cũng phải hoạt động.
-- Không cần tạo thứ tự ngẫu nhiên mật mã.
-'''
-starter = '''
-function seededShuffle(items, seed) {
-  return items.slice();
-}
-'''
-solution = '''
-function seededShuffle(items, seed) {
-  const result = items.slice();
-  let state = seed >>> 0;
-  if (state === 0) state = 1831565813;
-  function random() {
-    state ^= state << 13;
-    state ^= state >>> 17;
-    state ^= state << 5;
-    return (state >>> 0) / 4294967296;
-  }
-  for (let i = result.length - 1; i > 0; i--) {
-    const j = Math.floor(random() * (i + 1));
-    const value = result[i];
-    result[i] = result[j];
-    result[j] = value;
-  }
-  return result;
-}
-'''
-tests = '''
-test('cùng seed cho cùng kết quả', () => {
-  expect(seededShuffle(['a', 'b', 'c', 'd', 'e'], 42)).toEqual(seededShuffle(['a', 'b', 'c', 'd', 'e'], 42));
-});
-test('giữ đủ phần tử và không làm đổi input', () => {
-  const input = ['a', 'b', 'c', 'd', 'e'];
-  const result = seededShuffle(input, 7);
-  expect(result.slice().sort()).toEqual(['a', 'b', 'c', 'd', 'e']);
-  expect(input).toEqual(['a', 'b', 'c', 'd', 'e']);
-  expect(seededShuffle([1, 2, 3, 4, 5], 42)).not.toEqual([1, 2, 3, 4, 5]);
-});
-test('seed 0 vẫn xử lý ổn định', () => {
-  expect(seededShuffle([1, 2, 3, 4], 0)).toEqual(seededShuffle([1, 2, 3, 4], 0));
-});
-test('mảng rỗng và một phần tử', () => {
-  expect(seededShuffle([], 4)).toEqual([]);
-  expect(seededShuffle(['only'], 9)).toEqual(['only']);
-});
-test('trả về mảng mới', () => {
-  const input = [1, 2, 3];
-  expect(seededShuffle(input, 2) === input).toBe(false);
-});
-'''
-hints = ["Dùng generator giả ngẫu nhiên có state bắt đầu từ seed.", "Fisher–Yates chọn một vị trí trong đoạn chưa trộn rồi đổi chỗ."]
-explanation = '''Seed giúp quiz có thể tái tạo cùng thứ tự khi xem lại câu hỏi; thuật toán này không dùng cho bảo mật.'''
 
 [[questions]]
 id = "voc-033"
@@ -936,57 +698,6 @@ model_answer = '''We ran into an authentication issue after the rollout. The on-
 explanation = '''Phrasal verb trong câu chuyện giúp mô tả tự nhiên chuỗi hành động từ phát hiện đến theo dõi sau sự cố.'''
 
 [[questions]]
-id = "voc-c05"
-module = "vocab-phrasal-verbs"
-type = "code"
-difficulty = 3
-lang = "javascript"
-title = "Phát hiện phrasal verb trong câu"
-prompt = '''
-Viết findPhrasalVerbs(sentence, verbs). Trả về các cụm có mặt trong câu, không phân biệt hoa thường.
-- verbs là mảng phrasal verb cần dò; kết quả chỉ chứa cụm khớp chính xác với dạng trong danh sách, không xử lý chia thì.
-- Cho phép một hoặc nhiều khoảng trắng giữa các từ trong cụm.
-- Chỉ khớp ranh giới từ để “set up” không khớp với “setup” hay một cụm nằm giữa từ dài hơn.
-- Mỗi cụm chỉ xuất hiện một lần trong kết quả, theo thứ tự của verbs.
-'''
-starter = '''
-function findPhrasalVerbs(sentence, verbs) {
-  return [];
-}
-'''
-solution = '''
-function findPhrasalVerbs(sentence, verbs) {
-  const found = [];
-  const text = ' ' + sentence.toLowerCase().replace(/[^a-z0-9]+/g, ' ').replace(/ +/g, ' ').trim() + ' ';
-  for (const verb of verbs) {
-    const phrase = verb.trim().toLowerCase().replace(/ +/g, ' ');
-    if (text.includes(' ' + phrase + ' ') && !found.includes(verb)) found.push(verb);
-  }
-  return found;
-}
-'''
-tests = '''
-const verbs = ['look into', 'set up', 'follow up', 'wrap up'];
-test('tìm cụm không phân biệt hoa thường', () => {
-  expect(findPhrasalVerbs('Please LOOK INTO the alert, then set up a dashboard.', verbs)).toEqual(['look into', 'set up']);
-});
-test('chấp nhận nhiều khoảng trắng', () => {
-  expect(findPhrasalVerbs('We will follow   up tomorrow.', verbs)).toEqual(['follow up']);
-});
-test('chỉ khớp ranh giới từ', () => {
-  expect(findPhrasalVerbs('The setup guide is ready.', ['set up'])).toEqual([]);
-});
-test('kết quả theo thứ tự danh sách và không lặp', () => {
-  expect(findPhrasalVerbs('Wrap up, then look into it; wrap up later.', verbs)).toEqual(['look into', 'wrap up']);
-});
-test('không có cụm phù hợp', () => {
-  expect(findPhrasalVerbs('The build is green.', verbs)).toEqual([]);
-});
-'''
-hints = ["Chuẩn hóa khoảng trắng trong mỗi cụm thành biểu thức cho phép nhiều whitespace.", "Dùng ranh giới từ ở hai đầu và duyệt verbs để giữ thứ tự danh sách."]
-explanation = '''Bộ dò nhỏ này hỗ trợ tra cụm trong ghi chú; nó không phân tích biến thể ngữ pháp hoặc ngữ cảnh nghĩa.'''
-
-[[questions]]
 id = "voc-050"
 module = "vocab-workplace"
 type = "single"
@@ -1134,55 +845,64 @@ blanks = [["configurable"]]
 explanation = '''Configurable là tính từ có nghĩa là có thể cấu hình; hậu tố -able thường diễn tả khả năng.'''
 
 [[questions]]
-id = "voc-c06"
-module = "vocab-word-formation"
-type = "code"
+id = "voc-065"
+module = "vocab-devops-cloud"
+type = "single"
 difficulty = 2
-lang = "javascript"
-title = "Kiểm tra từ cùng họ"
+prompt = "During onboarding, the platform must ______ a temporary database instance before the test run."
+options = ["provision", "provisioning", "provisioned", "provisionally"]
+answer = [0]
+explanation = "Provision là động từ chỉ việc chuẩn bị hoặc cấp phát hạ tầng, tài khoản hay tài nguyên cần thiết."
+
+[[questions]]
+id = "voc-066"
+module = "vocab-security"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các collocation tự nhiên trong bản cập nhật sự cố bảo mật."
+options = ["mitigate the impact", "identify the root cause", "apply a security patch", "make a rollback", "do a mitigation"]
+answer = [0, 1, 2]
+explanation = "Mitigate the impact, identify the root cause và apply a security patch là các kết hợp từ tự nhiên; thường nói perform a rollback."
+
+[[questions]]
+id = "voc-067"
+module = "vocab-workflow"
+type = "fill"
+difficulty = 2
+prompt = "The export is temporarily unavailable; as a {{blank}}, users can download the CSV from the admin page."
+blanks = [["workaround"]]
+explanation = "Workaround là giải pháp tạm thời giúp tiếp tục công việc khi lỗi gốc chưa được khắc phục."
+
+[[questions]]
+id = "voc-068"
+module = "vocab-workflow"
+type = "fill"
+difficulty = 2
+prompt = "We will {{blank}} the new feature to ten percent of users first."
+blanks = [["roll out"]]
+explanation = "Roll out nghĩa là phát hành hoặc triển khai tính năng cho người dùng; có thể làm theo từng đợt."
+
+[[questions]]
+id = "voc-069"
+module = "vocab-workplace"
+type = "single"
+difficulty = 1
+prompt = "A team has accepted a set of tasks but has not prioritised or scheduled them for a sprint yet. What is this list called?"
+options = ["The backlog", "The postmortem", "The payload", "The rollback"]
+answer = [0]
+explanation = "Backlog là danh sách công việc chưa hoàn thành hoặc chưa được lên lịch; sprint backlog là phần được chọn cho một sprint."
+
+[[questions]]
+id = "voc-070"
+module = "vocab-devops-cloud"
+type = "essay"
+difficulty = 3
 prompt = '''
-Viết isFamilyMember(root, word, families). families là object ánh xạ từ gốc viết thường tới mảng các dạng từ cùng họ.
-- Trả true khi root tồn tại trong families và word, sau khi trim và chuyển chữ thường, nằm trong mảng của root.
-- So sánh không phân biệt hoa thường và bỏ khoảng trắng ở đầu/cuối của root, word.
-- Trả false nếu root không tồn tại, word không thuộc họ từ hoặc dữ liệu tương ứng không phải mảng.
-- Không tự suy diễn dạng từ; chỉ kiểm tra dữ liệu được cung cấp.
+Viết hai câu cập nhật sau một sự cố. Nêu cách giảm tác động, nguyên nhân gốc và hành động tiếp theo.
 '''
-starter = '''
-function isFamilyMember(root, word, families) {
-  return true;
-}
+keywords = [["mitigated", "mitigate", "reduced"], ["impact"], ["outage"], ["root cause"], ["follow-up action", "follow up action"]]
+min_keywords = 4
+model_answer = '''
+We mitigated the impact of the outage by routing requests to a healthy region. The investigation found the root cause, and the follow-up action is to add a regional failover test.
 '''
-solution = '''
-function isFamilyMember(root, word, families) {
-  const key = root.trim().toLowerCase();
-  const candidate = word.trim().toLowerCase();
-  const forms = families[key];
-  if (!Array.isArray(forms)) return false;
-  return forms.some((form) => form.trim().toLowerCase() === candidate);
-}
-'''
-tests = '''
-const families = {
-  secure: ['secure', 'security', 'securely'],
-  deploy: ['deploy', 'deployment', 'deployed', 'deployable'],
-  access: ['access', 'accessible', 'accessibility', 'inaccessible'],
-};
-test('tìm dạng từ cùng họ', () => {
-  expect(isFamilyMember('secure', 'security', families)).toBe(true);
-  expect(isFamilyMember('deploy', 'deployment', families)).toBe(true);
-});
-test('so sánh không phân biệt hoa thường', () => {
-  expect(isFamilyMember(' ACCESS ', ' Accessible ', families)).toBe(true);
-});
-test('từ không cùng họ trả false', () => {
-  expect(isFamilyMember('secure', 'security-related', families)).toBe(false);
-});
-test('root không có trong bảng trả false', () => {
-  expect(isFamilyMember('patch', 'patched', families)).toBe(false);
-});
-test('dữ liệu không phải mảng trả false', () => {
-  expect(isFamilyMember('query', 'queries', { query: 'query' })).toBe(false);
-});
-'''
-hints = ["Chuẩn hóa root và word bằng trim().toLowerCase().", "Dùng Array.isArray trước khi gọi some."]
-explanation = '''Bảng họ từ giúp quiz phân biệt danh từ, động từ và tính từ mà không đoán biến tố ngoài dữ liệu đã học.'''
+explanation = "Tóm tắt sự cố bằng ba cụm trọng tâm: giảm tác động, xác định nguyên nhân gốc và nêu hành động theo sau."

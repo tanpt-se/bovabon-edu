@@ -105,6 +105,74 @@ Tree shaking loại bỏ export không được dùng khi bundler có thể phâ
 Tên asset có content hash cho phép đặt cache dài hạn vì nội dung đổi sẽ có tên mới; HTML thường cần cache ngắn hơn để trỏ tới manifest mới. Kích thước chunk nên cân đối với đường đi người dùng và khả năng cache, không chỉ tối ưu một con số tổng. Lỗi hay gặp là tách mỗi module thành một chunk, hoặc bật cache dài hạn cho HTML mà không có cơ chế cập nhật.
 '''
 
+[[modules]]
+id = "frontend-tooling-dv-layout"
+title = "Tailwind layout, spacing và typography"
+description = "Kết hợp Flexbox, Grid, spacing, sizing và typography để xây bố cục responsive dễ duy trì."
+sources = ["tailwindcss/flex", "tailwindcss/grid-template-columns", "tailwindcss/gap", "tailwindcss/padding", "tailwindcss/font-size"]
+lesson = '''
+### Dựng bố cục từ utility
+Tailwind cung cấp utility cho các thuộc tính CSS nền tảng. Chọn `flex` khi quan hệ giữa các phần tử chạy theo một trục và cần căn chỉnh hoặc phân bố khoảng trống; chọn `grid` khi cần định nghĩa hàng, cột và quan hệ hai chiều. `items-*` căn chỉnh trên trục chéo của flex, còn `justify-*` phân bố theo trục chính; khi đổi `flex-row` thành `flex-col`, hai trục cũng đổi theo.
+
+| Nhu cầu | Nhóm utility | Ví dụ |
+|---|---|---|
+| Cột co giãn | Flexbox | `flex items-center gap-3` |
+| Lưới theo breakpoint | Grid | `grid grid-cols-1 md:grid-cols-3` |
+| Khoảng cách đều | Gap | `gap-4` hoặc `gap-x-6` |
+| Chiều rộng nội dung | Sizing | `w-full max-w-3xl` |
+| Nhịp chữ | Typography | `text-sm leading-6` |
+
+Ví dụ danh sách thẻ: `grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3`. Utility không có breakpoint đặt bố cục mặc định; breakpoint chỉ bổ sung thay đổi từ ngưỡng tương ứng. Ưu tiên thang spacing và sizing của theme để giao diện nhất quán, chỉ dùng giá trị tuỳ ý khi có yêu cầu đo được. Lỗi hay gặp là chỉ đặt `grid-cols-*` mà quên `grid`, nhầm `items-*` với `justify-*`, hoặc thêm breakpoint dựa trên tên thiết bị thay vì lúc nội dung thực sự cần đổi bố cục. Với con flex/grid bị tràn, kiểm tra kích thước tối thiểu của nội dung và giới hạn chiều rộng trước khi thêm `overflow-hidden` để che lỗi.
+'''
+
+[[modules]]
+id = "frontend-tooling-dv-sass-flow"
+title = "Sass control flow và collections"
+description = "Dùng list, map và directives điều kiện/vòng lặp để sinh CSS có kiểm soát."
+sources = ["sass/at-rules/control/each", "sass/at-rules/control/for", "sass/at-rules/control/if", "sass/values/maps", "sass/values/lists"]
+lesson = '''
+### Sinh CSS từ dữ liệu Sass
+Sass control flow chạy trong lúc biên dịch stylesheet. List phù hợp với một dãy giá trị có thứ tự; map lưu cặp key/value như tên token và màu. `@each` duyệt từng phần tử của list hoặc map, `@for` lặp theo dải số, còn `@if` chọn nhánh theo giá trị Sass. Chúng hữu ích khi tạo một tập utility/token có quy luật, nhưng mỗi vòng lặp thường tạo thêm CSS đầu ra.
+
+| Cấu trúc | Dùng khi | Lưu ý |
+|---|---|---|
+| List + `@each` | duyệt danh sách tên hoặc giá trị | phần tử được xử lý theo thứ tự |
+| Map + `@each` | ghép key với value như token | dùng `map.get` khi cần tra cứu |
+| `@for ... through` | sinh dải số có cả mốc cuối | `to` không bao gồm mốc cuối |
+| `@if` / `@else` | chọn CSS theo điều kiện lúc build | không phải nhánh runtime trong trình duyệt |
+
+```scss
+@use "sass:map";
+$palette: (brand: #087f8c, warning: #a85d00);
+
+@each $name, $color in $palette {
+  .text-#{$name} { color: $color; }
+}
+```
+
+`#{$name}` nội suy biến vào selector; biến vẫn giữ kiểu Sass trước khi được chuyển thành CSS. Dùng module có namespace rõ ràng khi gọi hàm built-in, và tổ chức token trong một điểm xuất ổn định với `@use`/`@forward`. Lỗi hay gặp là lặp trên map nhưng chỉ nhận một biến nên mất key, quên nội suy trong tên selector, hoặc tạo hàng trăm selector từ một vòng lặp không giới hạn. Hãy xác định số utility thực sự cần và kiểm tra CSS biên dịch, vì mã Sass ngắn vẫn có thể sinh đầu ra rất lớn.
+'''
+
+[[modules]]
+id = "frontend-tooling-dv-graph"
+title = "Dependency graph, resolver và assets"
+description = "Theo dấu entry, imports, quy tắc resolve và cách bundler biến source thành asset đầu ra."
+sources = ["webpack~5/concepts/dependency-graph", "webpack~5/concepts/module-resolution", "webpack~5/configuration/resolve", "webpack~5/guides/asset-modules", "vite/guide/assets", "vite/guide/dep-pre-bundling"]
+lesson = '''
+### Từ entry tới asset đầu ra
+Bundler bắt đầu từ một hoặc nhiều entry point rồi lần theo import để tạo dependency graph. Mỗi module là một nút; quan hệ import là cạnh. Resolver quyết định một specifier như `./panel` hay `library` trỏ tới file nào dựa trên đường dẫn, package metadata, alias và cấu hình extensions. Sau đó loader hoặc transform xử lý module; asset module như CSS, ảnh hay font cũng tham gia vào quá trình build theo quy tắc của công cụ.
+
+| Khái niệm | Vai trò | Ví dụ |
+|---|---|---|
+| Entry | điểm bắt đầu duyệt graph | `./src/main.js` |
+| Resolver | ánh xạ specifier sang file | `resolve.extensions` |
+| Static import | cạnh biết được khi phân tích | `import './theme.css'` |
+| Dynamic import | ranh giới tải bất đồng bộ | `import('./editor.js')` |
+| Asset import | đưa file vào pipeline | `import logo from './logo.svg'` |
+
+Vite phục vụ module qua ESM trong development và tối ưu dependency package khi cần; khi build, import tĩnh và dynamic import giúp xác định asset hoặc chunk đầu ra. Vite cũng xử lý asset được import và asset trong `public` theo các quy tắc khác nhau. webpack cấu hình entry, resolve, module rules và output riêng, nhưng vẫn xây graph từ các dependency. Lỗi hay gặp là cho rằng một file chỉ được đóng gói nếu nó xuất hiện trong HTML, quên rằng CSS có thể import ảnh/font, hoặc tạo đường dẫn import biến thiên mà bundler không thể phân tích. Khi debug file bị thiếu, lần theo entry → import → resolver → transform/output và kiểm tra cấu hình đúng môi trường dev hay production.
+'''
+
 [[questions]]
 id = "tool-001"
 module = "tool-tailwind"
@@ -901,3 +969,344 @@ test('giới hạn hoặc item sai thì báo lỗi', () => {
 hints = ["Theo dõi tổng size của chunk hiện tại; flush trước khi thêm item làm vượt ngưỡng.", "Xử lý riêng item quá lớn để nó không bị ghép với item kế tiếp."]
 explanation = "Đây là mô hình greedy giữ thứ tự input; bundler thực tế còn xét graph dependency, entry point, cache và request overhead."
 sources = ["vite/guide/build", "webpack~5/guides/code-splitting"]
+
+[[questions]]
+id = "frontend-tooling-dv001"
+module = "frontend-tooling-dv-layout"
+type = "single"
+difficulty = 1
+prompt = "Trong một hàng Flexbox nằm ngang, utility nào căn các phần tử theo trục chéo?"
+options = ["`items-center`", "`justify-center`", "`gap-x-4`", "`grid-cols-2`"]
+answer = [0]
+explanation = "Với `flex-row`, `items-*` điều khiển căn chỉnh trên trục chéo; `justify-*` điều khiển trục chính."
+sources = ["tailwindcss/flex"]
+
+[[questions]]
+id = "frontend-tooling-dv002"
+module = "frontend-tooling-dv-layout"
+type = "single"
+difficulty = 2
+prompt = "Bạn cần danh sách một cột trên màn hình nhỏ, hai cột từ `md` và ba cột từ `xl`. Cách viết nào thể hiện đúng cả display lẫn số cột?"
+options = ["`grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3`", "`grid-cols-1 md:grid-cols-2 xl:grid-cols-3`", "`flex grid-cols-1 md:grid-cols-2 xl:grid-cols-3`", "`grid grid-cols-3 md:grid-cols-2 xl:grid-cols-1`"]
+answer = [0]
+explanation = "`grid` bật CSS Grid; các lớp cột thay đổi theo breakpoint và mặc định theo hướng mobile-first."
+sources = ["tailwindcss/grid-template-columns", "tailwindcss/responsive-design"]
+
+[[questions]]
+id = "frontend-tooling-dv003"
+module = "frontend-tooling-dv-layout"
+type = "single"
+difficulty = 2
+prompt = "Trong Grid, utility nào chỉ đặt khoảng cách theo chiều ngang giữa các cột?"
+options = ["`gap-x-6`", "`gap-y-6`", "`space-y-6`", "`items-x-6`"]
+answer = [0]
+explanation = "`gap-x-*` tương ứng column gap; `gap-y-*` đặt khoảng cách giữa các hàng."
+sources = ["tailwindcss/gap"]
+
+[[questions]]
+id = "frontend-tooling-dv004"
+module = "frontend-tooling-dv-layout"
+type = "single"
+difficulty = 3
+prompt = "Một tiêu đề dài làm thẻ trong Grid rộng hơn dự kiến và đẩy các cột khác. Hướng xử lý nào nên được kiểm tra trước?"
+options = ["Cho phép track co lại, chẳng hạn dùng `minmax(0, 1fr)`, và kiểm soát tràn văn bản", "Thêm `justify-between` lên tiêu đề", "Tăng `gap` cho tới khi các cột cân bằng", "Xoá `grid` và để mọi phần tử thành block"]
+answer = [0]
+explanation = "Nội dung dài có thể tạo kích thước tối thiểu lớn cho track; cần kiểm soát min-size và overflow thay vì chỉ tăng khoảng cách."
+sources = ["tailwindcss/grid-template-columns", "tailwindcss/overflow-wrap"]
+
+[[questions]]
+id = "frontend-tooling-dv005"
+module = "frontend-tooling-dv-layout"
+type = "multiple"
+difficulty = 2
+prompt = "Những utility nào thường phù hợp để dựng một danh sách thẻ tự xuống hàng khi viewport hẹp?"
+options = ["`grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3`", "`flex flex-wrap gap-4`", "`grid-cols-3 gap-4` mà không có utility bật Grid", "`items-center justify-between` mà không có utility bật Flexbox hoặc Grid"]
+answer = [0, 1]
+explanation = "Grid có thể đổi số cột theo breakpoint; Flexbox có thể wrap. Các utility căn chỉnh đơn lẻ không tự bật layout tương ứng."
+sources = ["tailwindcss/flex-wrap", "tailwindcss/grid-template-columns", "tailwindcss/gap"]
+
+[[questions]]
+id = "frontend-tooling-dv006"
+module = "frontend-tooling-dv-layout"
+type = "multiple"
+difficulty = 2
+prompt = "Những nhận định nào đúng về utility Flexbox và khoảng cách?"
+options = ["`items-center` căn theo trục chéo của flex container", "`justify-between` phân bố phần tử theo trục chính", "`gap-x-4` đặt khoảng cách ngang giữa các mục", "`justify-center` luôn căn giữa theo trục dọc dù `flex-direction` thay đổi"]
+answer = [0, 1, 2]
+explanation = "Trục chính phụ thuộc `flex-direction`, vì vậy `justify-*` không luôn tương ứng với chiều ngang hay dọc."
+sources = ["tailwindcss/flex", "tailwindcss/gap"]
+
+[[questions]]
+id = "frontend-tooling-dv007"
+module = "frontend-tooling-dv-layout"
+type = "fill"
+difficulty = 1
+prompt = '''
+Điền utility để đặt khoảng cách theo chiều ngang giữa các cột:
+```html
+<div class="grid {{blank}}-4">...</div>
+```
+'''
+blanks = [["gap-x"]]
+explanation = "Tiền tố `gap-x` đặt column gap; hậu tố `4` chọn một mức trong thang spacing."
+sources = ["tailwindcss/gap"]
+
+[[questions]]
+id = "frontend-tooling-dv008"
+module = "frontend-tooling-dv-layout"
+type = "essay"
+difficulty = 3
+prompt = "Một lưới thẻ bị tràn ngang khi tiêu đề dài, dù đã khai báo nhiều cột responsive. Bạn sẽ lần lượt kiểm tra những gì trong utility layout và nội dung?"
+keywords = [["minmax(0, 1fr)", "min-width", "kích thước tối thiểu"], ["overflow", "tràn nội dung"], ["responsive", "breakpoint"], ["grid", "lưới"]]
+min_keywords = 2
+model_answer = '''Tôi sẽ kiểm tra track của grid và kích thước tối thiểu do nội dung áp đặt; `minmax(0, 1fr)` hoặc `min-w-0` có thể cho phép cột co lại. Sau đó kiểm soát `overflow` hoặc cách ngắt từ cho tiêu đề, rồi xác nhận số cột responsive chỉ đổi tại breakpoint nơi nội dung cần thay đổi.'''
+explanation = "Câu trả lời nên liên kết nguyên nhân tràn với kích thước nội dung và nêu cách xác minh bố cục theo breakpoint."
+sources = ["tailwindcss/grid-template-columns", "tailwindcss/overflow-wrap", "tailwindcss/responsive-design"]
+
+[[questions]]
+id = "frontend-tooling-dv009"
+module = "frontend-tooling-dv-sass-flow"
+type = "single"
+difficulty = 1
+prompt = "Directive nào phù hợp để lặp qua từng cặp key/value của một Sass map và sinh selector theo tên token?"
+options = ["`@each $name, $value in $tokens`", "`@for $name from $tokens`", "`@if $name in $tokens`", "`@use $name from $tokens`"]
+answer = [0]
+explanation = "`@each` có thể nhận key và value khi duyệt map; `@for` dùng dải số, còn `@use` nạp module."
+sources = ["sass/at-rules/control/each", "sass/values/maps"]
+
+[[questions]]
+id = "frontend-tooling-dv010"
+module = "frontend-tooling-dv-sass-flow"
+type = "single"
+difficulty = 2
+prompt = "Trong `@for $i from 1 through 4`, vòng lặp chạy qua những giá trị nào của `$i`?"
+options = ["1, 2, 3, 4", "1, 2, 3", "0, 1, 2, 3", "Chỉ 1 và 4"]
+answer = [0]
+explanation = "`through` bao gồm cận cuối; `to` dừng trước cận cuối."
+sources = ["sass/at-rules/control/for"]
+
+[[questions]]
+id = "frontend-tooling-dv011"
+module = "frontend-tooling-dv-sass-flow"
+type = "single"
+difficulty = 2
+prompt = '''
+Một stylesheet dùng `map.get($palette, "brand")`. Cách nào khai báo rõ module built-in chứa hàm `map.get`?
+'''
+options = ["`@use \"sass:map\";`", "`@import \"sass:map\";`", "`@forward \"sass:map\";`", "`@include \"sass:map\";`"]
+answer = [0]
+explanation = "`@use` nạp module built-in và cho phép gọi hàm qua namespace `map`."
+sources = ["sass/at-rules/use", "sass/values/maps"]
+
+[[questions]]
+id = "frontend-tooling-dv012"
+module = "frontend-tooling-dv-sass-flow"
+type = "single"
+difficulty = 1
+prompt = "`@if` trong Sass được đánh giá ở thời điểm nào?"
+options = ["Khi biên dịch Sass để chọn CSS đầu ra", "Mỗi lần người dùng hover trong trình duyệt", "Mỗi lần JavaScript thay đổi DOM", "Khi trình duyệt tải font"]
+answer = [0]
+explanation = "Sass control flow chạy ở build time; CSS đã biên dịch không giữ một nhánh Sass runtime."
+sources = ["sass/at-rules/control/if"]
+
+[[questions]]
+id = "frontend-tooling-dv013"
+module = "frontend-tooling-dv-sass-flow"
+type = "multiple"
+difficulty = 2
+prompt = "Những phát biểu nào đúng về Sass control flow?"
+options = ["`@each` có thể duyệt list hoặc map", "`@for ... through` bao gồm cận cuối", "`@if` chọn nhánh trong lúc biên dịch Sass", "`@each` tạo CSS động lại trong trình duyệt khi biến đổi"]
+answer = [0, 1, 2]
+explanation = "Sass biến đổi stylesheet tại build time; CSS được sinh ra không chạy lại directive khi người dùng thao tác."
+sources = ["sass/at-rules/control/each", "sass/at-rules/control/for", "sass/at-rules/control/if"]
+
+[[questions]]
+id = "frontend-tooling-dv014"
+module = "frontend-tooling-dv-sass-flow"
+type = "multiple"
+difficulty = 3
+prompt = "Một nhóm muốn sinh utility màu từ design tokens. Những lựa chọn nào giúp kiểm soát cấu trúc và đầu ra?"
+options = ["Dùng map để ghép tên token với giá trị", "Dùng `@each` để tạo selector theo từng cặp key/value", "Giới hạn tập token và kiểm tra CSS đã biên dịch", "Tạo vòng lặp không giới hạn vì compiler sẽ chỉ giữ class được dùng ở runtime"]
+answer = [0, 1, 2]
+explanation = "Map và `@each` làm dữ liệu rõ ràng; giới hạn đầu vào tránh sinh quá nhiều CSS. Sass không tự loại selector dựa trên DOM runtime."
+sources = ["sass/values/maps", "sass/at-rules/control/each"]
+
+[[questions]]
+id = "frontend-tooling-dv015"
+module = "frontend-tooling-dv-sass-flow"
+type = "fill"
+difficulty = 2
+prompt = '''
+Điền cú pháp nội suy để biến `$name` trở thành một phần của selector:
+```scss
+.#{{{blank}}} { color: $color; }
+```
+'''
+blanks = [["$name"]]
+explanation = "Dạng nội suy selector là `.#{$name}`; phần giá trị Sass được chèn khi biên dịch."
+sources = ["sass/at-rules/control/each", "sass/interpolation"]
+
+[[questions]]
+id = "frontend-tooling-dv016"
+module = "frontend-tooling-dv-sass-flow"
+type = "essay"
+difficulty = 3
+prompt = "Khi nào bạn sẽ tạo utility CSS bằng map và `@each` trong Sass, và làm sao tránh khiến stylesheet đầu ra phình to hoặc khó bảo trì?"
+keywords = [["map", "bản đồ token"], ["@each", "vòng lặp each"], ["CSS output", "CSS đầu ra"], ["giới hạn", "tập token nhỏ"], ["namespace", "module namespace"]]
+min_keywords = 2
+model_answer = '''Dùng map khi mỗi token cần tên và giá trị liên kết, rồi `@each` có thể sinh selector theo cặp key/value. Giới hạn tập token để kiểm soát CSS output, kiểm tra stylesheet sau biên dịch và đặt dữ liệu trong Sass module có namespace rõ ràng để tránh API toàn cục khó theo dõi.'''
+explanation = "Câu trả lời tốt nêu trường hợp sinh utility theo dữ liệu và ít nhất một cách kiểm soát độ lớn hoặc cấu trúc module."
+sources = ["sass/values/maps", "sass/at-rules/control/each", "sass/at-rules/use"]
+
+[[questions]]
+id = "frontend-tooling-dv017"
+module = "frontend-tooling-dv-graph"
+type = "single"
+difficulty = 1
+prompt = "Trong webpack, entry point có vai trò gì khi dựng dependency graph?"
+options = ["Chỉ định module gốc để bắt đầu lần theo các dependency", "Định nghĩa thứ tự CSS trong trình duyệt", "Thay thế toàn bộ quy tắc resolver", "Bắt buộc mỗi module tải bằng dynamic import"]
+answer = [0]
+explanation = "Bundler đi từ entry point và lần theo import để xác định các module liên quan tới build."
+sources = ["webpack~5/concepts/entry-points", "webpack~5/concepts/dependency-graph"]
+
+[[questions]]
+id = "frontend-tooling-dv018"
+module = "frontend-tooling-dv-graph"
+type = "single"
+difficulty = 2
+prompt = "Một module JavaScript import `./logo.svg` và dùng giá trị import trong thuộc tính `src`. Cách hiểu nào phù hợp với pipeline asset của Vite?"
+options = ["Asset được resolve và xử lý trong build; giá trị import có thể là URL đầu ra", "Mọi file SVG chỉ được đọc nếu đặt inline trong HTML", "Import ảnh luôn bị bỏ khỏi dependency graph", "Trình duyệt tự tìm file trong thư mục source mà bundler không tham gia"]
+answer = [0]
+explanation = "Vite hỗ trợ import asset từ source và chuyển nó thành URL phù hợp với dev hoặc build."
+sources = ["vite/guide/assets"]
+
+[[questions]]
+id = "frontend-tooling-dv019"
+module = "frontend-tooling-dv-graph"
+type = "single"
+difficulty = 2
+prompt = "Mục đích chính của dependency pre-bundling trong Vite development là gì?"
+options = ["Chuẩn hoá/tối ưu dependency package để trình duyệt tải hiệu quả hơn", "Thay thế production build và deploy ứng dụng", "Tự động viết lại toàn bộ source app sang TypeScript", "Xoá mọi dependency không được gọi trực tiếp từ HTML"]
+answer = [0]
+explanation = "Vite tối ưu package dependency cho môi trường dev; việc này khác với build production của ứng dụng."
+sources = ["vite/guide/dep-pre-bundling"]
+
+[[questions]]
+id = "frontend-tooling-dv020"
+module = "frontend-tooling-dv-graph"
+type = "single"
+difficulty = 2
+prompt = "Trong webpack, trường nào bên dưới điều khiển danh sách extension được thử khi resolve import không ghi extension?"
+options = ["`resolve.extensions`", "`output.filename`", "`module.rules`", "`optimization.minimize`"]
+answer = [0]
+explanation = "`resolve.extensions` cấu hình thứ tự phần mở rộng file mà resolver thử cho import không có extension."
+sources = ["webpack~5/configuration/resolve"]
+
+[[questions]]
+id = "frontend-tooling-dv021"
+module = "frontend-tooling-dv-graph"
+type = "multiple"
+difficulty = 2
+prompt = "Những phát biểu nào đúng về import và asset trong dependency graph?"
+options = ["Static import thường cho bundler biết dependency trong lúc phân tích", "Dynamic `import()` có thể tạo ranh giới tải bất đồng bộ", "CSS import có thể kéo thêm asset như font hoặc ảnh vào pipeline", "Mọi dependency phải được liệt kê thủ công trong HTML"]
+answer = [0, 1, 2]
+explanation = "Graph được tạo từ các quan hệ import; dependency không cần luôn được khai báo riêng trong HTML."
+sources = ["webpack~5/concepts/dependency-graph", "webpack~5/guides/asset-modules", "vite/guide/assets"]
+
+[[questions]]
+id = "frontend-tooling-dv022"
+module = "frontend-tooling-dv-graph"
+type = "multiple"
+difficulty = 3
+prompt = "Khi debug một import không tìm thấy trong production, những bước nào giúp khoanh vùng đúng?"
+options = ["Xác nhận import được truy cập từ entry hoặc dependency khác", "Kiểm tra resolver, alias và tên file/case thực tế", "Kiểm tra rule hoặc transform xử lý đúng loại module/asset", "Chỉ sửa dev server vì nếu chạy được ở dev thì production chắc chắn giống hệt"]
+answer = [0, 1, 2]
+explanation = "Dev server và production build có pipeline khác nhau; cần theo dấu graph, resolver và bước xử lý asset ở đúng mode."
+sources = ["webpack~5/concepts/dependency-graph", "webpack~5/concepts/module-resolution", "vite/guide/assets"]
+
+[[questions]]
+id = "frontend-tooling-dv023"
+module = "frontend-tooling-dv-graph"
+type = "fill"
+difficulty = 1
+prompt = '''
+Điền tên trường webpack cấu hình module gốc của build:
+```js
+export default { {{blank}}: './src/main.js' }
+```
+'''
+blanks = [["entry"]]
+explanation = "`entry` khai báo điểm bắt đầu để bundler lần theo dependency graph."
+sources = ["webpack~5/concepts/entry-points"]
+
+[[questions]]
+id = "frontend-tooling-dv024"
+module = "frontend-tooling-dv-graph"
+type = "essay"
+difficulty = 3
+prompt = "Hãy giải thích cách bundler đi từ entry tới asset/chunk và vì sao một dynamic import hoặc resolver sai có thể làm thay đổi kết quả build."
+keywords = [["entry point", "entry"], ["dependency graph", "đồ thị phụ thuộc"], ["resolve", "resolver"], ["dynamic import", "import động"], ["asset", "tài nguyên"]]
+min_keywords = 2
+model_answer = '''Bundler bắt đầu từ entry point, theo các import để lập dependency graph rồi resolve từng specifier tới file thật trước khi transform và phát asset/chunk. Dynamic import có thể tạo ranh giới tải bất đồng bộ; nếu resolver ánh xạ sai hoặc không tìm thấy file, module và asset đầu ra cũng thay đổi.'''
+explanation = "Câu trả lời cần nối được entry, graph/resolution và kết quả asset hoặc chunk."
+sources = ["webpack~5/concepts/entry-points", "webpack~5/concepts/dependency-graph", "webpack~5/concepts/module-resolution"]
+
+[[questions]]
+id = "frontend-tooling-dvc01"
+module = "frontend-tooling-dv-graph"
+type = "code"
+lang = "javascript"
+difficulty = 3
+title = "Sắp xếp module theo dependency"
+prompt = '''
+Viết `orderModules(graph)` với `graph` là object có dạng `{ moduleName: [dependencyName, ...] }`. Trả về mảng tên module theo thứ tự dependency xuất hiện trước module sử dụng nó. Duyệt các key gốc theo thứ tự trong object và dependency theo thứ tự trong mảng để kết quả ổn định; mỗi module chỉ xuất hiện một lần. Ví dụ `{ app: ['view'], view: ['utils'], utils: [] }` có thể trả `['utils', 'view', 'app']`.
+Nếu một dependency không có key tương ứng trong graph, ném `Error` có thông điệp bắt đầu bằng `Unknown dependency`. Nếu graph có chu trình, ném `Error('Dependency cycle')`. Graph đầu vào có cấu trúc hợp lệ; không cần xử lý loại dữ liệu khác.
+'''
+starter = '''
+function orderModules(graph) {
+  return Object.keys(graph);
+}
+'''
+solution = '''
+function orderModules(graph) {
+  const states = new Map();
+  const order = [];
+  function visit(name) {
+    if (!Object.prototype.hasOwnProperty.call(graph, name)) {
+      throw new Error('Unknown dependency: ' + name);
+    }
+    const state = states.get(name);
+    if (state === 1) throw new Error('Dependency cycle');
+    if (state === 2) return;
+    states.set(name, 1);
+    for (const dependency of graph[name]) visit(dependency);
+    states.set(name, 2);
+    order.push(name);
+  }
+  for (const name of Object.keys(graph)) visit(name);
+  return order;
+}
+'''
+tests = '''
+test('dependency nằm trước module sử dụng nó', () => {
+  expect(orderModules({ app: ['view'], view: ['utils'], utils: [] })).toEqual(['utils', 'view', 'app']);
+});
+test('giữ thứ tự ổn định cho các module độc lập', () => {
+  expect(orderModules({ first: [], second: [], third: [] })).toEqual(['first', 'second', 'third']);
+});
+test('diamond dependency chỉ xuất hiện một lần', () => {
+  expect(orderModules({ app: ['left', 'right'], left: ['shared'], right: ['shared'], shared: [] })).toEqual(['shared', 'left', 'right', 'app']);
+});
+test('graph rỗng trả mảng rỗng', () => {
+  expect(orderModules({})).toEqual([]);
+});
+test('dependency không tồn tại báo lỗi', () => {
+  expect(() => orderModules({ app: ['missing'] })).toThrow('Unknown dependency');
+});
+test('chu trình báo lỗi', () => {
+  expect(() => orderModules({ a: ['b'], b: ['a'] })).toThrow('Dependency cycle');
+});
+'''
+hints = ["Dùng DFS với ba trạng thái: chưa thăm, đang thăm và đã hoàn tất.", "Thêm module vào kết quả sau khi duyệt xong dependencies; trạng thái đang thăm giúp nhận ra chu trình."]
+explanation = "Topological ordering mô phỏng một phần việc sắp xếp dependency trong bundler; build thực tế còn xử lý chunk, side effects và asset emit."
+sources = ["webpack~5/concepts/dependency-graph", "webpack~5/concepts/module-resolution"]

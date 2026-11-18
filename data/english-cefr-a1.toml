@@ -1,0 +1,747 @@
+id = "english-cefr-a1"
+title = "Tiếng Anh A1 · Khởi đầu"
+icon = "A1"
+color = "#16a34a"
+group = "Tiếng Anh"
+area = "english"
+description = "Luyện các mẫu câu và từ vựng tiếng Anh A1 để giới thiệu bản thân, giao tiếp trong tình huống quen thuộc, đọc thông tin ngắn và viết vài câu đơn giản."
+
+[[modules]]
+id = "cefr-a1-be-pronouns"
+title = "To be, đại từ và sở hữu"
+description = "Dùng be, have got, đại từ nhân xưng, từ sở hữu, this/that và danh từ số ít, số nhiều."
+lesson = '''
+### Động từ *be*
+| Chủ ngữ | Khẳng định | Phủ định | Câu hỏi |
+|---|---|---|---|
+| I | I am (I'm) | I am not (I'm not) | Am I…? |
+| you / we / they | are (you're / we're / they're) | aren't | Are you…? |
+| he / she / it | is (he's / she's / it's) | isn't | Is he…? |
+
+Đặt *am/is/are* sau chủ ngữ để nói tên, tuổi, nghề hoặc nơi ở: *I'm 18. She is a student. They are at home.* Trong câu hỏi, đưa *be* lên trước: *Are you ready?* Trả lời ngắn bằng *Yes, I am* hoặc *No, she isn't*; không lặp cả câu.
+
+### Đại từ và sở hữu
+| Chủ ngữ | Tân ngữ | Từ sở hữu + danh từ |
+|---|---|---|
+| I / you | me / you | my / your |
+| he / she / it | him / her / it | his / her / its |
+| we / they | us / them | our / their |
+
+Chủ ngữ làm người/vật thực hiện hành động: *He is my brother. I like him.* Từ sở hữu đứng trước danh từ: *This is her bag.* Dùng *'s* với người: *Anna's brother*. *Have got* nói về sở hữu: *I have got a bike; he has got two sisters.* Hỏi *Have you got a pen?*; phủ định *haven't got / hasn't got*.
+
+### Chỉ đồ vật và danh từ số nhiều
+*This/these* chỉ vật ở gần; *that/those* chỉ vật ở xa. Dùng *this/that* với một vật, *these/those* với nhiều vật: *This is a cup. Those are my shoes.* Danh từ thường thêm *-s* (*books*), thêm *-es* sau một số âm như *box → boxes*. Một vài dạng cần nhớ: *child → children, person → people, man → men, woman → women*.
+
+**Lỗi hay gặp:** bỏ *be* (*She very nice* → *She is very nice*); chia sai theo chủ ngữ (*They is* → *They are*); dùng *have* thay *has* với *he/she/it*; nhầm *he* với *him* sau động từ; viết *two childs* thay vì *two children*. Mẹo: tìm chủ ngữ trước, chọn đúng *be/has*, rồi kiểm tra danh từ là một hay nhiều. Với tuổi, dùng *be*: *I am 20*, không dùng *I have 20*.
+'''
+
+[[questions]]
+id = "cefr-a1-001"
+module = "cefr-a1-be-pronouns"
+type = "single"
+difficulty = 1
+prompt = "Chọn từ đúng để hoàn thành câu: **I ___ 18 years old.**"
+options = ["am", "is", "are", "have"]
+answer = [0]
+explanation = "Với chủ ngữ *I*, dùng *am* để nói tuổi. Tiếng Anh dùng *be* trong mẫu *I am 18*, không dùng *have*."
+
+[[questions]]
+id = "cefr-a1-002"
+module = "cefr-a1-be-pronouns"
+type = "single"
+difficulty = 1
+prompt = "Tom is my friend. **___** is from Hanoi. Chọn đại từ làm chủ ngữ."
+options = ["He", "Him", "His", "They"]
+answer = [0]
+explanation = "Tom là một người nam, nên dùng đại từ chủ ngữ *he* trước động từ *is*. *Him* là dạng tân ngữ; *his* chỉ sở hữu."
+
+[[questions]]
+id = "cefr-a1-003"
+module = "cefr-a1-be-pronouns"
+type = "single"
+difficulty = 2
+prompt = "Mai ___ two brothers. Chọn cụm đúng để nói Mai có hai anh/em trai."
+options = ["have got", "has got", "is got", "have"]
+answer = [1]
+explanation = "Với *he/she/it* và tên một người, dùng *has got*. Không thêm *is* trước *got* trong cấu trúc sở hữu này."
+
+[[questions]]
+id = "cefr-a1-004"
+module = "cefr-a1-be-pronouns"
+type = "single"
+difficulty = 1
+prompt = "Có nhiều đôi giày ở gần người nói. Chọn câu đúng."
+options = ["This are my shoes.", "These are my shoes.", "That is my shoes.", "Those is my shoes."]
+answer = [1]
+explanation = "*These* dùng cho nhiều vật ở gần và đi với *are*. *This/that* đi với số ít; *those* cũng đi với *are* nhưng chỉ vật ở xa."
+
+[[questions]]
+id = "cefr-a1-005"
+module = "cefr-a1-be-pronouns"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn tất cả câu đúng về đại từ, *be* và sở hữu."
+options = ["This is my bag.", "She is my sister.", "They are students.", "He are my friend.", "Me am a student."]
+answer = [0, 1, 2]
+explanation = "Ba câu đầu dùng đúng từ sở hữu và *be*. *He* đi với *is*, còn đại từ chủ ngữ của người nói là *I*, không phải *me*."
+
+[[questions]]
+id = "cefr-a1-006"
+module = "cefr-a1-be-pronouns"
+type = "multiple"
+difficulty = 3
+prompt = "Chọn các cặp số ít → số nhiều viết đúng."
+options = ["child → children", "person → people", "man → mans", "woman → women"]
+answer = [0, 1, 3]
+explanation = "*Children, people,* và *women* là dạng số nhiều đúng. *Man* đổi thành *men*, không thêm *-s*."
+
+[[questions]]
+id = "cefr-a1-007"
+module = "cefr-a1-be-pronouns"
+type = "fill"
+difficulty = 1
+prompt = "Hoàn thành câu: **We {{blank}} classmates.**"
+blanks = [["are"]]
+explanation = "Chủ ngữ *we* đi với *are*: *We are classmates.*"
+
+[[questions]]
+id = "cefr-a1-008"
+module = "cefr-a1-be-pronouns"
+type = "fill"
+difficulty = 1
+prompt = "Hoàn thành câu với từ sở hữu: **I am Anna. This is {{blank}} sister.**"
+blanks = [["my"]]
+explanation = "Dùng *my* trước danh từ *sister* để nói đây là chị/em gái của người nói."
+
+[[questions]]
+id = "cefr-a1-009"
+module = "cefr-a1-be-pronouns"
+type = "fill"
+difficulty = 2
+prompt = "Dùng dạng số nhiều đúng: **One child, two {{blank}}.**"
+blanks = [["children"]]
+explanation = "*Child* có dạng số nhiều bất quy tắc là *children*."
+
+[[questions]]
+id = "cefr-a1-010"
+module = "cefr-a1-be-pronouns"
+type = "essay"
+difficulty = 2
+prompt = "Viết 3 câu ngắn bằng tiếng Anh để giới thiệu tên và quê/thành phố của em. Có thể thêm một câu về việc em là học sinh hay sinh viên."
+keywords = [["my name", "name is"], ["i am from", "i'm from"], ["i am a student", "i'm a student", "i am a university student", "i'm a university student"]]
+min_keywords = 2
+model_answer = '''Hello! My name is Lan. I am from Hue. I am a student.'''
+explanation = "Bài viết A1 có thể dùng các câu độc lập, ngắn: nêu tên với *My name is…*, quê quán với *I am from…* và thông tin đơn giản về bản thân."
+
+[[modules]]
+id = "cefr-a1-present-simple"
+title = "Thói quen và hành động đang diễn ra"
+description = "Dùng hiện tại đơn, trạng từ tần suất, can, câu mệnh lệnh, like + V-ing và hiện tại tiếp diễn cơ bản."
+lesson = '''
+### Hiện tại đơn: thói quen và điều thường đúng
+| Chủ ngữ | Khẳng định | Phủ định | Câu hỏi |
+|---|---|---|---|
+| I / you / we / they | work | don't work | Do they work? |
+| he / she / it | works | doesn't work | Does she work? |
+
+Thêm **-s** với phần lớn động từ ở ngôi thứ ba số ít: *read → reads*. Thêm **-es** sau một số đuôi như *watch → watches, go → goes*; phụ âm + *y* đổi thành *-ies*: *study → studies*. Sau *does/doesn't*, động từ trở về nguyên mẫu: *Does he play? He doesn't play.*
+
+### Tần suất, khả năng và yêu cầu
+*Always, usually, often, sometimes, never* thường đứng trước động từ thường: *I usually walk to school.* Với *be*, trạng từ đứng sau: *She is always kind.* *Can* + động từ nguyên mẫu nói về khả năng hoặc xin phép: *I can swim. Can I sit here?* Không thêm *to* hay *-s*: *He can cook.* Mệnh lệnh dùng động từ nguyên mẫu: *Open the door, please.* Thêm *don't* để yêu cầu không làm: *Don't run.* Dùng *Let's + động từ* để rủ nhau: *Let's eat.*
+
+### Sở thích và việc đang diễn ra
+Sau *like/love/hate*, có thể dùng danh từ hoặc động từ *-ing*: *I like music. He likes cooking.* Hiện tại tiếp diễn nói về việc đang xảy ra: **am/is/are + V-ing** — *They are playing now.* Một số động từ đổi cách viết: *make → making, run → running*.
+
+**Lỗi hay gặp:** quên *-s* (*She work* → *She works*); thêm *-s* sau *does* (*Does she works?* → *Does she work?*); dùng *am/is/are* cho mọi câu (*I am go*); đặt *usually* sai vị trí; nói *like read* thay vì *like reading*; bỏ *be* trong câu tiếp diễn. Mẹo: hỏi đây là thói quen hay việc đang xảy ra? Thói quen dùng hiện tại đơn; “now/look!” thường gợi ý hiện tại tiếp diễn. Sau *can*, *do/does*, *don't/doesn't* luôn dùng động từ nguyên mẫu.
+'''
+
+[[questions]]
+id = "cefr-a1-011"
+module = "cefr-a1-present-simple"
+type = "single"
+difficulty = 1
+prompt = "Hoàn thành câu về thói quen: **She ___ to school by bus every day.**"
+options = ["go", "goes", "is go", "going"]
+answer = [1]
+explanation = "Chủ ngữ *she* ở hiện tại đơn cần động từ thêm *-es*: *goes*. Cụm *every day* cho biết đây là thói quen."
+
+[[questions]]
+id = "cefr-a1-012"
+module = "cefr-a1-present-simple"
+type = "single"
+difficulty = 2
+prompt = "Chọn câu phủ định đúng: **I ___ coffee.**"
+options = ["doesn't like", "don't like", "am not like", "don't likes"]
+answer = [1]
+explanation = "Với *I*, dùng *don't + động từ nguyên mẫu*. Không thêm *-s* sau *don't*."
+
+[[questions]]
+id = "cefr-a1-013"
+module = "cefr-a1-present-simple"
+type = "single"
+difficulty = 2
+prompt = "Chọn trợ động từ đúng: **___ your brother play chess?**"
+options = ["Do", "Does", "Is", "Are"]
+answer = [1]
+explanation = "*Your brother* là ngôi thứ ba số ít, nên câu hỏi hiện tại đơn dùng *Does*; động từ chính giữ nguyên là *play*."
+
+[[questions]]
+id = "cefr-a1-014"
+module = "cefr-a1-present-simple"
+type = "single"
+difficulty = 2
+prompt = "Chọn vị trí và dạng đúng của trạng từ tần suất: **We ___ have dinner at 7.**"
+options = ["usually", "have usually", "are usually", "usually are"]
+answer = [0]
+explanation = "Trạng từ tần suất thường đứng trước động từ thường: *We usually have dinner*. Với *be*, trạng từ thường đứng sau *be*."
+
+[[questions]]
+id = "cefr-a1-015"
+module = "cefr-a1-present-simple"
+type = "single"
+difficulty = 1
+prompt = "**Can Mai swim? — Yes, ___.** Chọn câu trả lời ngắn đúng."
+options = ["she can", "she cans", "she does", "she is"]
+answer = [0]
+explanation = "Câu hỏi dùng *can* thì câu trả lời ngắn cũng dùng *can*: *Yes, she can.* Không thêm *-s* sau modal verb."
+
+[[questions]]
+id = "cefr-a1-016"
+module = "cefr-a1-present-simple"
+type = "multiple"
+difficulty = 3
+prompt = "Chọn tất cả câu đúng về sở thích, mệnh lệnh và việc đang xảy ra."
+options = ["I like reading books.", "Please open the window.", "They are playing football now.", "He can to swim.", "Let's to eat lunch."]
+answer = [0, 1, 2]
+explanation = "Sau *like* có thể dùng V-ing; câu mệnh lệnh dùng động từ nguyên mẫu; việc đang diễn ra dùng *be + V-ing*. Sau *can* và *let's* không dùng *to*."
+
+[[questions]]
+id = "cefr-a1-017"
+module = "cefr-a1-present-simple"
+type = "fill"
+difficulty = 2
+prompt = "Chia động từ trong ngoặc ở hiện tại đơn: **My father {{blank}} (work) at a hospital.**"
+blanks = [["works"]]
+explanation = "*My father* là ngôi thứ ba số ít, nên thêm *-s*: *works*."
+
+[[questions]]
+id = "cefr-a1-018"
+module = "cefr-a1-present-simple"
+type = "fill"
+difficulty = 2
+prompt = "Hoàn thành câu về việc đang diễn ra: **The children {{blank}} football now.** (play)"
+blanks = [["are playing", "'re playing"]]
+explanation = "Chủ ngữ *the children* đi với *are*; hiện tại tiếp diễn dùng *are + playing*. Có thể viết gọn *they're*."
+
+[[questions]]
+id = "cefr-a1-019"
+module = "cefr-a1-present-simple"
+type = "fill"
+difficulty = 1
+prompt = "Dùng động từ trong ngoặc để hoàn thành lời yêu cầu: **Please {{blank}} your name here.** (write)"
+blanks = [["write"]]
+explanation = "Câu mệnh lệnh bắt đầu bằng động từ nguyên mẫu: *Please write your name here.*"
+
+[[questions]]
+id = "cefr-a1-020"
+module = "cefr-a1-present-simple"
+type = "essay"
+difficulty = 3
+prompt = "Viết 3 câu ngắn bằng tiếng Anh về một ngày thường của em. Dùng ít nhất một trạng từ tần suất, chẳng hạn *usually* hoặc *often*."
+keywords = [["usually", "often", "always", "sometimes", "never"], ["get up", "have breakfast", "eat breakfast"], ["every day", "every morning", "on weekdays"]]
+min_keywords = 2
+model_answer = '''I usually get up at seven. I eat breakfast at home. I go to work every day.'''
+explanation = "Dùng hiện tại đơn cho thói quen. Trạng từ như *usually* thường đứng trước động từ thường; có thể viết mỗi hoạt động thành một câu ngắn."
+
+[[modules]]
+id = "cefr-a1-nouns-articles"
+title = "Danh từ, mạo từ và câu hỏi cơ bản"
+description = "Dùng a/an/the, some/any, danh từ đếm được và không đếm được, there is/are, giới từ và từ để hỏi."
+lesson = '''
+### Danh từ và mạo từ
+Danh từ đếm được có dạng số ít/số nhiều: *a chair, two chairs*. Danh từ không đếm được thường không thêm *-s*: *water, rice, money*. Với danh từ đếm được số ít, thường cần một từ đứng trước.
+
+| Từ | Cách dùng đơn giản | Ví dụ |
+|---|---|---|
+| a | một vật, âm đầu là phụ âm | a bag, a university |
+| an | một vật, âm đầu là nguyên âm | an apple, an hour |
+| the | vật cụ thể đã biết | the door, the book on my desk |
+
+Chọn *a/an* theo **âm**, không chỉ theo chữ cái: *an hour* bắt đầu bằng âm nguyên âm, còn *a university* bắt đầu bằng âm /y/. Dùng *some* thường trong câu khẳng định và *any* thường trong câu hỏi/phủ định: *There are some eggs. Are there any eggs?*; *There isn't any milk.*
+
+### There is/are, nơi chốn và thời gian
+| Mẫu câu | Ví dụ |
+|---|---|
+| There is + số ít / không đếm được | There is a shop. / There is some rice. |
+| There are + số nhiều | There are two chairs. |
+| at + giờ; on + thứ/ngày; in + tháng/năm | at 8; on Monday; in June |
+| in / on / under / next to / between | in the room; on the table; under the bed |
+
+*There is/are* giới thiệu thứ gì đó ở đâu hoặc có bao nhiêu. *How many* hỏi số lượng danh từ đếm được số nhiều (*How many books?*); *How much* hỏi lượng không đếm được hoặc giá (*How much water? How much is it?*). Các từ hỏi cơ bản: *what* (gì), *where* (ở đâu), *when* (khi nào), *who* (ai), *how* (như thế nào), *how old*, *what time*.
+
+**Lỗi hay gặp:** bỏ *a/an* trước danh từ số ít (*I have cat*); chọn *a/an* theo chữ viết; nói *many money* hoặc *many rice*; dùng *there are* với *milk*; nhầm *in Monday* với *on Monday*. Mẹo: xem danh từ là một vật đếm được, nhiều vật hay chất không đếm được; sau đó kiểm tra số ít/số nhiều và chọn *is/are*. Nhớ cụm thời gian *at* giờ, *on* ngày, *in* tháng.
+'''
+
+[[questions]]
+id = "cefr-a1-021"
+module = "cefr-a1-nouns-articles"
+type = "single"
+difficulty = 1
+prompt = "Chọn mạo từ đúng: **I eat ___ apple every morning.**"
+options = ["a", "an", "the", "some"]
+answer = [1]
+explanation = "*Apple* bắt đầu bằng âm nguyên âm, nên dùng *an*. Chọn theo âm đầu của từ, không chỉ nhìn chữ cái."
+
+[[questions]]
+id = "cefr-a1-022"
+module = "cefr-a1-nouns-articles"
+type = "single"
+difficulty = 2
+prompt = "Đây là lần đầu nhắc đến một quyển sách. Chọn câu đúng: **There is ___ book on the table.**"
+options = ["a", "an", "the", "any"]
+answer = [0]
+explanation = "Dùng *a* khi giới thiệu lần đầu một danh từ đếm được số ít bắt đầu bằng âm phụ âm."
+
+[[questions]]
+id = "cefr-a1-023"
+module = "cefr-a1-nouns-articles"
+type = "single"
+difficulty = 1
+prompt = "Chọn động từ đúng: **There ___ some milk in the fridge.**"
+options = ["are", "is", "have", "am"]
+answer = [1]
+explanation = "*Milk* là danh từ không đếm được, nên dùng *there is*. *Some* có thể đi với danh từ không đếm được trong câu khẳng định."
+
+[[questions]]
+id = "cefr-a1-024"
+module = "cefr-a1-nouns-articles"
+type = "single"
+difficulty = 2
+prompt = "Chọn từ đúng cho câu hỏi: **Are there ___ eggs in the fridge?**"
+options = ["some", "any", "a", "much"]
+answer = [1]
+explanation = "Trong câu hỏi thông tin thông thường, dùng *any* với danh từ đếm được số nhiều: *Are there any eggs?*"
+
+[[questions]]
+id = "cefr-a1-025"
+module = "cefr-a1-nouns-articles"
+type = "single"
+difficulty = 1
+prompt = "Chọn từ hỏi để hỏi vị trí: **___ is the bus station?**"
+options = ["Who", "When", "Where", "How old"]
+answer = [2]
+explanation = "Dùng *where* để hỏi một người hoặc vật ở đâu."
+
+[[questions]]
+id = "cefr-a1-026"
+module = "cefr-a1-nouns-articles"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn tất cả cụm giới từ thời gian đúng."
+options = ["at 7 o'clock", "on Monday", "in June", "in Friday", "at the morning"]
+answer = [0, 1, 2]
+explanation = "Dùng *at* với giờ, *on* với thứ/ngày và *in* với tháng. Nói *on Friday* và *in the morning*."
+
+[[questions]]
+id = "cefr-a1-027"
+module = "cefr-a1-nouns-articles"
+type = "multiple"
+difficulty = 3
+prompt = "Chọn tất cả câu hỏi có lượng từ đúng."
+options = ["How many apples do you want?", "How much water do you drink?", "How much money is this?", "How many bread do we need?"]
+answer = [0, 1, 2]
+explanation = "*Apples* đếm được nên đi với *many*; *water* và *money* không đếm được nên đi với *much*. *Bread* không dùng *many*."
+
+[[questions]]
+id = "cefr-a1-028"
+module = "cefr-a1-nouns-articles"
+type = "fill"
+difficulty = 1
+prompt = "Chọn giới từ chỉ vật nằm trên bề mặt: **The book is {{blank}} the table.**"
+blanks = [["on"]]
+explanation = "Dùng *on* khi vật nằm trên bề mặt: *on the table*."
+
+[[questions]]
+id = "cefr-a1-029"
+module = "cefr-a1-nouns-articles"
+type = "fill"
+difficulty = 2
+prompt = "Chọn giới từ đúng: **The school is {{blank}} the bank and the park.** (ở giữa hai nơi)"
+blanks = [["between"]]
+explanation = "Dùng *between* để nói một nơi nằm giữa hai nơi được nêu."
+
+[[questions]]
+id = "cefr-a1-030"
+module = "cefr-a1-nouns-articles"
+type = "fill"
+difficulty = 1
+prompt = "Hoàn thành câu hỏi về giờ: **{{blank}} time is it?**"
+blanks = [["what"]]
+explanation = "Cụm hỏi giờ cố định là *What time is it?*"
+
+[[modules]]
+id = "cefr-a1-vocab-everyday"
+title = "Từ vựng hằng ngày"
+description = "Ôn số, ngày giờ, giá tiền, gia đình, nghề nghiệp, nhà cửa, đồ ăn, quần áo, địa điểm thành phố và đánh vần."
+lesson = '''
+### Thông tin số, ngày giờ và tiền
+| Chủ đề | Mẫu / ví dụ |
+|---|---|
+| Số | one, two, three…; ten, twenty, thirty |
+| Ngày | Monday, Tuesday…; *a week* có seven days |
+| Giờ | 8:00 = eight o'clock; 8:15 = quarter past eight |
+| Giá | $3 = three dollars; $3.50 = three dollars and fifty cents |
+| Đánh vần | *book*: B-O-O-K; *name*: N-A-M-E |
+
+Khi hỏi giá, dùng *How much is this bag?*; khi nói giá, có thể đọc cả đơn vị tiền. Đọc số điện thoại từng chữ số sẽ dễ nghe hơn đọc thành một số lớn. Khi hỏi tên, có thể nói *How do you spell your name?* rồi đọc từng chữ cái.
+
+### Người, nhà cửa và sinh hoạt
+Từ chỉ gia đình: *mother, father, sister, brother, grandmother, grandfather*. Nghề quen thuộc: *teacher, doctor, nurse, student, cook*. Trong nhà có *kitchen, bedroom, bathroom, living room*; *kitchen* là nơi nấu ăn. Đồ ăn cơ bản: *bread, rice, egg, apple, banana, water*. Quần áo: *shirt, T-shirt, coat, dress, shoes*. Nơi trong thành phố: *school, hospital, supermarket, bus stop, train station, bank*.
+
+Ví dụ tự nhiên: *My sister is a nurse. She works at a hospital.* · *We have bread and eggs for breakfast.* · *The bus stop is near my house.* · *This coat is twenty dollars.*
+
+**Lỗi hay gặp:** nhầm *thirteen* với *thirty* khi nghe/đọc; quên tên ngày trong tuần viết hoa; nhầm *teacher* (nghề) với *student* (người học); dùng *wear* cho thức ăn; nhầm *house* (ngôi nhà) với *home* (nơi ở). Mẹo: học từ theo nhóm nhỏ và đặt mỗi từ vào một câu về bản thân. Với giá, nhìn ký hiệu tiền trước; khi đánh vần, viết mỗi chữ cái bằng chữ hoa và ngăn cách để dễ kiểm tra.
+'''
+
+[[questions]]
+id = "cefr-a1-031"
+module = "cefr-a1-vocab-everyday"
+type = "single"
+difficulty = 1
+prompt = "**8:15** được đọc là gì?"
+options = ["quarter past eight", "quarter to eight", "half past eight", "eight fifty"]
+answer = [0]
+explanation = "8:15 là 15 phút sau 8 giờ, đọc là *quarter past eight*. *Quarter to eight* là 7:45."
+
+[[questions]]
+id = "cefr-a1-032"
+module = "cefr-a1-vocab-everyday"
+type = "single"
+difficulty = 2
+prompt = "Một chiếc sandwich giá **$3.50**. Câu nào nói đúng giá?"
+options = ["It is three dollars and fifty cents.", "It is fifty dollars and three cents.", "It is three o'clock.", "It is three sandwiches."]
+answer = [0]
+explanation = "Với giá $3.50, đọc phần đô la trước rồi đến phần xu: *three dollars and fifty cents*."
+
+[[questions]]
+id = "cefr-a1-033"
+module = "cefr-a1-vocab-everyday"
+type = "single"
+difficulty = 1
+prompt = "My father's mother is my ___. Chọn từ chỉ quan hệ gia đình đúng."
+options = ["grandmother", "sister", "daughter", "aunt"]
+answer = [0]
+explanation = "Mẹ của bố là bà nội, tiếng Anh là *grandmother*."
+
+[[questions]]
+id = "cefr-a1-034"
+module = "cefr-a1-vocab-everyday"
+type = "single"
+difficulty = 1
+prompt = "A person who teaches children is a ___. Chọn từ chỉ nghề nghiệp."
+options = ["teacher", "student", "kitchen", "hospital"]
+answer = [0]
+explanation = "*Teacher* là giáo viên; *student* là học sinh/sinh viên, còn *kitchen* và *hospital* là địa điểm."
+
+[[questions]]
+id = "cefr-a1-035"
+module = "cefr-a1-vocab-everyday"
+type = "single"
+difficulty = 1
+prompt = "You cook dinner in the ___. Chọn nơi trong nhà phù hợp."
+options = ["kitchen", "bedroom", "bathroom", "bus stop"]
+answer = [0]
+explanation = "*Kitchen* là phòng bếp, nơi thường nấu thức ăn."
+
+[[questions]]
+id = "cefr-a1-036"
+module = "cefr-a1-vocab-everyday"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các từ chỉ quần áo."
+options = ["a coat", "a hat", "bread", "a station"]
+answer = [0, 1]
+explanation = "*Coat* và *hat* là quần áo/phụ kiện mặc; *bread* là đồ ăn, *station* là nhà ga."
+
+[[questions]]
+id = "cefr-a1-037"
+module = "cefr-a1-vocab-everyday"
+type = "fill"
+difficulty = 1
+prompt = "Hoàn thành câu về lịch: **There are seven days in a {{blank}}.**"
+blanks = [["week"]]
+explanation = "Một tuần (*week*) có bảy ngày."
+
+[[questions]]
+id = "cefr-a1-038"
+module = "cefr-a1-vocab-everyday"
+type = "fill"
+difficulty = 2
+prompt = "Điền tên loại quả: **I peel a {{blank}} before I eat it. It is a long, yellow fruit.**"
+blanks = [["banana"]]
+explanation = "*Banana* là quả chuối; câu mô tả quả dài, màu vàng và thường bóc vỏ trước khi ăn."
+
+[[questions]]
+id = "cefr-a1-039"
+module = "cefr-a1-vocab-everyday"
+type = "fill"
+difficulty = 2
+prompt = "Hoàn thành tên địa điểm trong thành phố: **You wait for a bus at a bus {{blank}}.**"
+blanks = [["stop"]]
+explanation = "Nơi đón xe buýt là *bus stop*."
+
+[[questions]]
+id = "cefr-a1-040"
+module = "cefr-a1-vocab-everyday"
+type = "fill"
+difficulty = 2
+prompt = "Đánh vần từ **book**: **B - O - {{blank}} - K**"
+blanks = [["o"]]
+explanation = "*Book* được đánh vần B-O-O-K, nên chữ cái còn thiếu là O."
+
+[[modules]]
+id = "cefr-a1-functions"
+title = "Giao tiếp trong tình huống quen thuộc"
+description = "Luyện chào hỏi, giới thiệu, gọi món, mua đồ, hỏi đường, xin nhắc lại, cảm ơn và xin lỗi."
+lesson = '''
+### Chào hỏi và giới thiệu
+| Tình huống | Câu thường dùng |
+|---|---|
+| Gặp ai đó | *Hello. / Hi. / Good morning.* |
+| Hỏi tên | *What's your name?* — *I'm Mai.* |
+| Giới thiệu người | *This is my friend, Nam.* |
+| Tạm biệt | *Goodbye. / See you later.* |
+| Cảm ơn / đáp lại | *Thank you. / Thanks.* — *You're welcome.* |
+| Xin lỗi | *I'm sorry.* — *That's OK.* |
+
+Khi mới gặp, có thể hỏi *Where are you from?* và trả lời *I'm from Vietnam.* Nếu chưa nghe rõ, nói *Sorry, can you repeat that, please?* hoặc *Can you say that again?*; những câu này lịch sự và nói rõ mình cần người kia lặp lại.
+
+### Gọi món, mua đồ và hỏi đường
+Để gọi món lịch sự, dùng *Can I have a coffee, please?* hoặc *I'd like a sandwich, please.* Người phục vụ có thể trả lời *Here you are.* Khi mua đồ, hỏi *How much is this T-shirt?*; người bán có thể nói *It's ten dollars.*
+
+Để hỏi đường, bắt đầu bằng *Excuse me,* rồi hỏi *Where is the bank?* Chỉ đường đơn giản bằng *Go straight. Turn left/right. It's next to the school.* Nhớ tên địa điểm rõ ràng, như *the bus stop* hay *the station*.
+
+**Lỗi hay gặp:** dịch nguyên câu tiếng Việt làm mất trật tự từ; quên *please* khi yêu cầu; nói *How much this bag?* thay vì *How much is this bag?*; trả lời *Thank you* khi người khác vừa cảm ơn mình thay vì *You're welcome*; dùng *Sorry?* nhưng không nói rõ muốn nghe lại. Mẹo: ghi nhớ cả cụm câu theo tình huống. Mở đầu bằng *Excuse me* khi cần thu hút sự chú ý; kết thúc yêu cầu bằng *please*; đáp lại lời cảm ơn bằng *You're welcome* và lời xin lỗi bằng *That's OK*.
+'''
+
+[[questions]]
+id = "cefr-a1-041"
+module = "cefr-a1-functions"
+type = "single"
+difficulty = 1
+prompt = "Bạn gặp bạn vào buổi sáng. Câu chào nào phù hợp?"
+options = ["Good morning!", "Good night!", "Goodbye!", "I'm sorry!"]
+answer = [0]
+explanation = "*Good morning!* là lời chào dùng vào buổi sáng. *Good night* thường nói khi tạm biệt lúc đi ngủ."
+
+[[questions]]
+id = "cefr-a1-042"
+module = "cefr-a1-functions"
+type = "single"
+difficulty = 1
+prompt = "A: **Hi, I'm Hoa. What's your name?** B: Chọn câu trả lời tự nhiên."
+options = ["I'm Nam.", "I name Nam.", "My is Nam.", "Nam are me."]
+answer = [0]
+explanation = "Có thể giới thiệu tên bằng *I'm Nam* hoặc *My name is Nam*. Các lựa chọn khác sai trật tự từ hoặc thiếu *is*."
+
+[[questions]]
+id = "cefr-a1-043"
+module = "cefr-a1-functions"
+type = "single"
+difficulty = 2
+prompt = "Ở quán cà phê, bạn muốn gọi một tách trà. Chọn câu lịch sự."
+options = ["Can I have a tea, please?", "I am tea, please.", "Give tea me.", "Can have I tea?"]
+answer = [0]
+explanation = "Mẫu *Can I have …, please?* dùng để gọi món hoặc yêu cầu lịch sự. Trong ngữ cảnh quán, *a tea* có thể chỉ một tách trà."
+
+[[questions]]
+id = "cefr-a1-044"
+module = "cefr-a1-functions"
+type = "single"
+difficulty = 1
+prompt = "Bạn muốn hỏi giá một chiếc áo phông. Chọn câu đúng."
+options = ["How much is this T-shirt?", "How many is this T-shirt?", "How much this T-shirt?", "What price this T-shirt is?"]
+answer = [0]
+explanation = "Hỏi giá một món đồ bằng *How much is …?*; câu hỏi cần động từ *is*."
+
+[[questions]]
+id = "cefr-a1-045"
+module = "cefr-a1-functions"
+type = "single"
+difficulty = 2
+prompt = "Nghe chỉ dẫn: **Go straight and turn left.** Bạn cần làm gì?"
+options = ["Đi thẳng rồi rẽ trái.", "Đi thẳng rồi rẽ phải.", "Dừng lại và quay về.", "Đi qua bên phải."]
+answer = [0]
+explanation = "*Go straight* là đi thẳng; *turn left* là rẽ trái."
+
+[[questions]]
+id = "cefr-a1-046"
+module = "cefr-a1-functions"
+type = "multiple"
+difficulty = 3
+prompt = "Bạn chưa nghe rõ và muốn người kia nhắc lại. Chọn tất cả câu lịch sự, tự nhiên."
+options = ["Sorry, can you repeat that?", "Can you say that again, please?", "I don't understand you again?", "Please speak repeat."]
+answer = [0, 1]
+explanation = "Hai câu đầu là cách tự nhiên để xin nhắc lại. Hai câu sau dịch sát tiếng Việt và không đúng cấu trúc tiếng Anh."
+
+[[questions]]
+id = "cefr-a1-047"
+module = "cefr-a1-functions"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các cặp đáp lời phù hợp."
+options = ["'Thank you.' — 'You're welcome.'", "'I'm sorry.' — 'That's OK.'", "'Thank you.' — 'Good morning.'", "'I'm sorry.' — 'See you later.'"]
+answer = [0, 1]
+explanation = "*You're welcome* đáp lại lời cảm ơn; *That's OK* thường đáp lại lời xin lỗi. Hai cặp còn lại không khớp tình huống."
+
+[[questions]]
+id = "cefr-a1-048"
+module = "cefr-a1-functions"
+type = "fill"
+difficulty = 2
+prompt = "Hoàn thành câu hỏi giá: **How much {{blank}} this bag?**"
+blanks = [["is"]]
+explanation = "Với một món đồ số ít, câu hỏi là *How much is this bag?*"
+
+[[questions]]
+id = "cefr-a1-049"
+module = "cefr-a1-functions"
+type = "fill"
+difficulty = 1
+prompt = "Hoàn thành câu hỏi lịch sự: **Excuse {{blank}}, where is the bank?**"
+blanks = [["me"]]
+explanation = "Cụm mở đầu cố định là *Excuse me* khi muốn hỏi hoặc thu hút sự chú ý lịch sự."
+
+[[questions]]
+id = "cefr-a1-050"
+module = "cefr-a1-functions"
+type = "essay"
+difficulty = 2
+prompt = "Viết một đoạn hội thoại ngắn bằng tiếng Anh ở quán cà phê: gọi một đồ uống, dùng lời nói lịch sự và cảm ơn."
+keywords = [["can i have", "i'd like", "i would like"], ["please"], ["thank you", "thanks"]]
+min_keywords = 3
+model_answer = '''Customer: Can I have a coffee, please? Server: Here you are. Customer: Thank you.'''
+explanation = "Hội thoại ngắn có thể dùng *Can I have …, please?* để gọi món và *Thank you* để cảm ơn."
+
+[[modules]]
+id = "cefr-a1-reading-writing"
+title = "Đọc và viết ngắn"
+description = "Đọc biển báo, menu, tin nhắn ngắn; điền thông tin vào form và viết câu giới thiệu với chữ hoa, dấu câu cơ bản."
+lesson = '''
+### Đọc văn bản rất ngắn
+Ở bậc A1, tập tìm thông tin nhìn thấy trực tiếp: tên, địa điểm, giờ, giá và hành động cần làm. Với biển báo, đọc từ khóa chính: *NO ENTRY* (không vào), *OPEN* (mở cửa), *CLOSED* (đóng cửa), *KEEP LEFT* (đi bên trái). Trong menu, ghép tên món với giá; trong tin nhắn, tìm người gửi, nơi gặp và thời gian.
+
+| Văn bản | Điều cần tìm | Ví dụ |
+|---|---|---|
+| Biển báo | việc được phép / không được làm | *No entry.* |
+| Menu | món ăn, đồ uống, giá | *Tea — $2* |
+| Tin nhắn | người, nơi, giờ | *Meet me at 6.* |
+| Form | đúng loại thông tin | *First name: Lan* |
+
+Đọc câu hỏi trước, rồi dò từ khóa trong nội dung. Không cần dịch từng từ nếu câu hỏi chỉ yêu cầu tìm giá hoặc giờ. Với form, *first/given name* là tên, *family/last name* là họ; *country* là quốc gia, *city* là thành phố.
+
+### Viết vài câu rõ ràng
+Một đoạn giới thiệu A1 có thể gồm 3–5 câu: *Hello! My name is Linh. I am from Da Nang. I live in Da Nang. I am a student.* Mỗi câu thường có chủ ngữ và động từ. Viết chữ hoa ở đầu câu, với *I*, tên người, thành phố, quốc gia và ngày trong tuần. Dùng dấu chấm cho câu kể, dấu hỏi cho câu hỏi, dấu phẩy sau lời chào ngắn như *Hello, Mai.*
+
+**Lỗi hay gặp:** viết hoa sai tên riêng (*vietnam* → *Vietnam*); quên viết hoa *I*; dùng dấu chấm thay dấu hỏi; nối nhiều ý thành một câu dài; điền họ vào ô first name. Mẹo: sau khi viết, kiểm tra từng câu theo thứ tự: chữ đầu đã viết hoa chưa, có chủ ngữ và động từ chưa, cuối câu có dấu phù hợp chưa? Khi điền form, đối chiếu đúng nhãn của từng ô trước khi chép thông tin.
+'''
+
+[[questions]]
+id = "cefr-a1-051"
+module = "cefr-a1-reading-writing"
+type = "single"
+difficulty = 1
+prompt = "Biển báo **NO ENTRY** có nghĩa gì?"
+options = ["Không được vào.", "Cửa đang mở.", "Rẽ trái.", "Giữ cửa mở."]
+answer = [0]
+explanation = "*No entry* là biển báo cấm đi vào khu vực đó."
+
+[[questions]]
+id = "cefr-a1-052"
+module = "cefr-a1-reading-writing"
+type = "single"
+difficulty = 1
+prompt = "Đọc menu: **Tea $2 · Juice $3 · Water $1**. Đồ uống nào giá $3?"
+options = ["Tea", "Juice", "Water", "Coffee"]
+answer = [1]
+explanation = "Trong menu, *Juice* có giá $3."
+
+[[questions]]
+id = "cefr-a1-053"
+module = "cefr-a1-reading-writing"
+type = "single"
+difficulty = 1
+prompt = "Đọc tin nhắn: **Hi Nam, Meet me at 6. —Mai**. Mai hẹn Nam lúc mấy giờ?"
+options = ["At 5", "At 6", "At 7", "At 8"]
+answer = [1]
+explanation = "Tin nhắn ghi *Meet me at 6*, nghĩa là hẹn lúc 6 giờ."
+
+[[questions]]
+id = "cefr-a1-054"
+module = "cefr-a1-reading-writing"
+type = "single"
+difficulty = 2
+prompt = "Form ghi: **First name: Lan · Family name: Pham**. Tên riêng của người này là gì?"
+options = ["Lan", "Pham", "First", "Family"]
+answer = [0]
+explanation = "*First name* là tên riêng, ở đây là *Lan*; *family name* là họ, ở đây là *Pham*."
+
+[[questions]]
+id = "cefr-a1-055"
+module = "cefr-a1-reading-writing"
+type = "single"
+difficulty = 2
+prompt = "Chọn câu viết đúng về chữ hoa và dấu câu."
+options = ["My name are Lan.", "My name is Lan.", "My name is from Lan.", "Are my name Lan?"]
+answer = [1]
+explanation = "Câu kể bắt đầu bằng chữ hoa, tên người *Lan* viết hoa và kết thúc bằng dấu chấm."
+
+[[questions]]
+id = "cefr-a1-056"
+module = "cefr-a1-reading-writing"
+type = "multiple"
+difficulty = 3
+prompt = "Chọn tất cả câu được viết đúng chữ hoa và dấu câu."
+options = ["Where are you?", "My name is An.", "i live in Hanoi.", "Do you like tea."]
+answer = [0, 1]
+explanation = "Câu hỏi kết thúc bằng dấu hỏi; câu kể kết thúc bằng dấu chấm. *I* luôn viết hoa; câu hỏi cũng cần dấu hỏi."
+
+[[questions]]
+id = "cefr-a1-057"
+module = "cefr-a1-reading-writing"
+type = "multiple"
+difficulty = 2
+prompt = "Đọc tin nhắn: **Hi Linh, The café is next to the bank. Meet me at 4. —Mai**. Chọn tất cả thông tin đúng."
+options = ["Mai gửi tin nhắn.", "Quán cà phê ở cạnh ngân hàng.", "Cuộc hẹn lúc 4 giờ.", "Quán cà phê ở trong bệnh viện."]
+answer = [0, 1, 2]
+explanation = "Tên người gửi là Mai; tin nhắn nói quán cà phê ở cạnh ngân hàng và hẹn lúc 4 giờ. Không có thông tin nào nói quán ở bệnh viện."
+
+[[questions]]
+id = "cefr-a1-058"
+module = "cefr-a1-reading-writing"
+type = "fill"
+difficulty = 1
+prompt = "Thêm dấu câu phù hợp cho câu hỏi: **How are you{{blank}}**"
+blanks = [["?"]]
+explanation = "Câu hỏi trực tiếp kết thúc bằng dấu hỏi."
+
+[[questions]]
+id = "cefr-a1-059"
+module = "cefr-a1-reading-writing"
+type = "single"
+difficulty = 1
+prompt = "Chọn câu đúng (đại từ chủ ngữ và động từ *be*)."
+options = ["I am a student.", "Me am a student.", "I is a student.", "I are a student."]
+answer = [0]
+explanation = "Chủ ngữ là đại từ *I* (luôn viết hoa, kể cả giữa câu), không dùng tân ngữ *me*; đi với *I* là *am*, không phải *is/are*."
+
+[[questions]]
+id = "cefr-a1-060"
+module = "cefr-a1-reading-writing"
+type = "essay"
+difficulty = 2
+prompt = "Viết 3–5 câu ngắn bằng tiếng Anh để giới thiệu tên, thành phố/quê quán và việc học hoặc nghề của em. Viết hoa đầu câu và tên riêng, dùng dấu chấm."
+keywords = [["my name", "name is"], ["i am from", "i'm from"], ["i live in"], ["i am a student", "i'm a student", "i am a teacher", "i'm a teacher"]]
+min_keywords = 3
+model_answer = '''Hello! My name is Linh. I am from Da Nang. I live in Da Nang. I am a student.'''
+explanation = "Một đoạn giới thiệu A1 có thể dùng các câu ngắn riêng biệt để nêu tên, nơi ở và việc học/nghề. Kiểm tra chữ hoa ở tên riêng và dấu chấm cuối câu."

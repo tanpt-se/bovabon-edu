@@ -10,7 +10,7 @@ description = "Event loop của Node, module ESM/CJS, stream & buffer, Express m
 id = "node-core"
 title = "Runtime & Event loop"
 description = "libuv, các phase của event loop, nextTick vs microtask vs setImmediate, worker_threads, cluster."
-sources = ["node/process#processnexttickcallback-args", "node/globals#setimmediatecallback-args", "node/cluster", "node/worker_threads#worker_threadsgetenvironmentdatakey"]
+sources = ["node/process#processnexttickcallback-args", "node/globals#setimmediatecallback-args", "node/cluster", "node/worker_threads#worker_threadsgetenvironmentdatakey", "node/modules", "node/esm", "node/packages"]
 lesson = '''
 ### Ý chính
 - Node chạy JS trên **một thread** (V8) + **libuv** (thread pool 4 luồng mặc định cho fs, dns.lookup, crypto, zlib).
@@ -26,7 +26,7 @@ lesson = '''
 id = "node-io"
 title = "Stream, Buffer & I/O"
 description = "Readable/Writable/Transform, backpressure, pipeline, Buffer, fs/promises, EventEmitter."
-sources = ["node/stream", "node/stream#streampipelinestreams-options", "node/buffer", "node/events"]
+sources = ["node/stream", "node/stream#streampipelinestreams-options", "node/buffer", "node/events", "node/fs"]
 lesson = '''
 ### Ý chính
 - **Stream** xử lý dữ liệu theo từng chunk → bộ nhớ ổn định với file lớn.
@@ -41,7 +41,7 @@ lesson = '''
 id = "node-express"
 title = "Express & kiến trúc API"
 description = "Middleware, router, error-handling middleware, async error, validation, cấu trúc project."
-sources = ["express/guide/using-middleware", "express/guide/error-handling", "express/guide/routing", "express/index#express.router"]
+sources = ["express/guide/using-middleware", "express/guide/error-handling", "express/guide/routing", "express/index#express.router", "express/index#express.json", "express/advanced/best-practice-security"]
 lesson = '''
 ### Ý chính
 - **Middleware** `(req, res, next)` chạy theo thứ tự đăng ký; phải gọi `next()` hoặc kết thúc response.
@@ -56,7 +56,7 @@ lesson = '''
 id = "node-ops"
 title = "Hiệu năng & Vận hành"
 description = "Cache, rate limit, retry/backoff, graceful shutdown, logging, biến môi trường."
-sources = ["node/errors", "node/process#processnexttickcallback-args"]
+sources = ["node/errors", "node/process", "node/environment_variables#processenv", "express/advanced/best-practice-performance", "express/advanced/healthcheck-graceful-shutdown"]
 lesson = '''
 ### Ý chính
 - **Cache**: in-memory (LRU) cho dữ liệu nóng; Redis khi nhiều instance.
@@ -823,3 +823,409 @@ test('lưu được giá trị falsy', () => {
 '''
 hints = ["`map.delete(key); map.set(key, v)` đưa key lên cuối (mới nhất).", "Key cũ nhất là `map.keys().next().value`."]
 explanation = "Thư viện `lru-cache` được npm dùng rộng rãi cài đặt ý tưởng này (tối ưu hơn)."
+
+
+[[modules]]
+id = "nodejs-dv-modules"
+title = "ESM, CommonJS & package contract"
+description = "Phân biệt module format, cấu hình package.json, conditional exports và ranh giới API công khai."
+sources = ["node/modules", "node/esm", "node/packages", "node/module"]
+lesson = '''
+### Chọn module format và công khai API có chủ đích
+Node hỗ trợ hai hệ module chính. CommonJS tải bằng require() và xuất qua module.exports; ECMAScript Modules (ESM) dùng import/export, có static analysis và hỗ trợ top-level await. Quy tắc rõ ràng giúp tránh phụ thuộc vào suy đoán từ cú pháp hay phiên bản runtime.
+
+| Dấu hiệu | Format | Ghi chú |
+|---|---|---|
+| .mjs | ESM | Rõ ràng, không phụ thuộc package.json |
+| .cjs | CommonJS | Rõ ràng, không phụ thuộc package.json |
+| .js | Theo type của package.json gần nhất; nếu thiếu, theo quy tắc mặc định/nhận diện của runtime | Nên khai báo tường minh để tránh mơ hồ |
+
+Ví dụ package.json: {"type":"module","exports":{".":{"import":"./dist/index.js","require":"./dist/index.cjs"},"./client":"./dist/client.js"}}
+
+Trong ESM, đường dẫn tương đối tới file thường ghi rõ phần mở rộng; __dirname và __filename không tự có như trong CommonJS. Khi cần gọi API require trong ESM, có thể tạo nó bằng createRequire(import.meta.url) từ node:module. Trường exports xác định các entry point mà consumer được phép import và có thể chọn target theo điều kiện import/require; khi trường này tồn tại, deep import không được khai báo có thể lỗi ERR_PACKAGE_PATH_NOT_EXPORTED. Trường imports dành cho alias nội bộ bắt đầu bằng #.
+
+Lỗi hay gặp là đặt type=module rồi vẫn dùng module.exports, viết import tương đối thiếu extension, hoặc import thẳng file nội bộ không nằm trong exports. Với package hỗ trợ cả hai format, hãy kiểm tra riêng từng entry point và tránh giả định hai format luôn chia sẻ cùng object state.
+'''
+
+[[questions]]
+id = "nodejs-dv001"
+module = "nodejs-dv-modules"
+type = "single"
+difficulty = 1
+prompt = '''Một package khai báo type=module ở package.json gần nhất. src/index.js dùng format nào theo cấu hình đó?'''
+options = ["ESM", "CommonJS", "Node chọn ngẫu nhiên theo cách chạy", "File không được nạp"]
+answer = [0]
+explanation = "Với .js, Node dùng trường type trong package.json gần nhất; .mjs và .cjs là dấu hiệu tường minh hơn."
+sources = ["node/packages#type", "node/esm"]
+
+[[questions]]
+id = "nodejs-dv002"
+module = "nodejs-dv-modules"
+type = "single"
+difficulty = 1
+prompt = '''Trong package có type=module, file nào vẫn được Node diễn giải tường minh là CommonJS?'''
+options = ["index.js", "index.mjs", "index.cjs", "index.json"]
+answer = [2]
+explanation = "Đuôi .cjs xác định CommonJS kể cả khi package mặc định dùng ESM."
+sources = ["node/modules", "node/packages#type"]
+
+[[questions]]
+id = "nodejs-dv003"
+module = "nodejs-dv-modules"
+type = "multiple"
+difficulty = 2
+prompt = '''Một thư viện thêm trường exports trong package.json. Hệ quả nào đúng?'''
+options = ["Có thể khai báo entry point khác nhau theo điều kiện import và require", "Node tự chuyển mã CommonJS sang ESM", "Các subpath không được công khai có thể bị chặn khi consumer deep import", "Mọi file trong thư mục package tự động trở thành API công khai", "exports luôn bắt buộc phải trỏ tới đúng một file"]
+answer = [0, 2]
+explanation = "exports có thể dùng conditional exports và giới hạn subpath công khai; nó không biên dịch format hay tự mở toàn bộ thư mục."
+sources = ["node/packages#exports"]
+
+[[questions]]
+id = "nodejs-dv004"
+module = "nodejs-dv-modules"
+type = "fill"
+difficulty = 1
+prompt = '''Với file .js, trường package.json nào khai báo format mặc định cho các file trong package: {{blank}}?'''
+blanks = [["type"]]
+explanation = "type nhận module hoặc commonjs; dùng .mjs/.cjs khi cần chỉ định format ngay trên tên file."
+sources = ["node/packages#type"]
+
+[[questions]]
+id = "nodejs-dv005"
+module = "nodejs-dv-modules"
+type = "fill"
+difficulty = 2
+prompt = '''Trong ESM, API nào từ node:module tạo một hàm require gắn với URL của module hiện tại: {{blank}}?'''
+blanks = [["createRequire"]]
+explanation = "createRequire(import.meta.url) hữu ích khi cần tương thích API CommonJS trong một module ESM."
+sources = ["node/module"]
+
+[[questions]]
+id = "nodejs-dv006"
+module = "nodejs-dv-modules"
+type = "single"
+difficulty = 2
+prompt = '''Trong Node ESM, cách nào phù hợp để import file JavaScript tương đối db.js?'''
+options = ["import db from './db'", "import db from './db.js'", "import db from 'db.js'", "require('./db.js') luôn khả dụng không cần thiết lập"]
+answer = [1]
+explanation = "Node ESM yêu cầu chỉ rõ extension cho đường dẫn file tương đối trong trường hợp thông thường; bare specifier như db.js được phân giải theo package."
+sources = ["node/esm"]
+
+[[questions]]
+id = "nodejs-dv007"
+module = "nodejs-dv-modules"
+type = "essay"
+difficulty = 3
+prompt = '''Trong buổi phỏng vấn, hãy giải thích các khác biệt thực tế giữa CommonJS và ESM trong Node, rồi nêu cách bạn thiết kế package để hỗ trợ consumer mà không để lộ file nội bộ.'''
+keywords = [["commonjs", "cjs", "module.exports"], ["esm", "ecmascript modules", "import/export"], ["package.json type", "type field"], ["exports", "conditional exports"], ["public api", "interoperability", "tương thích"]]
+min_keywords = 3
+model_answer = '''CommonJS dùng require() và module.exports, còn ESM dùng import/export với liên kết tĩnh; khi package có cả hai format, quy tắc type và extension .cjs/.mjs giúp Node phân biệt rõ. Tôi khai báo exports để định nghĩa public API và có thể dùng conditional exports cho consumer import hoặc require. Nhờ đó, file triển khai nội bộ không bị xem là API ổn định và có thể thay đổi độc lập.'''
+explanation = "Câu trả lời tốt phân biệt được cú pháp, quy tắc phân giải và hợp đồng package, không chỉ kể tên hai hệ module."
+sources = ["node/modules", "node/esm", "node/packages#exports"]
+
+[[questions]]
+id = "nodejs-dvc01"
+module = "nodejs-dv-modules"
+type = "code"
+lang = "javascript"
+difficulty = 2
+title = "Phân tích bare package specifier"
+prompt = '''Viết parsePackageSpecifier(specifier) cho một bare package specifier của Node. Trả về { packageName, subpath }, trong đó package root có subpath: ".", còn subpath như pkg/fs/read có subpath: "./fs/read". Hỗ trợ package scoped như @team/logger và @team/logger/json.
+
+Trả về null nếu input không phải chuỗi hợp lệ theo bài này: chuỗi rỗng, có whitespace, là đường dẫn tương đối/tuyệt đối, bắt đầu bằng node:, có backslash, ?, #, thiếu scope hoặc package name, có path segment rỗng, . hay ... Không cần giải quyết package trên filesystem hoặc áp dụng exports.'''
+starter = '''function parsePackageSpecifier(specifier) {
+  return null;
+}'''
+solution = '''function parsePackageSpecifier(specifier) {
+  if (typeof specifier !== 'string' || !specifier || /\s/.test(specifier) || specifier.startsWith('.') || specifier.startsWith('/') || specifier.startsWith('node:') || specifier.includes('\\') || specifier.includes('?') || specifier.includes('#')) return null;
+  const parts = specifier.split('/');
+  let packageName;
+  let subpathParts;
+  if (specifier.startsWith('@')) {
+    if (parts.length < 2 || parts[0].length < 2 || !parts[1]) return null;
+    packageName = parts.slice(0, 2).join('/');
+    subpathParts = parts.slice(2);
+  } else {
+    if (!parts[0]) return null;
+    packageName = parts[0];
+    subpathParts = parts.slice(1);
+  }
+  if (subpathParts.some((part) => !part || part === '.' || part === '..')) return null;
+  return { packageName, subpath: subpathParts.length ? './' + subpathParts.join('/') : '.' };
+}'''
+tests = '''test('package root', () => {
+  expect(parsePackageSpecifier('express')).toEqual({ packageName: 'express', subpath: '.' });
+});
+test('unscoped subpath', () => {
+  expect(parsePackageSpecifier('pkg/fs/read')).toEqual({ packageName: 'pkg', subpath: './fs/read' });
+});
+test('scoped root and subpath', () => {
+  expect(parsePackageSpecifier('@team/logger/json')).toEqual({ packageName: '@team/logger', subpath: './json' });
+});
+test('rejects relative and builtin specifiers', () => {
+  expect(parsePackageSpecifier('./local.js')).toBeNull();
+  expect(parsePackageSpecifier('node:fs')).toBeNull();
+});
+test('rejects malformed scoped or empty segments', () => {
+  expect(parsePackageSpecifier('@team')).toBeNull();
+  expect(parsePackageSpecifier('pkg//internal')).toBeNull();
+  expect(parsePackageSpecifier('pkg/../private')).toBeNull();
+});'''
+hints = ["Tách các segment bằng /; package scoped chiếm hai segment đầu.", "Kiểm tra segment rỗng hoặc ./.. trước khi ghép subpath."]
+explanation = "Bài tập mô hình hóa cách tách tên package và subpath; việc resolve target thực tế còn phụ thuộc package.json, exports và filesystem."
+sources = ["node/packages", "node/esm"]
+
+
+[[modules]]
+id = "nodejs-dv-http"
+title = "HTTP server, client & headers"
+description = "Node http/https/http2, luồng request-response, socket reuse, timeout và xử lý header đúng vòng đời."
+sources = ["node/http", "node/https", "node/http2", "node/net"]
+lesson = '''
+### HTTP là một luồng request-response
+Module node:http cung cấp API cấp thấp để nhận và gửi HTTP/1.1. Callback của createServer nhận IncomingMessage (Readable) và ServerResponse (Writable); body đến theo chunk, không tự biến thành JSON. Gọi write() có thể gửi nhiều chunk, còn end() kết thúc response. Headers phải được đặt trước khi chúng được gửi; headersSent giúp tránh cố ghi status/header lần nữa.
+
+| Nhu cầu | API | Lưu ý |
+|---|---|---|
+| Server HTTP/1.1 | http.createServer() | Nhận req và res dạng stream |
+| Server TLS | https.createServer() | Cấu hình certificate/key theo hạ tầng |
+| HTTP/2 | http2.createServer() hoặc createSecureServer() | API/session khác HTTP/1.1; TLS thường dùng trên Internet |
+| Client outbound | http.request() / https.request() | Agent có thể tái sử dụng và giới hạn socket |
+
+Ví dụ: http.createServer((req, res) => { res.writeHead(200, {'content-type':'application/json'}); res.end(JSON.stringify({ok:true})); }).listen(3000).
+
+Với file lớn, đừng gom toàn bộ body vào một chuỗi hoặc Buffer không giới hạn; xử lý stream và giữ backpressure. Hãy giới hạn kích thước request và cấu hình headersTimeout/requestTimeout theo nhu cầu endpoint. headersTimeout giới hạn việc nhận headers, còn requestTimeout giới hạn việc nhận toàn bộ request; socket timeout là khái niệm khác. Client có thể ngắt kết nối, nên code cần xử lý lỗi/close và không tiếp tục ghi response đã kết thúc.
+
+Lỗi hay gặp là gọi writeHead() sau write(), dimenticare end(), xem request body như object JSON tự động, hoặc tin rằng timeout socket tự giới hạn kích thước body. Express thêm routing và middleware lên trên HTTP server, nhưng vòng đời stream, socket và response vẫn cần hiểu.
+'''
+
+[[questions]]
+id = "nodejs-dv008"
+module = "nodejs-dv-http"
+type = "single"
+difficulty = 1
+prompt = '''Trong callback của http.createServer, req là đối tượng gì?'''
+options = ["Readable stream đại diện request đến", "JSON đã parse", "Writable stream của response", "Một worker thread"]
+answer = [0]
+explanation = "IncomingMessage là Readable; dữ liệu body có thể đến qua nhiều chunk và cần được đọc hoặc pipe."
+sources = ["node/http#class-httpincomingmessage"]
+
+[[questions]]
+id = "nodejs-dv009"
+module = "nodejs-dv-http"
+type = "single"
+difficulty = 2
+prompt = '''Bạn muốn biết response đã bắt đầu gửi headers chưa để tránh ghi status lần hai. Thuộc tính nào kiểm tra điều đó?'''
+options = ["res.headersSent", "res.writableEnded", "req.complete", "req.aborted"]
+answer = [0]
+explanation = "ServerResponse.headersSent cho biết headers đã được gửi tới client hay chưa."
+sources = ["node/http#responseheaderssent"]
+
+[[questions]]
+id = "nodejs-dv010"
+module = "nodejs-dv-http"
+type = "multiple"
+difficulty = 2
+prompt = '''Một HTTP Agent phía client có thể hỗ trợ những việc nào?'''
+options = ["Tái sử dụng socket theo cơ chế keep-alive", "Giới hạn số socket đồng thời tới một origin", "Tự retry mọi request lỗi mà không xét idempotency", "Parse JSON response thành object", "Quản lý pool socket outbound"]
+answer = [0, 1, 4]
+explanation = "Agent quản lý socket phía client và có thể tái sử dụng/giới hạn chúng; việc retry và parse body là trách nhiệm khác."
+sources = ["node/http#class-httpagent"]
+
+[[questions]]
+id = "nodejs-dv011"
+module = "nodejs-dv-http"
+type = "fill"
+difficulty = 1
+prompt = '''Sau khi ghi xong body qua res.write(), gọi phương thức nào để kết thúc response? res.{{blank}}()'''
+blanks = [["end"]]
+explanation = "response.end() báo rằng không còn dữ liệu nào được ghi thêm."
+sources = ["node/http#responseenddata-encoding-callback"]
+
+[[questions]]
+id = "nodejs-dv012"
+module = "nodejs-dv-http"
+type = "fill"
+difficulty = 2
+prompt = '''Trong Node, module nào cung cấp createServer() để tạo server TLS qua HTTPS? node:{{blank}}'''
+blanks = [["https"]]
+explanation = "node:https bọc luồng HTTP bằng TLS; chứng chỉ và khóa phải được cấu hình phù hợp."
+sources = ["node/https#httpscreateserveroptions-requestlistener"]
+
+[[questions]]
+id = "nodejs-dv013"
+module = "nodejs-dv-http"
+type = "single"
+difficulty = 2
+prompt = '''Bạn cần dựng HTTP/2 server có TLS. API nào đúng?'''
+options = ["https.createServer()", "http2.createSecureServer()", "http.createServer({ http2: true })", "net.createServer({ tls: true })"]
+answer = [1]
+explanation = "node:http2 có createSecureServer() cho HTTP/2 qua TLS; HTTP/2 cũng có createServer() cho kết nối không mã hóa trong môi trường phù hợp."
+sources = ["node/http2#http2createsecureserveroptions-onrequesthandler"]
+
+[[questions]]
+id = "nodejs-dv014"
+module = "nodejs-dv-http"
+type = "essay"
+difficulty = 3
+prompt = '''Hãy mô tả vòng đời request-response trong Node core HTTP, rồi giải thích khi nào bạn chọn HTTP/1.1, HTTPS, HTTP/2 hoặc Express và cần lưu ý gì về body lớn, timeout, client ngắt kết nối.'''
+keywords = [["incomingmessage", "readable stream", "request stream"], ["serverresponse", "writable stream", "response"], ["backpressure", "stream"], ["timeout", "headerstimeout", "requesttimeout"], ["https", "tls"], ["http2", "multiplexing"], ["express", "middleware"]]
+min_keywords = 4
+model_answer = '''Trong node:http, IncomingMessage là Readable và ServerResponse là Writable; request body có thể đến theo nhiều chunk và response phải kết thúc bằng end(). Với body lớn, tôi dùng stream để giữ backpressure thay vì gom tất cả vào RAM, đồng thời xử lý lỗi khi client đóng kết nối. Tôi cấu hình headersTimeout và requestTimeout theo loại endpoint vì chúng đo các khoảng nhận dữ liệu khác nhau. Chọn HTTPS khi cần TLS; HTTP/2 dùng API/session riêng, còn Express phù hợp khi cần routing và middleware nhưng vẫn dựa trên server HTTP.'''
+explanation = "Câu trả lời nên kết nối abstraction với vòng đời thực tế và các giới hạn tài nguyên."
+sources = ["node/http", "node/https", "node/http2"]
+
+[[questions]]
+id = "nodejs-dvc02"
+module = "nodejs-dv-http"
+type = "code"
+lang = "javascript"
+difficulty = 2
+title = "Gộp Vary header"
+prompt = '''Viết mergeVary(current, field). current là giá trị Vary hiện tại (chuỗi hoặc undefined); field là một tên header đơn hợp lệ. Trả về chuỗi Vary mới:
+- Tách danh sách hiện tại theo dấu phẩy, bỏ khoảng trắng thừa và giữ thứ tự ban đầu.
+- Thêm field chỉ khi chưa có tên tương đương, so sánh không phân biệt hoa thường.
+- Nếu current đã chứa * hoặc field là *, kết quả là *.
+- Nếu danh sách rỗng, trả về field.
+
+Không cần kiểm tra cú pháp tên header.'''
+starter = '''function mergeVary(current, field) {
+  return current || field;
+}'''
+solution = '''function mergeVary(current, field) {
+  const fields = (current || '').split(',').map((value) => value.trim()).filter(Boolean);
+  if (field.trim() === '*' || fields.includes('*')) return '*';
+  if (!fields.some((value) => value.toLowerCase() === field.trim().toLowerCase())) fields.push(field.trim());
+  return fields.join(', ');
+}'''
+tests = '''test('thêm vào header rỗng', () => {
+  expect(mergeVary(undefined, 'Accept')).toBe('Accept');
+});
+test('giữ danh sách hiện tại', () => {
+  expect(mergeVary('Accept-Encoding', 'Origin')).toBe('Accept-Encoding, Origin');
+});
+test('không thêm trùng khác hoa thường', () => {
+  expect(mergeVary('Accept-Encoding', 'accept-encoding')).toBe('Accept-Encoding');
+});
+test('chuẩn hóa khoảng trắng', () => {
+  expect(mergeVary(' Accept-Encoding , Origin ', 'origin')).toBe('Accept-Encoding, Origin');
+});
+test('wildcard hiện tại thay thế danh sách', () => {
+  expect(mergeVary('Accept, *', 'Origin')).toBe('*');
+});
+test('wildcard mới thay thế danh sách', () => {
+  expect(mergeVary('Accept', '*')).toBe('*');
+});'''
+hints = ["Tách current theo dấu phẩy, trim từng tên và so sánh bằng chữ thường.", "Xử lý wildcard trước khi ghép các tên khác."]
+explanation = "Vary mô tả request headers ảnh hưởng tới representation được cache; wildcard có ý nghĩa riêng và không nên ghép như một header thông thường."
+sources = ["express/index#res.vary"]
+
+
+[[modules]]
+id = "nodejs-dv-express-prod"
+title = "Express production boundaries & readiness"
+description = "Cấu hình reverse proxy đáng tin, hardening ứng dụng, health checks và shutdown có drain."
+sources = ["express/advanced/security-updates", "express/advanced/best-practice-security", "express/advanced/best-practice-performance", "express/advanced/healthcheck-graceful-shutdown", "express/guide/behind-proxies", "express/index#req.ip"]
+lesson = '''
+### Tin đúng reverse proxy và dừng ứng dụng có kiểm soát
+Khi Express đứng sau load balancer hoặc reverse proxy, các header X-Forwarded-* có thể cung cấp IP client, protocol và hostname ban đầu. Express chỉ dùng thông tin này theo cấu hình trust proxy. Nếu tin tất cả kết nối nhưng ứng dụng vẫn có thể truy cập trực tiếp từ Internet, client có thể tự gửi header giả để làm sai req.ip, req.protocol hoặc req.hostname. Hãy giới hạn nguồn tin vào proxy do mình kiểm soát và cấu hình proxy biên để ghi đè header do client gửi.
+
+| Mối quan tâm | Cách xử lý | Điều cần tránh |
+|---|---|---|
+| Proxy identity | trust proxy theo subnet/hop đúng topology | Bật true mà không kiểm soát đường vào |
+| Liveness | Trả lời ứng dụng/process còn sống | Phụ thuộc vào mọi dịch vụ ngoài |
+| Readiness | Ngừng nhận traffic khi đang shutdown hoặc dependency thiết yếu lỗi | Trả chi tiết lỗi nội bộ ra Internet |
+| SIGTERM | Báo not-ready, đóng listener, drain request, rồi đóng pool | Thoát ngay và cắt request đang chạy |
+
+Ví dụ cấu hình theo mạng triển khai: app.set('trust proxy', ['loopback', '10.0.0.0/8']). Danh sách phải khớp hạ tầng thực tế; không sao chép nguyên xi nếu subnet của proxy khác. Liveness chỉ xác nhận process còn phục vụ được; readiness kiểm tra khả năng nhận việc mới. Khi nhận SIGTERM, trước tiên đánh dấu readiness thất bại, sau đó đóng HTTP server để ngừng nhận kết nối và chờ request đang chạy, cuối cùng đóng database/message-broker pool. Thêm deadline để supervisor có thể kết thúc process nếu drain bị kẹt.
+
+Hardening production còn gồm cập nhật Express/dependency được hỗ trợ, TLS ở proxy hoặc ứng dụng, Helmet/security headers, giới hạn body, validate input và rate limit theo rủi ro. Theo dõi latency, lỗi và saturation; không dùng log chứa token hoặc dữ liệu nhạy cảm. Lỗi hay gặp là trust proxy=true theo hướng dẫn sao chép, dùng một readiness endpoint phụ thuộc vào quá nhiều dịch vụ, hoặc đóng DB pool trước khi request đang chạy hoàn tất.
+'''
+
+[[questions]]
+id = "nodejs-dv015"
+module = "nodejs-dv-express-prod"
+type = "single"
+difficulty = 2
+prompt = '''Express chạy sau load balancer. Vì sao cần cấu hình trust proxy đúng topology?'''
+options = ["Để Express có thể tin có điều kiện các header forwarded khi xác định client IP/protocol/hostname", "Để tự bật HTTPS giữa mọi service", "Để thay thế middleware xác thực", "Để tự giới hạn kích thước request body"]
+answer = [0]
+explanation = "trust proxy ảnh hưởng cách Express diễn giải thông tin do proxy chuyển tiếp; bật quá rộng có thể làm tin dữ liệu do client giả mạo."
+sources = ["express/guide/behind-proxies", "express/index#req.ip"]
+
+[[questions]]
+id = "nodejs-dv016"
+module = "nodejs-dv-express-prod"
+type = "single"
+difficulty = 2
+prompt = '''Khác biệt chính giữa liveness và readiness check là gì?'''
+options = ["Liveness cho biết process còn sống; readiness cho biết instance hiện có thể nhận traffic mới", "Readiness chỉ chạy khi deploy, liveness chỉ chạy ở local", "Liveness luôn phải truy vấn database; readiness không được truy cập dependency", "Hai endpoint bắt buộc trả cùng mã trạng thái"]
+answer = [0]
+explanation = "Readiness thường chuyển sang không sẵn sàng khi shutdown hoặc dependency thiết yếu lỗi; liveness tránh restart liên tục chỉ vì dependency ngoài bị gián đoạn."
+sources = ["express/advanced/healthcheck-graceful-shutdown"]
+
+[[questions]]
+id = "nodejs-dv017"
+module = "nodejs-dv-express-prod"
+type = "multiple"
+difficulty = 3
+prompt = '''Ứng dụng Express nằm sau một reverse proxy do nhóm bạn quản lý. Cách cấu hình nào giảm nguy cơ giả mạo forwarded headers?'''
+options = ["Proxy biên xóa hoặc ghi đè X-Forwarded-* do client gửi trước khi đặt giá trị đáng tin", "Giới hạn trust proxy theo subnet/hop đúng với topology", "Giả định req.ip luôn là địa chỉ socket gốc trong mọi cấu hình", "Bảo đảm app không có đường truy cập trực tiếp bỏ qua proxy nếu dựa vào header forwarded", "Luôn đặt trust proxy=true dù không biết proxy chain"]
+answer = [0, 1, 3]
+explanation = "Phải giới hạn cả nguồn tin ở Express lẫn đường đi mạng; cấu hình tin cậy sai có thể khiến client giả mạo IP/protocol."
+sources = ["express/guide/behind-proxies", "express/index#req.ip"]
+
+[[questions]]
+id = "nodejs-dv018"
+module = "nodejs-dv-express-prod"
+type = "single"
+difficulty = 2
+prompt = '''Khi nhận SIGTERM trong lúc deploy, thứ tự nào giúp hạn chế cắt request đang xử lý?'''
+options = ["Đánh dấu readiness thất bại, ngừng nhận kết nối mới, drain request đang chạy rồi đóng dependency pool", "Đóng database trước rồi tiếp tục nhận HTTP request", "Gọi process.exit ngay lập tức", "Bỏ qua signal và chờ supervisor gửi SIGKILL"]
+answer = [0]
+explanation = "Báo không sẵn sàng trước, sau đó đóng listener và chờ xử lý request đang chạy trước khi đóng dependency."
+sources = ["express/advanced/healthcheck-graceful-shutdown"]
+
+[[questions]]
+id = "nodejs-dv019"
+module = "nodejs-dv-express-prod"
+type = "multiple"
+difficulty = 2
+prompt = '''Biện pháp nào phù hợp khi hardening Express cho production?'''
+options = ["Cập nhật framework và dependency theo quy trình hỗ trợ", "Giới hạn body size và validate input ở biên", "Trả err.stack cho client để hỗ trợ debug", "Dùng security headers và rate limit phù hợp endpoint", "Ghi access token nguyên văn vào log để đối chiếu"]
+answer = [0, 1, 3]
+explanation = "Stack trace và credential không nên gửi/log công khai; cập nhật, giới hạn input và security headers giảm nhiều rủi ro phổ biến."
+sources = ["express/advanced/security-updates", "express/advanced/best-practice-security"]
+
+[[questions]]
+id = "nodejs-dv020"
+module = "nodejs-dv-express-prod"
+type = "fill"
+difficulty = 2
+prompt = '''Topology được cố định: app chỉ nhận kết nối từ đúng một reverse proxy đã tin cậy. Giá trị hop count nào có thể dùng trong cấu hình sau? app.set('trust proxy', {{blank}})'''
+blanks = [["1"]]
+explanation = "Một hop phù hợp với topology đã nêu; nếu đường đi có số hop khác nhau hoặc app có đường vào trực tiếp, hãy dùng cấu hình proxy cụ thể hơn."
+sources = ["express/guide/behind-proxies", "express/index#app.set"]
+
+[[questions]]
+id = "nodejs-dv021"
+module = "nodejs-dv-express-prod"
+type = "essay"
+difficulty = 3
+prompt = '''Hãy phác thảo cách triển khai Express sau reverse proxy an toàn và cách xử lý shutdown khi deploy: nêu trust boundary, forwarded headers, readiness/liveness, thứ tự drain và đóng dependency.'''
+keywords = [["trust proxy", "trusted proxy", "proxy tin cậy"], ["forwarded headers", "x-forwarded-for", "x-forwarded-proto"], ["readiness", "not-ready"], ["liveness"], ["sigterm", "graceful shutdown", "shutdown"], ["drain", "in-flight requests", "request đang chạy"], ["close database", "đóng pool"]]
+min_keywords = 5
+model_answer = '''Tôi cấu hình trust proxy theo subnet hoặc số hop thực tế và bảo đảm proxy biên ghi đè forwarded headers do client gửi; ứng dụng không được có đường truy cập bỏ qua proxy nếu đang dựa vào các header này. Readiness chuyển sang không sẵn sàng ngay khi bắt đầu deploy, còn liveness chỉ phản ánh process có còn hoạt động. Khi nhận SIGTERM, app ngừng nhận kết nối mới, drain request đang chạy, rồi đóng database/message-broker pool; deadline giúp supervisor kết thúc process nếu drain bị kẹt. Health endpoint chỉ trả trạng thái tối thiểu, không tiết lộ cấu hình hay lỗi nội bộ.'''
+explanation = "Câu trả lời nên thể hiện trust boundary và thứ tự shutdown rõ ràng, đồng thời tách readiness khỏi liveness."
+sources = ["express/guide/behind-proxies", "express/advanced/healthcheck-graceful-shutdown"]
+
+[[questions]]
+id = "nodejs-dv022"
+module = "nodejs-dv-express-prod"
+type = "single"
+difficulty = 2
+prompt = '''Health endpoint trả chi tiết lỗi database, hostname nội bộ và environment variables cho mọi client. Nhận định nào phù hợp?'''
+options = ["Nên trả trạng thái tối thiểu cần cho probe; chi tiết vận hành giữ trong telemetry/log được kiểm soát", "Đây là cách tốt để client tự sửa database", "Nên thêm access token để probe xác thực", "Endpoint health không cần giới hạn nội dung vì không có dữ liệu người dùng"]
+answer = [0]
+explanation = "Health endpoint công khai quá nhiều chi tiết tạo thêm bề mặt lộ thông tin; probe chỉ cần trạng thái cần thiết."
+sources = ["express/advanced/best-practice-security", "express/advanced/healthcheck-graceful-shutdown"]

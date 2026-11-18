@@ -9,7 +9,7 @@ docs = ["react_native"]
 # ============================================================ MODULES
 [[modules]]
 id = "rn-core"
-sources = ["react_native/pressable", "react_native/platform"]
+sources = ["react_native/components-and-apis", "react_native/view", "react_native/text", "react_native/textinput", "react_native/pressable", "react_native/keyboardavoidingview"]
 title = "Core Components & Layout"
 description = "View, Text, Image, Pressable, ScrollView; Flexbox mặc định trên React Native."
 lesson = '''
@@ -108,7 +108,7 @@ Lỗi hay gặp: key là index khi danh sách đổi thứ tự, `getItemLayout`
 
 [[modules]]
 id = "rn-navigation"
-sources = ["react_native/linking"]
+sources = ["react_native/navigation", "react_native/linking"]
 title = "Điều hướng"
 description = "React Navigation: stack, tab, drawer, params, deep link; Expo Router."
 lesson = '''
@@ -137,7 +137,7 @@ Lỗi hay gặp: nghĩ màn hình dưới stack đã unmount, điều hướng b
 
 [[modules]]
 id = "rn-native"
-sources = ["react_native/appstate", "react_native/accessibility", "react_native/performance"]
+sources = ["react_native/appstate", "react_native/accessibility", "react_native/security", "react_native/permissionsandroid", "react_native/performance"]
 title = "Kiến trúc, Native & Dữ liệu"
 description = "New Architecture (JSI, Fabric, TurboModules), bridge, Expo, lưu trữ, quyền, build & phát hành."
 lesson = '''
@@ -176,7 +176,7 @@ Lỗi hay gặp: lưu token trong AsyncStorage, giả định OTA thay được 
 id = "rn-architecture"
 title = "New Architecture & Luồng thực thi"
 description = "JSI, Fabric, TurboModules, Codegen, Hermes, bridgeless và tương tác giữa JS thread với UI thread."
-sources = ["react_native/new-architecture-intro", "react_native/new-architecture-app-intro", "react_native/hermes"]
+sources = ["react_native/new-architecture-intro", "react_native/new-architecture-app-intro", "react_native/new-architecture-app-modules-ios", "react_native/new-architecture-app-modules-android", "react_native/native-modules-intro", "react_native/hermes"]
 lesson = '''
 ### Các mảnh ghép
 | Thành phần | Vai trò |
@@ -198,7 +198,7 @@ Lỗi hay gặp: suy ra JSI làm lời gọi đồng bộ luôn an toàn; chạy
 id = "rn-expo"
 title = "Expo SDK & Quy trình phát triển"
 description = "Expo SDK, Expo Router, config plugin, prebuild, development build, EAS Build và EAS Update."
-sources = ["react_native/linking", "react_native/platform-specific-code"]
+sources = ["react_native/linking", "react_native/navigation", "react_native/platform-specific-code", "react_native/environment-setup", "react_native/libraries", "react_native/native-modules-setup"]
 lesson = '''
 ### Chọn môi trường và quy trình
 | Công cụ | Dùng khi |
@@ -240,7 +240,7 @@ Lỗi hay gặp: bật mọi prop tối ưu cùng lúc, tạo object/hàm mới 
 id = "rn-animation-gesture"
 title = "Animation & Gesture"
 description = "Animated, native driver, Reanimated worklet/shared value và React Native Gesture Handler."
-sources = ["react_native/animated", "react_native/gesture-responder-system"]
+sources = ["react_native/animated", "react_native/gesture-responder-system", "react_native/panresponder", "react_native/layoutanimation"]
 lesson = '''
 ### Chọn công cụ theo chuyển động
 | Công cụ | Thích hợp cho |
@@ -259,7 +259,7 @@ Lỗi hay gặp: đọc/ghi state React liên tục trong mỗi frame; đánh d�
 id = "rn-data-offline"
 title = "Dữ liệu Offline & Liên kết"
 description = "Lưu trữ cục bộ, token an toàn, trạng thái mạng, đồng bộ hàng đợi, push notification và deep link."
-sources = ["react_native/appstate", "react_native/linking"]
+sources = ["react_native/appstate", "react_native/linking", "react_native/network", "react_native/security"]
 lesson = '''
 ### Lưu trữ và đồng bộ
 | Nhu cầu | Lựa chọn | Lưu ý |
@@ -279,7 +279,7 @@ Lỗi hay gặp: xem tín hiệu Wi-Fi là chắc chắn có Internet; retry vô
 id = "rn-release"
 title = "Quyền, Bảo mật & Phát hành"
 description = "Permission, khác biệt nền tảng, ký ứng dụng, OTA update, crash reporting và quy trình store review."
-sources = ["react_native/platform-specific-code", "react_native/platform", "react_native/performance"]
+sources = ["react_native/platform-specific-code", "react_native/platform", "react_native/security", "react_native/permissionsandroid", "react_native/publishing-to-app-store", "react_native/signed-apk-android", "react_native/performance"]
 lesson = '''
 ### Checklist phát hành
 | Hạng mục | Kiểm tra |
@@ -297,6 +297,642 @@ Lỗi hay gặp: đưa signing secret vào app config được commit; xin quy�
 '''
 
 # ============================================================ CORE
+
+[[modules]]
+id = "react-native-dv-network"
+title = "Networking & xử lý request"
+description = "Gọi API, phân biệt lỗi HTTP với lỗi mạng, quản lý trạng thái request và retry an toàn."
+sources = ["react_native/network", "react_native/security", "react_native/appstate"]
+lesson = '''
+### Request trong React Native
+React Native cung cấp **fetch** để gửi request HTTP. Promise bị reject thường biểu thị lỗi giao tiếp như mất mạng; response 404 hay 500 vẫn là response hợp lệ ở tầng HTTP, nên cần kiểm tra **response.ok** hoặc **response.status** trước khi xử lý body.
+
+| Kết quả | Cách nhận biết | Cách xử lý |
+|---|---|---|
+| Thành công HTTP | response.ok là true | Đọc body theo định dạng API |
+| Lỗi HTTP | Có response nhưng ok là false | Hiển thị lỗi phù hợp; không giả định body luôn là JSON |
+| Lỗi giao tiếp | Request reject | Cho phép thử lại có giới hạn và báo trạng thái offline |
+
+Ví dụ tải dữ liệu nên giữ riêng các trạng thái đang tải, thành công và lỗi. Khi màn hình đổi dữ liệu đầu vào hoặc rời khỏi màn hình, huỷ request nếu môi trường hỗ trợ hoặc bỏ qua kết quả đã cũ để response chậm không ghi đè dữ liệu mới. Khi app chuyển nền, hệ điều hành có thể tạm dừng JavaScript; việc đồng bộ quan trọng cần tiếp tục từ server khi app hoạt động lại.
+
+Retry dùng exponential backoff và giới hạn số lần thử; với 429, tôn trọng Retry-After nếu có. Không gửi lại thao tác tạo đơn hoặc thanh toán một cách mù quáng: dùng idempotency key hoặc xác nhận trạng thái trước khi retry. Dữ liệu đi qua HTTPS, token không được ghi vào log, và thông tin response từ server vẫn cần được kiểm tra trước khi dùng trong giao diện.
+
+Lỗi hay gặp: coi mọi HTTP status là thành công vì fetch không reject; parse JSON trước khi kiểm tra response; để request cũ cập nhật state sau request mới; retry vô hạn; hoặc xem có kết nối Wi-Fi đồng nghĩa API luôn truy cập được. Trên mobile, kết nối có thể đổi giữa các request và request đang chạy.
+'''
+
+
+[[modules]]
+id = "react-native-dv-native"
+title = "Native modules & native UI components"
+description = "Chọn đúng loại tích hợp native, hiểu Codegen, Fabric và thiết kế ranh giới dữ liệu an toàn."
+sources = ["react_native/native-modules-intro", "react_native/native-modules-setup", "react_native/native-modules-android", "react_native/native-modules-ios", "react_native/native-components-android", "react_native/native-components-ios"]
+lesson = '''
+### Chọn điểm mở rộng
+Khi JavaScript cần gọi API riêng của iOS hoặc Android, native module cung cấp hành vi không phải giao diện, chẳng hạn truy cập cảm biến hay dịch vụ hệ điều hành. Nếu cần một view native có thể được bố trí trong cây React, cần native UI component. Hai nền tảng có thể cần phần triển khai riêng dù JavaScript dùng chung một API.
+
+| Nhu cầu | Hướng tích hợp | Vai trò trong New Architecture |
+|---|---|---|
+| Gọi chức năng native | Native module | TurboModule |
+| Hiển thị view native | Native UI component | Fabric component |
+| Định nghĩa API có kiểu | Spec cho Codegen | Sinh phần kết nối giữa JS và native |
+
+New Architecture dùng Codegen từ spec có kiểu để tạo mã kết nối, giúp phát hiện sai khác giữa giao diện JavaScript và phần triển khai native sớm hơn. Fabric quản lý kết xuất giao diện native; TurboModules cung cấp module native theo cơ chế mới. Các khái niệm này không tự sinh ra logic nghiệp vụ, không thay thế việc triển khai và kiểm tra trên từng nền tảng.
+
+Ví dụ: nếu ứng dụng chỉ cần đọc trạng thái pin, hãy tạo module có hàm đọc và event cập nhật; nếu cần bản đồ native có marker tương tác, đó là component có props, lệnh và event. Giữ payload qua biên giới nền tảng ở dạng dữ liệu đơn giản, kiểm tra kiểu và xử lý lỗi native rõ ràng. Sau khi thêm mã native hoặc thư viện native, cần tạo lại development build phù hợp; chỉ cập nhật JavaScript không thể cài phần binary native còn thiếu.
+
+Lỗi hay gặp: dùng module cho yêu cầu thực chất là view; chỉ triển khai iOS rồi giả định Android tương thích; bỏ qua quyền và lifecycle của API native; hoặc cho rằng Codegen thay thế kiểm thử trên thiết bị. Khi tích hợp, ghi rõ nền tảng được hỗ trợ, hành vi khi thiếu quyền và cách lỗi được chuyển về JavaScript.
+'''
+
+
+[[modules]]
+id = "react-native-dv-testing"
+title = "Testing & debugging"
+description = "Kiểm thử nhiều tầng, điều tra lỗi JavaScript/native và truy nguyên stack trace production."
+sources = ["react_native/testing-overview", "react_native/debugging", "react_native/fast-refresh", "react_native/symbolication", "react_native/running-on-device"]
+lesson = '''
+### Kiểm thử theo rủi ro
+Kiểm thử ứng dụng React Native nên bao phủ logic JavaScript, tương tác component và hành vi cần thiết trên thiết bị. Unit test giữ nhanh cho hàm thuần; component test kiểm tra cách người dùng nhìn thấy và thao tác; kiểm thử end-to-end xác nhận luồng tích hợp với navigation, quyền hoặc API native.
+
+| Tầng kiểm thử | Phạm vi | Điểm cần nhớ |
+|---|---|---|
+| Unit | Hàm, reducer, quy tắc nghiệp vụ | Nhanh, ít phụ thuộc môi trường |
+| Component | Props, trạng thái hiển thị, thao tác | Ưu tiên kết quả người dùng quan sát được |
+| End-to-end | Luồng trên app chạy thật | Phát hiện lỗi native và cấu hình tích hợp |
+
+Mock native module ở ranh giới để unit test ổn định, nhưng không xem mock là bằng chứng module hoạt động trên thiết bị. Với thao tác cập nhật state bất đồng bộ, test cần chờ UI ổn định theo cơ chế của thư viện kiểm thử; tránh khẳng định chi tiết nội bộ như số lần gọi render khi đó không phải yêu cầu sản phẩm. Dùng selector theo role hoặc label khi phù hợp để test cũng có thể phát hiện thiếu accessibility metadata.
+
+Khi debug, xác định lỗi ở JavaScript, Metro, cấu hình build hay mã native trước. Fast Refresh rút ngắn vòng lặp sửa giao diện nhưng không thay cho chạy test. Stack trace production thường trỏ vào bundle đã minify; symbolication cần source map khớp chính xác với bundle và phiên bản ứng dụng phát hành. Khi tái hiện lỗi native, kiểm tra trên thiết bị hoặc simulator của nền tảng liên quan, vì log JavaScript không luôn chứa nguyên nhân native.
+
+Lỗi hay gặp: chỉ test bằng mock rồi phát hành mà chưa chạy luồng native; dùng snapshot lớn khó chẩn đoán; coi Fast Refresh thành công là kiểm thử; hoặc dùng source map của build khác để đọc stack trace. Không ghi token hay dữ liệu cá nhân vào log debug.
+'''
+
+
+[[modules]]
+id = "react-native-dv-accessibility"
+title = "Accessibility cho giao diện mobile"
+description = "Thiết kế role, label, state và thứ tự focus để hỗ trợ VoiceOver, TalkBack và người dùng cần hỗ trợ tiếp cận."
+sources = ["react_native/accessibility", "react_native/accessibilityinfo", "react_native/view", "react_native/text", "react_native/pressable"]
+lesson = '''
+### Ngữ nghĩa cho screen reader
+Giao diện native cần mô tả mục đích và trạng thái điều khiển, không chỉ cách chúng trông như thế nào. Với nút chỉ có icon, đặt accessibilityRole phù hợp và accessibilityLabel ngắn, rõ; accessibilityHint chỉ giải thích kết quả tiếp theo khi nhãn chưa đủ. Dùng accessibilityState để biểu diễn disabled, selected, checked, expanded hoặc busy thay vì chỉ đổi màu.
+
+| Thuộc tính | Trả lời câu hỏi | Ví dụ ý nghĩa |
+|---|---|---|
+| Role | Đây là loại điều khiển nào? | button, link, header |
+| Label | Điều khiển này tên gì? | Mở giỏ hàng |
+| Hint | Thao tác sẽ làm gì? | Mở danh sách mặt hàng |
+| State | Đang ở trạng thái nào? | selected, disabled, expanded |
+
+Ví dụ: một filter chip nên có label là tên bộ lọc, role phù hợp với điều khiển và selected state đồng bộ với trạng thái thật của ứng dụng. Không để screen reader đọc riêng một icon trang trí nếu nhãn của control đã nói đủ ý. Với nội dung nhóm, cân nhắc accessibility grouping để thứ tự đọc tự nhiên, nhưng không gom cả màn hình thành một phần tử khiến người dùng mất khả năng tiếp cận từng control.
+
+AccessibilityInfo cung cấp thông tin về khả năng hỗ trợ tiếp cận của thiết bị; giao diện nên thích ứng mà không làm mất chức năng. Kiểm tra font scaling, tương phản, kích thước vùng chạm và thứ tự focus. Xác nhận trực tiếp với VoiceOver trên iOS và TalkBack trên Android vì hành vi đọc và focus có thể khác nhau giữa nền tảng.
+
+Lỗi hay gặp: nút icon không có label; hint lặp lại nguyên label; selected state chỉ thể hiện bằng màu; hoặc đặt accessibility props lên một wrapper không nhận tương tác trong khi phần tử bấm thật vẫn thiếu ngữ nghĩa. Test bằng screen reader và thao tác bàn phím/focus phù hợp, không chỉ nhìn screenshot.
+'''
+
+[[questions]]
+id = "react-native-dv025"
+module = "react-native-dv-accessibility"
+type = "single"
+difficulty = 1
+prompt = "Một Pressable chỉ hiển thị icon giỏ hàng. Điều gì giúp người dùng screen reader hiểu và thao tác với nó?"
+options = ["Thêm accessibilityRole phù hợp và accessibilityLabel mô tả hành động", "Đổi màu icon thành màu nổi bật", "Đặt testID nhưng không thêm label", "Ẩn control khỏi accessibility tree"]
+answer = [0]
+explanation = "Control cần role và label có ý nghĩa; màu hoặc testID không thay thế thông tin screen reader."
+sources = ["react_native/accessibility", "react_native/pressable"]
+
+[[questions]]
+id = "react-native-dv026"
+module = "react-native-dv-accessibility"
+type = "single"
+difficulty = 2
+prompt = "Một chip lọc đang được chọn nhưng chỉ đổi nền sang màu xanh. Cách bổ sung ngữ nghĩa tốt nhất là gì?"
+options = ["Đặt selected state đồng bộ với trạng thái lọc thật", "Đặt testID bằng selected", "Thêm hint lặp lại tên bộ lọc", "Tắt accessibility trên chip"]
+answer = [0]
+explanation = "Screen reader cần nhận trạng thái selected từ accessibilityState, không thể dựa vào màu."
+sources = ["react_native/accessibility", "react_native/view"]
+
+[[questions]]
+id = "react-native-dv027"
+module = "react-native-dv-accessibility"
+type = "single"
+difficulty = 2
+prompt = "Khi nào accessibilityHint hữu ích cho một nút?"
+options = ["Khi cần giải thích ngắn kết quả của thao tác mà label chưa truyền đạt", "Luôn lặp lại nguyên văn accessibilityLabel", "Để chứa toàn bộ nội dung màn hình", "Thay thế accessibilityRole"]
+answer = [0]
+explanation = "Hint nên bổ sung kết quả thao tác; role và label vẫn cần mô tả điều khiển."
+sources = ["react_native/accessibility"]
+
+[[questions]]
+id = "react-native-dv028"
+module = "react-native-dv-accessibility"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các cách cải thiện accessibility cho một nhóm nút điều khiển."
+options = ["Dùng role và label mô tả mục đích", "Đồng bộ accessibilityState với trạng thái ứng dụng", "Chỉ dùng màu để biểu thị selected hoặc disabled", "Kiểm tra thứ tự focus và cách screen reader đọc nhóm"]
+answer = [0, 1, 3]
+explanation = "Ngữ nghĩa, state, focus order và kiểm thử hỗ trợ người dùng hiểu và vận hành giao diện."
+sources = ["react_native/accessibility", "react_native/view"]
+
+[[questions]]
+id = "react-native-dv029"
+module = "react-native-dv-accessibility"
+type = "multiple"
+difficulty = 3
+prompt = "Trước khi phát hành một flow mobile có nhiều control tương tác, nên kiểm tra những gì?"
+options = ["Font scaling và tương phản", "VoiceOver trên iOS và TalkBack trên Android", "Chỉ kiểm tra screenshot ở kích thước mặc định", "Label, state và vùng chạm của control"]
+answer = [0, 1, 3]
+explanation = "Accessibility cần được đánh giá trên nội dung, ngữ nghĩa và hành vi assistive technology ở các nền tảng mục tiêu."
+sources = ["react_native/accessibility", "react_native/accessibilityinfo"]
+
+[[questions]]
+id = "react-native-dv030"
+module = "react-native-dv-accessibility"
+type = "fill"
+difficulty = 1
+prompt = "Prop mô tả loại điều khiển như button hoặc link trong React Native là accessibility{{blank}}."
+blanks = [["role"]]
+explanation = "accessibilityRole giúp assistive technology hiểu loại control."
+sources = ["react_native/accessibility"]
+
+[[questions]]
+id = "react-native-dv031"
+module = "react-native-dv-accessibility"
+type = "fill"
+difficulty = 1
+prompt = "Với control chỉ có icon, prop chứa tên ngắn gọn được đọc cho người dùng là accessibility{{blank}}."
+blanks = [["label"]]
+explanation = "accessibilityLabel cung cấp tên mà screen reader có thể đọc."
+sources = ["react_native/accessibility", "react_native/pressable"]
+
+[[questions]]
+id = "react-native-dv032"
+module = "react-native-dv-accessibility"
+type = "essay"
+difficulty = 3
+prompt = "Trong phỏng vấn, hãy trình bày cách rà soát accessibility cho một màn hình mobile có nút icon, chip lọc và nội dung cập nhật."
+keywords = [["accessibility role", "role"], ["accessibility label", "label"], ["accessibility state", "selected state"], ["voiceover", "talkback"], ["focus order", "focus"], ["font scaling", "contrast"]]
+min_keywords = 3
+model_answer = '''Gán accessibility role và label có nghĩa cho từng control, đồng bộ accessibility state như selected hoặc disabled với trạng thái ứng dụng. Kiểm tra focus order, font scaling và contrast, rồi dùng VoiceOver trên iOS cùng TalkBack trên Android để xác nhận cách đọc. Với nội dung cập nhật, kiểm tra hành vi thông báo phù hợp trên nền tảng.'''
+explanation = "Câu trả lời cần bao gồm ngữ nghĩa, trạng thái, khả năng đọc và kiểm tra bằng assistive technology thật."
+sources = ["react_native/accessibility", "react_native/accessibilityinfo"]
+
+[[questions]]
+id = "react-native-dvc04"
+module = "react-native-dv-accessibility"
+type = "code"
+difficulty = 2
+lang = "javascript"
+title = "Chuẩn hoá accessibility state"
+prompt = '''Viết buildAccessibilityState(input) trả về object mới chỉ có các key disabled, selected và expanded khi key đó là own property có giá trị boolean trong input. Giữ cả giá trị false; bỏ qua key thiếu, giá trị không phải boolean và các key khác. Không sửa input.'''
+starter = '''function buildAccessibilityState(input) {
+  return {};
+}'''
+solution = '''function buildAccessibilityState(input) {
+  const result = {};
+  for (const key of ['disabled', 'selected', 'expanded']) {
+    if (Object.prototype.hasOwnProperty.call(input, key) && typeof input[key] === 'boolean') {
+      result[key] = input[key];
+    }
+  }
+  return result;
+}'''
+tests = '''test('giữ state boolean được phép', () => {
+  expect(buildAccessibilityState({ disabled: false, selected: true })).toEqual({ disabled: false, selected: true });
+});
+
+test('bỏ key không phải boolean', () => {
+  expect(buildAccessibilityState({ expanded: 'yes', selected: false })).toEqual({ selected: false });
+});
+
+test('bỏ key không được hỗ trợ', () => {
+  expect(buildAccessibilityState({ busy: true, label: 'Save', expanded: true })).toEqual({ expanded: true });
+});
+
+test('bỏ thuộc tính kế thừa', () => {
+  const input = Object.create({ selected: true });
+  input.disabled = false;
+  expect(buildAccessibilityState(input)).toEqual({ disabled: false });
+});
+
+test('không thay đổi input', () => {
+  const input = { disabled: true, selected: false, extra: 1 };
+  buildAccessibilityState(input);
+  expect(input).toEqual({ disabled: true, selected: false, extra: 1 });
+});'''
+hints = ["Duyệt danh sách key được phép thay vì sao chép toàn bộ object.", "Dùng hasOwnProperty và kiểm tra typeof giá trị là boolean."]
+explanation = "Hàm giữ state hợp lệ và loại dữ liệu ngoài hợp đồng trước khi truyền vào accessibilityState."
+sources = ["react_native/accessibility"]
+
+[[questions]]
+id = "react-native-dv017"
+module = "react-native-dv-testing"
+type = "single"
+difficulty = 1
+prompt = "Một component hiển thị nút Lưu và trạng thái đã lưu. Assertion nào thường bền vững nhất khi kiểm thử hành vi?"
+options = ["Kiểm tra tên biến state nội bộ", "Tìm nút theo role hoặc label, nhấn rồi kiểm tra trạng thái người dùng nhìn thấy", "So sánh toàn bộ cây component với snapshot lớn", "Kiểm tra chính xác số lần mọi component render"]
+answer = [1]
+explanation = "Test hành vi quan sát được ít phụ thuộc cách component được cài đặt."
+sources = ["react_native/testing-overview", "react_native/accessibility"]
+
+[[questions]]
+id = "react-native-dv018"
+module = "react-native-dv-testing"
+type = "single"
+difficulty = 2
+prompt = "Ứng dụng crash trong mã native chỉ trên Android. Bước điều tra nào có ích nhất?"
+options = ["Chỉ xem console.log của JavaScript trên iOS", "Thu log và tái hiện trên Android device hoặc emulator bằng công cụ nền tảng", "Bật Fast Refresh rồi kết luận đã sửa", "Đổi mọi request sang retry"]
+answer = [1]
+explanation = "Lỗi native cần tái hiện và xem log của nền tảng bị ảnh hưởng; log JavaScript có thể không chứa nguyên nhân."
+sources = ["react_native/debugging", "react_native/running-on-device"]
+
+[[questions]]
+id = "react-native-dv019"
+module = "react-native-dv-testing"
+type = "single"
+difficulty = 3
+prompt = "Stack trace production trỏ đến vị trí khó đọc trong bundle đã minify. Điều gì cần để ánh xạ về mã nguồn?"
+options = ["Source map khớp chính xác với bundle và phiên bản phát hành đó", "Bất kỳ source map nào của nhánh main", "Tắt Hermes sau khi phát hành", "Chỉ bật Fast Refresh trên máy người dùng"]
+answer = [0]
+explanation = "Symbolication chỉ chính xác khi source map thuộc đúng bundle đã tạo stack trace."
+sources = ["react_native/symbolication"]
+
+[[questions]]
+id = "react-native-dv020"
+module = "react-native-dv-testing"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các chiến lược giúp bộ test React Native hữu ích và ít mong manh."
+options = ["Test logic thuần bằng unit test", "Kiểm tra component qua hành vi và nội dung người dùng thấy", "Xem mock native module là bằng chứng đủ cho tích hợp trên thiết bị", "Chạy luồng native quan trọng trên thiết bị hoặc simulator phù hợp"]
+answer = [0, 1, 3]
+explanation = "Unit và component test nhanh, còn luồng native cần được xác nhận trong môi trường thật hoặc simulator phù hợp."
+sources = ["react_native/testing-overview", "react_native/running-on-device"]
+
+[[questions]]
+id = "react-native-dv021"
+module = "react-native-dv-testing"
+type = "multiple"
+difficulty = 3
+prompt = "Khi điều tra lỗi production, những bước nào thường cần thiết?"
+options = ["Xác định phiên bản app và build liên quan", "Dùng source map thuộc đúng bundle để symbolicate", "Đưa token người dùng vào log để dễ đối chiếu", "Tái hiện lỗi trên nền tảng bị ảnh hưởng khi có thể"]
+answer = [0, 1, 3]
+explanation = "Phiên bản, source map phù hợp và môi trường tái hiện giúp thu hẹp nguyên nhân. Không ghi token vào log."
+sources = ["react_native/symbolication", "react_native/debugging"]
+
+[[questions]]
+id = "react-native-dv022"
+module = "react-native-dv-testing"
+type = "fill"
+difficulty = 2
+prompt = "Trong test component, helper thường dùng để bao một thao tác làm React cập nhật state trước khi assertion là {{blank}}."
+blanks = [["act"]]
+explanation = "act giúp test chờ các cập nhật liên quan đến thao tác được xử lý trước khi kiểm tra kết quả."
+sources = ["react_native/testing-overview"]
+
+[[questions]]
+id = "react-native-dv023"
+module = "react-native-dv-testing"
+type = "fill"
+difficulty = 2
+prompt = "Để ánh xạ vị trí trong bundle đã minify về file và dòng mã nguồn gốc, công cụ cần có là {{blank}}."
+blanks = [["source map", "sourcemap"]]
+explanation = "Source map cung cấp ánh xạ giữa mã đã biến đổi và mã nguồn ban đầu."
+sources = ["react_native/symbolication"]
+
+[[questions]]
+id = "react-native-dv024"
+module = "react-native-dv-testing"
+type = "essay"
+difficulty = 3
+prompt = "Trong phỏng vấn, hãy mô tả cách thiết kế kiểm thử nhiều tầng và điều tra một crash chỉ xuất hiện ở bản production."
+keywords = [["unit test", "unit testing"], ["component test", "component testing"], ["end-to-end", "e2e"], ["device testing", "test on device"], ["source map", "symbolication"], ["native log", "platform log"]]
+min_keywords = 3
+model_answer = '''Dùng unit test cho logic thuần, component test cho hành vi quan sát được và end-to-end test cho luồng tích hợp quan trọng. Với crash production, xác định chính xác app build, thu native log và tái hiện trên thiết bị nếu có thể. Dùng source map của đúng bundle để symbolication; mock không thay thế kiểm thử native.'''
+explanation = "Câu trả lời cân bằng tốc độ test với độ tin cậy tích hợp, và nêu rõ vai trò của log cùng source map đúng phiên bản."
+sources = ["react_native/testing-overview", "react_native/debugging", "react_native/symbolication"]
+
+[[questions]]
+id = "react-native-dvc03"
+module = "react-native-dv-testing"
+type = "code"
+difficulty = 2
+lang = "javascript"
+title = "Tổng hợp kết quả kiểm thử"
+prompt = '''Viết summarizeResults(results) với mỗi phần tử có name và status là passed, failed hoặc skipped. Trả object gồm total, passed, failed, skipped và failedNames. failedNames giữ tên các test thất bại theo thứ tự đầu vào. Mảng rỗng hợp lệ; mọi phần tử đầu vào có cấu trúc đã nêu.'''
+starter = '''function summarizeResults(results) {
+  return { total: 0, passed: 0, failed: 0, skipped: 0, failedNames: [] };
+}'''
+solution = '''function summarizeResults(results) {
+  const summary = { total: results.length, passed: 0, failed: 0, skipped: 0, failedNames: [] };
+  for (const result of results) {
+    if (result.status === 'passed') summary.passed += 1;
+    if (result.status === 'failed') {
+      summary.failed += 1;
+      summary.failedNames.push(result.name);
+    }
+    if (result.status === 'skipped') summary.skipped += 1;
+  }
+  return summary;
+}'''
+tests = '''test('mảng rỗng', () => {
+  expect(summarizeResults([])).toEqual({ total: 0, passed: 0, failed: 0, skipped: 0, failedNames: [] });
+});
+
+test('đếm từng trạng thái', () => {
+  const results = [
+    { name: 'loads', status: 'passed' },
+    { name: 'saves', status: 'failed' },
+    { name: 'offline', status: 'skipped' }
+  ];
+  expect(summarizeResults(results)).toEqual({ total: 3, passed: 1, failed: 1, skipped: 1, failedNames: ['saves'] });
+});
+
+test('giữ thứ tự tên test thất bại', () => {
+  const results = [
+    { name: 'first', status: 'failed' },
+    { name: 'second', status: 'passed' },
+    { name: 'third', status: 'failed' }
+  ];
+  expect(summarizeResults(results).failedNames).toEqual(['first', 'third']);
+});
+
+test('không có lỗi', () => {
+  const results = [{ name: 'a', status: 'passed' }, { name: 'b', status: 'skipped' }];
+  expect(summarizeResults(results).failedNames).toEqual([]);
+});
+
+test('không sửa mảng đầu vào', () => {
+  const results = [{ name: 'a', status: 'failed' }];
+  summarizeResults(results);
+  expect(results).toEqual([{ name: 'a', status: 'failed' }]);
+});'''
+hints = ["Khởi tạo bộ đếm từ độ dài mảng.", "Duyệt từng kết quả và chỉ thêm tên vào failedNames khi status là failed."]
+explanation = "Một summary ổn định giúp báo cáo CI cho biết tổng số, trạng thái và tên test lỗi mà không làm thay đổi đầu vào."
+sources = ["react_native/testing-overview"]
+
+[[questions]]
+id = "react-native-dv009"
+module = "react-native-dv-native"
+type = "single"
+difficulty = 1
+prompt = "Ứng dụng cần đọc dữ liệu từ HealthKit trên iOS và Health Connect trên Android, không cần thêm giao diện native. Loại tích hợp nào phù hợp nhất?"
+options = ["Native module", "Native UI component", "StyleSheet", "Route trong Expo Router"]
+answer = [0]
+explanation = "Native module bọc hành vi hoặc API của nền tảng; yêu cầu này không cần view native."
+sources = ["react_native/native-modules-intro"]
+
+[[questions]]
+id = "react-native-dv010"
+module = "react-native-dv-native"
+type = "single"
+difficulty = 2
+prompt = "Một sản phẩm cần nhúng view bản đồ native vào cây giao diện React và nhận sự kiện khi người dùng chọn marker. Hướng tích hợp nào đúng?"
+options = ["Native module thuần, vì mọi API native đều là module", "Native UI component với props và event", "Gọi Linking để mở URL bản đồ", "Đưa dữ liệu marker vào StyleSheet"]
+answer = [1]
+explanation = "Giao diện native có layout và tương tác cần được bọc thành native UI component để React quản lý trong cây view."
+sources = ["react_native/intro-react-native-components", "react_native/native-components-ios", "react_native/native-components-android"]
+
+[[questions]]
+id = "react-native-dv011"
+module = "react-native-dv-native"
+type = "single"
+difficulty = 2
+prompt = "Codegen trong New Architecture hỗ trợ tích hợp native chủ yếu bằng cách nào?"
+options = ["Tự viết toàn bộ logic native từ mô tả tiếng Việt", "Sinh phần kết nối có kiểu dựa trên spec để JS và native khớp API", "Thay Metro khi phát triển", "Chạy JavaScript trực tiếp trên UI thread"]
+answer = [1]
+explanation = "Codegen sinh mã kết nối dựa trên spec có kiểu; logic và kiểm thử từng nền tảng vẫn cần được triển khai."
+sources = ["react_native/native-modules-intro", "react_native/new-architecture-intro"]
+
+[[questions]]
+id = "react-native-dv012"
+module = "react-native-dv-native"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các thực hành phù hợp khi duy trì native module dùng trên iOS và Android."
+options = ["Kiểm thử phần triển khai trên từng nền tảng được hỗ trợ", "Dùng spec có kiểu để mô tả API công khai", "Giả định cùng tên hàm có nghĩa là hành vi hai nền tảng giống hệt", "Quy định rõ cách biểu diễn lỗi và payload sự kiện"]
+answer = [0, 1, 3]
+explanation = "Spec, kiểm thử theo nền tảng và hợp đồng payload rõ ràng giúp giảm sai khác giữa native và JavaScript."
+sources = ["react_native/native-modules-android", "react_native/native-modules-ios"]
+
+[[questions]]
+id = "react-native-dv013"
+module = "react-native-dv-native"
+type = "multiple"
+difficulty = 3
+prompt = "Một native API phát event về JavaScript. Những điều nào nên được thiết kế rõ?"
+options = ["Kiểu và cấu trúc payload", "Hành vi khi module chưa sẵn sàng hoặc thiếu quyền", "Giả định listener luôn tồn tại khi app ở nền", "Cách gỡ listener khi không còn cần"]
+answer = [0, 1, 3]
+explanation = "Event contract cần kiểu dữ liệu, lỗi và vòng đời listener. App mobile có thể bị tạm dừng hoặc thiếu quyền."
+sources = ["react_native/native-modules-intro", "react_native/communication-ios", "react_native/communication-android"]
+
+[[questions]]
+id = "react-native-dv014"
+module = "react-native-dv-native"
+type = "fill"
+difficulty = 1
+prompt = "Trong New Architecture, công cụ sinh phần kết nối từ spec có kiểu của native module được gọi là {{blank}}."
+blanks = [["Codegen", "code generation"]]
+explanation = "Codegen xử lý spec để tạo phần kết nối có kiểu giữa JavaScript và native."
+sources = ["react_native/native-modules-intro"]
+
+[[questions]]
+id = "react-native-dv015"
+module = "react-native-dv-native"
+type = "fill"
+difficulty = 2
+prompt = "Renderer mới trong New Architecture dùng để quản lý cây giao diện native được gọi là {{blank}}."
+blanks = [["Fabric"]]
+explanation = "Fabric là renderer của New Architecture; TurboModules đảm nhiệm phần module native."
+sources = ["react_native/new-architecture-intro", "react_native/intro-react-native-components"]
+
+[[questions]]
+id = "react-native-dv016"
+module = "react-native-dv-native"
+type = "essay"
+difficulty = 3
+prompt = "Trong phỏng vấn, hãy giải thích khi nào chọn native module hay native UI component và cách giảm lỗi ở ranh giới giữa JavaScript với iOS/Android."
+keywords = [["native module", "turbomodule"], ["native ui component", "fabric component"], ["codegen", "typed spec"], ["platform testing", "test both platforms"], ["payload validation", "typed payload"]]
+min_keywords = 3
+model_answer = '''Dùng native module cho hành vi như đọc cảm biến, còn native UI component cho view cần xuất hiện trong cây giao diện. Trong New Architecture, TurboModules và Fabric phục vụ hai mục đích tương ứng; Codegen sinh phần kết nối từ typed spec. Kiểm tra payload, quyền và lỗi, rồi test cả iOS lẫn Android vì phần triển khai native có thể khác nhau.'''
+explanation = "Cần phân biệt API hành vi với view, nêu vai trò của Codegen và nhấn mạnh hợp đồng cùng kiểm thử theo nền tảng."
+sources = ["react_native/native-modules-intro", "react_native/intro-react-native-components"]
+
+[[questions]]
+id = "react-native-dvc02"
+module = "react-native-dv-native"
+type = "code"
+difficulty = 2
+lang = "javascript"
+title = "Lọc payload event native"
+prompt = '''Viết pickNativeEventFields(payload, allowedFields). Hàm trả về object mới chỉ gồm những key nằm trong allowedFields và là own property của payload. Giữ nguyên giá trị false, 0, null và chuỗi rỗng; bỏ key không tồn tại hoặc chỉ được kế thừa. Không sửa payload đầu vào. allowedFields là mảng chuỗi, payload là object.'''
+starter = '''function pickNativeEventFields(payload, allowedFields) {
+  return { ...payload };
+}'''
+solution = '''function pickNativeEventFields(payload, allowedFields) {
+  const result = {};
+  for (const key of allowedFields) {
+    if (Object.prototype.hasOwnProperty.call(payload, key)) {
+      Object.defineProperty(result, key, {
+        value: payload[key],
+        enumerable: true,
+        configurable: true,
+        writable: true
+      });
+    }
+  }
+  return result;
+}'''
+tests = '''test('chỉ giữ các field được cho phép', () => {
+  expect(pickNativeEventFields({ id: 7, secret: 'x' }, ['id'])).toEqual({ id: 7 });
+});
+
+test('giữ nguyên các giá trị falsy', () => {
+  expect(pickNativeEventFields({ enabled: false, count: 0, note: '' }, ['enabled', 'count', 'note'])).toEqual({ enabled: false, count: 0, note: '' });
+});
+
+test('bỏ qua thuộc tính kế thừa', () => {
+  const payload = Object.create({ inherited: 'native' });
+  payload.visible = true;
+  expect(pickNativeEventFields(payload, ['inherited', 'visible'])).toEqual({ visible: true });
+});
+
+test('mảng cho phép rỗng trả object rỗng', () => {
+  expect(pickNativeEventFields({ id: 1 }, [])).toEqual({});
+});
+
+test('không thay đổi payload gốc', () => {
+  const payload = { id: 1, extra: 2 };
+  pickNativeEventFields(payload, ['id']);
+  expect(payload).toEqual({ id: 1, extra: 2 });
+});'''
+hints = ["Kiểm tra own property thay vì chỉ đọc giá trị qua prototype chain.", "Tạo object kết quả mới và duyệt danh sách key được cho phép."]
+explanation = "Payload event đi qua ranh giới native nên chỉ chuyển các trường đã được caller cho phép và có mặt trực tiếp trên payload."
+sources = ["react_native/native-modules-intro"]
+
+[[questions]]
+id = "react-native-dv001"
+module = "react-native-dv-network"
+type = "single"
+difficulty = 1
+prompt = "Một request fetch nhận response HTTP 404. Cách hiểu nào đúng?"
+options = ["Promise luôn reject và nhảy vào catch", "Có response nhưng response.ok là false; cần xử lý status", "Body tự động đổi thành JSON lỗi", "React Native tự gửi lại request"]
+answer = [1]
+explanation = "Lỗi HTTP như 404 vẫn tạo response; fetch thường chỉ reject khi có lỗi giao tiếp. Hãy kiểm tra ok hoặc status."
+sources = ["react_native/network"]
+
+[[questions]]
+id = "react-native-dv002"
+module = "react-native-dv-network"
+type = "single"
+difficulty = 2
+prompt = "Màn hình gửi request A rồi nhanh chóng gửi request B. A hoàn tất sau B và ghi dữ liệu cũ vào state. Cách sửa phù hợp nhất là gì?"
+options = ["Bỏ qua mọi response có status 200", "Huỷ request cũ nếu phù hợp hoặc kiểm tra request ID trước khi cập nhật state", "Tăng timeout cho request A", "Chuyển toàn bộ response vào AsyncStorage"]
+answer = [1]
+explanation = "Request có thể hoàn tất không theo thứ tự gửi. Huỷ hoặc bỏ qua kết quả đã lỗi thời để tránh dữ liệu cũ ghi đè."
+sources = ["react_native/network"]
+
+[[questions]]
+id = "react-native-dv003"
+module = "react-native-dv-network"
+type = "single"
+difficulty = 2
+prompt = "API trả 429 cho một thao tác đọc có thể retry. Hành vi nào hợp lý nhất?"
+options = ["Retry không giới hạn ngay lập tức", "Tôn trọng Retry-After nếu có, dùng backoff và giới hạn lần thử", "Đổi sang HTTP thay cho HTTPS", "Xem 429 như thành công"]
+answer = [1]
+explanation = "Backoff có giới hạn giúp giảm tải; Retry-After cho biết thời điểm server cho phép thử lại."
+sources = ["react_native/network"]
+
+[[questions]]
+id = "react-native-dv004"
+module = "react-native-dv-network"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các thực hành tốt khi gọi API từ ứng dụng mobile."
+options = ["Phân biệt lỗi giao tiếp với status HTTP không thành công", "Giữ loading, success và error state rõ ràng", "Ghi access token vào log để hỗ trợ debug", "Giới hạn retry và dùng idempotency cho thao tác có tác dụng phụ"]
+answer = [0, 1, 3]
+explanation = "Request cần trạng thái rõ ràng, xử lý status và retry có kiểm soát. Log token làm lộ thông tin nhạy cảm."
+sources = ["react_native/network", "react_native/security"]
+
+[[questions]]
+id = "react-native-dv005"
+module = "react-native-dv-network"
+type = "multiple"
+difficulty = 3
+prompt = "Một ứng dụng cần tải lại dữ liệu khi người dùng quay lại app sau thời gian dài ở nền. Các lựa chọn nào phù hợp?"
+options = ["Dùng AppState để nhận biết app trở lại active rồi kiểm tra dữ liệu", "Giả định JavaScript chạy liên tục trong nền trên cả iOS và Android", "Dùng timestamp hoặc version đồng bộ để quyết định cần làm mới", "Chỉ kiểm tra Wi-Fi; nếu có Wi-Fi thì bỏ qua lỗi API"]
+answer = [0, 2]
+explanation = "JavaScript có thể bị tạm dừng trong nền. Khi active, ứng dụng nên kiểm tra trạng thái dữ liệu thay vì dựa vào tác vụ chạy liên tục."
+sources = ["react_native/appstate", "react_native/network"]
+
+[[questions]]
+id = "react-native-dv006"
+module = "react-native-dv-network"
+type = "fill"
+difficulty = 1
+prompt = "Sau khi nhận response, thuộc tính boolean nên kiểm tra để biết status thuộc nhóm thành công là response.{{blank}}."
+blanks = [["ok"]]
+explanation = "response.ok cho biết status nằm trong khoảng 200–299."
+sources = ["react_native/network"]
+
+[[questions]]
+id = "react-native-dv007"
+module = "react-native-dv-network"
+type = "fill"
+difficulty = 1
+prompt = "Với response JSON hợp lệ, đọc body bất đồng bộ bằng await response.{{blank}}()."
+blanks = [["json"]]
+explanation = "response.json() parse body thành giá trị JavaScript."
+sources = ["react_native/network"]
+
+[[questions]]
+id = "react-native-dv008"
+module = "react-native-dv-network"
+type = "essay"
+difficulty = 3
+prompt = "Trong phỏng vấn, hãy mô tả cách xây màn hình tải dữ liệu ổn định khi API chậm, trả lỗi HTTP hoặc người dùng rời màn hình."
+keywords = [["response.ok", "http status"], ["loading and error state", "loading state"], ["cancel stale request", "request cancellation", "ignore stale response"], ["retry backoff", "exponential backoff"], ["idempotency key", "idempotent"]]
+min_keywords = 3
+model_answer = '''Kiểm tra response.ok và HTTP status trước khi đọc body, đồng thời biểu diễn loading, success và error state riêng. Huỷ request hoặc ignore stale response khi màn hình đổi dữ liệu hay rời đi. Retry lỗi giao tiếp và một số status bằng exponential backoff có giới hạn; thao tác có tác dụng phụ cần idempotency key.'''
+explanation = "Câu trả lời tốt nêu rõ trạng thái UI, vòng đời request, khác biệt giữa lỗi HTTP và lỗi mạng, cùng chính sách retry an toàn."
+sources = ["react_native/network", "react_native/appstate"]
+
+[[questions]]
+id = "react-native-dvc01"
+module = "react-native-dv-network"
+type = "code"
+difficulty = 2
+lang = "javascript"
+title = "Tính thời gian exponential backoff"
+prompt = '''Viết retryDelay(attempt, baseDelay, maxDelay) trả thời gian chờ cho lần retry thứ attempt. attempt bắt đầu từ 1; delay tăng gấp đôi mỗi lần và không vượt maxDelay. Ví dụ với baseDelay = 500, maxDelay = 3000, các lần đầu là 500, 1000, 2000, 3000 ms. Các đầu vào luôn là số nguyên hợp lệ và không âm, riêng attempt tối thiểu là 1.'''
+starter = '''function retryDelay(attempt, baseDelay, maxDelay) {
+  return baseDelay;
+}'''
+solution = '''function retryDelay(attempt, baseDelay, maxDelay) {
+  return Math.min(baseDelay * (2 ** (attempt - 1)), maxDelay);
+}'''
+tests = '''test('lần retry đầu dùng base delay', () => {
+  expect(retryDelay(1, 500, 5000)).toBe(500);
+});
+
+test('delay tăng gấp đôi', () => {
+  expect(retryDelay(3, 500, 5000)).toBe(2000);
+});
+
+test('delay bị chặn tại maxDelay', () => {
+  expect(retryDelay(5, 500, 3000)).toBe(3000);
+});
+
+test('base delay bằng không', () => {
+  expect(retryDelay(4, 0, 3000)).toBe(0);
+});
+
+test('maxDelay thấp hơn base delay', () => {
+  expect(retryDelay(1, 500, 200)).toBe(200);
+});'''
+hints = ["Dùng lũy thừa của 2 theo số lần retry đã qua.", "Dùng Math.min để áp dụng giới hạn trên."]
+explanation = "Exponential backoff giảm áp lực lên server khi lỗi tạm thời kéo dài; giới hạn trên giúp thời gian chờ không tăng vô hạn."
+sources = ["react_native/network"]
+
 [[questions]]
 id = "rn-001"
 module = "rn-core"
@@ -2212,59 +2848,45 @@ module = "rn-styling"
 type = "code"
 difficulty = 2
 lang = "javascript"
-title = "Gộp mảng StyleSheet lồng nhau"
+title = "Chọn số cột theo kích thước màn hình"
 prompt = '''
-Viết `flattenStyle(style)` để mô phỏng `StyleSheet.flatten` cho object style:
-- Nhận object, mảng lồng nhau hoặc giá trị falsy (`null`, `undefined`, `false`).
-- Gộp theo thứ tự duyệt; thuộc tính ở style sau ghi đè style trước.
-- Trả object mới và không mutate bất kỳ input nào; đầu vào falsy trả `{}`.
+Viết `columnsForWidth(width)` để chọn số cột cho màn hình React Native. `width` là giá trị dp từ `useWindowDimensions().width`:
+- Nhỏ hơn 600 dp: 1 cột.
+- Từ 600 đến dưới 960 dp: 2 cột.
+- Từ 960 dp trở lên: 3 cột.
+Các ngưỡng là chính xác; ví dụ 600 thuộc khoảng 2 cột.
 '''
 starter = '''
-function flattenStyle(style) {
-  return {};
+function columnsForWidth(width) {
+  return 1;
 }
 '''
 solution = '''
-function flattenStyle(style) {
-  const result = {};
-  const apply = (value) => {
-    if (!value) return;
-    if (Array.isArray(value)) {
-      for (const item of value) apply(item);
-    } else if (typeof value === 'object') {
-      Object.assign(result, value);
-    }
-  };
-  apply(style);
-  return result;
+function columnsForWidth(width) {
+  if (width < 600) return 1;
+  if (width < 960) return 2;
+  return 3;
 }
 '''
 tests = '''
-test('object đơn và object kết quả mới', () => {
-  const style = { color: 'red' };
-  const result = flattenStyle(style);
-  expect(result).toEqual({ color: 'red' });
-  expect(result).not.toBe(style);
+test('màn hình hẹp dùng một cột', () => {
+  expect(columnsForWidth(320)).toBe(1);
+  expect(columnsForWidth(599)).toBe(1);
 });
-test('style sau ghi đè', () => {
-  expect(flattenStyle([{ color: 'red', padding: 4 }, { color: 'blue' }])).toEqual({ color: 'blue', padding: 4 });
+test('ngưỡng 600 bắt đầu dùng hai cột', () => {
+  expect(columnsForWidth(600)).toBe(2);
 });
-test('mảng lồng sâu và falsy', () => {
-  expect(flattenStyle([{ a: 1 }, [false, [{ a: 2 }, null]], undefined, { b: 3 }])).toEqual({ a: 2, b: 3 });
+test('959 dp vẫn dùng hai cột', () => {
+  expect(columnsForWidth(959)).toBe(2);
 });
-test('đầu vào falsy', () => {
-  expect(flattenStyle(false)).toEqual({});
-  expect(flattenStyle(null)).toEqual({});
-});
-test('không mutate object lồng', () => {
-  const base = { a: 1 };
-  flattenStyle([base, [{ a: 2 }]]);
-  expect(base).toEqual({ a: 1 });
+test('ngưỡng 960 bắt đầu dùng ba cột', () => {
+  expect(columnsForWidth(960)).toBe(3);
+  expect(columnsForWidth(1200)).toBe(3);
 });
 '''
-hints = ["Duyệt đệ quy từng phần tử mảng.", "Dùng một accumulator mới và bỏ qua giá trị falsy."]
-explanation = "Mảng style cho phép ghép base style với override theo điều kiện mà không sửa object dùng chung."
-sources = ["react_native/stylesheet#flatten"]
+hints = ["So sánh lần lượt với ngưỡng 600 rồi 960.", "Đọc width từ useWindowDimensions để nhận thay đổi khi xoay hoặc đổi kích thước cửa sổ."]
+explanation = "useWindowDimensions cập nhật khi kích thước cửa sổ đổi; tính số cột trong render để layout theo màn hình hiện tại."
+sources = ["react_native/usewindowdimensions#width"]
 
 [[questions]]
 id = "rn-xc02"
@@ -2804,10 +3426,10 @@ difficulty = 3
 lang = "javascript"
 title = "Phân tích deep link"
 prompt = '''
-Viết `parseDeepLink(url, routes)` cho URL dạng `scheme://path?query` và `routes` dạng `{ 'course/:id': 'Course' }`.
-- Bỏ scheme và dấu `/` thừa đầu/cuối; số đoạn path phải khớp.
+Viết `parseDeepLink(url, routes)` cho custom link như `bovabon://course/rn?ref=mail` và app link như `https://example.com/course/rn?ref=mail`; `routes` có dạng `{ 'course/:id': 'Course' }`.
+- Custom link dùng phần sau `://` làm route; với HTTP(S), bỏ hostname và chỉ dùng pathname. Bỏ dấu `/` thừa đầu/cuối; số đoạn path phải khớp.
 - `:param` là tham số path; query decode percent-encoding và đổi `+` thành khoảng trắng.
-- Trả `{ screen, params }`; path param ghi đè query param cùng tên; query key lặp lấy giá trị cuối.
+- Query value giữ nguyên mọi dấu `=` sau dấu phân tách đầu tiên; path param ghi đè query param cùng tên; query key lặp lấy giá trị cuối.
 - Route tĩnh khớp chính xác; route đầu tiên khớp được chọn; không khớp trả `null`.
 - Không dùng `URL` hoặc `URLSearchParams`.
 '''
@@ -2818,7 +3440,15 @@ function parseDeepLink(url, routes) {
 '''
 solution = '''
 function parseDeepLink(url, routes) {
-  const rest = url.replace(/^[a-z][a-z0-9+.-]*:\/\//i, '');
+  const match = url.match(/^([a-z][a-z0-9+.-]*):\/\//i);
+  if (!match) return null;
+  let rest = url.slice(match[0].length);
+  if (/^https?$/i.test(match[1])) {
+    const boundary = rest.search(/[/?#]/);
+    rest = boundary < 0 ? '' : rest.slice(boundary);
+  }
+  const hashIndex = rest.indexOf('#');
+  if (hashIndex >= 0) rest = rest.slice(0, hashIndex);
   const queryIndex = rest.indexOf('?');
   const pathText = queryIndex < 0 ? rest : rest.slice(0, queryIndex);
   const queryText = queryIndex < 0 ? '' : rest.slice(queryIndex + 1);
@@ -2826,9 +3456,9 @@ function parseDeepLink(url, routes) {
   const query = {};
   for (const pair of queryText.split('&')) {
     if (!pair) continue;
-    const parts = pair.split('=');
-    const key = decodeURIComponent(parts[0].replace(/\+/g, ' '));
-    const value = decodeURIComponent((parts[1] || '').replace(/\+/g, ' '));
+    const equalsIndex = pair.indexOf('=');
+    const key = decodeURIComponent((equalsIndex < 0 ? pair : pair.slice(0, equalsIndex)).replace(/\+/g, ' '));
+    const value = decodeURIComponent((equalsIndex < 0 ? '' : pair.slice(equalsIndex + 1)).replace(/\+/g, ' '));
     query[key] = value;
   }
   for (const pattern of Object.keys(routes)) {
@@ -2861,12 +3491,15 @@ test('exact route length and static segments', () => {
   expect(parseDeepLink('bovabon://home/extra', routes)).toBeNull();
   expect(parseDeepLink('bovabon://settings', routes)).toBeNull();
 });
-test('universal link uses remaining path', () => {
-  expect(parseDeepLink('https://course/rn', routes).screen).toBe('Course');
+test('app link ignores hostname and matches pathname', () => {
+  expect(parseDeepLink('https://example.com/course/rn', routes)).toEqual({ screen: 'Course', params: { id: 'rn' } });
+});
+test('query value retains equals signs', () => {
+  expect(parseDeepLink('bovabon://course/rn?token=abc==', routes).params.token).toBe('abc==');
 });
 '''
-hints = ["Tách path/query bằng vị trí dấu `?`.", "So sánh segment tĩnh; segment bắt đầu bằng `:` được lưu vào params."]
-explanation = "Link ngoài là đầu vào không tin cậy; sau khi parse vẫn cần kiểm tra quyền và giá trị route params."
+hints = ["Kiểm tra scheme trước; với HTTP(S), bỏ phần authority tới dấu `/`, `?` hoặc `#` đầu tiên.", "Tách query pair tại dấu `=` đầu tiên và so sánh từng path segment."]
+explanation = "App link có hostname thật; coi host là route sẽ làm sai path. Link ngoài vẫn cần kiểm tra quyền và giá trị route params sau khi parse."
 sources = ["react_native/linking"]
 
 [[questions]]

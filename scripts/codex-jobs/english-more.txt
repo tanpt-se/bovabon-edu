@@ -1,4 +1,4 @@
-MỞ RỘNG lộ trình có sẵn `data/english.toml` "Tiếng Anh cho Developer" (xem mục "Mở rộng một lộ trình có sẵn" trong AGENTS.md). Hiện có 27 câu, module: en-vocab, en-grammar, en-reading, en-writing, en-speaking. Mục tiêu: thêm ~80 câu mới (tổng ≥ 105), tiền tố `en-x` (bài code `en-xc01`…). Không có DevDocs cho tiếng Anh: câu/module mới không khai báo `sources`.
+MỞ RỘNG lộ trình có sẵn `data/english.toml` "Tiếng Anh cho Developer" (xem mục "Mở rộng một lộ trình có sẵn" trong AGENTS.md). Bản hiện tại có 111 câu, gồm các module en-vocab, en-grammar, en-reading, en-writing, en-speaking, en-email-chat, en-meetings, en-code-review, en-docs-writing, en-interview và en-pronunciation. Lộ trình thuộc `area = "english"`, vì vậy không tạo bài code. Giữ nguyên mọi ID hiện có; câu mới dùng tiền tố `en-x` và không khai báo `sources` (không có DevDocs cho tiếng Anh).
 
 1. Làm dày bài học các module cũ: bảng từ vựng (từ – IPA – nghĩa – câu ví dụ trong ngữ cảnh IT), collocation, lỗi người Việt hay mắc (âm cuối -s/-ed, trọng âm, false friends, dịch word-by-word).
 2. Thêm module mới:
@@ -8,5 +8,5 @@ MỞ RỘNG lộ trình có sẵn `data/english.toml` "Tiếng Anh cho Developer
    - `en-docs-writing`: README, ADR, giải thích kỹ thuật ngắn gọn, plain English, câu chủ động.
    - `en-interview`: behavioral (STAR), mô tả dự án, trình bày system design, câu hỏi ngược cho interviewer, đàm phán offer.
    - `en-pronunciation`: trọng âm từ kỹ thuật (develop, component, database, cache, queue, GUI, SQL, Linux, algorithm, architecture…), âm cuối, nối âm — dạng chọn cách phát âm/trọng âm đúng.
-3. Phân bố: ~40% single, ~15% multiple, ~20% fill, 8–10 essay (viết email/PR/trả lời phỏng vấn; keywords là cụm then chốt, min_keywords hợp lý, model_answer phải đạt), 6–8 bài code JavaScript về ngôn ngữ: tách câu, đếm từ & ước lượng thời gian đọc, title case theo quy tắc, chọn a/an theo âm đầu (kể cả ngoại lệ an hour, a user, an SQL…), chuẩn hoá Conventional Commit, thay cụm từ thiếu lịch sự bằng cụm mềm hơn.
+3. Duy trì cân bằng single, multiple, fill và essay. Với essay, keywords phải là cụm then chốt, `min_keywords` hợp lý, và `model_answer` phải đạt; không thêm dạng code trong track này.
 4. Giải thích bằng tiếng Việt; ví dụ tiếng Anh tự nhiên, chuẩn (ưu tiên Anh–Mỹ, ghi chú khác biệt Anh–Anh khi cần).

@@ -41,7 +41,7 @@ function TodoList({ items }) {
 
 [[modules]]
 id = "react-state"
-sources = ["react/learn/preserving-and-resetting-state", "react/reference/react/usereducer"]
+sources = ["react/learn/preserving-and-resetting-state", "react/reference/react/usereducer", "react/reference/react/usestate"]
 title = "State, Props & Event"
 description = "useState, cập nhật bất biến, batching, lifting state up, controlled vs uncontrolled."
 lesson = '''
@@ -77,7 +77,7 @@ React 18+ tự động batching nhiều cập nhật trong cùng lượt xử l�
 
 [[modules]]
 id = "react-hooks"
-sources = ["react/reference/react/useeffect", "react/learn/you-might-not-need-an-effect", "react/reference/react/useref"]
+sources = ["react/reference/react/useeffect", "react/learn/you-might-not-need-an-effect", "react/reference/react/useref", "react/reference/react/useid", "react/reference/react/usesyncexternalstore", "react/learn/synchronizing-with-effects", "react/reference/rules/rules-of-hooks"]
 title = "Hooks"
 description = "useEffect, useRef, useMemo, useCallback, useReducer, useContext, custom hooks và Rules of Hooks."
 lesson = '''
@@ -119,7 +119,7 @@ Các bài code trong module dùng MiniReact có `useState`, `useEffect`, `useRef
 
 [[modules]]
 id = "react-perf"
-sources = ["react/reference/react/usememo", "react/reference/react/usetransition", "react/reference/react/usedeferredvalue"]
+sources = ["react/reference/react/usememo", "react/reference/react/usetransition", "react/reference/react/usedeferredvalue", "react/reference/react/memo", "react/reference/react/lazy", "react/reference/react/suspense", "react/reference/react/profiler"]
 title = "Rendering & Hiệu năng"
 description = "Reconciliation, key, React.memo, tránh render thừa, code splitting, concurrent features."
 lesson = '''
@@ -157,7 +157,7 @@ Key ổn định giúp reconciliation giữ đúng identity sau reorder. Dùng P
 
 [[modules]]
 id = "react-patterns"
-sources = ["react/reference/react/suspense", "react/reference/react/usecontext", "react/reference/react-dom/createportal"]
+sources = ["react/reference/react/suspense", "react/reference/react/usecontext", "react/reference/react-dom/createportal", "react/reference/react/useoptimistic", "react/reference/react/useactionstate", "react/reference/react/component", "react/reference/react/usesyncexternalstore"]
 title = "Pattern & Hệ sinh thái"
 description = "Context, composition, error boundary, Suspense, Server Components, form, testing."
 lesson = '''
@@ -194,7 +194,7 @@ React 19 bổ sung Actions, `useActionState`, `useOptimistic`, `use(promise)`, v
 id = "react-19"
 title = "React 19: Actions & Compiler"
 description = "Actions, các hook mới, ref prop, document metadata, use() và React Compiler."
-sources = ["react/reference/react/useactionstate", "react/reference/react/useoptimistic", "react/reference/react-dom/hooks/useformstatus", "react/reference/react/use", "react/reference/react-compiler/configuration", "react/reference/react-dom/components/title", "react/reference/react-dom/components/meta"]
+sources = ["react/reference/react/useactionstate", "react/reference/react/useoptimistic", "react/reference/react-dom/hooks/useformstatus", "react/reference/react/use", "react/reference/react-compiler/configuration", "react/reference/react-dom/components/title", "react/reference/react-dom/components/meta", "react/reference/react/forwardref", "react/reference/react/useref", "react/reference/react/suspense"]
 lesson = '''
 ### API React 19
 | API | Vai trò | Ghi nhớ |
@@ -361,6 +361,107 @@ Testing Library thường ưu tiên `getByRole('button', { name: 'Save' })`; dù
 - State này có thể đặt thấp hơn mà vẫn phục vụ mọi consumer không?
 - Test kiểm tra hành vi người dùng hay chi tiết implementation?
 - Khi nào context đủ dùng và khi nào cần external store có selector?
+'''
+
+[[modules]]
+id = "react-dv-rules"
+title = "Rules of React & Linting"
+description = "Purity khi render, Rules of Hooks, cập nhật bất biến và các cảnh báo từ eslint-plugin-react-hooks."
+sources = ["react/reference/rules", "react/reference/rules/components-and-hooks-must-be-pure", "react/reference/rules/rules-of-hooks", "react/reference/eslint-plugin-react-hooks/lints/immutability", "react/reference/eslint-plugin-react-hooks/lints/exhaustive-deps", "react/reference/eslint-plugin-react-hooks/lints/set-state-in-render"]
+lesson = '''
+### Vì sao React cần các quy tắc này?
+React cần component và hook có thể được gọi lại an toàn. Trong lúc render, cùng props, state và context nên tạo cùng kết quả; render không nên sửa dữ liệu bên ngoài, đăng ký listener hay khởi chạy công việc có tác dụng phụ. React có thể render lại, tạm dừng hoặc thử lại một nhánh, nên việc render thuần giúp giao diện không phụ thuộc số lần hàm được gọi.
+
+| Quy tắc | Cách làm phù hợp | Dấu hiệu vi phạm |
+|---|---|---|
+| Component thuần | Tính JSX từ props/state; xử lý thao tác trong event | `Date.now()` làm nội dung đổi giữa các lần render |
+| Gọi Hook đúng thứ tự | Gọi ở đầu function component/custom hook | Hook nằm trong `if`, vòng lặp hoặc callback thường |
+| Bất biến | Tạo array/object mới khi cập nhật | `push`, `sort` hoặc gán field lên props/state |
+| Dependency đầy đủ | Khai báo giá trị reactive mà Effect/Callback đọc | Closure dùng giá trị cũ hoặc lint báo thiếu deps |
+
+```jsx
+function addTodo(todos, todo) {
+  return [...todos, todo];
+}
+
+function TodoCount({ todos }) {
+  return <p>{todos.length} items</p>;
+}
+```
+
+`eslint-plugin-react-hooks` kiểm tra Rules of Hooks, dependency, tính bất biến và một số mẫu cập nhật state nguy hiểm. Hãy xử lý chẩn đoán thay vì tắt lint hàng loạt; các quy tắc này cũng giúp React Compiler phân tích code đáng tin cậy hơn.
+
+### Lỗi hay gặp
+- Gọi component bằng `Child(props)` thay vì để React gọi `<Child />`.
+- Gọi `useState` chỉ khi một điều kiện đúng, làm thứ tự hook thay đổi giữa các render.
+- Sửa trực tiếp `props.items` bằng `sort()` rồi dùng lại mảng.
+- Bỏ dependency để ép Effect không chạy lại, khiến callback dùng dữ liệu cũ.
+- Gọi setter trong render để “sửa” dữ liệu; việc đó có thể tạo vòng lặp render.
+'''
+
+[[modules]]
+id = "react-dv-compiler"
+title = "React Compiler"
+description = "Phân tích component ở build time, memoization tự động, directives và cách áp dụng tăng dần."
+sources = ["react/learn/react-compiler", "react/learn/react-compiler/introduction", "react/learn/react-compiler/incremental-adoption", "react/reference/react-compiler/configuration", "react/reference/react-compiler/directives", "react/learn/react-compiler/debugging"]
+lesson = '''
+### Compiler làm gì?
+React Compiler phân tích component và custom Hook ở build time rồi có thể tạo cache cho các giá trị hoặc component có thể tái sử dụng. Đây không phải hook chạy lúc render: code vẫn phải đúng khi chưa được tối ưu, và người viết không gọi một API compiler trong component. Mục tiêu là giảm những phép tính hoặc render lặp lại mà không đổi kết quả giao diện.
+
+| Thành phần | Vai trò | Cách nghĩ an toàn |
+|---|---|---|
+| Compiler trong build | Phân tích code và thêm memoization khi đủ điều kiện | Không giả định mọi component đều được tối ưu |
+| `eslint-plugin-react-hooks` | Báo các mẫu cản trở phân tích hoặc sai quy tắc | Sửa lỗi theo nguyên nhân, không tắt lint hàng loạt |
+| Cấu hình/gating | Chọn phạm vi và cách đưa compiler vào ứng dụng | Có thể triển khai từng phần và theo dõi kết quả |
+| Directives | Điều khiển việc compile ở phạm vi được hỗ trợ | Chỉ dùng khi có lý do cụ thể và hiểu cấu hình |
+
+```jsx
+function ProductList({ products, query }) {
+  const normalized = query.trim().toLowerCase();
+  const visible = products.filter(product => product.name.toLowerCase().includes(normalized));
+  return <List items={visible} />;
+}
+```
+
+Hàm trên chỉ đọc đầu vào và tính kết quả; đây là dạng code dễ phân tích hơn so với việc sửa props hoặc đọc giá trị thay đổi ngầm. Dự án vẫn có thể giữ `useMemo`/`useCallback` ở nơi đã đo được lợi ích hoặc nơi identity là một phần của tích hợp hiện tại. Hãy dùng cấu hình và lint của dự án để biết code nào được compiler nhận diện.
+
+### Lỗi hay gặp
+- Nghĩ compiler tự bật chỉ vì dự án dùng React 19; cần tích hợp đúng vào build.
+- Xem memoization là cơ chế đảm bảo tính đúng đắn thay vì tối ưu có thể được bỏ qua.
+- Cố ép compile code có mutation hoặc side effect trong render thay vì làm code thuần.
+- Xóa toàn bộ memo thủ công mà chưa kiểm tra cấu hình, profiler và hành vi ứng dụng.
+- Bỏ qua chẩn đoán compiler/lint nên không biết một phần code đã bị bỏ qua.
+'''
+
+[[modules]]
+id = "react-dv-ssr"
+title = "SSR, Streaming & Hydration"
+description = "Chọn server rendering API, stream HTML và nối React vào markup đã render mà không gây mismatch."
+sources = ["react/reference/react-dom/server/rendertostring", "react/reference/react-dom/server/rendertopipeablestream", "react/reference/react-dom/server/rendertoreadablestream", "react/reference/react-dom/static/prerender", "react/reference/react-dom/client/hydrateroot", "react/reference/react-dom/client/createroot"]
+lesson = '''
+### HTML server và React trên trình duyệt
+Server rendering tạo HTML ban đầu để trình duyệt có nội dung sớm. Với HTML có thể tương tác, client gọi `hydrateRoot` để React gắn event và tiếp tục quản lý cây hiện có. Nếu trang được dựng hoàn toàn ở client trong một container trống, dùng `createRoot`. Hydration mong markup ban đầu phía client khớp với HTML server; hai phía không được tự chọn giá trị khác nhau cho lần render đầu.
+
+| API | Mục đích | Đặc điểm chính |
+|---|---|---|
+| `renderToString` | Tạo HTML dạng string | Không stream; hạn chế hơn với Suspense |
+| `renderToPipeableStream` | Server runtime có Node stream | Gửi shell và nội dung theo luồng |
+| `renderToReadableStream` | Runtime hỗ trợ Web Streams | Cũng hỗ trợ streaming qua `ReadableStream` |
+| `prerender` | Tạo HTML tĩnh chờ dữ liệu sẵn sàng | Trả Promise khi các vùng Suspense đã hoàn tất |
+| `hydrateRoot` | Hydrate markup server đã có | HTML đầu tiên của client cần khớp server |
+| `createRoot` | Render ứng dụng client vào container | Không dùng để hydrate markup server |
+
+Với streaming, server có thể gửi phần vỏ trang khi sẵn sàng rồi gửi tiếp các vùng chậm qua Suspense. Chọn API theo môi trường stream của server và cách framework quản lý script/response. Static prerender hữu ích khi muốn chờ dữ liệu hoàn tất trước khi phát HTML.
+
+### Lỗi hay gặp
+- Gọi `createRoot` trên container đã có HTML server, làm bỏ qua quy trình hydrate.
+- Dùng `Date.now()`, random, dữ liệu browser hoặc locale khác nhau trong markup ban đầu.
+- Cho rằng `renderToString` cũng stream hoặc xử lý mọi Suspense giống các API streaming.
+- Dập mismatch bằng `suppressHydrationWarning` thay vì tìm đầu vào server/client lệch nhau.
+- Gọi `hydrateRoot` nhiều lần cho cùng một root thay vì giữ root đã tạo.
+
+### Gỡ lỗi theo thứ tự
+So sánh props và dữ liệu đầu vào của server với lần render đầu trên client; kiểm tra timezone/locale, giá trị ngẫu nhiên và điều kiện phụ thuộc `window`; kiểm tra cấu trúc HTML sau khi browser parse; sau đó dùng callback lỗi phục hồi của root để thu thập chẩn đoán phù hợp.
 '''
 
 # ============================================================ BASICS
@@ -2273,9 +2374,10 @@ id = "react-x047"
 module = "react-testing-arch"
 type = "fill"
 difficulty = 1
-prompt = "Trong Testing Library, truy vấn đồng bộ ưu tiên để tìm một nút theo semantics và accessible name thường là `{{blank}}`."
-blanks = [["getByRole"]]
-explanation = "`getByRole` truy vấn theo role và có thể nhận accessible name để phân biệt điều khiển."
+prompt = "Trong test React cần tự bọc thao tác gây cập nhật state và đợi cập nhật được áp dụng trước khi assert, API của React là `{{blank}}`."
+blanks = [["act"]]
+explanation = "`act` gom các cập nhật React phát sinh từ thao tác test trước khi assertion chạy; Testing Library thường đã bọc sẵn các tương tác phổ biến."
+sources = ["react/reference/react/act"]
 
 [[questions]]
 id = "react-x048"
@@ -3535,3 +3637,334 @@ prompt = "Trong React 19, hook dùng để hiện state tạm trong lúc action 
 blanks = [["useOptimistic"]]
 explanation = "`useOptimistic` tạo optimistic state trong thời gian chờ kết quả action/server."
 sources = ["react/reference/react/useoptimistic"]
+
+[[questions]]
+id = "react-dv001"
+module = "react-dv-rules"
+type = "single"
+difficulty = 2
+prompt = "Một component cần hiển thị danh sách theo thứ tự tên. Vì sao nên tránh gọi `items.sort(compareByName)` trực tiếp trên prop trong lúc render?"
+options = ["`sort` sửa mảng đầu vào, làm render gây side effect và có thể ảnh hưởng component khác", "React chỉ cho phép sort trong event handler", "`sort` luôn chạy bất đồng bộ", "Mảng đã sort sẽ không thể có `key`"]
+answer = [0]
+explanation = "Array.sort mutate mảng gốc. Tạo bản sao trước khi sort giúp render không thay đổi dữ liệu nhận từ bên ngoài."
+sources = ["react/reference/eslint-plugin-react-hooks/lints/immutability"]
+
+[[questions]]
+id = "react-dv002"
+module = "react-dv-rules"
+type = "single"
+difficulty = 1
+prompt = "Một component chỉ cần dùng `useState` khi `enabled` là true. Cách sửa nào giữ đúng Rules of Hooks?"
+options = ["Gọi `useState` vô điều kiện ở đầu component rồi dùng `enabled` để quyết định phần UI", "Gọi `useState` bên trong `if (enabled)`", "Gọi `useState` trong callback của nút bật", "Gọi `useState` trong một vòng lặp chỉ khi enabled"]
+answer = [0]
+explanation = "Hook cần được gọi theo cùng thứ tự ở mọi lần render; điều kiện nên áp dụng cho logic hoặc JSX sau khi gọi hook."
+sources = ["react/reference/rules/rules-of-hooks"]
+
+[[questions]]
+id = "react-dv003"
+module = "react-dv-rules"
+type = "single"
+difficulty = 2
+prompt = "Một component gọi `setTotal(total + 1)` ngay trong thân hàm render để tự cập nhật dữ liệu. Vấn đề chính là gì?"
+options = ["Cập nhật state trong render có thể tạo vòng lặp render và vi phạm tính thuần", "Setter chỉ hoạt động trong class component", "React tự bỏ qua mọi setter trong function component", "`total + 1` luôn trả về chuỗi"]
+answer = [0]
+explanation = "Render cần tính UI từ state hiện có. Cập nhật state trong render thường lặp vô hạn; hãy tính giá trị dẫn xuất hoặc cập nhật trong event/effect phù hợp."
+sources = ["react/reference/eslint-plugin-react-hooks/lints/set-state-in-render"]
+
+[[questions]]
+id = "react-dv004"
+module = "react-dv-rules"
+type = "multiple"
+difficulty = 3
+prompt = "Đoạn `useMemo(() => items.sort(compare).filter(item => item.name.includes(query)), [items])` có thể vi phạm hoặc gây lỗi nào? (chọn nhiều)"
+options = ["`sort` mutate mảng `items`", "`query` bị thiếu trong dependency nên kết quả có thể dùng query cũ", "`filter` luôn làm mất identity của component", "Compiler không hỗ trợ mọi lời gọi `filter`", "`useMemo` không được gọi trong component"]
+answer = [0, 1]
+explanation = "Callback sửa mảng đầu vào bằng sort và đọc `query` nhưng dependency chỉ có `items`. Cần tạo bản sao và khai báo đầy đủ đầu vào reactive."
+sources = ["react/reference/eslint-plugin-react-hooks/lints/immutability", "react/reference/eslint-plugin-react-hooks/lints/exhaustive-deps"]
+
+[[questions]]
+id = "react-dv005"
+module = "react-dv-rules"
+type = "multiple"
+difficulty = 2
+prompt = "Hành vi nào làm render không còn thuần hoặc không an toàn nếu React gọi lại component? (chọn nhiều)"
+options = ["Gọi `Date.now()` để đưa thời gian hiện tại vào JSX", "Gọi `window.addEventListener` trực tiếp trong render", "Gọi `items.push(newItem)` trên props", "Tạo mảng mới bằng `items.filter(...)`", "Hiển thị `count + 1` từ props"]
+answer = [0, 1, 2]
+explanation = "Thời gian thay đổi theo lần gọi, listener tạo tác dụng phụ và push sửa dữ liệu đầu vào. Tính toán trên mảng mới và phép cộng thuần có thể lặp an toàn."
+sources = ["react/reference/rules/components-and-hooks-must-be-pure", "react/reference/eslint-plugin-react-hooks/lints/immutability"]
+
+[[questions]]
+id = "react-dv006"
+module = "react-dv-rules"
+type = "fill"
+difficulty = 1
+prompt = "Để sort một prop array mà không mutate mảng gốc, hãy tạo bản sao trước bằng `{{blank}}`."
+blanks = [["items.slice()", "[...items]"]]
+explanation = "`slice()` hoặc spread tạo array mới; có thể gọi sort trên bản sao đó thay vì sửa prop."
+sources = ["react/reference/eslint-plugin-react-hooks/lints/immutability"]
+
+[[questions]]
+id = "react-dv007"
+module = "react-dv-rules"
+type = "essay"
+difficulty = 3
+prompt = "Trong phỏng vấn, hãy giải thích vì sao React khuyến khích component thuần và cập nhật state bất biến. Liên hệ điều đó với việc React có thể render lại hoặc thử lại component."
+keywords = [["pure", "purity", "thuần"], ["same inputs", "same output", "cùng đầu vào"], ["retry", "interrupted", "render lại"], ["immutable", "immutability", "bất biến"]]
+min_keywords = 3
+model_answer = '''Component thuần cho cùng đầu vào cùng kết quả và không tạo side effect trong render. React có thể gọi lại hoặc tạm ngắt rồi retry render mà không làm dữ liệu bên ngoài đổi ngoài ý muốn. Cập nhật state bất biến tạo array hoặc object mới để React nhận ra thay đổi và giữ các phép tính có thể lặp lại an toàn.'''
+explanation = "Câu trả lời tốt nối tính thuần, khả năng render lại linh hoạt và nhận diện thay đổi qua identity mới."
+sources = ["react/reference/rules/components-and-hooks-must-be-pure", "react/reference/eslint-plugin-react-hooks/lints/immutability"]
+
+[[questions]]
+id = "react-dvc01"
+module = "react-dv-rules"
+type = "code"
+difficulty = 2
+lang = "javascript"
+title = "Cập nhật todo bất biến"
+prompt = '''Viết `updateTodo(todos, id, patch)` trả về một **array mới**. Với todo có `id` trùng khớp, tạo object mới bằng cách gộp các field của `patch` lên todo cũ. Giữ nguyên thứ tự; không sửa array hoặc object đầu vào. Các todo không khớp phải giữ nguyên identity. Nếu không có id khớp, vẫn trả về array mới với các phần tử cũ.'''
+starter = '''function updateTodo(todos, id, patch) {
+  return todos;
+}'''
+solution = '''function updateTodo(todos, id, patch) {
+  return todos.map(todo => todo.id === id ? { ...todo, ...patch } : todo);
+}'''
+tests = '''test('tạo bản cập nhật cho todo khớp id', () => {
+  const todos = [{ id: 1, title: 'A', done: false }];
+  expect(updateTodo(todos, 1, { done: true })).toEqual([{ id: 1, title: 'A', done: true }]);
+});
+test('không mutate mảng hoặc object gốc', () => {
+  const todo = { id: 1, title: 'A', done: false };
+  const todos = [todo];
+  const result = updateTodo(todos, 1, { title: 'B' });
+  expect(todos[0].title).toBe('A');
+  expect(result).not.toBe(todos);
+  expect(result[0]).not.toBe(todo);
+});
+test('giữ identity của todo không khớp', () => {
+  const first = { id: 1, title: 'A' };
+  const second = { id: 2, title: 'B' };
+  const result = updateTodo([first, second], 1, { title: 'X' });
+  expect(result[1]).toBe(second);
+});
+test('giữ nguyên thứ tự và dữ liệu khi không tìm thấy id', () => {
+  const todos = [{ id: 2 }, { id: 1 }];
+  const result = updateTodo(todos, 9, { done: true });
+  expect(result).toEqual(todos);
+  expect(result).not.toBe(todos);
+});
+test('array rỗng trả về array rỗng mới', () => {
+  const todos = [];
+  const result = updateTodo(todos, 1, { done: true });
+  expect(result).toEqual([]);
+  expect(result).not.toBe(todos);
+});'''
+hints = ["Dùng `map` để giữ thứ tự và tạo array mới.", "Chỉ tạo object mới cho phần tử khớp id; các phần tử còn lại trả lại object cũ."]
+explanation = "Cập nhật bất biến giúp React nhận identity mới ở phần thay đổi mà không làm hỏng snapshot dữ liệu đã được component khác sử dụng."
+sources = ["react/reference/eslint-plugin-react-hooks/lints/immutability"]
+
+[[questions]]
+id = "react-dv008"
+module = "react-dv-compiler"
+type = "single"
+difficulty = 1
+prompt = "React Compiler chủ yếu phân tích component và thêm tối ưu ở giai đoạn nào?"
+options = ["Trong lúc build ứng dụng", "Khi người dùng bấm lần đầu", "Khi server nhận request đầu tiên", "Trong một Effect sau mỗi render"]
+answer = [0]
+explanation = "Compiler tích hợp vào quy trình build để phân tích source và tạo code đã tối ưu; nó không phải hook chạy khi component render."
+sources = ["react/learn/react-compiler/introduction"]
+
+[[questions]]
+id = "react-dv009"
+module = "react-dv-compiler"
+type = "single"
+difficulty = 2
+prompt = "Mục đích của directive `'use no memo'` trong code được React Compiler xử lý là gì?"
+options = ["Yêu cầu compiler bỏ qua phạm vi được đánh dấu", "Xóa mọi cache của trình duyệt", "Tắt `useMemo` trong toàn bộ ứng dụng khi runtime", "Bắt React render component đúng một lần"]
+answer = [0]
+explanation = "Directive điều khiển quá trình compile cho phạm vi tương ứng; nó không phải lệnh runtime để thay đổi cache toàn ứng dụng."
+sources = ["react/reference/react-compiler/directives/use-no-memo"]
+
+[[questions]]
+id = "react-dv010"
+module = "react-dv-compiler"
+type = "single"
+difficulty = 2
+prompt = "Sau khi bật React Compiler, lựa chọn nào hợp lý khi đánh giá một component vẫn render nhiều?"
+options = ["Kiểm tra compiler diagnostics và đo bằng Profiler thay vì giả định mọi component đều được cache", "Thêm `useMemo` vào mọi biểu thức", "Xóa dependency của các Effect để giảm render", "Bỏ kiểm thử vì compiler đảm bảo code không lỗi"]
+answer = [0]
+explanation = "Compiler không đảm bảo mọi code đều compile hoặc loại bỏ mọi render. Chẩn đoán và profiler cho biết phạm vi thực tế và chi phí còn lại."
+sources = ["react/learn/react-compiler/debugging", "react/reference/react/profiler"]
+
+[[questions]]
+id = "react-dv011"
+module = "react-dv-compiler"
+type = "multiple"
+difficulty = 3
+prompt = "Một nhóm muốn áp dụng React Compiler vào ứng dụng đang chạy ổn định. Những bước nào giúp giảm rủi ro? (chọn nhiều)"
+options = ["Đọc hướng dẫn cấu hình cho toolchain đang dùng", "Dùng lint/diagnostics để tìm code không tương thích", "Có thể giới hạn phạm vi hoặc dùng gating khi rollout", "Giả định compiler sẽ sửa mutation trong component", "So sánh hành vi và hiệu năng trước/sau trên luồng đại diện"]
+answer = [0, 1, 2, 4]
+explanation = "Cấu hình đúng, diagnostics, rollout có kiểm soát và đo lường tạo đường áp dụng an toàn. Compiler không biến code sai tính thuần thành code đúng."
+sources = ["react/learn/react-compiler/incremental-adoption", "react/reference/react-compiler/configuration", "react/learn/react-compiler/debugging"]
+
+[[questions]]
+id = "react-dv012"
+module = "react-dv-compiler"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các nhận định đúng về memoization khi dùng React Compiler. (chọn nhiều)"
+options = ["Compiler có thể tự thêm cache cho phép tính/component phù hợp", "Code chưa được compiler tối ưu vẫn cần trả kết quả đúng", "`useMemo` và `useCallback` vẫn có thể được giữ khi có lý do cụ thể", "Compiler bảo đảm component không bao giờ render lại", "Mọi giá trị được tạo trong render cần bọc `useMemo` thủ công"]
+answer = [0, 1, 2]
+explanation = "Compiler tối ưu có điều kiện nhưng không thay đổi yêu cầu về correctness. Memo thủ công vẫn có thể dùng khi đo đạc hoặc tích hợp cần identity ổn định."
+sources = ["react/learn/react-compiler", "react/reference/react-compiler/configuration"]
+
+[[questions]]
+id = "react-dv013"
+module = "react-dv-compiler"
+type = "fill"
+difficulty = 1
+prompt = "Một tối ưu chính React Compiler có thể tự thêm vào code phù hợp là `{{blank}}`."
+blanks = [["memoization"]]
+explanation = "Compiler phân tích code rồi có thể thêm memoization để tái sử dụng giá trị hoặc kết quả render."
+sources = ["react/learn/react-compiler/introduction"]
+
+[[questions]]
+id = "react-dv014"
+module = "react-dv-compiler"
+type = "essay"
+difficulty = 3
+prompt = "Trong phỏng vấn, hãy nêu cách đưa React Compiler vào một ứng dụng lớn và cách xác định nó đang giúp ích mà không ảnh hưởng correctness."
+keywords = [["build time", "build-time", "compiler configuration"], ["lint", "diagnostic", "compiler report"], ["gating", "incremental", "gradual"], ["profile", "measure", "performance"]]
+min_keywords = 3
+model_answer = '''Tích hợp compiler vào build time theo đúng toolchain rồi dùng lint và diagnostic để xem phạm vi được compile. Tôi sẽ rollout incremental với gating cho một phần ứng dụng, chạy kiểm thử và so sánh bằng Profiler trên luồng thực tế. Code phải giữ cùng hành vi dù không được memoize; chỉ giữ hoặc thêm memo thủ công khi có lý do được đo.'''
+explanation = "Câu trả lời nên đề cập cấu hình build, diagnostics, rollout có kiểm soát và xác minh hiệu năng/correctness."
+sources = ["react/learn/react-compiler/incremental-adoption", "react/learn/react-compiler/debugging"]
+
+[[questions]]
+id = "react-dvc02"
+module = "react-dv-compiler"
+type = "code"
+difficulty = 2
+lang = "javascript"
+title = "Selector sản phẩm thuần"
+prompt = '''Viết `filterProducts(products, query)` trả về các sản phẩm có `name` chứa query, không phân biệt hoa thường. Bỏ khoảng trắng ở đầu/cuối query, giữ nguyên thứ tự đầu vào và không sửa array hoặc object sản phẩm. Query rỗng phải trả về tất cả sản phẩm.'''
+starter = '''function filterProducts(products, query) {
+  return products;
+}'''
+solution = '''function filterProducts(products, query) {
+  const normalized = query.trim().toLowerCase();
+  return products.filter(product => product.name.toLowerCase().includes(normalized));
+}'''
+tests = '''test('lọc không phân biệt hoa thường', () => {
+  const products = [{ name: 'React Book' }, { name: 'Rust Guide' }];
+  expect(filterProducts(products, 'REACT')).toEqual([{ name: 'React Book' }]);
+});
+test('bỏ khoảng trắng quanh query', () => {
+  expect(filterProducts([{ name: 'React Course' }], '  course ')).toHaveLength(1);
+});
+test('query rỗng trả về mọi sản phẩm theo thứ tự', () => {
+  const products = [{ name: 'B' }, { name: 'A' }];
+  expect(filterProducts(products, '  ')).toEqual(products);
+});
+test('không có kết quả trả về array rỗng', () => {
+  expect(filterProducts([{ name: 'React' }], 'python')).toEqual([]);
+});
+test('không sửa đầu vào và giữ identity của item được chọn', () => {
+  const product = { name: 'React' };
+  const products = [product];
+  const result = filterProducts(products, 're');
+  expect(products).toHaveLength(1);
+  expect(result).not.toBe(products);
+  expect(result[0]).toBe(product);
+});'''
+hints = ["Chuẩn hóa query một lần bằng `trim()` và `toLowerCase()`.", "Dùng `filter` thay vì sort hoặc sửa mảng đầu vào."]
+explanation = "Selector thuần chỉ dựa trên đầu vào và không sửa dữ liệu, nên dễ kiểm thử và phù hợp để compiler phân tích."
+sources = ["react/learn/react-compiler/introduction"]
+
+[[questions]]
+id = "react-dv015"
+module = "react-dv-ssr"
+type = "single"
+difficulty = 1
+prompt = "Server đã gửi HTML cho `<App />`. Client nên gọi API nào để gắn React vào markup đó?"
+options = ["`hydrateRoot(container, <App />)`", "`createRoot(container).render(<App />)`", "`renderToString(<App />)`", "`prerender(<App />)`"]
+answer = [0]
+explanation = "`hydrateRoot` dùng cho HTML đã được server render; `createRoot` dành cho client rendering vào container mới."
+sources = ["react/reference/react-dom/client/hydrateroot"]
+
+[[questions]]
+id = "react-dv016"
+module = "react-dv-ssr"
+type = "single"
+difficulty = 2
+prompt = "Một trang client-only mount vào container rỗng. API nào phù hợp?"
+options = ["`createRoot`", "`hydrateRoot`", "`renderToPipeableStream`", "`prerender`"]
+answer = [0]
+explanation = "`createRoot` khởi tạo một React root phía client khi container không cần hydrate HTML server."
+sources = ["react/reference/react-dom/client/createroot"]
+
+[[questions]]
+id = "react-dv017"
+module = "react-dv-ssr"
+type = "single"
+difficulty = 2
+prompt = "Server Node muốn stream HTML React qua Node writable stream. API nào được thiết kế cho trường hợp đó?"
+options = ["`renderToPipeableStream`", "`renderToReadableStream`", "`renderToString`", "`createRoot`"]
+answer = [0]
+explanation = "`renderToPipeableStream` tích hợp với Node streams; `renderToReadableStream` dành cho Web Streams."
+sources = ["react/reference/react-dom/server/rendertopipeablestream"]
+
+[[questions]]
+id = "react-dv018"
+module = "react-dv-ssr"
+type = "single"
+difficulty = 2
+prompt = "Hydration warning xuất hiện vì markup client ban đầu khác HTML server. Hướng xử lý đúng nhất là gì?"
+options = ["Tìm và làm đồng nhất dữ liệu/logic của hai lần render đầu", "Luôn bọc component trong `suppressHydrationWarning`", "Gọi `createRoot` thay `hydrateRoot` để giữ markup", "Tắt Strict Mode trong production"]
+answer = [0]
+explanation = "Mismatch thường đến từ đầu vào không deterministic hoặc khác môi trường. Cần sửa nguồn chênh lệch trước khi dùng escape hatch hẹp."
+sources = ["react/reference/react-dom/client/hydrateroot"]
+
+[[questions]]
+id = "react-dv019"
+module = "react-dv-ssr"
+type = "multiple"
+difficulty = 2
+prompt = "Những khác biệt nào có thể làm markup server và lần render đầu của client không khớp? (chọn nhiều)"
+options = ["Dùng `Date.now()` để tạo nội dung", "Dùng số ngẫu nhiên trong render", "Dựa vào timezone/locale khác nhau giữa server và browser", "Đọc `window.innerWidth` trực tiếp để chọn markup client", "Tạo một object mới trong render nhưng không hiển thị nội dung của nó"]
+answer = [0, 1, 2, 3]
+explanation = "Giá trị thời gian, random, locale và browser-only data có thể khác giữa hai môi trường. Object không được dùng để tạo markup không gây mismatch."
+sources = ["react/reference/react-dom/client/hydrateroot"]
+
+[[questions]]
+id = "react-dv020"
+module = "react-dv-ssr"
+type = "multiple"
+difficulty = 3
+prompt = "Chọn các mô tả đúng về server rendering API. (chọn nhiều)"
+options = ["`renderToPipeableStream` dùng Node streams", "`renderToReadableStream` dùng Web Streams", "`hydrateRoot` tiếp tục từ HTML server đã tạo", "`createRoot` hydrate HTML server có sẵn", "`renderToString` gửi dần từng chunk khi Suspense hoàn tất"]
+answer = [0, 1, 2]
+explanation = "Hai API stream dành cho hai kiểu stream runtime khác nhau; hydration dùng `hydrateRoot`. `createRoot` không hydrate, còn `renderToString` tạo string đồng bộ thay vì stream."
+sources = ["react/reference/react-dom/server/rendertopipeablestream", "react/reference/react-dom/server/rendertoreadablestream", "react/reference/react-dom/client/hydrateroot", "react/reference/react-dom/client/createroot", "react/reference/react-dom/server/rendertostring"]
+
+[[questions]]
+id = "react-dv021"
+module = "react-dv-ssr"
+type = "fill"
+difficulty = 1
+prompt = "Để hydrate markup server, dùng `{{blank}}(container, <App />)`."
+blanks = [["hydrateRoot"]]
+explanation = "`hydrateRoot` nhận container chứa HTML server và cây React phía client."
+sources = ["react/reference/react-dom/client/hydrateroot"]
+
+[[questions]]
+id = "react-dv022"
+module = "react-dv-ssr"
+type = "essay"
+difficulty = 3
+prompt = "Giải thích nguyên nhân thường gặp của hydration mismatch và nêu thứ tự bạn sẽ dùng để tìm lỗi trong ứng dụng SSR."
+keywords = [["server", "client"], ["same", "match", "khớp"], ["date", "random", "locale", "timezone", "browser"], ["deterministic", "đồng nhất", "initial render"]]
+min_keywords = 3
+model_answer = '''Hydration cần markup server và lần render đầu của client khớp. Tôi sẽ so sánh dữ liệu/props hai phía, rồi tìm giá trị không deterministic như Date.now, random, locale/timezone hoặc nhánh đọc browser API. Sau đó kiểm tra HTML browser đã parse và sửa nguồn đầu vào để hai môi trường tạo cùng markup ban đầu.'''
+explanation = "Câu trả lời cần kết nối yêu cầu markup khớp với các nguồn khác biệt theo môi trường và cách kiểm tra có thứ tự."
+sources = ["react/reference/react-dom/client/hydrateroot", "react/reference/react-dom/server/rendertostring"]

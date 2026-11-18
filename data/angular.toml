@@ -1,0 +1,1938 @@
+id = "angular"
+title = "Angular & RxJS"
+icon = "🅰️"
+color = "#dd0031"
+group = "Frontend"
+docs = ["angular", "rxjs"]
+description = "Xây ứng dụng Angular hiện đại với component standalone, signals, DI, router, forms và luồng bất đồng bộ RxJS."
+
+[[modules]]
+id = "ng-components"
+title = "Component & Template"
+description = "Component standalone, binding, control flow mới và API input/output/model."
+sources = ["angular/api/core/component", "angular/api/core/@if", "angular/api/core/@for", "angular/api/core/@switch", "angular/api/core/model", "angular/guide/components/inputs", "angular/guide/components/outputs", "angular/guide/templates/two-way-binding"]
+lesson = '''
+### Component và template
+Component standalone tự khai báo dependency template trong imports; đây là cách tổ chức mặc định của component mới. Template liên kết dữ liệu với property bằng [value], sự kiện bằng (click), hoặc hai chiều bằng [(ngModel)] hay model signal phù hợp.
+
+| Cú pháp | Vai trò | Ví dụ |
+|---|---|---|
+| [value]="name()" | Property binding | Đồng bộ giá trị vào DOM |
+| (click)="save()" | Event binding | Gọi hành động từ template |
+| @if / @switch | Chọn nhánh | Hiển thị theo trạng thái |
+| @for (item of items(); track item.id) | Lặp có định danh | Giữ DOM ổn định |
+
+Ví dụ: @if (user(); as current) { <p>{{ current.name }}</p> } @else { <p>Chưa đăng nhập</p> }. Dùng track theo khóa bền vững như id để Angular nhận ra item khi danh sách đổi.
+
+Lỗi thường gặp: bỏ track trong danh sách lớn hoặc dùng vị trí làm khóa khi thứ tự có thể đổi; gọi hàm nặng trong template; nhầm [value] với (value); tạo output chỉ để đồng bộ hai chiều khi model() đã diễn đạt đúng ý định.
+'''
+
+[[modules]]
+id = "ng-signals"
+title = "Signals & Change Detection"
+description = "signal, computed, effect, linkedSignal, OnPush và ứng dụng zoneless."
+sources = ["angular/guide/signals", "angular/api/core/signal", "angular/api/core/computed", "angular/api/core/effect", "angular/api/core/linkedsignal", "angular/api/core/changedetectionstrategy", "angular/guide/zoneless"]
+lesson = '''
+### Trạng thái phản ứng
+signal() giữ trạng thái có thể ghi; computed() tạo giá trị dẫn xuất có cache và chỉ tính lại khi dependency đổi. effect() chạy để đồng bộ với tác động bên ngoài, chẳng hạn local storage hoặc API không phản ứng; không dùng effect để sao chép trạng thái có thể biểu diễn bằng computed. linkedSignal() giữ trạng thái có thể ghi nhưng tính lại khi nguồn phụ thuộc đổi.
+
+| API | Ý định | Lưu ý |
+|---|---|---|
+| signal | Trạng thái ghi được | set() hoặc update() |
+| computed | Giá trị dẫn xuất | Lazy, chỉ đọc |
+| effect | Đồng bộ side effect | Theo dõi signal được đọc |
+| linkedSignal | Giá trị dẫn xuất có thể ghi | Reset theo nguồn |
+
+Ví dụ: const total = computed(() => price() * quantity()); total tự invalid khi một dependency thay đổi. Với ChangeDetectionStrategy.OnPush, Angular kiểm tra component theo tín hiệu đầu vào, event và các trigger phù hợp; zoneless có thể cấu hình bằng provideZonelessChangeDetection().
+
+Lỗi thường gặp: gọi effect để cập nhật một signal khác thay vì dùng computed; sửa object bên trong signal mà không set/update; cho rằng OnPush có nghĩa là không bao giờ kiểm tra component; bật zoneless nhưng giữ cách cập nhật không phát tín hiệu cho Angular.
+'''
+
+[[modules]]
+id = "ng-di"
+title = "Dependency Injection & Service"
+description = "inject(), provider scope, hierarchical injector và InjectionToken."
+sources = ["angular/guide/di", "angular/guide/di/defining-dependency-providers", "angular/guide/di/hierarchical-dependency-injection", "angular/api/core/inject", "angular/api/core/injectable", "angular/api/core/injectiontoken"]
+lesson = '''
+### Dependency injection
+Service tách logic dùng lại khỏi component. @Injectable({providedIn: 'root'}) thường tạo một instance dùng chung ở root injector; provider đặt ở component hoặc route tạo phạm vi con và có thể ghi đè dependency cho nhánh đó. inject() dùng trong injection context như field initializer, constructor hoặc provider factory.
+
+| Cách khai báo | Phạm vi thường gặp | Dùng khi |
+|---|---|---|
+| providedIn: 'root' | Toàn ứng dụng | Service dùng chung |
+| providers ở route | Nhánh route | Trạng thái theo khu vực |
+| providers ở component | Component và hậu duệ | Trạng thái theo cây view |
+| InjectionToken | Giá trị không có class runtime | Cấu hình hoặc interface |
+
+Ví dụ: export const API_URL = new InjectionToken<string>('api-url'); sau đó cung cấp giá trị theo môi trường và inject(API_URL) tại service. Injector con tìm provider cục bộ trước, rồi tiếp tục lên cha.
+
+Lỗi thường gặp: cung cấp cùng service ở component làm mỗi component có instance riêng; tạo InjectionToken mới ở nhiều nơi thay vì chia sẻ cùng token; gọi inject() tùy ý trong hàm không thuộc injection context; nhầm provider scope với quyền truy cập bảo mật.
+'''
+
+[[modules]]
+id = "ng-router-forms"
+title = "Router & Forms"
+description = "Route config, lazy component, guard/resolver dạng hàm và typed reactive forms."
+sources = ["angular/guide/routing/define-routes", "angular/guide/routing/route-guards", "angular/guide/routing/data-resolvers", "angular/api/router/route", "angular/api/router/canactivatefn", "angular/api/router/resolvefn", "angular/guide/forms/reactive-forms", "angular/guide/forms/typed-forms", "angular/api/forms/formcontrol", "angular/api/forms/formgroup", "angular/api/forms/validators"]
+lesson = '''
+### Điều hướng và biểu mẫu
+Routes ánh xạ URL đến component; loadComponent tải component độc lập khi cần, còn guard quyết định có điều hướng được không và resolver chuẩn bị dữ liệu trước khi kích hoạt route. Guard phía client cải thiện trải nghiệm nhưng không thay thế kiểm tra quyền ở server.
+
+| Công cụ | Trách nhiệm |
+|---|---|
+| loadComponent | Lazy load một component |
+| CanActivateFn | Cho phép, từ chối hoặc redirect |
+| ResolveFn | Nạp dữ liệu trước khi route hoạt động |
+| FormControl / FormGroup | Trạng thái và giá trị biểu mẫu |
+| Validators | Quy tắc kiểm tra tại client |
+
+Ví dụ: const routes = [{ path: 'profile', loadComponent: () => import('./profile').then(m => m.Profile) }]. Reactive forms typed suy ra kiểu từ FormControl và FormGroup; dùng nonNullable khi giá trị không được phép trở thành null.
+
+Lỗi thường gặp: viết guard chỉ trả false khi cần redirect có URL; nhúng toàn bộ dữ liệu lớn vào route config; dùng any hoặc UntypedFormGroup làm mất kiểm tra kiểu; coi validator ở trình duyệt là biện pháp bảo vệ dữ liệu duy nhất.
+'''
+
+[[modules]]
+id = "rxjs-core"
+title = "RxJS căn bản"
+description = "Observable, Observer, Subscription, Subject, cold/hot và pipeable operators."
+sources = ["rxjs/guide/observable", "rxjs/guide/observer", "rxjs/guide/subscription", "rxjs/guide/subject", "rxjs/api/operators/map", "rxjs/api/operators/filter", "rxjs/api/operators/take"]
+lesson = '''
+### Observable và subscription
+Observable mô tả một luồng có thể phát 0-n giá trị rồi complete hoặc error. subscribe() bắt đầu nhận dữ liệu và trả Subscription để hủy; teardown giải phóng timer, listener hoặc kết nối khi hoàn tất hay unsubscribe. Pipeable operator nhận Observable và trả Observable mới.
+
+| Khái niệm | Ý nghĩa |
+|---|---|
+| Observable | Nguồn dữ liệu theo thời gian |
+| Observer | Bộ xử lý next, error, complete |
+| Subscription | Quyền nhận dữ liệu có thể hủy |
+| Subject | Vừa phát dữ liệu vừa là Observable |
+
+Ví dụ: source.pipe(map(x => x * 2), filter(x => x > 4), take(3)). Hai lần subscribe vào cold Observable thường chạy hai producer riêng; hot Observable có thể chia sẻ nguồn phát đang diễn ra.
+
+Lỗi thường gặp: quên unsubscribe luồng sống lâu; cho rằng mọi Observable đều async; dùng Subject làm trạng thái hiện tại dù người subscribe muộn cần giá trị gần nhất; bỏ qua nhánh error khiến lỗi khó quan sát.
+'''
+
+[[modules]]
+id = "rxjs-angular"
+title = "RxJS nâng cao & Angular"
+description = "Higher-order mapping, debounce, kết hợp luồng, lifecycle và tích hợp HTTP/signals."
+sources = ["rxjs/api/operators/switchmap", "rxjs/api/operators/mergemap", "rxjs/api/operators/concatmap", "rxjs/api/operators/exhaustmap", "rxjs/api/operators/debouncetime", "rxjs/api/operators/combinelatest", "rxjs/api/operators/catcherror", "rxjs/api/operators/retry", "angular/api/core/rxjs-interop/takeuntildestroyed", "angular/api/core/rxjs-interop/tosignal", "angular/api/core/rxjs-interop/toobservable", "angular/api/common/http/httpclient", "angular/guide/http/setup", "angular/guide/http/interceptors"]
+lesson = '''
+### Chọn toán tử theo hành vi
+Higher-order operator quyết định cách xử lý Observable con. switchMap hủy luồng con trước khi chuyển sang luồng mới; mergeMap chạy song song; concatMap xếp hàng; exhaustMap bỏ qua đầu vào mới khi luồng con hiện tại còn chạy. debounceTime đợi khoảng lặng trước khi phát giá trị mới nhất.
+
+| Toán tử | Hành vi | Ví dụ |
+|---|---|---|
+| switchMap | Chỉ giữ luồng mới nhất | Tìm kiếm theo từ khóa |
+| mergeMap | Xử lý đồng thời | Tải nhiều ảnh độc lập |
+| concatMap | Tuần tự, giữ thứ tự | Gửi lần lượt các lệnh |
+| exhaustMap | Bỏ lần gọi trùng khi đang bận | Chặn submit lặp |
+
+combineLatest phát khi mỗi nguồn đã có giá trị; forkJoin chờ tất cả nguồn hoàn tất rồi phát kết quả cuối. catchError thay luồng lỗi bằng luồng khác; retry có thể chạy lại nguồn nên cần cân nhắc tác dụng phụ. Trong Angular, takeUntilDestroyed gắn vòng đời subscription với context; toSignal/toObservable đổi dạng tín hiệu; HttpClient dùng interceptor hàm để xử lý request chung.
+
+Lỗi thường gặp: dùng switchMap cho thao tác ghi không được phép hủy; retry request không idempotent; gọi toSignal nhiều lần cho cùng nguồn; quên đăng ký interceptor hoặc xử lý lỗi ở sai tầng.
+'''
+
+[[modules]]
+id = "angular-dv-http"
+title = "HTTP & dữ liệu từ máy chủ"
+description = "Cấu hình HttpClient, luồng request, interceptor, httpResource và xử lý lỗi."
+sources = ["angular/guide/http", "angular/guide/http/setup", "angular/guide/http/making-requests", "angular/guide/http/interceptors", "angular/guide/http/http-resource", "angular/api/common/http/httpclient"]
+lesson = '''
+### Gọi API trong Angular
+HttpClient cung cấp các phương thức có kiểu cho request và trả về Observable. Request thường chỉ được gửi khi có subscription; subscribe lần nữa thường tạo một lần gọi mới. Kiểu generic như get<User>() giúp TypeScript kiểm tra cách dùng ở thời điểm biên dịch, nhưng không xác thực JSON thực tế nhận từ mạng. Khi dữ liệu ngoài hệ thống cần tin cậy, hãy kiểm tra cấu trúc tại ranh giới ứng dụng.
+
+| Công cụ | Vai trò | Lưu ý |
+|---|---|---|
+| HttpClient | Tạo request và nhận response | Observable có thể hủy |
+| HttpParams / HttpHeaders | Xây query và header | API bất biến, cần giữ giá trị trả về |
+| Functional interceptor | Áp dụng chính sách chung | Đăng ký qua cấu hình HttpClient |
+| httpResource | Đọc dữ liệu phản ứng trong UI | Phù hợp với trạng thái tải/lỗi/dữ liệu |
+
+Ví dụ tìm kiếm: khi từ khóa đổi, switchMap có thể thay request cũ bằng request mới; unsubscribe khỏi request đang chạy cho phép backend hủy việc chờ kết quả. Với một form ghi dữ liệu, cần tránh retry mù vì server có thể đã xử lý request dù client chưa nhận response. catchError nên đặt đúng tầng: bắt lỗi bên trong từng lần tìm kiếm giúp luồng từ khóa bên ngoài tiếp tục hoạt động.
+
+Lỗi thường gặp: tưởng generic của TypeScript là runtime schema; gọi subscribe lặp lại và vô tình gửi nhiều request; gọi params.set() nhưng bỏ qua object mới; retry mọi status hoặc mọi method; nhét xử lý lỗi riêng của màn hình vào interceptor toàn cục.
+'''
+
+[[modules]]
+id = "angular-dv-ssr"
+title = "SSR, prerender & hydration"
+description = "Chọn chiến lược render theo route và tránh sai khác giữa máy chủ với trình duyệt."
+sources = ["angular/guide/ssr", "angular/api/ssr/serverroute", "angular/api/ssr/rendermode", "angular/api/ssr/provideserverrendering", "angular/api/ssr/serverrouteprerender", "angular/api/ssr/serverrouteserver"]
+lesson = '''
+### Render ở server và theo từng route
+Angular có thể tạo HTML ở máy chủ cho mỗi request, tạo sẵn HTML lúc build, hoặc render ở trình duyệt. Hybrid rendering cho phép chọn cách phù hợp theo route: trang nội dung ít đổi thường hợp với prerender; trang cá nhân hóa theo request thường cần server rendering; một khu vực tương tác chỉ dành cho client có thể dùng client rendering. Server rendering giúp nội dung có mặt sớm, nhưng không thay thế kiểm soát quyền truy cập ở backend.
+
+| Chiến lược | Thời điểm tạo HTML | Trường hợp thường dùng |
+|---|---|---|
+| Client rendering | Trong trình duyệt | Nội dung sau đăng nhập, phụ thuộc nhiều vào client |
+| Server rendering | Theo request trên server | Nội dung động cần HTML ban đầu |
+| Prerender | Trong lúc build | Trang công khai, dữ liệu ổn định |
+| Hydration | Sau khi HTML server tới client | Gắn hành vi Angular lên DOM đã có |
+
+Hydration giúp trình duyệt tái sử dụng DOM được server render thay vì dựng lại toàn bộ. Để hai phía khớp nhau, template ban đầu nên xác định từ cùng dữ liệu; tránh tạo nội dung phụ thuộc ngẫu nhiên vào thời gian hoặc thứ tự không ổn định. Mã chạy trên server cũng không có sẵn các API chỉ thuộc trình duyệt như window và document. Chỉ truy cập chúng trong ngữ cảnh client phù hợp, và kiểm tra các side effect để tránh gửi request trùng khi client tiếp nhận trang.
+
+Lỗi thường gặp: prerender route có dữ liệu riêng tư hoặc thay đổi theo từng người; đọc window ngay trong quá trình render server; dùng giá trị ngẫu nhiên khiến HTML server và client khác nhau; cho rằng SSR tự bảo vệ API hoặc tự làm trang luôn nhanh hơn.
+'''
+
+[[modules]]
+id = "angular-dv-testing"
+title = "Kiểm thử Angular"
+description = "TestBed, kiểm thử component/service và giả lập request HTTP."
+sources = ["angular/guide/testing", "angular/guide/testing/components-basics", "angular/guide/testing/services", "angular/guide/http/testing", "angular/api/core/testing/testbed", "angular/api/common/http/testing/httptestingcontroller"]
+lesson = '''
+### Kiểm thử hành vi component và service
+TestBed tạo môi trường kiểm thử cho dependency injection và component mà không cần chạy toàn ứng dụng. Một bài kiểm thử tốt quan sát kết quả người dùng hoặc hợp đồng của service: cấu hình đầu vào, kích hoạt thay đổi, rồi xác nhận nội dung, trạng thái hay request phát sinh. Với component, ComponentFixture cung cấp instance và DOM; detectChanges() chạy binding và lifecycle cần thiết cho lượt kiểm tra.
+
+| Công cụ | Dùng để | Ví dụ |
+|---|---|---|
+| TestBed | Khai báo providers và component cần kiểm thử | Cấu hình component dưới test |
+| ComponentFixture | Đọc instance/DOM và kích hoạt change detection | detectChanges() |
+| HttpTestingController | Bắt request mà HttpClient gửi | expectOne(), flush() |
+| verify() | Phát hiện request chưa được xử lý | Gọi sau mỗi test HTTP |
+
+Khi kiểm thử HTTP, đăng ký provideHttpClient() trước provideHttpClientTesting(), gọi phương thức service, dùng expectOne() để xác nhận URL/phương thức, rồi flush() response giả. Sau đó verify() giúp phát hiện request ngoài dự kiến. Cách này không truy cập mạng thật và cho phép kiểm tra cả trạng thái thành công lẫn lỗi. Component test nên thay dependency ngoài phạm vi bằng provider giả khi mục tiêu là hành vi component; test service riêng để kiểm tra logic dữ liệu.
+
+Lỗi thường gặp: quên detectChanges() trước khi đọc DOM; để request giả chưa flush; chỉ kiểm tra implementation nội bộ thay vì kết quả; dùng một test khổng lồ bao trùm component, router và backend; hoặc để nhiều test dùng chung trạng thái khiến kết quả phụ thuộc thứ tự chạy.
+'''
+
+[[questions]]
+id = "ng-001"
+module = "ng-components"
+type = "single"
+difficulty = 1
+prompt = "Trong Angular hiện đại, nhận định nào đúng về component standalone?"
+options = ["Mặc định component mới có thể dùng standalone và tự khai báo dependency template", "Component standalone không thể dùng service", "Standalone bắt buộc phải được khai báo trong NgModule", "Standalone chỉ chạy khi bật Zone.js"]
+answer = [0]
+explanation = "Standalone mô tả cách component khai báo dependency và không cần được khai báo trong NgModule. Service vẫn được inject bình thường."
+sources = ["angular/api/core/component"]
+
+[[questions]]
+id = "ng-002"
+module = "ng-components"
+type = "single"
+difficulty = 1
+prompt = "Muốn truyền giá trị của biến title vào thuộc tính DOM title, cú pháp nào là property binding?"
+options = ["[title]=\"title\"", "(title)=\"title\"", "{{title}} trong tên thuộc tính", "bind:title=\"title\""]
+answer = [0]
+explanation = "Ngoặc vuông biểu thị property binding từ biểu thức trong component sang property đích."
+sources = ["angular/api/core/component"]
+
+[[questions]]
+id = "ng-003"
+module = "ng-components"
+type = "single"
+difficulty = 2
+prompt = "Một danh sách có thể đổi thứ tự và giữ lại nhiều phần tử cũ. Vì sao @for nên dùng track item.id?"
+options = ["Giúp Angular ghép item với view ổn định và giảm tạo lại DOM", "Ép danh sách luôn sắp xếp theo id", "Làm cho id trở thành khóa bảo mật", "Bắt Angular chạy change detection ít nhất một lần"]
+answer = [0]
+explanation = "track cung cấp định danh để Angular đối chiếu item qua các lần cập nhật; id ổn định thường tốt hơn vị trí trong danh sách."
+sources = ["angular/api/core/@for"]
+
+[[questions]]
+id = "ng-004"
+module = "ng-components"
+type = "single"
+difficulty = 2
+prompt = "Bạn cần hiển thị một trong ba nhánh theo trạng thái role. Cấu trúc template mới phù hợp nhất là gì?"
+options = ["@switch với các @case và @default", "@for với ba item giả", "@defer cho mọi nhánh", "Ba event binding click"]
+answer = [0]
+explanation = "@switch biểu đạt lựa chọn loại trừ nhau theo một biểu thức; @if phù hợp hơn cho điều kiện đơn giản."
+sources = ["angular/api/core/@switch"]
+
+[[questions]]
+id = "ng-005"
+module = "ng-components"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các phát biểu đúng về input(), output() và model() trong component."
+options = ["input() khai báo dữ liệu đầu vào dạng signal chỉ đọc", "output() phát sự kiện từ component ra ngoài", "model() biểu đạt giá trị có thể đồng bộ hai chiều với component cha", "Mọi output() tự động trở thành input của component cha", "model() thay thế mọi service dùng chung"]
+answer = [0, 1, 2]
+explanation = "Ba API có mục đích khác nhau: input nhận, output phát sự kiện, model hỗ trợ binding hai chiều cho một giá trị cụ thể."
+sources = ["angular/guide/components/inputs", "angular/guide/components/outputs", "angular/api/core/model"]
+
+[[questions]]
+id = "ng-006"
+module = "ng-components"
+type = "fill"
+difficulty = 1
+prompt = '''
+Hoàn thiện control flow để lặp users và nhận diện mỗi phần tử bằng id:
+
+~~~html
+{{blank}} (user of users; {{blank}} user.id) {
+  <p>{{ user.name }}</p>
+}
+~~~
+'''
+blanks = [["@for"], ["track"]]
+explanation = "Control flow dùng @for và track gắn mỗi view với một định danh ổn định."
+sources = ["angular/api/core/@for"]
+
+[[questions]]
+id = "ng-007"
+module = "ng-signals"
+type = "single"
+difficulty = 1
+prompt = "Giá trị total chỉ là price nhân quantity và không cần ghi trực tiếp. API nào phù hợp nhất?"
+options = ["computed()", "effect()", "linkedSignal() trong mọi trường hợp", "setTimeout()"]
+answer = [0]
+explanation = "computed() biểu diễn giá trị dẫn xuất, lưu cache và tự invalid khi dependency thay đổi."
+sources = ["angular/api/core/computed"]
+
+[[questions]]
+id = "ng-008"
+module = "ng-signals"
+type = "single"
+difficulty = 2
+prompt = "Khi nào effect() là lựa chọn hợp lý hơn computed()?"
+options = ["Khi cần đồng bộ signal với tác động bên ngoài như ghi local storage", "Khi cần đặt tên cho một biến", "Khi cần thay đổi DOM trực tiếp trong mọi lần render", "Khi muốn sao chép một signal sang signal khác"]
+answer = [0]
+explanation = "effect dành cho side effect cần đồng bộ với hệ thống bên ngoài; trạng thái dẫn xuất nội bộ thường nên dùng computed."
+sources = ["angular/api/core/effect"]
+
+[[questions]]
+id = "ng-009"
+module = "ng-signals"
+type = "single"
+difficulty = 3
+prompt = "Người dùng chọn một tab trong danh sách; khi danh sách tab được tải lại, lựa chọn cũ không còn hợp lệ và cần trở về tab mặc định mới. API nào mô tả tốt nhất trạng thái này?"
+options = ["linkedSignal() phụ thuộc danh sách tab", "effect() sao chép mọi thay đổi vào một signal khác", "Một computed không thể ghi", "Một biến global không phản ứng"]
+answer = [0]
+explanation = "linkedSignal biểu diễn trạng thái có thể ghi nhưng được làm mới dựa trên nguồn phụ thuộc khi nguồn đó đổi."
+sources = ["angular/guide/signals/linked-signal"]
+
+[[questions]]
+id = "ng-010"
+module = "ng-signals"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các phát biểu đúng khi dùng OnPush và cấu hình zoneless."
+options = ["OnPush giúp giới hạn thời điểm component được kiểm tra theo các trigger phù hợp", "Zoneless yêu cầu ứng dụng báo hiệu cập nhật theo cơ chế Angular hiểu được", "OnPush có nghĩa component sẽ không bao giờ được kiểm tra lại", "Zoneless loại bỏ nhu cầu quản lý trạng thái", "provideZonelessChangeDetection() là một cách cấu hình zoneless"]
+answer = [0, 1, 4]
+explanation = "OnPush không tắt change detection; zoneless thay đổi cách framework nhận biết công việc cần cập nhật."
+sources = ["angular/api/core/changedetectionstrategy", "angular/guide/zoneless"]
+
+[[questions]]
+id = "ng-011"
+module = "ng-signals"
+type = "fill"
+difficulty = 1
+prompt = '''
+Điền API tạo trạng thái signal có thể ghi:
+
+~~~ts
+const count = {{blank}}(0);
+~~~
+'''
+blanks = [["signal"]]
+explanation = "signal() tạo writable signal; giá trị có thể được đọc bằng cách gọi count() và thay bằng set() hoặc update()."
+sources = ["angular/api/core/signal"]
+
+[[questions]]
+id = "ng-012"
+module = "ng-signals"
+type = "essay"
+difficulty = 3
+prompt = "Câu hỏi phỏng vấn: phân biệt signal, computed và effect; mô tả cách tránh vòng lặp hoặc trạng thái trùng lặp khi thiết kế luồng cập nhật."
+keywords = [["signal", "trạng thái"], ["computed", "giá trị dẫn xuất"], ["effect", "side effect"], ["dependency", "phụ thuộc"], ["trùng lặp", "duplicate"]]
+min_keywords = 3
+model_answer = '''
+signal lưu trạng thái có thể ghi và là dependency của các phép tính. computed tạo giá trị dẫn xuất, được cache và đánh dấu dirty khi dependency đổi. effect theo dõi các signal được đọc để đồng bộ side effect bên ngoài. Tránh sao chép trạng thái bằng effect vì dễ tạo dependency vòng hoặc dữ liệu trùng lặp; ưu tiên một nguồn trạng thái và computed cho giá trị dẫn xuất.
+'''
+explanation = "Câu trả lời cần nêu đúng vai trò và cách chọn API để tránh duy trì cùng một dữ liệu ở nhiều nơi."
+sources = ["angular/guide/signals", "angular/api/core/computed", "angular/api/core/effect"]
+
+[[questions]]
+id = "ng-c02"
+module = "ng-signals"
+type = "code"
+difficulty = 3
+lang = "javascript"
+title = "Mini signal, computed và effect"
+prompt = '''
+Hãy viết ba hàm JavaScript thuần:
+
+- signal(initialValue) trả về hàm đọc; hàm có set(value) và update(fn).
+- computed(fn) trả về hàm đọc có cache. Tính toán phải lazy, đánh dấu dirty khi dependency đổi, và chỉ tính lại khi được đọc.
+- effect(fn) chạy ngay một lần, tự chạy lại khi signal được đọc bên trong thay đổi; trả về object có destroy() để ngừng theo dõi.
+- Không thông báo khi set giá trị bằng giá trị hiện tại theo Object.is.
+
+Ví dụ: const count = signal(2); const doubled = computed(() => count() * 2); doubled() trả 4; count.set(3); lần đọc tiếp theo trả 6.
+'''
+starter = '''
+function signal(initialValue) {
+  let value = initialValue;
+  const read = () => value;
+  read.set = next => { value = next; };
+  read.update = fn => { value = fn(value); };
+  return read;
+}
+
+function computed(fn) {
+  return fn;
+}
+
+function effect(fn) {
+  fn();
+  return { destroy: function () {} };
+}
+'''
+solution = '''
+let activeObserver = null;
+
+function signal(initialValue) {
+  let value = initialValue;
+  const node = {
+    observers: new Set(),
+    invalidate: function () {
+      Array.from(node.observers).forEach(observer => observer.invalidate());
+    }
+  };
+  const read = function () {
+    if (activeObserver) activeObserver.register(node);
+    return value;
+  };
+  read.set = function (next) {
+    if (Object.is(value, next)) return;
+    value = next;
+    node.invalidate();
+  };
+  read.update = function (fn) { read.set(fn(value)); };
+  return read;
+}
+
+function computed(fn) {
+  let value;
+  let dirty = true;
+  const node = {
+    observers: new Set(),
+    dependencies: new Set(),
+    register: function (dependency) {
+      node.dependencies.add(dependency);
+      dependency.observers.add(node);
+    },
+    invalidate: function () {
+      if (dirty) return;
+      dirty = true;
+      Array.from(node.observers).forEach(observer => observer.invalidate());
+    }
+  };
+  const read = function () {
+    if (activeObserver) activeObserver.register(node);
+    if (dirty) {
+      node.dependencies.forEach(dependency => dependency.observers.delete(node));
+      node.dependencies.clear();
+      const previous = activeObserver;
+      activeObserver = node;
+      try {
+        value = fn();
+        dirty = false;
+      } finally {
+        activeObserver = previous;
+      }
+    }
+    return value;
+  };
+  read.observers = node.observers;
+  return read;
+}
+
+function effect(fn) {
+  const observer = {
+    active: true,
+    dependencies: new Set(),
+    register: function (dependency) {
+      observer.dependencies.add(dependency);
+      dependency.observers.add(observer);
+    },
+    invalidate: function () {
+      if (observer.active) run();
+    }
+  };
+  function run() {
+    observer.dependencies.forEach(dependency => dependency.observers.delete(observer));
+    observer.dependencies.clear();
+    const previous = activeObserver;
+    activeObserver = observer;
+    try {
+      fn();
+    } finally {
+      activeObserver = previous;
+    }
+  }
+  run();
+  return {
+    destroy: function () {
+      observer.active = false;
+      observer.dependencies.forEach(dependency => dependency.observers.delete(observer));
+      observer.dependencies.clear();
+    }
+  };
+}
+'''
+tests = '''
+test('computed is lazy and caches a read', function () {
+  const count = signal(2);
+  let calculations = 0;
+  const doubled = computed(function () { calculations += 1; return count() * 2; });
+  expect(calculations).toBe(0);
+  expect(doubled()).toBe(4);
+  expect(doubled()).toBe(4);
+  expect(calculations).toBe(1);
+});
+
+test('computed becomes dirty and recalculates on demand', function () {
+  const count = signal(2);
+  let calculations = 0;
+  const doubled = computed(function () { calculations += 1; return count() * 2; });
+  doubled();
+  count.set(3);
+  expect(calculations).toBe(1);
+  expect(doubled()).toBe(6);
+  expect(calculations).toBe(2);
+});
+
+test('effect reruns only when a dependency changes', function () {
+  const count = signal(0);
+  const seen = [];
+  const ref = effect(function () { seen.push(count()); });
+  count.set(1);
+  count.set(1);
+  expect(seen).toEqual([0, 1]);
+  ref.destroy();
+  count.set(2);
+  expect(seen).toEqual([0, 1]);
+});
+
+test('update applies a function to the current value', function () {
+  const count = signal(4);
+  count.update(function (value) { return value + 3; });
+  expect(count()).toBe(7);
+});
+'''
+hints = ["Theo dõi dependency hiện tại bằng một biến module-level tạm thời.", "Mỗi node cần Set dependency và observer để invalidation truyền qua computed tới effect."]
+explanation = "Bản mini này mô phỏng dependency graph: computed lazy giữ cache, còn effect đăng ký vào các signal được đọc."
+sources = ["angular/guide/signals", "angular/api/core/computed", "angular/api/core/effect"]
+
+[[questions]]
+id = "ng-013"
+module = "ng-di"
+type = "single"
+difficulty = 1
+prompt = "Khi injector con và injector cha cùng cung cấp một token, injector con thường trả về instance nào?"
+options = ["Instance trong injector con", "Instance trong injector cha", "Luôn tạo instance mới không lưu", "Không thể phân giải token"]
+answer = [0]
+explanation = "Phân giải bắt đầu từ injector gần nhất; provider cục bộ ở injector con che provider cùng token ở cha."
+sources = ["angular/guide/di/hierarchical-dependency-injection"]
+
+[[questions]]
+id = "ng-014"
+module = "ng-di"
+type = "single"
+difficulty = 2
+prompt = "Service khai báo providedIn: 'root' thường có ý nghĩa gì?"
+options = ["Service được cung cấp ở root injector và có thể dùng chung trong ứng dụng", "Mỗi lần inject luôn tạo instance mới", "Service chỉ dùng được trong component root", "Angular tự gửi service tới server"]
+answer = [0]
+explanation = "providedIn: 'root' cung cấp service ở phạm vi root; provider scope cụ thể hơn có thể tạo instance riêng."
+sources = ["angular/api/core/injectable"]
+
+[[questions]]
+id = "ng-015"
+module = "ng-di"
+type = "single"
+difficulty = 2
+prompt = "Cần inject một cấu hình có kiểu interface, không phải class runtime. Cơ chế nào phù hợp?"
+options = ["InjectionToken", "Một interface được inject trực tiếp ở runtime", "RouterLink", "ChangeDetectionStrategy"]
+answer = [0]
+explanation = "Interface TypeScript bị xóa khi chạy; InjectionToken cung cấp định danh runtime ổn định cho giá trị cấu hình."
+sources = ["angular/api/core/injectiontoken"]
+
+[[questions]]
+id = "ng-016"
+module = "ng-di"
+type = "multiple"
+difficulty = 3
+prompt = "Ở những nơi nào inject() thường được phép gọi trong Angular?"
+options = ["Field initializer của injectable hoặc component", "Provider factory đang chạy trong injection context", "Constructor khi Angular đang khởi tạo instance", "Callback bất kỳ chạy sau một timer", "Một hàm tiện ích bất kỳ không có injection context"]
+answer = [0, 1, 2]
+explanation = "inject() cần injection context; một callback độc lập chạy sau này không tự có context đó."
+sources = ["angular/api/core/inject", "angular/guide/di/dependency-injection-context"]
+
+[[questions]]
+id = "ng-017"
+module = "ng-di"
+type = "fill"
+difficulty = 1
+prompt = '''
+Điền scope thường dùng để cung cấp một service dùng chung ở cấp ứng dụng:
+
+~~~ts
+@Injectable({ providedIn: '{{blank}}' })
+~~~
+'''
+blanks = [["root"]]
+explanation = "root là injector phạm vi ứng dụng thường dùng cho service dùng chung."
+sources = ["angular/api/core/injectable"]
+
+[[questions]]
+id = "ng-018"
+module = "ng-di"
+type = "essay"
+difficulty = 3
+prompt = "Câu hỏi phỏng vấn: giải thích hierarchical dependency injection, cách injector con tìm dependency và khi nào nên đặt provider ở root, route hoặc component."
+keywords = [["hierarchical", "phân cấp"], ["parent", "cha"], ["child", "con"], ["scope", "phạm vi"], ["override", "ghi đè"]]
+min_keywords = 3
+model_answer = '''
+Angular dùng hierarchical dependency injection với cây injector. Khi yêu cầu dependency, injector con tìm provider trong phạm vi của mình trước; nếu không có thì đi lên injector cha. Provider gần hơn có thể override provider ở cha. Đặt service ở root khi cần instance dùng chung toàn ứng dụng, ở route khi trạng thái thuộc một khu vực điều hướng, hoặc ở component khi instance chỉ nên sống trong cây component đó.
+'''
+explanation = "Câu trả lời cần mô tả chiều tra cứu dependency và liên hệ scope với vòng đời instance."
+sources = ["angular/guide/di/hierarchical-dependency-injection"]
+
+[[questions]]
+id = "ng-c03"
+module = "ng-di"
+type = "code"
+difficulty = 2
+lang = "javascript"
+title = "Injector cha và con"
+prompt = '''
+Viết createInjector(providers, parent) cho DI container nhỏ bằng JavaScript thuần.
+
+- providers là danh sách cặp [token, value].
+- injector.get(token) trả provider gần nhất; nếu không có ở injector hiện tại thì tra lên parent.
+- Nếu không có provider trong cả cây, ném Error.
+- injector.createChild(providers) tạo injector con; provider con có thể che token từ cha.
+- Giá trị đã cung cấp phải giữ nguyên identity khi được lấy nhiều lần.
+'''
+starter = '''
+function createInjector(providers, parent) {
+  return {
+    get: function (token) { return undefined; },
+    createChild: function (childProviders) { return createInjector(childProviders, parent); }
+  };
+}
+'''
+solution = '''
+function createInjector(providers, parent) {
+  const values = new Map(providers || []);
+  const injector = {
+    get: function (token) {
+      if (values.has(token)) return values.get(token);
+      if (parent) return parent.get(token);
+      throw new Error('No provider for ' + String(token));
+    },
+    createChild: function (childProviders) {
+      return createInjector(childProviders, injector);
+    }
+  };
+  return injector;
+}
+'''
+tests = '''
+test('reads a local provider', function () {
+  const token = {};
+  const instance = {};
+  const injector = createInjector([[token, instance]]);
+  expect(injector.get(token)).toBe(instance);
+});
+
+test('falls back to a parent provider', function () {
+  const token = 'config';
+  const parent = createInjector([[token, 7]]);
+  expect(parent.createChild([]).get(token)).toBe(7);
+});
+
+test('child provider shadows parent', function () {
+  const token = 'service';
+  const parent = createInjector([[token, 'parent']]);
+  const child = parent.createChild([[token, 'child']]);
+  expect(child.get(token)).toBe('child');
+  expect(parent.get(token)).toBe('parent');
+});
+
+test('throws when no injector provides the token', function () {
+  const child = createInjector([], createInjector([], null));
+  expect(function () { child.get('missing'); }).toThrow();
+});
+'''
+hints = ["Dùng Map để hỗ trợ token object và kiểm tra sự tồn tại chính xác.", "Đóng tham chiếu injector hiện tại vào createChild để cây cha-con giữ đúng scope."]
+explanation = "Injector tra cứu từ scope gần nhất lên cha và giữ provider cục bộ theo từng injector."
+sources = ["angular/guide/di/hierarchical-dependency-injection", "angular/api/core/injector"]
+
+[[questions]]
+id = "ng-019"
+module = "ng-router-forms"
+type = "single"
+difficulty = 2
+prompt = "Route ít được truy cập chứa một component standalone lớn. Cách tải nào giúp trì hoãn tải code của component?"
+options = ["loadComponent", "component với eager import ở entry bundle", "Validators.required", "FormControl"]
+answer = [0]
+explanation = "loadComponent tải component độc lập khi route cần được kích hoạt."
+sources = ["angular/api/router/route", "angular/guide/routing/define-routes"]
+
+[[questions]]
+id = "ng-020"
+module = "ng-router-forms"
+type = "single"
+difficulty = 3
+prompt = "Guard phát hiện người dùng chưa đăng nhập và muốn đưa họ tới trang đăng nhập. Nên trả kết quả nào?"
+options = ["UrlTree hoặc RedirectCommand để yêu cầu router chuyển hướng", "true rồi tự sửa URL trong mọi component", "Một Observable không bao giờ phát", "FormControl với trạng thái invalid"]
+answer = [0]
+explanation = "Guard có thể trả UrlTree hoặc RedirectCommand để router xử lý redirect trong cùng luồng điều hướng."
+sources = ["angular/guide/routing/route-guards", "angular/api/router/canactivatefn"]
+
+[[questions]]
+id = "ng-021"
+module = "ng-router-forms"
+type = "single"
+difficulty = 2
+prompt = "Khi nào resolver phù hợp hơn việc tải dữ liệu sau khi component route đã hiện?"
+options = ["Khi route cần dữ liệu trước activation và giao diện nên dựa trên dữ liệu đó", "Khi dữ liệu chỉ dùng cho một click event sau này", "Khi cần thay thế authorization ở server", "Khi form không có trường nào"]
+answer = [0]
+explanation = "Resolver cung cấp dữ liệu trước khi route component được kích hoạt; dữ liệu quan trọng vẫn cần được bảo vệ tại server."
+sources = ["angular/guide/routing/data-resolvers"]
+
+[[questions]]
+id = "ng-022"
+module = "ng-router-forms"
+type = "single"
+difficulty = 2
+prompt = "FormControl<string> được khởi tạo bằng giá trị mặc định và không khai báo nonNullable. Tình huống nào cần lưu ý trong typed forms?"
+options = ["Reset có thể đưa giá trị về null theo cấu hình mặc định", "FormControl không thể phát valueChanges", "Validators bị vô hiệu hóa", "Angular tự chuyển string thành number"]
+answer = [0]
+explanation = "Typed forms biểu đạt khả năng null của giá trị; dùng nonNullable khi reset không được phép trả về null."
+sources = ["angular/api/forms/formcontrol", "angular/api/forms/formgroup"]
+
+[[questions]]
+id = "ng-023"
+module = "ng-router-forms"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các phát biểu đúng về reactive forms và validation."
+options = ["FormGroup gom controls thành cấu trúc có kiểu", "Validator phía client giúp trải nghiệm nhưng server vẫn phải xác thực dữ liệu", "Typed forms giúp phát hiện một số lỗi kiểu khi biên dịch", "Validators.required ngăn mọi request giả mạo gửi dữ liệu rỗng tới API", "Reactive forms chỉ dùng được với template-driven forms"]
+answer = [0, 1, 2]
+explanation = "Typed forms tăng độ an toàn kiểu; validation ở trình duyệt có thể bị bỏ qua nên backend cần kiểm tra lại."
+sources = ["angular/api/forms/formgroup", "angular/api/forms/validators"]
+
+[[questions]]
+id = "ng-024"
+module = "ng-router-forms"
+type = "fill"
+difficulty = 1
+prompt = '''
+Điền tên API dùng để tải component standalone theo nhu cầu trong route:
+
+~~~ts
+{ path: 'settings', {{blank}}: () => import('./settings').then(m => m.Settings) }
+~~~
+'''
+blanks = [["loadComponent"]]
+explanation = "loadComponent trì hoãn tải một component standalone cho route."
+sources = ["angular/api/router/route"]
+
+[[questions]]
+id = "ng-025"
+module = "ng-router-forms"
+type = "essay"
+difficulty = 3
+prompt = "Câu hỏi phỏng vấn: thiết kế một form profile typed có kiểm tra dữ liệu, giải thích vai trò của FormControl/FormGroup, validator phía client và kiểm tra ở server."
+keywords = [["typed forms", "kiểu"], ["formcontrol", "control"], ["formgroup", "group"], ["validator", "validation"], ["server", "backend"]]
+min_keywords = 3
+model_answer = '''
+Typed forms dùng FormControl cho trường và FormGroup để gom cấu trúc profile với kiểu cụ thể. Validator cung cấp phản hồi sớm như required hoặc định dạng không hợp lệ và giao diện có thể hiển thị lỗi theo trạng thái control. Dữ liệu vẫn phải được kiểm tra ở server vì client có thể bị chỉnh sửa hoặc bỏ qua. Có thể dùng nonNullable cho trường không chấp nhận null.
+'''
+explanation = "Câu trả lời tốt phân biệt UX validation với ranh giới tin cậy phía server và đề cập kiểu dữ liệu."
+sources = ["angular/api/forms/formcontrol", "angular/api/forms/formgroup", "angular/api/forms/validators"]
+
+[[questions]]
+id = "ng-026"
+module = "rxjs-core"
+type = "single"
+difficulty = 1
+prompt = "Một cold Observable tạo timer bên trong producer. Điều gì thường xảy ra khi hai người subscribe riêng?"
+options = ["Mỗi subscription chạy một producer độc lập", "Luôn chỉ có một timer dùng chung", "Subscription thứ hai tự nhận lại toàn bộ giá trị cũ", "Cold Observable không thể phát giá trị"]
+answer = [0]
+explanation = "Cold Observable bắt đầu producer cho từng subscription; cần chia sẻ/multicast nếu muốn dùng chung một nguồn."
+sources = ["rxjs/guide/observable"]
+
+[[questions]]
+id = "ng-027"
+module = "rxjs-core"
+type = "single"
+difficulty = 2
+prompt = "Subscription.unsubscribe() cần làm gì với một nguồn có timer đang chờ?"
+options = ["Hủy nhận dữ liệu và chạy teardown để giải phóng timer", "Phát lại mọi giá trị từ đầu", "Tự retry nguồn đến khi thành công", "Biến nguồn thành BehaviorSubject"]
+answer = [0]
+explanation = "Unsubscribe ngừng observer và teardown cần dọn tài nguyên do producer tạo ra."
+sources = ["rxjs/guide/subscription"]
+
+[[questions]]
+id = "ng-028"
+module = "rxjs-core"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các đặc điểm đúng của Subject, BehaviorSubject và ReplaySubject."
+options = ["Subject multicast giá trị đến các observer đang đăng ký", "BehaviorSubject giữ giá trị hiện tại và phát giá trị đó cho subscriber mới", "ReplaySubject có thể phát lại một số giá trị trước đó theo cấu hình", "Subject luôn lưu lại mọi giá trị kể từ khi tạo", "Unsubscribe một observer bắt buộc hoàn tất Subject cho tất cả observer"]
+answer = [0, 1, 2]
+explanation = "BehaviorSubject giữ giá trị hiện tại; ReplaySubject giữ lịch sử giới hạn/cấu hình; Subject cơ bản không tự replay."
+sources = ["rxjs/guide/subject"]
+
+[[questions]]
+id = "ng-029"
+module = "rxjs-core"
+type = "multiple"
+difficulty = 3
+prompt = "Những thao tác nào là trách nhiệm hợp lý của consumer khi dùng Observable?"
+options = ["Đăng ký handler cho next/error/complete khi cần", "Hủy subscription sống lâu khi không còn cần", "Có thể dùng pipeable operator để biến đổi luồng trước subscribe", "Giả định mọi nguồn tự hoàn tất sau một giá trị", "Chỉ dùng subscribe khi cần side effect hoặc nhận kết quả"]
+answer = [0, 1, 2, 4]
+explanation = "Observable có thể sống lâu và không hoàn tất; consumer cần quản lý vòng đời và nên biến đổi luồng bằng operator."
+sources = ["rxjs/guide/observer", "rxjs/guide/subscription"]
+
+[[questions]]
+id = "ng-030"
+module = "rxjs-core"
+type = "fill"
+difficulty = 1
+prompt = '''
+Điền các callback theo thứ tự để tạo observer:
+
+~~~js
+source.subscribe({ {{blank}}: onValue, {{blank}}: onError, {{blank}}: onDone });
+~~~
+'''
+blanks = [["next"], ["error"], ["complete"]]
+explanation = "Observer có ba notification phổ biến: next, error và complete."
+sources = ["rxjs/guide/observer"]
+
+[[questions]]
+id = "ng-031"
+module = "rxjs-core"
+type = "essay"
+difficulty = 3
+prompt = "Câu hỏi phỏng vấn: so sánh cold và hot Observable trong một tính năng tìm kiếm; nêu ảnh hưởng đến việc chạy request, chia sẻ dữ liệu và subscription."
+keywords = [["cold"], ["hot"], ["subscription", "đăng ký"], ["chia sẻ", "multicast"], ["request"]]
+min_keywords = 3
+model_answer = '''
+Cold Observable thường bắt đầu producer riêng cho mỗi subscription, vì vậy hai subscriber có thể tạo hai request tìm kiếm. Hot Observable phát từ nguồn đang hoạt động và nhiều subscriber có thể cùng nhận dữ liệu mới. Nếu cần chia sẻ một request, có thể multicast/share và phải xác định rõ thời điểm kết nối, cache, lỗi và teardown khi không còn subscriber.
+'''
+explanation = "Câu trả lời cần nối semantics của nguồn với số request và cách quản lý subscription."
+sources = ["rxjs/guide/observable", "rxjs/guide/subject"]
+
+[[questions]]
+id = "ng-c01"
+module = "rxjs-core"
+type = "code"
+difficulty = 3
+lang = "javascript"
+title = "Mini Observable và pipeable operators"
+prompt = '''
+Hãy cài đặt JavaScript thuần gồm MiniObservable, MiniSubscription và ba pipeable operator map(project), filter(predicate), take(count).
+
+- subscribe(next, error, complete) trả subscription có unsubscribe() và closed.
+- Producer nhận observer có next, error, complete và có thể trả teardown function.
+- Teardown chạy đúng một lần khi unsubscribe hoặc khi stream kết thúc.
+- pipe(...operators) áp dụng operator theo thứ tự từ trái sang phải.
+- take(0) hoàn tất ngay; take(n) không phát quá n giá trị và dọn subscription nguồn.
+- map/filter bắt lỗi từ callback và chuyển lỗi qua error handler.
+'''
+starter = '''
+class MiniSubscription {
+  constructor() { this.closed = false; }
+  unsubscribe() { this.closed = true; }
+}
+
+class MiniObservable {
+  constructor(producer) { this.producer = producer; }
+  subscribe(next, error, complete) {
+    this.producer({ next: next, error: error, complete: complete });
+    return new MiniSubscription();
+  }
+  pipe() { return this; }
+}
+
+function map(project) { return function (source) { return source; }; }
+function filter(predicate) { return function (source) { return source; }; }
+function take(count) { return function (source) { return source; }; }
+'''
+solution = '''
+function runTeardown(teardown) {
+  if (typeof teardown === 'function') teardown();
+  else if (teardown && typeof teardown.unsubscribe === 'function') teardown.unsubscribe();
+}
+
+class MiniSubscription {
+  constructor() {
+    this.closed = false;
+    this.teardowns = [];
+  }
+  add(teardown) {
+    if (!teardown) return;
+    if (this.closed) runTeardown(teardown);
+    else this.teardowns.push(teardown);
+  }
+  unsubscribe() {
+    if (this.closed) return;
+    this.closed = true;
+    this.teardowns.splice(0).reverse().forEach(runTeardown);
+  }
+}
+
+class MiniObservable {
+  constructor(producer) { this.producer = producer; }
+  subscribe(next, error, complete) {
+    const sub = new MiniSubscription();
+    const onNext = typeof next === 'function' ? next : function () {};
+    const onError = typeof error === 'function' ? error : function () {};
+    const onComplete = typeof complete === 'function' ? complete : function () {};
+    let stopped = false;
+    const observer = {
+      next: function (value) { if (!stopped && !sub.closed) onNext(value); },
+      error: function (reason) {
+        if (stopped || sub.closed) return;
+        stopped = true;
+        onError(reason);
+        sub.unsubscribe();
+      },
+      complete: function () {
+        if (stopped || sub.closed) return;
+        stopped = true;
+        onComplete();
+        sub.unsubscribe();
+      }
+    };
+    try {
+      sub.add(this.producer(observer));
+    } catch (reason) {
+      observer.error(reason);
+    }
+    return sub;
+  }
+  pipe() {
+    return Array.from(arguments).reduce(function (source, operator) {
+      return operator(source);
+    }, this);
+  }
+}
+
+function map(project) {
+  return function (source) {
+    return new MiniObservable(function (observer) {
+      return source.subscribe(function (value) {
+        try { observer.next(project(value)); } catch (reason) { observer.error(reason); }
+      }, observer.error, observer.complete);
+    });
+  };
+}
+
+function filter(predicate) {
+  return function (source) {
+    return new MiniObservable(function (observer) {
+      return source.subscribe(function (value) {
+        try { if (predicate(value)) observer.next(value); } catch (reason) { observer.error(reason); }
+      }, observer.error, observer.complete);
+    });
+  };
+}
+
+function take(count) {
+  return function (source) {
+    return new MiniObservable(function (observer) {
+      if (count <= 0) {
+        observer.complete();
+        return;
+      }
+      let seen = 0;
+      let sourceSub;
+      let stopAfterSubscribe = false;
+      sourceSub = source.subscribe(function (value) {
+        if (seen >= count) return;
+        seen += 1;
+        observer.next(value);
+        if (seen === count) {
+          observer.complete();
+          if (sourceSub) sourceSub.unsubscribe();
+          else stopAfterSubscribe = true;
+        }
+      }, observer.error, observer.complete);
+      if (stopAfterSubscribe) sourceSub.unsubscribe();
+      return sourceSub;
+    });
+  };
+}
+'''
+tests = '''
+test('pipe applies map and filter in order', function () {
+  const values = [];
+  new MiniObservable(function (observer) {
+    [1, 2, 3, 4].forEach(observer.next);
+    observer.complete();
+  }).pipe(map(function (x) { return x * 2; }), filter(function (x) { return x > 4; }))
+    .subscribe(function (value) { values.push(value); });
+  expect(values).toEqual([6, 8]);
+});
+
+test('take stops after the requested number and runs teardown', function () {
+  let cleaned = 0;
+  const values = [];
+  const source = new MiniObservable(function (observer) {
+    [1, 2, 3, 4].forEach(observer.next);
+    return function () { cleaned += 1; };
+  });
+  source.pipe(take(2)).subscribe(function (value) { values.push(value); });
+  expect(values).toEqual([1, 2]);
+  expect(cleaned).toBe(1);
+});
+
+test('unsubscribe is idempotent and suppresses later notifications', function () {
+  let send;
+  let cleaned = 0;
+  const values = [];
+  const sub = new MiniObservable(function (observer) {
+    send = observer.next;
+    return function () { cleaned += 1; };
+  }).subscribe(function (value) { values.push(value); });
+  sub.unsubscribe();
+  sub.unsubscribe();
+  send(9);
+  expect(sub.closed).toBe(true);
+  expect(cleaned).toBe(1);
+  expect(values).toEqual([]);
+});
+
+test('map sends callback exceptions to error', function () {
+  let message = '';
+  new MiniObservable(function (observer) { observer.next(1); })
+    .pipe(map(function () { throw new Error('bad map'); }))
+    .subscribe(function () {}, function (error) { message = error.message; });
+  expect(message).toBe('bad map');
+});
+'''
+hints = ["Subscription cần nhận teardown cả khi producer kết thúc đồng bộ trước lúc trả về.", "Trong take, xử lý riêng trường hợp nguồn phát đồng bộ trước khi sourceSub được gán."]
+explanation = "Bài tập mô phỏng vòng đời Observable, pipeable operator và dọn tài nguyên khi kết thúc."
+sources = ["rxjs/guide/observable", "rxjs/guide/subscription", "rxjs/api/operators/map", "rxjs/api/operators/filter", "rxjs/api/operators/take"]
+
+[[questions]]
+id = "ng-c04"
+module = "rxjs-core"
+type = "code"
+difficulty = 2
+lang = "javascript"
+title = "Mini BehaviorSubject"
+prompt = '''
+Viết MiniBehaviorSubject(initialValue) bằng JavaScript thuần.
+
+- getValue() trả giá trị hiện tại; next(value) cập nhật và phát cho observer đang hoạt động.
+- subscribe(next, error, complete) phát giá trị hiện tại ngay cho subscriber mới.
+- unsubscribe() chỉ ngừng observer tương ứng.
+- complete() hoàn tất các observer hiện tại; next() sau complete không phát thêm.
+- Subscriber đăng ký sau complete chỉ nhận complete, không nhận lại giá trị.
+'''
+starter = '''
+function MiniBehaviorSubject(initialValue) {
+  this.value = initialValue;
+}
+MiniBehaviorSubject.prototype.getValue = function () { return this.value; };
+MiniBehaviorSubject.prototype.next = function (value) { this.value = value; };
+MiniBehaviorSubject.prototype.subscribe = function () { return { unsubscribe: function () {} }; };
+MiniBehaviorSubject.prototype.complete = function () {};
+'''
+solution = '''
+function MiniBehaviorSubject(initialValue) {
+  this.value = initialValue;
+  this.observers = new Set();
+  this.stopped = false;
+}
+
+MiniBehaviorSubject.prototype.getValue = function () {
+  return this.value;
+};
+
+MiniBehaviorSubject.prototype.subscribe = function (next, error, complete) {
+  const observer = {
+    next: typeof next === 'function' ? next : function () {},
+    error: typeof error === 'function' ? error : function () {},
+    complete: typeof complete === 'function' ? complete : function () {}
+  };
+  const subscription = {
+    closed: this.stopped,
+    unsubscribe: function () {
+      if (subscription.closed) return;
+      subscription.closed = true;
+      subject.observers.delete(subscription);
+    }
+  };
+  const subject = this;
+  subscription.observer = observer;
+  if (this.stopped) {
+    observer.complete();
+    return subscription;
+  }
+  this.observers.add(subscription);
+  observer.next(this.value);
+  return subscription;
+};
+
+MiniBehaviorSubject.prototype.next = function (value) {
+  if (this.stopped) return;
+  this.value = value;
+  Array.from(this.observers).forEach(function (subscription) {
+    if (!subscription.closed) subscription.observer.next(value);
+  });
+};
+
+MiniBehaviorSubject.prototype.complete = function () {
+  if (this.stopped) return;
+  this.stopped = true;
+  Array.from(this.observers).forEach(function (subscription) {
+    if (!subscription.closed) subscription.observer.complete();
+    subscription.unsubscribe();
+  });
+};
+'''
+tests = '''
+test('subscriber receives current value immediately', function () {
+  const subject = new MiniBehaviorSubject(5);
+  const values = [];
+  subject.subscribe(function (value) { values.push(value); });
+  expect(values).toEqual([5]);
+  expect(subject.getValue()).toBe(5);
+});
+
+test('next updates value and notifies active subscribers', function () {
+  const subject = new MiniBehaviorSubject('a');
+  const values = [];
+  subject.subscribe(function (value) { values.push(value); });
+  subject.next('b');
+  expect(subject.getValue()).toBe('b');
+  expect(values).toEqual(['a', 'b']);
+});
+
+test('unsubscribe removes only that subscriber', function () {
+  const subject = new MiniBehaviorSubject(0);
+  const first = [];
+  const second = [];
+  const sub = subject.subscribe(function (value) { first.push(value); });
+  subject.subscribe(function (value) { second.push(value); });
+  sub.unsubscribe();
+  subject.next(1);
+  expect(first).toEqual([0]);
+  expect(second).toEqual([0, 1]);
+});
+
+test('complete stops next and late subscribers only complete', function () {
+  const subject = new MiniBehaviorSubject(1);
+  let completed = 0;
+  const values = [];
+  subject.subscribe(function (value) { values.push(value); }, function () {}, function () { completed += 1; });
+  subject.complete();
+  subject.next(2);
+  let lateValue = 0;
+  let lateComplete = 0;
+  subject.subscribe(function () { lateValue += 1; }, function () {}, function () { lateComplete += 1; });
+  expect(values).toEqual([1]);
+  expect(completed).toBe(1);
+  expect(lateValue).toBe(0);
+  expect(lateComplete).toBe(1);
+});
+'''
+hints = ["Lưu mỗi subscription cùng observer của nó trong Set để có thể gỡ riêng.", "Phân biệt trạng thái subject đã complete với trạng thái subscription riêng lẻ."]
+explanation = "BehaviorSubject multicast giá trị mới và replay giá trị hiện tại cho người đăng ký sau."
+sources = ["rxjs/guide/subject"]
+
+[[questions]]
+id = "ng-032"
+module = "rxjs-angular"
+type = "single"
+difficulty = 2
+prompt = "Luồng tìm kiếm nhận từ khóa mới và không cần kết quả của request cũ nữa. Higher-order operator nào thường phù hợp?"
+options = ["switchMap", "concatMap", "mergeMap", "exhaustMap"]
+answer = [0]
+explanation = "switchMap unsubscribe luồng con trước khi chuyển sang luồng con ứng với giá trị mới."
+sources = ["rxjs/api/operators/switchmap"]
+
+[[questions]]
+id = "ng-033"
+module = "rxjs-angular"
+type = "single"
+difficulty = 2
+prompt = "Tải nhiều ảnh độc lập và chấp nhận kết quả hoàn thành không theo thứ tự đầu vào. Operator nào phù hợp?"
+options = ["mergeMap", "switchMap", "concatMap", "exhaustMap"]
+answer = [0]
+explanation = "mergeMap cho phép các inner Observable chạy đồng thời; có thể giới hạn concurrency khi cần."
+sources = ["rxjs/api/operators/mergemap"]
+
+[[questions]]
+id = "ng-034"
+module = "rxjs-angular"
+type = "single"
+difficulty = 3
+prompt = "Người dùng bấm submit nhiều lần trong khi request đầu vẫn chạy; muốn bỏ các lần bấm tiếp theo cho đến khi hoàn tất. Chọn gì?"
+options = ["exhaustMap", "switchMap", "mergeMap", "concatMap"]
+answer = [0]
+explanation = "exhaustMap bỏ qua đầu vào mới khi inner Observable hiện tại chưa hoàn tất."
+sources = ["rxjs/api/operators/exhaustmap"]
+
+[[questions]]
+id = "ng-035"
+module = "rxjs-angular"
+type = "multiple"
+difficulty = 3
+prompt = "Chọn các phát biểu đúng về kết hợp luồng và xử lý lỗi."
+options = ["combineLatest chờ mỗi nguồn phát ít nhất một giá trị rồi phát kết hợp khi nguồn thay đổi", "forkJoin thường phát kết quả cuối sau khi tất cả nguồn hoàn tất", "catchError có thể thay nguồn lỗi bằng Observable khác", "retry có thể lặp lại request có tác dụng phụ mà không cần xem xét idempotency", "concatMap giữ thứ tự xử lý inner bằng cách xếp hàng"]
+answer = [0, 1, 2, 4]
+explanation = "retry cần cân nhắc tác dụng phụ và tính idempotent; các operator còn lại có semantics như mô tả."
+sources = ["rxjs/api/operators/combinelatest", "rxjs/api/operators/catcherror", "rxjs/api/operators/retry", "rxjs/api/operators/concatmap"]
+
+[[questions]]
+id = "ng-036"
+module = "rxjs-angular"
+type = "fill"
+difficulty = 2
+prompt = '''
+Trong component Angular, điền operator để gắn subscription với vòng đời component:
+
+~~~ts
+source.pipe({{blank}}()).subscribe();
+~~~
+'''
+blanks = [["takeUntilDestroyed"]]
+explanation = "takeUntilDestroyed tự hoàn tất subscription khi DestroyRef tương ứng bị hủy."
+sources = ["angular/api/core/rxjs-interop/takeuntildestroyed"]
+
+[[questions]]
+id = "ng-037"
+module = "rxjs-angular"
+type = "fill"
+difficulty = 2
+prompt = '''
+Điền hai API Angular để chuyển Observable thành signal đọc được và signal thành Observable:
+
+- Observable sang signal: {{blank}}
+- Signal sang Observable: {{blank}}
+'''
+blanks = [["toSignal"], ["toObservable"]]
+explanation = "toSignal chuyển giá trị Observable thành signal; toObservable phát thay đổi của signal thành Observable."
+sources = ["angular/api/core/rxjs-interop/tosignal", "angular/api/core/rxjs-interop/toobservable"]
+
+[[questions]]
+id = "ng-c05"
+module = "rxjs-angular"
+type = "code"
+difficulty = 3
+lang = "javascript"
+title = "switchMap hủy inner cũ"
+prompt = '''
+Viết MiniObservable và switchMap(project) bằng JavaScript thuần.
+
+- Observable constructor nhận producer(observer), subscribe(next, error, complete) trả subscription unsubscribe().
+- switchMap chỉ chuyển tiếp giá trị từ inner Observable mới nhất.
+- Mỗi outer value mới phải unsubscribe inner trước đó và chạy teardown của inner đó.
+- Khi outer hoàn tất, chỉ complete downstream sau khi inner hiện tại hoàn tất.
+- Unsubscribe downstream phải hủy outer và inner hiện tại.
+'''
+starter = '''
+class MiniObservable {
+  constructor(producer) { this.producer = producer; }
+  subscribe(next) { this.producer({ next: next }); return { unsubscribe: function () {} }; }
+  pipe(operator) { return operator(this); }
+}
+function switchMap(project) {
+  return function (source) { return new MiniObservable(function (observer) {
+    return source.subscribe(observer.next);
+  }); };
+}
+'''
+solution = '''
+class MiniObservable {
+  constructor(producer) { this.producer = producer; }
+  subscribe(next, error, complete) {
+    let stopped = false;
+    let teardown;
+    let closed = false;
+    const subscription = {
+      get closed() { return closed; },
+      unsubscribe: function () {
+        if (closed) return;
+        closed = true;
+        if (typeof teardown === 'function') teardown();
+        else if (teardown && typeof teardown.unsubscribe === 'function') teardown.unsubscribe();
+      }
+    };
+    const observer = {
+      next: function (value) { if (!stopped && !closed && next) next(value); },
+      error: function (reason) {
+        if (stopped || closed) return;
+        stopped = true;
+        if (error) error(reason);
+        subscription.unsubscribe();
+      },
+      complete: function () {
+        if (stopped || closed) return;
+        stopped = true;
+        if (complete) complete();
+        subscription.unsubscribe();
+      }
+    };
+    const result = this.producer(observer);
+    if (closed) {
+      if (typeof result === 'function') result();
+      else if (result && typeof result.unsubscribe === 'function') result.unsubscribe();
+    } else {
+      teardown = result;
+    }
+    return subscription;
+  }
+  pipe(operator) { return operator(this); }
+}
+
+function switchMap(project) {
+  return function (source) {
+    return new MiniObservable(function (observer) {
+      let outerSub;
+      let innerSub = null;
+      let innerActive = false;
+      let outerDone = false;
+      let index = 0;
+      outerSub = source.subscribe(function (value) {
+        const current = ++index;
+        if (innerSub) innerSub.unsubscribe();
+        innerSub = null;
+        innerActive = true;
+        const candidate = project(value).subscribe(function (innerValue) {
+          if (current === index) observer.next(innerValue);
+        }, observer.error, function () {
+          if (current !== index) return;
+          innerActive = false;
+          innerSub = null;
+          if (outerDone) observer.complete();
+        });
+        if (current === index && !candidate.closed) innerSub = candidate;
+      }, observer.error, function () {
+        outerDone = true;
+        if (!innerActive) observer.complete();
+      });
+      return function () {
+        if (outerSub) outerSub.unsubscribe();
+        if (innerSub) innerSub.unsubscribe();
+      };
+    });
+  };
+}
+'''
+tests = '''
+test('new outer value cancels old timer and only latest value emits', function () {
+  jest.useFakeTimers();
+  let emit;
+  const values = [];
+  const source = new MiniObservable(function (observer) { emit = observer.next; });
+  source.pipe(switchMap(function (item) {
+    return new MiniObservable(function (observer) {
+      const id = setTimeout(function () { observer.next(item.value); observer.complete(); }, item.delay);
+      return function () { clearTimeout(id); };
+    });
+  })).subscribe(function (value) { values.push(value); });
+  emit({ value: 'old', delay: 20 });
+  jest.advanceTimersByTime(5);
+  emit({ value: 'new', delay: 10 });
+  jest.advanceTimersByTime(10);
+  expect(values).toEqual(['new']);
+});
+
+test('switching runs teardown on the previous inner', function () {
+  let emit;
+  let cleaned = 0;
+  const source = new MiniObservable(function (observer) { emit = observer.next; });
+  const sub = source.pipe(switchMap(function () {
+    return new MiniObservable(function () { return function () { cleaned += 1; }; });
+  })).subscribe(function () {});
+  emit(1);
+  emit(2);
+  expect(cleaned).toBe(1);
+  sub.unsubscribe();
+  expect(cleaned).toBe(2);
+});
+
+test('outer completion waits for the active inner', function () {
+  jest.useFakeTimers();
+  let send;
+  let finish;
+  let completed = false;
+  const source = new MiniObservable(function (observer) { send = observer.next; finish = observer.complete; });
+  source.pipe(switchMap(function (value) {
+    return new MiniObservable(function (observer) {
+      const id = setTimeout(function () { observer.next(value); observer.complete(); }, 4);
+      return function () { clearTimeout(id); };
+    });
+  })).subscribe(function () {}, function () {}, function () { completed = true; });
+  send(8);
+  finish();
+  expect(completed).toBe(false);
+  jest.advanceTimersByTime(4);
+  expect(completed).toBe(true);
+});
+
+test('downstream unsubscribe cancels the active inner timer', function () {
+  jest.useFakeTimers();
+  let emit;
+  const values = [];
+  const source = new MiniObservable(function (observer) { emit = observer.next; });
+  const sub = source.pipe(switchMap(function (value) {
+    return new MiniObservable(function (observer) {
+      const id = setTimeout(function () { observer.next(value); }, 5);
+      return function () { clearTimeout(id); };
+    });
+  })).subscribe(function (value) { values.push(value); });
+  emit('skip');
+  sub.unsubscribe();
+  jest.advanceTimersByTime(5);
+  expect(values).toEqual([]);
+});
+'''
+hints = ["Lưu inner subscription hiện tại và tăng chỉ số mỗi khi outer phát giá trị mới.", "Outer complete không có nghĩa downstream complete nếu inner hiện tại còn chạy."]
+explanation = "switchMap đổi sang inner mới bằng cách hủy subscription inner cũ, tránh đưa kết quả lỗi thời tới consumer."
+sources = ["rxjs/api/operators/switchmap", "rxjs/guide/subscription"]
+
+[[questions]]
+id = "ng-c06"
+module = "rxjs-angular"
+type = "code"
+difficulty = 2
+lang = "javascript"
+title = "debounceTime với fake timers"
+prompt = '''
+Viết MiniObservable và debounceTime(delay) bằng JavaScript thuần.
+
+- Mỗi giá trị mới hủy timer trước và bắt đầu lại khoảng chờ.
+- Phát giá trị gần nhất khi không có giá trị mới trong delay mili giây.
+- Khi nguồn hoàn tất, phát giá trị đang chờ ngay rồi complete.
+- Khi nguồn lỗi, hủy timer và chuyển lỗi xuống observer.
+- Unsubscribe phải dọn subscription nguồn và timer.
+'''
+starter = '''
+class MiniObservable {
+  constructor(producer) { this.producer = producer; }
+  subscribe(next) { this.producer({ next: next }); return { unsubscribe: function () {} }; }
+  pipe(operator) { return operator(this); }
+}
+function debounceTime(delay) {
+  return function (source) { return new MiniObservable(function (observer) {
+    return source.subscribe(observer.next);
+  }); };
+}
+'''
+solution = '''
+class MiniObservable {
+  constructor(producer) { this.producer = producer; }
+  subscribe(next, error, complete) {
+    let stopped = false;
+    let teardown;
+    let closed = false;
+    const subscription = {
+      get closed() { return closed; },
+      unsubscribe: function () {
+        if (closed) return;
+        closed = true;
+        if (typeof teardown === 'function') teardown();
+        else if (teardown && typeof teardown.unsubscribe === 'function') teardown.unsubscribe();
+      }
+    };
+    const observer = {
+      next: function (value) { if (!stopped && !closed && next) next(value); },
+      error: function (reason) {
+        if (stopped || closed) return;
+        stopped = true;
+        if (error) error(reason);
+        subscription.unsubscribe();
+      },
+      complete: function () {
+        if (stopped || closed) return;
+        stopped = true;
+        if (complete) complete();
+        subscription.unsubscribe();
+      }
+    };
+    const result = this.producer(observer);
+    if (closed) {
+      if (typeof result === 'function') result();
+      else if (result && typeof result.unsubscribe === 'function') result.unsubscribe();
+    } else {
+      teardown = result;
+    }
+    return subscription;
+  }
+  pipe(operator) { return operator(this); }
+}
+
+function debounceTime(delay) {
+  return function (source) {
+    return new MiniObservable(function (observer) {
+      let timer = null;
+      let latest;
+      let hasValue = false;
+      let sourceSub;
+      sourceSub = source.subscribe(function (value) {
+        latest = value;
+        hasValue = true;
+        if (timer !== null) clearTimeout(timer);
+        timer = setTimeout(function () {
+          timer = null;
+          if (hasValue) {
+            hasValue = false;
+            observer.next(latest);
+          }
+        }, delay);
+      }, function (reason) {
+        if (timer !== null) clearTimeout(timer);
+        timer = null;
+        hasValue = false;
+        observer.error(reason);
+      }, function () {
+        if (timer !== null) clearTimeout(timer);
+        timer = null;
+        if (hasValue) {
+          hasValue = false;
+          observer.next(latest);
+        }
+        observer.complete();
+      });
+      return function () {
+        sourceSub.unsubscribe();
+        if (timer !== null) clearTimeout(timer);
+        timer = null;
+      };
+    });
+  };
+}
+'''
+tests = '''
+test('only emits the latest value after the quiet period', function () {
+  jest.useFakeTimers();
+  let emit;
+  const values = [];
+  const source = new MiniObservable(function (observer) { emit = observer.next; });
+  source.pipe(debounceTime(10)).subscribe(function (value) { values.push(value); });
+  emit('a');
+  jest.advanceTimersByTime(6);
+  emit('b');
+  jest.advanceTimersByTime(9);
+  expect(values).toEqual([]);
+  jest.advanceTimersByTime(1);
+  expect(values).toEqual(['b']);
+});
+
+test('source completion flushes a pending value immediately', function () {
+  jest.useFakeTimers();
+  let emit;
+  let finish;
+  const values = [];
+  let completed = false;
+  const source = new MiniObservable(function (observer) { emit = observer.next; finish = observer.complete; });
+  source.pipe(debounceTime(20)).subscribe(function (value) { values.push(value); }, function () {}, function () { completed = true; });
+  emit(3);
+  finish();
+  expect(values).toEqual([3]);
+  expect(completed).toBe(true);
+});
+
+test('source error cancels pending value, forwards error, and tears down source', function () {
+  jest.useFakeTimers();
+  let emit;
+  let fail;
+  let cleaned = 0;
+  const failure = new Error('source failed');
+  const values = [];
+  let receivedError;
+  const source = new MiniObservable(function (observer) {
+    emit = observer.next;
+    fail = observer.error;
+    return function () { cleaned += 1; };
+  });
+  source.pipe(debounceTime(10)).subscribe(function (value) { values.push(value); }, function (error) { receivedError = error; });
+  emit('pending');
+  fail(failure);
+  jest.advanceTimersByTime(10);
+  expect(values).toEqual([]);
+  expect(receivedError).toBe(failure);
+  expect(cleaned).toBe(1);
+});
+
+test('a later value resets the previous timer', function () {
+  jest.useFakeTimers();
+  let emit;
+  const values = [];
+  const source = new MiniObservable(function (observer) { emit = observer.next; });
+  source.pipe(debounceTime(5)).subscribe(function (value) { values.push(value); });
+  emit(1);
+  jest.advanceTimersByTime(5);
+  emit(2);
+  jest.advanceTimersByTime(5);
+  expect(values).toEqual([1, 2]);
+});
+
+test('unsubscribe cancels pending timer and source', function () {
+  jest.useFakeTimers();
+  let emit;
+  let cleaned = 0;
+  const source = new MiniObservable(function (observer) {
+    emit = observer.next;
+    return function () { cleaned += 1; };
+  });
+  const values = [];
+  const sub = source.pipe(debounceTime(7)).subscribe(function (value) { values.push(value); });
+  emit('skip');
+  sub.unsubscribe();
+  jest.advanceTimersByTime(7);
+  expect(values).toEqual([]);
+  expect(cleaned).toBe(1);
+});
+'''
+hints = ["Mỗi next phải clearTimeout trước khi tạo timer mới.", "Hoàn tất và lỗi là hai đường kết thúc khác nhau: complete flush giá trị pending, error loại bỏ nó."]
+explanation = "debounceTime chờ khoảng lặng để gộp các giá trị liên tiếp và luôn xử lý timer đúng khi kết thúc."
+sources = ["rxjs/api/operators/debouncetime", "rxjs/guide/subscription"]
+
+[[questions]]
+id = "ng-038"
+module = "rxjs-angular"
+type = "single"
+difficulty = 2
+prompt = "HttpClient functional interceptor thường phù hợp để làm gì?"
+options = ["Áp dụng logic request/response dùng chung như header hoặc logging có kiểm soát", "Thay thế validator phía server", "Tạo component từ response", "Bỏ qua mọi lỗi mạng"]
+answer = [0]
+explanation = "Interceptor gom logic HTTP dùng chung; tránh đặt bí mật hoặc quyền tin cậy chỉ ở phía client."
+sources = ["angular/guide/http/interceptors", "angular/api/common/http/httpclient"]
+
+[[questions]]
+id = "ng-039"
+module = "rxjs-angular"
+type = "single"
+difficulty = 3
+prompt = "Vì sao không nên retry mù một request ghi dữ liệu khi chưa biết nó idempotent?"
+options = ["Request có thể chạy tác dụng phụ nhiều lần", "Retry biến Observable thành signal", "Retry luôn xóa dữ liệu ở server", "HttpClient không phát error"]
+answer = [0]
+explanation = "Một retry sau lỗi không rõ kết quả có thể tạo thao tác trùng; thiết kế idempotency hoặc retry policy phù hợp."
+sources = ["rxjs/api/operators/retry", "angular/api/common/http/httpclient"]
+
+[[questions]]
+id = "angular-dv001"
+module = "angular-dv-http"
+type = "single"
+difficulty = 1
+prompt = "Trong HttpClient, generic get<User>() có đảm bảo response JSON thực tế đúng cấu trúc User ở runtime không?"
+options = ["Có, Angular tự kiểm tra mọi field trước khi trả response", "Không, generic chỉ cung cấp kỳ vọng kiểu cho TypeScript khi biên dịch", "Có, nhưng chỉ khi bật interceptor", "Không, vì HttpClient luôn trả về chuỗi"]
+answer = [1]
+explanation = "TypeScript không tự xác thực dữ liệu mạng lúc chạy; nếu cần bảo đảm cấu trúc, ứng dụng phải kiểm tra dữ liệu tại ranh giới nhận."
+sources = ["angular/guide/http/making-requests", "angular/api/common/http/httpclient"]
+
+[[questions]]
+id = "angular-dv002"
+module = "angular-dv-http"
+type = "single"
+difficulty = 2
+prompt = "Một Observable do HttpClient tạo được subscribe hai lần độc lập. Điều gì thường xảy ra?"
+options = ["Request chỉ gửi một lần vì Observable luôn chia sẻ response", "Mỗi subscription có thể gửi một request mới", "Subscription thứ hai tự dùng cache của trình duyệt", "Observable phát response trước cả khi subscribe"]
+answer = [1]
+explanation = "HttpClient Observable là lazy và mỗi subscription thường khởi chạy một request riêng; cần chia sẻ/caching có chủ ý nếu muốn dùng chung kết quả."
+sources = ["angular/guide/http/making-requests"]
+
+[[questions]]
+id = "angular-dv003"
+module = "angular-dv-http"
+type = "single"
+difficulty = 2
+prompt = "Ô tìm kiếm gửi request theo từng từ khóa; kết quả của từ khóa cũ không còn cần thiết khi có từ khóa mới. Cách xử lý nào phù hợp?"
+options = ["switchMap để chuyển sang request mới và hủy subscription của request cũ", "concatMap để giữ mọi kết quả theo thứ tự", "mergeMap để mọi request đều luôn hoàn tất", "subscribe lồng nhau mà không giữ subscription"]
+answer = [0]
+explanation = "switchMap giữ luồng con mới nhất; khi nguồn phát giá trị mới, subscription tới request trước bị hủy."
+sources = ["rxjs/api/operators/switchmap", "angular/guide/http/making-requests"]
+
+[[questions]]
+id = "angular-dv004"
+module = "angular-dv-http"
+type = "single"
+difficulty = 2
+prompt = "Trong ứng dụng standalone, cách nào đăng ký functional interceptor với HttpClient?"
+options = ["Đưa interceptor vào withInterceptors() trong provideHttpClient()", "Khai báo interceptor như một validator của FormGroup", "Gọi interceptor trực tiếp trong mỗi template", "Thêm interceptor vào danh sách routes"]
+answer = [0]
+explanation = "Functional interceptor được cung cấp qua cấu hình HttpClient, thường bằng provideHttpClient(withInterceptors([...]))."
+sources = ["angular/guide/http/setup", "angular/guide/http/interceptors", "angular/api/common/http/providehttpclient"]
+
+[[questions]]
+id = "angular-dv005"
+module = "angular-dv-http"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các nhận định đúng về HttpClient và request đang chạy."
+options = ["Mỗi subscription độc lập có thể làm phát sinh một request mới", "HttpParams.set() sửa chính object hiện tại và luôn trả về void", "HttpParams và HttpHeaders là bất biến; cần dùng object được trả về", "Unsubscribe có thể hủy việc chờ một request HttpClient chưa hoàn tất", "Generic get<User>() kiểm tra JSON lúc chạy"]
+answer = [0, 2, 3]
+explanation = "Subscription thường khởi chạy request; params/headers là bất biến; unsubscribe có thể hủy request đang chờ. Generic TypeScript không xác thực JSON runtime."
+sources = ["angular/guide/http/making-requests", "angular/api/common/http/httpparams", "angular/api/common/http/httpheaders"]
+
+[[questions]]
+id = "angular-dv006"
+module = "angular-dv-http"
+type = "multiple"
+difficulty = 3
+prompt = "Chọn các nhận định đúng về xử lý lỗi trong luồng request."
+options = ["HttpErrorResponse có thể biểu diễn lỗi từ response server hoặc lỗi mạng", "Đặt catchError bên trong switchMap có thể giúp luồng từ khóa bên ngoài tiếp tục sau lỗi một request", "Vì HttpClient Observable là cold nên retry POST luôn an toàn", "Interceptor có thể thay thế việc server kiểm tra dữ liệu và quyền truy cập"]
+answer = [0, 1]
+explanation = "HttpErrorResponse gom các tình huống lỗi HTTP/mạng; vị trí catchError quyết định luồng nào được phục hồi. Cold Observable không làm thao tác ghi trở nên idempotent."
+sources = ["angular/guide/http/making-requests", "angular/guide/http/interceptors", "angular/api/common/http/httperrorresponse"]
+
+[[questions]]
+id = "angular-dv007"
+module = "angular-dv-http"
+type = "fill"
+difficulty = 1
+prompt = "Các phương thức HttpClient như get() trả về một {{blank}} có thể subscribe để gửi request."
+blanks = [["Observable"]]
+explanation = "HttpClient biểu diễn kết quả request bằng Observable; việc subscribe thường khởi chạy request."
+sources = ["angular/guide/http/making-requests"]
+
+[[questions]]
+id = "angular-dv008"
+module = "angular-dv-http"
+type = "essay"
+difficulty = 3
+prompt = "Câu hỏi phỏng vấn: mô tả cách bạn thiết kế luồng tìm kiếm dùng HttpClient khi người dùng nhập liên tục. Giải thích cách hủy request cũ, đặt xử lý lỗi và quyết định có retry hay không."
+keywords = [["cancellation", "unsubscribe", "hủy request"], ["idempotent", "idempotency"], ["error handling", "catchError", "xử lý lỗi"]]
+min_keywords = 2
+model_answer = '''Dùng switchMap để request mới nhất thay thế request cũ; việc unsubscribe tạo cancellation cho request trước. Đặt catchError trong luồng con nếu cần giữ luồng nhập liệu tiếp tục sau lỗi. Chỉ áp dụng retry khi chính sách lỗi phù hợp và thao tác có tính idempotent hoặc có cơ chế chống gửi trùng.'''
+explanation = "Câu trả lời tốt liên hệ vòng đời subscription với request, phân biệt lỗi của một request với lỗi toàn luồng và tránh lặp tác dụng phụ."
+sources = ["rxjs/api/operators/switchmap", "rxjs/api/operators/catcherror", "rxjs/api/operators/retry", "angular/guide/http/making-requests"]
+
+[[questions]]
+id = "angular-dvc01"
+module = "angular-dv-http"
+type = "code"
+lang = "javascript"
+difficulty = 2
+title = "Quyết định retry request HTTP"
+prompt = '''Viết hàm shouldRetryHttp(method, status) cho chính sách retry tự động bảo thủ. Trả về true chỉ khi method là GET, HEAD, PUT, DELETE hoặc OPTIONS và status là 408, 429, 500, 502, 503 hoặc 504. Method có thể viết thường hoặc hoa. Mọi tổ hợp khác trả về false; chính sách này không xét Idempotency-Key cho POST.'''
+starter = '''function shouldRetryHttp(method, status) {
+  return false;
+}'''
+solution = '''function shouldRetryHttp(method, status) {
+  const methodName = method.toUpperCase();
+  const retryableMethods = ["GET", "HEAD", "PUT", "DELETE", "OPTIONS"];
+  const transientStatuses = [408, 429, 500, 502, 503, 504];
+  return retryableMethods.includes(methodName) && transientStatuses.includes(status);
+}'''
+tests = '''test("cho phép GET với lỗi tạm thời", function () {
+  expect(shouldRetryHttp("GET", 503)).toBe(true);
+});
+
+test("không phân biệt hoa thường của method", function () {
+  expect(shouldRetryHttp("put", 429)).toBe(true);
+});
+
+test("không retry POST dù server lỗi tạm thời", function () {
+  expect(shouldRetryHttp("POST", 503)).toBe(false);
+});
+
+test("không retry lỗi không thuộc nhóm tạm thời", function () {
+  expect(shouldRetryHttp("GET", 404)).toBe(false);
+});
+
+test("không retry method không được cho phép", function () {
+  expect(shouldRetryHttp("PATCH", 500)).toBe(false);
+});'''
+hints = ["Chuẩn hóa method bằng toUpperCase() trước khi so sánh.", "Dùng hai danh sách cho phép và chỉ trả true khi cả method lẫn status đều khớp."]
+explanation = "Retry tự động cần tính đến tính lặp an toàn của method và các status có thể chỉ ra lỗi tạm thời."
+sources = ["angular/guide/http/making-requests", "angular/api/common/http/httpclient"]
+
+[[questions]]
+id = "angular-dv010"
+module = "angular-dv-ssr"
+type = "single"
+difficulty = 1
+prompt = "Trang hướng dẫn công khai chỉ đổi khi phát hành phiên bản mới. Chiến lược render nào thường phù hợp để tạo HTML trước?"
+options = ["Prerender", "Server rendering theo từng request", "Chỉ client rendering", "Hydration mà không có HTML ban đầu"]
+answer = [0]
+explanation = "Trang công khai có nội dung ổn định thường có thể tạo sẵn lúc build, giảm công việc render theo request."
+sources = ["angular/guide/ssr", "angular/api/ssr/rendermode"]
+
+[[questions]]
+id = "angular-dv011"
+module = "angular-dv-ssr"
+type = "single"
+difficulty = 2
+prompt = "Trang hồ sơ phải dựng nội dung theo cookie và dữ liệu mới nhất của request. Cách render nào phù hợp hơn prerender công khai?"
+options = ["Server rendering theo request", "Prerender một bản dùng chung cho mọi người", "Chỉ tạo nội dung trong lúc build", "Tắt mọi rendering"]
+answer = [0]
+explanation = "Nội dung phụ thuộc request hoặc người dùng không nên được tạo thành một bản HTML dùng chung khi build."
+sources = ["angular/guide/ssr", "angular/api/ssr/serverrouteserver"]
+
+[[questions]]
+id = "angular-dv012"
+module = "angular-dv-ssr"
+type = "single"
+difficulty = 2
+prompt = "Một service được thực thi trong quá trình server rendering cần dùng window để đọc kích thước màn hình. Vấn đề chính là gì?"
+options = ["window chỉ có trong môi trường trình duyệt nên không thể giả định luôn tồn tại trên server", "window chỉ hoạt động bên trong HttpInterceptor", "Angular tự chuyển mọi truy cập window thành request HTTP", "SSR cấm mọi service có dependency"]
+answer = [0]
+explanation = "Mã server chạy trong môi trường không có DOM trình duyệt; browser API cần được cô lập vào ngữ cảnh client phù hợp."
+sources = ["angular/guide/ssr"]
+
+[[questions]]
+id = "angular-dv013"
+module = "angular-dv-ssr"
+type = "single"
+difficulty = 2
+prompt = "Hydration chủ yếu cho phép ứng dụng làm gì sau khi HTML server được tải về?"
+options = ["Tái sử dụng DOM hiện có và gắn hành vi Angular phía client", "Xác thực quyền của request thay cho backend", "Tạo lại toàn bộ HTML ở build time", "Biến mọi route thành prerender"]
+answer = [0]
+explanation = "Hydration nối ứng dụng client với DOM server đã tạo, giúp tránh dựng lại toàn bộ cây giao diện."
+sources = ["angular/guide/ssr", "angular/api/ssr/provideserverrendering"]
+
+[[questions]]
+id = "angular-dv014"
+module = "angular-dv-ssr"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các nhận định đúng về hybrid rendering và SSR."
+options = ["Có thể chọn render mode khác nhau cho các route", "SSR tự thay thế kiểm tra quyền trên server", "Kết quả render đầu ở server và client nên nhất quán để hydration hoạt động ổn định", "Mọi API của trình duyệt đều có sẵn trong lúc server render"]
+answer = [0, 2]
+explanation = "Hybrid rendering chọn chiến lược theo route; hydration cần DOM ban đầu nhất quán. SSR không thay thế bảo mật backend và server không có sẵn browser API."
+sources = ["angular/guide/ssr", "angular/api/ssr/serverroute", "angular/api/ssr/rendermode"]
+
+[[questions]]
+id = "angular-dv015"
+module = "angular-dv-ssr"
+type = "multiple"
+difficulty = 3
+prompt = "Chọn các thực hành giúp tránh lỗi khi bật server rendering và hydration."
+options = ["Tránh tạo nội dung ban đầu phụ thuộc giá trị ngẫu nhiên khác nhau giữa server và client", "Đưa dữ liệu cá nhân vào HTML prerender dùng chung", "Chỉ truy cập browser API trong ngữ cảnh client phù hợp", "Kiểm tra side effect để tránh khởi chạy request trùng khi client tiếp nhận trang"]
+answer = [0, 2, 3]
+explanation = "Markup nhất quán, API đúng môi trường và side effect được kiểm soát giúp quá trình chuyển từ server sang client ổn định."
+sources = ["angular/guide/ssr"]
+
+[[questions]]
+id = "angular-dv016"
+module = "angular-dv-ssr"
+type = "fill"
+difficulty = 1
+prompt = "Trong cấu hình ServerRoute, trang công khai cần tạo HTML tại build có thể dùng RenderMode.{{blank}}."
+blanks = [["Prerender"]]
+explanation = "Prerender tạo trước HTML cho route trong quá trình build."
+sources = ["angular/api/ssr/rendermode", "angular/api/ssr/serverrouteprerender"]
+
+[[questions]]
+id = "angular-dv017"
+module = "angular-dv-ssr"
+type = "fill"
+difficulty = 2
+prompt = "Quá trình gắn ứng dụng Angular phía client lên DOM đã được server render gọi là {{blank}}."
+blanks = [["hydration"]]
+explanation = "Hydration tái sử dụng HTML/DOM đã có để kết nối hành vi phía client."
+sources = ["angular/guide/ssr", "angular/api/ssr/provideserverrendering"]
+
+[[questions]]
+id = "angular-dv018"
+module = "angular-dv-ssr"
+type = "essay"
+difficulty = 3
+prompt = "Câu hỏi phỏng vấn: bạn sẽ chọn client rendering, server rendering hay prerender cho các route khác nhau như thế nào? Nêu các rủi ro cần xử lý khi hydration khởi chạy trên trình duyệt."
+keywords = [["render mode", "rendering mode"], ["hydration"], ["browser api", "window", "document"], ["server-side rendering", "ssr"]]
+min_keywords = 3
+model_answer = '''Tôi chọn render mode theo dữ liệu và độ cá nhân hóa: route công khai ổn định có thể dùng prerender, route thay đổi theo request dùng server-side rendering, còn phần phụ thuộc mạnh vào client có thể render ở client. Khi hydration chạy, markup server và client cần nhất quán; browser API như window và document chỉ dùng trong ngữ cảnh client phù hợp.'''
+explanation = "Câu trả lời cần liên hệ chiến lược render với dữ liệu của route và nhận diện khác biệt môi trường server/client."
+sources = ["angular/guide/ssr", "angular/api/ssr/rendermode", "angular/api/ssr/serverroute"]
+
+[[questions]]
+id = "angular-dv019"
+module = "angular-dv-testing"
+type = "single"
+difficulty = 1
+prompt = "TestBed hữu ích nhất cho nhiệm vụ nào trong unit test Angular?"
+options = ["Tạo môi trường kiểm thử có cấu hình dependency và component cần kiểm tra", "Thay toàn bộ kiểm thử end-to-end trên trình duyệt", "Gửi request thật tới production API", "Tự sinh dữ liệu kiểm thử ngẫu nhiên cho mọi service"]
+answer = [0]
+explanation = "TestBed cấu hình môi trường Angular nhỏ để tạo component và cung cấp dependency cần cho unit test."
+sources = ["angular/guide/testing", "angular/api/core/testing/testbed"]
+
+[[questions]]
+id = "angular-dv020"
+module = "angular-dv-testing"
+type = "single"
+difficulty = 1
+prompt = "Sau khi tạo ComponentFixture, bạn cần chạy binding/lifecycle trước khi đọc kết quả render ban đầu. Thường gọi API nào?"
+options = ["fixture.detectChanges()", "fixture.destroy()", "TestBed.resetTestingModule()", "HttpTestingController.verify()"]
+answer = [0]
+explanation = "detectChanges() yêu cầu fixture chạy change detection để cập nhật view theo trạng thái component."
+sources = ["angular/guide/testing/components-basics", "angular/api/core/testing/componentfixture"]
+
+[[questions]]
+id = "angular-dv021"
+module = "angular-dv-testing"
+type = "single"
+difficulty = 2
+prompt = "Khi cấu hình test HTTP với provider function, thứ tự nào cho phép backend kiểm thử thay backend thật?"
+options = ["provideHttpClient() trước provideHttpClientTesting()", "provideHttpClientTesting() trước provideHttpClient()", "Chỉ đăng ký provideHttpClientTesting()", "Đăng ký hai provider trong component template"]
+answer = [0]
+explanation = "Cấu hình HttpClient trước, rồi provider kiểm thử thay backend bằng backend giả."
+sources = ["angular/guide/http/testing", "angular/api/common/http/testing/providehttpclienttesting"]
+
+[[questions]]
+id = "angular-dv022"
+module = "angular-dv-testing"
+type = "single"
+difficulty = 2
+prompt = "HttpTestingController.expectOne('/api/users') hữu ích nhất để xác nhận điều gì?"
+options = ["Có đúng một request khớp điều kiện được tạo và lấy request đó để kiểm tra", "Server production đã lưu user thành công", "Component không còn subscription nào", "Route đã được prerender"]
+answer = [0]
+explanation = "expectOne() tìm request phù hợp và lỗi nếu không có hoặc có nhiều hơn một request khớp."
+sources = ["angular/guide/http/testing", "angular/api/common/http/testing/httptestingcontroller"]
+
+[[questions]]
+id = "angular-dv023"
+module = "angular-dv-testing"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các bước đúng khi kiểm thử service gọi HttpClient bằng backend giả."
+options = ["Gọi method của service để phát request", "Dùng expectOne() để lấy request cần kiểm tra", "Dùng flush() để cung cấp response giả", "Bỏ qua mọi request còn treo vì chúng tự được đóng khi test kết thúc"]
+answer = [0, 1, 2]
+explanation = "Test khởi chạy request qua service, xác nhận nó bằng expectOne(), trả response giả bằng flush() và cuối cùng kiểm tra request chưa xử lý."
+sources = ["angular/guide/http/testing", "angular/api/common/http/testing/httptestingcontroller"]
+
+[[questions]]
+id = "angular-dv024"
+module = "angular-dv-testing"
+type = "multiple"
+difficulty = 3
+prompt = "Chọn các thực hành giúp component test tập trung và ít phụ thuộc implementation."
+options = ["Kiểm tra nội dung/hành vi mà người dùng hoặc consumer quan sát được", "Thay service ngoài phạm vi bằng provider giả nếu phù hợp mục tiêu test", "Kiểm tra mọi field private để test luôn biết chi tiết nội bộ", "Tạo trạng thái riêng cho mỗi test để tránh phụ thuộc thứ tự chạy"]
+answer = [0, 1, 3]
+explanation = "Tập trung vào hợp đồng quan sát được, cô lập dependency ngoài phạm vi và giữ test độc lập giúp test bền vững hơn."
+sources = ["angular/guide/testing/components-basics", "angular/guide/testing/services"]
+
+[[questions]]
+id = "angular-dv025"
+module = "angular-dv-testing"
+type = "fill"
+difficulty = 1
+prompt = "Để đồng bộ binding và cập nhật DOM của component fixture trong test, gọi fixture.{{blank}}()."
+blanks = [["detectChanges"]]
+explanation = "detectChanges() chạy change detection cho fixture."
+sources = ["angular/api/core/testing/componentfixture"]
+
+[[questions]]
+id = "angular-dv026"
+module = "angular-dv-testing"
+type = "fill"
+difficulty = 2
+prompt = "Sau khi xử lý các request mong đợi, gọi HttpTestingController.{{blank}}() để phát hiện request chưa được xử lý."
+blanks = [["verify"]]
+explanation = "verify() kiểm tra không còn request mở hoặc ngoài dự kiến trong test."
+sources = ["angular/guide/http/testing", "angular/api/common/http/testing/httptestingcontroller"]
+
+[[questions]]
+id = "angular-dv027"
+module = "angular-dv-testing"
+type = "essay"
+difficulty = 3
+prompt = "Câu hỏi phỏng vấn: bạn sẽ tách test component và service như thế nào, và kiểm thử một request HttpClient ra sao mà không gọi mạng thật?"
+keywords = [["testbed"], ["observable behavior", "user-visible behavior", "hành vi quan sát được"], ["httptestingcontroller"], ["flush"], ["verify"]]
+min_keywords = 3
+model_answer = '''Tôi dùng TestBed để cấu hình component hoặc service cùng dependency cần thiết, rồi kiểm tra observable behavior thay vì private implementation. Với request, HttpTestingController.expectOne() xác nhận request, flush() cấp response giả và verify() phát hiện request còn sót.'''
+explanation = "Câu trả lời cần thể hiện ranh giới unit test và quy trình kiểm soát request giả."
+sources = ["angular/guide/testing", "angular/guide/http/testing", "angular/api/common/http/testing/httptestingcontroller"]

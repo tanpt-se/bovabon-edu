@@ -1,0 +1,574 @@
+[modules.testing-principles]
+title = "Testing Principles"
+description = "The testing pyramid, AAA, and choosing suitable test doubles."
+lesson = '''
+### Choosing a testing level
+| Level | Scope | Characteristics |
+|---|---|---|
+| Unit | One function or small unit | Fast, and failures are usually easy to localize |
+| Integration | Several components working together | Catches boundary issues such as database, router, or component interactions |
+| E2E | A user flow through the application | Close to real usage, but slower and more demanding to keep stable |
+
+The testing pyramid is a guideline: have many small tests, enough integration tests, and a small number of critical E2E tests. It is not a fixed ratio for every product. Each test should be independent, produce a deterministic result, and check meaningful behavior.
+
+### AAA and test doubles
+AAA divides a test into **Arrange** (prepare data), **Act** (perform the action), and **Assert** (check the result). In this curriculum, a stub returns predefined data, a mock records calls so interactions can be checked, a spy observes or wraps a real function, and a fake is a simple implementation that behaves like a subsystem.
+
+For example, a cart-total test can use fixed data and assert the total; an email test can replace the email service with a mock at the side-effect boundary. Common mistakes include mocking every internal function, checking implementation details instead of outcomes, and sharing state in a way that makes tests depend on execution order.
+'''
+
+[questions.tst-001]
+prompt = "What does a unit test usually focus on?"
+options = ["One small unit with controlled dependencies", "An entire flow through a real browser", "Production page load time", "Deployment configuration for every environment"]
+explanation = "A unit test targets a small unit to provide fast feedback and make failures easier to localize."
+
+[questions.tst-002]
+prompt = "A project has many slow E2E tests that often fail because of selectors, while pure logic has no tests. What is the most reasonable adjustment?"
+options = ["Add small tests for logic and integration tests at important boundaries; keep E2E tests for core user flows", "Convert every test to E2E to make it more like production", "Delete all tests because some are flaky", "Add a fixed wait to every test"]
+explanation = "The testing pyramid suggests using faster tests for logic and reserving E2E tests for high-value user flows."
+
+[questions.tst-003]
+prompt = "In the AAA structure, what is the Act step?"
+options = ["Preparing the initial data and conditions", "Calling the action or function being tested", "Checking the expected result", "Removing every test file from the repository"]
+explanation = "Act is the step that performs the behavior under test, usually by calling a function or interacting with the system."
+
+[questions.tst-004]
+prompt = "Under this curriculum's convention, which test double is suitable when you need to check whether a function was called with the right arguments?"
+explanation = "A mock records calls so a test can verify interactions. Terminology can vary between teams, so make the project's convention explicit."
+
+[questions.tst-005]
+prompt = "Which characteristics make a unit test reliable and easy to maintain? Select all that apply."
+options = ["It produces a deterministic result for the same input", "It checks behavior that matters to users or the function contract", "It depends on another test's execution order", "It has a small scope so failures are easy to locate"]
+explanation = "Deterministic behavior, meaningful assertions, and clear scope help keep tests stable. Order dependencies make a suite prone to intermittent failures."
+
+[questions.tst-006]
+prompt = '''Fill in the three AAA steps in order:
+
+1. {{blank}}: prepare data and conditions.
+2. {{blank}}: perform the action.
+3. {{blank}}: verify the result.
+'''
+explanation = "AAA stands for Arrange, Act, Assert."
+
+[questions.tst-007]
+prompt = "Explain when to use a unit test and when an integration test is needed; include one limitation of replacing every dependency with a mock."
+keywords = [["unit test", "unit testing"], ["integration test", "integration testing"], ["mock", "mock object"]]
+model_answer = '''A unit test is suitable for checking small pieces of logic quickly and in isolation. An integration test is needed to verify that components work together correctly at their boundaries. Mocking every dependency can miss integration failures and make tests depend on implementation details.'''
+explanation = "A strong answer distinguishes the purposes of unit and integration tests and recognizes that mocks do not replace integration checks."
+
+[modules.testing-unit]
+title = "Unit Testing with Vitest and Jest"
+description = "Matchers, mock functions and modules, fake timers, snapshots, and asynchronous assertions."
+lesson = '''
+### Assertions and dependency isolation
+| Need | Common matcher or technique |
+|---|---|
+| Compare primitives | `toBe` usually checks the same value or identity |
+| Compare structures | `toEqual` deeply compares fields |
+| Check calls | A mock or spy with a call-count or argument matcher |
+| Control time | Fake timers let tests advance time deliberately |
+
+Vitest and Jest have many similar APIs, but their configuration and module-mocking details are not identical. Module mocks are useful for isolating boundaries such as external libraries or I/O; avoid mocking internal logic just to make a test match the current structure.
+
+Fake timers make timeouts, intervals, and simulated time controllable; restore the clock and mock state after each test. For asynchronous code, always return or await the Promise so the runner knows when the test is complete.
+
+A snapshot stores an output representation for comparison on a later run. Keep snapshots small and stable, and review the diff before updating them. Large snapshots, random data, or bulk updates without reviewing the diff can hide regressions. Common mistakes include confusing `toBe` with deep equality, allowing mock state to leak into the next test, and using real sleeps that slow the suite.
+'''
+
+[questions.tst-008]
+prompt = "In Vitest/Jest, which matcher is usually suitable for comparing two objects with different identities but the same nested structure?"
+explanation = "`toEqual` checks deep structure; `toBe` is better suited to primitive values or cases where identity must match."
+
+[questions.tst-009]
+prompt = "A function calls an external payment SDK. What is a reasonable way to use a module mock?"
+options = ["Mock the SDK at the boundary to verify the submitted data, while testing business logic separately", "Mock every function in the business-logic module", "Mock the test runner's matchers", "Replace every assertion with a snapshot"]
+explanation = "Mocking at the side-effect boundary avoids dependence on an external service while keeping the test focused on the contract that matters."
+
+[questions.tst-010]
+prompt = "What is the main benefit of testing a debounce function with fake timers?"
+options = ["You can advance the clock in a controlled way without waiting in real time", "It automatically proves the interface is accessible", "It replaces every assertion", "It measures production CPU speed precisely"]
+explanation = "Fake timers let you advance simulated time to check when a callback runs without slowing down the test."
+
+[questions.tst-011]
+prompt = "When is a snapshot test most useful?"
+options = ["When the output is relatively stable and its diff can be reviewed", "For all business logic without any assertions", "For random timestamp output that is not normalized", "As a replacement for browser accessibility checks"]
+explanation = "Snapshots can reveal intentional or accidental output changes, but their diffs still need review and important semantics need direct assertions."
+
+[questions.tst-012]
+prompt = "After using a mock function in a test, which practices help limit interactions between tests? Select all that apply."
+options = ["Reset or clear mock state as appropriate", "Await Promises created by the test", "Run dependent tests in a fixed order", "Restore fake timers after using them"]
+explanation = "Cleaning up mock state, awaiting asynchronous work, and restoring timers help keep tests independent. Fixing execution order does not remove dependencies between tests."
+
+[questions.tst-013]
+prompt = '''Fill in the matchers for deep object equality and checking that a function was called exactly twice:
+
+```js
+expect({ id: 4 }).{{blank}}({ id: 4 })
+expect(callback).{{blank}}(2)
+```
+'''
+explanation = "`toEqual` compares object structure; `toHaveBeenCalledTimes` verifies the call count of a mock or spy."
+
+[questions.tst-014]
+prompt = "A test calls a function that returns a Promise, but the test ends before the Promise settles. What is the most reliable fix?"
+options = ["Return or await the Promise in the test", "Add an arbitrarily long sleep at the end of every test", "Delete the asynchronous assertion", "Turn the callback into a snapshot"]
+explanation = "The runner must know when asynchronous work finishes; returning or awaiting the Promise lets it catch rejections at the right time."
+
+[questions.tst-015]
+title = "Create a Spy That Records Calls"
+prompt = '''Write `createSpy(implementation)` to return a spy function:
+- Each time it is called, append that call's argument list to `spy.calls`.
+- If `implementation` is a function, call it with the received arguments and return its result; otherwise return `undefined`.
+- `spy.calls` starts as an empty array and preserves call order.
+
+Example: `const add = createSpy((a, b) => a + b)`; `add(2, 3)` returns `5`, and `add.calls` is `[[2, 3]]`.
+'''
+explanation = "A spy stores the argument history and, when an implementation is provided, forwards the call to it."
+hints = ["Initialize the calls array once when creating the spy.", "Record `args` before calling the implementation."]
+
+[questions.tst-016]
+title = "Mini `expect` with `deepEqual`"
+prompt = '''Write `miniExpect(actual)` to return an object with a `toEqual(expected)` matcher.
+- `toEqual` returns `undefined` when the values are deeply equal.
+- If they are not equal, throw an `Error`.
+- Support primitives, `null`, arrays, and nested plain objects; compare objects by their sets of keys and values, regardless of key declaration order.
+- You do not need to handle cyclic objects or special prototypes.
+
+Example: `miniExpect({ a: [1] }).toEqual({ a: [1] })` does not throw.
+'''
+explanation = "Deep equality recursively compares keys and values; `Object.is` handles primitives, identical references, and cases such as NaN."
+hints = ["Compare primitives before iterating over keys.", "Distinguish arrays from ordinary objects."]
+
+[modules.testing-components]
+title = "Testing Components and Hooks"
+description = "Prioritize user-visible behavior, query by role/name, and test hooks in an appropriate context."
+lesson = '''
+### Checking what users can observe
+Component tests should interact with and verify meaningful content, state, or callbacks instead of depending on internal class names or implementation structure. With Testing Library, queries by role and accessible name often express the intent well: for example, find the button named “Save” and activate it.
+
+| Query method | Typical priority | Reason |
+|---|---|---|
+| Role and accessible name | High | Close to semantic HTML and how assistive technologies identify controls |
+| Label or visible content | High | Tied to content users can see |
+| Test id | When needed | Less dependent on CSS, but does not check semantics by itself |
+| Class or deeply nested structural selector | Low | Easily broken by UI refactoring |
+
+Hooks are often tested through a component that uses them, so the test can verify a user flow. `renderHook` is useful for an independently reusable hook; state updates triggered by interaction should be synchronized with the renderer's `act` mechanism. Component tests in a browser can check real semantics more closely than render-only simulations.
+
+Common mistakes include selecting a node by an internal class, calling a hook outside a React context, or asserting private state without checking the rendered outcome. Role/name queries are part of accessible querying; the actual accessible name also follows the platform's accessibility rules.
+'''
+
+[questions.tst-017]
+prompt = "In a component test, why should you prefer querying for a button by role and accessible name?"
+options = ["It checks semantics close to how users and assistive technologies find controls", "It is always faster than every other query", "It avoids asserting the outcome after an interaction", "It automatically verifies all server-side logic"]
+explanation = "Queries by role and accessible name are tied to semantics users can access and depend less on internal classes."
+
+[questions.tst-018]
+prompt = "A custom hook manages form state. Which option usually leads to the most resilient test?"
+options = ["Test the component using the hook through input, visible errors, and submission; use `renderHook` when the hook needs to be tested independently", "Read every private variable in the closure", "Snapshot only the hook's source code", "Call the hook directly in the test without a renderer"]
+explanation = "Testing through a component often reflects user behavior; `renderHook` is suitable when the reusable logic needs to be isolated."
+
+[questions.tst-019]
+prompt = "Which choices usually make component tests less dependent on implementation? Select all that apply."
+options = ["Find controls by role and accessible name", "Assert content or state visible to users", "Depend on automatically generated CSS classes", "Simulate interactions that fit the user flow"]
+explanation = "Role/name queries, visible outcomes, and interactions that resemble user behavior keep tests focused on the component's contract."
+
+[questions.tst-020]
+prompt = "Fill in the two parts used to query a button by semantic role and displayed name in Testing Library:\n\n```js\nscreen.{{blank}}('button', { {{blank}}: 'Lưu' })\n```"
+explanation = "`getByRole` accepts a role and the `name` option to match an accessible name."
+
+[questions.tst-021]
+prompt = "Explain why queries by role/name are usually more resilient than queries by internal class, and give one reasonable use for a test id."
+keywords = [["getByRole", "role query"], ["accessible name", "accessibility name"], ["test id", "data-testid"]]
+model_answer = '''A `getByRole` query with an accessible name expresses semantics users can recognize and is less tied to implementation details such as CSS classes. A test id can be useful when no suitable stable semantic query exists, but it does not by itself prove that a control has good semantics.'''
+explanation = "A good answer connects role/name queries with semantics and describes a test id as a deliberate fallback."
+
+[questions.tst-022]
+title = "Find a Node by Role and Name"
+prompt = '''Write `getByRole(tree, role, name)` to find exactly one node in a simulated tree. Each node is an object that may have `role`, `name`, `ariaLabel`, `text`, and `children` (an array of child nodes).
+- Traverse depth-first starting at the root.
+- In this model, the accessible name is `ariaLabel`; if it is not a string, use `name`, then `text`. If none of these is a string, use an empty string.
+- The role and name must match exactly.
+- Return the node object if there is exactly one match; throw an `Error` if there are no matches or more than one.
+- `tree` may be missing or null, in which case there is no match.
+
+This is a simplified model; you do not need to implement the browser's full accessible-name computation rules.
+'''
+explanation = "A get-by-style `getByRole` query must detect both missing and ambiguous results; this model intentionally supports only the described object tree."
+hints = ["Collect matching nodes instead of returning the first one immediately.", "Traverse `children` only when it is an array."]
+
+[modules.testing-e2e]
+title = "E2E Testing with Playwright and Cypress"
+description = "Locators, auto-waiting, web-first assertions, fixtures, traces, and Cypress retry behavior."
+lesson = '''
+### Locators and waiting for conditions
+A Playwright locator describes how to find an element and is evaluated again when used; actions such as `click` automatically wait for the element to become actionable. A web-first assertion such as `toBeVisible()` retries within its timeout while waiting for the expected state. Avoid fixed sleeps: they slow tests and do not guarantee that the application is ready.
+
+| Tool | Pattern | Remember |
+|---|---|---|
+| Playwright | `getByRole('button', { name: 'Save' })` | Prefer semantics; web-first assertions retry |
+| Cypress | `cy.get(...).should(...)` | Queries and assertions use an appropriate retry mechanism |
+| Fixture | Create context or data for a test | Choose a clear scope to avoid unintended shared state |
+| Trace | Review the timeline, screenshots, and action details | Useful for investigating CI failures that are hard to reproduce |
+
+Playwright fixtures allow setup to be shared under a controlled scope and manage their own lifecycle. Trace Viewer lets you review actions and context when a failure occurs; enabling traces on every run can increase storage costs.
+
+Common mistakes include keeping an old element handle after the DOM changes, using selectors tied to deeply nested structure, asserting immediately instead of using a web-first assertion, or using `waitForTimeout` to hide a race condition. Cypress also retries queries and assertions through its command chain; do not assume every Promise or arbitrary side effect is retried automatically.
+'''
+
+[questions.tst-023]
+prompt = "A page loads data asynchronously. In Playwright, what is usually a more stable way to wait for a button to appear?"
+options = ["Create a locator by role and use a web-first assertion such as `toBeVisible()`", "Wait a fixed 10 seconds before every assertion", "Find the element once and keep its reference through every render", "Skip the assertion because a click always succeeds"]
+explanation = "Locators and web-first assertions wait for a state within the timeout instead of relying on a fixed sleep."
+
+[questions.tst-024]
+prompt = "What is the main advantage of a web-first assertion such as `await expect(locator).toHaveText('Done')`?"
+options = ["It retries the condition within the timeout, giving the UI time to update", "It runs the assertion in every browser at once", "It ignores the timeout", "It automatically creates backend data fixtures"]
+explanation = "A web-first assertion waits for the condition to become true within the configured timeout, helping avoid common race conditions."
+
+[questions.tst-025]
+prompt = "After submitting a form, the application re-renders a list. Why is a locator often a better fit than keeping an old element handle?"
+options = ["A locator is resolved again when used, which suits a DOM that may change", "A locator ignores all selector errors", "An element handle cannot read properties", "A locator guarantees the backend will not fail"]
+explanation = "A locator describes how to find an element and can resolve it when an action or assertion runs, reducing the risk of using a stale node."
+
+[questions.tst-026]
+prompt = "An E2E failure occurs only in CI. Which measures help investigate it and reduce common causes? Select all that apply."
+options = ["Capture a trace or artifact on failure", "Use fixtures and data isolated per test", "Add a long sleep without identifying the condition to wait for", "Use suitable locators and auto-waiting assertions"]
+explanation = "A trace provides debugging evidence, fixtures isolate state, and retrying locators and assertions reduce races. A long sleep only hides the problem and slows the suite."
+
+[questions.tst-027]
+prompt = '''In Cypress, which command is commonly used to retry an assertion about a query's state until it passes or times out?
+
+```js
+cy.get('[role="status"]').{{blank}}('be.visible')
+```
+'''
+explanation = "`should` retries an assertion in a Cypress query chain according to Cypress's retry behavior."
+
+[questions.tst-028]
+title = "`waitFor` with a Timeout"
+prompt = '''Write `waitFor(check, options)` to return a Promise:
+- Call `check` immediately and then every `interval` ms.
+- If `check` returns a truthy value, resolve with that value.
+- If `check` returns a falsy value or throws, try again.
+- If `timeout` ms elapse without success, reject with an `Error` whose message is `Timed out`.
+- The defaults are `timeout` 1000 and `interval` 50; assume the values are valid numbers, `timeout >= 0`, and `interval > 0`.
+
+Example: `waitFor(() => ready, { timeout: 100, interval: 10 })` resolves when `ready` becomes truthy before or at the final check.
+'''
+explanation = "Polling immediately and using fake timers in the test lets you verify both retries and timeout behavior without waiting on the real clock."
+hints = ["Use `Date.now()` to calculate the remaining timeout.", "Call `check` before scheduling the first timer."]
+
+[modules.testing-strategy]
+title = "Testing Strategy and Reliability"
+description = "Coverage, flaky tests, CI, and the TDD loop."
+lesson = '''
+### Coverage and flaky tests
+Line coverage is the proportion of executable lines that ran out of all executable lines included in the report: `covered lines / total lines × 100%`. It shows how much code ran, but does not prove that assertions catch the right failures; high coverage can coexist with weak tests or missing important branches.
+
+A flaky test produces inconsistent results across runs even though the code and expected conditions have not changed. Common causes include race conditions, shared data, order dependencies, real clocks, networks, or differences in CI environments. Save logs or traces, isolate the test, and find the nondeterministic condition. Retries can help detect or classify intermittent failures, but they do not replace fixing the cause.
+
+| Practice | Goal |
+|---|---|
+| Run tests independently with separate data | Reduce cross-test interference |
+| Wait for conditions instead of sleeping | Reduce races and unnecessary waiting |
+| Run the suite in a stable CI environment | Detect regressions under consistent conditions |
+| TDD: Red → Green → Refactor | Write a behavior test before completing the implementation |
+
+Common mistakes include setting a high coverage threshold and optimizing the number instead of the risk, retrying indefinitely to make CI green, or running tests only on a local machine. A good CI system also needs fast feedback and clear reports about which tests failed.
+'''
+
+[questions.tst-029]
+prompt = "What does high line coverage tell you best?"
+options = ["Many executable lines have run, but this does not prove the assertions are strong enough", "Every defect will be detected", "Every logic branch has been tested", "The application has no bugs"]
+explanation = "Coverage measures how much code executed; it does not directly measure assertion quality or test completeness."
+
+[questions.tst-030]
+prompt = "In TDD, what happens first in the Red-Green-Refactor loop?"
+options = ["Write a test for unsupported behavior and observe it fail", "Refactor before there are tests", "Delete old tests to start over", "Increase coverage with tests that have no assertions"]
+explanation = "Red means writing a test for the desired behavior and confirming it fails before implementing the minimum needed to reach Green."
+
+[questions.tst-031]
+prompt = "Which causes can make a test flaky? Select all that apply."
+options = ["Depending on real time or a race condition", "Sharing mutable data between tests", "Depending on execution order", "Using fixed inputs and independent tests"]
+explanation = "Real clocks, races, shared data, and order dependencies can all create unstable inputs or conditions."
+
+[questions.tst-032]
+prompt = "A CI test suite is taking longer and sometimes fails without reproducing. Which measures can improve the quality of its signal? Select all that apply."
+options = ["Classify and investigate flaky tests instead of only increasing retries", "Capture useful artifacts or traces on failure", "Always run every dependent test in a fixed order", "Separate data and state so tests can run independently"]
+explanation = "Investigating causes, retaining evidence, and isolating state improve reproducibility. Enforcing order hides dependencies and limits parallelism."
+
+[questions.tst-033]
+prompt = "If 18 of 24 executable lines have run, line coverage is {{blank}} percent.\n"
+explanation = "Coverage = 18 / 24 × 100 = 75%."
+
+[questions.tst-034]
+prompt = "A test passes when run alone but fails intermittently in the suite because it shares a mutable variable. It is likely {{blank}}.\n"
+explanation = "Results that change because of shared state are a sign of a flaky test and tests that depend on each other."
+
+[questions.tst-035]
+title = "Detect Flaky Tests from History"
+prompt = '''Write `findFlakyTests(history)` to accept an array of objects `{ id, runs }`, where `runs` is an array of status strings: `pass`, `fail`, or `skip`.
+- Return a list of `id` values in input order.
+- A test is considered flaky if its history contains at least one `pass` and at least one `fail`.
+- Tests that always pass, always fail, are skipped only, or have no runs are not considered flaky.
+- Each input object represents a unique test.
+'''
+explanation = "A history containing both pass and fail signals instability; an always-failing test needs a fix but does not yet have enough evidence to be called flaky."
+hints = ["Keep only tests that have both `pass` and `fail` statuses.", "Map the filtered results to `id` to preserve order."]
+
+[questions.tst-036]
+title = "Calculate Line Coverage"
+prompt = '''Write `lineCoverage(totalLines, coveredLines)` to return line coverage as a percentage from 0 to 100.
+- The inputs are the total number of executable lines and the number that ran; assume both are non-negative integers and `coveredLines <= totalLines`.
+- If `totalLines` is 0, return 0.
+- Round the result to two decimal places.
+
+Example: `lineCoverage(8, 6)` returns `75`; `lineCoverage(3, 2)` returns `66.67`.
+'''
+explanation = "Line coverage is the percentage of executable lines that ran; it does not mean that every behavior or branch has been verified."
+hints = ["Divide covered lines by total lines, then multiply by 100.", "Multiply by 100 before `Math.round` to round the percentage to two decimal places."]
+
+[modules.testing-dv-network]
+title = "Controlling Network Requests in Tests"
+description = "Mock requests at the right boundary, simulate stable responses, and verify UI behavior when an API succeeds or fails."
+lesson = '''
+### Keeping requests predictable
+Tests that use a real network can be flaky because they depend on external services, changing data, quotas, and response times. Instead of waiting a fixed number of milliseconds, control responses at the HTTP boundary and synchronize with the request or UI state under test.
+
+| Need | Common approach | What is still being tested |
+|---|---|---|
+| Unit test code that calls an API client | Mock a module or dependency | The consumer's handling branches |
+| Check a request through the application | MSW at the request boundary | Request construction, response parsing, and state updates |
+| Browser E2E with a simulated response | Playwright `page.route` or Cypress `cy.intercept` | The UI flow after a controlled response |
+
+For example, with Playwright: `await page.route('**/api/orders', (route) => route.fulfill({ status: 503, body: '{"message":"Unavailable"}' }));`. Register the route before navigation, then check the error message visible to the user. With Cypress, `cy.intercept('GET', '/api/orders', { fixture: 'orders.json' }).as('orders')` can stub a response; omit the response handler to observe the request only. A Jest manual mock is useful when a unit test needs to replace an API module, but it does not verify real HTTP behavior.
+
+### Common mistakes
+- Calling `wait(2000)` instead of waiting for an alias, locator, or condition-based assertion.
+- Registering a route after the request has already been sent, or using a URL pattern that does not match the actual path or query.
+- Asserting only that a request was sent without checking how the UI handles success, errors, loading, and empty data.
+- Mocking every layer so tests pass even though the real code has an incorrect URL, header, or response transformation.
+- Sharing a handler whose state changes between tests without resetting it.
+'''
+
+[questions.testing-dv001]
+prompt = "A unit test checks a function that handles API results but does not need to verify the URL or HTTP. Which dependency replacement is usually the best fit?"
+options = ["Mock the API client/module at the function's boundary", "Start the real production API for every test", "Wait a fixed number of seconds before asserting", "Disable all assertions to avoid network errors"]
+explanation = "Mocking a dependency keeps a consumer test fast and isolated. If request behavior or HTTP integration needs verification, add a test at the appropriate boundary instead of making every unit test use a real network."
+
+[questions.testing-dv002]
+prompt = "In Playwright, a test needs to simulate an API returning a 503 error when the page loads. When should it register `page.route`?"
+options = ["Before navigating or before the action that sends the request", "After the failure assertion has run", "Only after the test finishes", "Only in `afterAll`, after the browser has closed"]
+explanation = "The route must be in place before the request it needs to intercept is sent; then the test can check how the UI responds to the simulated response."
+
+[questions.testing-dv003]
+prompt = "A Cypress test calls `cy.intercept(...).as('orders')` before `cy.visit`. What does `cy.wait('@orders')` directly help the test do?"
+options = ["Synchronize with the aliased request and inspect the request/response", "Ensure every animation on the page has finished", "Replace every UI assertion", "Verify that production data was written to the database"]
+explanation = "An alias lets a test wait for a specific request and inspect its data; UI content still needs assertions when the goal is user behavior."
+
+[questions.testing-dv004]
+prompt = "A test for an order-list flow needs to stay stable when the API fails. Which choices help make the test both deterministic and meaningful?"
+options = ["Stub an error response at the request boundary", "Assert the error message or recovery action in the UI", "Use a fixed delay and assume the API has failed", "Mock every internal function and skip checking the displayed state"]
+explanation = "A controlled response and UI behavior assertion check both the input and the outcome. A delay and overly deep mocking do not synchronize on a condition and can hide integration failures."
+
+[questions.testing-dv005]
+prompt = "When using a network stub for an E2E test, which practices are good? Select all that apply."
+options = ["Use clear and stable response data", "Keep stubbed tests separate from some integration tests against the real backend", "Verify important requests/responses when that is part of the test's goal", "Treat a stubbed test as the only evidence that the production backend works correctly"]
+explanation = "Stubs make E2E tests more deterministic and faster but do not verify the real backend; some integration tests are still needed to check service-boundary contracts."
+
+[questions.testing-dv006]
+prompt = '''In a `page.route` callback, which method returns a simulated response for the request?
+```js
+await page.route('**/api/profile', (route) => route.{{blank}}({ status: 200, body: '{"name":"Sam"}' }));
+```'''
+explanation = "`route.fulfill` completes the request with a response provided by the test."
+
+[questions.testing-dv007]
+prompt = '''In Cypress, which command waits for the alias named `orders`?
+```js
+cy.wait('@{{blank}}')
+```'''
+explanation = "`cy.wait` accepts an alias attached to a request with `.as('orders')`."
+
+[questions.testing-dv008]
+prompt = "In an interview, explain how you choose between mocking an API client, mocking at the network boundary, and calling a real backend; include how to keep tests stable while still detecting integration failures."
+keywords = [["network boundary", "request boundary"], ["deterministic response", "controlled response"], ["over-mocking", "excessive mocking"], ["integration test", "integration testing"]]
+model_answer = '''I use an API client mock for unit tests of a consumer, and MSW or a network-boundary stub to exercise request creation and response parsing with a deterministic response. I keep integration tests against the real backend for important contracts. Avoiding over-mocking ensures that real URL construction, serialization, and error handling are still checked.'''
+explanation = "A strong answer distinguishes test boundaries, uses deterministic response data, and recognizes that a stub does not replace integration tests."
+
+[questions.testing-dvc01]
+title = "Select a Stub Response by Request"
+prompt = '''Write `findStub(request, stubs)` to find the first response stub that matches a request.
+- `request` has `method` and `url`; each stub has `method`, `url`, `status`, and `body`.
+- Compare methods case-insensitively, but require an exact URL match.
+- Return a new object containing only the matching stub's `status` and `body`; return `null` if there is no match.
+- Do not modify `request` or the `stubs` array.
+
+Example: a `GET /api/items` request matches a `get /api/items` stub and returns `{ status: 200, body: [] }`.
+'''
+explanation = "Selecting a response by method and URL simulates a controlled request boundary; the test still needs to verify that the application uses the response correctly."
+hints = ["Use `find` to preserve order and select only the first match.", "Create a new result object instead of returning all of the stub's metadata."]
+
+[modules.testing-dv-state]
+title = "Fixtures, Data, and Authentication State"
+description = "Manage fixture lifecycles, reproducible data, and login state without creating dependencies between tests."
+lesson = '''
+### Separating data, setup, and login state
+A fixture provides resources or data to a test with a defined lifecycle. Playwright fixtures can be scoped to a test or worker; built-in fixtures such as `page` are prepared before a test and closed afterward. Cypress `cy.fixture` reads static data from a file, while `cy.session` saves and restores cookies and web storage under a session key. These concepts solve different needs: input data is not the same thing as a login session.
+
+| Need | Mechanism | Boundary to remember |
+|---|---|---|
+| Sample data that rarely changes | Playwright fixture or Cypress `cy.fixture` | Do not mutate an object shared between tests |
+| Faster E2E login | Playwright `storageState` or Cypress `cy.session` | The key must distinguish user/role/tenant; create state through a trusted process |
+| Shared matchers or setup | Vitest/Jest setup file | Runs before a test file; it is not per-test data storage |
+| A resource that must be closed | Fixture with teardown | Clean up after the test or worker according to its scope |
+
+For example, in Playwright, configure `use: { storageState: 'playwright/.auth/member.json' }` so a test starts in an authenticated state. The test should still create its own order or use repeatable seed data, because sharing a session does not isolate backend data. In Jest, `setupFiles` runs before the test framework is installed; `setupFilesAfterEnv` runs afterward and is suitable for registering shared matchers or hooks.
+
+### Common mistakes
+- Using a mutable fixture in several tests and then depending on execution order.
+- Sharing a user or tenant so tests contend for the same records when run in parallel.
+- Caching a session with a key that omits the role or tenant, so a test accidentally gets another user's state.
+- Putting per-test seed data in global setup without a way to clean it up or recreate it.
+- Treating `setupFiles` as a one-time setup for the entire suite; setup is usually tied to each test file.
+'''
+
+[questions.testing-dv009]
+prompt = "In Playwright, a test receives `{ page }` from a built-in fixture. What is an important benefit of the fixture?"
+options = ["It manages resource setup/teardown within the test scope", "It automatically makes every assertion correct", "It shares the same DOM across all tests regardless of configuration", "It ignores errors when the browser closes"]
+explanation = "A fixture creates a resource before a test and manages teardown according to its scope, giving each test a clear context."
+
+[questions.testing-dv010]
+prompt = "An E2E suite needs to start on an authenticated page in Playwright. What is a suitable way to reuse browser authentication state?"
+options = ["Save state with `storageState` and configure it for the appropriate context/project", "Use the same global page for every worker", "Disable authorization assertions", "Put the account password in the test name"]
+explanation = "`storageState` lets a context start with saved authentication state; business data still needs separate isolation."
+
+[questions.testing-dv011]
+prompt = "When is Cypress `cy.session(id, setup, options)` most useful?"
+options = ["Saving and restoring a browser session to avoid repeating the login steps", "Reading a JSON fixture from disk", "Replacing all test isolation", "Starting the application server in every assertion"]
+explanation = "`cy.session` caches and restores authentication state by key; it does not replace page or business-data isolation."
+
+[questions.testing-dv012]
+prompt = "A parallel test suite often fails because tests modify the same sample data. What can reduce cross-test dependencies?"
+options = ["Create separate records per test or worker", "Reset backend state before/after a test under a clear contract", "Keep fixtures immutable and make a copy when changes are needed", "Rely on execution order so an earlier test restores the data"]
+explanation = "Separate data, explicit resets, and immutable fixtures help keep tests independent. Relying on order hides the problem and is unstable under parallel execution."
+
+[questions.testing-dv013]
+prompt = "Which statements about Jest `setupFiles` and `setupFilesAfterEnv` are correct?"
+options = ["`setupFiles` runs before the test framework is installed in the test environment", "`setupFilesAfterEnv` runs after the test framework is installed", "Both setup types run before the test file contents", "`setupFiles` automatically creates separate data for each test case"]
+explanation = "The two setup groups differ in when the test framework is ready, and both run before the test file contents; they do not automatically create per-case fixtures."
+
+[questions.testing-dv014]
+prompt = '''In Playwright, which option accepts the path to saved state so a context starts authenticated?
+```js
+test.use({ {{blank}}: 'playwright/.auth/member.json' });
+```'''
+explanation = "`storageState` loads saved cookies and web storage into the browser context."
+
+[questions.testing-dv015]
+prompt = '''Which Cypress command caches and restores a browser session by id?
+```js
+cy.{{blank}}('member', setupLogin);
+```'''
+explanation = "`cy.session` caches and restores session state under the provided id."
+
+[questions.testing-dv016]
+prompt = "In an interview, describe how you would design fixtures and login state for parallel E2E tests; include how to avoid sharing mutable data between tests."
+keywords = [["test-scoped fixture", "fixture scope"], ["storage state", "authentication state"], ["test isolation", "state isolation"], ["teardown", "cleanup"]]
+model_answer = '''I use test-scoped fixtures for dedicated resources, create storage state for the required user or role, and maintain test isolation with records unique to each test or worker. Baseline fixture data should be immutable; teardown or cleanup removes resources created by a test so parallel runs do not contend.'''
+explanation = "A good answer covers fixture scope, intentional auth reuse, and independent data/teardown for parallel runs."
+
+[questions.testing-dvc02]
+title = "Merge Fixture Data Without Mutation"
+prompt = '''Write `mergeTestData(defaults, overrides)` to create a fixture object for a test.
+- Shallow-copy the properties of two plain objects.
+- Values in `overrides` replace properties with the same names in `defaults`.
+- Return a new object and do not mutate either input.
+- You do not need to clone nested objects.
+
+Example: `mergeTestData({ role: 'member', active: true }, { role: 'admin' })` returns `{ role: 'admin', active: true }`.
+'''
+explanation = "A shallow fixture merge lets a test customize data without changing a shared default object."
+hints = ["Spread objects in the right order: defaults first, overrides second.", "Create a new object literal to avoid modifying an input."]
+
+[modules.testing-dv-projects]
+title = "Project Matrices and Test Environments"
+description = "Organize multiple test configurations in a suite to check browsers, runtimes, or packages with clear choices."
+lesson = '''
+### One suite, multiple intentional projects
+A project groups a run configuration with its own name and options. Projects are useful when the same tests need to run across browsers, runtimes, packages, or sets of configuration values. A project matrix makes the combinations under test explicit and lets developers select a subset during development; each project may also need suitable setup and data.
+
+| Tool | Organization | Useful for |
+|---|---|---|
+| Vitest | Declare `test.projects` with child configurations | Monorepos or tests across environments |
+| Jest | Declare `projects` in the config | Multiple packages or suites in one run |
+| Playwright | `projects` with separate `name` and `use` values | Running the same test on different browsers/devices or configurations |
+| Cypress | Configure projects and Node event hooks | Customizing lifecycle, tasks, or runner configuration |
+
+For example, a Playwright setup can define `chromium` and `firefox` projects, each with its own browser option but sharing the same spec. You can select one project while debugging and run the needed matrix in CI. Jest's `testEnvironment` or Vitest's `environment` determines runtime APIs such as `window`, so a test that needs the DOM cannot be assumed to work like a plain Node test. Environment is one dimension of configuration; a project packages configuration dimensions into named runs.
+
+### Common mistakes
+- Creating every browser × locale × role combination when it adds no value, making CI slow and failures harder to locate.
+- Assuming that declaring several projects proves every browser was run; check the actual CI command and filters.
+- Running a DOM test in a Node environment and mistaking a missing-global error for an application bug.
+- Sharing mutable test data or an account among projects that run in parallel.
+- Allowing project settings for timeout, setup, or base URL to drift without knowing whether the difference is intentional.
+'''
+
+[questions.testing-dv017]
+prompt = "In Playwright, what are projects with separate `name` and `use` options commonly used for?"
+options = ["Running a suite with different browser/device configurations in the same config", "Creating a production database for every assertion", "Disabling auto-waiting for every locator", "Making test order a mandatory contract"]
+explanation = "Projects describe named run configurations, often to test the same suite across multiple browsers or devices."
+
+[questions.testing-dv018]
+prompt = "A repository has Node and browser packages that need to run with Jest in one command. Which feature is suitable for grouping the configurations?"
+explanation = "Jest `projects` can run multiple projects/configurations in one invocation, which suits monorepos or multiple environments."
+
+[questions.testing-dv019]
+prompt = "A test that uses `window` fails in Vitest's Node environment. What is the best way to address it?"
+options = ["Choose a suitable browser-like environment for tests that need the DOM", "Add retries so Node eventually gets a `window`", "Mock every assertion to pass", "Increase the timeout without changing the environment"]
+explanation = "The environment determines which globals and APIs are available; increasing a timeout cannot provide a missing DOM API."
+
+[questions.testing-dv020]
+prompt = "When does a project matrix usually provide practical value?"
+options = ["Running the same important flow on supported browsers", "Separating Node and DOM configurations when tests need different APIs", "Duplicating every combination even when there is no difference or risk", "Allowing a specific project to be selected during debugging"]
+explanation = "A matrix is useful for checking meaningful differences and selecting a subset during development; unnecessary combinations only slow down the suite."
+
+[questions.testing-dv021]
+prompt = "A suite contains DOM tests and plain Node tests. Which choices make the configuration easier to understand and more reliable?"
+options = ["Assign an appropriate environment by test type/project", "Name projects so reports show which configuration ran", "Assume every runner provides the same globals/APIs", "Verify that CI commands do not filter out a required project"]
+explanation = "Appropriate environments and project names distinguish runs; checking CI filters ensures the matrix is actually executed."
+
+[questions.testing-dv022]
+prompt = '''Which Playwright command selects only the project named `chromium`?
+```sh
+npx playwright test --project={{blank}}
+```'''
+explanation = "The `--project` option limits the run to the project named in the config."
+
+[questions.testing-dv023]
+prompt = '''In a Vitest configuration, which property accepts a list of child project configurations?
+```js
+test: { {{blank}}: [/* project configs */] }
+```'''
+explanation = "`test.projects` groups the project configurations that Vitest runs."
+
+[questions.testing-dv024]
+prompt = "In an interview, describe how you would choose a project matrix for CI, balancing browser/runtime coverage with execution time and the ability to investigate failures."
+keywords = [["project matrix", "configuration matrix"], ["runtime cost", "execution time", "ci duration"], ["targeted subset", "smoke suite", "focused smoke"], ["browser coverage", "environment coverage"]]
+model_answer = '''I build a project matrix around browser coverage and environments with real risk instead of multiplying every combination by default. CI can run a targeted subset or quick smoke suite on each commit and a broader matrix on a schedule. I track CI duration and report the specific project to make failures easier to investigate.'''
+explanation = "A good answer states how the matrix is selected, how CI time is controlled, and how subsets or scheduled runs support investigation."
+
+[questions.testing-dvc03]
+title = "Build an Ordered Project Matrix"
+prompt = '''Write `buildProjectMatrix(browsers, locales)` to create configurations for every browser-locale pair.
+- Each item has the form `{ name, browser, locale }`, with `name` equal to `browser + '-' + locale`.
+- Iterate through browsers in input order; for each browser, iterate through locales in input order.
+- If either input is empty, return an empty array.
+- Do not modify either input array.
+
+Example: `buildProjectMatrix(['chromium'], ['en', 'vi'])` returns the two projects `chromium-en` and `chromium-vi`.
+'''
+explanation = "Generating an ordered matrix makes test configuration consistent and clarifies how many combinations the suite will check."
+hints = ["Use nested loops to keep browser order outside locale order.", "Create a new result array; do not push into an input."]

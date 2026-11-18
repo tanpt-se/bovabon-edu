@@ -27,6 +27,203 @@ Git giữ snapshot trong commit; working tree là file đang sửa, index là v�
 Ví dụ workflow: tạo feature branch, commit các thay đổi nhỏ, cập nhật từ main bằng merge hoặc rebase theo quy ước nhóm, xử lý conflict rồi mở review. Rebase thay đổi commit ID và không nên dùng để viết lại nhánh người khác đang dựa vào. Reflog ghi lại vị trí HEAD gần đây, hữu ích khi commit tưởng như mất sau reset. Lỗi thường gặp là nhầm reset với revert, force-push nhánh chia sẻ, hoặc giải quyết conflict nhưng quên kiểm tra diff trước commit.
 '''
 
+[[modules]]
+id = "ops-linux-bash"
+title = "Linux và Bash"
+description = "Quyền file, process, pipeline, redirect và viết script có kiểm soát lỗi."
+sources = ["bash/the-set-builtin", "bash/pipelines", "bash/redirections", "bash/quoting", "bash/shell-parameters"]
+lesson = '''
+### Quan sát hệ thống và viết script
+Quyền file thường hiển thị theo chủ sở hữu, nhóm và người khác; chmod 640 file cấp đọc/ghi cho chủ sở hữu, đọc cho nhóm và không cấp quyền cho người khác. ps và kill hỗ trợ quan sát, gửi tín hiệu tới process; ưu tiên xác định đúng PID và thử dừng mềm trước khi dùng SIGKILL.
+
+| Cú pháp | Ý nghĩa |
+|---|---|
+| command > out.txt | Ghi stdout, ghi đè file |
+| command >> out.txt | Ghi stdout nối thêm |
+| command 2> err.txt | Ghi stderr riêng |
+| command1 \\| command2 | Nối stdout của lệnh trước vào stdin lệnh sau |
+| set -euo pipefail | Bật một số kiểm tra lỗi hữu ích cho script |
+
+Ví dụ: grep ERROR app.log | sort | uniq -c cho biết số dòng lỗi duy nhất. Dấu nháy kép bảo toàn khoảng trắng trong biến, còn dấu nháy đơn giữ nguyên nội dung theo nghĩa đen. set -e có ngoại lệ theo ngữ cảnh điều kiện; pipefail làm pipeline thất bại nếu một lệnh con thất bại, còn -u bắt biến chưa đặt. Lỗi thường gặp là dùng chmod 777, quên quote biến, hoặc hiểu set -e như cơ chế bắt mọi lỗi.
+'''
+
+[[modules]]
+id = "ops-docker"
+title = "Docker và Compose"
+description = "Image, container, layer, build cache, multi-stage, volume, network và Compose."
+sources = ["docker/engine/reference/commandline/image/index", "docker/engine/reference/commandline/build/index", "docker/engine/reference/commandline/volume/index", "docker/engine/reference/commandline/network/index", "docker/compose/compose-file/compose-file-v2/index", "docker/compose/reference/up/index", "docker/engine/reference/builder/index", "docker/engine/security/index"]
+lesson = '''
+### Từ image tới dịch vụ
+Image là mẫu chỉ đọc gồm các layer; container là instance được tạo từ image, có writable layer riêng. Layer có thể được tái sử dụng trong build cache nếu instruction và input phía trước không đổi.
+
+| Thành phần | Vai trò |
+|---|---|
+| Image | Đóng gói filesystem và metadata để chạy ứng dụng |
+| Container | Process đang chạy cùng cấu hình runtime |
+| Volume | Lưu dữ liệu bền vững ngoài vòng đời container |
+| Network | Cho phép container giao tiếp theo tên/service |
+| Compose | Khai báo nhiều service và quan hệ của chúng |
+
+Ví dụ Dockerfile có thể đặt dependency trước mã nguồn để tận dụng cache; multi-stage build dùng stage đầu để biên dịch rồi chỉ chép artifact cần thiết sang image runtime. Compose thuận tiện cho môi trường phát triển nhiều service. Tag latest không cố định phiên bản image; pin tag hoặc digest khi cần build lặp lại. Lỗi thường gặp là lưu dữ liệu duy nhất trong writable layer, đưa secret vào image, hoặc giả định image giống container đang chạy.
+'''
+
+[[modules]]
+id = "ops-kubernetes"
+title = "Kubernetes"
+description = "Pod, Deployment, Service, Ingress, cấu hình, probe, rollout và HPA."
+sources = ["kubernetes/core/pod-v1/index", "kubernetes/apps/deployment-v1/index", "kubernetes/core/service-v1/index", "kubernetes/networking/ingress-v1/index", "kubernetes/core/config-map-v1/index", "kubernetes/core/secret-v1/index", "kubernetes/autoscaling/horizontal-pod-autoscaler-v2/index"]
+lesson = '''
+### Kubernetes: đối tượng và controller
+Pod chạy một hoặc nhiều container cùng các tài nguyên mạng cơ bản; Deployment quản lý ReplicaSet và số Pod mong muốn. Service tạo điểm truy cập ổn định tới các Pod phù hợp selector. Ingress mô tả luật HTTP(S), nhưng cần Ingress controller thực thi.
+
+| Đối tượng | Trách nhiệm |
+|---|---|
+| ConfigMap | Cấu hình không bí mật |
+| Secret | Dữ liệu nhạy cảm, cần kiểm soát quyền và mã hoá phù hợp |
+| readinessProbe | Xác định khi nào Pod nhận traffic |
+| livenessProbe | Phát hiện container cần khởi động lại |
+| HPA | Điều chỉnh replicas theo metric và giới hạn đã cấu hình |
+
+Ví dụ Deployment đặt replicas, image và resource requests; Service chọn Pod bằng label. Rolling update thay Pod theo từng bước để giảm downtime. HPA thường cần metrics server và resource requests phù hợp khi dùng CPU utilization. Secret không tự động an toàn chỉ vì loại object mang tên Secret. Lỗi thường gặp là probe liveness quá gắt, selector không khớp label, hoặc nghĩ Ingress hoạt động khi chưa cài controller.
+'''
+
+[[modules]]
+id = "ops-nginx"
+title = "Nginx và reverse proxy"
+description = "Khớp location, chuyển tiếp upstream, header, TLS và kiểm tra cấu hình."
+sources = ["nginx/http/ngx_http_core_module#location", "nginx/http/ngx_http_proxy_module", "nginx/http/ngx_http_upstream_module", "nginx/http/ngx_http_ssl_module", "nginx/http/ngx_http_limit_req_module", "nginx/http/ngx_http_log_module"]
+lesson = '''
+### Reverse proxy và location
+Nginx nhận request từ client rồi có thể chuyển tiếp tới upstream bằng proxy_pass. Proxy thường kết thúc TLS, áp dụng routing, giới hạn request và ghi access/error log. Cần hiểu URI thay đổi thế nào khi proxy_pass có hoặc không có phần URI.
+
+| Location | Cách chọn |
+|---|---|
+| = /health | Khớp chính xác và dừng |
+| ^~ /assets/ | Prefix dài nhất; bỏ qua kiểm tra regex |
+| /api/ | Prefix thông thường, so theo prefix dài nhất |
+| ~ \.php$ | Regex phân biệt hoa thường, kiểm tra theo thứ tự khai báo |
+| ~* \.jpg$ | Regex không phân biệt hoa thường |
+
+Nginx chọn exact trước; nếu không có exact thì xét prefix dài nhất. Prefix ^~ thắng regex sau khi tìm được prefix đó; nếu không, regex được xét theo thứ tự khai báo trước khi dùng prefix đã chọn. Ví dụ route tĩnh có thể dùng ^~ để tránh regex PHP bắt nhầm. Lỗi thường gặp là cho rằng regex dài nhất thắng, nhầm thứ tự location, hoặc quên kiểm tra cấu hình trước reload.
+'''
+
+[[modules]]
+id = "ops-cicd-terraform"
+title = "CI/CD và Terraform"
+description = "Pipeline kiểm tra, triển khai có kiểm soát, Infrastructure as Code, state, plan và apply."
+sources = ["terraform/language/syntax/configuration", "terraform/language/state/purpose", "terraform/language/state/remote", "terraform/tutorials/cli/plan", "terraform/tutorials/cli/apply"]
+lesson = '''
+### Tự động hoá triển khai và hạ tầng
+CI chạy các bước kiểm tra lặp lại khi có thay đổi; CD tự động đưa artifact đã kiểm chứng tới môi trường theo quy tắc phát hành. Pipeline nên tách build, test, scan và deploy; chỉ cấp credential tối thiểu cho job cần dùng, không in secret vào log.
+
+| Terraform command | Vai trò |
+|---|---|
+| init | Khởi tạo thư mục làm việc và provider |
+| plan | Tính toán thay đổi dự kiến, chưa áp dụng vào hạ tầng |
+| apply | Thực thi kế hoạch thay đổi đã xác nhận |
+| state | Theo dõi liên hệ giữa cấu hình và resource thực tế |
+
+Terraform state có thể chứa dữ liệu nhạy cảm; backend từ xa cần hỗ trợ kiểm soát truy cập và khoá state phù hợp. Hãy review plan, lưu state an toàn và tránh nhiều người apply đồng thời không có locking. Ví dụ pipeline có thể chạy fmt, validate, plan khi mở pull request rồi chỉ apply sau khi được phê duyệt ở môi trường mục tiêu. Lỗi thường gặp là coi plan là thay đổi đã xảy ra, sửa state bằng tay tuỳ tiện hoặc lưu secret trong repository.
+'''
+
+[[modules]]
+id = "devops-dv-k8s-rollout"
+title = "Kubernetes: readiness và rollout ổn định"
+description = "Thiết kế probes, requests/limits, rolling update và PDB để phát hành workload có kiểm soát."
+sources = ["kubernetes/core/pod-v1/index", "kubernetes/apps/deployment-v1/index", "kubernetes/policy/pod-disruption-budget-v1/index", "kubernetes/autoscaling/horizontal-pod-autoscaler-v2/index", "kubernetes/core/pod-v1/index#ResourceRequirements"]
+lesson = '''
+### Giữ workload sẵn sàng khi phát hành
+Kubernetes dùng trạng thái của Pod và chính sách cập nhật để điều phối traffic, tài nguyên và thay đổi phiên bản. Readiness quyết định Pod có nhận traffic từ Service hay chưa; liveness phát hiện tiến trình cần khởi động lại; startup probe dành thời gian khởi động cho ứng dụng chậm trước khi hai probe còn lại bắt đầu. Một liveness probe quá gắt có thể tạo vòng lặp restart dù ứng dụng chỉ đang tải dữ liệu ban đầu.
+
+| Cấu hình | Ý nghĩa | Lưu ý vận hành |
+|---|---|---|
+| `requests` | Lượng tài nguyên dùng để xếp Pod và làm cơ sở cho một số phép autoscale | Đặt quá thấp gây tranh chấp; quá cao gây khó xếp lịch |
+| `limits` | Mức tài nguyên tối đa container được dùng | CPU có thể bị throttle; vượt memory limit thường khiến container bị OOM-kill |
+| `maxSurge` | Số Pod bổ sung tạm thời trong rolling update | Cần tính cả quota và dung lượng cluster |
+| `maxUnavailable` | Số Pod có thể không sẵn sàng trong lúc cập nhật | Giá trị cao tăng tốc rollout nhưng giảm capacity |
+| PDB | Giới hạn gián đoạn tự nguyện khi drain/evict | Không ngăn mọi sự cố hoặc mọi thao tác xoá trực tiếp |
+
+Ví dụ, với ba replicas, readiness probe chỉ trả thành công sau khi ứng dụng nạp cấu hình và kết nối dependency cần thiết; khi phiên bản mới chưa ready, Service không gửi request tới Pod đó. Có thể theo dõi `kubectl rollout status deployment/api`, xem `kubectl describe pod` và Events khi tiến trình dừng, rồi dùng `kubectl rollout undo deployment/api` nếu phiên bản mới gây lỗi. PDB bảo vệ số replica tối thiểu khi node được bảo trì, nhưng phải phối hợp với capacity và quy trình drain.
+
+Lỗi thường gặp là chỉ kiểm tra tiến trình còn sống mà không kiểm tra khả năng phục vụ, đặt request bằng 0 rồi kỳ vọng HPA dùng CPU utilization chính xác, để `maxUnavailable` làm mất phần lớn capacity, hoặc xem PDB như bảo đảm HA tuyệt đối. Luôn kiểm tra readiness, quota, Events và kết quả rollout trước khi kết thúc đợt phát hành.
+'''
+
+[[modules]]
+id = "devops-dv-k8s-security"
+title = "Kubernetes: RBAC và cô lập workload"
+description = "Thiết kế quyền tối thiểu, NetworkPolicy và cách bảo vệ thông tin nhạy cảm trong cluster."
+sources = ["kubernetes/rbac/role-v1/index", "kubernetes/rbac/role-binding-v1/index", "kubernetes/core/service-account-v1/index", "kubernetes/networking/network-policy-v1/index", "kubernetes/core/pod-v1/index#PodSecurityContext", "kubernetes/core/secret-v1/index"]
+lesson = '''
+### Giới hạn quyền và đường giao tiếp
+Kubernetes tách danh tính (user, group, ServiceAccount), quyền (Role/ClusterRole) và phép gán quyền (RoleBinding/ClusterRoleBinding). Role chỉ mô tả quyền trong một namespace; ClusterRole có thể mô tả quyền cấp cluster hoặc được tham chiếu trong namespace tùy kiểu binding. RoleBinding giới hạn phạm vi quyền được gán vào namespace của binding, kể cả khi tham chiếu ClusterRole. Hãy cấp đúng verbs và resources cần thiết, tránh `*` và quyền `cluster-admin` cho ứng dụng thường.
+
+| Cơ chế | Phạm vi / mục đích | Điều cần kiểm tra |
+|---|---|---|
+| Role + RoleBinding | Quyền API trong một namespace | Subject và namespace của binding đúng chưa |
+| ClusterRole + ClusterRoleBinding | Quyền API cấp cluster | Có thực sự cần đọc/ghi tài nguyên toàn cluster không |
+| ServiceAccount | Danh tính API cho Pod | Chỉ gán quyền ứng dụng cần; tắt tự mount token nếu không gọi API |
+| NetworkPolicy | Lọc kết nối L3/L4 tới/ra Pod | CNI cluster có hỗ trợ NetworkPolicy không |
+| Secret | Lưu cấu hình nhạy cảm trong API | RBAC, encryption at rest, log và quy trình xoay vòng |
+
+Ví dụ, một API chỉ đọc ConfigMap trong namespace `app` có thể dùng ServiceAccount riêng, Role chỉ cấp `get/list` cho ConfigMap và RoleBinding gán Role đó cho ServiceAccount. NetworkPolicy có thể bắt đầu bằng chính sách default-deny ingress rồi mở đúng luồng từ gateway và dependency; ingress và egress là hai hướng riêng. Chính sách không có tác dụng lọc nếu network plugin không triển khai hỗ trợ.
+
+Secret không tự mã hóa dữ liệu chỉ vì giá trị được biểu diễn base64; cấu hình encryption at rest cho datastore và giới hạn quyền đọc vẫn cần thiết. Với workload không gọi Kubernetes API, cân nhắc `automountServiceAccountToken: false`. Lỗi thường gặp là gán ClusterRoleBinding chỉ để sửa lỗi permission nhanh, dùng ServiceAccount mặc định có quyền rộng, hiểu NetworkPolicy như firewall host, hoặc đưa secret vào manifest công khai. Kiểm tra quyền bằng `kubectl auth can-i` và thử các luồng mạng được cho phép lẫn bị chặn.
+'''
+
+[[modules]]
+id = "devops-dv-nginx-edge"
+title = "Nginx: TLS và bảo vệ lưu lượng"
+description = "Cấu hình TLS đầu cuối, giới hạn request và tin cậy proxy một cách có kiểm soát."
+sources = ["nginx/http/ngx_http_ssl_module#ssl_certificate", "nginx/http/ngx_http_limit_req_module#limit_req_zone", "nginx/http/ngx_http_limit_req_module#limit_req", "nginx/http/ngx_http_realip_module#set_real_ip_from", "nginx/http/ngx_http_headers_module#add_header", "nginx/http/ngx_http_log_module#access_log"]
+lesson = '''
+### Gia cố reverse proxy ở biên
+Nginx thường kết thúc TLS, chuẩn hóa header chuyển tiếp và áp dụng giới hạn request trước khi traffic tới ứng dụng. Chứng thư và private key là hai vật liệu khác nhau: chứng thư có thể được gửi cho client, private key phải chỉ đọc được bởi tiến trình/nhóm phù hợp và không được đưa vào image hay log. TLS không thay thế xác thực ứng dụng, và kết nối từ Nginx tới upstream có thể cần bảo vệ riêng tùy ranh giới tin cậy.
+
+| Cấu hình | Vai trò | Rủi ro cần tránh |
+|---|---|---|
+| `ssl_certificate` / `ssl_certificate_key` | Nạp certificate chain và private key cho TLS | Lộ key hoặc thiếu chuỗi certificate |
+| `limit_req_zone` | Khai báo key, shared memory zone và tốc độ | Dùng key không đại diện đúng client |
+| `limit_req` | Áp dụng zone, burst và chính sách xử lý vượt tốc độ | Đặt ngưỡng quá thấp gây chặn traffic hợp lệ |
+| `set_real_ip_from` | Khai báo proxy đáng tin được phép cung cấp IP client | Tin mọi địa chỉ khiến client giả mạo IP qua header |
+| `access_log` | Ghi request để giám sát và điều tra | Log token, query nhạy cảm hoặc dữ liệu cá nhân không cần thiết |
+
+Ví dụ, trong `http` có thể khai báo `limit_req_zone $binary_remote_addr zone=api:10m rate=10r/s;`, sau đó áp dụng `limit_req zone=api burst=20` trong location API. `burst` cho phép đệm một lượng request vượt nhịp bình thường; không bật `nodelay` sẽ làm các request dư được trì hoãn theo thuật toán, còn `nodelay` cho phép burst đi ngay nhưng vẫn giữ giới hạn dài hạn. Nên quan sát log hoặc dùng chế độ dry-run trước khi bật chặn trên endpoint đang có tải thật.
+
+Nếu có load balancer phía trước, chỉ đặt `set_real_ip_from` cho CIDR proxy do mình quản lý; không tin `X-Forwarded-For` từ Internet trực tiếp. Nginx cần chuyển tiếp `Host` và chuỗi địa chỉ client theo chính sách của hệ thống, đồng thời upstream chỉ nên nhận kết nối từ proxy được phép. Trước reload hãy chạy `nginx -t`, xem lỗi cấu hình và theo dõi access/error log sau triển khai.
+
+Lỗi thường gặp là mở TLS nhưng không bảo vệ private key, tin header client IP từ mọi nguồn, coi `burst` là quota cố định theo phút, hoặc reload cấu hình chưa kiểm tra. Rate limit cần được thiết kế theo client identity, đường đi qua proxy và hành vi endpoint, rồi đo tác động để tránh biến biện pháp bảo vệ thành sự cố availability.
+'''
+
+[[modules]]
+id = "devops-dv-terraform-modules"
+title = "Terraform: module và thay đổi có kiểm soát"
+description = "Thiết kế module có giao diện rõ, địa chỉ resource ổn định và kiểm thử/review plan."
+sources = ["terraform/language/modules/sources", "terraform/language/modules/syntax", "terraform/language/values/variables", "terraform/language/values/outputs", "terraform/language/meta-arguments/for_each", "terraform/cli/commands/test"]
+lesson = '''
+### Tách cấu hình thành module có giao diện rõ
+Terraform module là một thư mục cấu hình được gọi từ root module hoặc module cha. Module tái sử dụng nên nhận các input có kiểu và ý nghĩa rõ, xuất output thực sự cần cho caller, và giới hạn phạm vi trách nhiệm; biến toàn cục ngầm định hoặc nhiều output nội bộ khiến thay đổi khó review. Module nguồn từ registry nên được chọn phiên bản có chủ ý để nâng cấp không đổi hành vi ngoài dự kiến.
+
+| Cách làm | Hành vi | Phù hợp khi |
+|---|---|---|
+| `count` | Tạo số bản sao theo chỉ số số nguyên | Tập instance gần như đồng nhất và thứ tự ổn định |
+| `for_each` với map | Địa chỉ gắn với key có tên | Instance có cấu hình khác nhau hoặc cần địa chỉ dễ đọc |
+| Input variable | Đưa giá trị cấu hình vào module | Khác biệt theo môi trường hoặc thành phần gọi |
+| Output | Công bố một giá trị cho module gọi | Tạo contract nhỏ giữa các module |
+| `terraform test` | Kiểm thử cấu hình theo test files và assertions | Xác nhận module/config trước khi chia sẻ hoặc apply |
+
+Ví dụ module cục bộ:
+```hcl
+module "service" {
+  source = "./modules/service"
+  name   = var.service_name
+}
+```
+
+Với các resource đặt tên như database hoặc bucket, `for_each` trên map key ổn định thường dễ hiểu hơn `count` trên danh sách: xoá phần tử ở giữa danh sách có thể làm thay đổi địa chỉ theo index, trong khi key map giữ danh tính instance. Dù vậy, đổi key của `for_each` cũng làm Terraform thấy một địa chỉ khác; khi chuyển địa chỉ cần kế hoạch migration state phù hợp, không chỉ sửa chuỗi key tùy tiện. Dùng `terraform plan` để xem create/update/delete/replacement và review mọi thao tác phá huỷ trước khi apply.
+
+`terraform test` có thể chạy kiểm thử ở chế độ plan hoặc apply; test áp dụng resource thật cần provider, môi trường cô lập, quyền tối thiểu và cleanup rõ ràng vì có thể tốn phí hoặc để lại hạ tầng nếu lỗi. Lỗi thường gặp là biến module thành bản sao cấu hình không có contract, dùng output quá rộng, thay module source mà không review phiên bản, hoặc mặc định rằng thay đổi địa chỉ resource chỉ là refactor vô hại. Hãy giữ giao diện module nhỏ và coi địa chỉ resource cùng state là một phần của kế hoạch migration.
+'''
+
 [[questions]]
 id = "ops-001"
 module = "ops-git"
@@ -218,26 +415,6 @@ def _():
 hints = ["Tách tiền tố v khỏi ba số phiên bản trước khi so sánh commit.", "Thứ tự ưu tiên là breaking, feat, rồi patch."]
 explanation = "SemVer giúp người dùng phân biệt thay đổi phá vỡ tương thích, tính năng mới và bản sửa tương thích."
 
-[[modules]]
-id = "ops-linux-bash"
-title = "Linux và Bash"
-description = "Quyền file, process, pipeline, redirect và viết script có kiểm soát lỗi."
-sources = ["bash/the-set-builtin", "bash/pipelines", "bash/redirections", "bash/quoting", "bash/shell-parameters"]
-lesson = '''
-### Quan sát hệ thống và viết script
-Quyền file thường hiển thị theo chủ sở hữu, nhóm và người khác; chmod 640 file cấp đọc/ghi cho chủ sở hữu, đọc cho nhóm và không cấp quyền cho người khác. ps và kill hỗ trợ quan sát, gửi tín hiệu tới process; ưu tiên xác định đúng PID và thử dừng mềm trước khi dùng SIGKILL.
-
-| Cú pháp | Ý nghĩa |
-|---|---|
-| command > out.txt | Ghi stdout, ghi đè file |
-| command >> out.txt | Ghi stdout nối thêm |
-| command 2> err.txt | Ghi stderr riêng |
-| command1 \\| command2 | Nối stdout của lệnh trước vào stdin lệnh sau |
-| set -euo pipefail | Bật một số kiểm tra lỗi hữu ích cho script |
-
-Ví dụ: grep ERROR app.log | sort | uniq -c cho biết số dòng lỗi duy nhất. Dấu nháy kép bảo toàn khoảng trắng trong biến, còn dấu nháy đơn giữ nguyên nội dung theo nghĩa đen. set -e có ngoại lệ theo ngữ cảnh điều kiện; pipefail làm pipeline thất bại nếu một lệnh con thất bại, còn -u bắt biến chưa đặt. Lỗi thường gặp là dùng chmod 777, quên quote biến, hoặc hiểu set -e như cơ chế bắt mọi lỗi.
-'''
-
 [[questions]]
 id = "ops-007"
 module = "ops-linux-bash"
@@ -407,26 +584,6 @@ def _():
 hints = ["Tách comment không quote trước khi gán giá trị.", "Với nháy kép, duyệt từng ký tự để xử lý escape và tìm dấu quote đóng."]
 explanation = "Parser .env phải phân biệt comment thật với ký tự # trong token, đồng thời không làm mất escape có ý nghĩa."
 
-[[modules]]
-id = "ops-docker"
-title = "Docker và Compose"
-description = "Image, container, layer, build cache, multi-stage, volume, network và Compose."
-sources = ["docker/engine/reference/commandline/image/index", "docker/engine/reference/commandline/build/index", "docker/engine/reference/commandline/volume/index", "docker/engine/reference/commandline/network/index", "docker/compose/compose-file/compose-file-v2/index", "docker/compose/reference/up/index"]
-lesson = '''
-### Từ image tới dịch vụ
-Image là mẫu chỉ đọc gồm các layer; container là instance được tạo từ image, có writable layer riêng. Layer có thể được tái sử dụng trong build cache nếu instruction và input phía trước không đổi.
-
-| Thành phần | Vai trò |
-|---|---|
-| Image | Đóng gói filesystem và metadata để chạy ứng dụng |
-| Container | Process đang chạy cùng cấu hình runtime |
-| Volume | Lưu dữ liệu bền vững ngoài vòng đời container |
-| Network | Cho phép container giao tiếp theo tên/service |
-| Compose | Khai báo nhiều service và quan hệ của chúng |
-
-Ví dụ Dockerfile có thể đặt dependency trước mã nguồn để tận dụng cache; multi-stage build dùng stage đầu để biên dịch rồi chỉ chép artifact cần thiết sang image runtime. Compose thuận tiện cho môi trường phát triển nhiều service. Tag latest không cố định phiên bản image; pin tag hoặc digest khi cần build lặp lại. Lỗi thường gặp là lưu dữ liệu duy nhất trong writable layer, đưa secret vào image, hoặc giả định image giống container đang chạy.
-'''
-
 [[questions]]
 id = "ops-013"
 module = "ops-docker"
@@ -573,26 +730,6 @@ hints = ["Tách chỉ thị và đối số sau khi bỏ khoảng trắng đầu
 explanation = "Tag không pin, quá nhiều layer RUN và chạy mặc định bằng root là các tín hiệu review hữu ích; chúng không thay thế đánh giá ngữ cảnh."
 sources = ["docker/engine/reference/commandline/build/index"]
 
-[[modules]]
-id = "ops-kubernetes"
-title = "Kubernetes"
-description = "Pod, Deployment, Service, Ingress, cấu hình, probe, rollout và HPA."
-sources = ["kubernetes/core/pod-v1/index", "kubernetes/apps/deployment-v1/index", "kubernetes/core/service-v1/index", "kubernetes/networking/ingress-v1/index", "kubernetes/core/config-map-v1/index", "kubernetes/core/secret-v1/index", "kubernetes/autoscaling/horizontal-pod-autoscaler-v2/index"]
-lesson = '''
-### Kubernetes: đối tượng và controller
-Pod chạy một hoặc nhiều container cùng các tài nguyên mạng cơ bản; Deployment quản lý ReplicaSet và số Pod mong muốn. Service tạo điểm truy cập ổn định tới các Pod phù hợp selector. Ingress mô tả luật HTTP(S), nhưng cần Ingress controller thực thi.
-
-| Đối tượng | Trách nhiệm |
-|---|---|
-| ConfigMap | Cấu hình không bí mật |
-| Secret | Dữ liệu nhạy cảm, cần kiểm soát quyền và mã hoá phù hợp |
-| readinessProbe | Xác định khi nào Pod nhận traffic |
-| livenessProbe | Phát hiện container cần khởi động lại |
-| HPA | Điều chỉnh replicas theo metric và giới hạn đã cấu hình |
-
-Ví dụ Deployment đặt replicas, image và resource requests; Service chọn Pod bằng label. Rolling update thay Pod theo từng bước để giảm downtime. HPA thường cần metrics server và resource requests phù hợp khi dùng CPU utilization. Secret không tự động an toàn chỉ vì loại object mang tên Secret. Lỗi thường gặp là probe liveness quá gắt, selector không khớp label, hoặc nghĩ Ingress hoạt động khi chưa cài controller.
-'''
-
 [[questions]]
 id = "ops-019"
 module = "ops-kubernetes"
@@ -718,26 +855,6 @@ hints = ["Tính số nguyên trên bằng math.ceil.", "Giới hạn kết quả
 explanation = "Đây là mô hình hoá công thức replica cơ bản; controller thật còn cân nhắc tolerance, metric và ổn định scale."
 sources = ["kubernetes/autoscaling/horizontal-pod-autoscaler-v2/index"]
 
-[[modules]]
-id = "ops-nginx"
-title = "Nginx và reverse proxy"
-description = "Khớp location, chuyển tiếp upstream, header, TLS và kiểm tra cấu hình."
-sources = ["nginx/http/ngx_http_core_module#location", "nginx/http/ngx_http_proxy_module", "nginx/http/ngx_http_upstream_module"]
-lesson = '''
-### Reverse proxy và location
-Nginx nhận request từ client rồi có thể chuyển tiếp tới upstream bằng proxy_pass. Proxy thường kết thúc TLS, áp dụng routing, giới hạn request và ghi access/error log. Cần hiểu URI thay đổi thế nào khi proxy_pass có hoặc không có phần URI.
-
-| Location | Cách chọn |
-|---|---|
-| = /health | Khớp chính xác và dừng |
-| ^~ /assets/ | Prefix dài nhất; bỏ qua kiểm tra regex |
-| /api/ | Prefix thông thường, so theo prefix dài nhất |
-| ~ \.php$ | Regex phân biệt hoa thường, kiểm tra theo thứ tự khai báo |
-| ~* \.jpg$ | Regex không phân biệt hoa thường |
-
-Nginx chọn exact trước; nếu không có exact thì xét prefix dài nhất. Prefix ^~ thắng regex sau khi tìm được prefix đó; nếu không, regex được xét theo thứ tự khai báo trước khi dùng prefix đã chọn. Ví dụ route tĩnh có thể dùng ^~ để tránh regex PHP bắt nhầm. Lỗi thường gặp là cho rằng regex dài nhất thắng, nhầm thứ tự location, hoặc quên kiểm tra cấu hình trước reload.
-'''
-
 [[questions]]
 id = "ops-026"
 module = "ops-nginx"
@@ -860,25 +977,6 @@ hints = ["Kiểm tra exact trong lần duyệt đầu.", "Tách nhóm prefix và
 explanation = "Thuật toán location có ưu tiên rõ ràng; ^~ chỉ ảnh hưởng bước xét regex sau khi prefix đã thắng."
 sources = ["nginx/http/ngx_http_core_module#location"]
 
-[[modules]]
-id = "ops-cicd-terraform"
-title = "CI/CD và Terraform"
-description = "Pipeline kiểm tra, triển khai có kiểm soát, Infrastructure as Code, state, plan và apply."
-sources = ["terraform/language/syntax/configuration", "terraform/language/state/purpose", "terraform/language/state/remote", "terraform/tutorials/cli/plan", "terraform/tutorials/cli/apply"]
-lesson = '''
-### Tự động hoá triển khai và hạ tầng
-CI chạy các bước kiểm tra lặp lại khi có thay đổi; CD tự động đưa artifact đã kiểm chứng tới môi trường theo quy tắc phát hành. Pipeline nên tách build, test, scan và deploy; chỉ cấp credential tối thiểu cho job cần dùng, không in secret vào log.
-
-| Terraform command | Vai trò |
-|---|---|
-| init | Khởi tạo thư mục làm việc và provider |
-| plan | Tính toán thay đổi dự kiến, chưa áp dụng vào hạ tầng |
-| apply | Thực thi kế hoạch thay đổi đã xác nhận |
-| state | Theo dõi liên hệ giữa cấu hình và resource thực tế |
-
-Terraform state có thể chứa dữ liệu nhạy cảm; backend từ xa cần hỗ trợ kiểm soát truy cập và khoá state phù hợp. Hãy review plan, lưu state an toàn và tránh nhiều người apply đồng thời không có locking. Ví dụ pipeline có thể chạy fmt, validate, plan khi mở pull request rồi chỉ apply sau khi được phê duyệt ở môi trường mục tiêu. Lỗi thường gặp là coi plan là thay đổi đã xảy ra, sửa state bằng tay tuỳ tiện hoặc lưu secret trong repository.
-'''
-
 [[questions]]
 id = "ops-031"
 module = "ops-cicd-terraform"
@@ -963,3 +1061,675 @@ min_keywords = 4
 model_answer = '''Pull request chạy kiểm tra cấu hình và tạo Terraform plan để review. Sau khi plan được phê duyệt, pipeline production dùng credential có quyền tối thiểu để apply; state được lưu ở remote backend có kiểm soát truy cập và locking.'''
 explanation = "Luồng an toàn tách kế hoạch, review và thực thi, đồng thời bảo vệ credential và state."
 sources = ["terraform/tutorials/cli/plan", "terraform/tutorials/cli/apply", "terraform/language/state/remote"]
+
+[[questions]]
+id = "devops-dv001"
+module = "devops-dv-k8s-rollout"
+type = "single"
+difficulty = 1
+prompt = "Một Pod vẫn chạy nhưng chưa nạp xong dữ liệu và chưa nên nhận request. Probe nào nên báo chưa sẵn sàng?"
+options = ["readinessProbe", "livenessProbe", "startupProbe", "Không cần probe nào"]
+answer = [0]
+explanation = "Readiness điều khiển việc Pod được đưa vào endpoint phục vụ; liveness chủ yếu quyết định khi nào cần khởi động lại container."
+sources = ["kubernetes/core/pod-v1/index"]
+
+[[questions]]
+id = "devops-dv002"
+module = "devops-dv-k8s-rollout"
+type = "single"
+difficulty = 2
+prompt = "Ứng dụng mất vài phút để khởi động lần đầu. Cách cấu hình nào tránh liveness probe khởi động lại container quá sớm?"
+options = ["Thêm startupProbe với ngưỡng/thời gian phù hợp", "Đặt readinessProbe thành false vĩnh viễn", "Tăng replicas lên rất cao", "Xoá livenessProbe rồi không theo dõi sức khoẻ"]
+answer = [0]
+explanation = "Startup probe trì hoãn việc đánh giá liveness/readiness cho đến khi ứng dụng khởi động thành công."
+sources = ["kubernetes/core/pod-v1/index"]
+
+[[questions]]
+id = "devops-dv003"
+module = "devops-dv-k8s-rollout"
+type = "single"
+difficulty = 2
+prompt = "Sự khác nhau quan trọng nhất giữa CPU request và CPU limit của container là gì?"
+options = ["Request phục vụ lập lịch và là mức kỳ vọng cấp phát; limit giới hạn mức CPU tối đa có thể dùng", "Request là mức trần còn limit là mức tối thiểu được bảo đảm", "Cả hai đều chỉ dùng để đặt số replicas", "Limit khiến Pod luôn được xếp lên node có CPU trống"]
+answer = [0]
+explanation = "Scheduler dùng requests để đánh giá khả năng đặt Pod; CPU limit áp trần sử dụng và có thể làm tiến trình bị throttle."
+sources = ["kubernetes/core/pod-v1/index#ResourceRequirements"]
+
+[[questions]]
+id = "devops-dv004"
+module = "devops-dv-k8s-rollout"
+type = "single"
+difficulty = 2
+prompt = "PDB hữu ích nhất trong tình huống nào?"
+options = ["Giới hạn số Pod có thể bị gián đoạn tự nguyện khi drain node", "Ngăn mọi Pod lỗi do node mất điện", "Thay thế readiness probe", "Bắt buộc Deployment không bao giờ thay image"]
+answer = [0]
+explanation = "PodDisruptionBudget điều tiết một số disruption tự nguyện thông qua eviction; nó không bảo vệ trước mọi lỗi ngoài dự kiến."
+sources = ["kubernetes/policy/pod-disruption-budget-v1/index"]
+
+[[questions]]
+id = "devops-dv005"
+module = "devops-dv-k8s-rollout"
+type = "multiple"
+difficulty = 3
+prompt = "Deployment đang rolling update nhưng replicas mới chưa phục vụ được. Chọn các bước/thiết lập giúp giảm rủi ro phát hành."
+options = [
+  "Dùng readiness probe để chỉ đưa Pod sẵn sàng vào traffic.",
+  "Kiểm tra rollout status, Pod Events và lý do container chưa ready.",
+  "Đặt maxUnavailable cao nhất để rollout luôn hoàn tất nhanh.",
+  "Đánh giá maxSurge cùng quota và capacity của cluster.",
+  "Xem PDB như cơ chế ngăn mọi dạng outage và bỏ qua health check."
+]
+answer = [0, 1, 3]
+explanation = "Readiness và quan sát rollout giúp phát hiện lỗi trước khi chuyển traffic; maxSurge phải nằm trong capacity. PDB không ngăn lỗi mọi loại và không thay health checks."
+sources = ["kubernetes/apps/deployment-v1/index", "kubernetes/core/pod-v1/index", "kubernetes/policy/pod-disruption-budget-v1/index"]
+
+[[questions]]
+id = "devops-dv006"
+module = "devops-dv-k8s-rollout"
+type = "fill"
+difficulty = 1
+prompt = '''
+Lệnh xem trạng thái tiến trình cập nhật của Deployment là `kubectl rollout {{blank}} deployment/api`.
+'''
+blanks = [["status"]]
+explanation = "`kubectl rollout status` chờ và báo trạng thái rollout của workload."
+sources = ["kubernetes/apps/deployment-v1/index"]
+
+[[questions]]
+id = "devops-dv007"
+module = "devops-dv-k8s-rollout"
+type = "fill"
+difficulty = 2
+prompt = '''
+Kubernetes xếp Pod lên node dựa trên tài nguyên khai báo trong `resources.{{blank}}`.
+'''
+blanks = [["requests"]]
+explanation = "Requests là tài nguyên được khai báo để scheduler xét khả năng xếp Pod; limits đặt mức tối đa runtime."
+sources = ["kubernetes/core/pod-v1/index#ResourceRequirements"]
+
+[[questions]]
+id = "devops-dv008"
+module = "devops-dv-k8s-rollout"
+type = "essay"
+difficulty = 3
+prompt = "Trong phỏng vấn, hãy giải thích cách bạn điều tra một Deployment bị kẹt khi rollout phiên bản mới mà vẫn giữ an toàn cho người dùng."
+keywords = [["readiness probe", "readiness"], ["rollout status", "kubectl rollout"], ["events", "describe pod"], ["capacity", "requests", "quota"], ["rollback", "rollout undo"]]
+min_keywords = 3
+model_answer = '''Tôi kiểm tra kubectl rollout status, trạng thái Pod và Events để tìm lỗi image, cấu hình hoặc tài nguyên. Tôi xác nhận readiness probe phản ánh đúng khả năng phục vụ và requests/quota còn đủ capacity. Nếu phiên bản mới gây lỗi cho người dùng, tôi dừng rollout và dùng rollback đã được review.'''
+explanation = "Câu trả lời tốt kết hợp chẩn đoán trạng thái, khả năng phục vụ và lựa chọn rollback có kiểm soát."
+sources = ["kubernetes/apps/deployment-v1/index", "kubernetes/core/pod-v1/index"]
+
+[[questions]]
+id = "devops-dvc01"
+module = "devops-dv-k8s-rollout"
+type = "code"
+lang = "python"
+difficulty = 2
+title = "Đếm Pod đã sẵn sàng"
+prompt = '''
+Viết `count_ready_pods(pods)` nhận danh sách object Pod dạng dictionary như JSON Kubernetes và trả về số Pod có ít nhất một condition với `type` là `Ready` và `status` là chuỗi `True`. Bỏ qua phần tử sai kiểu, thiếu `status`/`conditions`, hoặc `conditions` không phải danh sách. Các condition khác và giá trị `True` viết hoa/thường khác không được tính. Ví dụ Pod có `{"status": {"conditions": [{"type": "Ready", "status": "True"}]}}` được tính một lần.
+'''
+starter = '''
+def count_ready_pods(pods):
+    return 0
+'''
+solution = '''
+def count_ready_pods(pods):
+    count = 0
+    for pod in pods:
+        if not isinstance(pod, dict):
+            continue
+        status = pod.get("status")
+        if not isinstance(status, dict):
+            continue
+        conditions = status.get("conditions")
+        if not isinstance(conditions, list):
+            continue
+        if any(
+            isinstance(condition, dict)
+            and condition.get("type") == "Ready"
+            and condition.get("status") == "True"
+            for condition in conditions
+        ):
+            count += 1
+    return count
+'''
+tests = '''
+@test("đếm Pod Ready")
+def _():
+    pods = [
+        {"status": {"conditions": [{"type": "Ready", "status": "True"}]}},
+        {"status": {"conditions": [{"type": "Ready", "status": "False"}]}},
+    ]
+    expect(count_ready_pods(pods)).to_equal(1)
+
+@test("không đếm lặp condition")
+def _():
+    pod = {"status": {"conditions": [
+        {"type": "Ready", "status": "True"},
+        {"type": "Ready", "status": "True"},
+    ]}}
+    expect(count_ready_pods([pod])).to_equal(1)
+
+@test("bỏ qua field thiếu và phần tử sai kiểu")
+def _():
+    expect(count_ready_pods([None, {}, {"status": None}, {"status": {"conditions": None}}])).to_equal(0)
+
+@test("phân biệt đúng type và status")
+def _():
+    pods = [{"status": {"conditions": [
+        {"type": "Ready", "status": "true"},
+        {"type": "Initialized", "status": "True"},
+    ]}}]
+    expect(count_ready_pods(pods)).to_equal(0)
+'''
+hints = ["Đọc status và conditions sau khi xác nhận mỗi lớp dữ liệu là dictionary/list.", "Dùng any để tránh đếm một Pod nhiều lần nếu có condition Ready lặp."]
+explanation = "Điều kiện Ready trong Pod status là tín hiệu để workload và Service xác định Pod đã sẵn sàng; bài tập xử lý hình dạng JSON thiếu hoặc không hợp lệ an toàn."
+sources = ["kubernetes/core/pod-v1/index"]
+
+[[questions]]
+id = "devops-dv009"
+module = "devops-dv-k8s-security"
+type = "single"
+difficulty = 1
+prompt = "Một ứng dụng chỉ cần đọc ConfigMap trong namespace `app`. Cặp đối tượng nào phù hợp để cấp quyền theo phạm vi hẹp?"
+options = ["Role và RoleBinding trong namespace app", "ClusterRoleBinding tới cluster-admin", "PodSecurityContext và Secret", "NetworkPolicy và Ingress"]
+answer = [0]
+explanation = "Role mô tả quyền trong namespace và RoleBinding gán quyền đó cho subject trong cùng phạm vi."
+sources = ["kubernetes/rbac/role-v1/index", "kubernetes/rbac/role-binding-v1/index"]
+
+[[questions]]
+id = "devops-dv010"
+module = "devops-dv-k8s-security"
+type = "single"
+difficulty = 2
+prompt = "Pod cần gọi Kubernetes API bằng danh tính riêng của ứng dụng. Cơ chế nào nên gắn vào Pod?"
+options = ["ServiceAccount", "Node name", "IngressClass", "PersistentVolumeClaim"]
+answer = [0]
+explanation = "ServiceAccount cung cấp danh tính API cho workload; quyền cần thiết được gán riêng qua RBAC."
+sources = ["kubernetes/core/service-account-v1/index"]
+
+[[questions]]
+id = "devops-dv011"
+module = "devops-dv-k8s-security"
+type = "single"
+difficulty = 2
+prompt = "Một NetworkPolicy default-deny đã được áp dụng nhưng Pod vẫn giao tiếp được như trước. Nguyên nhân hạ tầng nào cần xác minh đầu tiên?"
+options = ["CNI đang dùng có triển khai hỗ trợ NetworkPolicy hay không", "Deployment có image digest hay không", "Cluster có Ingress object hay không", "Pod có dùng volume hay không"]
+answer = [0]
+explanation = "NetworkPolicy chỉ có tác dụng lọc khi network plugin của cluster thực thi chính sách đó."
+sources = ["kubernetes/networking/network-policy-v1/index"]
+
+[[questions]]
+id = "devops-dv012"
+module = "devops-dv-k8s-security"
+type = "single"
+difficulty = 1
+prompt = "Nhận định nào chính xác về Kubernetes Secret?"
+options = ["Giá trị thường được mã hóa dạng base64 trong API; cần RBAC và encryption at rest phù hợp", "Base64 mặc định bảo vệ dữ liệu như mã hóa mật mã", "Mọi người dùng cluster đều không thể đọc Secret", "Secret không thể xuất hiện trong backup hoặc log"]
+answer = [0]
+explanation = "Base64 là biểu diễn dữ liệu, không phải cơ chế mã hóa; quyền truy cập và cấu hình lưu trữ vẫn rất quan trọng."
+sources = ["kubernetes/core/secret-v1/index"]
+
+[[questions]]
+id = "devops-dv013"
+module = "devops-dv-k8s-security"
+type = "multiple"
+difficulty = 3
+prompt = "Chọn các biện pháp giảm phạm vi ảnh hưởng nếu một Pod bị chiếm quyền."
+options = [
+  "Dùng ServiceAccount riêng và chỉ cấp verbs/resources ứng dụng cần.",
+  "Dùng NetworkPolicy để giới hạn luồng mạng, sau khi xác nhận CNI hỗ trợ.",
+  "Gán cluster-admin cho mọi ServiceAccount để tránh lỗi vận hành.",
+  "Tắt tự mount ServiceAccount token với workload không gọi API.",
+  "Coi Secret base64 là đã mã hóa nên có thể ghi vào log debug."
+]
+answer = [0, 1, 3]
+explanation = "Danh tính riêng, quyền tối thiểu, kiểm soát mạng và không cấp token khi không cần sẽ giảm blast radius."
+sources = ["kubernetes/core/service-account-v1/index", "kubernetes/rbac/role-v1/index", "kubernetes/networking/network-policy-v1/index", "kubernetes/core/secret-v1/index"]
+
+[[questions]]
+id = "devops-dv014"
+module = "devops-dv-k8s-security"
+type = "fill"
+difficulty = 1
+prompt = '''
+Đối tượng RBAC gán một Role cho ServiceAccount trong namespace là `{{blank}}`.
+'''
+blanks = [["RoleBinding"]]
+explanation = "RoleBinding nối Role với subject như user, group hoặc ServiceAccount trong một namespace."
+sources = ["kubernetes/rbac/role-binding-v1/index"]
+
+[[questions]]
+id = "devops-dv015"
+module = "devops-dv-k8s-security"
+type = "fill"
+difficulty = 2
+prompt = '''
+API object dùng để khai báo quy tắc ingress/egress cho Pod là `{{blank}}`.
+'''
+blanks = [["NetworkPolicy"]]
+explanation = "NetworkPolicy chọn Pod và mô tả các luồng mạng được phép theo ingress hoặc egress."
+sources = ["kubernetes/networking/network-policy-v1/index"]
+
+[[questions]]
+id = "devops-dv016"
+module = "devops-dv-k8s-security"
+type = "essay"
+difficulty = 3
+prompt = "Trong phỏng vấn, hãy mô tả cách giảm blast radius khi một ứng dụng trong Kubernetes bị xâm nhập."
+keywords = [["least privilege", "quyền tối thiểu"], ["serviceaccount", "service account"], ["networkpolicy", "network policy"], ["secret encryption", "encryption at rest", "mã hóa khi lưu"], ["automountserviceaccounttoken", "tắt token"]]
+min_keywords = 3
+model_answer = '''Tôi cấp ServiceAccount riêng và RBAC theo least privilege, tránh quyền cluster-wide nếu ứng dụng chỉ cần một namespace. Tôi dùng NetworkPolicy để giới hạn ingress/egress và xác nhận CNI thực thi chính sách. Secret cần RBAC chặt, encryption at rest và xoay vòng; workload không gọi API nên tắt tự mount token.'''
+explanation = "Câu trả lời tốt giới hạn cả quyền API, luồng mạng và khả năng truy cập dữ liệu nhạy cảm."
+sources = ["kubernetes/rbac/role-v1/index", "kubernetes/core/service-account-v1/index", "kubernetes/networking/network-policy-v1/index", "kubernetes/core/secret-v1/index"]
+
+[[questions]]
+id = "devops-dvc02"
+module = "devops-dv-k8s-security"
+type = "code"
+lang = "python"
+difficulty = 2
+title = "Đánh giá rule RBAC"
+prompt = '''
+Viết `rbac_allows(rules, verb, api_group, resource)` để kiểm tra một yêu cầu đã được gán tới chủ thể có khớp ít nhất một rule trong danh sách hay không. Mỗi rule có thể có các danh sách `verbs`, `apiGroups`, `resources`; ký tự `*` khớp mọi giá trị trong trường đó. API group lõi được truyền bằng chuỗi rỗng. Rule thiếu trường hoặc có trường không phải danh sách không cấp quyền. Hàm chỉ kiểm tra rule đã hiệu lực, không cần mô phỏng binding hay phạm vi namespace. Ví dụ rule `{"verbs": ["get"], "apiGroups": [""], "resources": ["configmaps"]}` cho phép đọc ConfigMap API lõi.
+'''
+starter = '''
+def rbac_allows(rules, verb, api_group, resource):
+    return False
+'''
+solution = '''
+def rbac_allows(rules, verb, api_group, resource):
+    requested = (verb, api_group, resource)
+    for rule in rules:
+        if not isinstance(rule, dict):
+            continue
+        fields = (rule.get("verbs"), rule.get("apiGroups"), rule.get("resources"))
+        if not all(isinstance(values, list) for values in fields):
+            continue
+        if all("*" in values or value in values for values, value in zip(fields, requested)):
+            return True
+    return False
+'''
+tests = '''
+@test("khớp đủ verb, group và resource")
+def _():
+    rules = [{"verbs": ["get"], "apiGroups": [""], "resources": ["configmaps"]}]
+    expect(rbac_allows(rules, "get", "", "configmaps")).to_be_true()
+
+@test("wildcard khớp từng trường")
+def _():
+    rules = [{"verbs": ["*"], "apiGroups": ["apps"], "resources": ["deployments", "*"]}]
+    expect(rbac_allows(rules, "patch", "apps", "deployments")).to_be_true()
+
+@test("không cấp quyền khi thiếu một trường khớp")
+def _():
+    rules = [{"verbs": ["get"], "apiGroups": [""], "resources": ["secrets"]}]
+    expect(rbac_allows(rules, "get", "", "configmaps")).to_be_false()
+
+@test("bỏ qua rule sai định dạng")
+def _():
+    rules = [None, {"verbs": "get", "apiGroups": [""], "resources": ["pods"]}]
+    expect(rbac_allows(rules, "get", "", "pods")).to_be_false()
+'''
+hints = ["Xác thực từng rule và ba trường trước khi so khớp.", "Mỗi trường hỗ trợ khớp chính xác hoặc wildcard; cả ba phải khớp trong cùng một rule."]
+explanation = "Mô phỏng rule access-control theo hướng fail-closed: rule thiếu dữ liệu hợp lệ không được cấp quyền."
+sources = ["kubernetes/rbac/role-v1/index"]
+
+[[questions]]
+id = "devops-dv017"
+module = "devops-dv-nginx-edge"
+type = "single"
+difficulty = 2
+prompt = "Nginx đứng sau load balancer. Cách nào tránh tin địa chỉ client giả mạo trong `X-Forwarded-For`?"
+options = ["Chỉ khai báo CIDR của proxy tin cậy bằng set_real_ip_from", "Tin mọi địa chỉ gửi header này", "Tắt access log", "Dùng client IP làm tên upstream"]
+answer = [0]
+explanation = "Chỉ proxy đã được tin cậy mới được phép cung cấp địa chỉ client; tin header từ mọi nguồn cho phép giả mạo IP."
+sources = ["nginx/http/ngx_http_realip_module#set_real_ip_from"]
+
+[[questions]]
+id = "devops-dv018"
+module = "devops-dv-nginx-edge"
+type = "single"
+difficulty = 2
+prompt = "Trong Nginx rate limiting, mục đích chính của `limit_req_zone` là gì?"
+options = ["Khai báo key, shared-memory zone và tốc độ cho bộ giới hạn request", "Chặn toàn bộ HTTP method ngoài GET", "Tạo upstream server group", "Bắt buộc mọi request dùng TLS"]
+answer = [0]
+explanation = "limit_req_zone định nghĩa vùng trạng thái/tốc độ; limit_req tham chiếu zone trong context áp dụng."
+sources = ["nginx/http/ngx_http_limit_req_module#limit_req_zone"]
+
+[[questions]]
+id = "devops-dv019"
+module = "devops-dv-nginx-edge"
+type = "single"
+difficulty = 1
+prompt = "Bạn vừa sửa cấu hình Nginx và cần xác nhận cú pháp trước khi reload. Lệnh nào phù hợp?"
+options = ["nginx -t", "nginx -s stop", "nginx -V", "nginx -T | reload"]
+answer = [0]
+explanation = "nginx -t kiểm tra cú pháp và thử mở các file được tham chiếu trong cấu hình."
+sources = ["nginx/ngx_core_module"]
+
+[[questions]]
+id = "devops-dv020"
+module = "devops-dv-nginx-edge"
+type = "single"
+difficulty = 3
+prompt = "Biện pháp nào bảo vệ private key của TLS certificate tốt nhất trong môi trường production?"
+options = ["Giới hạn quyền đọc cho tiến trình/nhóm cần thiết và quản lý key như secret", "Đưa key vào image để mọi replica dùng chung", "Ghi key vào access log khi debug", "Phục vụ nội dung private key cho client cùng certificate"]
+answer = [0]
+explanation = "Private key cần được bảo vệ khỏi đọc trái phép, không lưu trong image hoặc log và chỉ cấp cho Nginx cần sử dụng."
+sources = ["nginx/http/ngx_http_ssl_module#ssl_certificate"]
+
+[[questions]]
+id = "devops-dv021"
+module = "devops-dv-nginx-edge"
+type = "multiple"
+difficulty = 3
+prompt = "Chọn các cấu hình/vận hành giúp triển khai Nginx reverse proxy an toàn hơn."
+options = [
+  "Giới hạn set_real_ip_from vào CIDR của proxy thực sự tin cậy.",
+  "Bắt đầu rate limit ở chế độ quan sát/dry-run khi cần đo ảnh hưởng.",
+  "Chạy nginx -t trước khi reload cấu hình.",
+  "Dùng một limit_req_zone không phân biệt endpoint hay loại client trong mọi hệ thống.",
+  "Ghi token truy cập đầy đủ vào access log để điều tra nhanh."
+]
+answer = [0, 1, 2]
+explanation = "Trust boundary, đánh giá chính sách trước khi chặn và kiểm tra cấu hình giúp giảm rủi ro; key rate limit và nội dung log phải được thiết kế phù hợp."
+sources = ["nginx/http/ngx_http_realip_module#set_real_ip_from", "nginx/http/ngx_http_limit_req_module#limit_req_dry_run", "nginx/http/ngx_http_log_module#access_log"]
+
+[[questions]]
+id = "devops-dv022"
+module = "devops-dv-nginx-edge"
+type = "fill"
+difficulty = 1
+prompt = '''
+Directive khai báo key, zone và rate cho request limiting là `{{blank}}`.
+'''
+blanks = [["limit_req_zone"]]
+explanation = "limit_req_zone tạo vùng trạng thái được directive limit_req tham chiếu."
+sources = ["nginx/http/ngx_http_limit_req_module#limit_req_zone"]
+
+[[questions]]
+id = "devops-dv023"
+module = "devops-dv-nginx-edge"
+type = "fill"
+difficulty = 1
+prompt = '''
+Kiểm tra cú pháp cấu hình Nginx bằng lệnh `nginx {{blank}}` trước khi reload.
+'''
+blanks = [["-t"]]
+explanation = "Tùy chọn -t kiểm tra cấu hình trước khi áp dụng bằng reload."
+sources = ["nginx/ngx_core_module"]
+
+[[questions]]
+id = "devops-dv024"
+module = "devops-dv-nginx-edge"
+type = "essay"
+difficulty = 3
+prompt = "Hãy giải thích thiết kế rate limit và xác định client IP đáng tin cậy khi Nginx chạy sau load balancer."
+keywords = [["trusted proxy", "proxy tin cậy", "set_real_ip_from"], ["client ip", "binary_remote_addr", "địa chỉ client"], ["burst", "nodelay"], ["dry run", "limit_req_dry_run", "quan sát"], ["nginx -t", "kiểm tra cấu hình"]]
+min_keywords = 3
+model_answer = '''Tôi chỉ tin client IP do trusted proxy trong CIDR được khai báo bằng set_real_ip_from chuyển tới. Tôi chọn key như binary_remote_addr, đặt rate và burst theo hành vi endpoint; có thể quan sát bằng limit_req_dry_run trước khi chặn, rồi chạy nginx -t trước reload.'''
+explanation = "Câu trả lời tốt làm rõ ranh giới proxy, chính sách burst và bước đo/kiểm tra trước khi bật enforcement."
+sources = ["nginx/http/ngx_http_realip_module#set_real_ip_from", "nginx/http/ngx_http_limit_req_module#limit_req", "nginx/http/ngx_http_limit_req_module#limit_req_dry_run"]
+
+[[questions]]
+id = "devops-dvc03"
+module = "devops-dv-nginx-edge"
+type = "code"
+lang = "python"
+difficulty = 3
+title = "Xác định client qua proxy tin cậy"
+prompt = '''
+Viết `resolve_client_ip(peer_ip, forwarded_for, trusted_cidrs)`. `peer_ip` là địa chỉ kết nối trực tiếp tới Nginx; `forwarded_for` là chuỗi IP phân tách bằng dấu phẩy; `trusted_cidrs` là danh sách CIDR của proxy tin cậy. Nếu peer không thuộc CIDR tin cậy, bỏ qua header và trả về peer. Nếu peer tin cậy, duyệt các địa chỉ trong X-Forwarded-For từ phải sang trái, bỏ qua IP nằm trong trusted CIDRs và trả về IP hợp lệ đầu tiên không tin cậy. Bỏ qua địa chỉ/CIDR lỗi định dạng; nếu peer IP không hợp lệ trả `None`, nếu không tìm được client hợp lệ thì trả peer. Trả địa chỉ chuẩn hóa bằng `str(ipaddress.ip_address(...))`. Chỉ dùng thư viện chuẩn Python.
+'''
+starter = '''
+def resolve_client_ip(peer_ip, forwarded_for, trusted_cidrs):
+    return peer_ip
+'''
+solution = '''
+import ipaddress
+
+
+def resolve_client_ip(peer_ip, forwarded_for, trusted_cidrs):
+    try:
+        peer = ipaddress.ip_address(peer_ip)
+    except (ValueError, TypeError):
+        return None
+
+    networks = []
+    if isinstance(trusted_cidrs, list):
+        for cidr in trusted_cidrs:
+            try:
+                networks.append(ipaddress.ip_network(cidr, strict=False))
+            except (ValueError, TypeError):
+                continue
+
+    def is_trusted(address):
+        return any(
+            address.version == network.version and address in network
+            for network in networks
+        )
+
+    if not is_trusted(peer):
+        return str(peer)
+    if not isinstance(forwarded_for, str):
+        return str(peer)
+
+    for raw_ip in reversed(forwarded_for.split(",")):
+        try:
+            address = ipaddress.ip_address(raw_ip.strip())
+        except ValueError:
+            continue
+        if not is_trusted(address):
+            return str(address)
+    return str(peer)
+'''
+tests = '''
+@test("bỏ qua header khi peer không tin cậy")
+def _():
+    result = resolve_client_ip("203.0.113.5", "198.51.100.9", ["10.0.0.0/8"])
+    expect(result).to_equal("203.0.113.5")
+
+@test("lấy client từ proxy tin cậy")
+def _():
+    result = resolve_client_ip("10.0.0.2", "198.51.100.7", ["10.0.0.0/8"])
+    expect(result).to_equal("198.51.100.7")
+
+@test("bỏ qua các proxy tin cậy từ phải sang trái")
+def _():
+    result = resolve_client_ip("10.0.0.2", "198.51.100.7, 10.0.0.1", ["10.0.0.0/8"])
+    expect(result).to_equal("198.51.100.7")
+
+@test("không nhận giá trị giả mạo đứng trước client thật")
+def _():
+    chain = "192.0.2.99, 198.51.100.7, 10.0.0.1"
+    expect(resolve_client_ip("10.0.0.2", chain, ["10.0.0.0/8"])).to_equal("198.51.100.7")
+
+@test("IP peer không hợp lệ trả None")
+def _():
+    expect(resolve_client_ip("not-an-ip", "198.51.100.7", ["10.0.0.0/8"])).to_be_none()
+
+@test("header không có client hợp lệ thì giữ peer")
+def _():
+    result = resolve_client_ip("10.0.0.2", "bad-ip, 10.0.0.1", ["10.0.0.0/8"])
+    expect(result).to_equal("10.0.0.2")
+'''
+hints = ["Chỉ đọc X-Forwarded-For khi peer kết nối nằm trong mạng tin cậy.", "Duyệt header từ proxy gần nhất về phía client và tiếp tục bỏ qua các hop tin cậy."]
+explanation = "Mô hình này thể hiện nguyên tắc chỉ tin header do proxy quản lý; cấu hình thực tế cần khớp với thứ tự và hành vi append của load balancer."
+sources = ["nginx/http/ngx_http_realip_module#set_real_ip_from", "nginx/http/ngx_http_realip_module#real_ip_recursive"]
+
+[[questions]]
+id = "devops-dv025"
+module = "devops-dv-terraform-modules"
+type = "single"
+difficulty = 1
+prompt = "Một module Terraform được gọi từ root module sẽ nhận cấu hình của caller qua cơ chế nào?"
+options = ["Input variables", "Remote state locking", "Provisioner mặc định", "Tên thư mục working directory"]
+answer = [0]
+explanation = "Input variables tạo phần giao diện để caller truyền dữ liệu cấu hình vào module."
+sources = ["terraform/language/values/variables", "terraform/language/modules/syntax"]
+
+[[questions]]
+id = "devops-dv026"
+module = "devops-dv-terraform-modules"
+type = "single"
+difficulty = 2
+prompt = "Danh sách instance có tên ổn định như `api`, `worker` và `scheduler`; muốn địa chỉ resource dễ đọc và ít phụ thuộc thứ tự danh sách. Cách nào phù hợp?"
+options = ["for_each trên map với key ổn định", "count trên list rồi đổi thứ tự tuỳ ý", "Provisioner local-exec", "Một state file riêng cho từng resource"]
+answer = [0]
+explanation = "for_each dùng key map làm một phần địa chỉ instance, nên không lệ thuộc index của danh sách như count."
+sources = ["terraform/language/meta-arguments/for_each"]
+
+[[questions]]
+id = "devops-dv027"
+module = "devops-dv-terraform-modules"
+type = "single"
+difficulty = 2
+prompt = "Bạn đang đổi key `for_each` của một resource production. Điều gì cần được xem xét trước apply?"
+options = ["Terraform có thể xem địa chỉ mới là resource khác; cần đánh giá migration state và plan", "Đổi key chỉ sửa nhãn hiển thị, không ảnh hưởng state", "Terraform luôn giữ nguyên resource mà không cần review", "Chạy apply hai lần sẽ tự ghép địa chỉ cũ và mới"]
+answer = [0]
+explanation = "Key tạo địa chỉ instance; đổi key có thể biểu hiện thành destroy/create nếu không lập kế hoạch chuyển state phù hợp."
+sources = ["terraform/language/meta-arguments/for_each", "terraform/language/state/purpose"]
+
+[[questions]]
+id = "devops-dv028"
+module = "devops-dv-terraform-modules"
+type = "single"
+difficulty = 2
+prompt = "Mục đích chính của `terraform test` trong một repository IaC là gì?"
+options = ["Chạy test files và assertions để kiểm tra cấu hình Terraform", "Thay thế mọi lần review terraform plan", "Tự cấp quyền production cho provider", "Xoá toàn bộ state sau mỗi lần init"]
+answer = [0]
+explanation = "Terraform test cung cấp cơ chế kiểm thử cấu hình; test plan/apply vẫn cần môi trường và provider phù hợp."
+sources = ["terraform/cli/commands/test"]
+
+[[questions]]
+id = "devops-dv029"
+module = "devops-dv-terraform-modules"
+type = "multiple"
+difficulty = 3
+prompt = "Chọn các thực hành giúp module Terraform dễ tái sử dụng và thay đổi an toàn."
+options = [
+  "Thiết kế input có kiểu, ý nghĩa rõ và output theo nhu cầu của caller.",
+  "Dùng key ổn định cho các resource có danh tính nghiệp vụ khi dùng for_each.",
+  "Review plan để tìm thay đổi destroy/create bất ngờ trước apply.",
+  "Ẩn mọi thay đổi module source khỏi pull request để giảm nhiễu.",
+  "Cho test apply resource thật chạy với quyền production mặc định."
+]
+answer = [0, 1, 2]
+explanation = "Contract rõ, địa chỉ ổn định và review plan giúp giảm thay đổi ngoài ý muốn; test apply cần quyền và môi trường được cô lập."
+sources = ["terraform/language/modules/sources", "terraform/language/meta-arguments/for_each", "terraform/cli/commands/test"]
+
+[[questions]]
+id = "devops-dv030"
+module = "devops-dv-terraform-modules"
+type = "fill"
+difficulty = 1
+prompt = '''
+Để lặp qua các instance có key ổn định trong block resource, dùng meta-argument `{{blank}}`.
+'''
+blanks = [["for_each"]]
+explanation = "for_each tạo instance từ map hoặc set có phần tử định danh; key trở thành một phần địa chỉ resource."
+sources = ["terraform/language/meta-arguments/for_each"]
+
+[[questions]]
+id = "devops-dv031"
+module = "devops-dv-terraform-modules"
+type = "fill"
+difficulty = 1
+prompt = '''
+Lệnh chạy các Terraform test files là `terraform {{blank}}`.
+'''
+blanks = [["test"]]
+explanation = "terraform test chạy các test files để đánh giá cấu hình và assertions."
+sources = ["terraform/cli/commands/test"]
+
+[[questions]]
+id = "devops-dv032"
+module = "devops-dv-terraform-modules"
+type = "essay"
+difficulty = 3
+prompt = "Trong phỏng vấn, hãy mô tả cách chuyển các resource lặp lại thành Terraform module dùng chung mà vẫn hạn chế rủi ro cho hạ tầng đang quản lý."
+keywords = [["input variables", "inputs", "giao diện module"], ["outputs", "contract"], ["for_each", "stable keys", "key ổn định"], ["terraform plan", "review plan"], ["state migration", "migration state"], ["terraform test", "kiểm thử"]]
+min_keywords = 4
+model_answer = '''Tôi xác định input variables và outputs cần thiết để tạo contract nhỏ, rồi gọi module từ một môi trường thử nghiệm. Với resource có danh tính nghiệp vụ, tôi chọn for_each và key ổn định. Tôi chạy terraform test và review terraform plan để phát hiện destroy/create; nếu địa chỉ thay đổi, tôi chuẩn bị state migration riêng trước khi rollout.'''
+explanation = "Câu trả lời nên đề cập contract, danh tính resource, kiểm thử và cách xem trước tác động state."
+sources = ["terraform/language/modules/sources", "terraform/language/meta-arguments/for_each", "terraform/cli/commands/test"]
+
+[[questions]]
+id = "devops-dvc04"
+module = "devops-dv-terraform-modules"
+type = "code"
+lang = "python"
+difficulty = 2
+title = "Tóm tắt thay đổi trong Terraform plan"
+prompt = '''
+Viết `summarize_plan(plan)` nhận object JSON từ `terraform show -json` và trả về dict có các khóa `create`, `update`, `delete`, `replace`, `read`, `no_op`, ban đầu đều bằng 0. Duyệt `resource_changes`; mỗi entry có `change.actions`. Nếu actions chứa cả `create` và `delete` thì tăng riêng `replace` (không tăng create/delete). Nếu không, nhận diện chính xác các danh sách `['create']`, `['update']`, `['delete']`, `['read']`, `['no-op']`. Bỏ qua entry sai định dạng hoặc action không nhận diện. Ví dụ replacement `['delete', 'create']` chỉ tăng `replace`.
+'''
+starter = '''
+def summarize_plan(plan):
+    return {"create": 0, "update": 0, "delete": 0, "replace": 0, "read": 0, "no_op": 0}
+'''
+solution = '''
+def summarize_plan(plan):
+    result = {"create": 0, "update": 0, "delete": 0, "replace": 0, "read": 0, "no_op": 0}
+    if not isinstance(plan, dict):
+        return result
+    changes = plan.get("resource_changes")
+    if not isinstance(changes, list):
+        return result
+    mapping = {
+        "create": "create",
+        "update": "update",
+        "delete": "delete",
+        "read": "read",
+        "no-op": "no_op",
+    }
+    for item in changes:
+        if not isinstance(item, dict):
+            continue
+        change = item.get("change")
+        if not isinstance(change, dict):
+            continue
+        actions = change.get("actions")
+        if not isinstance(actions, list) or not all(isinstance(action, str) for action in actions):
+            continue
+        if "create" in actions and "delete" in actions:
+            result["replace"] += 1
+        elif len(actions) == 1 and actions[0] in mapping:
+            result[mapping[actions[0]]] += 1
+    return result
+'''
+tests = '''
+@test("đếm các action cơ bản")
+def _():
+    plan = {"resource_changes": [
+        {"change": {"actions": ["create"]}},
+        {"change": {"actions": ["update"]}},
+        {"change": {"actions": ["delete"]}},
+        {"change": {"actions": ["read"]}},
+        {"change": {"actions": ["no-op"]}},
+    ]}
+    expect(summarize_plan(plan)).to_equal({"create": 1, "update": 1, "delete": 1, "replace": 0, "read": 1, "no_op": 1})
+
+@test("đếm replacement độc lập với thứ tự action")
+def _():
+    plan = {"resource_changes": [
+        {"change": {"actions": ["delete", "create"]}},
+        {"change": {"actions": ["create", "delete"]}},
+    ]}
+    expect(summarize_plan(plan)["replace"]).to_equal(2)
+    expect(summarize_plan(plan)["create"]).to_equal(0)
+
+@test("bỏ qua entry sai cấu trúc và action lạ")
+def _():
+    plan = {"resource_changes": [None, {}, {"change": {"actions": "create"}}, {"change": {"actions": ["forget"]}}]}
+    expect(summarize_plan(plan)).to_equal({"create": 0, "update": 0, "delete": 0, "replace": 0, "read": 0, "no_op": 0})
+
+@test("trả các số không khi thiếu resource_changes")
+def _():
+    expect(summarize_plan({})).to_equal({"create": 0, "update": 0, "delete": 0, "replace": 0, "read": 0, "no_op": 0})
+'''
+hints = ["Khởi tạo đầy đủ các khóa rồi xác thực từng cấp dictionary/list.", "Xử lý replacement trước action đơn để không tính nó thành create hoặc delete."]
+explanation = "Bản tóm tắt giúp reviewer nhận ra replacement riêng vì nó thường có blast radius lớn hơn cập nhật tại chỗ."
+sources = ["terraform/cli/commands/show", "terraform/language/modules/sources"]

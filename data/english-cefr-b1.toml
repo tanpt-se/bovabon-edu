@@ -1,0 +1,685 @@
+id = "english-cefr-b1"
+title = "Tiếng Anh B1 · Trung cấp"
+icon = "B1"
+color = "#16a34a"
+group = "Tiếng Anh"
+area = "english"
+description = "Luyện tiếng Anh B1 qua ngữ pháp bổ sung, từ vựng chủ đề quen thuộc, giao tiếp và đọc–viết thực tế."
+
+[[modules]]
+id = "cefr-b1-grammar-plus"
+title = "Ngữ pháp B1 mở rộng"
+description = "Dạng tương lai, modal, mệnh đề kết quả/mục đích, câu hỏi gián tiếp và đuôi, mạo từ, lượng từ và be used to."
+lesson = '''
+### Chọn dạng tương lai theo ý nghĩa
+| Dạng | Dùng khi | Ví dụ |
+|---|---|---|
+| will + V | quyết định ngay, lời hứa hoặc dự đoán theo ý kiến | *I'll help you. I think it will be busy.* |
+| be going to + V | dự định đã có hoặc dự đoán có dấu hiệu hiện tại | *We're going to save money. Look at those clouds!* |
+| hiện tại tiếp diễn | kế hoạch cá nhân đã sắp xếp | *I'm meeting Lan at six.* |
+| hiện tại đơn | lịch trình cố định | *The bus leaves at 7.20.* |
+
+### Modal: nghĩa vụ, cho phép, khả năng
+| Cấu trúc | Nghĩa | Ví dụ |
+|---|---|---|
+| need to + V | cần làm | *You need to bring your ID.* |
+| needn't + V | không cần làm | *You needn't print the form.* |
+| be allowed to + V | được phép | *Visitors are allowed to take photos.* |
+| may + V | có thể / xin phép lịch sự | *It may rain. May I sit here?* |
+| be able to + V | có khả năng, dùng được ở nhiều thì | *She was able to finish on time.* |
+
+Đừng nhầm *needn't* (không cần) với *mustn't* (bị cấm). Sau modal dùng động từ nguyên mẫu không *to*; riêng *need to* và *be allowed to* có *to*.
+
+### Kết quả, mức độ và mục đích
+*so + tính từ/trạng từ + that*: *The room was so noisy that I couldn't sleep.* · *such + (a/an) + tính từ + danh từ + that*: *It was such a useful lesson that I took notes.* Dùng *too + tính từ + to V* khi quá mức để làm gì (*too tired to walk*); dùng *tính từ + enough + to V* khi đủ khả năng (*old enough to travel alone*). Nói mục đích bằng *to / in order to + V* hoặc *so that + chủ ngữ + động từ*: *I left early to catch the bus.* / *I spoke slowly so that everyone could understand.*
+
+### Câu hỏi lịch sự, câu hỏi đuôi
+Trong câu hỏi gián tiếp, dùng trật tự câu kể sau từ để hỏi: *Could you tell me where the bank is?* Không nói *where is the bank* ở giữa câu. Câu hỏi có/không thường dùng *if/whether*: *Do you know if the shop is open?* Câu hỏi đuôi đổi cực tính: câu khẳng định thường theo sau bởi đuôi phủ định (*You live nearby, don't you?*); câu phủ định theo sau bởi đuôi khẳng định (*She isn't busy, is she?*). Chọn trợ động từ khớp với động từ chính.
+
+### Mạo từ và từ chỉ lượng
+Dùng *a/an* khi nói một danh từ đếm được số ít chưa xác định (*an interview*), *the* khi người nghe biết rõ đối tượng hoặc vật là duy nhất trong ngữ cảnh (*the interview at 2 p.m.*). Nói chung với danh từ số nhiều/không đếm được thường bỏ mạo từ: *Books are useful; Water is important.* *Go to school* nói về việc học; *go to the school* là tới địa điểm trường cụ thể. *Both* = cả hai; *either* = một trong hai; *neither* = không bên nào. Với danh từ số nhiều: *Both options are fine.* *Neither answer is correct.*
+
+### used to và be used to
+*used to + V* nói thói quen/trạng thái trong quá khứ nay đã đổi: *I used to cycle to work.* *be used to + danh từ/V-ing* nói đã quen: *I'm used to cycling in the rain.* Mẹo: sau *be used to*, chữ *to* là giới từ nên theo sau bằng danh từ hoặc V-ing. Lỗi thường gặp là viết *I'm used to cycle* hoặc dùng *will* ngay sau *if* trong câu điều kiện; hãy nhìn cấu trúc và ý nghĩa trước khi chọn dạng.
+
+### Một số cấu trúc B1 khác
+Đại từ phản thân (*myself, yourself, himself, herself, ourselves, themselves*) nhấn mạnh người tự làm việc đó: *I made the cake myself.* Dùng *each other* khi hai hay nhiều người làm việc qua lại: *The classmates help each other.* Với phrasal verb, một số cụm tách được: *turn off the light / turn the light off / turn it off*; một số cụm không tách: *look after a child* (không nói *look a child after*). Ghi nhớ cả cụm và vị trí đại từ. Để diễn đạt tương phản, *although + mệnh đề* có thể đứng đầu câu (*Although it was late, we stayed.*), *but* nối hai ý trong một câu, còn *however* thường mở câu tiếp theo (*It was late. However, we stayed.*). Không ghép *although…but* hoặc *but, however* trong cùng một cấu trúc.
+'''
+
+[[questions]]
+id = "cefr-b1-001"
+module = "cefr-b1-grammar-plus"
+type = "single"
+difficulty = 1
+prompt = "The museum ______ at 9 a.m. every day."
+options = ["is opening", "opens", "will open", "is going to open"]
+answer = [1]
+explanation = "Lịch mở cửa cố định dùng hiện tại đơn. Hiện tại tiếp diễn thường nói về một cuộc hẹn đã sắp xếp."
+
+[[questions]]
+id = "cefr-b1-002"
+module = "cefr-b1-grammar-plus"
+type = "single"
+difficulty = 2
+prompt = "Look at those dark clouds. It ______ soon."
+options = ["is going to rain", "rains", "is raining yesterday", "will to rain"]
+answer = [0]
+explanation = "Có dấu hiệu rõ ở hiện tại nên dùng *be going to* để dự đoán. Sau *will* không có *to*."
+
+[[questions]]
+id = "cefr-b1-003"
+module = "cefr-b1-grammar-plus"
+type = "single"
+difficulty = 1
+prompt = "You ______ bring food; lunch is included in the price."
+options = ["mustn't", "needn't", "aren't allowed", "can't to"]
+answer = [1]
+explanation = "*Needn't* nghĩa là không cần. *Mustn't* nghĩa là không được phép, khác hẳn ý của câu."
+
+[[questions]]
+id = "cefr-b1-004"
+module = "cefr-b1-grammar-plus"
+type = "single"
+difficulty = 2
+prompt = "Which sentence is a polite indirect question?"
+options = ["Could you tell me where the station is?", "Could you tell me where is the station?", "Could you tell where the station?", "Could you tell me where does the station be?"]
+answer = [0]
+explanation = "Sau *Could you tell me*, mệnh đề dùng trật tự câu kể: chủ ngữ đứng trước động từ."
+
+[[questions]]
+id = "cefr-b1-005"
+module = "cefr-b1-grammar-plus"
+type = "single"
+difficulty = 2
+prompt = "My sister is a doctor, ______?"
+options = ["is she", "isn't she", "doesn't she", "does she"]
+answer = [1]
+explanation = "Mệnh đề chính khẳng định với *is*, nên câu hỏi đuôi phủ định dùng *isn't she*."
+
+[[questions]]
+id = "cefr-b1-006"
+module = "cefr-b1-grammar-plus"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các câu dùng dạng tương lai phù hợp với tình huống được nêu."
+options = ["The train leaves at 8.15, according to the timetable.", "I've booked a table; I'm meeting Mai at seven.", "We planned this last week: we're going to paint the kitchen.", "Look at the timetable: the train is leaving every day at 8.15.", "I think he going to enjoy the film."]
+answer = [0, 1, 2]
+explanation = "Lịch trình dùng hiện tại đơn; cuộc hẹn đã sắp xếp dùng hiện tại tiếp diễn; dự định có từ trước dùng *going to*."
+
+[[questions]]
+id = "cefr-b1-007"
+module = "cefr-b1-grammar-plus"
+type = "multiple"
+difficulty = 3
+prompt = "Chọn các câu đúng về modal, mạo từ và either/neither/both."
+options = ["Visitors are allowed to use the garden.", "You mustn't wear a uniform; it is optional. (ý: không bắt buộc)", "Both answers are possible.", "Neither of the two rooms is available.", "She is an engineer at a local hospital.", "You can either take the bus or walk to the station.", "She may to arrive late because of traffic."]
+answer = [0, 2, 3, 4, 5]
+explanation = "*Be allowed to* diễn tả được phép; *both* đi với danh từ số nhiều; *neither* thường đi với động từ số ít; *either...or* nối hai lựa chọn. *Mustn't* là bị cấm và sau *may* không dùng *to*."
+
+[[questions]]
+id = "cefr-b1-008"
+module = "cefr-b1-grammar-plus"
+type = "fill"
+difficulty = 1
+prompt = '''
+Điền dạng tương lai phù hợp:
+
+1. The film {{blank}} (start) at 6.30 according to the programme.
+2. We {{blank}} (have) dinner with our cousins tomorrow; the table is booked.
+3. I think you {{blank}} (like) this book.
+'''
+blanks = [["starts"], ["are having", "'re having"], ["will like", "'ll like"]]
+explanation = "Lịch cố định dùng hiện tại đơn; sắp xếp cá nhân dùng hiện tại tiếp diễn; dự đoán nêu ý kiến thường dùng *will*."
+
+[[questions]]
+id = "cefr-b1-009"
+module = "cefr-b1-grammar-plus"
+type = "fill"
+difficulty = 2
+prompt = '''
+Điền một cụm phù hợp vào mỗi chỗ trống:
+
+1. The box is {{blank}} heavy that I can't lift it. (so/such)
+2. It was {{blank}} a funny story that we all laughed. (so/such)
+3. The soup is too hot {{blank}} eat now. (to/for)
+4. Mia is old {{blank}} to travel alone. (enough/too)
+5. I left early {{blank}} catch the first bus. (mục đích)
+'''
+blanks = [["so"], ["such"], ["to"], ["enough"], ["to", "in order to"]]
+explanation = "*So* đứng trước tính từ; *such* đứng trước cụm danh từ; *too + adjective + to V*; *adjective + enough + to V*. Dùng *to/in order to + V* để nêu mục đích."
+
+[[questions]]
+id = "cefr-b1-010"
+module = "cefr-b1-grammar-plus"
+type = "fill"
+difficulty = 3
+prompt = '''
+Hoàn thành các câu hỏi lịch sự và câu hỏi đuôi:
+
+1. Could you tell me where the post office {{blank}}? (is)
+2. You haven't met our new teacher, {{blank}}? (have)
+3. Do you know {{blank}} the shop is open on Sundays? (if/whether)
+4. My grandfather {{blank}} live by the sea, but now he lives in Hanoi. (từng)
+5. I am used to {{blank}} up early, so mornings are easy for me. (get)
+6. She is {{blank}} engineer at a local hospital. (an)
+'''
+blanks = [["is"], ["have you"], ["if", "whether"], ["used to"], ["getting"], ["an"]]
+explanation = "Câu hỏi gián tiếp giữ trật tự câu kể; mệnh đề chính phủ định *haven't met* cần đuôi khẳng định *have you?*. *Used to + V* nói thói quen cũ, còn *be used to + V-ing* nói đã quen. Dùng *an* trước âm nguyên âm trong *engineer*."
+
+[[questions]]
+id = "cefr-b1-011"
+module = "cefr-b1-grammar-plus"
+type = "essay"
+difficulty = 2
+prompt = '''
+Bạn đang ở một thị trấn lạ. Viết **hai câu tiếng Anh** để hỏi lịch sự đường đến bảo tàng và hỏi xem nó có mở cửa vào thứ Hai không. Dùng câu hỏi gián tiếp.
+'''
+keywords = [["could you tell me", "could you show me"], ["where the museum is", "how to get to the museum"], ["if it is open", "whether it is open"], ["on monday"]]
+min_keywords = 3
+model_answer = '''Could you tell me where the museum is? Do you know if it is open on Monday?'''
+explanation = "Câu hỏi gián tiếp giúp yêu cầu lịch sự hơn; sau cụm mở đầu dùng trật tự câu kể, kể cả khi có từ để hỏi."
+
+[[modules]]
+id = "cefr-b1-vocab"
+title = "Từ vựng theo chủ đề B1"
+description = "Từ vựng về công việc, học tập, truyền thông, môi trường và tiền bạc; collocation thông dụng và cấu tạo từ cơ bản."
+lesson = '''
+### Từ vựng theo chủ đề quen thuộc
+| Chủ đề | Từ/cụm từ | Ví dụ |
+|---|---|---|
+| Công việc | apply for a job, CV, salary, colleague, interview | *I have an interview on Friday.* |
+| Giáo dục | course, subject, exam, improve, take notes | *She takes notes during the lesson.* |
+| Truyền thông | news, headline, online, post, share | *I read the news online every morning.* |
+| Môi trường | recycle, waste, pollution, public transport, save energy | *We take the bus to reduce air pollution.* |
+| Tiền bạc | price, cost, spend, save, borrow, lend | *I'm saving money for a new laptop.* |
+| Sức khỏe & lối sống | exercise, sleep, healthy, habit | *A short walk is a healthy habit.* |
+| Du lịch & văn hóa | ticket, local food, museum, festival | *We tried local food at the festival.* |
+| Quan hệ | invite, get on with, apologize, each other | *I get on well with my colleagues.* |
+
+Chú ý các cặp dễ nhầm: *borrow* = nhận/tạm mượn từ ai; *lend* = cho ai mượn. *Salary* thường là khoản lương định kỳ; *price* là giá của món hàng; *cost* là số tiền cần trả. Dùng *apply for a job* (ứng tuyển việc làm) và *apply to a company* (nộp đơn cho công ty).
+
+### Collocation với make, do, take, have, get
+| Động từ | Cụm thường gặp | Ví dụ |
+|---|---|---|
+| make | a decision, a mistake, progress | *We made a decision together.* |
+| do | homework, housework, a course | *He does his homework after dinner.* |
+| take | notes, a photo, a break | *Please take notes of the new words.* |
+| have | a meeting, a lesson, a good time | *They have a meeting at noon.* |
+| get | a job, a message, better | *I hope you get a job soon.* |
+
+Học cả cụm thay vì dịch từng từ; lỗi thường gặp là *make homework* hoặc *do a decision*. Với *have/get*, để ý collocation và ngữ cảnh thay vì chọn theo một bản dịch tiếng Việt duy nhất.
+
+### Tiền tố và hậu tố
+Tiền tố thường đổi nghĩa; hậu tố thường đổi loại từ hoặc tạo danh từ/tính từ.
+| Phần thêm | Ví dụ | Gợi ý |
+|---|---|---|
+| un- | unhappy, unusual | không / trái nghĩa |
+| dis- | disagree, dislike | không / ngược lại |
+| -ful | useful, careful | có đặc điểm đó |
+| -less | careless, useless | thiếu / không có |
+| -ment | employment, development | thường tạo danh từ |
+| -tion | education, information | thường tạo danh từ |
+
+Ví dụ: *use → useful → useless*; *employ → employment*. Không phải từ nào cũng ghép được với mọi tiền tố/hậu tố. Khi điền dạng từ, xác định vị trí cần danh từ, tính từ hay động từ trước, rồi kiểm tra chính tả và nghĩa trong câu.
+'''
+
+[[questions]]
+id = "cefr-b1-012"
+module = "cefr-b1-vocab"
+type = "single"
+difficulty = 1
+prompt = "Duy has an important meeting with a company because he wants to ______ a job there."
+options = ["apply for", "borrow", "save", "share"]
+answer = [0]
+explanation = "Ta nói *apply for a job* khi ứng tuyển việc làm. *Borrow* là mượn, *save* là tiết kiệm, *share* là chia sẻ."
+
+[[questions]]
+id = "cefr-b1-013"
+module = "cefr-b1-vocab"
+type = "single"
+difficulty = 1
+prompt = "I want to learn Spanish, so I signed up for an evening ______."
+options = ["course", "salary", "headline", "waste"]
+answer = [0]
+explanation = "*Course* là khóa học; những lựa chọn còn lại lần lượt liên quan đến lương, tin tức và rác thải."
+
+[[questions]]
+id = "cefr-b1-014"
+module = "cefr-b1-vocab"
+type = "single"
+difficulty = 2
+prompt = "A short title at the top of a news story is called a ______."
+options = ["colleague", "headline", "price", "subject"]
+answer = [1]
+explanation = "*Headline* là dòng tiêu đề của bài báo hoặc tin tức."
+
+[[questions]]
+id = "cefr-b1-015"
+module = "cefr-b1-vocab"
+type = "single"
+difficulty = 2
+prompt = "Which action can help reduce air pollution in a busy city?"
+options = ["Taking public transport", "Buying more plastic bags", "Leaving lights on all day", "Throwing bottles into rivers"]
+answer = [0]
+explanation = "Đi phương tiện công cộng có thể giảm số xe cá nhân và khí thải. Các lựa chọn còn lại làm tăng rác hoặc lãng phí năng lượng."
+
+[[questions]]
+id = "cefr-b1-016"
+module = "cefr-b1-vocab"
+type = "single"
+difficulty = 1
+prompt = "I put a little money aside each month because I want to ______ for a holiday."
+options = ["save", "spend", "lend", "cost"]
+answer = [0]
+explanation = "Để dành tiền cho một mục tiêu là *save for*. *Spend* là tiêu, *lend* là cho mượn, còn *cost* nói giá tiền."
+
+[[questions]]
+id = "cefr-b1-017"
+module = "cefr-b1-vocab"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các cụm động từ–danh từ tự nhiên thường gặp trong bối cảnh học tập."
+options = ["do homework", "make a decision", "take notes", "make housework", "do progress"]
+answer = [0, 1, 2]
+explanation = "Các cụm đúng là *do homework*, *make a decision* và *take notes*. Ta nói *do housework* và *make progress*."
+
+[[questions]]
+id = "cefr-b1-018"
+module = "cefr-b1-vocab"
+type = "multiple"
+difficulty = 3
+prompt = "Chọn các câu có dạng từ đúng và nghĩa phù hợp."
+options = ["The new app is useful for learning vocabulary.", "The workers discussed their employment plans.", "It was careless to leave your bag on the bus.", "I felt unhope after I lost the job.", "The school gave us a lot of inform about the course."]
+answer = [0, 1, 2]
+explanation = "*Useful*, *employment* và *careless* là dạng từ đúng. Cần dùng danh từ *hope* (hoặc *hopeless* theo nghĩa khác) và *information*, không phải *unhope/inform*."
+
+[[questions]]
+id = "cefr-b1-019"
+module = "cefr-b1-vocab"
+type = "fill"
+difficulty = 1
+prompt = '''
+Điền make, do, take, have hoặc get vào mỗi chỗ trống:
+
+1. I need to {{blank}} my homework before dinner.
+2. We {{blank}} a meeting every Monday morning.
+3. She wants to {{blank}} a job in education.
+'''
+blanks = [["do"], ["have"], ["get"]]
+explanation = "Học các kết hợp cố định: *do homework*, *have a meeting*, *get a job*."
+
+[[questions]]
+id = "cefr-b1-020"
+module = "cefr-b1-vocab"
+type = "fill"
+difficulty = 2
+prompt = '''
+Tạo từ đúng từ từ trong ngoặc:
+
+1. This website is very {{blank}}; it helps me practise English. (use)
+2. The company offers jobs in teaching and {{blank}}. (employ)
+3. Please be {{blank}} when you cross this busy road. (care)
+'''
+blanks = [["useful"], ["employment"], ["careful"]]
+explanation = "Sau *very* và *be* cần tính từ *useful/careful*; sau *in* trong cụm này cần danh từ *employment*."
+
+[[questions]]
+id = "cefr-b1-021"
+module = "cefr-b1-vocab"
+type = "fill"
+difficulty = 2
+prompt = '''
+Điền một từ phù hợp với nghĩa trong ngoặc:
+
+1. The money you receive regularly for your work is your {{blank}}. (tiền lương)
+2. I need to {{blank}} a book from the library and return it next week. (mượn)
+3. We sort glass and paper so that we can {{blank}} them. (tái chế)
+'''
+blanks = [["salary"], ["borrow"], ["recycle"]]
+explanation = "*Salary* là tiền lương; người mượn *borrows* còn người cho mượn *lends*; *recycle* là tái chế."
+
+[[questions]]
+id = "cefr-b1-022"
+module = "cefr-b1-vocab"
+type = "essay"
+difficulty = 2
+prompt = '''
+Viết **ba câu tiếng Anh** đề xuất cách làm cho trường học thân thiện với môi trường hơn. Nêu một hành động giảm rác và một cách đi lại hoặc tiết kiệm năng lượng.
+'''
+keywords = [["recycle", "recycling"], ["waste", "rubbish"], ["public transport", "bus", "walk", "cycle"], ["save energy", "turn off the lights"]]
+min_keywords = 3
+model_answer = '''Our school should recycle paper and bottles to reduce waste. Students can take public transport or cycle to school. We can also save energy by turning off the lights when we leave a room.'''
+explanation = "Câu trả lời nêu hành động cụ thể và dùng từ vựng môi trường ở mức B1 như *recycle*, *waste* và *public transport*."
+
+[[modules]]
+id = "cefr-b1-functions"
+title = "Chức năng giao tiếp B1"
+description = "Nêu ý kiến, phản hồi lịch sự, đưa lời khuyên, xử lý phàn nàn, kể chuyện và nói về kế hoạch."
+lesson = '''
+### Nêu ý kiến và phản hồi
+| Mục đích | Cách nói tự nhiên | Ví dụ |
+|---|---|---|
+| Hỏi ý kiến | *What do you think about…?* | *What do you think about online classes?* |
+| Nêu ý kiến | *In my opinion,… / I think…* | *In my opinion, the bus is more convenient.* |
+| Đồng ý | *I agree. / That's a good point.* | *I agree; it saves time.* |
+| Không đồng ý nhẹ nhàng | *I see what you mean, but… / I'm not sure I agree.* | *I see what you mean, but the train is cheaper.* |
+
+Để trao đổi thân thiện, hãy ghi nhận ý của người kia rồi nêu lý do ngắn. Tránh chỉ nói *You are wrong*; có thể dùng *I'm not sure I agree because…* hoặc *I see your point, but…*.
+
+### Khuyên và phàn nàn
+Khuyên bằng *You should + V*, *You could + V* hoặc *Why don't you + V?*: *You should speak to your teacher.* Không thêm *to* sau *should*. Khi phàn nàn, nêu vấn đề cụ thể, giữ giọng bình tĩnh, rồi đề nghị cách giải quyết: *Excuse me, the room is very noisy. Could I change rooms, please?* Tránh lời buộc tội hoặc mệnh lệnh trực tiếp nếu muốn nhân viên dễ hỗ trợ. Nếu nhận phàn nàn, có thể xin lỗi, xác nhận vấn đề và đề xuất bước tiếp theo: *I'm sorry about that. I'll ask someone to check it.*
+
+### Kể chuyện có trình tự
+Dùng từ nối để người nghe theo kịp: *At first / First* mở đầu; *then / after that / a little later* đưa sự kiện tiếp theo; *because / so* giải thích nguyên nhân hoặc kết quả; *in the end / finally* kết thúc. Ví dụ: *First, we missed the bus. Then, we called a taxi. In the end, we arrived before the show started.* Không cần lặp *and then* ở mọi câu; thay đổi từ nối giúp câu chuyện rõ hơn.
+
+### Kế hoạch, hoài bão và yêu cầu làm rõ
+Nói kế hoạch gần bằng *I'm planning to…*, *I'd like to…*; nói mục tiêu bằng *I hope to…* hoặc *My goal is to…*: *I'm planning to take an English course because I want to work in tourism.* Khi chưa hiểu, hỏi lịch sự: *Could you explain what you mean?*, *Could you say that again, please?*, *Do you mean…?* Có thể nhắc lại phần đã hiểu trước khi hỏi. Lỗi hay gặp của người Việt là dịch nguyên mẫu *explain me*; động từ *explain* thường theo sau bằng nội dung (*explain the rule to me*) hoặc mệnh đề (*explain what you mean*).
+
+Khi cần xin lỗi, nói rõ việc mình làm và thêm lời giải thích ngắn: *I'm sorry I'm late. The bus was delayed.* Có thể thuyết phục nhẹ bằng ý kiến kèm lợi ích cụ thể: *I think we should take the train because it is cheaper.* Mục tiêu là giúp người nghe hiểu lý do, không gây áp lực.
+'''
+
+[[questions]]
+id = "cefr-b1-023"
+module = "cefr-b1-functions"
+type = "single"
+difficulty = 1
+prompt = "Which question politely asks for someone's opinion?"
+options = ["What do you think about the new library?", "You think about the new library.", "Why you like the new library?", "Tell me your thought now."]
+answer = [0]
+explanation = "*What do you think about…?* là cách hỏi ý kiến tự nhiên và lịch sự."
+
+[[questions]]
+id = "cefr-b1-024"
+module = "cefr-b1-functions"
+type = "single"
+difficulty = 2
+prompt = "Your friend wants to drive in heavy snow. You disagree politely. What can you say?"
+options = ["I see what you mean, but I think we should take the train.", "You are stupid to drive.", "No. Be quiet.", "I agree, but you are wrong."]
+answer = [0]
+explanation = "Câu đầu ghi nhận ý kiến rồi nêu bất đồng và lý do ngầm một cách lịch sự."
+
+[[questions]]
+id = "cefr-b1-025"
+module = "cefr-b1-functions"
+type = "single"
+difficulty = 1
+prompt = "Your classmate is worried about an exam. Which sentence gives simple advice?"
+options = ["You should make a study plan.", "You should to make a study plan.", "You are make a study plan.", "You should making a study plan."]
+answer = [0]
+explanation = "Sau *should* dùng động từ nguyên mẫu không *to*: *should make*."
+
+[[questions]]
+id = "cefr-b1-026"
+module = "cefr-b1-functions"
+type = "single"
+difficulty = 2
+prompt = "The hotel room is noisy at night. Which is the most helpful complaint?"
+options = ["Excuse me, the room is quite noisy. Could I change rooms, please?", "Your hotel is bad. Fix it now!", "I am noise in my room.", "Why do you make the hotel? Please stop."]
+answer = [0]
+explanation = "Nêu vấn đề cụ thể và đưa yêu cầu có *could* giúp lời phàn nàn lịch sự, dễ giải quyết."
+
+[[questions]]
+id = "cefr-b1-027"
+module = "cefr-b1-functions"
+type = "single"
+difficulty = 2
+prompt = "Choose the best connector: “First, we visited the museum. ______, we had lunch near the river.”"
+options = ["After that", "Although", "Because", "Instead of"]
+answer = [0]
+explanation = "*After that* nối một sự việc xảy ra tiếp theo. Các lựa chọn còn lại diễn đạt tương phản, nguyên nhân hoặc thay thế."
+
+[[questions]]
+id = "cefr-b1-028"
+module = "cefr-b1-functions"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các câu đồng ý hoặc không đồng ý lịch sự trong một cuộc thảo luận."
+options = ["I agree with you because the plan is simple.", "That's a good point.", "I see your point, but I have a different idea.", "You are wrong and should stop talking.", "I don't agree you because it costs too much."]
+answer = [0, 1, 2]
+explanation = "Ba câu đầu thể hiện sự đồng tình hoặc bất đồng kèm ghi nhận. Nên nói *I don't agree with you* nếu chọn cấu trúc này; tránh công kích người nghe."
+
+[[questions]]
+id = "cefr-b1-029"
+module = "cefr-b1-functions"
+type = "multiple"
+difficulty = 3
+prompt = "Chọn các câu có thể dùng để yêu cầu người khác làm rõ điều họ vừa nói."
+options = ["Could you explain what you mean?", "Sorry, could you say that again, please?", "Do you mean the course starts next week?", "Explain me again now.", "I know everything you said."]
+answer = [0, 1, 2]
+explanation = "Các câu đầu hỏi lại hoặc kiểm tra cách hiểu một cách lịch sự. *Explain me* không đúng; nói *explain it to me* hoặc hỏi *what you mean*."
+
+[[questions]]
+id = "cefr-b1-030"
+module = "cefr-b1-functions"
+type = "fill"
+difficulty = 1
+prompt = '''
+Hoàn thành các lời khuyên bằng một từ:
+
+1. You {{blank}} talk to your teacher about the problem. (should)
+2. Why don't you {{blank}} a short break? (take)
+3. You could {{blank}} the instructions again before starting. (read)
+'''
+blanks = [["should"], ["take"], ["read"]]
+explanation = "*Should/could + V* và *Why don't you + V* đều dùng động từ nguyên mẫu không *to*."
+
+[[questions]]
+id = "cefr-b1-031"
+module = "cefr-b1-functions"
+type = "fill"
+difficulty = 2
+prompt = '''
+Điền từ nối kể chuyện phù hợp:
+
+1. {{blank}}, we bought our tickets. Then, we went inside. (đầu tiên)
+2. The bus was late, {{blank}} we called a taxi. (vì vậy)
+3. We visited the old town. {{blank}}, we had dinner by the sea. (sau đó)
+'''
+blanks = [["first", "at first"], ["so"], ["after that", "then"]]
+explanation = "Từ nối báo hiệu thứ tự và kết quả giúp người nghe theo dõi câu chuyện dễ hơn."
+
+[[questions]]
+id = "cefr-b1-032"
+module = "cefr-b1-functions"
+type = "fill"
+difficulty = 2
+prompt = '''
+Hoàn thành các câu nói về kế hoạch và hoài bão:
+
+1. I'm planning {{blank}} take an evening English course. (to)
+2. My goal {{blank}} to work in a hospital. (is)
+3. I hope {{blank}} travel around my country next year. (to)
+'''
+blanks = [["to"], ["is"], ["to"]]
+explanation = "Dùng *plan to + V*, *goal is to + V* và *hope to + V* để nói kế hoạch hoặc mục tiêu."
+
+[[questions]]
+id = "cefr-b1-033"
+module = "cefr-b1-functions"
+type = "essay"
+difficulty = 2
+prompt = '''
+Một người bạn muốn bỏ cuộc vì khóa học tiếng Anh khó. Viết **ba câu tiếng Anh**: nêu ý kiến của bạn, phản hồi lịch sự với nỗi lo của bạn ấy, rồi đưa một lời khuyên kèm lý do.
+'''
+keywords = [["in my opinion", "i think", "i believe"], ["i see your point", "i understand", "i know it is difficult", "i know it's difficult", "i know it is hard", "i know it's hard"], ["should", "could", "why don't you", "why not"], ["because", "so ", "as it"]]
+min_keywords = 3
+model_answer = '''In my opinion, learning English is useful for your future. I see your point, but you have already made good progress. You should practise for twenty minutes each day because small steps can help.'''
+explanation = "Câu trả lời thể hiện ý kiến, ghi nhận cảm xúc của bạn và đưa lời khuyên có lý do."
+
+[[modules]]
+id = "cefr-b1-reading-writing"
+title = "Đọc và viết B1"
+description = "Đọc blog, tin ngắn, bài đánh giá; viết email theo văn phong phù hợp và đoạn văn mạch lạc."
+lesson = '''
+### Đọc văn bản ngắn có mục đích
+Blog cá nhân thường kể trải nghiệm và cảm nhận; tin ngắn ưu tiên sự kiện chính, ai/làm gì/ở đâu/khi nào; bài đánh giá nêu nhận xét và lý do, đôi khi kết thúc bằng lời khuyên. Trước khi đọc kỹ, xem tiêu đề và câu đầu để đoán chủ đề. Khi làm câu hỏi chi tiết, tìm lại từ khóa trong bài và đọc cả câu xung quanh; đừng chọn đáp án chỉ vì nó lặp lại một từ giống bài. Phân biệt thông tin được nói rõ với suy luận đơn giản từ chi tiết.
+
+### Email thân mật và trang trọng
+| Phần | Thân mật | Trang trọng |
+|---|---|---|
+| Lời chào | *Hi Anna,* | *Dear Ms Brown,* |
+| Mở đầu | *How are you?* | *I am writing to ask about…* |
+| Yêu cầu | *Can you send me…?* | *Could you please send me…?* |
+| Kết thư | *See you soon,* | *Yours sincerely,* |
+
+Email cần đúng mục đích, đủ thông tin và ngắt đoạn rõ. Dùng lời chào/kết thư phù hợp với người nhận. Với email công việc đơn giản, tránh viết tắt quá thân mật; *I'm* có thể dùng trong trao đổi thân mật, còn *I am* thường hợp với thư trang trọng hơn. Không dịch nguyên cụm *I want to know* khi cần nhờ lịch sự; dùng *Could you please tell me…?*.
+
+### Đoạn văn có câu chủ đề
+Câu chủ đề nêu ý chính; các câu sau đưa lý do hoặc ví dụ; câu cuối có thể tóm tắt. Dùng từ nối đúng quan hệ nghĩa: *Firstly* mở lý do đầu tiên; *In addition* thêm ý; *However* báo hiệu tương phản; *For example* đưa ví dụ; *Finally* khép lại. Ví dụ: *Public transport is useful for students. Firstly, it is cheaper than driving. In addition, students can read on the bus. However, buses can be crowded at busy times.* Tránh đặt *but* và *however* cùng lúc trong một cấu trúc (*but, however*); mỗi từ nối cần liên kết hai ý có quan hệ phù hợp.
+
+Ở B1, người học có thể viết email trang trọng hoặc thân mật khoảng **100–150 từ**, kể một câu chuyện ngắn, viết blog/đánh giá hoặc đoạn nêu quan điểm có lý do. Hãy chia nội dung thành đoạn nhỏ khi chuyển ý; chọn câu chủ đề trước rồi thêm hai lý do hay ví dụ. Trong email mời, cảm ơn hoặc xin lỗi, nêu mục đích ngay đầu thư và kết thúc phù hợp với người nhận.
+
+### Kiểm tra trước khi gửi
+Đọc lại để xem người nhận có hiểu mục đích ngay không, mỗi đoạn có tập trung vào một ý không, và đại từ/từ nối có liên kết rõ không. Kiểm tra câu chủ đề, viết hoa đầu câu và tên riêng, dấu chấm/phẩy, thì động từ và chính tả. Bài viết B1 nên rõ ràng, liên kết bằng một số từ nối quen thuộc; không cần cố dùng từ dài hoặc câu quá phức tạp. Khi viết đánh giá, nêu điều thích/không thích kèm lý do cụ thể thay vì chỉ viết *It was good*.
+'''
+
+[[questions]]
+id = "cefr-b1-034"
+module = "cefr-b1-reading-writing"
+type = "single"
+difficulty = 1
+prompt = '''
+Đọc đoạn blog:
+
+“Last Saturday, I joined a cooking class at the community centre. We learned to make vegetable soup. I enjoyed meeting new people, and I want to go again next month.”
+
+What is the main idea?
+'''
+options = ["The writer enjoyed a cooking class and wants to return.", "The writer is opening a restaurant next week.", "The writer dislikes meeting people.", "The community centre is closed next month."]
+answer = [0]
+explanation = "Đoạn blog kể trải nghiệm tham gia lớp nấu ăn và nói người viết muốn quay lại."
+
+[[questions]]
+id = "cefr-b1-035"
+module = "cefr-b1-reading-writing"
+type = "single"
+difficulty = 2
+prompt = '''
+Đọc mẩu tin:
+
+“A new bike path opened near Green Park on Monday. The city built it to help people travel safely to work and school. Local residents can use it for free.”
+
+Why did the city build the path?
+'''
+options = ["To help people travel safely.", "To make people pay for the park.", "To close the road to schools.", "To sell bicycles to residents."]
+answer = [0]
+explanation = "Bài viết nêu rõ mục đích là giúp mọi người đi làm và đi học an toàn hơn."
+
+[[questions]]
+id = "cefr-b1-036"
+module = "cefr-b1-reading-writing"
+type = "single"
+difficulty = 2
+prompt = '''
+Đọc bài đánh giá:
+
+“I watched *The Blue Island* with my family. The story was easy to follow, and the music was beautiful. The film was a little long, but I would recommend it to people who enjoy adventure stories.”
+
+What does the writer think about the film?
+'''
+options = ["Mostly positive, although the film felt a little long.", "Very negative because the story was confusing.", "The writer has not watched it.", "The writer only liked the cinema building."]
+answer = [0]
+explanation = "Người viết khen câu chuyện và âm nhạc, đồng thời nhận xét phim hơi dài nhưng vẫn giới thiệu cho người thích phiêu lưu."
+
+[[questions]]
+id = "cefr-b1-037"
+module = "cefr-b1-reading-writing"
+type = "single"
+difficulty = 2
+prompt = "You are writing a formal email to a course manager whose name is Ms Green. Which opening is most suitable?"
+options = ["Dear Ms Green,", "Hey Green!", "Hi mate,", "Dear my teacher friend,"]
+answer = [0]
+explanation = "*Dear Ms Green,* là lời chào phù hợp trong email trang trọng gửi người nhận đã biết tên."
+
+[[questions]]
+id = "cefr-b1-038"
+module = "cefr-b1-reading-writing"
+type = "single"
+difficulty = 3
+prompt = "Which sentence is the clearest topic sentence for a paragraph about the benefits of walking to work?"
+options = ["Walking to work can improve health and save money.", "Yesterday, I saw a red car near my house.", "Firstly, because the weather was nice.", "In addition, my shoes are new."]
+answer = [0]
+explanation = "Câu chủ đề nêu rõ ý chính mà các câu sau có thể giải thích bằng lý do hoặc ví dụ."
+
+[[questions]]
+id = "cefr-b1-039"
+module = "cefr-b1-reading-writing"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các câu phù hợp với một email trang trọng hỏi thông tin về khóa học."
+options = ["Dear Mr Lee,", "Could you please send me the course dates?", "I am writing to ask about your evening class.", "Hey, send me the dates now!", "See ya, Mr Lee!"]
+answer = [0, 1, 2]
+explanation = "Lời chào và cách nêu yêu cầu lịch sự phù hợp với email trang trọng. Các câu còn lại quá suồng sã hoặc mang tính mệnh lệnh."
+
+[[questions]]
+id = "cefr-b1-040"
+module = "cefr-b1-reading-writing"
+type = "fill"
+difficulty = 1
+prompt = '''
+Điền từ nối phù hợp:
+
+{{blank}}, I would like to describe the problem with my new phone. (thứ nhất)
+It is light and easy to use. {{blank}}, the battery lasts all day. (thêm vào đó)
+The camera is good. {{blank}}, the screen is difficult to read outside. (tuy nhiên)
+'''
+blanks = [["firstly", "first"], ["in addition"], ["however"]]
+explanation = "*Firstly/first* mở ý đầu, *in addition* bổ sung thông tin, còn *however* báo hiệu ý tương phản."
+
+[[questions]]
+id = "cefr-b1-041"
+module = "cefr-b1-reading-writing"
+type = "fill"
+difficulty = 2
+prompt = '''
+Hoàn thành đoạn kết email trang trọng gửi **Mr Lee**:
+
+I look forward to hearing from you.
+{{blank}},
+Mai Tran
+'''
+blanks = [["yours sincerely"]]
+explanation = "Khi biết tên người nhận và mở đầu bằng *Dear Mr Lee*, cách kết thư trang trọng thường dùng là *Yours sincerely*."
+
+[[questions]]
+id = "cefr-b1-042"
+module = "cefr-b1-reading-writing"
+type = "fill"
+difficulty = 2
+prompt = '''
+Điền **however** hoặc **in addition**:
+
+The library is close to my house. {{blank}}, it has a quiet room where I can study.
+The room is comfortable. {{blank}}, it can be noisy after school.
+'''
+blanks = [["in addition"], ["however"]]
+explanation = "Ý thứ nhất bổ sung lợi ích nên dùng *in addition*; ý thứ hai nêu điểm trái ngược nên dùng *however*."
+
+[[questions]]
+id = "cefr-b1-043"
+module = "cefr-b1-reading-writing"
+type = "fill"
+difficulty = 3
+prompt = '''
+Đọc đoạn văn rồi điền thông tin:
+
+“Our town opened a small weekend market in May. Local farmers sell fruit there, and visitors can buy bread from a family bakery. The market closes at 2 p.m.”
+
+1. The market opened in {{blank}}.
+2. Visitors can buy bread from a family {{blank}}.
+'''
+blanks = [["may"], ["bakery"]]
+explanation = "Quét lại văn bản để tìm chi tiết cụ thể; giữ đúng từ và thông tin được nêu trong bài."
+
+[[questions]]
+id = "cefr-b1-044"
+module = "cefr-b1-reading-writing"
+type = "essay"
+difficulty = 2
+prompt = '''
+Viết **một đoạn văn 4–5 câu tiếng Anh** nêu ý kiến về việc học sinh đi xe buýt đến trường. Mở đầu bằng câu chủ đề, đưa ra hai lý do và dùng ít nhất hai từ nối trong số *Firstly, In addition, However, Finally*.
+'''
+keywords = [["bus", "public transport"], ["firstly", "first"], ["in addition", "also"], ["however", "but"], ["because", "so"]]
+min_keywords = 4
+model_answer = '''Students should take the bus to school when possible. Firstly, it can save money for families. In addition, fewer cars near the school can make the air cleaner. However, buses may be crowded in the morning. I think the bus is still a good choice because it helps the whole community.'''
+explanation = "Đoạn văn có câu chủ đề, lý do và từ nối; các ý liên kết để người đọc theo dõi quan điểm."

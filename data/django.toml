@@ -38,7 +38,7 @@ Lỗi hay gặp: quên thêm app vào INSTALLED_APPS, đặt URL tổng quát tr
 id = "django-orm"
 title = "Model, migration & QuerySet"
 description = "Schema qua model/migration, truy vấn lười, tối ưu quan hệ, biểu thức và transaction."
-sources = ["django~6.0/topics/db/models", "django~6.0/topics/db/queries", "django~6.0/ref/models/querysets", "django~6.0/ref/models/expressions", "django~6.0/topics/db/optimization", "django~6.0/topics/db/aggregation", "django~6.0/topics/db/transactions"]
+sources = ["django~6.0/topics/db/models", "django~6.0/topics/migrations", "django~6.0/topics/db/queries", "django~6.0/ref/models/querysets", "django~6.0/ref/models/expressions", "django~6.0/topics/db/optimization", "django~6.0/topics/db/aggregation", "django~6.0/topics/db/transactions"]
 lesson = '''
 ### Mô hình và truy vấn
 Model mô tả dữ liệu, field và quan hệ; migration là lịch sử thay đổi schema. makemigrations tạo migration từ khác biệt model, còn migrate áp dụng chúng lên database. QuerySet mô tả truy vấn và thường chưa đọc dữ liệu cho tới khi được đánh giá, chẳng hạn khi lặp hoặc chuyển thành list.
@@ -129,6 +129,77 @@ Cache có thể đặt ở mức site, view hoặc dữ liệu. Chọn cache key
 Production cần HTTPS, static files được thu thập/phục vụ phù hợp, log không chứa bí mật, và chạy check --deploy. Chọn WSGI hoặc ASGI cùng server production phù hợp với ứng dụng.
 
 Lỗi hay gặp: cho rằng CSRF thay thế authorization, cache response riêng tư công khai, hoặc triển khai development server với DEBUG=True.
+'''
+
+[[modules]]
+id = "django-dv-testing"
+title = "Kiểm thử ứng dụng Django"
+description = "Chọn test case phù hợp, kiểm tra request/response, cơ sở dữ liệu và view cô lập."
+sources = ["django~6.0/topics/testing/index", "django~6.0/topics/testing/tools", "django~6.0/topics/testing/advanced", "django~6.0/topics/testing/overview"]
+lesson = '''
+### Kiểm thử hành vi ở đúng ranh giới
+Django cung cấp các lớp test dựa trên unittest, test database riêng và công cụ mô phỏng request. Nên kiểm tra hành vi quan sát được: status, redirect, dữ liệu đã lưu, quyền truy cập và số truy vấn quan trọng. Mỗi test nên thiết lập dữ liệu cần thiết, thực hiện một hành động và kiểm tra kết quả có ý nghĩa với người dùng.
+
+| Công cụ | Phạm vi | Dùng khi |
+|---|---|---|
+| `SimpleTestCase` | Không dùng database | Logic thuần, template, response |
+| `TestCase` | Database test được cô lập bằng transaction/rollback | Hầu hết kiểm thử model và view |
+| `TransactionTestCase` | Kiểm tra commit, rollback hoặc hành vi transaction thực | Mã phụ thuộc ranh giới commit |
+| `Client` | Đi qua URL resolver và middleware trong test | Kiểm thử luồng HTTP tích hợp |
+| `RequestFactory` | Tạo request để gọi trực tiếp một view | Cô lập logic của view; middleware không tự chạy |
+
+Ví dụ: dùng `self.client.post()` để gửi form, rồi xác nhận status, redirect và trạng thái database. `setUpTestData()` tạo dữ liệu dùng chung cho các test trong class hiệu quả hơn khi dữ liệu không bị sửa; dùng `setUp()` cho trạng thái thay đổi riêng từng test. `AsyncClient` phù hợp khi cần gọi endpoint bất đồng bộ.
+
+Để phát hiện hồi quy hiệu năng, đo số truy vấn trên đoạn code cụ thể bằng `assertNumQueries`, thay vì giả định truy vấn tối ưu. Có thể thay thế phụ thuộc ngoài như cổng thanh toán bằng mock, nhưng vẫn cần test riêng cho hợp đồng tích hợp.
+
+Lỗi hay gặp: dùng `RequestFactory` rồi tưởng session, authentication và middleware đã chạy; chia sẻ object mutable giữa test; chỉ kiểm tra status mà bỏ qua tác động dữ liệu; hoặc dùng `TransactionTestCase` cho mọi test khiến suite chậm hơn cần thiết.
+'''
+
+[[modules]]
+id = "django-dv-files"
+title = "Upload và storage"
+description = "Nhận file qua form, xử lý UploadedFile và lưu qua storage backend an toàn."
+sources = ["django~6.0/ref/files/uploads", "django~6.0/ref/files/storage", "django~6.0/howto/custom-file-storage", "django~6.0/ref/files/file"]
+lesson = '''
+### Luồng nhận và lưu file
+Form upload HTML phải dùng `method="post"` và `enctype="multipart/form-data"`; form Django cần có field phù hợp và template POST cần token CSRF. Khi request được parse, file nằm trong `request.FILES`. Nên để Form/ModelForm kiểm tra dữ liệu trước khi lưu model, rồi xử lý tiếp bằng UploadedFile hoặc storage API.
+
+| Thành phần | Trách nhiệm | Lưu ý |
+|---|---|---|
+| `UploadedFile` | Đại diện file nhận từ request | Có thể nằm trong memory hoặc temporary file |
+| `chunks()` | Đọc lần lượt từng phần | Phù hợp hơn `read()` với file lớn |
+| `FileField` | Lưu tham chiếu file trên model | Database thường giữ tên/path do storage trả về |
+| `Storage` | Lưu và truy xuất nội dung file | Backend local, cloud hoặc custom có thể khác nhau |
+| `staticfiles` | Tài nguyên phát hành cùng ứng dụng | Khác file do người dùng tải lên |
+
+Trong môi trường local, `MEDIA_ROOT` và `MEDIA_URL` thường cấu hình nơi lưu/phục vụ media; static assets có quy trình riêng như collectstatic. Không giả định storage luôn nằm trên filesystem: `.path()` có thể không khả dụng ở backend từ xa, còn `.url()` phụ thuộc cấu hình truy cập.
+
+Tên file, phần mở rộng, kích cỡ và `content_type` từ client đều là input không đáng tin. Đặt giới hạn kích thước, allowlist loại file theo nhu cầu, kiểm tra nội dung thực bằng parser phù hợp, dùng key lưu trữ do server kiểm soát, và giới hạn quyền đọc. File không tin cậy không nên được phục vụ như mã thực thi từ cùng origin nhạy cảm.
+
+Lỗi hay gặp: quên `multipart/form-data`, chỉ kiểm tra phần mở rộng do client gửi, đọc toàn bộ file lớn vào RAM, nối tên file vào đường dẫn tùy ý, hoặc dùng `FileField.path` với storage không phải filesystem.
+'''
+
+[[modules]]
+id = "django-dv-tasks"
+title = "Async support và task framework"
+description = "Phân biệt async view với công việc chạy nền, khai báo task và theo dõi kết quả."
+sources = ["django~6.0/topics/tasks", "django~6.0/ref/tasks", "django~6.0/topics/async", "django~6.0/topics/db/transactions"]
+lesson = '''
+### Async request và công việc nền
+Async view hữu ích khi request chờ nhiều thao tác I/O có thể chờ đồng thời và toàn bộ middleware/đường gọi hỗ trợ async. Nó vẫn chạy trong vòng đời request: tác vụ dài chưa tự động chuyển thành background job. Django 6.0 bổ sung task framework chuẩn hóa cách khai báo, xếp hàng và đọc kết quả công việc nền thông qua backend.
+
+| Nhu cầu | Cơ chế | Đặc điểm |
+|---|---|---|
+| Chờ nhiều I/O trong một request | Async view | Response vẫn phụ thuộc thời gian hoàn thành view |
+| Gửi email hoặc tạo báo cáo sau response | Task và `.enqueue()` | Backend/worker xử lý ngoài request |
+| Đảm bảo enqueue sau khi lưu transaction | `transaction.on_commit()` | Callback chỉ chạy sau commit thành công |
+| Theo dõi tiến trình/kết quả | `TaskResult` | Trạng thái và khả năng lưu kết quả tùy backend |
+
+Task được định nghĩa bằng decorator `@task`; gọi `.enqueue()` để gửi yêu cầu thực thi qua backend. Framework cung cấp API và hợp đồng backend, nhưng Django core không tự cung cấp worker production để chạy queue. Cần chọn backend/worker phù hợp môi trường và xác nhận backend hỗ trợ tính năng như priority hay kết quả nếu ứng dụng phụ thuộc.
+
+Payload task nên đủ để worker đọc lại dữ liệu bền vững; thường truyền ID thay vì object model đang nằm trong memory. Task có thể được thử lại hoặc gửi lặp tùy hệ thống vận hành, vì vậy thao tác có side effect nên idempotent. Khi task phụ thuộc một bản ghi vừa tạo, enqueue trong `transaction.on_commit()` để worker không đọc trước khi transaction commit.
+
+Lỗi hay gặp: xem async view như queue, thực hiện công việc dài trước khi trả response, cho rằng `.enqueue()` có nghĩa task đã hoàn thành, giả định mọi backend chạy task ngay, hoặc bỏ qua việc thiết kế retry và side effect lặp.
 '''
 
 [[questions]]
@@ -989,3 +1060,389 @@ def _():
 hints = ["Từ chối user inactive trước khi xét các nguồn quyền.", "Duyệt từng group của user và kiểm tra permission trong mapping."]
 explanation = "Group là một nguồn cấp model permission; quyền truy cập vẫn cần kiểm tra trong từng request."
 sources = ["django~6.0/topics/auth/default", "django~6.0/ref/contrib/auth"]
+
+[[questions]]
+id = "django-dv001"
+module = "django-dv-testing"
+type = "single"
+difficulty = 1
+prompt = "Bạn muốn kiểm tra một request POST đi qua URL resolver và middleware, sau đó xác nhận redirect. Công cụ nào phù hợp nhất?"
+options = ["RequestFactory", "Client của Django", "MigrationExecutor", "Paginator"]
+answer = [1]
+explanation = "Client mô phỏng request qua chuỗi xử lý của Django và cho phép kiểm tra response, redirect cùng trạng thái ứng dụng. RequestFactory gọi view trực tiếp, không chạy middleware."
+sources = ["django~6.0/topics/testing/tools"]
+
+[[questions]]
+id = "django-dv002"
+module = "django-dv-testing"
+type = "single"
+difficulty = 2
+prompt = "Một test cần xác nhận callback chỉ chạy sau khi transaction database được commit thật. Lựa chọn nào phù hợp hơn TestCase thông thường?"
+options = ["SimpleTestCase", "TransactionTestCase", "RequestFactory", "LiveServerTestCase"]
+answer = [1]
+explanation = "TestCase tối ưu tốc độ bằng cơ chế transaction cô lập; TransactionTestCase phù hợp khi cần quan sát hành vi commit/rollback thực tế."
+sources = ["django~6.0/topics/testing/tools", "django~6.0/topics/testing/advanced"]
+
+[[questions]]
+id = "django-dv003"
+module = "django-dv-testing"
+type = "single"
+difficulty = 1
+prompt = "Các test trong cùng một class cùng cần một bộ dữ liệu nền không bị thay đổi. Cách thiết lập nào thường hiệu quả hơn?"
+options = ["Tạo lại toàn bộ dữ liệu trong từng assertion", "Dùng setUpTestData()", "Gọi migrate trong mỗi test", "Dùng một database production dùng chung"]
+answer = [1]
+explanation = "setUpTestData() tạo dữ liệu class-level một lần cho các test của class, giúp tránh lặp setup nặng; trạng thái mutable riêng vẫn nên tạo trong setUp()."
+sources = ["django~6.0/topics/testing/tools"]
+
+[[questions]]
+id = "django-dv004"
+module = "django-dv-testing"
+type = "single"
+difficulty = 2
+prompt = "Khi dùng Django test Client, mặc định một response redirect được xử lý thế nào?"
+options = ["Client luôn theo redirect và chỉ trả response cuối", "Client trả response redirect; có thể yêu cầu theo tiếp bằng follow=True", "Redirect bị đổi thành lỗi 500", "Client bỏ qua mọi header Location"]
+answer = [1]
+explanation = "Mặc định Client trả response của redirect để test có thể kiểm tra status và Location; follow=True yêu cầu theo chuỗi redirect."
+sources = ["django~6.0/topics/testing/tools"]
+
+[[questions]]
+id = "django-dv005"
+module = "django-dv-testing"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các phát biểu đúng về RequestFactory."
+options = ["Cho phép tạo request rồi gọi trực tiếp view", "Tự chạy toàn bộ middleware như Client", "Có thể cần gắn session hoặc user thủ công khi view cần chúng", "Thích hợp để kiểm tra riêng logic view"]
+answer = [0, 2, 3]
+explanation = "RequestFactory giúp cô lập view nhưng không dựng toàn bộ request pipeline; thuộc tính thường được middleware thêm vào cần được thiết lập trong test."
+sources = ["django~6.0/topics/testing/advanced"]
+
+[[questions]]
+id = "django-dv006"
+module = "django-dv-testing"
+type = "multiple"
+difficulty = 3
+prompt = "Một nhóm test endpoint thanh toán đang chậm và dễ chập chờn. Chọn các hướng cải thiện hợp lý."
+options = ["Thay lời gọi cổng thanh toán bằng mock trong test đơn vị", "Kiểm tra cả response lẫn thay đổi dữ liệu cần thiết", "Dùng TransactionTestCase cho mọi test dù không cần transaction thật", "Tách một số test tích hợp ít hơn để kiểm tra hợp đồng bên ngoài"]
+answer = [0, 1, 3]
+explanation = "Mock cô lập test khỏi mạng và dịch vụ chậm; test tích hợp vẫn có giá trị nhưng nên giới hạn ở các luồng cần kiểm tra tương tác thật."
+sources = ["django~6.0/topics/testing/overview", "django~6.0/topics/testing/tools"]
+
+[[questions]]
+id = "django-dv007"
+module = "django-dv-testing"
+type = "fill"
+difficulty = 2
+prompt = "Trong test Django, context manager nào giúp xác nhận một đoạn code thực hiện đúng số truy vấn SQL dự kiến: self.{{blank}}(2)?"
+blanks = [["assertNumQueries"]]
+explanation = "assertNumQueries hữu ích để bắt hồi quy truy vấn ở một phạm vi được chọn, ví dụ khi thêm render danh sách có quan hệ ORM."
+sources = ["django~6.0/topics/testing/tools"]
+
+[[questions]]
+id = "django-dv008"
+module = "django-dv-testing"
+type = "essay"
+difficulty = 3
+prompt = "Bạn sẽ thiết kế test cho endpoint yêu cầu đăng nhập và trả danh sách đơn hàng như thế nào để kiểm tra cả quyền truy cập lẫn kết quả?"
+keywords = [["test client", "client"], ["authentication", "login", "đăng nhập"], ["permission", "authorization", "phân quyền"], ["status code", "response"], ["database", "dữ liệu"]]
+min_keywords = 3
+model_answer = '''Dùng test client để gửi request như một người dùng đã đăng nhập, rồi kiểm tra status code và response. Tạo user không có permission để xác nhận authorization bị từ chối, đồng thời tạo user có quyền và dữ liệu đơn hàng để kiểm tra kết quả database chỉ chứa đơn được phép xem.'''
+explanation = "Test nên bao gồm nhánh chưa đăng nhập, đã xác thực nhưng thiếu quyền, và trường hợp được phép để tránh chỉ kiểm tra happy path."
+sources = ["django~6.0/topics/testing/tools", "django~6.0/topics/auth/default"]
+
+[[questions]]
+id = "django-dvc01"
+module = "django-dv-testing"
+type = "code"
+difficulty = 2
+title = "Kiểm tra hợp đồng response"
+lang = "python"
+prompt = '''
+Viết hàm response_issues(status, body, expected_status, required_fields) cho test API. Hàm trả về danh sách chuỗi lỗi theo đúng thứ tự: thêm "status" nếu status khác expected_status; sau đó với mỗi field thiếu trong required_fields, thêm "missing:<tên-field>" theo thứ tự đầu vào. body có thể không phải dict; khi đó mọi field bắt buộc đều được xem là thiếu. Không thêm lỗi khác.
+Ví dụ response_issues(200, {"id": 4}, 200, ["id", "name"]) trả ["missing:name"].
+'''
+starter = '''
+def response_issues(status, body, expected_status, required_fields):
+    return []
+'''
+solution = '''
+def response_issues(status, body, expected_status, required_fields):
+    issues = []
+    if status != expected_status:
+        issues.append("status")
+    for field in required_fields:
+        if not isinstance(body, dict) or field not in body:
+            issues.append(f"missing:{field}")
+    return issues
+'''
+tests = '''
+@test("response hợp lệ không có issue")
+def _():
+    assert response_issues(200, {"id": 4, "name": "A"}, 200, ["id", "name"]) == []
+
+@test("status sai được báo trước field thiếu")
+def _():
+    assert response_issues(404, {}, 200, ["id"]) == ["status", "missing:id"]
+
+@test("field thiếu giữ thứ tự yêu cầu")
+def _():
+    assert response_issues(200, {"id": 4}, 200, ["name", "email"]) == ["missing:name", "missing:email"]
+
+@test("body không phải dict khiến các field đều thiếu")
+def _():
+    assert response_issues(200, None, 200, ["id"]) == ["missing:id"]
+
+@test("không bắt buộc field nào")
+def _():
+    assert response_issues(204, [], 204, []) == []
+'''
+hints = ["Tạo danh sách lỗi rỗng rồi so sánh status trước.", "Duyệt required_fields và kiểm tra body là dict có chứa từng key."]
+explanation = "Một helper assertion nhỏ giúp test endpoint nhất quán mà vẫn giữ thông báo lỗi theo thứ tự dễ đọc."
+sources = ["django~6.0/topics/testing/tools", "django~6.0/topics/testing/overview"]
+
+[[questions]]
+id = "django-dv009"
+module = "django-dv-files"
+type = "single"
+difficulty = 1
+prompt = "Form HTML gửi file lên Django cần cấu hình nào để trình duyệt gửi nội dung file?"
+options = ["method=\"get\" và enctype=\"text/plain\"", "method=\"post\" và enctype=\"multipart/form-data\"", "method=\"put\" và enctype=\"application/json\"", "Chỉ cần thêm accept vào input"]
+answer = [1]
+explanation = "multipart/form-data mã hóa các phần của form, bao gồm file; request POST cũng cần được bảo vệ CSRF khi dùng session/cookie."
+sources = ["django~6.0/ref/files/uploads", "django~6.0/howto/csrf"]
+
+[[questions]]
+id = "django-dv010"
+module = "django-dv-files"
+type = "single"
+difficulty = 1
+prompt = "Sau khi Django parse một request multipart chứa file, view thường lấy file từ thuộc tính nào của request?"
+options = ["request.GET", "request.COOKIES", "request.FILES", "request.path_info"]
+answer = [2]
+explanation = "Các file upload được parse vào request.FILES; dữ liệu text của form POST nằm trong request.POST."
+sources = ["django~6.0/ref/files/uploads"]
+
+[[questions]]
+id = "django-dv011"
+module = "django-dv-files"
+type = "single"
+difficulty = 2
+prompt = "Một endpoint nhận file lớn và cần chuyển nội dung lên storage theo từng phần. Phương thức nào phù hợp hơn việc đọc toàn bộ bytes cùng lúc?"
+options = ["UploadedFile.chunks()", "UploadedFile.name", "UploadedFile.content_type", "UploadedFile.size"]
+answer = [0]
+explanation = "chunks() cho phép xử lý file theo từng khối, giảm nhu cầu giữ toàn bộ dữ liệu file trong bộ nhớ ứng dụng."
+sources = ["django~6.0/ref/files/uploads"]
+
+[[questions]]
+id = "django-dv012"
+module = "django-dv-files"
+type = "single"
+difficulty = 2
+prompt = "Phát biểu nào đúng về FileField khi dùng storage backend từ xa?"
+options = ["Giá trị lưu trong model thường là tên/path do storage quản lý; không nên mặc định có filesystem path cục bộ", "Django luôn chép file vào thư mục hiện tại của process", "Trường trong database luôn chứa toàn bộ bytes file", "Storage backend từ xa bắt buộc hỗ trợ phương thức path()"]
+answer = [0]
+explanation = "FileField kết hợp với Storage để quản lý nội dung; database lưu tham chiếu tên file, còn backend quyết định cách truy xuất và có thể không cung cấp path cục bộ."
+sources = ["django~6.0/ref/files/storage", "django~6.0/ref/files/file"]
+
+[[questions]]
+id = "django-dv013"
+module = "django-dv-files"
+type = "multiple"
+difficulty = 3
+prompt = "Chọn các kiểm soát phù hợp khi xây dựng luồng upload file do người dùng gửi."
+options = ["Giới hạn kích thước và số lượng file", "Tin hoàn toàn content_type do trình duyệt gửi", "Kiểm tra nội dung bằng parser phù hợp với loại file", "Giới hạn quyền đọc và tránh phục vụ file không tin cậy như mã thực thi"]
+answer = [0, 2, 3]
+explanation = "Metadata client gửi có thể giả mạo; giới hạn tài nguyên, xác minh nội dung và kiểm soát cách phục vụ file giúp giảm rủi ro."
+sources = ["django~6.0/ref/files/uploads", "django~6.0/topics/security"]
+
+[[questions]]
+id = "django-dv014"
+module = "django-dv-files"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các phát biểu đúng về static assets và file người dùng upload."
+options = ["CSS/JavaScript phát hành cùng ứng dụng thuộc luồng staticfiles", "Ảnh đại diện do người dùng gửi thường thuộc luồng media/storage", "collectstatic là thao tác thay thế cho việc validate file upload", "File người dùng gửi cần chính sách lưu trữ và truy cập riêng"]
+answer = [0, 1, 3]
+explanation = "Static files là tài nguyên ứng dụng; media do người dùng tạo có yêu cầu vòng đời, quyền truy cập và kiểm soát bảo mật riêng."
+sources = ["django~6.0/ref/contrib/staticfiles", "django~6.0/ref/files/storage"]
+
+[[questions]]
+id = "django-dv015"
+module = "django-dv-files"
+type = "fill"
+difficulty = 1
+prompt = "Để đọc một UploadedFile theo từng phần thay vì tải toàn bộ nội dung vào memory, hãy gọi phương thức {{blank}}()."
+blanks = [["chunks"]]
+explanation = "chunks() phù hợp hơn cho xử lý upload lớn, đặc biệt khi ghi nội dung sang nơi lưu trữ theo luồng."
+sources = ["django~6.0/ref/files/uploads"]
+
+[[questions]]
+id = "django-dv016"
+module = "django-dv-files"
+type = "essay"
+difficulty = 3
+prompt = "Mô tả một pipeline upload an toàn cho tài liệu người dùng trong ứng dụng Django, từ form đến lúc file được tải lại."
+keywords = [["multipart/form-data", "request.files"], ["size limit", "giới hạn kích thước"], ["validate content", "kiểm tra nội dung", "content type"], ["storage", "storage backend"], ["access control", "phân quyền", "private"], ["chunks", "chunk"]]
+min_keywords = 3
+model_answer = '''Dùng form POST với multipart/form-data và CSRF, giới hạn kích thước rồi validate nội dung file ở server thay vì tin metadata client. Lưu qua storage backend bằng chunks() khi file lớn, dùng tên do server quản lý, và kiểm tra access control khi người dùng tải file lại.'''
+explanation = "Pipeline cần kiểm soát cả đầu vào, tiêu thụ tài nguyên, backend lưu trữ và quyền truy cập đầu ra."
+sources = ["django~6.0/ref/files/uploads", "django~6.0/ref/files/storage", "django~6.0/topics/security"]
+
+[[questions]]
+id = "django-dv017"
+module = "django-dv-tasks"
+type = "single"
+difficulty = 1
+prompt = "Một view async gọi một hàm tạo báo cáo mất vài phút trước khi trả response. Nếu muốn người dùng nhận phản hồi nhanh và xử lý báo cáo ở worker, nên dùng cơ chế nào?"
+options = ["Chuyển view thành template tag", "Task được enqueue qua backend", "Dùng RequestFactory trong production", "Bật DEBUG"]
+answer = [1]
+explanation = "Async view vẫn nằm trong request lifecycle; task framework dùng backend để xếp hàng việc chạy nền để request không phải chờ hoàn tất."
+sources = ["django~6.0/topics/tasks", "django~6.0/topics/async"]
+
+[[questions]]
+id = "django-dv018"
+module = "django-dv-tasks"
+type = "single"
+difficulty = 1
+prompt = "Sau khi định nghĩa task bằng decorator @task, API nào dùng để gửi một lần thực thi qua backend?"
+options = ["task.enqueue(...)", "task.migrate(...)", "task.render(...)", "task.as_view()"]
+answer = [0]
+explanation = "enqueue() tạo yêu cầu đưa task vào backend; việc enqueue thành công không đồng nghĩa task đã hoàn tất."
+sources = ["django~6.0/topics/tasks", "django~6.0/ref/tasks"]
+
+[[questions]]
+id = "django-dv019"
+module = "django-dv-tasks"
+type = "single"
+difficulty = 2
+prompt = "Phát biểu nào mô tả đúng ranh giới của task framework trong Django 6.0?"
+options = ["Django core định nghĩa API và backend contract, nhưng không tự cung cấp production worker hoàn chỉnh", "Mọi task luôn chạy đồng bộ trong tiến trình web", "Django tự khởi chạy worker khi gọi runserver", "Task backend chỉ dùng được với một database cụ thể"]
+answer = [0]
+explanation = "Task framework chuẩn hóa định nghĩa và enqueue; ứng dụng cần backend/worker thích hợp để thực thi trong production."
+sources = ["django~6.0/topics/tasks", "django~6.0/ref/tasks"]
+
+[[questions]]
+id = "django-dv020"
+module = "django-dv-tasks"
+type = "single"
+difficulty = 3
+prompt = "Một view tạo Order trong transaction rồi enqueue task gửi email xác nhận. Làm sao tránh worker đọc Order trước khi transaction commit?"
+options = ["Đưa lời gọi enqueue vào transaction.on_commit()", "Gọi task trực tiếp trước khi lưu Order", "Tăng timeout của request", "Dùng async view thay cho transaction"]
+answer = [0]
+explanation = "on_commit() chạy callback sau khi transaction commit thành công; nếu rollback thì callback không được thực hiện."
+sources = ["django~6.0/topics/db/transactions", "django~6.0/topics/tasks"]
+
+[[questions]]
+id = "django-dv021"
+module = "django-dv-tasks"
+type = "multiple"
+difficulty = 3
+prompt = "Chọn các thực hành phù hợp khi thiết kế task có thể chạy lại sau lỗi worker."
+options = ["Truyền ID bền vững rồi đọc lại dữ liệu cần thiết khi task chạy", "Thiết kế side effect có thể xử lý lặp an toàn", "Truyền object model đang nằm trong memory và kỳ vọng object tồn tại qua restart", "Giả định mọi backend bảo đảm chạy đúng một lần"]
+answer = [0, 1]
+explanation = "Task thường được xử lý ngoài tiến trình web; identifier bền vững và thao tác idempotent giúp giảm lỗi khi retry hoặc gửi trùng."
+sources = ["django~6.0/topics/tasks", "django~6.0/ref/tasks"]
+
+[[questions]]
+id = "django-dv022"
+module = "django-dv-tasks"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các phát biểu đúng về enqueue, TaskResult và backend."
+options = ["Enqueue là yêu cầu thực thi, không chứng minh task đã hoàn tất", "TaskResult có thể cung cấp trạng thái/kết quả theo khả năng backend", "Mọi backend bắt buộc giữ kết quả vô thời hạn", "Django core không tự chạy production worker chỉ vì task đã được khai báo"]
+answer = [0, 1, 3]
+explanation = "API kết quả giúp quan sát task, còn thời điểm chạy, lưu kết quả và khả năng backend cần được xác nhận theo implementation đang dùng."
+sources = ["django~6.0/topics/tasks", "django~6.0/ref/tasks"]
+
+[[questions]]
+id = "django-dv023"
+module = "django-dv-tasks"
+type = "fill"
+difficulty = 2
+prompt = "Thuộc tính task nào chỉ thời điểm sớm nhất task nên được chạy: task.{{blank}}?"
+blanks = [["run_after"]]
+explanation = "run_after biểu diễn thời điểm trì hoãn task; backend cần hỗ trợ cách lập lịch tương ứng."
+sources = ["django~6.0/ref/tasks"]
+
+[[questions]]
+id = "django-dv024"
+module = "django-dv-tasks"
+type = "essay"
+difficulty = 3
+prompt = "Thiết kế luồng tạo báo cáo nền sau khi người dùng lưu yêu cầu. Nêu cách enqueue, xử lý transaction và giảm tác hại khi task được chạy lại."
+keywords = [["enqueue", "xếp hàng"], ["worker", "backend"], ["on_commit", "sau commit", "commit transaction"], ["idempotent", "idempotency"], ["taskresult", "task result", "trạng thái"]]
+min_keywords = 3
+model_answer = '''View lưu yêu cầu rồi dùng transaction.on_commit() để enqueue task, tránh worker chạy trước khi commit. Task nhận ID yêu cầu, worker đọc dữ liệu bền vững và cập nhật trạng thái qua backend/TaskResult. Thiết kế cập nhật idempotent để retry không tạo báo cáo hoặc gửi thông báo trùng.'''
+explanation = "Luồng bền vững tách thời gian response khỏi xử lý dài và xử lý đúng quan hệ giữa transaction, worker, retry."
+sources = ["django~6.0/topics/tasks", "django~6.0/ref/tasks", "django~6.0/topics/db/transactions"]
+
+[[questions]]
+id = "django-dvc02"
+module = "django-dv-files"
+type = "code"
+difficulty = 2
+title = "Kiểm tra metadata upload"
+lang = "python"
+prompt = '''
+Viết validate_upload(metadata, max_bytes, allowed_extensions, allowed_types). metadata là dict có name, size và content_type. Trả True khi tên file là chuỗi không rỗng và không chứa / hoặc \\, phần mở rộng (không phân biệt hoa thường) nằm trong allowed_extensions, size là số nguyên dương không vượt max_bytes, và MIME type (bỏ phần tham số sau dấu ;) nằm trong allowed_types. Nếu metadata sai kiểu hoặc thiếu trường thì trả False. Đây chỉ là kiểm tra metadata; không khẳng định nội dung bytes đã an toàn.
+'''
+starter = '''
+def validate_upload(metadata, max_bytes, allowed_extensions, allowed_types):
+    return True
+'''
+solution = '''
+def validate_upload(metadata, max_bytes, allowed_extensions, allowed_types):
+    if not isinstance(metadata, dict):
+        return False
+    name = metadata.get("name")
+    size = metadata.get("size")
+    content_type = metadata.get("content_type")
+    if not isinstance(name, str) or not name or "/" in name or "\\\\" in name:
+        return False
+    if type(size) is not int or size <= 0 or type(max_bytes) is not int or size > max_bytes:
+        return False
+    if not isinstance(content_type, str):
+        return False
+    if "." not in name:
+        return False
+    extension = "." + name.rsplit(".", 1)[1].lower()
+    normalized_extensions = {item.lower() for item in allowed_extensions if isinstance(item, str)}
+    if extension not in normalized_extensions:
+        return False
+    mime_type = content_type.split(";", 1)[0].strip().lower()
+    normalized_types = {item.lower() for item in allowed_types if isinstance(item, str)}
+    return mime_type in normalized_types
+'''
+tests = '''
+@test("metadata pdf hợp lệ")
+def _():
+    meta = {"name": "report.PDF", "size": 120, "content_type": "Application/PDF"}
+    assert validate_upload(meta, 1000, {".pdf"}, {"application/pdf"}) is True
+
+@test("từ chối file lớn hơn giới hạn")
+def _():
+    meta = {"name": "report.pdf", "size": 1001, "content_type": "application/pdf"}
+    assert validate_upload(meta, 1000, {".pdf"}, {"application/pdf"}) is False
+
+@test("từ chối extension không allowlist")
+def _():
+    meta = {"name": "script.exe", "size": 10, "content_type": "application/pdf"}
+    assert validate_upload(meta, 1000, {".pdf"}, {"application/pdf"}) is False
+
+@test("từ chối đường dẫn trong tên file")
+def _():
+    meta = {"name": "../report.pdf", "size": 10, "content_type": "application/pdf"}
+    assert validate_upload(meta, 1000, {".pdf"}, {"application/pdf"}) is False
+
+@test("từ chối MIME type không allowlist")
+def _():
+    meta = {"name": "report.pdf", "size": 10, "content_type": "text/html; charset=utf-8"}
+    assert validate_upload(meta, 1000, {".pdf"}, {"application/pdf"}) is False
+
+@test("từ chối size dạng bool")
+def _():
+    meta = {"name": "report.pdf", "size": True, "content_type": "application/pdf"}
+    assert validate_upload(meta, 1000, {".pdf"}, {"application/pdf"}) is False
+'''
+hints = ["Xác thực metadata và giới hạn trước khi so sánh phần mở rộng.", "Chuẩn hóa phần mở rộng và MIME type về chữ thường; MIME client vẫn không chứng minh bytes an toàn."]
+explanation = "Allowlist metadata là bước đầu của policy upload; ứng dụng vẫn cần xác thực nội dung thật và kiểm soát cách phục vụ file."
+sources = ["django~6.0/ref/files/uploads", "django~6.0/ref/files/storage", "django~6.0/topics/security"]

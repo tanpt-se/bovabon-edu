@@ -36,6 +36,45 @@ Khi được giao **mở rộng** `data/<file>.toml` đã tồn tại:
 - Không giới hạn 35–45 câu như lộ trình mới — làm theo quy mô trong đề bài. Làm theo từng đợt (mỗi đợt ~20 câu) và chạy `check` sau mỗi đợt để không dồn lỗi.
 - Lộ trình không có DevDocs (vd. tiếng Anh): không khai báo `docs`/`sources`.
 
+## Danh mục (`data/categories.toml`)
+
+Người học không thấy "lộ trình" mà thấy **danh mục** (React, Python, Styling, Ngữ pháp…). Mỗi danh mục gom các **module** (mục con) từ một hay nhiều file lộ trình; ví dụ "Python" = Flask + FastAPI + Django.
+- Mỗi module thuộc đúng **1** danh mục; mọi module trong danh mục phải cùng `area`.
+- Khi thêm lộ trình / module mới: thêm id module vào danh mục phù hợp (hoặc tạo danh mục mới) trong `data/categories.toml` — chỉ khi đề bài cho phép sửa file này. Module chưa xếp sẽ tạm hiện trong danh mục trùng id lộ trình, và `cargo test` sẽ báo thiếu.
+- `build.rs` tự nhúng mọi file `data/*.toml` vào binary; không sửa danh sách nhúng trong `src/bank.rs` khi thêm lộ trình.
+
+## Bản dịch tiếng Anh (`data/i18n/en/<file>.toml`)
+
+App có giao diện Việt/Anh. Nội dung dịch nằm ở file **lớp phủ** cùng tên với file lộ trình (vd. `data/react.toml` → `data/i18n/en/react.toml`), chỉ chứa phần chữ, theo id:
+```toml
+[modules.react-hooks]
+title = "Hooks"
+description = "…"
+lesson = '''…Markdown tiếng Anh…'''
+
+[questions.react-001]
+title = "…"            # nếu bản gốc có
+prompt = '''…'''       # giữ nguyên code, {{blank}} (đúng số lượng & vị trí), Markdown
+options = ["…", "…"]   # ĐÚNG số lượng & thứ tự như bản gốc (đáp án theo chỉ số)
+blanks = [["…"]]       # chỉ khi đáp án điền là chữ tiếng Việt; code/từ tiếng Anh giữ nguyên → bỏ trường này
+keywords = [["…", "…"]]  # essay: từ khoá TIẾNG ANH (nhiều cách diễn đạt), model_answer phải khớp ≥ min_keywords
+model_answer = '''…'''
+explanation = '''…'''
+hints = ["…"]          # đúng số lượng như bản gốc
+```
+- Không dịch / không đưa vào: `answer`, `tests`, `solution`, `starter`, `type`, `difficulty`, `sources`, id. Code trong prompt giữ nguyên (có thể dịch comment tiếng Việt trong code).
+- Dịch tự nhiên, đúng thuật ngữ chuẩn của tài liệu gốc (tiếng Anh kỹ thuật), không dịch word-by-word.
+- Lộ trình **tiếng Anh** (area = english): câu hỏi vốn bằng tiếng Anh → giữ nguyên câu/lựa chọn tiếng Anh, chỉ dịch phần tiếng Việt (giải thích, hướng dẫn, bài học) sang tiếng Anh dễ hiểu; đừng làm lộ đáp án khi dịch đề.
+- Bỏ qua trường nào không có chữ tiếng Việt (trường thiếu = dùng bản gốc).
+- Kiểm định: `./target/release/bovabon_edu check data/i18n/en/<file>.toml` (kiểm tra id tồn tại, số lựa chọn/ô trống, đáp án chuẩn vẫn chấm đúng).
+
+## Bám mục lục DevDocs
+
+`.devdocs/<slug>.json` là mục lục DevDocs: `types` = các nhóm chủ đề (thường là chương/mục của tài liệu gốc), `entries` = các trang (`name`, `path`, `type`). Khi được giao "mở rộng theo DevDocs":
+- Dùng `types` làm khung để rà soát độ phủ: nhóm chủ đề quan trọng nào (cho người học/phỏng vấn) chưa có module → thêm module mới; `sources` của module trỏ tới các `entries` tiêu biểu của nhóm đó (người học đọc nguyên trang ngay trong app, tab "Tài liệu gốc").
+- **Bài học và câu hỏi phải tự viết mới** dựa trên hiểu biết chuẩn xác — không chép văn bản tài liệu.
+- Bỏ qua nhóm thuần tra cứu/ít giá trị ôn tập (danh sách hằng số, changelog, API cũ đã deprecated).
+
 ## Định dạng TOML
 
 ```toml
@@ -44,6 +83,7 @@ title = "Vue 3 & Vue Router"
 icon = "🟢"
 color = "#42b883"
 group = "Frontend"              # Frontend | Backend | Ngoại ngữ | ...
+area = "dev"                    # "dev" (mặc định) | "english": khu Tiếng Anh riêng, KHÔNG có câu code (chỉ single/multiple/fill/essay)
 docs = ["vue~3", "vue_router~5"]  # slug DevDocs
 description = "Mô tả ngắn 1–2 câu."
 

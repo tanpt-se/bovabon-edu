@@ -1,0 +1,991 @@
+[modules.gr-a2-tenses]
+title = "A2 · Basic tenses"
+description = "Present simple and continuous, past simple, the future with will / be going to, and stative verbs."
+lesson = '''
+### Present simple vs present continuous
+| | Present simple | Present continuous |
+|---|---|---|
+| Use | habits, facts, schedules | actions happening now, temporary situations, arranged plans |
+| Example | *She **works** in Hanoi.* | *She **is working** from home this week.* |
+| Signals | always, usually, every day | now, at the moment, this week |
+
+- Add **-s/-es/-ies** in the third-person singular: *works, watches, goes, studies* — *have → has*.
+- **Stative verbs** (know, like, want, need, believe, own, understand…) are **not usually** used in continuous forms: ~~I am knowing~~ → *I know*.
+
+### Past simple
+Use it for a completed action at a definite time: *I **visited** Da Nang **last year**.* For negatives and questions, use *did + base verb*: *Did you **see**…? I didn't **go**.*
+Spelling of *-ed*: *like → liked, study → studied, stop → stopped, play → played*.
+
+### Future forms
+- **will**: an immediate decision, prediction, or promise — *I'll help you.*
+- **be going to**: a prior intention or a prediction based on evidence — *Look at those clouds! It's **going to** rain.*
+- Use the present continuous for an arranged plan: *I'm **meeting** the client at 3.*
+
+### Forms, signals, and questions
+| Structure | Affirmative | Negative | Question |
+|---|---|---|---|
+| Present simple | S + V(s/es) | S + don't/doesn't + V | Do/Does + S + V? |
+| Present continuous | S + am/is/are + V-ing | S + am/is/are not + V-ing | Am/Is/Are + S + V-ing? |
+| Past simple | S + V2/ed | S + didn't + V | Did + S + V? |
+| Future with will | S + will + V | S + won't + V | Will + S + V? |
+| Future intention | S + am/is/are going to + V | S + am/is/are not going to + V | Am/Is/Are + S + going to + V? |
+
+**Signals:** *usually/every sprint* often goes with the present simple; *right now/this week* with the present continuous; *yesterday/last release* with the past simple. *This Friday* does not determine the tense on its own: distinguish an intention, an immediate decision, and a confirmed arrangement.
+
+**Common confusions and errors:** After *does/doesn't/did/didn't*, use the base verb (*Does she work?*, not *Does she works?*). Do not use *will* in a future time clause: *I'll call when the build finishes*. Vietnamese learners often omit *be* in continuous forms or choose the wrong form of *be* for the subject.
+
+**IT context:** *The API returns JSON by default. The team is testing a patch now. We didn't deploy it yesterday. I'm going to review the logs, and I'll send you the results.*
+'''
+
+[questions.gr-a2-01]
+explanation = "*Listen!* signals an action happening at the moment of speaking, so use the present continuous."
+
+[questions.gr-a2-02]
+prompt = "Which sentence uses the stative verb *know* correctly?"
+explanation = "*Know* is a stative verb and is not used in the continuous form here."
+
+[questions.gr-a2-03]
+prompt = '''Complete the verbs in parentheses:
+
+1. My sister {{blank}} (study) English every evening.
+2. We {{blank}} (go) to Ha Long Bay last summer.
+3. {{blank}} you {{blank}} (see) the new film yesterday?
+4. He {{blank}} (not / like) coffee.'''
+explanation = "For the third-person singular, *study → studies*. *Last summer* calls for the past simple; past-simple questions use *Did + subject + base verb*."
+
+[questions.gr-a2-04]
+explanation = "A prediction based on **present evidence** takes *be going to*. *Will* is used for a prediction based on an opinion (*I think it will rain tomorrow*)."
+
+[questions.gr-a2-05]
+prompt = "Which sentences use **will** appropriately (for an immediate decision, a promise, or an opinion-based prediction)?"
+explanation = "The plan is already arranged (the tickets have been bought), so use *I'm visiting* or *I'm going to visit*."
+
+[questions.gr-x003]
+prompt = "The engineer ______ the configuration last night. (meaning: did not change it)"
+explanation = "*Last night* is a completed past time; form a past-simple negative with *didn't + base verb*."
+
+[questions.gr-x004]
+prompt = "Choose the correct question about Linh's code-review habit."
+explanation = "With a third-person singular subject in the present simple, use *Does + subject + base verb*."
+
+[questions.gr-x007]
+prompt = "Choose the sentences that use the correct tense for the stated context."
+options = ["The API returns JSON for every request. (default behavior)", "We are testing the patch this week. (temporary activity)", "She doesn't understands the alert.", "Did they deployed the fix last night?", "The team is usually meeting at 9 every day."]
+explanation = "The first two sentences match their contexts and are grammatically correct. After *doesn't/did*, use the base verb; a regular daily habit takes the present simple."
+
+[questions.gr-x008]
+prompt = "In the stated contexts, which sentences use **will / be going to** naturally and correctly?"
+options = ["The screen has gone blank; I'll restart the app now. (a decision just made)", "Look at the CPU graph; it is going to overheat. (a prediction based on evidence)", "We will going to deploy at noon.", "I am going send you the logs.", "The team will meet at 3 yesterday."]
+explanation = "*Will* expresses an immediate decision; *be going to* expresses a prediction based on evidence. The other options have incorrect forms or conflicting time references."
+
+[questions.gr-x009]
+prompt = '''Complete the verbs in context:
+
+1. The app usually {{blank}} (send) a notification after login.
+2. The developers {{blank}} (check) the new build right now.
+3. Our test server {{blank}} (not / run) on Sundays.'''
+explanation = "*Usually* and *on Sundays* signal habits; *right now* signals an action in progress."
+
+[questions.gr-x010]
+prompt = '''Use the past simple. Each sentence includes a completed past-time reference:
+
+1. We {{blank}} (deploy) the hotfix yesterday.
+2. Mai {{blank}} (go) to the data centre last Monday.
+3. The build {{blank}} (stop) at 6 p.m. yesterday.'''
+explanation = "Add *-ed* to *deploy*; *go* is irregular; double the final consonant in *stop* before adding *-ed*."
+
+[questions.gr-x011]
+prompt = '''Choose the future form that fits the signal in parentheses:
+
+1. I {{blank}} (call) the on-call engineer now. *(just decided)*
+2. Look at the smoke from the rack; it {{blank}} (catch) fire. *(present evidence)*'''
+explanation = "Use *will* for an immediate decision and *be going to* for a prediction based on evidence."
+
+[questions.gr-x012]
+prompt = '''Use the present simple for these stative verbs:
+
+1. I {{blank}} (know) the staging password.
+2. The client {{blank}} (not / want) a maintenance window today.'''
+explanation = "*Know* and *want* are usually stative verbs, so use the present simple rather than the continuous."
+
+[questions.gr-x013]
+prompt = '''Choose the appropriate verb forms to complete this status update. The signals in parentheses indicate the intended meaning:
+
+1. The team {{blank}} (meet) the security team at 3 p.m. tomorrow. *(arranged plan)*
+2. I {{blank}} (review) the access logs before the meeting. *(prior intention)*
+3. The alert has just arrived, so I {{blank}} (check) the production dashboard now. *(immediate decision)*'''
+explanation = "The present continuous expresses an arranged plan; *be going to* expresses a prior intention; *will* expresses an immediate decision."
+
+[questions.gr-c01]
+explanation = "With a third-person singular subject in the present simple, the verb takes *-s*: *log → logs*."
+
+[modules.gr-a2-basics]
+title = "A2 · Nouns, articles, comparisons, and modals"
+description = "Nouns and quantifiers, pronouns and possession, there is/are, a/an/the, comparisons, modals, and prepositions of time and place."
+lesson = '''
+### Nouns and quantifiers
+- Countable nouns: *many, a few, a number of* — *many bugs, a few users*.
+- Uncountable nouns: *much, a little, an amount of* — *much time, a little information*.
+- *Some* is common in affirmative statements and offers; *any* is common in negatives and questions.
+
+### Articles
+- Choose **a/an** by the **first sound**: *an hour, an MBA, a university, a European*.
+- Use **the** when the listener knows which one you mean or it is unique: *the sun, the manager of our team*.
+- Use no article for plural or uncountable nouns in general: *Dogs are loyal. Water is important.*
+
+### Comparisons
+| Adjective | Comparative | Superlative |
+|---|---|---|
+| One syllable | fast**er**, larg**er**, big**ger** | the fast**est**, the big**gest** |
+| Two syllables ending in -y | happ**ier** | the happ**iest** |
+| Other adjectives with 2+ syllables | **more** modern | **the most** modern |
+| Irregular | good → better → best, bad → worse → worst, far → farther/further | |
+
+Use *as fast **as*** for equality; use *not as fast as / less expensive than* for a lower degree.
+
+### Modals
+*Can* expresses ability or a request for permission; *must* expresses an obligation imposed by the speaker; *have to* expresses an external obligation; *mustn't* means prohibited, unlike *don't have to* (not necessary); *should* gives advice.
+
+### Prepositions of time
+**At** + a time / *at night* / *at the weekend* (BrE) · **on** + a day or date · **in** + a month, year, season, or part of the day (*in the morning*).
+
+### Pronouns, existence, and possession
+| Role | First-person singular | Third-person singular | First-person plural |
+|---|---|---|---|
+| Subject | I | he / she / it | we |
+| Object | me | him / her / it | us |
+| Possessive adjective + noun | my | his / her / its | our |
+| Independent possessive pronoun | mine | his / hers / its | ours |
+
+| Pattern | Affirmative | Negative | Question |
+|---|---|---|---|
+| be | There is a server. / I am ready. | There isn't a server. / I'm not ready. | Is there a server? / Am I ready? |
+| have (possession) | She has access. | She doesn't have access. | Does she have access? |
+| can / must | We can deploy. / You must log in. | We can't deploy. / You mustn't share keys. | Can we deploy? / Must I log in? |
+
+Use *a/an* with a singular countable noun, *many/few* with plural countable nouns, and *much/little* with uncountable nouns such as *advice, information,* and *software*. *Some* is common in affirmatives and offers; *any* is common in questions and negatives, though offers can use *some*: *Would you like some help?*
+
+**Signals and common comparison errors:** use *in* with months, years, and rooms (*in 2025, in the server room*); *on* with days, dates, and surfaces (*on Monday, on the dashboard*); and *at* with times and specific points (*at 9, at the entrance*). *Mustn't* means prohibited; *don't have to* means not required. Use *there is* with singular or uncountable nouns and *there are* with plural nouns.
+
+**Common errors for Vietnamese learners:** using *he* instead of *him* after a verb or preposition; confusing *her* (possessive adjective) with *hers*; saying *many information* instead of *much information/a lot of information*; and omitting *a/an* before a singular countable noun. Superlatives usually take *the*; comparatives use *than*.
+
+**IT context:** *There are two tickets on the board. One of them is mine. We have some time, but we don't have much information yet. The meeting is at 10 on Tuesday in the test room. You can restart the staging server, but you mustn't delete production data.*
+'''
+
+[questions.gr-a2-11]
+prompt = "Choose the **correct** sentence:"
+explanation = "The *h* is silent in *hour* and *honest*, so use **an**. *University* and *useful* begin with the /juː/ sound, so use **a**."
+
+[questions.gr-a2-12]
+prompt = '''Write the correct comparative or superlative form:
+
+1. This laptop is {{blank}} than mine. (fast)
+2. Today is {{blank}} than yesterday. (hot)
+3. She is the {{blank}} student in the class. (good)
+4. This course is {{blank}} {{blank}} than the last one. (interesting)'''
+explanation = "In *hot* (consonant–vowel–consonant), double the final consonant: *hotter*. *Good → better → best*. Long adjectives use *more/most*."
+
+[questions.gr-a2-13]
+prompt = "*\"Tomorrow is a holiday, so you ______ go to school.\"* (not necessary)"
+explanation = "*Don't have to* means it is not necessary; *mustn't* means it is **prohibited**."
+
+[questions.gr-a2-14]
+prompt = '''Fill in **at / on / in**:
+
+The meeting is {{blank}} Monday {{blank}} 9 a.m. We started the project {{blank}} 2023, {{blank}} the summer.'''
+explanation = "Use *on* with a day/date, *at* with a time, and *in* with a year, season, or month."
+
+[questions.gr-x014]
+explanation = "*Two open tickets* is a plural noun phrase, so use *There are*."
+
+[questions.gr-x015]
+explanation = "*Mine* is a possessive pronoun that stands alone; *my* must come before a noun."
+
+[questions.gr-x016]
+explanation = "Use *on* for content displayed on a surface or interface, such as a dashboard."
+
+[questions.gr-x017]
+explanation = "*Developers* is a plural countable noun, so use *many*; *time* is uncountable, so use *much*."
+
+[questions.gr-x018]
+explanation = "Negative sentences commonly use *any* with an uncountable noun."
+
+[questions.gr-x019]
+prompt = "The new build is ______ than version 1. (meaning: more stable)"
+explanation = "*Stable* usually forms its comparative with *more + adjective*; *than* introduces the comparison."
+
+[questions.gr-x020]
+prompt = "Choose the correct sentences about **there is / there are** and quantifiers."
+explanation = "*Equipment* and *information* are uncountable; *monitors* is plural and countable. Do not use *much* with *traffic* after *there are*, and *many users* requires *there are*."
+
+[questions.gr-x021]
+prompt = "Choose the sentences that use subject, object, or possessive pronouns correctly."
+explanation = "*Her* is an object pronoun, *ours* is a possessive pronoun, and *their/its* are possessive adjectives. Use *them* after a preposition; *my* cannot stand alone before a noun."
+
+[questions.gr-x022]
+prompt = "Choose the sentences that use modals correctly for the situations."
+options = ["You mustn't share your password. (prohibited)", "You don't have to attend the optional demo. (not required)", "You mustn't attend the required security training. (not necessary)", "We can to restart the service now.", "Does she can access the test server?"]
+explanation = "*Mustn't* expresses prohibition; *don't have to* means something is not required. A modal takes the base verb without *to*, and questions with *can* do not use *do/does*."
+
+[questions.gr-x023]
+prompt = '''Fill in **in / on / at**:
+
+The review starts {{blank}} 2 p.m. {{blank}} Thursday. The test team works {{blank}} the second floor, and the release is planned {{blank}} October.'''
+explanation = "Use *at* with a time, *on* with a day and a floor/surface, and *in* with a month."
+
+[questions.gr-x024]
+prompt = '''Choose the appropriate quantifier: **many, much, a few, a little**. Use each answer once.
+
+1. How {{blank}} support tickets arrived today?
+2. We have very {{blank}} time before the maintenance window.
+3. Only {{blank}} engineers know the legacy system.
+4. Add {{blank}} salt to the test data to check the edge case. *(a small amount)*'''
+explanation = "Use *many/a few* with countable nouns and *much/a little* with uncountable nouns."
+
+[questions.gr-x025]
+prompt = '''Complete the comparisons using the adjective in parentheses:
+
+1. The new laptop is {{blank}} than the old one. (fast)
+2. This is the {{blank}} result in the benchmark. (good)
+3. The production database is {{blank}} {{blank}} than the test copy. (reliable)'''
+explanation = "*Fast* forms *faster*; *good* is irregular and takes *best* in the superlative; long adjectives use *more + adjective*."
+
+[questions.gr-x026]
+prompt = "Choose all the grammatically correct sentences in this status update."
+explanation = "*Servers* is plural, so use *there are*; *time* and *information* are uncountable, so use *a little/much*. Do not add *more* before *faster* in a comparative. Use *at* with a time and *on* with a day."
+
+[questions.gr-c02]
+prompt = "Choose all sentences that use the comparative or superlative correctly."
+explanation = "Long adjectives such as *reliable* usually take *more* in the comparative; short adjectives such as *easy* usually take *-er/-est*. Do not combine *more* with an *-er* form or *most* with an *-est* form."
+
+[questions.gr-c04]
+explanation = "*User* begins with the /j/ sound (as in *you*), so choose *a* based on the sound, not the letter *u*."
+
+[modules.gr-b1-tenses]
+title = "B1 · Perfect forms and past narration"
+description = "Present perfect (for/since/already/yet/just), past continuous, past perfect, and used to / would."
+lesson = '''
+### Present perfect vs past simple
+- Present perfect: experiences, recently completed actions, or situations continuing to the present — *I **have worked** here **since** 2020 / **for** five years.* · *Have you **ever** been to Japan?* · *I've **just/already** sent it.* · *I haven't finished **yet**.*
+- Past simple: a definite time in the past — *I **started** here **in** 2020.*
+- Use **for** + a period of time and **since** + a starting point.
+- Present perfect continuous emphasizes an ongoing process: *I've **been waiting** for an hour.*
+
+### Past continuous
+Use it for an action in progress when another action interrupts it: *I **was cooking** **when** the phone **rang**.* · For simultaneous actions: ***While** I was cooking, he was reading.*
+
+### Past perfect
+Use it for an action that happened **before** another past reference point: *When I arrived, the meeting **had** already **started**.*
+
+### used to / would
+*I **used to** live in Hue.* describes a past habit or state that is no longer true. *Would* is used only for **repeated actions**: *We **would** play football every Sunday.* (Not ~~I would live~~.)
+This differs from *be used to + V-ing*, meaning to be accustomed to something: *I'm used to working late.*
+
+### Forms, signals, and distinctions
+| Structure | Affirmative | Negative | Question |
+|---|---|---|---|
+| Present perfect | S + have/has + V3 | S + haven't/hasn't + V3 | Have/Has + S + V3? |
+| Past continuous | S + was/were + V-ing | S + wasn't/weren't + V-ing | Was/Were + S + V-ing? |
+| used to | S + used to + V | S + didn't use to + V | Did + S + use to + V? |
+| Past perfect | S + had + V3 | S + hadn't + V3 | Had + S + V3? |
+
+**Signals:** *since/for/ever/already/yet* often suggest the present perfect; *at 8 yesterday/while* often suggest the past continuous; *by the time/before* often clarify the order of past events; *when* often links an action in progress with an interrupting event.
+
+**Common confusions and errors:** The present perfect connects the past with the present and does not take a finished-time expression such as *last Monday*; the past simple describes a completed event at a past time. Use *for* + a duration and *since* + a starting point. After *didn't/did*, write *use to*, not *used to*. Vietnamese learners often use the past simple with *since* even when the situation is still continuing.
+
+**IT context:** *We have used this test suite since 2022. At 6 p.m. yesterday, the team was investigating an outage. The deployment had finished before the alert arrived. We didn't use to run these checks locally.*
+'''
+
+[questions.gr-b1-02]
+prompt = "Which sentence is **incorrect**?"
+explanation = "A definite past time (*last week*) is given, so do **not** use the present perfect."
+
+[questions.gr-b1-03]
+prompt = '''Complete the verbs:
+
+1. I {{blank}} (cook) dinner when the power {{blank}} (go) out.
+2. When we got to the cinema, the film {{blank}} already {{blank}} (start).
+3. She {{blank}} (wait) for an hour — she's really annoyed. *(emphasize the process; present perfect continuous)*'''
+explanation = "An action in progress (past continuous) was interrupted by another action (past simple). An event before a past reference point takes the past perfect."
+
+[questions.gr-b1-04]
+prompt = "Which sentences correctly describe a past habit or present familiarity? Select all that apply."
+explanation = "*Would* is used only for **repeated actions**, not past states or possession (*have a dog*). *Be used to + V-ing* means accustomed to; *used to + base verb* describes a past habit or state."
+
+[questions.gr-b1-05]
+prompt = "Write a **5–7 sentence** paragraph in English about a memorable day. Use the **past simple**, **past continuous** (with *when/while*), and **past perfect**. You may add one sentence with *used to*."
+explanation = "Combining past tenses makes the sequence of events clear: background (past continuous) → event (past simple) → an earlier event (past perfect)."
+
+[questions.gr-x027]
+explanation = "*So far* connects a result during an unfinished time period to the present, so use the present perfect."
+
+[questions.gr-x028]
+explanation = "*Yesterday* is a completed past-time reference, so use the past simple."
+
+[questions.gr-x029]
+explanation = "An action in progress provides the background for an interrupting event: past continuous + past simple."
+
+[questions.gr-x030]
+explanation = "*Used to + base verb* describes a past habit that is no longer true."
+
+[questions.gr-x031]
+explanation = "*Be used to* means to be accustomed to; *to* is a preposition here, so it is followed by V-ing."
+
+[questions.gr-x032]
+prompt = "Choose the correct sentences for the stated time contexts."
+options = ["I have worked on this service since 2022. (still working on it now)", "We deployed the patch last Monday.", "We've fixed the bug yesterday.", "At 5 p.m., I was debugged the login flow.", "Have you ever tested the new endpoint?"]
+explanation = "*Since* and *ever* fit the present perfect; *last Monday* takes the past simple. Do not use the present perfect with *yesterday*; the continuous sentence needs *was debugging*."
+
+[questions.gr-x033]
+prompt = "Choose the correct sentences about *used to*, *would*, and *be used to*."
+explanation = "*Used to* describes a past state or habit; *would* describes a repeated action; *be used to* is followed by a noun or V-ing."
+
+[questions.gr-x034]
+prompt = '''Complete the verbs according to the time references:
+
+1. I {{blank}} (work) here since May, and I still do.
+2. We {{blank}} (ship) the patch last Friday.
+3. {{blank}} you ever {{blank}} (see) this error before?'''
+explanation = "Use the present perfect with *since May* for an ongoing situation; the past simple with *last Friday*; and the present perfect for an experience question with *ever*."
+
+[questions.gr-x035]
+prompt = '''Complete the sequence of events in this incident report:
+
+1. When the build failed, we {{blank}} (run) integration tests.
+2. The service {{blank}} (go) down while we were checking the logs.
+3. By the time I joined the call, the incident {{blank}} already {{blank}} (resolve).'''
+explanation = "The past continuous gives the background; the past simple describes an event; the past perfect passive shows that something was completed before the call was joined."
+
+[questions.gr-x036]
+prompt = '''Choose the correct form of *used to*:
+
+1. In 2020, the team {{blank}} (use) FTP for internal transfers, but it no longer does.
+2. They didn't {{blank}} (use) to run these checks locally.
+3. Our analyst is used to {{blank}} (work) with overnight alerts.'''
+explanation = "*Used to* describes a past habit; after *did/didn't*, use *use to*; *be used to + V-ing* means to be accustomed to something."
+
+[questions.gr-x037]
+prompt = "Write 4–5 sentences in English for a project report. Use the present perfect for work that is still relevant (with *since/for*), the past simple with a completed-time reference, and the past continuous with *when* or *while*."
+explanation = "The time references help readers distinguish a result that is still relevant, a completed event, and past background activity."
+
+[questions.gr-x038]
+prompt = '''Choose the appropriate verb forms to narrate the incident in the correct sequence:
+
+1. We {{blank}} (monitor) the release when the login service {{blank}} (stop) responding.
+2. The certificate {{blank}} (expire) earlier that morning.
+3. The team {{blank}} (renew) certificates manually, but it now uses an automated reminder.'''
+explanation = "The past continuous describes an action in progress; the past simple describes the interruption; the past perfect shows the certificate expired before the incident; *used to* describes a former habit that has changed."
+
+[questions.gr-c03]
+prompt = '''Use the past simple. All events take place at a completed past time:
+
+1. We {{blank}} (deploy) the hotfix yesterday.
+2. Mai {{blank}} (go) to the data centre last Monday.
+3. The build {{blank}} (stop) at 6 p.m. yesterday.'''
+explanation = "*Yesterday* and *last Monday* identify completed past times; double the final consonant in *stop* before adding *-ed*."
+
+[modules.gr-b1-structures]
+title = "B1 · Passive voice, conditionals, and relative clauses"
+description = "Passive voice across tenses, zero/first/second conditionals, who/which/that/whose/where, V-ing vs to V, and basic reported speech."
+lesson = '''
+### Passive voice: be + V3
+| Tense | Passive |
+|---|---|
+| Present simple | The room **is cleaned** every day. |
+| Past simple | The bridge **was built** in 1990. |
+| Present perfect | The tickets **have been sold**. |
+| Future | It **will be finished** tomorrow. |
+| Modal | It **must be done** today. |
+| Continuous | The road **is being repaired**. |
+
+### Conditionals
+- Zero conditional: *If you **heat** ice, it **melts**.*
+- First conditional: *If it **rains**, we **will stay** home.* Do not use *will* after *if*. *Unless* means *if … not*.
+- Second conditional: *If I **had** more money, I **would travel**.* · *If I **were** you, I'd…*
+
+### Relative clauses
+Use *who* for people, *which* for things, *that* for people or things only in **defining** clauses, *whose* for possession, *where* for places, and *when* for times.
+A relative pronoun can be omitted when it is the **object**: *The book (that) I bought…*
+
+### V-ing or to V
+- Follow with V-ing: *enjoy, finish, avoid, mind, suggest, consider, keep, practise*.
+- Follow with to V: *want, decide, plan, hope, agree, promise, refuse, manage*.
+- Meaning changes: *stop **to** smoke* (stop in order to smoke) ≠ *stop smok**ing*** (quit smoking); *remember **to** lock* (remember to do it) ≠ *remember lock**ing*** (remember doing it).
+
+### Basic reported speech
+Backshift the tense: *"I **am** tired" → She said (that) she **was** tired.* · *will → would*, *can → could*. Also change pronouns and time expressions (*today → that day*, *tomorrow → the next day*).
+
+### Forms and use cases
+| Structure | Affirmative | Negative | Question |
+|---|---|---|---|
+| First conditional | If + present simple, S + will + V | If + present simple, S + won't + V | What will you do if + present simple? |
+| Second conditional | If + past simple, S + would + V | If + past simple, S + wouldn't + V | What would you do if + past simple? |
+| Present passive | S + am/is/are + V3 | S + am/is/are not + V3 | Am/Is/Are + S + V3? |
+| Past passive | S + was/were + V3 | S + wasn't/weren't + V3 | Was/Were + S + V3? |
+| Obligation | S + must/have to + V | S + mustn't / don't have to + V | Must/Do + S + have to + V? |
+
+**Signals:** *if + present, tomorrow* often describes a possible condition; *if + past, would* describes a hypothetical present/future; *by + agent* names the person who performs an action in a passive sentence; *must/have to/should* express strong obligation, a requirement or rule, and advice respectively.
+
+**Common confusions and errors:** Do not put *will* directly after *if* in the first conditional. *Mustn't* means prohibited; *don't have to* means not necessary. A passive sentence must keep the correct tense of *be* and use V3. Defining relative clauses do not have commas; an object relative pronoun may be omitted, but a subject pronoun may not. Vietnamese learners often keep direct-question word order in reported speech; after *asked where*, use statement word order.
+
+**IT context:** *If the tests pass, we will merge the change. If we had a staging copy, we would test it there. The report is reviewed every Friday. The engineer who owns this service must update the runbook.*
+'''
+
+[questions.gr-b1-10]
+prompt = '''Change these sentences to the **passive**:
+
+1. They built this bridge in 1990. → This bridge {{blank}} in 1990.
+2. Someone has stolen my bike. → My bike {{blank}}.
+3. They are repairing the road. → The road {{blank}}.
+4. You must finish the report today. → The report {{blank}} today.'''
+explanation = "Keep the tense of the active sentence and replace its verb with *be* (in the matching tense) + V3."
+
+[questions.gr-b1-11]
+explanation = "The second conditional uses *were* with every person in standard usage (*If I were you…*)."
+
+[questions.gr-b1-12]
+explanation = "*Unless* means *if … not*: We will miss the train **if we don't** leave now."
+
+[questions.gr-b1-13]
+prompt = "Which relative clauses are **correct**?"
+explanation = "Use *who* only for people; use *which/that* for things. The relative pronoun is correctly omitted as the object in the final sentence."
+
+[questions.gr-b1-14]
+prompt = '''Fill in **V-ing** or **to V**:
+
+1. I enjoy {{blank}} (read) before bed.
+2. She decided {{blank}} (learn) Japanese.
+3. Would you mind {{blank}} (close) the window?
+4. He promised {{blank}} (not / be) late again.'''
+explanation = "*Enjoy, mind* + V-ing; *decide, promise* + to V. Negate a to-infinitive with *not to V*."
+
+[questions.gr-b1-15]
+prompt = "*\"I'll never forget ______ the Eiffel Tower for the first time.\"* (remembering something you **already did**)"
+explanation = "*Forget/remember + V-ing* means remembering/forgetting an action already done; *+ to V* means remembering/forgetting something that needs to be done (*Don't forget to lock the door*)."
+
+[questions.gr-b1-16]
+prompt = "*She said, \"I am tired today.\"* → Choose the correct reported-speech sentence:"
+explanation = "Backshift the tense *am → was* and change *today → that day*. Use *say (that)…* but *tell + person + (that)…*."
+
+[questions.gr-x039]
+explanation = "The first conditional uses the present simple in the *if*-clause and *will + verb* in the main clause."
+
+[questions.gr-x040]
+explanation = "The second conditional uses the past simple in the *if*-clause and *would + verb* in the main clause."
+
+[questions.gr-x041]
+explanation = "The present continuous passive has the form *am/is/are being + V3*; the application is the thing being monitored."
+
+[questions.gr-x042]
+explanation = "*Who* is the subject of a relative clause referring to a person."
+
+[questions.gr-x043]
+explanation = "*Avoid* is followed by V-ing; the sentence says the team actively refrained from copying customer data."
+
+[questions.gr-x044]
+prompt = "Choose the correctly written defining relative clauses."
+explanation = "Use *who* for people, *which* for things, and *that* for either people or things in defining clauses."
+
+[questions.gr-x045]
+prompt = "Choose the sentences that use obligation modals correctly for the situations."
+options = ["Company policy requires MFA, so every developer has to enable it.", "You mustn't share a production password; it is prohibited.", "The optional demo is not required, so I don't have to attend.", "You mustn't attend the required safety briefing. (meaning: not necessary)", "She has to updates the runbook today."]
+explanation = "*Have to* expresses an obligation imposed by a rule; *mustn't* means prohibited; *don't have to* means not required. Use the base verb after *have to*."
+
+[questions.gr-x046]
+prompt = "Choose the sentences that use the correct verb form after the main verb."
+explanation = "*Decide + to V*; *avoid/consider + V-ing*. *Suggest* is usually followed by V-ing or a that-clause; *promise* is followed by to V."
+
+[questions.gr-x047]
+prompt = '''Change the sentences to the passive, keeping the tense or modal:
+
+1. The support team reviews every ticket. → Every ticket {{blank}} by the support team.
+2. They tested the endpoint yesterday. → The endpoint {{blank}} yesterday.
+3. You must protect the access key. → The access key {{blank}}.'''
+explanation = "Keep the tense in the auxiliary *be* and change the main verb to V3. Keep the modal before *be*."
+
+[questions.gr-x048]
+prompt = '''Fill in **who / which / whose** in the relative clauses:
+
+1. The developer {{blank}} owns the repository is on leave.
+2. The tool {{blank}} we installed last week scans dependencies.
+3. The analyst {{blank}} report found the issue presented the fix.'''
+explanation = "*Who* refers to a person as the subject; *which/that* refers to a thing as the object; *whose* expresses possession."
+
+[questions.gr-x049]
+prompt = '''Fill in the correct form of the verb in parentheses:
+
+1. We agreed {{blank}} (wait) for the test results.
+2. The engineer kept {{blank}} (check) the logs.
+3. Please remember {{blank}} (run) the migration before the deploy. *(an action that needs to be done)*'''
+explanation = "*Agree + to V*; *keep + V-ing*; *remember to V* means to remember to do something that still needs to be done."
+
+[questions.gr-x050]
+prompt = '''Rewrite the three direct-speech sentences as reported speech, preserving the intended listener and meaning:
+1. Ella said, “The server is down.”
+2. The manager told me, “Restart the service.”
+3. The administrator told the team, “Do not share this token.”'''
+explanation = "Backshift *am/is* to *was* in statements; use *told + object + (not) to-infinitive* for commands."
+
+[questions.gr-x091]
+prompt = '''Choose the appropriate modal. Policy requires the owner to revoke a compromised key immediately; an analyst only reads the logs and is not required to modify production.
+
+1. The owner {{blank}} revoke the exposed key immediately.
+2. An analyst {{blank}} change production.'''
+explanation = "*Must/has to* expresses obligation; *does not have to* means something is not required, unlike *must not*, which means prohibited."
+
+[modules.gr-b2-advanced]
+title = "B2 · Advanced conditionals, deduction, and reported speech"
+description = "Third and mixed conditionals, deduction modals (must/can't/might have V3), reported questions and commands, wish / if only, and have something done."
+lesson = '''
+### Third and mixed conditionals
+- Third conditional (an unreal past): *If I **had studied**, I **would have passed**.*
+- Mixed conditional (past → present): *If I **had taken** the job, I **would be** rich now.*
+- Mixed conditional (present → past): *If I **were** more careful, I **wouldn't have made** that mistake.*
+
+### Modals of deduction
+| Degree of certainty | Present | Past |
+|---|---|---|
+| Almost certainly true | must be | **must have** + V3 |
+| Possible | might / may / could be | might / may / could **have** + V3 |
+| Almost certainly false | can't / couldn't be | **can't have** + V3 |
+
+*Should have + V3* means something was advisable but did not happen. *Needn't have + V3* means something was done but was unnecessary.
+
+### Advanced reported speech
+- Questions: *"Where **do you live**?" → He asked me where **I lived**.* Use statement word order, without *do/did*.
+- Yes/no questions: *"Are you ready?" → She asked **if/whether** I was ready.*
+- Commands/requests: *told/asked + object + (not) to V* — *He told me **not to touch** it.*
+- Reporting verbs: *suggest + V-ing / that…*, *advise someone to V*, *apologise for V-ing*, *deny V-ing*, *admit V-ing*.
+
+### wish / if only
+- Present: *I wish I **knew** the answer.* · *I wish I **were** taller.*
+- Past: *I wish I **had listened**.*
+- Complaining about someone else's behavior: *I wish you **would stop** talking.*
+
+### Having something done
+*I **had my car repaired**.* · *She **got her hair cut**.* · Active alternatives: *have someone do* / *get someone to do*.
+
+### Forms and signals
+| Structure | Affirmative | Negative | Question |
+|---|---|---|---|
+| Third conditional | If + had + V3, would have + V3 | If + hadn't + V3, wouldn't have + V3 | What would have happened if + had + V3? |
+| Mixed: past → present | If + had + V3, would + V | If + hadn't + V3, wouldn't + V | What would you be doing now if…? |
+| wish about the present | S + wish + S + past simple | S + wish + S + didn't + V | Do you wish + S + past simple? |
+| Causative | S + have/get + object + V3 | S + don't/doesn't have + object + V3 | Do/Does + S + have + object + V3? |
+
+**Signals:** *yesterday/last year* with an unreal result suggests the third conditional; *now/today* after a past condition suggests a mixed conditional; *wish/if only* expresses an unreal situation or a desire for change; *have/get something done* emphasizes that a service is performed for someone.
+
+**Common confusions and errors:** In the *if*-clause of a third conditional, use *had + V3*, not *would have*. *Wish + past simple* describes a present situation that is different from reality; *wish + past perfect* expresses regret about the past. The causative takes V3, not the base verb. Vietnamese learners may translate *I wish I will…* word for word; choose the structure according to the subject and time reference.
+
+**IT context:** *If we had added monitoring, we would have detected the outage sooner. If the team had documented the API, support would be easier now. We had the database migrated by a specialist, and I wish we had reviewed the rollback plan first.*
+'''
+
+[questions.gr-b2-01]
+explanation = "Third conditional: *If + had + V3, would have + V3* — an unreal situation in the past."
+
+[questions.gr-b2-02]
+explanation = "This is a **mixed conditional**: the condition is in the past (*had accepted*), while the result is in the present (*now*) → *would + V* (here, the continuous form *would be living*)."
+
+[questions.gr-b2-03]
+prompt = '''Use a deduction modal + **have + V3**:
+
+1. The streets are wet. It {{blank}} rained last night. *(almost certainly did)*
+2. She {{blank}} seen me — she didn't say hello. *(almost certainly did not)*
+3. I'm not sure where my keys are. I {{blank}} left them in the car. *(possibly did)*
+4. You {{blank}} told me earlier! Now it's too late. *(you should have)*'''
+explanation = "*Must have + V3* expresses near certainty that something happened; *can't have + V3* expresses near certainty that it did not; *might/may/could have + V3* expresses possibility; *should have + V3* expresses a past action that would have been advisable."
+
+[questions.gr-b2-04]
+prompt = "*\"Where do you work?\" he asked.* → Choose the correct reported-speech sentence:"
+explanation = "Reported questions use **statement word order** and omit the auxiliary *do/did*."
+
+[questions.gr-b2-05]
+prompt = "Which sentences use **wish / if only** correctly?"
+explanation = "For a wish about one's own present situation, use the **past simple** (*I wish I were rich*), not *would*. *Wish + someone + would* can complain about another person's behavior."
+
+[questions.gr-b2-06]
+prompt = '''Use the **causative** form (have/get something done):
+
+1. I don't cut my hair myself — I {{blank}} it {{blank}} at the barber's every month.
+2. We're {{blank}} our kitchen {{blank}} next week. *(paint, use have)*'''
+explanation = "*Have/get + object + V3* means someone else does the action for you."
+
+[questions.gr-b2-07]
+prompt = "*\"I'm sorry I broke the vase,\" said Tom.* → Choose the most natural reported form:"
+explanation = "Use *apologise for + V-ing*. Other reporting verbs include *deny/admit + V-ing*, *advise/warn someone (not) to V*, and *suggest + V-ing*."
+
+[questions.gr-x051]
+explanation = "The third conditional describes an unreal past: *if + past perfect, would have + V3*."
+
+[questions.gr-x052]
+explanation = "A mixed conditional links a past condition (*had accepted*) with a present result (*this week*): *would + V*."
+
+[questions.gr-x053]
+explanation = "Use *wish + past perfect* to express regret about a past event."
+
+[questions.gr-x054]
+explanation = "Clear negative evidence supports a confident deduction that the event did not happen: *can't have + V3*."
+
+[questions.gr-x055]
+explanation = "A reported yes/no question uses *if/whether*, statement word order, and backshifts *have used* to *had used*."
+
+[questions.gr-x056]
+prompt = "Choose the correct sentences about the third conditional, mixed conditionals, and *wish*."
+explanation = "The three correct sentences respectively use the third conditional, a past-to-present mixed conditional, and *wish + past perfect* to express past regret."
+
+[questions.gr-x057]
+prompt = "Choose the reported sentences that correctly match the speech and action in parentheses."
+explanation = "Reported questions use statement word order; commands use *told + object + (not) to V*. Do not use *suggest + object + to V*."
+
+[questions.gr-x058]
+prompt = '''Complete the conditionals and wishes:
+
+1. If we {{blank}} (save) a backup, we would have restored the service faster.
+2. If I had learned SQL earlier, I {{blank}} (be) more confident in this role now.
+3. I wish the deployment {{blank}} (not / happen) before the tests finished. *(regret about a past event)*'''
+explanation = "A third-conditional *if*-clause uses the past perfect; a past-to-present mixed conditional uses *would + V*; a wish about the past uses the past perfect."
+
+[questions.gr-x059]
+prompt = '''Report the questions and request, backshifting the tense as needed:
+
+1. 'Where do you store the backups?' → The auditor asked where we {{blank}} the backups.
+2. 'Can you send the report?' → She asked if I {{blank}} send the report.
+3. 'Do not change the access policy.' → The lead told us {{blank}} change the access policy.'''
+explanation = "Reported questions use statement word order and backshift *do/does*; *can* backshifts to *could*; a negative command uses *told + object + not to V*."
+
+[questions.gr-x060]
+prompt = '''Choose a suitable deduction modal or causative form for each clue:
+
+1. The checksum matches and the signed release is present; the package {{blank}} (must / build) by our CI system.
+2. The timestamps show the file was never opened; the analyst {{blank}} (can't / read) it.
+3. A specialist installed the new database last night. We {{blank}} the database {{blank}} last night. *(have something done)*'''
+explanation = "*Must have been + V3* makes a confident deduction about a past passive event; *can't have + V3* expresses a negative deduction; the past causative uses *had + object + V3*."
+
+[questions.gr-x061]
+prompt = '''Turn the three ideas into a short paragraph about an IT incident. Use: (1) the third conditional for a past cause, (2) a mixed conditional for a present impact, and (3) *wish + past perfect* for a regret. Preserve the meaning: no backup led to data loss; missing a course earlier means the writer lacks confidence now; the writer regrets ignoring a warning.'''
+explanation = "The clauses distinguish an unreal past condition, its present consequence, and regret about a past action."
+
+[questions.gr-x062]
+prompt = '''Fill in the phrases to report the meeting, preserving the meaning and using the correct structures:
+
+1. The manager asked {{blank}} the backup {{blank}} by noon. *(finish)*
+2. She told the team {{blank}} the service during migration. *(not / restart)*
+3. Before release, we {{blank}} by an external specialist over the weekend. *(upgrade the database)*'''
+explanation = "An indirect yes/no question uses *if/whether* and statement word order; a negative instruction uses *told + object + not to*; *have/get something done* describes arranging for someone else to do it."
+
+[questions.gr-x085]
+explanation = "The third conditional describes a different possible past result: *if + past perfect, would have + V3*."
+
+[questions.gr-x086]
+explanation = "This is a mixed conditional: an unreal past condition produces a present result."
+
+[questions.gr-x087]
+explanation = "*Wish + past perfect* expresses regret about something that happened in the past."
+
+[questions.gr-x088]
+explanation = "The causative *have + object + past participle* describes arranging for someone else to do something: *have the load balancer configured*."
+
+[questions.gr-x089]
+explanation = "An indirect question uses *whether/if + subject + verb*; *can* usually backshifts to *could* when the reporting verb is in the past."
+
+[modules.gr-b2-linking]
+title = "B2 · Linking ideas, relative clauses, and advanced future forms"
+description = "Although/despite/however, non-defining relative clauses, future continuous and perfect forms, and impersonal passives (It is said that…)."
+lesson = '''
+### Linking contrast and cause
+| + clause | + noun / V-ing | At the start of a sentence, followed by a comma |
+|---|---|---|
+| **although / even though / though** | **despite / in spite of** | **However, / Nevertheless,** |
+| **because / since / as** | **because of / due to / owing to** | **Therefore, / As a result,** |
+
+*Despite **being** tired, she finished.* · *In spite of **the fact that** it rained…* (Not ~~despite it rained~~.)
+
+### Non-defining relative clauses
+These add extra information, use **commas**, do **not** use *that*, and do not allow the relative pronoun to be omitted:
+*My brother, **who** lives in Sydney, is a nurse.* · *He passed the exam, **which** surprised everyone.* (*Which* refers to the whole preceding clause.)
+For a more formal style, use a preposition + *which/whom*: *the person **to whom** I spoke*.
+
+### Advanced future forms
+- Future continuous: *This time tomorrow I **will be flying** to Paris.*
+- Future perfect: *By 2030, we **will have finished** the project.*
+- Future perfect continuous: *By June, I **will have been working** here for ten years.*
+
+### Impersonal passive
+*People say that he is rich.* → ***It is said that** he is rich.* / *He **is said to be** rich.*
+For an earlier action: *He **is believed to have left** the country.*
+
+### Future and linking structures
+| Structure | Affirmative | Negative | Question |
+|---|---|---|---|
+| Future continuous | S + will be + V-ing | S + won't be + V-ing | Will + S + be + V-ing? |
+| Future perfect | S + will have + V3 | S + won't have + V3 | Will + S + have + V3? |
+| Future perfect continuous | S + will have been + V-ing | S + won't have been + V-ing | Will + S + have been + V-ing? |
+| Impersonal passive | It is said that + clause | It isn't said that + clause | Is it said that + clause? |
+
+**Signals:** *this time tomorrow* often takes the future continuous; *by Friday/by 2030* often takes the future perfect; *for ten years by June* emphasizes duration with the future perfect continuous. In a non-defining relative clause, commas mark extra information; *which* can refer to the whole preceding clause.
+
+**Common confusions and errors:** *Although/whereas* is followed by a clause; *despite* is followed by a noun or V-ing. *Whereas* places two contrasting facts side by side, while *although* introduces a concession. A non-defining clause does not use *that* and does not omit its relative pronoun. Vietnamese learners often write *Despite it rained*; use *Although it rained* or *Despite the rain* instead.
+
+**IT context:** *This time tomorrow, we will be migrating the database. By Friday, we will have completed the rollout. The new release, which fixes the login issue, will ship despite the short testing window, whereas the analytics update will wait.*
+'''
+
+[questions.gr-b2-10]
+explanation = "The following phrase is a **noun phrase** (*the heavy rain*), so use *despite / in spite of*. *Although/even though* is followed by a clause."
+
+[questions.gr-b2-11]
+prompt = "Which sentences express contrast with grammatically correct linking words? Select all that apply."
+explanation = "*Despite* is followed by V-ing or a noun. *However* is a conjunctive adverb: place it after a full stop or semicolon and put a comma after it; do not use it to join two clauses with only a comma."
+
+[questions.gr-b2-12]
+prompt = "Which sentence contains a correctly written **non-defining** relative clause?"
+explanation = "A non-defining clause uses **commas** and does **not** use *that*. (You have only one father, so this information is additional.)"
+
+[questions.gr-b2-13]
+prompt = '''Advanced future forms:
+
+1. Don't call me at 8 tonight — I {{blank}} (watch) the final. *(in progress at a future time)*
+2. By the end of this year, we {{blank}} (launch) three new products. *(completed before a future reference point)*
+3. Next month I {{blank}} (work) here for ten years. *(emphasize duration up to a future reference point)*'''
+explanation = "Use *will be + V-ing / will have + V3 / will have been + V-ing*."
+
+[questions.gr-b2-14]
+prompt = "*People believe that the thief escaped through the window.* → Choose the correct impersonal passive:"
+explanation = "The action (*escaped*) happened **before** the time of *believe*, so use *to have + V3*. Another option is *It is believed that the thief escaped…*."
+
+[questions.gr-b2-15]
+prompt = "Write a **6–8 sentence** paragraph in English on: *\"Should students be allowed to use AI tools for homework?\"* Use at least **4** of these structures: *although/even though*, *despite/in spite of*, *however/nevertheless*, a non-defining relative clause (*, which…*), a conditional, and *therefore/as a result*."
+explanation = "A B2 essay should develop both sides of an argument and use a range of linking expressions, not only *and/but/because*."
+
+[questions.gr-x063]
+explanation = "*At 10 tomorrow* emphasizes an action in progress at a specific future time: *will be + V-ing*."
+
+[questions.gr-x064]
+explanation = "*By the end of Friday* sets a deadline before a future reference point, so use *will have + V3*."
+
+[questions.gr-x065]
+explanation = "A non-defining clause is set off by commas and does not use *that*; its relative pronoun cannot be omitted."
+
+[questions.gr-x066]
+explanation = "*Whereas* joins two clauses to contrast their different uses."
+
+[questions.gr-x067]
+prompt = "Choose the sentences that use linking words or non-defining relative clauses correctly."
+explanation = "*Although* + clause; *despite* + noun/noun phrase; a non-defining clause uses commas and *which/who*, not *that*."
+
+[questions.gr-x068]
+prompt = "Choose the sentences that correctly use *although/despite/whereas* or a non-defining relative clause."
+explanation = "*Although* and *whereas* are followed by a clause; *despite* needs a noun or V-ing; a non-defining clause uses *which/who*, not *that*."
+
+[questions.gr-x069]
+prompt = '''Conjugate the verbs according to the future time references:
+
+1. At midnight, the team {{blank}} (monitor) the migration. *(in progress at that time)*
+2. By midnight, the team {{blank}} (complete) the migration. *(finished before that time)*
+3. By June, I {{blank}} (work) here for five years. *(emphasize duration up to that time)*'''
+explanation = "*Will be + V-ing* describes an action in progress; *will have + V3* an action completed before a reference point; *will have been + V-ing* emphasizes an ongoing duration."
+
+[questions.gr-x070]
+prompt = '''Fill in a linking word that fits the structure and contrast:
+
+1. {{blank}} the service was overloaded, the standby node stayed healthy. *(needs a full clause; concession)*
+2. {{blank}} the overload, the standby node stayed healthy. *(needs a noun phrase; concession)*
+3. The front end uses REST, {{blank}} the internal service uses gRPC. *(contrast two facts)*'''
+explanation = "*Although/even though* + clause; *despite/in spite of* + noun phrase; *whereas* contrasts two clauses."
+
+[questions.gr-x071]
+prompt = '''Complete the impersonal passive structures:
+
+1. Experts expect that the update will reduce latency. → The update {{blank}} reduce latency.
+2. Investigators believe that the server was compromised before the patch. → The server {{blank}} compromised before the patch.'''
+explanation = "Use *is expected to + V* for a prediction; for a passive action that happened earlier, use *is believed to have been + V3*."
+
+[questions.gr-x072]
+prompt = "Write four sentences for a release update. Include a concessive sentence with *although/despite*, a contrast with *whereas*, a non-defining relative clause with commas, and the future perfect with a *by + time reference* phrase."
+explanation = "The structures are tied to concrete release information to show concession, contrast, extra detail, and a completion deadline."
+
+[questions.gr-x090]
+prompt = "Choose the correctly written non-defining relative clauses."
+explanation = "A non-defining clause uses commas, *who* for people, and *which* for things; it does not use *that*."
+
+[modules.gr-c1]
+title = "C1 · Inversion, cleft sentences, the subjunctive, and participle clauses"
+description = "Emphatic and conditional inversion, cleft sentences, the subjunctive, participle clauses, nominalisation, hedging, ellipsis, substitution, and advanced article use."
+lesson = '''
+### Inversion after negative or restrictive adverbials (auxiliary + subject)
+- ***Never have I*** seen such a mess. · ***Rarely/Seldom does*** he complain.
+- ***Not only did*** she win, **but** she (also) broke the record.
+- ***Hardly/Scarcely had*** I arrived **when** it started to rain. · ***No sooner had*** I arrived **than**…
+- ***Only when/after*** I read the report ***did I*** understand. · ***Not until*** later ***did*** we realise…
+- ***Under no circumstances should*** you share your password. · ***Little did*** they know…
+
+### Conditional inversion (omit *if*)
+- First conditional: ***Should you*** need help, call me.
+- Second conditional: ***Were I*** you, I would accept. · ***Were it not for*** your help…
+- Third conditional: ***Had I known***, I would have come.
+
+### Cleft sentences — emphasis
+- ***It was*** Tom ***who*** broke the window. · ***It is*** the price ***that*** worries me.
+- ***What*** I need ***is*** a holiday. · ***All*** I want ***is*** some sleep. · ***The reason why*** … ***is that*** …
+
+### Subjunctive
+After *suggest, recommend, insist, demand, propose,* and *it is essential/vital that*, use the **base form** of the verb:
+*The doctor recommended that he **take** a break.* · *It is essential that every member **be** informed.*
+Use *It's (high) time we **left*** and *I'd rather you **didn't** smoke here.*
+
+### Participle clauses
+- Active: ***Walking*** down the street, I met an old friend. (The subject must be the same.)
+- Passive: ***Written*** in 1950, the book is still popular.
+- Perfect: ***Having finished*** the report, she went home.
+- Dangling modifier: not ~~*Walking down the street, the rain started.*~~ (The rain was not walking.)
+
+### Ellipsis and substitution
+*I hope **so** / I'm afraid **not**.* · *She can swim and **so can** I.* · *"Will you come?" "I'd like **to**."* · *I've got a red pen and two blue **ones**.*
+
+### Improving technical writing
+| Purpose | Affirmative pattern | Negative / question | Signal |
+|---|---|---|---|
+| Emphatic inversion | Never have we seen… | Under no circumstances should… | A negative/restrictive adverbial comes first |
+| Cleft sentence | It is the cache that… / What matters is… | It isn't the cache that… | Clarify exactly which information matters |
+| Subjunctive | We recommend that he be informed. | We recommend that he not be informed. | recommend/suggest/essential that + base verb |
+| Hedging | The change may reduce latency. | The change may not reduce latency. | may, might, appears to, is likely to |
+
+**Nominalisation** turns an action into a noun for concise writing (*we analysed the logs → our analysis of the logs*), but overuse makes sentences heavy. A **participle clause** shortens a clause when its implied subject is the same as the subject of the main clause. **Ellipsis/substitution** avoids repetition: *The API is stable, and the client is too; the older version isn't.*
+
+**Advanced article use:** use *the* when referring again to a known item (*a request → the request*) or to something unique in context (*the production database*), but omit articles for general statements (*Software requires testing; engineers need documentation*). A singular countable noun usually needs a determiner (*a/the/this/each*).
+
+**Common errors for Vietnamese learners:** Invert the auxiliary only when a negative or restrictive phrase comes first; ordinary word order does not invert. Avoid *suggest someone to do*; use the subjunctive (*suggest that someone do*) or a gerund (*suggest doing*). Hedging should reflect the strength of the evidence; do not turn every conclusion into *maybe*.
+
+**IT context:** *Only after the rollback did we identify the faulty migration. What the logs show is a rise in retries. We recommend that the service be monitored for another week. The result suggests that caching may reduce latency, although further tests are required.*
+'''
+
+[questions.gr-c1-01]
+explanation = "A negative adverbial at the start of a sentence triggers **subject–auxiliary inversion**: *Never have I seen…*."
+
+[questions.gr-c1-02]
+prompt = '''Complete the inverted sentences:
+
+1. Not only {{blank}} she speak French, but she also speaks Arabic.
+2. Hardly {{blank}} I sat down when the phone rang.
+3. No sooner had we left {{blank}} it started to snow.
+4. Only after the meeting {{blank}} I realise my mistake.
+5. Under no circumstances {{blank}} you open this door. *(not permitted)*'''
+explanation = "Use *Hardly … when* and *No sooner … than*. With *Only after/when + clause*, invert the **main clause**."
+
+[questions.gr-c1-03]
+prompt = "Which conditional inversions are **correct**?"
+explanation = "Conditional inversion omits *if*: *Should you…* (first conditional), *Were I…* (second), and *Had I…* (third). Do not use *Did* for the second conditional."
+
+[questions.gr-c1-04]
+prompt = "Which sentence uses the **subjunctive mood** correctly?"
+explanation = "After *insist/recommend/suggest/demand that*, use the **base form** for every person: *he arrive*, *she be*. (British English also accepts *should arrive*.)"
+
+[questions.gr-c1-05]
+prompt = '''Rewrite these sentences for **emphasis** (cleft sentences):
+
+1. *Tom broke the window.* → It was Tom {{blank}} broke the window.
+2. *I need a long holiday.* → {{blank}} I need is a long holiday.
+3. *The price worries me, not the quality.* → It is the price {{blank}} worries me.'''
+explanation = "Use *It + be + focus + who/that…* and *What + S + V + is…* (pseudo-cleft)."
+
+[questions.gr-c1-06]
+prompt = "Which sentence does **not** contain a *dangling participle*?"
+explanation = "The implied subject of a participle clause must match the subject of the main clause: *she* finished the report. In sentence 4, the correct version is *Written in a hurry, **the email** contained many mistakes.*"
+
+[questions.gr-c1-07]
+prompt = "Which sentences are **grammatically correct**?"
+explanation = "Use *It's (high) time + subject + past simple* for a present meaning, so the final sentence should be *It's time we **left*** (or *It's time **to leave***)."
+
+[questions.gr-c1-08]
+prompt = '''Ellipsis and substitution:
+
+1. "Will it rain tomorrow?" — "I hope {{blank}}." *(I hope it will not)*
+2. She can play the piano, and {{blank}} can I.
+3. "Are you coming to the party?" — "I'd love {{blank}}, but I'm busy."
+4. I don't like the red shoes; I prefer the black {{blank}}.'''
+explanation = "Use *I hope so / I hope not*; *so + auxiliary + subject*; *to* to stand for a verb phrase; and *one/ones* to replace a countable noun."
+
+[questions.gr-c1-09]
+prompt = "Write **5 sentences** in English about technology or learning, using a **different C1 structure** in each: negative inversion, conditional inversion, a cleft sentence, the subjunctive, and a participle clause."
+explanation = "At C1, the goal is to use these structures **naturally and in context**, not to force them into the writing."
+
+[questions.gr-x073]
+explanation = "When *Hardly* begins a sentence, use the inversion pattern *Hardly + had + subject + V3 + when*."
+
+[questions.gr-x074]
+explanation = "A clause beginning with *Not only* requires auxiliary–subject inversion; after *did*, use the base verb."
+
+[questions.gr-x075]
+explanation = "When *Only after + clause* begins a sentence, invert the main clause: *did we notice*."
+
+[questions.gr-x076]
+explanation = "A *what*-clause can carry the focus in a pseudo-cleft: *What caused the failure was…*."
+
+[questions.gr-x077]
+explanation = "After *recommend that*, the subjunctive uses the base verb; the passive form of *be + V3* here is *be monitored*."
+
+[questions.gr-x078]
+explanation = "*Suggest* and *may* express a level of certainty appropriate to preliminary results; the other sentences overstate the evidence."
+
+[questions.gr-x079]
+explanation = "Use *the* when referring to a specific item already introduced in the context."
+
+[questions.gr-x080]
+prompt = "Choose the sentences with correct inversion."
+explanation = "A negative adverbial at the start of a sentence requires auxiliary inversion; *Hardly* pairs with *when*, while *No sooner* pairs with *than*."
+
+[questions.gr-x081]
+prompt = "Choose the sentences that correctly use a participle clause, ellipsis/substitution, or nominalisation."
+explanation = "A participle clause must share its subject with the main clause; *one* and *did* replace known information to avoid repetition; the natural nominalisation is *an analysis of the logs*."
+
+[questions.gr-x082]
+prompt = '''Complete the inverted structures:
+
+1. Never {{blank}} we {{blank}} (see) so many failed checks.
+2. Not only {{blank}} the team {{blank}} (fix) the bug, but it also added a regression test.
+3. No sooner had the server restarted {{blank}} the alert fired.'''
+explanation = "Use present-perfect inversion after *Never*; past-simple inversion after *Not only*; and *No sooner … than*."
+
+[questions.gr-x083]
+prompt = '''Complete the C1 structures:
+
+1. It was the missing header {{blank}} triggered the failure. *(cleft sentence)*
+2. The architect suggested that the service {{blank}} available during migration. *(subjunctive form of be)*
+3. {{blank}} the review, the engineer approved the change. *(the review was completed first)*'''
+explanation = "The cleft sentence emphasizes the cause; *suggest that* takes the subjunctive; *having + V3* marks an earlier completed action with the same subject."
+
+[questions.gr-x084]
+prompt = '''Fill in the appropriate article for the stated context:
+
+1. We created a staging cache and a production cache. {{blank}} production cache contains customer data.
+2. Before the deploy, the team prepared {{blank}} rollback plan. *(first mention of a plan)*
+3. We tested a new API endpoint. {{blank}} endpoint returned a 500 error on the first request.'''
+explanation = "Use *the* for a specific item or one mentioned before; use *a* when introducing a singular countable noun for the first time."
+
+[questions.gr-x092]
+explanation = "*Review* and *approval* function as nouns, and the sentence preserves the original time relationship and meaning."
+
+[questions.gr-x093]
+prompt = "{{blank}} the migration twice, the engineers approved the rollout. *(use a perfect participle)*"
+explanation = "*Having + V3* shows that the testing was completed before the engineers approved the rollout; the subject of both actions is *the engineers*."
+
+[questions.gr-x094]
+prompt = "Write two sentences for an incident report. Use *despite + noun phrase* and *have/get + object + past participle* to say that the vendor reviewed the API gateway. The second sentence must contain a non-defining relative clause."
+explanation = "The sample uses *despite* with a noun phrase, causative *have + object + V3*, and a *which*-clause to add information."
+
+[questions.gr-a2-10]
+explanation = "*Money* is uncountable, so use *much*."
+
+[questions.gr-b1-01]
+explanation = "*Since + starting point* and an action continuing to the present call for the present perfect (or *have been working*)."
+
+[questions.gr-x001]
+explanation = "*Every minute* describes a habit or repeated schedule, so use the present simple; a third-person singular subject takes *-s*."
+
+[questions.gr-x002]
+explanation = "In this context, *this week* describes a temporary activity in progress, which fits the present continuous."
+
+[questions.gr-x005]
+explanation = "There is clear present evidence (the queue is at 98%), so use *be going to* for the prediction."
+
+[questions.gr-x006]
+explanation = "A decision made at the moment of speaking usually takes *will*."

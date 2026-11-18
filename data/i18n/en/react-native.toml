@@ -1,0 +1,1249 @@
+[modules.rn-core]
+description = "View, Text, Image, Pressable, ScrollView; Flexbox defaults in React Native."
+lesson = '''### Core components
+| RN | Web equivalent |
+|---|---|
+| `View` | `div` |
+| `Text` | `span`/`p` — **all text strings must be inside `<Text>`** |
+| `Image` | `img` (network images need `width`/`height`) |
+| `TextInput` | `input` |
+| `ScrollView` | A scrolling div — renders **all** children |
+| `Pressable` | A modern pressable control (replaces `TouchableOpacity`) |
+| `SafeAreaView` | Avoids the notch / system navigation area (use `react-native-safe-area-context`) |
+
+### How React Native Flexbox differs from the web
+- The default `flexDirection` is **`column`** (web: `row`).
+- `alignContent` defaults to `flex-start`, and `flexShrink` defaults to `0`.
+- `flex: 1` = fill the remaining available space (accepts **a number** only).
+- Dimensions use **density-independent pixels (dp)**; there is no `px`, `em`, or `rem`.
+- There is no CSS cascade: styles are **not inherited**, except for text nested inside `<Text>`.
+
+### Interaction and safe areas
+| Situation | Approach |
+|---|---|
+| Touch / button | Use `Pressable`; it supports pressed/disabled states and appropriately sized touch targets |
+| Keyboard content | Use `KeyboardAvoidingView` or a scroll container with platform-specific keyboard handling |
+| Notch / system bars | Use safe-area-context to calculate the safe display area |
+
+Example: `<Pressable onPress={save}><Text>Lưu</Text></Pressable>` — the text still belongs inside `Text`.
+
+Common mistakes: rendering a string directly inside `View`, using `ScrollView` for thousands of items, or forgetting dimensions for a remote image. Unlike the web, RN uses native `View`/`Text` instead of `div`/`span`, does not accept free-standing text nodes, and has no DOM events.'''
+
+[questions.rn-001]
+prompt = "What is the default value of `flexDirection` in React Native?"
+options = ["`row`", "`column`", "`row-reverse`", "There is no default"]
+explanation = "Unlike the web (`row`), RN defaults to `column` because phone screens are portrait-oriented."
+
+[questions.rn-002]
+prompt = "Which snippet causes an error in React Native?"
+options = ["`<View><Text>Xin chào</Text></View>`", "`<View>Xin chào</View>`", "`<Text>Xin <Text style={{fontWeight:'bold'}}>bạn</Text></Text>`", "`<View />`"]
+explanation = "Text strings must be inside `<Text>`: ‘Text strings must be rendered within a <Text> component’."
+
+[questions.rn-003]
+prompt = "Why should you avoid using `ScrollView` to display a list of 5,000 items?"
+options = ["ScrollView cannot scroll past 1,000 items", "ScrollView renders **all** children immediately, consuming memory and slowing startup; use virtualized FlatList instead", "ScrollView only runs on iOS", "ScrollView does not support `key`"]
+explanation = "FlatList/SectionList/FlashList render only items in or near the visible area, plus a buffer."
+
+[questions.rn-004]
+prompt = "What does an `<Image>` need to display an image from a network URL?"
+options = ["Only `source={{ uri }}`", "`source={{ uri }}` and **dimensions** (`width`/`height` through style), because RN cannot know the remote image dimensions in advance", "It must first be downloaded with `fetch`", "You must use `require(url)`"]
+explanation = "A local image (`require('./a.png')`) has known dimensions; a remote image does not, so you must specify them."
+
+[questions.rn-005]
+prompt = "What unit does a numeric value such as `width: 100` use in an RN style?"
+options = ["Physical pixels", "Density-independent pixels (dp/pt)", "rem", "Percent"]
+explanation = "This is a logical unit independent of pixel density; physical pixels = dp × `PixelRatio.get()`. Percentages must be written as strings such as `'50%'`."
+
+[questions.rn-006]
+prompt = "Which statements about styles in React Native are true?"
+options = ["Styles are **not inherited** from a parent View to its children", "Text nested inside `<Text>` inherits styles from its parent Text", "CSS selectors such as `.btn:hover` can be used", "Style properties use camelCase (`backgroundColor`)", "`flex` accepts a string such as `'1 1 auto'`"]
+explanation = "There are no selectors or cascade; `flex` accepts a number only."
+
+[questions.rn-007]
+prompt = "What advantage does `Pressable` have over `TouchableOpacity`?"
+options = ["It only runs on Android", "A flexible API: `style`/children can receive a `({ pressed }) => ...` function; it supports `onLongPress`, `hitSlop`, and `android_ripple`, and is easier to extend", "It automatically fades its content", "It does not need `onPress`"]
+explanation = "Pressable is the recommended API for new touch interactions."
+
+[questions.rn-008]
+prompt = '''Make the child fill all remaining space in its parent:
+
+```jsx
+<View style={{ {{blank}}: 1 }}>
+```'''
+explanation = "In Yoga, `flex: 1` is equivalent to `flexGrow: 1, flexShrink: 1, flexBasis: 0`."
+
+[questions.rn-009]
+prompt = '''Arrange children in a horizontal row and center them on the vertical (cross) axis:
+
+```jsx
+const styles = StyleSheet.create({
+  row: { flexDirection: '{{blank}}', {{blank}}: 'center' },
+});
+```'''
+explanation = "With `flexDirection: 'row'`, the main axis is horizontal (`justifyContent`) and the cross axis is vertical (`alignItems`)."
+
+[questions.rn-010]
+prompt = "Name at least three differences between React Native Flexbox and CSS Flexbox on the web."
+keywords = [["column"], ["flexShrink", "shrink"], ["flex: 1", "a number", "number only"], ["alignContent", "align-content"], ["default display", "display: flex", "always flex"]]
+model_answer = '''- `flexDirection` defaults to **column** (web: row).
+- Every `View` is a flex container (there is no need to set `display: flex`).
+- `flexShrink` defaults to **0** (web: 1); `alignContent` defaults to `flex-start` (web: `stretch`).
+- `flex` accepts a **single number** (`flex: 1`), not a multi-value shorthand.
+- CSS units such as `px` and `em`, as well as CSS cascade/selectors, are not used.'''
+explanation = "Layout is calculated by Yoga (C++)."
+
+[questions.rn-dd01]
+prompt = "On iOS, the keyboard covers the password field in a login form at the bottom of the screen. Which built-in component can help?"
+options = ["`SafeAreaView`", "`KeyboardAvoidingView` with `behavior=\"padding\"` (iOS)", "`Modal`", "`StatusBar`"]
+explanation = "`KeyboardAvoidingView` adjusts height, padding, or position in response to the keyboard. `behavior=\"padding\"` is commonly used on iOS and `\"height\"` or no behavior on Android; use `keyboardVerticalOffset` when a header requires it."
+
+[questions.rn-x001]
+prompt = "A `View` needs to display text with one bold section. What is the correct approach in React Native?"
+options = ["Put the string directly in `View`", "Wrap the text and nested section inside `Text`", "Put a `span` inside `View`", "Set `innerHTML` on `View`"]
+explanation = "React Native requires text content to be inside `Text`; unlike a web DOM element, `View` does not accept a text node."
+
+[questions.rn-x002]
+prompt = "A screen has only four fixed options, all visible at once. When is `ScrollView` a reasonable choice?"
+options = ["Always use it for long lists", "When the content is small, limited, and should all render", "Only when there are more than 1,000 items", "When native views must be recycled automatically"]
+explanation = "ScrollView is suitable for small amounts of content. Long lists should use FlatList/SectionList virtualization to limit how many items are rendered at once."
+
+[questions.rn-x030]
+prompt = "Choose the correct statements about text content and styles in RN."
+options = ["Visible strings must be inside `Text`", "A `Text` nested inside another `Text` can inherit text styles", "`View` applies the CSS cascade automatically", "Style properties are generally written in camelCase", "You can use `innerHTML` on View"]
+explanation = "RN uses native components instead of the DOM: strings belong in Text, and there is no CSS cascade or `innerHTML`."
+
+[questions.rn-x041]
+prompt = "In a controlled TextInput, the callback prop that receives the new string as the user types is `{{blank}}`."
+explanation = "`onChangeText` receives the new text value directly; a controlled input also receives its current value through `value`."
+
+[modules.rn-styling]
+description = "StyleSheet, style arrays, Platform, Dimensions/useWindowDimensions, PixelRatio, dark mode."
+lesson = '''### Key points
+- `StyleSheet.create({...})` declares styles and validates them in development. The `style` prop accepts an **array**: later entries override earlier ones, and falsy values are ignored.
+- `StyleSheet.flatten(style)` merges a style array into one object.
+- `StyleSheet.hairlineWidth`, `StyleSheet.absoluteFill`.
+- **Platform**: `Platform.OS` (`'ios' | 'android' | 'web'…`), `Platform.select({ ios, android, native, default })`, and files such as `Button.ios.tsx` / `Button.android.tsx`.
+- **Dimensions**: prefer the `useWindowDimensions()` hook (which updates when the screen rotates) over `Dimensions.get('window')`.
+- `PixelRatio.get()`, `PixelRatio.roundToNearestPixel()`.
+- Dark mode: `useColorScheme()` returns `'light' | 'dark' | null`.
+
+### Choosing styles for state and device
+| Need | Pattern |
+|---|---|
+| Base + state | `style={[styles.button, pressed && styles.pressed]}` |
+| Dimensions change on rotation | Use `useWindowDimensions()` in the component |
+| Small platform differences | `Platform.select({ ios: ..., android: ..., default: ... })` |
+
+Example: set `const wide = width >= 600;` and choose the layout based on `wide`; the hook updates when the window changes.
+
+Common mistakes: expecting styles to inherit from a parent `View`, using `px`/`rem`, or creating new style objects during every render without a reason. The web has a CSS cascade, selectors, and media queries; RN merges style objects in order, uses dp units, and uses JavaScript logic for responsive layouts.'''
+
+[questions.rn-020]
+prompt = '''What is the final background color of the View?
+
+```jsx
+<View style={[styles.box, { backgroundColor: 'red' }, isActive && styles.active]} />
+// styles.box: { backgroundColor: 'gray' }, styles.active: { backgroundColor: 'green' }, isActive = false
+```'''
+options = ["gray", "red", "green", "An error occurs because the array contains `false`"]
+explanation = "Later entries override earlier ones; `false` is ignored."
+
+[questions.rn-021]
+prompt = "Why should you use `useWindowDimensions()` instead of `Dimensions.get('window')` in a component?"
+options = ["It is 10 times faster", "The hook updates and re-renders when dimensions change (rotation, split-screen, foldables)", "Dimensions has been removed", "The hook returns physical pixel dimensions"]
+explanation = "`Dimensions.get` returns the value at the time it is called; you must subscribe to the `change` event yourself to receive updates."
+
+[questions.rn-022]
+prompt = "What does `Platform.select({ ios: 'A', android: 'B', default: 'C' })` return when running on the **web**?"
+options = ["'A'", "'B'", "'C'", "undefined"]
+explanation = "The priority is: a key matching `Platform.OS` → `native` (for iOS/Android) → `default`."
+
+[questions.rn-023]
+prompt = "How do you provide platform-specific code **by file**?"
+options = ["`Button.ios.js` and `Button.android.js`, imported as `./Button`", "`Button.native.ios.js`", "`ios/Button.js`", "Only with `if (Platform.OS)`"]
+explanation = "Metro bundler automatically selects files with `.ios`, `.android`, `.native`, or `.web` suffixes."
+
+[questions.rn-024]
+prompt = "Which shadow properties only work on **iOS** (before `boxShadow` in the New Architecture)?"
+options = ["`shadowColor`", "`shadowOffset`", "`elevation`", "`shadowOpacity`", "`shadowRadius`"]
+explanation = "Android uses `elevation`. Starting with RN 0.76, the New Architecture also provides cross-platform `boxShadow`."
+
+[questions.rn-025]
+prompt = '''Detect the system dark mode:
+
+```jsx
+const scheme = {{blank}}(); // 'light' | 'dark' | null
+```'''
+explanation = "`useColorScheme` comes from `react-native` and re-renders when the user changes the system theme."
+
+[questions.rn-026]
+title = "Implement StyleSheet.flatten"
+prompt = '''Implement `flattenStyle(style)` to simulate `StyleSheet.flatten`:
+- `style` can be an object, a nested array, or a falsy value (`null`, `undefined`, `false`)
+- Merge entries in order; later entries override earlier ones
+- Always return a **new object** (do not mutate the input); a falsy input returns `{}`'''
+explanation = "Understanding the merge behavior helps when writing a component that accepts an external `style` prop, such as `style={[styles.base, props.style]}`."
+hints = ["Recursively flatten each entry, then `Object.assign` it into a new accumulator."]
+
+[questions.rn-027]
+title = "Platform.select"
+prompt = '''Write `createPlatform(os)` to return an object `{ OS, select(spec) }` that simulates RN's `Platform`.
+
+`select(spec)` returns:
+1. `spec[os]` if that key exists, even if its value is falsy
+2. If `os` is `'ios'` or `'android'` and the `native` key exists, return `spec.native`
+3. Otherwise, return `spec.default` (which may be `undefined`)'''
+explanation = "Platform.select makes it easy to write concise cross-platform code in a StyleSheet."
+hints = ["Use `hasOwnProperty` instead of a truthiness check so values such as `0`/`false` are not missed."]
+
+[questions.rn-028]
+title = "Responsive scaling"
+prompt = '''A Figma design uses a standard screen size of **375 × 812**. Write `createScaler(width, height)` that returns:
+- `scale(size)` = `size * width / 375`
+- `verticalScale(size)` = `size * height / 812`
+- `moderateScale(size, factor = 0.5)` = `size + (scale(size) - size) * factor`
+
+Round results to **2 decimal places** (`Math.round(x * 100) / 100).'''
+explanation = "moderateScale keeps fonts/padding from growing too large on a tablet."
+hints = ["`moderateScale` should use the **unrounded** scale value, then round only the final result."]
+
+[questions.rn-dd03]
+prompt = '''The hook below returns screen dimensions and **updates automatically** when the device rotates:
+
+```js
+const { width, height } = {{blank}}();
+```
+
+Run an animation automatically for the next layout change (adding/removing an item):
+
+```js
+{{blank}}.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+setItems(next);
+```'''
+explanation = "`Dimensions.get` does not update automatically, while `useWindowDimensions` does. `LayoutAnimation` applies to the next layout render (Android requires enabling the experimental feature on the old architecture)."
+
+[questions.rn-x003]
+prompt = "In `style={[base, selected && active]}`, what happens if `selected` is `false`?"
+options = ["The style array throws an error", "`false` is ignored and `base` remains in effect", "`base` is removed", "`false` becomes `{ display: 'none' }`"]
+explanation = "React Native ignores falsy values in a style array and merges valid styles in order, with later entries overriding duplicate properties."
+
+[questions.rn-x004]
+prompt = "A layout based on a `width` read once with `Dimensions.get('window')` becomes incorrect after screen rotation/folding. What is the best fix?"
+options = ["Increase `flexShrink`", "Use `useWindowDimensions()` in the component", "Read `window.innerWidth`", "Call `StyleSheet.create` again during render"]
+explanation = "`useWindowDimensions` updates when the window size changes. `window.innerWidth` is a browser API, not the way to read dimensions in native RN."
+
+[questions.rn-x031]
+prompt = "Which behaviors are correct for a style array in RN?"
+options = ["Later styles override duplicate properties", "`false`/`null` can be used conditionally in the array and are ignored", "The first style always has the highest priority", "`StyleSheet.flatten` returns a merged object", "CSS selectors are applied last"]
+explanation = "Styles are merged in order and falsy values are ignored. RN does not have CSS selectors or a cascade."
+
+[questions.rn-x042]
+prompt = "Merge a nested style array into a plain object with the `StyleSheet.{{blank}}` API."
+explanation = "`StyleSheet.flatten` merges styles in precedence order."
+
+[questions.rn-xc01]
+title = "Choose a column count from screen width"
+prompt = '''Write `columnsForWidth(width)` to choose the number of columns for a React Native screen. `width` is a dp value from `useWindowDimensions().width`:
+- Below 600 dp: 1 column.
+- From 600 up to (but not including) 960 dp: 2 columns.
+- 960 dp and above: 3 columns.
+The boundaries are exact; for example, 600 belongs to the 2-column range.'''
+explanation = "useWindowDimensions updates when the window size changes; calculate the column count during render so the layout follows the current screen size."
+hints = ["Compare against 600 first, then 960.", "Read width from useWindowDimensions to respond to rotation or window resizing."]
+
+[questions.rn-xc02]
+title = "Simulate Platform.select"
+prompt = '''Write `createPlatform(os)` to return `{ OS, select(spec) }`:
+1. Return `spec[os]` if the OS key exists, including when its value is `false`, `0`, or `undefined`.
+2. If `os` is `ios` or `android`, use `spec.native` when that key exists.
+3. Otherwise, return `spec.default` (which may be `undefined`).'''
+explanation = "This simulation lets you test cross-platform fallbacks without a native runtime."
+hints = ["Check for a key with `hasOwnProperty`, rather than checking truthiness.", "The priority is OS-specific, then native on iOS/Android, then default."]
+
+[modules.rn-lists]
+title = "Lists & Performance"
+description = "FlatList, SectionList, virtualization, getItemLayout, pagination, re-rendering, Hermes."
+lesson = '''### FlatList
+- **Virtualized**: renders only items near the viewport (`windowSize`, `initialNumToRender`, `maxToRenderPerBatch`).
+- `keyExtractor` returns a unique key (by default, RN uses `item.key` and then the index).
+- `getItemLayout` (for items with fixed height) skips measurement, making `scrollToIndex` accurate.
+- Use `onEndReached` + `onEndReachedThreshold` for pagination (infinite scrolling).
+- Use `extraData` to make FlatList (a PureComponent) re-render when data outside `data` changes.
+- Items should use `React.memo`, and `renderItem` should be stable (`useCallback`).
+- For very large lists, consider **FlashList** (Shopify), which recycles views.
+
+### General performance
+- Keep the JS thread free: avoid expensive calculations during render; use **Reanimated** (runs on the UI thread) or `useNativeDriver: true` for animation.
+- **Hermes** is a JavaScript engine optimized for RN: it compiles bytecode ahead of time, starts quickly, and uses less RAM.
+- Remove `console.log` from release builds.
+
+### Choosing a component and configuration
+| Component | Use when | Notes |
+|---|---|---|
+| `ScrollView` | Content is small and the item count is limited | Renders all children |
+| `FlatList` | A long list, often loaded in batches | Virtualization, stable keys |
+| `SectionList` | A grouped list with headers | `sections` stores grouped data |
+| FlashList | A large list needs recycling | Third-party library; check version requirements |
+
+Example: `keyExtractor={(item) => String(item.id)}`; if a row depends on state outside `data`, pass that value through `extraData`.
+
+Common mistakes: using the index as a key when the list can reorder, forgetting the separator in `getItemLayout`, or creating new props in `renderItem` so memoization has no effect. The web often virtualizes DOM nodes; FlatList manages native views and should be measured on a real device.'''
+
+[questions.rn-040]
+prompt = "What does `getItemLayout` do in FlatList?"
+options = ["Changes the layout from vertical to horizontal", "Provides FlatList with the known size/position of each item (when fixed), skipping dynamic measurement for fast, accurate scrolling to an index", "Automatically measures item height", "Enables virtualization"]
+explanation = "It returns `{ length, offset, index }`. This is especially useful for `scrollToIndex` and `initialScrollIndex`."
+
+[questions.rn-041]
+prompt = "FlatList does not re-render when `selectedId` (state outside `data`) changes. How should you fix it?"
+options = ["Add `key={Math.random()}` to FlatList", "Pass `extraData={selectedId}`", "Use ScrollView", "Call `forceUpdate`"]
+explanation = "FlatList is a PureComponent: it re-renders only when its props change shallowly. `extraData` tells it about additional data it depends on."
+
+[questions.rn-042]
+prompt = "What does `onEndReachedThreshold={0.5}` mean?"
+options = ["Call `onEndReached` when 50 items remain", "Call `onEndReached` when the remaining content is within 0.5 times the visible area's height", "Call it after 0.5 seconds", "Call it after scrolling through 50% of the list"]
+explanation = "The value is the number of viewport lengths from the end of the list."
+
+[questions.rn-043]
+prompt = "What is a main benefit of Hermes?"
+options = ["It supports CSS", "It compiles JS to bytecode during build (AOT), improving startup time, memory use, and APK size", "It runs JS on the UI thread", "It replaces Metro bundler"]
+explanation = "Hermes has been the default RN engine since 0.70."
+
+[questions.rn-044]
+prompt = "Why can animation using `Animated` with `useNativeDriver: true` (or a Reanimated worklet) stay smooth while the JS thread is busy?"
+options = ["It uses the GPU to run JS", "Animation values are calculated and applied on the UI/native thread, so JS does not need to send every frame", "It reduces the frame rate to 30 FPS", "It disables virtualization"]
+explanation = "The native driver supports only properties that do not affect layout, such as `transform` and `opacity`."
+
+[questions.rn-045]
+prompt = "Which techniques can help a long FlatList scroll smoothly?"
+options = ["Wrap the item component with `React.memo`", "Define `renderItem` with `useCallback` or outside the component", "Use full-resolution images in every item", "Use `getItemLayout` when item heights are fixed", "Put expensive anonymous calculations in `renderItem` so they run on each render", "Tune `windowSize`, `maxToRenderPerBatch`, and `removeClippedSubviews`"]
+explanation = "Images should be resized/cached (for example, with expo-image or FastImage); avoid expensive work in renderItem."
+
+[questions.rn-046]
+prompt = '''Complete the FlatList:
+
+```jsx
+<FlatList
+  data={products}
+  {{blank}}={(item) => String(item.id)}
+  renderItem={({ {{blank}} }) => <ProductRow product={item} />}
+/>
+```'''
+explanation = "`renderItem` receives `{ item, index, separators }`."
+
+[questions.rn-047]
+prompt = "Describe how to implement **infinite scrolling** (pagination) with FlatList and which mistakes to avoid."
+keywords = [["onEndReached"], ["loading", "isLoading", "loading flag"], ["duplicate", "duplicate calls", "repeated calls"], ["hasMore", "no more data", "last page", "cursor"], ["ListFooterComponent", "footer", "spinner"]]
+model_answer = '''- Use `onEndReached` + `onEndReachedThreshold` to load the next page, then append the new data.
+- Track a **loading** flag to prevent **duplicate calls** (`onEndReached` may fire repeatedly), and a **hasMore** flag/cursor to stop when there is no more data.
+- Show a spinner with `ListFooterComponent`; support pull-to-refresh with `refreshing` + `onRefresh` (reset to page 1).
+- **Deduplicate by id** when merging pages, use a stable `keyExtractor`, and handle network errors with retry.'''
+explanation = "In practice, this is often implemented with TanStack Query's `useInfiniteQuery`."
+
+[questions.rn-048]
+title = "getItemLayout for fixed-height items"
+prompt = '''Write `makeGetItemLayout(itemHeight, separatorHeight = 0, headerHeight = 0)` to return a function
+`(data, index) => ({ length, offset, index })` for FlatList:
+- `length` = `itemHeight`
+- `offset` = `headerHeight + index * (itemHeight + separatorHeight)`'''
+explanation = "Use this only when item height is truly fixed; an incorrect value causes inaccurate scrolling."
+hints = ["Each item before the index contributes `itemHeight + separatorHeight`."]
+
+[questions.rn-049]
+title = "Paginator that prevents duplicate requests"
+prompt = '''Write `createPaginator(fetchPage)` for infinite scrolling. `fetchPage(page)` returns a Promise of `{ items, hasMore }` (page starts at **1**).
+
+Return an object with:
+- `items` — an array of all loaded items (deduplicate by `id`, keeping the **first** occurrence)
+- `loading`, `hasMore` (initially `false` and `true`)
+- `loadMore()` → Promise: if already `loading` or `!hasMore`, do **not** call `fetchPage` (resolve immediately). Otherwise, load the next page.
+- If `fetchPage` fails: set `loading = false`, set `error` to the error, and **do not increment the page** (the next call retries that page).
+- `refresh()` → reset to page 1, clear items, and load again.'''
+explanation = "This is the core logic beneath `onEndReached`, a common React Native interview topic."
+hints = ["Keep `page` in a closure and increment it only after a successful fetch.", "Use a `Set` of existing IDs to filter duplicates."]
+
+[questions.rn-x005]
+prompt = "The list can be reordered. What should `keyExtractor` return?"
+options = ["`String(index)`", "A unique, stable item ID", "`Math.random()` on every render", "The item's pixel position"]
+explanation = "A stable key lets React preserve the correct identity when items are inserted, deleted, or reordered; an index/random key can attach row state to the wrong item."
+
+[questions.rn-x006]
+prompt = "What trade-off usually comes with increasing FlatList's `windowSize`?"
+options = ["Fewer rendered views and less RAM", "More viewport areas are kept ready, reducing blank space during fast scrolling but using more memory", "It disables `keyExtractor`", "It makes item height fixed"]
+explanation = "`windowSize` controls the area kept around the viewport. Measure on target devices to balance memory and smoothness."
+
+[questions.rn-x007]
+prompt = "Some rows disappear or render incorrectly with `removeClippedSubviews` enabled. What is the most reasonable first step?"
+options = ["Increase `initialNumToRender` without limit", "Disable the option to confirm the cause, then inspect layout/transforms and the platform", "Change keys to indexes", "Move every row to a `ScrollView`"]
+explanation = "This option can cause display issues with some layouts; do not enable it by default without checking the target iOS/Android platforms."
+
+[questions.rn-x008]
+prompt = "What is the main idea behind FlashList compared with FlatList?"
+options = ["FlashList replaces React Native with the DOM", "FlashList recycles views to reduce view creation/destruction in long lists", "FlashList always loads data from the network", "FlashList removes the need for keys"]
+explanation = "FlashList is a third-party library focused on recycling; correct keys/identity are still required, and version and architecture requirements should be checked."
+
+[questions.rn-x032]
+prompt = "When there is evidence of a bottleneck, which changes often make a long FlatList more stable?"
+options = ["Use stable keys based on IDs", "Use `getItemLayout` when dimensions are fixed", "Pass new objects/functions to every row on each render", "Use `extraData` for dependencies outside `data`", "Increase images to the highest possible resolution"]
+explanation = "Stable identity, known layouts, and declared dependencies help FlatList update correctly; new props and heavy images can increase cost."
+
+[questions.rn-x043]
+prompt = "In FlatList, pass the function that converts an item to a stable React key through the `{{blank}}` prop."
+explanation = "Stable keys help React preserve row identity when data changes."
+
+[questions.rn-x052]
+prompt = "Describe how to investigate a list that stutters and explain why it should be measured on a near-production build."
+keywords = [["profiling", "profile"], ["release", "production build"], ["hermes"], ["js thread", "javascript thread"], ["measure", "measurement"], ["re-render", "rerender"]]
+model_answer = '''Reproduce the issue on a representative device and use React Profiler/Hermes profiling to measure JS thread time, render counts, and UI work. Compare one change at a time, such as stabilizing props, adding `getItemLayout`, or tuning `windowSize`. Development builds have overhead and behave differently from release builds, so confirm on a near-production build before drawing conclusions.'''
+explanation = "Profiling distinguishes JS, native, image, and virtualization bottlenecks instead of relying on guesswork."
+
+[questions.rn-xc03]
+title = "Estimate the FlatList render window"
+prompt = '''Write `getRenderRange(itemCount, itemHeight, viewportHeight, scrollOffset, windowSize)` to return `{ start, end }`, where `end` is inclusive:
+- The visible items start at `floor(scrollOffset / itemHeight)` and end at `ceil((scrollOffset + viewportHeight) / itemHeight) - 1`.
+- `windowSize` is the total number of viewports kept; distribute the extra area evenly on both sides. Each side adds `floor(((windowSize - 1) * viewportHeight) / (2 * itemHeight))` items.
+- Clamp the offset to the valid scroll range and indexes to `[0, itemCount - 1]`.
+- For an empty list, return `{ start: 0, end: -1 }`.'''
+explanation = "This is a simplified mathematical model of the render window; actual FlatList behavior also depends on batching and layout measurement."
+hints = ["Calculate the visible range first, then add overscan on each side.", "Clamp the scroll offset using total content height minus the viewport height."]
+
+[modules.rn-navigation]
+title = "Navigation"
+lesson = '''### React Navigation
+- `NavigationContainer` wraps the whole app (Expo Router handles this itself).
+- **Native Stack** (`@react-navigation/native-stack`) uses native `UINavigationController`/`Fragment`, so it can feel smoother than a JS stack.
+- `navigation.navigate('Profile', { id })` returns to that screen if it is already in the stack; `push` always adds a new instance. Other actions include `goBack`, `popToTop`, and `replace`.
+- Read params from `route.params` or `useRoute()`; use `useNavigation()` in a child component.
+- A screen in the stack **does not unmount** when another screen is pushed, so use `useFocusEffect` to run logic when the screen gains focus.
+- **Deep linking**: configure `linking` (prefix + path-to-screen mapping).
+- **Expo Router**: file-based routing (`app/(tabs)/index.tsx`, `app/user/[id].tsx`) built on React Navigation.
+
+### Stack and external URLs
+| Action | Meaning |
+|---|---|
+| `navigate(name)` | Go to a route, possibly returning to an existing route with that name |
+| `push(name)` | Always add a new instance to the stack |
+| `replace(name)` | Replace the current route |
+| `reset(state)` | Replace the entire navigation state |
+
+Example: `app/user/[id].tsx` receives `id` from the URL; pass only an ID or another serializable value in params, then load data in the screen.
+
+Common mistakes: assuming a screen lower in the stack has unmounted, passing callbacks in navigation params, or handling URLs only while the app is already open. Web routes are often tied to browser history; RN needs linking/prefix configuration and must handle both launch URLs and URLs received later.'''
+
+[questions.rn-060]
+prompt = "In a Stack, what is the difference between `navigation.navigate('Detail')` and `navigation.push('Detail')`?"
+options = ["There is no difference", "`navigate` returns to an existing `Detail` screen in the stack; `push` always adds a new instance", "`push` is only for tabs", "`navigate` clears the stack"]
+explanation = "Use `push` when you want multiple screens of the same type stacked (for example, Detail → a related Detail)."
+
+[questions.rn-061]
+prompt = "Screen A in a stack has pushed screen B. When returning to A, does A's `useEffect(() => {...}, [])` run again?"
+options = ["Yes, because A mounts again", "No — A is not unmounted when B is pushed; use `useFocusEffect` to run logic whenever A gains focus", "Only on Android", "Yes, when using native-stack"]
+explanation = "Use `useFocusEffect(useCallback(() => { ...; return cleanup }, []))`."
+
+[questions.rn-062]
+prompt = "Which hook provides access to `navigation` in a component that is **not** a screen?"
+options = ["`useRoute`", "`useNavigation`", "`useNavigationState`", "`useLinking`"]
+explanation = "Use `useRoute()` to read params for the current screen."
+
+[questions.rn-063]
+prompt = "In Expo Router, what does `app/user/[id].tsx` correspond to?"
+options = ["A static `/user/[id]` route", "A dynamic `/user/:id` route, read with `useLocalSearchParams()`", "The layout for the user directory", "An ignored route"]
+explanation = "`_layout.tsx` defines a layout; `(group)` is a group that does not affect the URL."
+
+[questions.rn-064]
+prompt = '''Pass and read params:
+
+```jsx
+navigation.navigate('Profile', { userId: 42 });
+
+function Profile({ route }) {
+  const { userId } = route.{{blank}};
+}
+```'''
+explanation = "Params should be serializable data (such as an ID); do not pass large objects or functions."
+
+[questions.rn-065]
+title = "Stack navigation reducer"
+prompt = '''Simulate Stack Navigator state. State: `{ routes: [{ name, params }], index }` (`index` is the visible screen, which is the last element).
+
+Implement an immutable `stackReducer(state, action)` supporting:
+- `{ type: 'PUSH', name, params }` → add a new route
+- `{ type: 'NAVIGATE', name, params }` → if a route with the same `name` exists in the stack, **pop back** to it (and update params if provided); otherwise, behave like PUSH
+- `{ type: 'POP', count = 1 }` → remove `count` top routes, but **always keep at least one**
+- `{ type: 'POP_TO_TOP' }` → keep only the first route
+- `{ type: 'REPLACE', name, params }` → replace the top route
+- `{ type: 'RESET', name, params }` → replace the stack with one route
+- Any other action → return the original state'''
+explanation = "React Navigation itself uses a router in this reducer style (`StackRouter.getStateForAction`)."
+hints = ["Write a `make(routes)` helper that calculates `index = routes.length - 1`.", "For NAVIGATE, search backward from the top of the stack."]
+
+[questions.rn-dd05]
+title = "Parse a deep link"
+prompt = '''The app receives a deep link through `Linking`. Write `parseDeepLink(url, routes)`:
+
+- `url` has the form `scheme://path?query` (for example, `bovabon://course/react/lesson/3?ref=mail`); **ignore** the scheme and extra leading/trailing `/` characters
+- `routes` is an object `{ "<pattern>": "<ScreenName>" }`; a pattern uses `:param` (for example, `"course/:courseId/lesson/:lessonId"`)
+- Return `{ screen, params }` for the **first** matching route (the number of path segments must match); `params` contains path params and query params (values decoded with `decodeURIComponent`, with `+` converted to a space)
+- Return `null` if no route matches
+- (Do not use `URL`/`URLSearchParams` — they are unavailable in the test runtime)'''
+explanation = "React Navigation handles this through `linking` configuration; understanding the mechanism helps with deep-link debugging. Always check/validate params received from a link."
+hints = ["Remove the scheme with the regex `^[a-z][a-z0-9+.-]*://`.", "Compare segments one by one; a segment beginning with `:` is a param."]
+
+[questions.rn-x009]
+prompt = "Screen A remains in the stack when screen B is pushed. What should you use to refresh data whenever A gains focus?"
+options = ["Only `useEffect(..., [])`", "`useFocusEffect` with a stable callback", "`setTimeout` during render", "Remove `NavigationContainer`"]
+explanation = "A screen underneath another screen usually stays mounted. Focus lifecycle differs from mount lifecycle; `useFocusEffect` runs when the screen gains focus."
+
+[questions.rn-x010]
+prompt = "The app needs to handle a link both while it is open and when it is launched from a URL. What should be configured?"
+options = ["Read `route.params` once", "Handle the initial URL and subscribe to URL events while the app is running", "Only enable `onEndReached`", "Store the URL in a `StyleSheet`"]
+explanation = "A deep link can launch the app or arrive while it is active; linking configuration must cover both cases."
+
+[questions.rn-x033]
+prompt = "When configuring deep links, which practices should you follow?"
+options = ["Handle URLs that launch the app and URLs received while it is running", "Check/normalize params before using them", "Pass arbitrary callbacks in the URL", "Map paths to routes explicitly", "Trust every external URL"]
+explanation = "A URL is external input; map it to a route and validate params, while supporting both initial URLs and events received while the app is active."
+
+[questions.rn-x044]
+prompt = "The React Native API that receives the initial URL when the app is opened from a deep link is `Linking.{{blank}}()`."
+explanation = "`getInitialURL()` handles launch; URLs received while the app is running require an event listener."
+
+[modules.rn-native]
+title = "Architecture, Native & Data"
+description = "New Architecture (JSI, Fabric, TurboModules), the bridge, Expo, storage, permissions, builds, and releases."
+lesson = '''### Architecture
+- **Old architecture**: JS ↔ Native communication goes through the asynchronous **Bridge** and serializes data as JSON, which can become a bottleneck when many messages are sent.
+- **New Architecture** (the default since RN 0.76):
+  - **JSI** (JavaScript Interface): a C++ API that lets JS hold references to and call native objects directly, including synchronously.
+  - **Fabric**: the new renderer, supporting concurrent React and synchronous layout measurement.
+  - **TurboModules**: lazily loaded, type-safe native modules through **Codegen**.
+- **Yoga**: a Flexbox layout engine written in C++.
+
+### Data and security
+- `AsyncStorage`: **unencrypted**, asynchronous key-value storage. For tokens/secrets, use `expo-secure-store` / Keychain / Keystore.
+- **MMKV**: synchronous, very fast key-value storage (based on JSI).
+- Permissions (camera, location): declare them in `Info.plist` / `AndroidManifest.xml` and request them at runtime.
+
+### Expo
+- Expo SDK + **EAS Build/Submit/Update**; use a **development build** instead of Expo Go when you need a custom native module; use **config plugins** to adjust native configuration without ejecting.
+- **OTA updates** (EAS Update) can update JS and assets only; they cannot update native code.
+
+### Runtime, data, and releases
+| Need | Choice |
+|---|---|
+| Non-sensitive cache | AsyncStorage or MMKV, depending on synchronization/performance requirements |
+| Token | SecureStore/Keychain/Keystore wrapper |
+| App state | Use `AppState` to pause polling or refresh when the app becomes active |
+| New native module | Suitable development build and config plugin/prebuild |
+
+Example: when the app returns to `active`, check the last sync time and refresh data; do not depend on JS tasks running continuously in the background.
+
+Common mistakes: storing tokens in AsyncStorage, assuming OTA can replace native code, or requesting a permission without handling denial. On the web, localStorage and service workers have different lifecycles and permissions; RN uses secure storage and background capabilities controlled by iOS/Android.'''
+
+[questions.rn-080]
+prompt = "What problem with the old Bridge does JSI (JavaScript Interface) address in the New Architecture?"
+options = ["It lets you write the UI in C++", "It lets JS call native objects directly through C++, including synchronously, without serializing JSON through the asynchronous bridge", "It replaces JavaScript with TypeScript", "It lets React Native run on the web"]
+explanation = "JSI is the foundation for TurboModules, Fabric, Reanimated, MMKV, VisionCamera, and more."
+
+[questions.rn-081]
+prompt = "What is Fabric?"
+options = ["A UI library", "React Native's new rendering system in the New Architecture", "An iOS build tool", "A JavaScript engine"]
+explanation = "Fabric supports concurrent rendering, synchronous layout measurement, and a shared shadow tree in C++."
+
+[questions.rn-082]
+prompt = "Where should a user's **access token** be stored in an RN app?"
+options = ["AsyncStorage", "A global variable", "Keychain (iOS) / Keystore (Android) through `expo-secure-store` or `react-native-keychain`", "A JSON file in the bundle"]
+explanation = "AsyncStorage is unencrypted; it can be read on rooted or jailbroken devices."
+
+[questions.rn-083]
+prompt = "What **cannot** an OTA update (EAS Update) update?"
+options = ["JavaScript code", "Images/assets in the bundle", "Native code (adding a native module or changing Info.plist)", "Displayed text"]
+explanation = "Native changes require a new build and store release. `runtimeVersion` compatibility is also required."
+
+[questions.rn-084]
+prompt = "When do you need a **development build** instead of Expo Go?"
+options = ["When using `useState`", "When the project needs a native module/configuration that Expo Go does not include (for example, a third-party native library or custom config plugin)", "When running on Android", "Never"]
+explanation = "A development build is your own debug app with `expo-dev-client`."
+
+[questions.rn-085]
+prompt = "Which components belong to React Native's **New Architecture**?"
+options = ["JSI", "Fabric", "TurboModules", "Codegen", "Bridge (MessageQueue)", "Bridgeless mode"]
+explanation = "The Bridge belongs to the old architecture; the New Architecture moves toward bridgeless mode."
+
+[questions.rn-086]
+prompt = '''Store and read data with AsyncStorage (which stores **strings only**):
+
+```js
+await AsyncStorage.setItem('user', JSON.{{blank}}(user));
+const user = JSON.{{blank}}(await AsyncStorage.getItem('user'));
+```'''
+explanation = "AsyncStorage stores strings only, so data must be serialized/deserialized."
+
+[questions.rn-087]
+prompt = "Compare React Native's old (Bridge) architecture with the New Architecture."
+keywords = [["bridge"], ["asynchronous", "async"], ["json", "serialize", "serialization"], ["jsi"], ["fabric"], ["turbomodule", "turbo module", "lazy loading"], ["synchronous", "sync"]]
+model_answer = '''**Old architecture**: JS and native communicate through the **Bridge** — calls are **serialized as JSON** and sent **asynchronously** in batches. This can bottleneck under heavy traffic (scrolling, animation, gestures), does not support synchronous calls, and initializes every native module at startup.
+
+**New Architecture**:
+- **JSI**: JS holds direct references to C++/native objects and can call them **synchronously** or asynchronously without serialization.
+- **Fabric**: a new renderer that supports concurrent React (Suspense, transitions) and synchronous layout measurement.
+- **TurboModules**: native modules **load lazily** and are type-safe through **Codegen** from a TypeScript/Flow spec.
+- Result: faster startup, smoother interaction, and a path toward bridgeless operation.'''
+explanation = "The New Architecture has been the default since RN 0.76."
+
+[questions.rn-088]
+title = "TTL cache on AsyncStorage"
+prompt = '''Write `createCache(storage, ttlMs)`. `storage` has an AsyncStorage-like API: `getItem(key)`, `setItem(key, value)`, and `removeItem(key)` all return a **Promise** and store **strings only**.
+
+Return:
+- `set(key, value)` → store `JSON.stringify({ value, expires: Date.now() + ttlMs })`
+- `get(key)` → return a Promise resolving to `value` if it has not expired; otherwise return `null` when the key is missing or expired (`Date.now() >= expires`), and remove the key if expired. Invalid JSON also returns `null`.
+
+`Date.now()` is controlled by fake timers (`jest.advanceTimersByTime`).'''
+explanation = "A cache-with-TTL pattern is often used for offline-first API responses."
+hints = ["`JSON.parse` can throw, so wrap it in try/catch.", "Distinguish a missing key (`null`) from a stored value of `0`/`false`."]
+
+[questions.rn-dd02]
+prompt = "Which uses of `AppState` are reasonable?"
+options = ["Pause polling/video when the app moves to `background`", "Refresh data when the app returns to `active`", "Lock the screen with a PIN when the user returns to the app", "Run heavy tasks indefinitely while the app is in the background (iOS)"]
+explanation = "`AppState.addEventListener('change', cb)` reports `active` / `background` / `inactive`. JS is not guaranteed to run for long in the background; use a dedicated background-task API instead."
+
+[questions.rn-dd04]
+prompt = "How can a custom button (`Pressable` containing an icon) work well with VoiceOver/TalkBack?"
+keywords = [["accessible"], ["accessibilitylabel", "label"], ["accessibilityrole", "role", "button"], ["accessibilityhint", "hint"], ["accessibilitystate", "disabled", "selected", "state"], ["hitslop", "touch target", "44", "48"]]
+model_answer = '''- Set `accessible` (Pressable already groups its children by default) and provide an **`accessibilityLabel`** describing the action (for example, “Add to cart”), since the icon has no text.
+- Set **`accessibilityRole="button"`** so the screen reader announces a button.
+- Add an **`accessibilityHint`** when the result is not obvious (for example, “Opens checkout”).
+- Make **`accessibilityState={{ disabled, selected }}`** reflect the actual state.
+- Provide a sufficiently large touch target (≥ 44pt on iOS / 48dp on Android); use **`hitSlop`** if the icon is small.
+- Test with VoiceOver/TalkBack and use `AccessibilityInfo.isScreenReaderEnabled()` when needed.'''
+explanation = "Accessibility should be considered from the start, not added as a final fix."
+
+[questions.rn-x045]
+prompt = "Store an access token with Expo's library for sensitive data: `expo-{{blank}}-store`."
+explanation = "`expo-secure-store` uses the platform's secure storage; AsyncStorage is not encrypted."
+
+[questions.rn-x053]
+prompt = "Describe how to combine platform permissions and secure storage when an app uses the camera and an access token."
+keywords = [["permission", "request permission"], ["denied", "permission denial"], ["securestore", "keychain", "keystore"], ["asyncstorage"], ["do not log", "never log", "logging"], ["explain", "just in time", "context"]]
+model_answer = '''Explain the camera permission just before the feature needs it, handle both granted and denied states, and provide a way forward if the user declines. Store the access token in SecureStore/Keychain/Keystore; AsyncStorage is unencrypted and should be used only for non-sensitive data. Do not put the token in logs or crash reports.'''
+explanation = "Permissions and sensitive data need to be handled separately according to their purpose and platform."
+
+[modules.rn-architecture]
+title = "New Architecture & Execution Flow"
+description = "JSI, Fabric, TurboModules, Codegen, Hermes, bridgeless mode, and interaction between the JS thread and UI thread."
+lesson = '''### The building blocks
+| Component | Role |
+|---|---|
+| JSI | C++ interface for JavaScript to interact with native objects without serializing every call through the old Bridge |
+| Fabric | New renderer coordinating React with the native UI tree |
+| TurboModules | Load native modules on demand; Codegen creates the connection layer from a typed spec |
+| Hermes | JavaScript engine commonly bundled by default with RN apps |
+| Bridgeless | Runs the New Architecture without depending on the legacy Bridge |
+
+The JS thread handles React, JavaScript, and events; the UI/native thread handles display, native layout, and frame interactions. JSI reduces communication overhead, but it does not make all JavaScript run automatically on the UI thread. Hermes does not replace Metro either: Metro still bundles the app during development.
+
+Example: Codegen processes a native module spec during the build; the app calls the module when needed instead of initializing every module at startup.
+
+Common mistakes: assuming JSI makes synchronous calls automatically safe; running heavy loops on the JS thread; confusing Fabric with a JS engine; or assuming bridgeless mode makes every old library compatible automatically. On the web, JavaScript often updates the DOM; RN sends changes through its renderer to native views.'''
+
+[questions.rn-x013]
+prompt = "What is the key difference between JSI and calls through the legacy Bridge?"
+options = ["JSI requires every call to be serialized as JSON", "JSI lets JS interact with host objects through a C++ interface without the legacy JSON message path", "JSI is a CSS engine", "JSI replaces Metro bundler"]
+explanation = "JSI is an interface between the JavaScript runtime and native/C++ code; it does not replace the bundler or automatically run all JS on the UI thread."
+
+[questions.rn-x014]
+prompt = "Which responsibility does Fabric have in the New Architecture?"
+options = ["JavaScript engine", "React Native renderer, coordinating React with native views", "OTA service", "App signing tool"]
+explanation = "Fabric is the renderer; Hermes is the JS engine, and EAS Update distributes updates."
+
+[questions.rn-x015]
+prompt = "How does Codegen mainly support TurboModules?"
+options = ["It creates images for the app", "It generates the native connection layer from a typed spec so JS and native share a consistent contract", "It replaces Hermes", "It writes the entire UI in C++ automatically"]
+explanation = "A typed spec is the input to Codegen; the native module implementation still needs to be written and built."
+
+[questions.rn-x016]
+prompt = "What does bridgeless mode mean?"
+options = ["The app no longer has native modules", "A New Architecture app does not depend on the legacy Bridge; JS/native communication and modules still exist", "JS runs entirely on the GPU", "A native binary build is no longer needed"]
+explanation = "Bridgeless mode removes dependence on the legacy Bridge; it does not remove native code or the need to build the app."
+
+[questions.rn-x035]
+prompt = "Which components belong to the New Architecture or a related RN runtime mode?"
+options = ["JSI", "Fabric", "TurboModules", "Codegen", "Hermes", "The legacy Bridge is the new renderer"]
+explanation = "JSI/Fabric/TurboModules/Codegen are parts of the New Architecture; Hermes is a JS engine that can be used with it. The legacy Bridge is not a new renderer."
+
+[questions.rn-x046]
+prompt = "In the New Architecture, a native module that loads on demand uses `{{blank}}`; a typed spec is processed by `{{blank}}`."
+explanation = "TurboModules support lazy loading; Codegen generates the connection layer from a typed spec."
+
+[questions.rn-x054]
+prompt = "Explain the roles of JSI, Fabric, TurboModules/Codegen, and the JS/UI threads in the New Architecture."
+model_answer = """JSI provides a C++ interface for JavaScript to interact with host objects without routing every call through the legacy Bridge. Fabric is the renderer; TurboModules load native modules on demand, and Codegen generates the connection layer from a spec. The JS thread handles JavaScript/React, while the UI thread handles native display; JSI does not move all JS to the UI thread. Bridgeless removes dependence on the legacy Bridge, but the app still needs a native runtime."""
+explanation = "Distinguishing the renderer, JS engine, native communication, and threads helps identify the right performance cause."
+
+[modules.rn-expo]
+title = "Expo SDK & Development Workflow"
+description = "Expo SDK, Expo Router, config plugins, prebuild, development builds, EAS Build, and EAS Update."
+lesson = '''### Choosing an environment and workflow
+| Tool | Use when |
+|---|---|
+| Expo Go | Trying the app with the pre-bundled set of native modules |
+| Development build | The development app needs a custom native module or configuration |
+| Prebuild | Generating native directories from app config and config plugins |
+| EAS Build | Creating an iOS/Android artifact locally or on EAS infrastructure |
+| EAS Update | Distributing JavaScript and assets compatible with the installed runtime |
+
+An Expo SDK pairs Expo module versions with a compatible React Native base; upgrade the SDK using its version-specific guidance instead of upgrading individual pieces arbitrarily. Expo Router maps files in the `app` directory to routes. Dynamic routes use names such as `[id].tsx`, while `_layout.tsx` defines the layout/stack.
+
+Example: a custom native library requires a development build; a config plugin describes native changes so `npx expo prebuild` can regenerate a consistent native project.
+
+Common mistakes: editing generated native directories directly and losing changes on prebuild; assuming Expo Go includes every native module; or publishing an OTA update with an incompatible native runtime. On the web, routers are often tied to browser URL/history; Expo Router still navigates inside a native app and needs deep-link configuration for external links.'''
+
+[questions.rn-x017]
+prompt = "The app uses a native module that is not included in Expo Go. What is the appropriate development choice?"
+options = ["Use Expo Go and hope the module appears", "Create a development build that includes the required module", "Move the module into CSS", "Disable Metro"]
+explanation = "A development build is your own app with the project's native modules; Expo Go contains only its pre-bundled set."
+
+[questions.rn-x018]
+prompt = "What is `_layout.tsx` for in Expo Router?"
+options = ["The default image file", "Defining a shared layout and navigator for routes in a directory branch", "Creating a native module", "Handling HTTP requests only"]
+explanation = "Expo Router maps the file tree to routes; `_layout` configures the layout/stack or a route group."
+
+[questions.rn-x036]
+prompt = "Which statements about config plugins and prebuild are true?"
+options = ["A config plugin describes reproducible native changes", "Prebuild can regenerate native directories from app config/plugins", "Edits to generated native files are always preserved through every prebuild", "A development build is needed when a native change is not included in Expo Go", "A config plugin is a CSS selector"]
+explanation = "Plugins express reproducible native configuration; direct edits to generated artifacts may be lost when prebuild runs."
+
+[questions.rn-x047]
+prompt = "The app needs a custom native module outside Expo Go's built-in set, so create a `{{blank}}`."
+explanation = "A development build includes the project's own native modules and configuration."
+
+[questions.rn-x055]
+prompt = "Compare Expo Go, development builds, prebuild, EAS Build, and EAS Update across the development lifecycle."
+keywords = [["expo go"], ["development build", "dev client"], ["prebuild"], ["config plugin"], ["eas build"], ["eas update"], ["runtimeversion"]]
+model_answer = '''Expo Go enables quick testing with its included native modules. When custom native modules/configuration are needed, create a development build; config plugins describe changes so prebuild can regenerate a consistent native project. EAS Build creates the binary. EAS Update distributes JS/assets when `runtimeVersion` matches the installed binary; native changes require a new binary.'''
+explanation = "These steps serve different needs: quick testing, generating the native project, building a binary, and releasing compatible JS/assets."
+
+[questions.rn-xc04]
+title = "Choose Expo Go or a development build"
+prompt = '''Write `chooseExpoClient(needsCustomNative, hasDevClient)` to return one of three strings:
+- `development-build` if a dev client is already installed.
+- `development-build-required` if a custom native module is needed but no dev client is installed.
+- `expo-go` if no custom native module is needed and no dev client is installed.'''
+explanation = "Distinguishing these environments helps select the right way to run the app during development."
+hints = ["Check whether a dev client is already available first.", "A custom native module will not run in Expo Go unless it is included in its binary."]
+
+[questions.rn-xc05]
+title = "Check EAS Update compatibility"
+prompt = "Write `canApplyUpdate(build, update)` to return a boolean. Allow an update only when both `platform` and `runtimeVersion` exactly match the installed build. Do not compare any other fields."
+explanation = "Runtime compatibility is required for JS/assets to work with the native binary."
+hints = ["Compare both conditions using exact equality.", "An OTA update cannot add a native module to an already installed binary."]
+
+[modules.rn-perf]
+title = "List Optimization & Profiling"
+description = "Virtualization, FlatList configuration, FlashList, controlling re-renders, and measuring performance in the right environment."
+lesson = '''### Tune based on measurements
+| Technique | Effect | Trade-off |
+|---|---|---|
+| Stable `keyExtractor` | Preserves item identity when data changes | Do not use the index if items can be inserted, deleted, or reordered |
+| `getItemLayout` | Skips dynamic measurement when item height is fixed | Offsets are wrong if item/header/separator sizes are omitted |
+| `windowSize` | Sets how many viewports are kept rendered around the visible area | Larger uses more memory; smaller can expose blank space during fast scrolling |
+| `removeClippedSubviews` | Removes views outside the visible area on some platforms | Can cause rendering issues with certain layouts/transforms |
+| FlashList | Third-party library that recycles views | Check the version and New Architecture requirements of the version you choose |
+
+Example: for a row with a fixed height of 56 dp and a 1 dp separator, `getItemLayout` should use `length: 56` and `offset: index * 57`. `React.memo` helps when props are stable; `useCallback` helps only when a changing function reference causes the child to re-render.
+
+Common mistakes: enabling every optimization prop at once, creating new objects/functions for every item, using the index as a key, or measuring in development and drawing conclusions about release performance. Use React DevTools/Profiler and the Hermes sampling profiler to find the cause before changing configuration. Unlike web list virtualization, RN creates native views; do not rely on a DOM profiler or browser APIs.'''
+
+[questions.rn-x019]
+prompt = "When is `getItemLayout` most useful?"
+options = ["When item heights vary with their content", "When item and separator dimensions are known in advance", "When the list has no data yet", "When network images must be loaded"]
+explanation = "Known dimensions/positions skip dynamic measurement and support scrolling to an index; incorrect measurements produce incorrect offsets."
+
+[questions.rn-x020]
+prompt = "`React.memo(Row)` does not reduce renders. The `item` prop is recreated as a new object for every row on each render. What is the most direct cause?"
+options = ["`memo` compares props shallowly, so a new reference is still considered a change", "`memo` only runs on the web", "FlatList forbids objects", "Hermes removes memo"]
+explanation = "Memoization usually compares props shallowly. Keep references stable or pass only the needed values, after a profiler confirms this is a bottleneck."
+
+[questions.rn-x021]
+prompt = "Why can an incorrect `getItemLayout` make `scrollToIndex` land in the wrong place?"
+options = ["FlatList uses the index as a color", "The offset must account for the actual header, item, and separator sizes", "`scrollToIndex` only works with ScrollView", "It disables `keyExtractor`"]
+explanation = "FlatList uses the supplied offset to jump to a position; omitting a header/separator or using the wrong height shifts the result."
+
+[questions.rn-x022]
+prompt = "To find the cause of stuttering in a release build, which process is more reliable?"
+options = ["Measure only in development and infer release behavior", "Profile a near-production build/configuration, inspect JS/UI time, and change one factor at a time", "Enable every optimization at once", "Count components in the source"]
+explanation = "Development has different overhead from release. Measure a representative build and change one factor at a time to identify the cause."
+
+[questions.rn-x037]
+prompt = "Choose reasonable steps for profiling a list."
+options = ["Reproduce on a representative build and device", "Use React Profiler/Hermes profiler to identify time spent", "Measure on the web and infer native behavior exactly", "Change one configuration at a time and measure again", "Enable all optimization props at once without recording measurements"]
+explanation = "Profiling needs a representative environment and comparable measurements; change one factor at a time to attribute the result."
+
+[questions.rn-x048]
+prompt = "FlatList receives the function that provides `{ length, offset, index }` for an item through the `{{blank}}` prop."
+explanation = "Use it when item dimensions can be determined in advance."
+
+[questions.rn-xc06]
+title = "Compare props for a memoized row"
+prompt = '''Write `shouldRenderRow(previous, next)` for a row that receives only three props: `item`, `selected`, and `onPress`:
+- Return `true` if at least one prop changes under JavaScript reference/value comparison with `!==`.
+- Return `false` if all three props remain the same.'''
+explanation = "Memoization helps only when props are stable and measurements show that row rendering is a significant cost."
+hints = ["Compare each of the listed props.", "This is a shallow comparison; a new object can cause the row to render again."]
+
+[questions.rn-xc07]
+title = "Merge list pages without duplicate IDs"
+prompt = '''Write `mergeById(existing, incoming)` to return a new array containing the old items followed by new items whose `id` is not already present.
+- If an ID appears more than once, keep its first occurrence.
+- Support IDs of `0` and the empty string.
+- Do not mutate either input array.'''
+explanation = "Deduplicating by ID prevents duplicate rows during pagination/offline sync."
+hints = ["Use a Set to track IDs already seen.", "Do not use a truthiness check for IDs; `0` is valid."]
+
+[modules.rn-animation-gesture]
+description = "Animated, native driver, Reanimated worklets/shared values, and React Native Gesture Handler."
+lesson = '''### Choose a tool for the motion
+| Tool | Best suited for |
+|---|---|
+| `Animated` | Declarative animations in React Native; `useNativeDriver` works well for opacity/transform |
+| Reanimated | Worklet calculations and shared-value updates close to the UI runtime |
+| Gesture Handler | Recognizing pan, tap, and pinch gestures and coordinating them with native handlers |
+| Layout animation | Motion tied to layout changes, when supported by the target configuration |
+
+Animated example: `Animated.timing(progress, { toValue: 1, duration: 220, useNativeDriver: true })`. The native driver does not support properties that require layout recalculation, such as `height` or `padding`. In Reanimated, a shared value stores motion state; a worklet can calculate frames without calling JavaScript on every frame.
+
+Common mistakes: reading/writing React state on every frame; marking a function as a worklet but calling an API available only in the JS runtime; or allowing gestures to compete without defining their priority relationship. On the web, animation is often tied to CSS/WAAPI and pointer events; RN uses native views/gesture handlers and has no DOM.'''
+
+[questions.rn-x023]
+prompt = "Which group of properties is suitable for Animated with `useNativeDriver: true`?"
+options = ["`opacity` and `transform`", "`height` and `padding`", "Any style property", "Text content and React state"]
+explanation = "The native driver supports properties that do not require layout recalculation, such as opacity/transform; it does not support every property."
+
+[questions.rn-x024]
+prompt = "What is a benefit of a Reanimated worklet when running an animation?"
+options = ["It moves the entire app to the web", "It lets animation logic run on the UI runtime without JS sending every frame", "It replaces `StyleSheet`", "It automatically grants gesture permissions"]
+explanation = "A worklet can run in the UI runtime. Work that requires JS must use the appropriate communication mechanism; avoid calling into JS on every frame."
+
+[questions.rn-x025]
+prompt = "Why is Gesture Handler often more suitable than updating React state for every pan event?"
+options = ["It uses the DOM", "Gestures are recognized by native handlers, reducing dependence on a JS render for every movement", "It replaces navigation", "It automatically stores gestures in AsyncStorage"]
+explanation = "Gesture Handler uses native gesture recognition; frequent React state updates can still cause many renders."
+
+[questions.rn-x038]
+prompt = "Which statements about animation and gestures in RN are true?"
+options = ["The native driver suits opacity/transform", "`useNativeDriver` supports every layout property", "A Reanimated shared value can change without re-rendering the entire React tree on every frame", "Gesture Handler provides native gesture recognition", "Heavy JS calls on every frame will always be smooth"]
+explanation = "The native driver supports a limited set of properties; shared values/worklets and native gesture recognition reduce work through JS on every frame."
+
+[questions.rn-x049]
+prompt = "In Reanimated, a value that can update on the UI runtime without React state on every frame is a `{{blank}}`; a function that runs on the UI runtime is a `{{blank}}`."
+explanation = "A shared value stores motion state; a worklet is logic that can run in the UI runtime."
+
+[questions.rn-x056]
+prompt = "When would you choose Animated's native driver, Reanimated, and Gesture Handler for a drag-and-drop interaction?"
+model_answer = """Animated with `useNativeDriver` suits opacity/transform properties that do not affect layout. Reanimated uses shared values and worklets to calculate motion on the UI runtime. Gesture Handler recognizes pan/tap through native handlers; combine these tools to avoid updating React state on every frame. Layout properties and work that requires JS must respect the specific API limitations."""
+explanation = "Choose based on the animated properties, execution path, and gesture complexity instead of assuming one library replaces every tool."
+
+[questions.rn-xc08]
+title = "Simulate Animated.interpolate"
+prompt = '''Write `interpolate(value, inputRange, outputRange, extrapolate = 'extend')` for strictly increasing ranges of equal length, with at least two points.
+- Interpolate linearly between adjacent points.
+- `clamp` clamps value to the ends of the input range; `extend` extends linearly using the first/last segment.
+- The output range may be increasing or decreasing.'''
+explanation = "This simulates the arithmetic of interpolation; it does not create an animation or access the UI thread."
+hints = ["Find the input segment containing the value; for out-of-range values, use the first or last segment.", "Clamp the input before finding a segment when extrapolate is `clamp`."]
+
+[questions.rn-xc09]
+title = "Throttle scroll events"
+prompt = '''Write `throttleLeading(fn, wait, now = () => Date.now())`:
+- Call `fn` immediately on the first invocation.
+- Ignore subsequent invocations that occur less than `wait` apart.
+- Once `wait` has elapsed, call again with the arguments from the newly accepted invocation.
+- Do not schedule an automatic trailing call with a timer.'''
+explanation = "Throttling is useful for scroll callbacks; choose an interval based on the actual work and keep UI updates smooth enough."
+hints = ["Store the timestamp of the most recently accepted invocation.", "The prompt does not require a trailing timer."]
+
+[modules.rn-data-offline]
+title = "Offline Data & Linking"
+description = "Local storage, secure tokens, network state, queued synchronization, push notifications, and deep links."
+lesson = '''### Storage and synchronization
+| Need | Choice | Notes |
+|---|---|---|
+| Non-sensitive cache | AsyncStorage or MMKV | AsyncStorage is asynchronous and does not encrypt data |
+| Token/secret | SecureStore or a Keychain/Keystore wrapper | Do not put tokens in logs or the bundle; handle cases where they cannot be read |
+| Connection state | NetInfo | `isConnected` and `isInternetReachable` can differ or be unknown |
+| Offline changes | Local queue with retries | Use idempotency keys and conflict-handling rules when sending again |
+| Push/deep link | Notification handler and Linking | Payloads come from outside the app and must be validated before navigation |
+
+Example: while offline, add an operation to a queue with a stable ID; when the network returns, send operations in sequence, retry with exponential backoff, and remove an operation after the server confirms it. Push notifications may be delayed or never arrive, so important data must be resynchronized from the server.
+
+Common mistakes: treating a Wi-Fi signal as proof that the Internet is available; retrying forever without a limit; storing tokens in AsyncStorage; or handling URLs only while the app is open. On the web, localStorage/service workers have different lifecycles and permissions; do not use those APIs in an RN app.'''
+
+[questions.rn-x026]
+prompt = "NetInfo reports `isConnected: true` but `isInternetReachable: false`. Which conclusion is appropriate?"
+options = ["The API server is definitely reachable", "There is a local network connection, but Internet reachability has not been confirmed", "The app is in the background", "The token has expired"]
+explanation = "A Wi-Fi/mobile connection does not guarantee Internet access or a working server; handle unknown status and actual request failures."
+
+[questions.rn-x027]
+prompt = "An order-creation operation is retried after an unstable network connection. What helps prevent duplicate orders?"
+options = ["Retry forever with a new ID", "A stable ID/idempotency key and handling of already-applied results", "Store the request in a component variable", "Disable retries"]
+explanation = "A retry can repeat an operation the server already processed; an idempotency key lets the server recognize the duplicate and return a stable result."
+
+[questions.rn-x028]
+prompt = "How should push notifications be treated in a data synchronization design?"
+options = ["As the only data source, guaranteed to arrive in order", "As a signal that may be delayed/lost; reload important state from the server when the app opens", "As a replacement for deep links", "As a guarantee that the app can run indefinitely in the background"]
+explanation = "Push delivery is not guaranteed to be timely or ordered; use it to signal a change, then sync authoritative data from the server."
+
+[questions.rn-x039]
+prompt = "Which characteristics should a safe offline queue have?"
+options = ["Operations have a stable ID/idempotency key", "Retries are limited and use backoff", "Delete an operation as soon as a request starts", "Handle errors/conflicts during synchronization", "Store tokens in an unencrypted queue record"]
+explanation = "A queue needs controlled retries, duplicate detection, and error handling; secrets should not be stored in unprotected queue data."
+
+[questions.rn-x050]
+prompt = "A popular community library for observing React Native connection state is `@react-native-{{blank}}/netinfo`."
+explanation = "NetInfo provides connection state; network status does not replace handling request errors."
+
+[questions.rn-x057]
+prompt = "Design offline synchronization for a data-creation operation on an unstable network, including retries and conflict handling."
+keywords = [["offline"], ["queue"], ["retry", "retries"], ["exponential backoff"], ["idempotency", "idempotency key"], ["conflict", "conflict resolution"], ["netinfo"]]
+model_answer = '''Store the operation in a local queue with a stable ID/idempotency key. NetInfo helps determine when to try sending, but requests must still handle failures. Send sequentially, retry with a limit and exponential backoff, and remove a record only after server confirmation. If the server returns a conflict, apply merge rules or ask the user to resolve it; do not assume push notifications always arrive.'''
+explanation = "Offline-first design needs duplicate prevention, limited retries, and rules for resolving concurrent edits."
+
+[questions.rn-xc10]
+title = "Offline queue with retries"
+prompt = '''Write `createOfflineQueue(send, baseDelay = 100, maxRetries = 2)` to return an object with `enqueue(value)`, `setOnline(value)`, and a `pending` getter.
+- Jobs are sent sequentially; the queue is online by default.
+- While offline, keep jobs queued until the network is online again.
+- When `send` fails, retry up to `maxRetries` times with a delay of `baseDelay * 2 ** retryIndex`.
+- After the final attempt, reject the job's Promise and remove it from the queue.
+- `pending` returns the current values; use fake timers to test backoff.'''
+explanation = "This queue simulates sequential sending and backoff; a real app also needs persistence, idempotency keys, and merge policies."
+hints = ["Keep a `processing` flag so only one worker processes the queue.", "Increment retryIndex after calculating the delay; advance the timer Promise in the test."]
+
+[questions.rn-xc11]
+title = "Parse a deep link"
+prompt = '''Write `parseDeepLink(url, routes)` for a custom link such as `bovabon://course/rn?ref=mail` and an app link such as `https://example.com/course/rn?ref=mail`; `routes` has the form `{ 'course/:id': 'Course' }`.
+- For custom links, use the part after `://` as the route; for HTTP(S), discard the hostname and use only the pathname. Trim extra leading/trailing `/`; the number of path segments must match.
+- `:param` represents a path param; decode percent-encoding in query values and convert `+` to a space.
+- Preserve any `=` after the first separator in a query value; path params override query params with the same name; for duplicate query keys, keep the last value.
+- Static routes must match exactly; choose the first matching route; return `null` if none match.
+- Do not use `URL` or `URLSearchParams`.'''
+explanation = "An app link has a real hostname; treating the host as part of the route gives the wrong path. External links still require validation of access and route param values after parsing."
+hints = ["Check the scheme first; for HTTP(S), remove the authority up to the first `/`, `?`, or `#`.", "Split each query pair at the first `=` and compare path segments one by one."]
+
+[modules.rn-release]
+title = "Permissions, Security & Releases"
+description = "Permissions, platform differences, app signing, OTA updates, crash reporting, and store review."
+lesson = '''### Release checklist
+| Area | Check |
+|---|---|
+| Permissions | Declare the reason in line with the feature; request access at the right time; handle denial |
+| Platform | Use `Platform.select` or platform-specific files for real differences |
+| App signing | Keep the keystore/certificate and signing information outside the repository, with controlled backups |
+| OTA | Release JS/assets only to compatible runtimes; native changes require a new binary |
+| Crash reporting | Upload matching symbols and remove tokens/PII from breadcrumbs and payloads |
+| Store review | Ensure declared permissions, privacy information, and app behavior match the release |
+
+Example: a JavaScript change can be sent through EAS Update if `runtimeVersion` matches the build; adding a native module or changing a permission manifest requires a new binary build and distribution. Release to a channel/small group first to catch problems before expanding the rollout.
+
+Common mistakes: committing a signing secret in app config; requesting permissions too early; using OTA to bypass store review or runtime compatibility; and treating crash logs as harmless data. On the web, server TLS/certificates differ from signing iOS/Android binaries; mobile platforms also manage permission prompts.'''
+
+[questions.rn-x029]
+prompt = "An OTA update adds a new native module but keeps the same `runtimeVersion` as the old binary. What is the main risk?"
+options = ["There is no risk because OTA updates the native binary", "The new JS may call a native API that does not exist in the installed binary", "OTA automatically re-signs the app", "Store review automatically installs the module"]
+explanation = "OTA replaces JS/assets only; native modules and configuration require a compatible new binary."
+
+[questions.rn-x040]
+prompt = "Choose suitable checks before releasing a mobile app."
+options = ["Confirm permissions and privacy disclosures match the features", "Keep signing keys outside the repository and manage backups", "Confirm OTA compatibility with the binary runtime", "Delete source maps/symbols before uploading crash symbols", "Treat crash reporting as a safe place to send tokens"]
+explanation = "Permissions, signing keys, and runtime compatibility need to be controlled; crash reports need matching symbols but must exclude sensitive data."
+
+[questions.rn-x051]
+prompt = "EAS Update uses a runtime-version field to limit updates to compatible binaries: `{{blank}}`."
+explanation = "Runtime version ensures JS/assets updates target binaries with a compatible native runtime."
+
+[questions.rn-x058]
+prompt = "Describe the release gates for a binary and an OTA update in a React Native app."
+keywords = [["signing"], ["permission", "permissions"], ["runtimeversion"], ["ota"], ["crash", "symbol", "symbols"], ["store review", "review"], ["privacy"]]
+model_answer = '''Validate the build and signing using securely managed credentials; confirm the permissions/privacy disclosures match the features. Release OTA only to compatible `runtimeVersion` builds; native changes need a new binary. Upload symbols for crash reporting while removing tokens/PII, roll out to a small group first, and ensure store review information matches the app's behavior.'''
+explanation = "A safe release needs native compatibility, protected signing keys, appropriate crash data, and accurate store declarations."
+
+[questions.rn-xc12]
+title = "List remaining release blockers"
+prompt = '''Write `releaseBlockers(checks)`, which accepts an object of booleans. Check these keys in exactly this order:
+`buildPassed`, `signingReady`, `permissionsReviewed`, `privacyDisclosureReady`, `crashSymbolsUploaded`, `storeNotesReady`.
+Return an array of key names whose value is not `true`; do not modify the input object.'''
+explanation = "An ordered blocker list makes the release checklist predictable; the team still needs to review the result and own the release decision."
+hints = ["Keep the required keys in the order given in the prompt.", "Use `!== true` to handle missing keys and values of the wrong type."]
+
+[questions.rn-xc13]
+title = "Redact sensitive data from a crash payload"
+prompt = '''Write `redactCrashPayload(value)` for JSON-like data containing objects, arrays, and primitives:
+- Recursively create a new structure without mutating the input.
+- For keys matching `token`, `accessToken`, `refreshToken`, `password`, or `email` case-insensitively, replace the value with the string `[REDACTED]`.
+- Preserve other keys and continue processing nested values.
+- The input contains no circular references.'''
+explanation = "Redaction reduces the risk of exposing secrets in crash reports; real systems need a sensitive-data list based on their schema."
+hints = ["Handle arrays before objects.", "When creating a new object, replace only sensitive values and recurse into the remaining keys."]
+
+[modules.react-native-dv-network]
+title = "Networking & Request Handling"
+description = "Calling APIs, distinguishing HTTP errors from network errors, managing request state, and retrying safely."
+lesson = '''### Requests in React Native
+React Native provides **fetch** for sending HTTP requests. A rejected Promise usually indicates a communication error such as a lost connection; a 404 or 500 is still a valid HTTP response, so check **response.ok** or **response.status** before processing the body.
+
+| Result | How to identify it | How to handle it |
+|---|---|---|
+| HTTP success | `response.ok` is true | Read the body according to the API format |
+| HTTP error | A response exists but `ok` is false | Show an appropriate error; do not assume the body is always JSON |
+| Communication error | The request rejects | Allow a limited retry and report offline status |
+
+A data-loading screen should keep loading, success, and error states separate. When the screen's input changes or the user leaves, cancel the request if the environment supports it, or ignore stale results so a slow response cannot overwrite newer data. When the app moves to the background, the operating system may pause JavaScript; important synchronization should resume from the server when the app becomes active.
+
+Use exponential backoff with a retry limit; for 429, honor `Retry-After` when available. Do not blindly resend an order-creation or payment operation: use an idempotency key or confirm the current status before retrying. Send data over HTTPS, never log tokens, and validate server response data before using it in the UI.
+
+Common mistakes: treating every HTTP status as success because fetch does not reject; parsing JSON before checking the response; letting an old request update state after a newer one; retrying forever; or assuming Wi-Fi means the API is always reachable. On mobile, connectivity can change between requests and while a request is in progress.'''
+
+[questions.react-native-dv001]
+prompt = "A fetch request receives an HTTP 404 response. Which interpretation is correct?"
+options = ["The Promise always rejects and enters catch", "A response exists but `response.ok` is false; handle the status", "The body automatically becomes a JSON error", "React Native automatically retries the request"]
+explanation = "An HTTP error such as 404 still produces a response; fetch usually rejects only for communication errors. Check `ok` or `status`."
+
+[questions.react-native-dv002]
+prompt = "A screen sends request A, then quickly sends request B. A finishes after B and writes stale data to state. What is the best fix?"
+options = ["Ignore all responses with status 200", "Cancel the old request when appropriate or check the request ID before updating state", "Increase request A's timeout", "Move every response to AsyncStorage"]
+explanation = "Requests may finish in a different order from the order they were sent. Cancel or ignore stale results to prevent old data from overwriting new data."
+
+[questions.react-native-dv003]
+prompt = "An API returns 429 for a read operation that can be retried. What is a reasonable behavior?"
+options = ["Retry without limit immediately", "Honor `Retry-After` when present, use backoff, and limit attempts", "Switch to HTTP instead of HTTPS", "Treat 429 as success"]
+explanation = "Limited backoff reduces load; `Retry-After` indicates when the server allows another attempt."
+
+[questions.react-native-dv004]
+prompt = "Choose good practices for calling an API from a mobile app."
+options = ["Distinguish communication errors from unsuccessful HTTP statuses", "Keep loading, success, and error states clear", "Log the access token to help with debugging", "Limit retries and use idempotency for operations with side effects"]
+explanation = "Requests need clear state, status handling, and controlled retries. Logging a token exposes sensitive information."
+
+[questions.react-native-dv005]
+prompt = "An app needs to reload data when the user returns after leaving it in the background for a long time. Which choices are appropriate?"
+options = ["Use AppState to detect the return to active and check the data", "Assume JavaScript runs continuously in the background on both iOS and Android", "Use a timestamp or sync version to decide whether a refresh is needed", "Check only Wi-Fi; if Wi-Fi exists, ignore API errors"]
+explanation = "JavaScript may be paused in the background. When the app becomes active, check the data state instead of relying on continuously running tasks."
+
+[questions.react-native-dv006]
+prompt = "After receiving a response, check the boolean property `response.{{blank}}` to see whether its status is in the success range."
+explanation = "`response.ok` indicates that the status is in the 200–299 range."
+
+[questions.react-native-dv007]
+prompt = "For a valid JSON response, read the body asynchronously with `await response.{{blank}}()`."
+explanation = "`response.json()` parses the body into a JavaScript value."
+
+[questions.react-native-dv008]
+prompt = "In an interview, describe how to build a reliable data-loading screen when the API is slow, returns an HTTP error, or the user leaves the screen."
+model_answer = '''Check `response.ok` and the HTTP status before reading the body, and represent loading, success, and error states separately. Cancel the request or ignore stale responses when the screen's data changes or it is left. Retry communication failures and selected statuses with limited exponential backoff; operations with side effects need an idempotency key.'''
+explanation = "A strong answer covers UI state, request lifecycle, the difference between HTTP and network errors, and a safe retry policy."
+
+[questions.react-native-dvc01]
+title = "Calculate exponential backoff delay"
+prompt = "Write `retryDelay(attempt, baseDelay, maxDelay)` to return the wait time for retry number `attempt`. `attempt` starts at 1; the delay doubles each time and never exceeds `maxDelay`. For example, with `baseDelay = 500` and `maxDelay = 3000`, the first delays are 500, 1000, 2000, and 3000 ms. All inputs are valid non-negative integers, except `attempt` is at least 1."
+explanation = "Exponential backoff reduces pressure on a server during persistent temporary errors; the cap prevents the wait from growing without limit."
+hints = ["Use a power of 2 based on the number of retries already made.", "Use `Math.min` to apply the upper bound."]
+
+[modules.react-native-dv-native]
+description = "Choosing the right native integration, understanding Codegen and Fabric, and designing safe data boundaries."
+lesson = '''### Choosing an extension point
+When JavaScript needs to call an iOS- or Android-specific API, a native module provides behavior rather than UI, such as access to a sensor or operating-system service. If you need a native view that can be laid out in the React tree, use a native UI component. Each platform may need its own implementation even when JavaScript uses a shared API.
+
+| Need | Integration approach | New Architecture role |
+|---|---|---|
+| Call native functionality | Native module | TurboModule |
+| Display a native view | Native UI component | Fabric component |
+| Define a typed API | Spec for Codegen | Generates the JS/native connection layer |
+
+The New Architecture uses Codegen with a typed spec to generate connection code, helping catch mismatches between the JavaScript interface and native implementation earlier. Fabric manages native UI rendering; TurboModules provide native modules through the new mechanism. These concepts do not generate business logic, replace implementation, or eliminate testing on each platform.
+
+Example: if the app only needs to read battery state, create a module with a read function and an update event; if it needs a native map with interactive markers, use a component with props, commands, and events. Keep data crossing the platform boundary simple, validate types, and handle native errors clearly. After adding native code or a native library, create a matching development build; a JavaScript-only update cannot install a missing native binary component.
+
+Common mistakes: using a module for something that is really a view; implementing only iOS and assuming Android compatibility; ignoring permissions and the native API lifecycle; or assuming Codegen replaces on-device testing. During integration, state which platforms are supported, what happens when permission is missing, and how errors are passed back to JavaScript.'''
+
+[questions.react-native-dv009]
+prompt = "The app needs to read data from HealthKit on iOS and Health Connect on Android, without adding native UI. Which integration is the best fit?"
+options = ["Native module", "Native UI component", "StyleSheet", "An Expo Router route"]
+explanation = "A native module wraps platform behavior or APIs; this requirement does not need a native view."
+
+[questions.react-native-dv010]
+prompt = "A product needs to embed a native map view in the React UI tree and receive an event when the user selects a marker. Which integration is correct?"
+options = ["A plain native module, because every native API is a module", "A native UI component with props and events", "Call Linking to open a map URL", "Put marker data in a StyleSheet"]
+explanation = "Native UI with layout and interaction should be wrapped as a native UI component so React can manage it in the view tree."
+
+[questions.react-native-dv011]
+prompt = "How does Codegen mainly support native integration in the New Architecture?"
+options = ["It writes all native logic from a Vietnamese description", "It generates a typed connection layer from a spec so JS and native agree on the API", "It replaces Metro during development", "It runs JavaScript directly on the UI thread"]
+explanation = "Codegen generates connection code from a typed spec; implementation and testing for each platform are still required."
+
+[questions.react-native-dv012]
+prompt = "Choose suitable practices when maintaining a native module used on iOS and Android."
+options = ["Test the implementation on every supported platform", "Use a typed spec to describe the public API", "Assume the same function name means both platforms behave identically", "Clearly define how errors and event payloads are represented"]
+explanation = "A spec, platform-specific testing, and a clear payload contract reduce mismatches between native and JavaScript."
+
+[questions.react-native-dv013]
+prompt = "A native API emits events to JavaScript. What should be clearly designed?"
+options = ["Payload type and structure", "Behavior when the module is not ready or permission is missing", "Assume a listener always exists while the app is in the background", "How to remove a listener when it is no longer needed"]
+explanation = "An event contract needs data types, errors, and listener lifecycle. A mobile app may be paused or lack permission."
+
+[questions.react-native-dv014]
+prompt = "In the New Architecture, the tool that generates the connection layer from a typed native module spec is called {{blank}}."
+explanation = "Codegen processes the spec to generate a typed connection layer between JavaScript and native code."
+
+[questions.react-native-dv015]
+prompt = "The new renderer that manages the native UI tree in the New Architecture is called {{blank}}."
+explanation = "Fabric is the New Architecture renderer; TurboModules handle native modules."
+
+[questions.react-native-dv016]
+prompt = "In an interview, explain when to choose a native module versus a native UI component and how to reduce errors at the JavaScript/iOS/Android boundary."
+model_answer = '''Use a native module for behavior such as reading a sensor, and a native UI component for a view that belongs in the UI tree. In the New Architecture, TurboModules and Fabric serve these respective purposes; Codegen generates the connection layer from a typed spec. Validate payloads, permissions, and errors, then test both iOS and Android because native implementations can differ.'''
+explanation = "Distinguish behavior APIs from views, describe Codegen's role, and emphasize the contract and platform-specific testing."
+
+[questions.react-native-dvc02]
+title = "Filter a native event payload"
+prompt = "Write `pickNativeEventFields(payload, allowedFields)`. Return a new object containing only keys that appear in `allowedFields` and are own properties of `payload`. Preserve values such as `false`, `0`, `null`, and the empty string; omit missing or inherited keys. Do not mutate the input payload. `allowedFields` is an array of strings and `payload` is an object."
+explanation = "Event payloads cross the native boundary, so pass only fields explicitly allowed by the caller and directly present on the payload."
+hints = ["Check for an own property rather than simply reading through the prototype chain.", "Create a new result object and iterate over the allowed keys."]
+
+[modules.react-native-dv-testing]
+description = "Multi-layer testing, investigating JavaScript/native errors, and tracing production stack traces."
+lesson = '''### Risk-based testing
+React Native tests should cover JavaScript logic, component interactions, and behavior that needs to run on a device. Unit tests stay fast for pure functions; component tests check what users see and do; end-to-end tests validate integrated flows involving navigation, permissions, or native APIs.
+
+| Test layer | Scope | Keep in mind |
+|---|---|---|
+| Unit | Functions, reducers, business rules | Fast, with few environment dependencies |
+| Component | Props, visible state, interactions | Prefer outcomes observable to the user |
+| End-to-end | Flows on a running app | Finds native and integration-configuration problems |
+
+Mock native modules at the boundary to keep unit tests stable, but do not treat a mock as proof that a module works on a device. For asynchronous state updates, tests should wait for the UI to settle using the testing library's mechanism; avoid asserting internal details such as exact render counts when they are not product requirements. When appropriate, role- or label-based selectors can also reveal missing accessibility metadata.
+
+When debugging, first locate the problem in JavaScript, Metro, build configuration, or native code. Fast Refresh shortens the UI edit loop but does not replace running tests. Production stack traces often point into a minified bundle; symbolication requires a source map that matches the exact bundle and app version. Reproduce native failures on a device or simulator for the affected platform, because JavaScript logs may not contain the native cause.
+
+Common mistakes: shipping after testing only with mocks and never running the native flow; using large snapshots that are hard to diagnose; treating a successful Fast Refresh as a test; or using a source map from another build to read a stack trace. Do not put tokens or personal data in debug logs.'''
+
+[questions.react-native-dv017]
+prompt = "A component displays a Save button and a saved status. Which assertion is usually the most robust for behavior testing?"
+options = ["Check the name of an internal state variable", "Find the button by role or label, press it, then check the state visible to the user", "Compare the entire component tree with a large snapshot", "Check the exact number of renders for every component"]
+explanation = "Tests of observable behavior depend less on how the component is implemented."
+
+[questions.react-native-dv018]
+prompt = "The app crashes in native code only on Android. Which investigation step is most useful?"
+options = ["Only inspect JavaScript `console.log` on iOS", "Collect logs and reproduce on an Android device or emulator with platform tools", "Enable Fast Refresh and conclude it is fixed", "Change every request to retry"]
+explanation = "A native failure should be reproduced and logged on the affected platform; JavaScript logs may not contain the cause."
+
+[questions.react-native-dv019]
+prompt = "A production stack trace points to an unreadable location in a minified bundle. What is needed to map it to source code?"
+options = ["A source map that matches the exact bundle and release version", "Any source map from the main branch", "Disable Hermes after release", "Only enable Fast Refresh on the user's device"]
+explanation = "Symbolication is accurate only when the source map belongs to the bundle that produced the stack trace."
+
+[questions.react-native-dv020]
+prompt = "Choose strategies that make a React Native test suite useful and resilient."
+options = ["Test pure logic with unit tests", "Test components through user-visible behavior and content", "Treat a native-module mock as sufficient proof of on-device integration", "Run important native flows on an appropriate device or simulator"]
+explanation = "Unit and component tests are fast; native flows still need confirmation in an appropriate real or simulated environment."
+
+[questions.react-native-dv021]
+prompt = "When investigating a production issue, which steps are usually necessary?"
+options = ["Identify the relevant app and build version", "Use the source map for the exact bundle to symbolicate", "Put user tokens in logs for easier correlation", "Reproduce the issue on the affected platform when possible"]
+explanation = "The version, matching source map, and reproduction environment help narrow the cause. Do not log tokens."
+
+[questions.react-native-dv022]
+prompt = "In a component test, the helper commonly used to wrap an action that updates React state before an assertion is {{blank}}."
+explanation = "`act` lets the test wait for updates related to an action before checking the result."
+
+[questions.react-native-dv023]
+prompt = "To map a location in a minified bundle back to the original source file and line, you need a {{blank}}."
+explanation = "A source map provides the mapping between transformed code and its original source."
+
+[questions.react-native-dv024]
+prompt = "In an interview, describe how to design multi-layer testing and investigate a crash that occurs only in production."
+model_answer = '''Use unit tests for pure logic, component tests for observable behavior, and end-to-end tests for important integrated flows. For a production crash, identify the exact app build, collect native logs, and reproduce it on a device if possible. Use the source map for the exact bundle to symbolicate the trace; mocks do not replace native testing.'''
+explanation = "The answer balances test speed with integration confidence and explains the roles of logs and a version-matched source map."
+
+[questions.react-native-dvc03]
+title = "Summarize test results"
+prompt = "Write `summarizeResults(results)`. Each item has a `name` and a `status` of `passed`, `failed`, or `skipped`. Return an object with `total`, `passed`, `failed`, `skipped`, and `failedNames`. `failedNames` contains the names of failed tests in input order. An empty array is valid; all input items follow the described structure."
+explanation = "A stable summary lets CI reports show the total, statuses, and names of failed tests without changing the input."
+hints = ["Initialize counters from the array length.", "Iterate through each result and add a name to `failedNames` only when its status is failed."]
+
+[modules.react-native-dv-accessibility]
+title = "Accessibility for Mobile Interfaces"
+description = "Designing roles, labels, states, and focus order to support VoiceOver, TalkBack, and users who need accessibility support."
+lesson = '''### Semantics for screen readers
+A native interface should describe the purpose and state of controls, not only how they look. For an icon-only button, set an appropriate `accessibilityRole` and a short, clear `accessibilityLabel`; use `accessibilityHint` only to explain the next result when the label is not enough. Use `accessibilityState` to represent disabled, selected, checked, expanded, or busy states rather than relying on color alone.
+
+| Property | Question it answers | Example meaning |
+|---|---|---|
+| Role | What kind of control is this? | button, link, header |
+| Label | What is this control called? | Open cart |
+| Hint | What will the action do? | Opens the item list |
+| State | What state is it in? | selected, disabled, expanded |
+
+Example: a filter chip should have a label naming the filter, a role suitable for the control, and a selected state synchronized with the app's actual state. Do not make a screen reader announce a decorative icon separately if the control's label already communicates enough. For grouped content, consider accessibility grouping to create a natural reading order, but do not combine the entire screen into one element and prevent access to individual controls.
+
+`AccessibilityInfo` provides information about device accessibility settings; the interface should adapt without losing functionality. Check font scaling, contrast, touch-target size, and focus order. Verify directly with VoiceOver on iOS and TalkBack on Android because reading and focus behavior can differ by platform.
+
+Common mistakes: an icon button without a label; a hint that repeats the label verbatim; showing selected state only through color; or putting accessibility props on a non-interactive wrapper while the actual pressable element lacks semantics. Test with a screen reader and appropriate keyboard/focus interaction, not just a screenshot.'''
+
+[questions.react-native-dv025]
+prompt = "A Pressable shows only a cart icon. What helps a screen-reader user understand and operate it?"
+options = ["Add an appropriate `accessibilityRole` and an `accessibilityLabel` that describes the action", "Change the icon to a brighter color", "Set `testID` without adding a label", "Hide the control from the accessibility tree"]
+explanation = "A control needs a meaningful role and label; color or `testID` cannot replace information for a screen reader."
+
+[questions.react-native-dv026]
+prompt = "A selected filter chip only changes its background to blue. What is the best way to add semantics?"
+options = ["Set the selected state to match the actual filter state", "Set `testID` to selected", "Add a hint that repeats the filter name", "Disable accessibility on the chip"]
+explanation = "A screen reader needs to receive the selected state through `accessibilityState`; it cannot rely on color."
+
+[questions.react-native-dv027]
+prompt = "When is `accessibilityHint` useful for a button?"
+options = ["When a short explanation of the action's result adds information not conveyed by the label", "Always repeat the exact `accessibilityLabel`", "To contain the entire screen's content", "To replace `accessibilityRole`"]
+explanation = "A hint should add information about the result; role and label are still needed to describe the control."
+
+[questions.react-native-dv028]
+prompt = "Choose ways to improve accessibility for a group of controls."
+options = ["Use roles and labels that describe their purpose", "Keep `accessibilityState` synchronized with app state", "Use color alone to show selected or disabled states", "Check focus order and how a screen reader reads the group"]
+explanation = "Semantics, state, focus order, and testing help users understand and operate the interface."
+
+[questions.react-native-dv029]
+prompt = "Before releasing a mobile flow with many interactive controls, what should you check?"
+options = ["Font scaling and contrast", "VoiceOver on iOS and TalkBack on Android", "Only a screenshot at the default size", "Control labels, states, and touch targets"]
+explanation = "Accessibility should be evaluated across content, semantics, and assistive-technology behavior on target platforms."
+
+[questions.react-native-dv030]
+prompt = "The prop that describes a control type such as button or link in React Native is `accessibility{{blank}}`."
+explanation = "`accessibilityRole` helps assistive technology understand the type of control."
+
+[questions.react-native-dv031]
+prompt = "For an icon-only control, the prop containing a short name read to the user is `accessibility{{blank}}`."
+explanation = "`accessibilityLabel` provides a name that a screen reader can announce."
+
+[questions.react-native-dv032]
+prompt = "In an interview, describe how to review accessibility for a mobile screen with an icon button, filter chip, and updating content."
+model_answer = '''Give each control a meaningful accessibility role and label, and synchronize accessibility state such as selected or disabled with the app state. Check focus order, font scaling, and contrast, then verify announcements with VoiceOver on iOS and TalkBack on Android. For updating content, check the appropriate announcement behavior on each platform.'''
+explanation = "The answer should cover semantics, state, readability, and testing with real assistive technology."
+
+[questions.react-native-dvc04]
+title = "Normalize accessibility state"
+prompt = "Write `buildAccessibilityState(input)` to return a new object containing only the `disabled`, `selected`, and `expanded` keys when each key is an own property with a boolean value in `input`. Preserve `false`; omit missing keys, non-boolean values, and all other keys. Do not mutate the input."
+explanation = "The function keeps valid state and removes values outside the contract before passing them to `accessibilityState`."
+hints = ["Iterate over the allowed keys instead of copying the whole object.", "Use `hasOwnProperty` and check that the value's type is boolean."]
+
+[questions.rn-x011]
+prompt = "Choose where to store a long-lived access token for an RN app."
+options = ["Unencrypted AsyncStorage", "A SecureStore/Keychain/Keystore wrapper", "A constant in the bundle", "Log it with `console.log` and read it later"]
+explanation = "AsyncStorage is suitable for non-sensitive data; tokens need platform-protected storage and should not appear in logs."
+
+[questions.rn-x012]
+prompt = "The app moves to `background`. What is the safest assumption about JavaScript?"
+options = ["JS is guaranteed to keep running indefinitely", "The operating system may pause the app; do not rely on JS to finish long background tasks", "JS automatically runs on a server", "Hermes ignores battery limits"]
+explanation = "AppState reports the state but does not guarantee unlimited execution; background tasks need suitable platform APIs and permissions."
+
+[questions.rn-x034]
+prompt = "Choose suitable practices for permissions and sensitive data."
+options = ["Explain why permission is needed near the time the feature is used", "Store a refresh token in AsyncStorage because its API is asynchronous", "Use secure storage for tokens", "Handle the case when the user denies permission", "Write tokens to crash logs for easier debugging"]
+explanation = "Permissions need context and a denial path; tokens must be protected and must not be logged."

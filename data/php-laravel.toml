@@ -10,7 +10,7 @@ description = "PHP hiện đại và các nền tảng thực hành Laravel 11: 
 id = "php-modern"
 title = "PHP hiện đại"
 description = "Type declarations, enum, readonly, match, named arguments, nullsafe operator và first-class callable."
-sources = ["php/language.types.declarations", "php/language.enumerations.basics", "php/language.oop5.properties", "php/control-structures.match", "php/functions.arguments", "php/functions.first_class_callable_syntax", "php/language.operators"]
+sources = ["php/language.types.declarations", "php/language.enumerations.basics", "php/language.oop5.properties", "php/control-structures.match", "php/class.unhandledmatcherror", "php/functions.arguments", "php/functions.first_class_callable_syntax", "php/language.operators"]
 lesson = '''
 ### Kiểu và cú pháp hiện đại
 Type declaration trên tham số, property và giá trị trả về giúp hợp đồng hàm rõ hơn. PHP hỗ trợ union types; enum có thể là pure hoặc backed enum. Readonly property chỉ khởi tạo một lần; readonly class có từ PHP 8.2. Match so sánh nghiêm ngặt và phải khớp một nhánh, nếu không sẽ ném UnhandledMatchError.
@@ -55,7 +55,7 @@ Composer thường được chạy bằng composer dump-autoload sau khi đổi 
 id = "laravel-core"
 title = "Laravel căn bản"
 description = "Routing, controller, request lifecycle, middleware onion và Blade."
-sources = ["laravel~11/docs/11.x/routing", "laravel~11/docs/11.x/controllers", "laravel~11/docs/11.x/lifecycle", "laravel~11/docs/11.x/middleware", "laravel~11/docs/11.x/blade", "laravel~11/docs/11.x/container"]
+sources = ["laravel~11/docs/11.x/routing", "laravel~11/docs/11.x/controllers", "laravel~11/docs/11.x/lifecycle", "laravel~11/docs/11.x/middleware", "laravel~11/docs/11.x/requests", "laravel~11/docs/11.x/responses", "laravel~11/docs/11.x/blade", "laravel~11/docs/11.x/container"]
 lesson = '''
 ### Từ request đến response
 Trong Laravel 11, public/index.php nạp ứng dụng qua bootstrap/app.php; ứng dụng xử lý request, chạy middleware, khớp route, gọi controller và gửi response. Middleware có thể kiểm tra hoặc biến đổi request trước next, rồi xử lý response khi lời gọi next trả về — đây là cấu trúc onion.
@@ -1032,4 +1032,689 @@ test('min khong chap nhan gia tri khong phai string', function () {
 hints = ["Tách rule bằng dấu | và xác định trường hợp rỗng trước.", "required thất bại thì ghi lỗi rồi bỏ qua các rule khác của field đó."]
 explanation = "Validator tách việc xác định trạng thái rỗng khỏi kiểm tra từng rule và trả lỗi có cấu trúc."
 sources = ["laravel~11/docs/11.x/validation"]
+
+[[modules]]
+id = "php-laravel-dv-errors"
+title = "PHP Errors và Exception"
+description = "Phân biệt Error, Exception và Throwable; xử lý lỗi theo đúng ranh giới."
+sources = ["php/language.errors", "php/language.exceptions", "php/class.throwable", "php/class.error", "php/class.exception"]
+lesson = '''
+### Mô hình lỗi trong PHP
+Trong PHP, `Throwable` là giao diện gốc mà cả `Error` lẫn `Exception` triển khai. `Exception` thường biểu diễn tình huống nghiệp vụ hoặc đầu vào không hợp lệ mà chương trình dự kiến có thể xử lý; `Error` thường báo lỗi thực thi hoặc lỗi lập trình như `TypeError`. Vì vậy `catch (Exception $e)` không bắt được mọi lỗi có thể ném ra.
+
+| Nhóm | Ví dụ | Cách xử lý thường gặp |
+|---|---|---|
+| `Exception` | `InvalidArgumentException` | Bắt gần nơi có thể báo lỗi đầu vào hoặc đổi luồng nghiệp vụ |
+| `Error` | `TypeError` | Sửa nguyên nhân; chỉ bắt ở ranh giới cần ghi nhận hoặc dọn dẹp |
+| `Throwable` | cả hai nhóm | Dùng khi tầng ranh giới thật sự cần quan sát mọi lỗi rồi chuyển tiếp |
+
+Ví dụ:
+```php
+function requirePositiveId(int $id): int {
+    if ($id <= 0) {
+        throw new InvalidArgumentException('ID must be positive');
+    }
+    return $id;
+}
+```
+
+Các `catch` được xét theo thứ tự, nên nhánh cụ thể phải đứng trước nhánh rộng. `finally` phù hợp để giải phóng tài nguyên hoặc hoàn tất dọn dẹp dù khối `try` thành công hay ném lỗi. Lỗi hay gặp là bắt `Throwable` ở mọi nơi rồi trả `null`, làm mất nguyên nhân và khiến trạng thái sai khó truy vết; hãy bắt loại lỗi mà tầng hiện tại có thể xử lý, còn lỗi không biết cách phục hồi thì chuyển tiếp.
+'''
+
+[[questions]]
+id = "php-laravel-dv001"
+module = "php-laravel-dv-errors"
+type = "single"
+difficulty = 1
+prompt = "Một lời gọi hàm gây `TypeError`. Kiểu nào bắt được lỗi đó trong PHP?"
+options = ["Exception", "Error", "InvalidArgumentException", "RuntimeException"]
+answer = [1]
+explanation = "TypeError thuộc nhánh Error. Error và Exception đều triển khai Throwable, nhưng chúng không kế thừa lẫn nhau."
+sources = ["php/class.error", "php/class.throwable"]
+
+[[questions]]
+id = "php-laravel-dv002"
+module = "php-laravel-dv-errors"
+type = "single"
+difficulty = 2
+prompt = "Vì sao `catch (Exception $e)` không phải là cách bắt mọi lỗi có thể phát sinh trong PHP?"
+options = ["Vì Exception chỉ bắt lỗi cú pháp", "Vì Error cũng triển khai Throwable nhưng không kế thừa Exception", "Vì catch chỉ hoạt động với lỗi trong finally", "Vì PHP không cho bắt exception"]
+answer = [1]
+explanation = "Exception và Error là hai nhánh riêng cùng triển khai Throwable; catch Exception không bắt Error như TypeError."
+sources = ["php/class.throwable", "php/class.exception", "php/class.error"]
+
+[[questions]]
+id = "php-laravel-dv003"
+module = "php-laravel-dv-errors"
+type = "single"
+difficulty = 2
+prompt = "Một hàm cần dọn dẹp file tạm dù xử lý thành công hay ném exception. Cấu trúc nào phù hợp nhất?"
+options = ["Đặt lệnh dọn dẹp sau try/catch", "Đặt lệnh dọn dẹp trong finally", "Bắt mọi lỗi rồi bỏ qua", "Chỉ dùng return trong catch"]
+answer = [1]
+explanation = "finally chạy sau try/catch trên cả đường thành công lẫn đường có lỗi, phù hợp cho thao tác dọn dẹp."
+sources = ["php/language.exceptions"]
+
+[[questions]]
+id = "php-laravel-dv004"
+module = "php-laravel-dv-errors"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các thực hành giúp xử lý lỗi có thể bảo trì trong một ứng dụng PHP."
+options = ["Bắt loại exception cụ thể ở tầng có thể phục hồi", "Dùng finally để dọn dẹp tài nguyên", "Bắt Throwable ở mọi hàm và trả về giá trị rỗng", "Chuyển tiếp lỗi chưa biết cách xử lý sau khi bổ sung ngữ cảnh phù hợp"]
+answer = [0, 1, 3]
+explanation = "Bắt lỗi cụ thể và dọn dẹp có chủ đích giữ được ngữ nghĩa. Nuốt mọi Throwable thường che lỗi lập trình và làm sai kết quả."
+sources = ["php/language.exceptions", "php/class.throwable"]
+
+[[questions]]
+id = "php-laravel-dv005"
+module = "php-laravel-dv-errors"
+type = "fill"
+difficulty = 1
+prompt = '''Để một catch nhận cả các đối tượng thuộc nhánh Error và Exception, điền giao diện gốc:
+
+```php
+catch ({{blank}} $error) {
+    report($error);
+}
+```'''
+blanks = [["Throwable"]]
+explanation = "Throwable là giao diện được triển khai bởi cả Error và Exception."
+sources = ["php/class.throwable"]
+
+[[questions]]
+id = "php-laravel-dv006"
+module = "php-laravel-dv-errors"
+type = "fill"
+difficulty = 1
+prompt = '''Khối nào thích hợp cho việc dọn dẹp chạy sau try/catch dù có exception hay không?
+
+```php
+try { work(); } catch (Throwable $error) { report($error); } {{blank}} { cleanup(); }
+```'''
+blanks = [["finally"]]
+explanation = "finally dành cho thao tác cần chạy sau khối try/catch trên các đường thực thi thông thường."
+sources = ["php/language.exceptions"]
+
+[[questions]]
+id = "php-laravel-dv007"
+module = "php-laravel-dv-errors"
+type = "essay"
+difficulty = 3
+prompt = "Trong phỏng vấn, hãy giải thích khác biệt giữa `Error` và `Exception`, rồi nêu cách chọn nơi bắt lỗi trong một request web."
+keywords = [["Throwable", "giao diện Throwable"], ["Error", "TypeError"], ["Exception", "exception nghiệp vụ"], ["bắt cụ thể", "loại lỗi cụ thể"], ["chuyển tiếp", "rethrow"]]
+min_keywords = 3
+model_answer = '''Cả `Error` và `Exception` đều triển khai `Throwable`, nhưng là hai nhánh riêng. `Error` thường phản ánh lỗi thực thi như `TypeError`, còn `Exception` thường mô tả tình huống ứng dụng có thể dự kiến. Nên bắt loại lỗi cụ thể tại tầng có thể xử lý hoặc chuyển thành response phù hợp; tầng ngoài cùng có thể ghi nhận lỗi chưa xử lý rồi chuyển tiếp thay vì âm thầm trả dữ liệu giả.'''
+explanation = "Câu trả lời tốt phân biệt quan hệ kiểu và giải thích ranh giới phục hồi thay vì chỉ liệt kê cú pháp catch."
+sources = ["php/class.throwable", "php/class.error", "php/class.exception"]
+
+[[questions]]
+id = "php-laravel-dvc01"
+module = "php-laravel-dv-errors"
+type = "code"
+difficulty = 2
+lang = "php"
+title = "Phân tích số nguyên dương an toàn"
+prompt = '''Viết `positiveInt(mixed $value): int`. Hàm nhận một số nguyên dương hoặc chuỗi chỉ gồm chữ số thập phân; chuỗi có thể có khoảng trắng ở hai đầu và số 0 ở đầu. Trả về số nguyên đã chuẩn hóa. Với số 0, số âm, boolean, float, chuỗi có ký tự khác chữ số hoặc giá trị lớn hơn `PHP_INT_MAX`, ném `InvalidArgumentException`.'''
+starter = '''function positiveInt(mixed $value): int {
+    return 1;
+}
+'''
+solution = '''function positiveInt(mixed $value): int {
+    if (is_int($value)) {
+        if ($value > 0) {
+            return $value;
+        }
+        throw new InvalidArgumentException('Expected a positive integer');
+    }
+    if (!is_string($value)) {
+        throw new InvalidArgumentException('Expected an integer or digit string');
+    }
+    $digits = trim($value);
+    if ($digits === '' || !preg_match('/\\A[0-9]+\\z/', $digits)) {
+        throw new InvalidArgumentException('Expected decimal digits');
+    }
+    $digits = ltrim($digits, '0');
+    if ($digits === '') {
+        throw new InvalidArgumentException('Expected a positive integer');
+    }
+    $maximum = (string) PHP_INT_MAX;
+    if (strlen($digits) > strlen($maximum) || (strlen($digits) === strlen($maximum) && strcmp($digits, $maximum) > 0)) {
+        throw new InvalidArgumentException('Integer is out of range');
+    }
+    return (int) $digits;
+}
+'''
+tests = '''test('nhan integer duong', function () {
+    expect(positiveInt(42))->toBe(42);
+});
+
+test('trim va bo so khong dau chuoi', function () {
+    expect(positiveInt('  00042  '))->toBe(42);
+});
+
+test('tu choi zero', function () {
+    expect(fn () => positiveInt('000'))->toThrow(InvalidArgumentException::class);
+});
+
+test('tu choi boolean va float', function () {
+    expect(fn () => positiveInt(true))->toThrow(InvalidArgumentException::class);
+    expect(fn () => positiveInt(2.5))->toThrow(InvalidArgumentException::class);
+});
+
+test('tu choi ky tu khong phai chu so', function () {
+    expect(fn () => positiveInt('-12'))->toThrow(InvalidArgumentException::class);
+    expect(fn () => positiveInt('12x'))->toThrow(InvalidArgumentException::class);
+});
+
+test('tu choi tran gioi han integer', function () {
+    expect(fn () => positiveInt(str_repeat('9', strlen((string) PHP_INT_MAX) + 1)))->toThrow(InvalidArgumentException::class);
+});
+'''
+hints = ["Xác nhận kiểu dữ liệu trước khi trim hoặc so khớp chuỗi.", "So độ dài và thứ tự từ điển của chuỗi chữ số với PHP_INT_MAX trước khi ép kiểu."]
+explanation = "Kiểm tra biểu diễn trước khi ép kiểu tránh chấp nhận dữ liệu sai và tránh tràn số khi chuyển chuỗi sang integer."
+sources = ["php/language.exceptions", "php/class.exception"]
+
+[[modules]]
+id = "php-laravel-dv-api"
+title = "API Resources và phân trang"
+description = "Thiết kế JSON response ổn định và chọn chiến lược phân trang phù hợp."
+sources = ["laravel~11/docs/11.x/eloquent-resources", "laravel~11/docs/11.x/pagination", "laravel~11/docs/11.x/requests", "laravel~11/docs/11.x/responses"]
+lesson = '''
+### Response contract cho API
+Eloquent Resource tạo một lớp trình bày riêng giữa model và JSON response. Thay vì trả nguyên model với mọi thuộc tính đang có, resource chọn rõ field công khai, đổi tên field khi cần và có thể định dạng dữ liệu lồng nhau. Nhờ vậy thay đổi schema nội bộ không vô tình phá hợp đồng của client. Với quan hệ, dùng cách kiểm tra đã được tải như `whenLoaded` để response không âm thầm kích hoạt thêm query.
+
+| Chiến lược | Tổng số bản ghi | Hợp với | Điểm cần cân nhắc |
+|---|---|---|---|
+| `paginate` | Có | UI cần số trang và tổng số | Cần đếm tổng; có thể tốn kém trên tập lớn |
+| `simplePaginate` | Không | Nút trước/sau đơn giản | Không có tổng số trang |
+| `cursorPaginate` | Không | Bảng lớn, duyệt liên tục theo thứ tự | Cần thứ tự ổn định và cột cursor phù hợp |
+
+Ví dụ:
+```php
+return UserResource::collection(User::with('profile')->paginate(25));
+```
+
+Laravel tạo response phân trang với `data`, `links` và `meta`; hãy kiểm tra cấu trúc mà client cần thay vì tự lắp metadata không nhất quán. Offset pagination tiện khi nhảy tới một trang bất kỳ, nhưng dữ liệu chèn/xóa giữa các lần tải có thể làm bản ghi lặp hoặc bị bỏ qua. Cursor pagination tiếp tục sau giá trị sắp xếp, thường ổn định và hiệu quả hơn cho danh sách lớn, nhưng không phù hợp khi cần nhảy thẳng đến trang 40. Lỗi hay gặp là phân trang không có `orderBy` ổn định hoặc Resource truy cập relationship chưa eager load.
+'''
+
+[[questions]]
+id = "php-laravel-dv008"
+module = "php-laravel-dv-api"
+type = "single"
+difficulty = 1
+prompt = "Lợi ích chính của việc dùng Eloquent Resource thay vì trả trực tiếp model là gì?"
+options = ["Tự tạo database index", "Kiểm soát response JSON công khai tách khỏi cấu trúc model", "Tắt middleware cho route", "Bảo đảm mọi query chỉ chạy một lần"]
+answer = [1]
+explanation = "Resource định nghĩa biểu diễn API rõ ràng, giúp tránh lộ field nội bộ và giảm phụ thuộc của client vào model."
+sources = ["laravel~11/docs/11.x/eloquent-resources"]
+
+[[questions]]
+id = "php-laravel-dv009"
+module = "php-laravel-dv-api"
+type = "single"
+difficulty = 2
+prompt = "Một endpoint trả danh sách hàng triệu bản ghi theo thời gian, client chỉ cần tiếp tục từ bản ghi cuối đã xem. Lựa chọn nào thường phù hợp hơn?"
+options = ["paginate vì luôn rẻ hơn", "simplePaginate để có tổng số chính xác", "cursorPaginate với thứ tự ổn định", "Tải toàn bộ collection rồi cắt bằng PHP"]
+answer = [2]
+explanation = "Cursor pagination phù hợp cho luồng duyệt lớn theo thứ tự ổn định và không yêu cầu tổng số trang."
+sources = ["laravel~11/docs/11.x/pagination"]
+
+[[questions]]
+id = "php-laravel-dv010"
+module = "php-laravel-dv-api"
+type = "single"
+difficulty = 2
+prompt = "Khi nào `simplePaginate` là lựa chọn hợp lý?"
+options = ["Khi giao diện bắt buộc hiển thị chính xác tổng số trang", "Khi chỉ cần điều hướng trang trước/sau và không cần đếm toàn bộ kết quả", "Khi cần trả mọi bản ghi trong một response", "Khi thứ tự dữ liệu không xác định"]
+answer = [1]
+explanation = "simplePaginate không cần tổng số bản ghi, phù hợp khi UI chỉ cần liên kết trang trước và trang sau."
+sources = ["laravel~11/docs/11.x/pagination"]
+
+[[questions]]
+id = "php-laravel-dv011"
+module = "php-laravel-dv-api"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các thực hành tốt khi tạo response JSON phân trang bằng Resource."
+options = ["Chỉ công khai field client cần", "Dùng `whenLoaded` cho quan hệ tùy chọn để tránh lazy loading ngoài ý muốn", "Bỏ metadata phân trang để response ngắn hơn trong mọi trường hợp", "Đặt thứ tự ổn định trước khi dùng cursor pagination"]
+answer = [0, 1, 3]
+explanation = "Resource cần giữ hợp đồng công khai có chủ đích; cursor cần thứ tự ổn định. Metadata nên được giữ khi client cần điều hướng hoặc biết trạng thái phân trang."
+sources = ["laravel~11/docs/11.x/eloquent-resources", "laravel~11/docs/11.x/pagination"]
+
+[[questions]]
+id = "php-laravel-dv012"
+module = "php-laravel-dv-api"
+type = "fill"
+difficulty = 1
+prompt = '''Điền tên resource để Laravel tạo collection JSON từ danh sách `$users`:
+
+```php
+return {{blank}}::collection($users);
+```'''
+blanks = [["UserResource"]]
+explanation = "Resource class có phương thức collection để trình bày danh sách model theo cùng một hợp đồng."
+sources = ["laravel~11/docs/11.x/eloquent-resources"]
+
+[[questions]]
+id = "php-laravel-dv013"
+module = "php-laravel-dv-api"
+type = "fill"
+difficulty = 2
+prompt = '''Query cần dùng phân trang cursor cho danh sách lớn. Điền method phù hợp:
+
+```php
+$users = User::orderBy('id')->{{blank}}(50);
+```'''
+blanks = [["cursorPaginate"]]
+explanation = "cursorPaginate tiếp tục theo cursor thay vì offset, và query cần thứ tự ổn định."
+sources = ["laravel~11/docs/11.x/pagination"]
+
+[[questions]]
+id = "php-laravel-dv014"
+module = "php-laravel-dv-api"
+type = "essay"
+difficulty = 3
+prompt = "Trong phỏng vấn, hãy so sánh offset pagination với cursor pagination và giải thích vì sao API nên dùng Resource."
+keywords = [["offset pagination", "phân trang offset"], ["cursor pagination", "phân trang cursor"], ["thứ tự ổn định", "stable ordering"], ["hợp đồng response", "response contract"], ["tổng số", "total count"]]
+min_keywords = 3
+model_answer = '''Offset pagination hỗ trợ nhảy tới số trang và thường cung cấp tổng số, nhưng query lớn có thể tốn chi phí và dữ liệu thay đổi giữa các lần tải có thể làm lệch kết quả. Cursor pagination dựa trên một thứ tự ổn định để tiếp tục từ vị trí đã đọc, hợp với danh sách lớn nhưng không tiện nhảy tới trang tùy ý. Resource giữ response contract độc lập với model và giới hạn field được công khai.'''
+explanation = "Cần cân bằng khả năng điều hướng, chi phí truy vấn, tính ổn định của dữ liệu và hợp đồng JSON."
+sources = ["laravel~11/docs/11.x/eloquent-resources", "laravel~11/docs/11.x/pagination"]
+
+[[questions]]
+id = "php-laravel-dvc02"
+module = "php-laravel-dv-api"
+type = "code"
+difficulty = 2
+lang = "php"
+title = "Phân trang danh sách kết quả"
+prompt = '''Viết `paginateRecords(array $items, int $perPage, int $page): array`. Trả về mảng có `data` là lát cắt đúng trang và `meta` gồm `current_page`, `per_page`, `total`, `last_page`. `page` và `perPage` phải từ 1 trở lên, nếu không ném `InvalidArgumentException`. `last_page` tối thiểu là 1 kể cả danh sách rỗng. Nếu page lớn hơn last_page thì `data` là mảng rỗng và `current_page` vẫn là page được yêu cầu.'''
+starter = '''function paginateRecords(array $items, int $perPage, int $page): array {
+    return ['data' => [], 'meta' => []];
+}
+'''
+solution = '''function paginateRecords(array $items, int $perPage, int $page): array {
+    if ($perPage < 1 || $page < 1) {
+        throw new InvalidArgumentException('Page and page size must be positive');
+    }
+    $total = count($items);
+    $lastPage = max(1, (int) ceil($total / $perPage));
+    $offset = ($page - 1) * $perPage;
+    return [
+        'data' => array_slice($items, $offset, $perPage),
+        'meta' => [
+            'current_page' => $page,
+            'per_page' => $perPage,
+            'total' => $total,
+            'last_page' => $lastPage,
+        ],
+    ];
+}
+'''
+tests = '''$items = ['a', 'b', 'c', 'd', 'e'];
+
+test('trang dau co metadata', function () use ($items) {
+    $result = paginateRecords($items, 2, 1);
+    expect($result['data'])->toEqual(['a', 'b']);
+    expect($result['meta'])->toEqual(['current_page' => 1, 'per_page' => 2, 'total' => 5, 'last_page' => 3]);
+});
+
+test('trang giua lay dung offset', function () use ($items) {
+    expect(paginateRecords($items, 2, 2)['data'])->toEqual(['c', 'd']);
+});
+
+test('trang cuoi co it phan tu hon page size', function () use ($items) {
+    expect(paginateRecords($items, 2, 3)['data'])->toEqual(['e']);
+});
+
+test('page vuot cuoi tra mang rong', function () use ($items) {
+    expect(paginateRecords($items, 2, 9)['data'])->toEqual([]);
+    expect(paginateRecords($items, 2, 9)['meta']['current_page'])->toBe(9);
+});
+
+test('danh sach rong van co mot last page', function () {
+    expect(paginateRecords([], 10, 1)['meta']['last_page'])->toBe(1);
+});
+
+test('tu choi page hoac page size khong duong', function () use ($items) {
+    expect(fn () => paginateRecords($items, 0, 1))->toThrow(InvalidArgumentException::class);
+    expect(fn () => paginateRecords($items, 2, 0))->toThrow(InvalidArgumentException::class);
+});
+'''
+hints = ["Tính offset từ page và perPage sau khi kiểm tra chúng.", "Tính last_page bằng ceil(total / perPage), rồi đảm bảo giá trị nhỏ nhất là 1."]
+explanation = "Metadata phân trang là một phần của response contract; kiểm thử cả trang cuối và danh sách rỗng để tránh lỗi biên."
+sources = ["laravel~11/docs/11.x/pagination", "laravel~11/docs/11.x/responses"]
+
+[[modules]]
+id = "php-laravel-dv-http-client"
+title = "HTTP Client và tích hợp dịch vụ"
+description = "Gọi dịch vụ ngoài có timeout, xử lý response rõ ràng và kiểm thử không cần mạng."
+sources = ["laravel~11/docs/11.x/http-client", "laravel~11/docs/11.x/http-tests", "laravel~11/docs/11.x/rate-limiting", "laravel~11/docs/11.x/responses"]
+lesson = '''
+### Gọi HTTP có kiểm soát
+Laravel HTTP Client cung cấp API fluent để đặt header, gửi payload và đọc response từ dịch vụ ngoài. Hãy đặt timeout tường minh để request không giữ worker vô hạn. HTTP status lỗi như 404 hoặc 503 thường vẫn trả về một response object; kiểm tra `successful`, `failed` hoặc gọi `throw()` khi muốn chuyển status 4xx/5xx thành exception. Lỗi kết nối và lỗi status là hai tình huống khác nhau, cần log và phản hồi theo chính sách riêng.
+
+| Nhu cầu | Công cụ | Lưu ý |
+|---|---|---|
+| Giới hạn thời gian chờ | `timeout` | Chọn ngưỡng theo SLA của dependency |
+| Thử lại lỗi tạm thời | `retry` | Giới hạn số lần và thời gian chờ |
+| Xử lý status không thành công | `failed` hoặc `throw` | Không coi mọi response là thành công |
+| Kiểm thử request | `Http::fake` và assertion | Không gọi dịch vụ thật trong test |
+
+Ví dụ:
+```php
+$response = Http::timeout(3)->retry(2, 100)->get($url);
+$response->throw();
+```
+
+Retry có thể tạo tác dụng phụ nếu request ghi dữ liệu đã được xử lý ở đầu bên kia. Với thao tác tạo giao dịch, chỉ retry khi thiết kế idempotent hoặc gửi khóa idempotency mà dịch vụ thực sự hỗ trợ. Nên retry lỗi tạm thời có giới hạn, tránh lặp vô tận hoặc retry mọi lỗi 4xx. Test có thể cấu hình `Http::fake` để mô phỏng status/body và xác nhận method, URL, header, payload; nhờ đó test ổn định và không phụ thuộc mạng. Lỗi hay gặp là quên timeout, bỏ qua status lỗi hoặc dùng fake sau khi request đã được gửi.
+'''
+
+[[questions]]
+id = "php-laravel-dv015"
+module = "php-laravel-dv-http-client"
+type = "single"
+difficulty = 1
+prompt = "Một request dùng Laravel HTTP Client nhận status 503. Điều nào đúng về response?"
+options = ["Luôn ném exception trước khi có response object", "Có thể kiểm tra status hoặc gọi `throw()` để chuyển status lỗi thành exception", "Laravel tự retry vô hạn", "Status 503 được xem là thành công"]
+answer = [1]
+explanation = "HTTP Client trả response để ứng dụng quyết định; `throw()` chuyển status lỗi HTTP thành RequestException."
+sources = ["laravel~11/docs/11.x/http-client"]
+
+[[questions]]
+id = "php-laravel-dv016"
+module = "php-laravel-dv-http-client"
+type = "single"
+difficulty = 3
+prompt = "Một endpoint tạo thanh toán có thể đã xử lý request nhưng client bị timeout trước khi nhận response. Trước khi retry, điều gì quan trọng nhất?"
+options = ["Tăng timeout lên vô hạn", "Đảm bảo thao tác có tính idempotent hoặc dùng idempotency key được dịch vụ hỗ trợ", "Retry liên tục tới khi nhận 200", "Chuyển POST thành GET mà không đổi hợp đồng"]
+answer = [1]
+explanation = "Timeout không chứng minh server chưa thực hiện thao tác. Idempotency giúp retry không tạo giao dịch trùng."
+sources = ["laravel~11/docs/11.x/http-client"]
+
+[[questions]]
+id = "php-laravel-dv017"
+module = "php-laravel-dv-http-client"
+type = "single"
+difficulty = 2
+prompt = "Muốn test một service gọi API đối tác mà không phụ thuộc mạng thật, nên làm gì?"
+options = ["Gọi endpoint thật trong mọi test", "Đăng ký `Http::fake` trước lời gọi rồi kiểm tra request/response", "Tắt mọi assertion của test", "Thay HTTP Client bằng sleep"]
+answer = [1]
+explanation = "HTTP fake mô phỏng dịch vụ ngoài và cho phép assertion request mà không phát sinh network call."
+sources = ["laravel~11/docs/11.x/http-tests", "laravel~11/docs/11.x/http-client"]
+
+[[questions]]
+id = "php-laravel-dv018"
+module = "php-laravel-dv-http-client"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các biện pháp giúp tích hợp HTTP ổn định hơn trong production."
+options = ["Đặt timeout rõ ràng", "Giới hạn retry và chỉ retry các lỗi phù hợp", "Retry mọi lỗi xác thực 401 vô hạn", "Dùng fake trong test và assertion để kiểm tra request"]
+answer = [0, 1, 3]
+explanation = "Timeout, retry có giới hạn và fake test cải thiện khả năng kiểm soát. Retry vô hạn với lỗi 401 không giải quyết nguyên nhân và có thể tăng tải."
+sources = ["laravel~11/docs/11.x/http-client", "laravel~11/docs/11.x/http-tests"]
+
+[[questions]]
+id = "php-laravel-dv019"
+module = "php-laravel-dv-http-client"
+type = "fill"
+difficulty = 1
+prompt = '''Điền facade để thiết lập response giả trước khi gọi dịch vụ ngoài trong test:
+
+```php
+{{blank}}::fake(['partner.test/*' => Http::response(['ok' => true], 200)]);
+```'''
+blanks = [["Http"]]
+explanation = "Laravel HTTP Client fake cấu hình response giả cho các request được test."
+sources = ["laravel~11/docs/11.x/http-tests"]
+
+[[questions]]
+id = "php-laravel-dv020"
+module = "php-laravel-dv-http-client"
+type = "fill"
+difficulty = 2
+prompt = '''Điền method để chuyển response 4xx/5xx thành exception:
+
+```php
+$response = Http::get($url);
+$response->{{blank}}();
+```'''
+blanks = [["throw"]]
+explanation = "throw ném exception khi response có status lỗi HTTP, giúp luồng xử lý chuyển sang catch phù hợp."
+sources = ["laravel~11/docs/11.x/http-client"]
+
+[[questions]]
+id = "php-laravel-dv021"
+module = "php-laravel-dv-http-client"
+type = "essay"
+difficulty = 3
+prompt = "Trong phỏng vấn, hãy mô tả chính sách timeout, retry và kiểm thử cho một client gọi API thanh toán bên ngoài."
+keywords = [["timeout", "thời gian chờ"], ["retry có giới hạn", "bounded retry"], ["idempotent", "tính idempotent"], ["idempotency key", "khóa idempotency"], ["Http::fake", "HTTP fake"]]
+min_keywords = 3
+model_answer = '''Tôi đặt timeout theo SLA để worker không chờ vô hạn. Retry chỉ có số lần giới hạn và nhắm tới lỗi tạm thời. Vì timeout có thể xảy ra sau khi đối tác đã tạo giao dịch, thao tác cần idempotent hoặc dùng idempotency key được hai bên hỗ trợ. Trong test, tôi dùng Http::fake để mô phỏng response thành công, lỗi và kiểm tra request mà không gọi mạng thật.'''
+explanation = "Câu trả lời cần xem timeout là kết quả chưa chắc chắn và bảo vệ thao tác ghi khỏi bị thực hiện lặp."
+sources = ["laravel~11/docs/11.x/http-client", "laravel~11/docs/11.x/http-tests"]
+
+[[questions]]
+id = "php-laravel-dvc03"
+module = "php-laravel-dv-http-client"
+type = "code"
+difficulty = 2
+lang = "php"
+title = "Tính backoff có giới hạn"
+prompt = '''Viết `retryDelayMs(int $attempt, int $baseMs, int $maxMs): int` cho backoff lũy thừa. Lần thử bắt đầu từ 1; độ trễ lần đầu là `baseMs`, mỗi lần tiếp theo gấp đôi, nhưng không vượt quá `maxMs`. `attempt` phải trong khoảng 1 đến 20, `baseMs` và `maxMs` không âm; dữ liệu ngoài giới hạn phải ném `InvalidArgumentException`.'''
+starter = '''function retryDelayMs(int $attempt, int $baseMs, int $maxMs): int {
+    return 0;
+}
+'''
+solution = '''function retryDelayMs(int $attempt, int $baseMs, int $maxMs): int {
+    if ($attempt < 1 || $attempt > 20 || $baseMs < 0 || $maxMs < 0) {
+        throw new InvalidArgumentException('Invalid retry settings');
+    }
+    $delay = $baseMs;
+    for ($i = 1; $i < $attempt; $i++) {
+        if ($delay >= $maxMs) {
+            return $maxMs;
+        }
+        if ($delay > intdiv($maxMs, 2)) {
+            return $maxMs;
+        }
+        $delay *= 2;
+    }
+    return min($delay, $maxMs);
+}
+'''
+tests = '''test('lan thu nhat dung base delay', function () {
+    expect(retryDelayMs(1, 100, 1000))->toBe(100);
+});
+
+test('nhan doi theo lan thu', function () {
+    expect(retryDelayMs(4, 100, 1000))->toBe(800);
+});
+
+test('khong vuot qua max', function () {
+    expect(retryDelayMs(5, 100, 700))->toBe(700);
+});
+
+test('max nho hon base thi dung max', function () {
+    expect(retryDelayMs(1, 1000, 300))->toBe(300);
+});
+
+test('base bang zero van bang zero', function () {
+    expect(retryDelayMs(10, 0, 500))->toBe(0);
+});
+
+test('tu choi attempt ngoai gioi han', function () {
+    expect(fn () => retryDelayMs(0, 100, 1000))->toThrow(InvalidArgumentException::class);
+    expect(fn () => retryDelayMs(21, 100, 1000))->toThrow(InvalidArgumentException::class);
+});
+
+test('tu choi do tre am', function () {
+    expect(fn () => retryDelayMs(1, -1, 1000))->toThrow(InvalidArgumentException::class);
+    expect(fn () => retryDelayMs(1, 10, -1))->toThrow(InvalidArgumentException::class);
+});
+'''
+hints = ["Kiểm tra giới hạn đầu vào trước khi tính.", "Dừng sớm khi delay đã chạm max hoặc phép nhân tiếp theo có thể vượt max."]
+explanation = "Backoff có giới hạn giảm retry dồn dập; khi triển khai thật cần ghép với timeout và phân loại lỗi tạm thời."
+sources = ["laravel~11/docs/11.x/http-client", "laravel~11/docs/11.x/rate-limiting"]
+
+[[modules]]
+id = "php-laravel-dv-events"
+title = "Events, Notifications và Mail"
+description = "Tách domain events khỏi side effects và gửi thông báo qua kênh phù hợp."
+sources = ["laravel~11/docs/11.x/events", "laravel~11/docs/11.x/notifications", "laravel~11/docs/11.x/mail", "laravel~11/docs/11.x/queues", "laravel~11/docs/11.x/broadcasting", "laravel~11/docs/11.x/testing"]
+lesson = '''
+### Tách sự kiện khỏi việc gửi thông báo
+Domain event diễn đạt một việc đã xảy ra, chẳng hạn `OrderPaid`; listener phản ứng với sự kiện đó bằng cách cập nhật projection, gửi email hoặc đẩy thông tin sang hệ thống khác. Cách này giúp controller không phải biết mọi side effect. Event mô tả sự kiện nghiệp vụ, còn notification chọn người nhận và kênh như mail, database hoặc broadcast. Mail phù hợp khi cần tạo nội dung email cụ thể; Notification hữu ích khi cùng một thông điệp có thể đi qua nhiều channel.
+
+| Công cụ | Trách nhiệm | Ví dụ |
+|---|---|---|
+| Event | Mô tả sự việc đã xảy ra | `OrderPaid` |
+| Listener | Phản ứng với event | tạo biên nhận |
+| Notification | Chọn nội dung, người nhận và channel | mail + database |
+| Queue | Chuyển việc chậm sang worker | gửi email ngoài request |
+
+Ví dụ gửi notification tới nhiều người dùng:
+```php
+Notification::send($users, new InvoicePaid($invoice));
+```
+
+Listener hoặc notification triển khai `ShouldQueue` khi công việc chậm cần chạy nền; queue vẫn cần retry có giới hạn và xử lý lỗi cuối cùng. Nếu event gắn với dữ liệu trong transaction, dispatch sau commit để listener không đọc bản ghi chưa được commit. Trong test, `Notification::fake` và `Event::fake` kiểm tra việc phát sinh thông báo hoặc event mà không gửi thật. Lỗi hay gặp là gửi email đồng bộ trong request, phát event trước khi transaction commit, hoặc coi retry là bảo đảm không có side effect trùng lặp.
+'''
+
+[[questions]]
+id = "php-laravel-dv022"
+module = "php-laravel-dv-events"
+type = "single"
+difficulty = 1
+prompt = "Trong kiến trúc event/listener, `OrderPaid` nên biểu đạt điều gì?"
+options = ["Một truy vấn SQL", "Một sự kiện nghiệp vụ đã xảy ra", "Một email gửi tới người mua", "Một middleware HTTP"]
+answer = [1]
+explanation = "Event mô tả sự việc đã xảy ra; listener mới quyết định phản ứng nào cần chạy."
+sources = ["laravel~11/docs/11.x/events"]
+
+[[questions]]
+id = "php-laravel-dv023"
+module = "php-laravel-dv-events"
+type = "single"
+difficulty = 3
+prompt = "Một listener đọc order ngay sau khi event được dispatch trong transaction nhưng không tìm thấy bản ghi. Hướng sửa phù hợp là gì?"
+options = ["Dispatch event sau khi transaction commit", "Tắt transaction cho toàn ứng dụng", "Retry vô hạn trong controller", "Đổi event thành email"]
+answer = [0]
+explanation = "Listener có thể chạy trước khi dữ liệu transaction được commit; trì hoãn dispatch đến sau commit giúp nó đọc trạng thái đã lưu."
+sources = ["laravel~11/docs/11.x/events", "laravel~11/docs/11.x/queues"]
+
+[[questions]]
+id = "php-laravel-dv024"
+module = "php-laravel-dv-events"
+type = "single"
+difficulty = 2
+prompt = "Khi một thông điệp cần gửi cho người dùng qua email và database, lựa chọn nào thể hiện đúng vai trò của Laravel Notification?"
+options = ["Notification có thể định nghĩa nhiều channel cho cùng thông điệp", "Mỗi notification chỉ gửi được qua một SMTP server", "Notification thay thế database transaction", "Notification chỉ dùng được trong controller"]
+answer = [0]
+explanation = "Notification có thể chọn một hoặc nhiều channel theo người nhận và tình huống."
+sources = ["laravel~11/docs/11.x/notifications"]
+
+[[questions]]
+id = "php-laravel-dv025"
+module = "php-laravel-dv-events"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các quyết định hợp lý khi triển khai thông báo sau khi đơn hàng được thanh toán."
+options = ["Phát event thể hiện đơn hàng đã thanh toán", "Đưa việc gửi email chậm vào queue khi phù hợp", "Gửi notification giả lập trong test bằng fake", "Phát event trước commit rồi giả định listener luôn thấy dữ liệu đã commit"]
+answer = [0, 1, 2]
+explanation = "Event tách nghiệp vụ khỏi side effect; queue giảm thời gian request; fake tránh gửi thật trong test. Tính nhất quán transaction cần được chủ động bảo đảm."
+sources = ["laravel~11/docs/11.x/events", "laravel~11/docs/11.x/queues", "laravel~11/docs/11.x/testing"]
+
+[[questions]]
+id = "php-laravel-dv026"
+module = "php-laravel-dv-events"
+type = "fill"
+difficulty = 2
+prompt = '''Điền interface để Laravel chạy việc gửi notification qua queue:
+
+```php
+class InvoicePaid extends Notification implements {{blank}} {
+}
+```'''
+blanks = [["ShouldQueue"]]
+explanation = "Notification có thể triển khai ShouldQueue để việc gửi được xử lý bởi worker."
+sources = ["laravel~11/docs/11.x/notifications", "laravel~11/docs/11.x/queues"]
+
+[[questions]]
+id = "php-laravel-dv027"
+module = "php-laravel-dv-events"
+type = "fill"
+difficulty = 1
+prompt = '''Điền facade để test ghi nhận việc gửi thông báo mà không gửi qua channel thật:
+
+```php
+{{blank}}::fake();
+```'''
+blanks = [["Notification"]]
+explanation = "Notification::fake thay thế việc gửi thật và cung cấp assertion cho test."
+sources = ["laravel~11/docs/11.x/notifications", "laravel~11/docs/11.x/testing"]
+
+[[questions]]
+id = "php-laravel-dv028"
+module = "php-laravel-dv-events"
+type = "essay"
+difficulty = 3
+prompt = "Trong phỏng vấn, hãy giải thích cách tách việc thanh toán đơn hàng khỏi gửi email và đảm bảo listener đọc được dữ liệu đã commit."
+keywords = [["domain event", "sự kiện nghiệp vụ"], ["listener", "bộ lắng nghe"], ["queue", "hàng đợi"], ["after commit", "sau commit", "sau khi transaction commit"], ["notification", "thông báo"]]
+min_keywords = 3
+model_answer = '''Sau khi thanh toán thành công, ứng dụng phát một domain event như `OrderPaid`. Listener xử lý việc gửi email hoặc tạo notification để controller không bị gắn chặt với side effect. Việc chậm có thể chuyển qua queue. Nếu event phụ thuộc vào bản ghi vừa tạo trong transaction, dispatch after commit để listener chỉ chạy khi dữ liệu đã commit. Test dùng Notification::fake để xác nhận thông báo được gửi mà không cần gửi email thật.'''
+explanation = "Câu trả lời tốt nêu ranh giới nghiệp vụ, xử lý nền và tính nhất quán với transaction."
+sources = ["laravel~11/docs/11.x/events", "laravel~11/docs/11.x/notifications", "laravel~11/docs/11.x/queues"]
+
+[[questions]]
+id = "php-laravel-dvc04"
+module = "php-laravel-dv-events"
+type = "code"
+difficulty = 2
+lang = "php"
+title = "Khử trùng người nhận thông báo"
+prompt = '''Viết `uniqueRecipientIds(array $ids): array`. Chỉ giữ các ID là integer dương, loại bỏ ID trùng lặp và giữ thứ tự xuất hiện đầu tiên. Giá trị không phải integer dương phải bị bỏ qua; không ép chuỗi số thành integer.'''
+starter = '''function uniqueRecipientIds(array $ids): array {
+    return [];
+}
+'''
+solution = '''function uniqueRecipientIds(array $ids): array {
+    $unique = [];
+    foreach ($ids as $id) {
+        if (!is_int($id) || $id < 1) {
+            continue;
+        }
+        if (!in_array($id, $unique, true)) {
+            $unique[] = $id;
+        }
+    }
+    return $unique;
+}
+'''
+tests = '''test('loai id trung va giu thu tu dau tien', function () {
+    expect(uniqueRecipientIds([7, 2, 7, 4, 2]))->toEqual([7, 2, 4]);
+});
+
+test('bo qua id khong duong', function () {
+    expect(uniqueRecipientIds([0, -1, 3]))->toEqual([3]);
+});
+
+test('bo qua gia tri sai kieu khong ep kieu', function () {
+    expect(uniqueRecipientIds(['3', true, 3.0, 5]))->toEqual([5]);
+});
+
+test('danh sach rong tra rong', function () {
+    expect(uniqueRecipientIds([]))->toEqual([]);
+});
+
+test('khong lam thay doi mang dau vao', function () {
+    $ids = [8, 8, 9];
+    uniqueRecipientIds($ids);
+    expect($ids)->toEqual([8, 8, 9]);
+});
+'''
+hints = ["Duyệt một lần và thêm ID hợp lệ vào mảng kết quả.", "Dùng so sánh strict khi kiểm tra ID đã tồn tại để không gộp giá trị khác kiểu."]
+explanation = "Khử trùng danh sách người nhận giúp tránh gửi thông báo lặp khi cùng user xuất hiện từ nhiều nguồn."
+sources = ["laravel~11/docs/11.x/notifications", "laravel~11/docs/11.x/events"]
 

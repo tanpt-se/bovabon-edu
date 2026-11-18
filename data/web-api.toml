@@ -67,7 +67,7 @@ lesson = '''
 id = "api-auth"
 title = "Xác thực, phân quyền & bảo mật"
 description = "Session cookie vs token, JWT, OAuth2 / OIDC, PKCE, CORS, CSRF, OWASP API Top 10."
-sources = ["http/guides/cors", "http/reference/headers/set-cookie", "http/reference/headers/content-security-policy", "http/reference/headers/strict-transport-security"]
+sources = ["http/guides/cors", "http/reference/headers/set-cookie", "http/reference/headers/content-security-policy", "http/reference/headers/strict-transport-security", "http/reference/headers/authorization", "http/reference/headers/www-authenticate"]
 lesson = '''
 ### Ý chính
 - **Authentication** (bạn là ai) ≠ **Authorization** (bạn được làm gì).
@@ -83,7 +83,7 @@ lesson = '''
 id = "api-styles"
 title = "REST, GraphQL, gRPC & Realtime"
 description = "So sánh kiểu API, WebSocket, SSE, webhook, message queue."
-sources = ["dom/websocket", "dom/eventsource"]
+sources = ["http/guides/protocol_upgrade_mechanism", "http/rfc9110#section-7.8", "http/reference/headers/upgrade", "http/reference/headers/connection"]
 lesson = '''
 | | REST | GraphQL | gRPC |
 |---|---|---|---|
@@ -96,6 +96,74 @@ lesson = '''
 - **SSE** (Server-Sent Events): server → client một chiều qua HTTP, tự reconnect.
 - **WebSocket**: hai chiều, full-duplex.
 - **Webhook**: server gọi ngược tới URL của bạn khi có sự kiện — xác minh chữ ký HMAC, xử lý idempotent, trả 2xx nhanh.
+'''
+
+[[modules]]
+id = "web-api-dv-representations"
+title = "Content negotiation & range requests"
+description = "Chọn định dạng biểu diễn, xử lý byte range và tiếp tục tải nội dung lớn."
+sources = ["http/rfc9110#section-12", "http/rfc9110#section-14", "http/reference/headers/accept", "http/reference/headers/content-type", "http/reference/headers/range", "http/reference/headers/content-range"]
+lesson = '''
+### Chọn biểu diễn và tải một phần tài nguyên
+
+Một resource có thể được biểu diễn ở nhiều định dạng. Client mô tả định dạng có thể nhận qua `Accept`; server mô tả định dạng thực tế của body bằng `Content-Type`. Request body lại có `Content-Type` riêng, vì vậy không nên dùng hai header này thay cho nhau. Nếu server không hỗ trợ kiểu dữ liệu request, thường trả `415 Unsupported Media Type`; nếu không thể tạo representation nào client chấp nhận, có thể trả `406 Not Acceptable`. Khi nội dung response thay đổi theo `Accept`, cache cần biết biến thể này qua `Vary: Accept`.
+
+| Tình huống | Header / status | Ý nghĩa |
+|---|---|---|
+| Client chọn JSON | `Accept: application/json` | Định dạng mong muốn |
+| Server trả JSON | `Content-Type: application/json` | Định dạng body thực tế |
+| Tải một phần | `Range: bytes=100-199` | Yêu cầu khoảng byte |
+| Server chấp nhận range | `206 Partial Content` | Body chỉ chứa phần được chọn |
+| Range không thỏa mãn | `416 Range Not Satisfiable` | Không có byte nào trong khoảng hợp lệ |
+
+Range hữu ích khi tải video, file lớn hoặc tiếp tục tải sau khi mất kết nối. Response `206` thường có `Content-Range: bytes 100-199/1000`, trong đó mẫu số là tổng độ dài representation. `Accept-Ranges: bytes` quảng bá hỗ trợ này. `If-Range` cho phép client gửi range khi validator còn khớp; nếu nội dung đã đổi, server gửi toàn bộ representation với `200` để tránh ghép các phần thuộc hai phiên bản khác nhau.
+
+Ví dụ: client yêu cầu `Range: bytes=0-99`, server trả `206`, `Content-Range: bytes 0-99/1000` và đúng 100 byte đầu. Lỗi thường gặp là nhầm `406` (không chọn được response) với `415` (không đọc được request), trả `200` nhưng chỉ kèm một phần body, hoặc quên giới hạn số range và kích thước tải để tránh tiêu hao tài nguyên. Với dữ liệu thay đổi thường xuyên, kiểm tra validator trước khi nối các đoạn tải.
+'''
+
+[[modules]]
+id = "web-api-dv-framing"
+title = "Message framing & connection"
+description = "Cách HTTP xác định biên body, tái sử dụng kết nối và khác biệt giữa các phiên bản."
+sources = ["http/rfc9112#section-2.1", "http/rfc9112#section-6", "http/rfc9112#section-9", "http/rfc9110#section-7.2", "http/rfc9113#section-9", "http/rfc9114#section-3"]
+lesson = '''
+### Message framing và vòng đời kết nối
+
+HTTP/1.1 truyền message trên một kết nối TCP dạng byte stream, nên hai đầu phải thống nhất nơi body kết thúc. `Content-Length` nêu số octet của body; `Transfer-Encoding: chunked` cho phép gửi các chunk khi chưa biết tổng độ dài trước. Khi request có framing mơ hồ, chẳng hạn `Content-Length` mâu thuẫn với `Transfer-Encoding`, reverse proxy và ứng dụng có thể hiểu khác nhau về ranh giới request. Đây là dấu hiệu cần từ chối và chuẩn hóa ở biên tin cậy; không tự viết parser HTTP đơn giản.
+
+| Phiên bản | Giao thức truyền tải | Đơn vị ghép kênh | Điểm cần nhớ |
+|---|---|---|---|
+| HTTP/1.1 | TCP | Một request/response đang dùng kết nối theo thứ tự | Kết nối thường được tái sử dụng; framing body phải rõ |
+| HTTP/2 | TCP | Nhiều stream trên một kết nối | Binary framing, HPACK; mất gói TCP có thể chặn tiến triển các stream |
+| HTTP/3 | QUIC trên UDP | Nhiều stream QUIC | QPACK; mất gói ở một stream không nhất thiết chặn stream khác |
+
+HTTP/1.1 yêu cầu `Host` để server chọn authority đích; kết nối mặc định có thể tồn tại qua nhiều request nếu body trước đã được đọc hết và không có chỉ thị đóng. `Connection: close` ngăn tái sử dụng; HTTP/1.0 cần cơ chế keep-alive riêng. Không được quyết định pool chỉ từ status code: body chưa đọc xong thì byte còn lại có thể bị hiểu nhầm là response kế tiếp.
+
+Lỗi hay gặp là cho rằng HTTP/2 chạy trên UDP hoặc HTTP/3 chỉ là HTTP/2 nhanh hơn. HTTP/2 vẫn kế thừa thứ tự byte của TCP; HTTP/3 dùng QUIC để cô lập tiến triển stream tốt hơn, nhưng vẫn chịu giới hạn băng thông và congestion control. Với proxy, ưu tiên server/library đã được cập nhật, giới hạn kích thước header/body và kiểm tra log giao thức đầu-cuối thay vì suy ra phiên bản từ một header ứng dụng.
+'''
+
+[[modules]]
+id = "web-api-dv-csp"
+title = "CSP & browser security headers"
+description = "Giảm bề mặt tấn công nội dung trong trình duyệt bằng CSP và các header phòng thủ."
+sources = ["http/reference/headers/content-security-policy", "http/reference/headers/content-security-policy/default-src", "http/reference/headers/content-security-policy/script-src", "http/reference/headers/content-security-policy/frame-ancestors", "http/reference/headers/content-security-policy/connect-src", "http/reference/headers/content-security-policy-report-only"]
+lesson = '''
+### Content Security Policy
+
+Content Security Policy (CSP) là lớp phòng thủ do browser thực thi dựa trên policy server gửi qua response header. CSP giúp giới hạn nơi trang được tải script, ảnh, style, kết nối mạng và frame; nó giảm tác động của một số lỗi injection nhưng không thay thế encode output, kiểm tra input hay sửa XSS trong ứng dụng.
+
+| Directive | Phạm vi | Ghi nhớ |
+|---|---|---|
+| `default-src` | Fallback cho một số fetch directive chưa khai báo riêng | Không thay thế `base-uri`, `form-action` hay `frame-ancestors` |
+| `script-src` | Nguồn script, nonce hoặc hash được chấp nhận | Tránh cho phép inline script rộng bằng `'unsafe-inline'` |
+| `connect-src` | Kết nối do trang khởi tạo như fetch/XHR/WebSocket | Giới hạn endpoint mà mã trang có thể gọi |
+| `frame-ancestors` | Những site được phép nhúng trang này | `'none'` cấm embedding; khác `frame-src` |
+
+Ví dụ policy ban đầu: `default-src 'none'; script-src 'self' 'nonce-<random-per-response>'; connect-src 'self' https://api.example; img-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'`. Nonce phải khó đoán, được tạo mới cho mỗi response và gắn đúng vào script được server tin cậy. Hash phù hợp với inline script tĩnh có nội dung ổn định. Tránh bật `'unsafe-inline'` chỉ để làm policy hết báo lỗi.
+
+Khi triển khai trên ứng dụng cũ, bắt đầu với `Content-Security-Policy-Report-Only` và cấu hình reporting để quan sát vi phạm; policy này chỉ báo cáo, không chặn. Sau khi dọn nguồn script/kết nối hợp lệ, chuyển dần sang `Content-Security-Policy` thực thi. Lỗi thường gặp là nghĩ `default-src` khóa mọi hành vi, nhầm `frame-src` (trang tải frame nào) với `frame-ancestors` (ai được nhúng trang), hoặc coi CSP là CORS: CORS kiểm soát việc browser cho phép trang đọc response cross-origin, còn CSP giới hạn hành vi/tài nguyên của trang.
+
+Các header khác giải quyết lớp riêng: `Strict-Transport-Security` yêu cầu browser dùng HTTPS sau khi nhận policy an toàn; `X-Content-Type-Options: nosniff` ngăn một số suy đoán MIME. Thiết lập header đúng giúp giảm rủi ro, nhưng cần kiểm tra trên trang thật để tránh vô tình chặn tài nguyên ứng dụng.
 '''
 
 # ------------------------------------------------------------ HTTP
@@ -754,7 +822,7 @@ prompt = "Dashboard chỉ cần server **đẩy** cập nhật giá một chiề
 options = ["Long polling mỗi 100ms", "Server-Sent Events (EventSource)", "gRPC streaming từ trình duyệt", "Webhook"]
 answer = [1]
 explanation = "SSE chạy trên HTTP thường, tự reconnect, có `Last-Event-ID`. Cần hai chiều tần suất cao thì dùng WebSocket."
-sources = ["dom/eventsource"]
+sources = ["http/reference/headers/content-type"]
 
 [[questions]]
 id = "api-082"
@@ -773,6 +841,395 @@ answer = [0, 1, 2, 4]
 explanation = "URL webhook là public — ai cũng gọi được, nên bắt buộc xác minh chữ ký."
 
 [[questions]]
+id = "web-api-dv001"
+module = "web-api-dv-representations"
+type = "single"
+difficulty = 1
+prompt = "Client gửi `Accept: application/json`, còn server trả JSON. Cặp mô tả nào đúng?"
+options = ["Request `Content-Type`, response `Accept`", "Request `Accept`, response `Content-Type`", "Cả hai header đều mô tả định dạng response", "Cả hai header đều mô tả định dạng request"]
+answer = [1]
+explanation = "`Accept` nêu kiểu response client muốn nhận; `Content-Type` mô tả kiểu dữ liệu thực tế của body request hoặc response."
+sources = ["http/reference/headers/accept", "http/reference/headers/content-type"]
+
+[[questions]]
+id = "web-api-dv002"
+module = "web-api-dv-representations"
+type = "single"
+difficulty = 2
+prompt = "Client gửi `POST` với `Content-Type: application/xml`, nhưng endpoint chỉ nhận JSON. Status phù hợp nhất là gì?"
+options = ["406 Not Acceptable", "415 Unsupported Media Type", "416 Range Not Satisfiable", "304 Not Modified"]
+answer = [1]
+explanation = "415 biểu thị server không hỗ trợ media type của request body; 406 liên quan đến representation response không đáp ứng `Accept`."
+sources = ["http/rfc9110#section-15.5.16", "http/reference/headers/content-type"]
+
+[[questions]]
+id = "web-api-dv003"
+module = "web-api-dv-representations"
+type = "multiple"
+difficulty = 2
+prompt = "Một endpoint tạo response JSON hoặc XML tùy theo `Accept`. Chọn các hành vi đúng."
+options = ["Response ghi media type được chọn trong `Content-Type`", "Có thể trả `406` nếu không có kiểu response nào được chấp nhận", "Cache cần `Vary: Accept` khi response cacheable thay đổi theo header này", "`Content-Length` thay thế cho `Content-Type`", "Request bắt buộc phải có cả `Accept` và `Content-Type`"]
+answer = [0, 1, 2]
+explanation = "`Content-Type` mô tả representation được trả; `Vary` giúp cache phân biệt response theo `Accept`."
+sources = ["http/rfc9110#section-12", "http/reference/headers/accept", "http/reference/headers/content-type", "http/reference/headers/vary"]
+
+[[questions]]
+id = "web-api-dv004"
+module = "web-api-dv-representations"
+type = "fill"
+difficulty = 1
+prompt = '''
+File có tổng cộng 1000 byte; server phục vụ thành công `Range: bytes=100-199`:
+
+- Status: **{{blank}}**
+- `Content-Range: bytes 100-199/{{blank}}`
+- `Content-Length` của body: **{{blank}}**
+'''
+blanks = [["206"], ["1000"], ["100"]]
+explanation = "Khoảng byte có hai đầu mút bao gồm cả hai, nên đoạn 100–199 dài 100 byte."
+sources = ["http/rfc9110#section-14", "http/reference/headers/content-range"]
+
+[[questions]]
+id = "web-api-dv005"
+module = "web-api-dv-representations"
+type = "single"
+difficulty = 3
+prompt = "Client gửi `Range` cùng `If-Range`, nhưng validator hiện tại không khớp vì file đã thay đổi. Server nên làm gì?"
+options = ["Trả `206` với một phần của file mới", "Bỏ qua range và trả toàn bộ representation mới với `200`", "Trả `304` dù body đã thay đổi", "Ghép byte của file cũ và file mới"]
+answer = [1]
+explanation = "Nếu validator trong `If-Range` không còn đúng, trả toàn bộ phiên bản mới giúp client không ghép các đoạn thuộc hai representation khác nhau."
+sources = ["http/rfc9110#section-13.1.5", "http/rfc9110#section-14"]
+
+[[questions]]
+id = "web-api-dv006"
+module = "web-api-dv-representations"
+type = "single"
+difficulty = 2
+prompt = "File dài 100 byte nhận `Range: bytes=100-120`. Nếu server không bỏ qua header này, status phù hợp là gì?"
+options = ["200 OK", "206 Partial Content", "304 Not Modified", "416 Range Not Satisfiable"]
+answer = [3]
+explanation = "Byte offset lớn nhất là 99, nên range bắt đầu ở 100 không có phần giao với representation."
+sources = ["http/rfc9110#section-14", "http/reference/status/416"]
+
+[[questions]]
+id = "web-api-dv007"
+module = "web-api-dv-representations"
+type = "essay"
+difficulty = 3
+prompt = "Trong buổi phỏng vấn, hãy giải thích cách thiết kế endpoint hỗ trợ JSON/XML và tải tiếp file lớn. Nêu cách client/server thương lượng định dạng, các status/header quan trọng và một rủi ro cần kiểm soát."
+keywords = [["accept", "content negotiation"], ["content-type"], ["406", "not acceptable"], ["415", "unsupported media type"], ["range", "206", "content-range"], ["if-range", "validator"], ["vary"]]
+min_keywords = 4
+model_answer = '''
+Client gửi `Accept` để chọn định dạng response; server ghi định dạng thực tế bằng `Content-Type` và có thể trả `406 Not Acceptable` nếu không có kiểu phù hợp. `415 Unsupported Media Type` dành cho kiểu body request server không nhận. Khi representation cacheable thay đổi theo `Accept`, dùng `Vary: Accept`. Với file lớn, client gửi `Range`; server trả `206 Partial Content` cùng `Content-Range`. Có thể dùng `If-Range` với validator để tránh ghép các đoạn từ hai phiên bản file khác nhau. Server nên giới hạn và kiểm tra range để tránh tiêu tốn tài nguyên quá mức.
+'''
+explanation = "Câu trả lời tốt phân biệt chiều request/response và nối đúng status với từng tình huống."
+sources = ["http/rfc9110#section-12", "http/rfc9110#section-14", "http/rfc9110#section-13.1.5"]
+
+[[questions]]
+id = "web-api-dvc01"
+module = "web-api-dv-representations"
+type = "code"
+difficulty = 2
+title = "Phản hồi byte range đơn"
+lang = "javascript"
+prompt = '''
+Viết `rangeResponse(data, rangeHeader)` cho dữ liệu ASCII trong chuỗi `data` và tối đa một byte range:
+- Không có header, unit không phải `bytes`, cú pháp sai hoặc nhiều range: bỏ qua header và trả `{ status: 200, headers: { 'Accept-Ranges': 'bytes', 'Content-Length': '<độ dài>' }, body: data }`.
+- Chấp nhận dạng `bytes=start-end`, `bytes=start-` và `bytes=-suffixLength`; hai đầu mút của range là bao gồm.
+- Range hợp lệ: trả `206`, body là phần được chọn, có `Content-Range: bytes start-end/total` và `Content-Length` đúng độ dài body. Nếu end vượt quá cuối chuỗi thì giới hạn về byte cuối.
+- Range hợp lệ nhưng không có byte nào thỏa mãn (ví dụ start vượt quá độ dài hoặc suffix bằng 0): trả `416`, `Content-Range: bytes */total`, `Content-Length: '0'`, body rỗng.
+- Luôn có `Accept-Ranges: bytes`. Vì dữ liệu là ASCII, mỗi ký tự tương ứng một byte.
+'''
+starter = '''
+function rangeResponse(data, rangeHeader) {
+  return { status: 200, headers: { 'Accept-Ranges': 'bytes' }, body: data };
+}
+'''
+solution = '''
+function rangeResponse(data, rangeHeader) {
+  const total = data.length;
+  const full = () => ({ status: 200, headers: { 'Accept-Ranges': 'bytes', 'Content-Length': String(total) }, body: data });
+  const unsatisfiable = () => ({ status: 416, headers: { 'Accept-Ranges': 'bytes', 'Content-Range': 'bytes */' + total, 'Content-Length': '0' }, body: '' });
+  if (typeof rangeHeader !== 'string' || !rangeHeader.startsWith('bytes=') || rangeHeader.slice(6).includes(',')) return full();
+  const match = /^(\d*)-(\d*)$/.exec(rangeHeader.slice(6));
+  if (!match || (match[1] === '' && match[2] === '')) return full();
+  let start;
+  let end;
+  if (match[1] === '') {
+    const suffix = Number(match[2]);
+    if (!Number.isSafeInteger(suffix)) return full();
+    if (suffix <= 0 || total === 0) return unsatisfiable();
+    start = Math.max(0, total - suffix);
+    end = total - 1;
+  } else {
+    start = Number(match[1]);
+    end = match[2] === '' ? total - 1 : Number(match[2]);
+    if (!Number.isSafeInteger(start) || !Number.isSafeInteger(end)) return full();
+    if (total === 0 || start >= total || start > end) return unsatisfiable();
+    end = Math.min(end, total - 1);
+  }
+  const body = data.slice(start, end + 1);
+  return { status: 206, headers: { 'Accept-Ranges': 'bytes', 'Content-Range': 'bytes ' + start + '-' + end + '/' + total, 'Content-Length': String(body.length) }, body };
+}
+'''
+tests = '''
+test('không có range → toàn bộ nội dung', () => {
+  expect(rangeResponse('abcdef', null)).toEqual({ status: 200, headers: { 'Accept-Ranges': 'bytes', 'Content-Length': '6' }, body: 'abcdef' });
+});
+test('range có hai đầu mút bao gồm', () => {
+  expect(rangeResponse('abcdef', 'bytes=1-3')).toEqual({ status: 206, headers: { 'Accept-Ranges': 'bytes', 'Content-Range': 'bytes 1-3/6', 'Content-Length': '3' }, body: 'bcd' });
+});
+test('range mở tới cuối chuỗi', () => {
+  expect(rangeResponse('abcdef', 'bytes=4-').body).toBe('ef');
+});
+test('suffix range lấy các byte cuối', () => {
+  expect(rangeResponse('abcdef', 'bytes=-2').body).toBe('ef');
+});
+test('end vượt quá độ dài được giới hạn', () => {
+  expect(rangeResponse('abcdef', 'bytes=4-99').headers['Content-Range']).toBe('bytes 4-5/6');
+});
+test('range vượt quá nội dung → 416', () => {
+  expect(rangeResponse('abcdef', 'bytes=6-8')).toEqual({ status: 416, headers: { 'Accept-Ranges': 'bytes', 'Content-Range': 'bytes */6', 'Content-Length': '0' }, body: '' });
+});
+test('cú pháp không hỗ trợ và nhiều range bị bỏ qua', () => {
+  expect(rangeResponse('abcdef', 'items=1-2').status).toBe(200);
+  expect(rangeResponse('abcdef', 'bytes=0-1,4-5').status).toBe(200);
+});
+test('suffix không dương và dữ liệu rỗng không tạo range', () => {
+  expect(rangeResponse('abcdef', 'bytes=-0').status).toBe(416);
+  expect(rangeResponse('', 'bytes=0-0').status).toBe(416);
+});
+'''
+hints = ["Tách hai trường hợp suffix và start/end; nhớ range có cả hai đầu mút.", "Với range sai cú pháp, trả toàn bộ response; với range hợp lệ nhưng không thỏa mãn, trả 416."]
+explanation = "Byte range thường dùng cho media và resume download; trong production hãy giới hạn số range và tổng chi phí xử lý."
+sources = ["http/rfc9110#section-14", "http/reference/headers/range", "http/reference/headers/content-range"]
+
+[[questions]]
+id = "web-api-dv008"
+module = "web-api-dv-framing"
+type = "single"
+difficulty = 1
+prompt = "Trong HTTP/1.1, `Content-Length: 120` cho biết điều gì?"
+options = ["Tổng số header trong message", "Số octet của body message", "Timeout tối đa của kết nối", "Số request được phép trên kết nối"]
+answer = [1]
+explanation = "`Content-Length` biểu thị độ dài body theo octet, không phải số ký tự Unicode hay toàn bộ message."
+sources = ["http/rfc9112#section-6.2", "http/reference/headers/content-length"]
+
+[[questions]]
+id = "web-api-dv009"
+module = "web-api-dv-framing"
+type = "single"
+difficulty = 2
+prompt = "Một server HTTP/1.1 dùng cùng IP để phục vụ nhiều domain. Thông tin nào trong request giúp chọn authority đích?"
+options = ["`Accept-Language`", "`Host`", "`Referer`", "`Content-Encoding`"]
+answer = [1]
+explanation = "`Host` mang thông tin authority của request trong HTTP/1.1; server dùng nó để định tuyến virtual host."
+sources = ["http/rfc9110#section-7.2", "http/reference/headers/host"]
+
+[[questions]]
+id = "web-api-dv010"
+module = "web-api-dv-framing"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các mô tả đúng về HTTP/2 và HTTP/3."
+options = ["HTTP/2 ghép nhiều stream trên một kết nối TCP", "HTTP/2 dùng HPACK để nén header", "HTTP/3 dùng QUIC", "HTTP/2 dùng UDP làm transport", "HTTP/3 loại bỏ nhu cầu congestion control"]
+answer = [0, 1, 2]
+explanation = "HTTP/2 chạy trên TCP; HTTP/3 chạy trên QUIC/UDP nhưng vẫn có congestion control."
+sources = ["http/rfc9113#section-9", "http/rfc9114#section-3"]
+
+[[questions]]
+id = "web-api-dv011"
+module = "web-api-dv-framing"
+type = "fill"
+difficulty = 2
+prompt = '''
+Trong HTTP/1.1, nếu server stream body mà chưa biết trước tổng độ dài, cơ chế transfer coding phổ biến là `{{blank}}`.
+'''
+blanks = [["chunked"]]
+explanation = "Chunked framing kết thúc bằng chunk độ dài 0, rồi có thể theo sau bởi trailer."
+sources = ["http/rfc9112#section-6.1", "http/reference/headers/transfer-encoding"]
+
+[[questions]]
+id = "web-api-dv012"
+module = "web-api-dv-framing"
+type = "single"
+difficulty = 2
+prompt = "Mất gói TCP trên một kết nối HTTP/2 có thể ảnh hưởng thế nào tới các stream đang ghép kênh?"
+options = ["Chỉ stream có response lỗi bị ảnh hưởng", "Các byte sau gói mất có thể phải chờ TCP truyền lại, làm chậm nhiều stream trên kết nối", "HTTP/2 tự chuyển sang QUIC", "Không ảnh hưởng vì mỗi stream dùng một TCP connection riêng"]
+answer = [1]
+explanation = "Multiplexing thuộc tầng HTTP/2; bên dưới vẫn là một TCP byte stream có thứ tự."
+sources = ["http/rfc9113#section-9"]
+
+[[questions]]
+id = "web-api-dv013"
+module = "web-api-dv-framing"
+type = "single"
+difficulty = 3
+prompt = "Reverse proxy phát hiện request có thông tin framing body mâu thuẫn. Cách xử lý an toàn ở biên tin cậy là gì?"
+options = ["Chuyển tiếp nguyên trạng để ứng dụng tự chọn cách hiểu", "Từ chối request mơ hồ và đóng kết nối theo chính sách server", "Chỉ tin header xuất hiện sau cùng", "Xóa body nhưng giữ nguyên các header framing"]
+answer = [1]
+explanation = "Các hop phải thống nhất ranh giới message; từ chối framing mơ hồ tránh proxy và upstream diễn giải request khác nhau."
+sources = ["http/rfc9112#section-6", "http/rfc9112#section-2.2"]
+
+[[questions]]
+id = "web-api-dv014"
+module = "web-api-dv-framing"
+type = "essay"
+difficulty = 3
+prompt = "Giải thích khác biệt thực tế giữa HTTP/1.1, HTTP/2 và HTTP/3 khi phục vụ nhiều request đồng thời. Nếu người dùng báo các request HTTP/2 cùng chậm khi mạng mất gói, bạn sẽ giải thích và điều tra ra sao?"
+keywords = [["http/2", "http2"], ["tcp"], ["multiplex", "stream"], ["http/3", "http3", "quic"], ["head-of-line", "hol", "mất gói"], ["qpack", "hpack"]]
+min_keywords = 4
+model_answer = '''
+HTTP/1.1 thường xử lý response theo thứ tự trên một kết nối, còn HTTP/2 multiplex nhiều stream trên cùng một kết nối TCP và nén header bằng HPACK. Vì TCP vẫn truyền byte có thứ tự, mất gói có thể làm chậm dữ liệu của nhiều stream, dù mỗi stream là độc lập ở tầng HTTP. HTTP/3 dùng QUIC để cô lập tiến triển stream tốt hơn qua mất gói ở stream khác; QUIC vẫn điều khiển congestion và HTTP/3 dùng QPACK. Khi điều tra, đo handshake, retransmission, thời gian từng stream và phiên bản giao thức thực tế ở cả client, proxy lẫn upstream.
+'''
+explanation = "Phỏng vấn tốt sẽ phân biệt multiplexing ở tầng HTTP với thứ tự truyền tải của TCP và nêu được cách quan sát thực tế."
+sources = ["http/rfc9112#section-9", "http/rfc9113#section-9", "http/rfc9114#section-3"]
+
+[[questions]]
+id = "web-api-dvc02"
+module = "web-api-dv-framing"
+type = "code"
+difficulty = 2
+title = "Quyết định tái sử dụng kết nối HTTP/1.x"
+lang = "javascript"
+prompt = '''
+Viết `canReuseHttp1(version, connectionHeader, responseComplete)`:
+- `version` là `'1.0'` hoặc `'1.1'`; giá trị khác trả `false`.
+- Chỉ có thể tái sử dụng sau khi response body đã được đọc hết (`responseComplete === true`).
+- Với HTTP/1.1, kết nối được giữ mặc định trừ khi danh sách token trong `Connection` có token `close`.
+- Với HTTP/1.0, chỉ tái sử dụng khi danh sách token có `keep-alive` và không có `close`.
+- `connectionHeader` có thể thiếu; token phân cách bằng dấu phẩy, bỏ khoảng trắng và không phân biệt hoa thường. So khớp cả token, không so khớp chuỗi con.
+'''
+starter = '''
+function canReuseHttp1(version, connectionHeader, responseComplete) {
+  return true;
+}
+'''
+solution = '''
+function canReuseHttp1(version, connectionHeader, responseComplete) {
+  if (responseComplete !== true || (version !== '1.0' && version !== '1.1')) return false;
+  const tokens = String(connectionHeader || '').split(',').map((token) => token.trim().toLowerCase());
+  if (tokens.includes('close')) return false;
+  if (version === '1.1') return true;
+  return tokens.includes('keep-alive');
+}
+'''
+tests = '''
+test('HTTP/1.1 mặc định tái sử dụng khi đã đọc hết body', () => {
+  expect(canReuseHttp1('1.1', null, true)).toBe(true);
+});
+test('token close đóng kết nối, không phân biệt hoa thường', () => {
+  expect(canReuseHttp1('1.1', 'upgrade, CLOSE', true)).toBe(false);
+});
+test('HTTP/1.0 cần keep-alive tường minh', () => {
+  expect(canReuseHttp1('1.0', 'keep-alive', true)).toBe(true);
+  expect(canReuseHttp1('1.0', null, true)).toBe(false);
+});
+test('body chưa đọc hết thì không trả connection về pool', () => {
+  expect(canReuseHttp1('1.1', '', false)).toBe(false);
+});
+test('chỉ so khớp nguyên token và từ chối version khác', () => {
+  expect(canReuseHttp1('1.0', 'x-keep-alive-extra', true)).toBe(false);
+  expect(canReuseHttp1('2', 'keep-alive', true)).toBe(false);
+});
+'''
+hints = ["Tách `Connection` thành token bằng dấu phẩy, trim và chuyển chữ thường.", "Kiểm tra `close` trước quy tắc mặc định của HTTP/1.1."]
+explanation = "Không đưa connection vào pool khi body chưa được tiêu thụ hết vì byte còn lại có thể thuộc response hiện tại."
+sources = ["http/rfc9112#section-9"]
+
+[[questions]]
+id = "web-api-dv015"
+module = "web-api-dv-csp"
+type = "single"
+difficulty = 1
+prompt = "Cần quan sát các vi phạm CSP của ứng dụng cũ trước khi bật chặn. Header nào phù hợp cho giai đoạn đầu?"
+options = ["`Content-Security-Policy-Report-Only`", "`Content-Security-Policy` với `default-src *`", "`Access-Control-Allow-Origin`", "`X-Content-Type-Options: nosniff`"]
+answer = [0]
+explanation = "Report-Only cho phép quan sát policy mà chưa chặn tài nguyên; cần cấu hình reporting để nhận báo cáo."
+sources = ["http/reference/headers/content-security-policy-report-only"]
+
+[[questions]]
+id = "web-api-dv016"
+module = "web-api-dv-csp"
+type = "single"
+difficulty = 2
+prompt = "Policy chỉ khai báo `default-src 'self'` nhưng không khai báo `script-src`. Kết luận nào chính xác nhất?"
+options = ["`script-src` không có fallback và cho phép mọi nguồn", "`default-src` làm fallback cho script; nó không thay cho các directive như `frame-ancestors`", "`default-src` chỉ tác động tới ảnh", "Browser tự chuyển policy sang Report-Only"]
+answer = [1]
+explanation = "`default-src` là fallback cho fetch directive chưa khai báo; một số directive không kế thừa từ nó."
+sources = ["http/reference/headers/content-security-policy/default-src"]
+
+[[questions]]
+id = "web-api-dv017"
+module = "web-api-dv-csp"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các cấu hình/nhận định giúp xây CSP chặt chẽ hơn cho ứng dụng web."
+options = ["Dùng nonce ngẫu nhiên riêng cho mỗi response để cho phép script tin cậy", "Đặt `object-src 'none'` nếu ứng dụng không cần plugin object", "Dùng `frame-ancestors 'none'` khi trang không được phép nhúng", "Thêm `'unsafe-inline'` vào `script-src` để tránh mọi lỗi CSP", "Cho rằng CSP thay thế việc encode output và sửa lỗi XSS"]
+answer = [0, 1, 2]
+explanation = "Nonce có hiệu quả khi được tạo và gắn đúng; CSP vẫn là defense-in-depth, không chữa nguyên nhân injection."
+sources = ["http/reference/headers/content-security-policy/script-src", "http/reference/headers/content-security-policy/frame-ancestors"]
+
+[[questions]]
+id = "web-api-dv018"
+module = "web-api-dv-csp"
+type = "fill"
+difficulty = 1
+prompt = '''
+Để chỉ định những origin được phép nhúng trang hiện tại trong iframe, dùng directive `{{blank}}`.
+'''
+blanks = [["frame-ancestors"]]
+explanation = "`frame-ancestors` kiểm soát ai có thể embed trang; `frame-src` kiểm soát frame mà chính trang tải."
+sources = ["http/reference/headers/content-security-policy/frame-ancestors"]
+
+[[questions]]
+id = "web-api-dv019"
+module = "web-api-dv-csp"
+type = "single"
+difficulty = 2
+prompt = "Directive nào giới hạn đích của các kết nối do JavaScript trong trang khởi tạo, như `fetch` hoặc WebSocket?"
+options = ["`connect-src`", "`frame-ancestors`", "`base-uri`", "`form-action`"]
+answer = [0]
+explanation = "`connect-src` áp dụng cho các API kết nối mà trang khởi tạo, bao gồm fetch/XHR và WebSocket."
+sources = ["http/reference/headers/content-security-policy/connect-src"]
+
+[[questions]]
+id = "web-api-dv020"
+module = "web-api-dv-csp"
+type = "single"
+difficulty = 2
+prompt = "Ứng dụng gửi `Content-Security-Policy-Report-Only` và reporting được cấu hình. Browser xử lý tài nguyên vi phạm thế nào?"
+options = ["Luôn chặn ngay lập tức", "Ghi nhận/gửi báo cáo vi phạm nhưng không chặn chỉ vì policy Report-Only", "Tự thêm nonce vào script", "Bỏ qua cả policy lẫn báo cáo"]
+answer = [1]
+explanation = "Report-Only hỗ trợ rollout quan sát trước khi bật header CSP thực thi."
+sources = ["http/reference/headers/content-security-policy-report-only"]
+
+[[questions]]
+id = "web-api-dv021"
+module = "web-api-dv-csp"
+type = "essay"
+difficulty = 3
+prompt = "Bạn cần triển khai CSP cho một ứng dụng lâu năm có nhiều script bên thứ ba. Trình bày cách rollout, cách cho phép script tin cậy và cách phân biệt lỗi CSP với CORS."
+keywords = [["report-only", "chỉ báo cáo"], ["nonce", "hash"], ["script-src"], ["unsafe-inline"], ["cors"], ["connect-src"], ["frame-ancestors"]]
+min_keywords = 4
+model_answer = '''
+Đầu tiên gửi `Content-Security-Policy-Report-Only` cùng cấu hình reporting để thống kê nguồn script và kết nối đang dùng mà chưa chặn. Sau khi dọn nguồn không cần thiết, áp dụng policy thực thi với `default-src 'none'` hoặc baseline phù hợp, khai báo `script-src` rõ ràng và dùng nonce ngẫu nhiên mới cho mỗi response hoặc hash cho script tĩnh. Hạn chế `'unsafe-inline'`, khai báo `connect-src` cho API cần thiết và `frame-ancestors` theo chính sách nhúng. CSP giới hạn hành vi/tài nguyên trang; CORS kiểm soát việc browser cho phép JavaScript đọc response cross-origin, nên cần chẩn đoán header và console theo từng cơ chế.
+'''
+explanation = "Rollout quan sát giúp phát hiện dependency hợp lệ trước khi bật enforcement; nonce/hash giảm nhu cầu cho phép inline script rộng."
+sources = ["http/reference/headers/content-security-policy", "http/reference/headers/content-security-policy-report-only", "http/reference/headers/content-security-policy/script-src"]
+
+[[questions]]
+id = "web-api-dv022"
+module = "web-api-dv-csp"
+type = "single"
+difficulty = 2
+prompt = "Điểm khác nhau giữa CSP `frame-src` và `frame-ancestors` là gì?"
+options = ["`frame-src` giới hạn ai được nhúng trang này; `frame-ancestors` giới hạn ảnh", "`frame-src` giới hạn frame trang tải; `frame-ancestors` giới hạn site được phép nhúng trang này", "Hai directive đồng nghĩa", "Cả hai chỉ áp dụng cho WebSocket"]
+answer = [1]
+explanation = "Một directive kiểm soát nội dung frame đi ra từ trang; directive còn lại kiểm soát việc trang được embed bởi bên khác."
+sources = ["http/reference/headers/content-security-policy/frame-ancestors"]
+
+[[questions]]
 id = "api-083"
 module = "api-styles"
 type = "fill"
@@ -787,7 +1244,7 @@ ws.addEventListener('open', () => ws.{{blank}}(JSON.stringify({ text: 'Xin chào
 '''
 blanks = [["WebSocket"], ["send"]]
 explanation = "Dùng `wss://` (TLS) ở production; cần cơ chế reconnect + heartbeat."
-sources = ["dom/websocket"]
+sources = ["http/guides/protocol_upgrade_mechanism", "http/reference/headers/upgrade"]
 
 [[questions]]
 id = "api-084"

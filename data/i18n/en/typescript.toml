@@ -1,0 +1,617 @@
+[modules.ts-types]
+title = "Core Types and Inference"
+description = "Primitive and literal types, any, unknown, never, inference, and structural compatibility."
+lesson = '''
+### Types inferred from usage
+TypeScript uses initial values, expressions, and context to infer types, so not every variable needs an annotation. `let status = "ready"` is usually widened to `string`, while `const status = "ready"` can retain the literal type `"ready"`. Annotations are useful at data boundaries and in function signatures; good inference avoids repeating information.
+
+| Type | Use it when |
+|---|---|
+| `unknown` | Receiving untrusted data that must be narrowed before use |
+| `any` | Disabling type checking at a location; the risk can spread to callers |
+| `never` | No value is valid, or a branch cannot be reached |
+| `void` | A function does not provide a useful return value |
+
+Object types are structural: two values are compatible when they have the required members with compatible types; they do not need the same declared name. For example, `type Point = { x: number; y: number }`; an object with both `x` and `y` can be assigned to `Point`. A common mistake is using `as` to silence an error. An assertion only affects static checking; it does not validate data at runtime.
+'''
+
+[questions.ts-001]
+prompt = '''Read this TypeScript code:
+~~~ts
+const retries = 3;
+let label = "queued";
+~~~
+What types are usually inferred for the two variables?'''
+options = ["retries: number; label: string", "retries: 3; label: string", 'retries: 3; label: "queued"', "Both are any"]
+explanation = "A const cannot be reassigned, so the literal value 3 is retained. A let can be assigned a different string, so its type widens to string."
+
+[questions.ts-002]
+prompt = '''~~~ts
+type HasId = { id: number };
+const row = { id: 8, label: "draft" };
+const item: HasId = row;
+~~~
+Why is the final assignment valid?'''
+options = ["Every object is compatible with every interface", "TypeScript compares structure, and row has an id property of the right type", "A const declaration skips type checking", "The label property automatically widens HasId"]
+explanation = "Object type compatibility is primarily based on required members. row has an id of type number; its extra property does not make an already wider value incompatible."
+
+[questions.ts-003]
+prompt = "A function receives JSON from an external source and does not know its structure yet. Choose the type that requires code to check the data before accessing properties."
+options = ["any", "unknown", "never", "void"]
+explanation = "unknown accepts any value but does not allow arbitrary operations before narrowing. any disables most checks and can spread."
+
+[questions.ts-004]
+prompt = '''~~~ts
+function format(value: number, prefix = "id:") {
+  return prefix + value;
+}
+~~~
+Choose the correct descriptions of inference in this code.'''
+options = ["The value parameter is inferred as number", "The prefix parameter is inferred as string", "The return type is inferred as string", 'The prefix parameter automatically becomes the literal type "id:"']
+explanation = "The annotation on value establishes number; the default value infers string for prefix; string concatenation gives the return type string. A parameter usually does not retain a literal type just because it has a default value."
+
+[questions.ts-005]
+prompt = "In strict mode, the {{blank}} type represents an unknown value and requires narrowing before you call a method on it."
+explanation = "unknown is safer than any because the compiler requires a check before use."
+
+[questions.ts-006]
+prompt = "In TypeScript, an assertion using the syntax value as User is checked at compile time but does not run data {{blank}} when the application executes."
+blanks = [["validation"]]
+explanation = "An assertion does not transform or validate a runtime value; you need to check it yourself or use a validator."
+
+[questions.ts-007]
+prompt = "An application asserts that JSON from an API has the User type. Explain why the assertion is not sufficient for safety and describe an appropriate way to handle it at the data boundary."
+keywords = [["no runtime check", "no runtime validation", "does not validate at runtime"], ["unknown"], ["type guard", "validator", "validate the shape"], ["untrusted data", "data boundary"]]
+model_answer = '''An assertion only guides the compiler and performs no runtime check. Treat the JSON as `unknown`, then validate its shape with a type guard or validator before using it as `User`. This prevents untrusted data from breaking assumptions elsewhere in the application.'''
+explanation = "Static types do not replace checks on data received from a network, file, or user."
+
+[questions.ts-008]
+title = "Runtime Guard and Assertion"
+prompt = '''Implement two JavaScript functions:
+- `isNonEmptyString(value)` returns true when `value` is a string containing at least one non-whitespace character.
+- `assertNonEmptyString(value)` returns the original string when it is valid; otherwise, it throws a TypeError with the message `Expected non-empty string`.
+This is the runtime counterpart to a TypeScript type guard and assertion function; do not use TypeScript syntax.'''
+explanation = "A type guard narrows a type after a check; an assertion function turns a failed condition into a runtime error."
+hints = ["Check typeof before calling trim.", "The assertion should throw when the predicate returns false."]
+
+[modules.ts-narrowing]
+title = "Narrowing and Type Guards"
+description = "Control-flow analysis, typeof, in, instanceof, predicates, assertion functions, and exhaustive switches."
+lesson = '''
+### Narrowing through control flow
+A variable declared as a union can only use operations that are safe for every member. `if`, `switch`, `typeof`, `instanceof`, the `in` operator, literal comparisons, and assignments can narrow the set of possible types in each branch. A type predicate such as `value is T` describes a boolean function to the compiler; an assertion function such as `asserts value is T` says the function throws when the condition is false.
+
+| Check | Narrowing signal |
+|---|---|
+| `typeof x === "string"` | A primitive type |
+| `"id" in x` | A property on a union of objects |
+| `x instanceof Date` | An instance of a class |
+| `x.kind === "saved"` | A literal discriminant |
+
+For a discriminated union, switch on a shared field such as `kind`. Assigning the remaining value to `never` in the final branch lets the compiler report a newly added union member that has not been handled. A common mistake is to check only `if (x)` and assume every empty value has been eliminated: empty strings, zero, and false still need handling according to the data domain.
+'''
+
+[questions.ts-009]
+prompt = '''~~~ts
+function printId(id: string | number) {
+  if (typeof id === "string") return id.toUpperCase();
+  return id.toFixed(0);
+}
+~~~
+What is the type of `id` in the `else` branch?'''
+options = ["string", "number", "string | number", "unknown"]
+explanation = "The typeof check in the if branch removes string from the union, so the remaining branch has type number."
+
+[questions.ts-010]
+prompt = '''~~~ts
+type Result = { ok: true; value: string } | { ok: false; error: Error };
+function show(result: Result) {
+  if (result.ok) return result.value;
+  return result.error.message;
+}
+~~~
+What lets TypeScript access different properties in each branch?'''
+options = ["Any truthiness check", "The discriminant field ok has different literal types in each member", "TypeScript skips property checks on unions", "The function name show"]
+explanation = "ok is a discriminant with the literal values true or false, so control-flow analysis identifies the appropriate union member in each branch."
+
+[questions.ts-011]
+prompt = '''~~~ts
+type Shape = { kind: "circle"; radius: number } | { kind: "square"; side: number };
+function area(shape: Shape): number {
+  switch (shape.kind) {
+    case "circle": return Math.PI * shape.radius ** 2;
+    case "square": return shape.side ** 2;
+    default: return assertNever(shape);
+  }
+}
+function assertNever(value: never): never { throw new Error("unhandled"); }
+~~~
+What is the main benefit of `assertNever` here?'''
+options = ["It runs the default branch when the program starts", "It reports a compile-time error if a Shape variant is added without a switch case", "It converts the object to null", "It generates another case for the union"]
+explanation = "After every member is handled, shape in default must be never. Adding a new member makes the argument no longer assignable to never."
+
+[questions.ts-012]
+prompt = "Choose the checks that can help TypeScript narrow a union in an appropriate context."
+options = ['typeof value === "string"', '"id" in value', "value instanceof Date", "JSON.stringify(value)", 'value.kind === "saved"']
+explanation = "typeof, in, instanceof, and discriminant comparisons are guards recognized by control-flow analysis. JSON.stringify only produces a string and does not prove a specific type for value."
+
+[questions.ts-013]
+prompt = "In a type predicate signature, the check function has a return type of the form `value {{blank}} User`."
+explanation = "The phrase `value is User` tells the compiler that a true predicate result narrows value to User."
+
+[questions.ts-014]
+prompt = "A discriminated union gains an archived variant. Describe how to write a switch so the compiler helps detect a missing branch."
+keywords = [["discriminant", "kind"], ["never"], ["assertnever", "assert never"], ["compile-time error", "compiler error", "compile error"]]
+model_answer = '''Switch on the discriminant field, such as `kind`, and handle each literal value. In `default`, pass the remaining value to an `assertNever` helper that accepts `never`. If the union gains `archived` without a matching case, the compiler reports a compile-time error at the `never` branch, helping keep the handling exhaustive.'''
+explanation = "An exhaustiveness check turns a changed union into a compile-time error at a clear location."
+
+[questions.ts-015]
+title = "Exhaustive Switch for Events"
+prompt = '''Implement `describeEvent(event)` using the discriminated union model:
+- `{ type: 'created', id: number }` returns `Created #<id>`
+- `{ type: 'renamed', oldName: string, newName: string }` returns `Renamed <oldName> -> <newName>`
+- `{ type: 'deleted', id: number }` returns `Deleted #<id>`
+- An unknown type must throw an Error with the message `Unexpected event type: <type>`
+Use a switch and an `assertNever` helper to represent the exhaustive branch. JavaScript has no compile-time `never` check, so the helper checks for errors at runtime.'''
+explanation = "A discriminated union narrows on its kind; a never branch forces a review when the union changes."
+hints = ["Branch on `event.type` to select a case.", "The default branch should call a helper that throws for the unhandled type."]
+
+[modules.ts-generics]
+title = "Generics and Constraints"
+description = "Type parameters, argument inference, extends, keyof, indexed access, and input-output relationships."
+lesson = '''
+### Preserve relationships between types
+A generic represents an unknown type while keeping a stable relationship between input and output. The function `identity<T>(value: T): T` returns the input with its type intact; the compiler usually infers `T` from the argument, so callers do not need to specify it explicitly. Use `extends` to limit the operations a generic can perform, such as `T extends { id: string }`.
+
+| Syntax | Meaning |
+|---|---|
+| `keyof T` | A union of the valid keys of `T` |
+| `T[K]` | The value type at key `K` |
+| `K extends keyof T` | Ensures that the accessed key belongs to `T` |
+| `T extends Constraint` | Constrains a generic type by structure |
+
+The pattern `getProperty<T, K extends keyof T>(value: T, key: K): T[K]` connects the key type to the return value type. A common mistake is to make a generic constraint too broad and then use a property that is not guaranteed inside the function. Fix this by adding the minimum constraint needed for the operation instead of replacing the generic with `any`.
+'''
+
+[questions.ts-016]
+prompt = '''~~~ts
+function identity<T>(value: T): T { return value; }
+const result = identity("ready");
+~~~
+What type is inferred for `result`?'''
+options = ["any", "unknown", '"ready"', "string"]
+explanation = 'T is inferred as the literal type "ready": because T appears directly in the return type, TypeScript does not widen the literal, and the const declaration for result preserves "ready". If you write `let result = identity("ready")`, the variable widens to string; calling `identity<string>("ready")` also gives string.'
+
+[questions.ts-017]
+prompt = '''~~~ts
+function getId<T extends { id: string }>(value: T) {
+  return value.id;
+}
+~~~
+What does the `extends` constraint guarantee?'''
+options = ["T can only be an object declared with the exact name Id", "Every T passed in has an id property of type string, so the function body may read id", "The result is always a literal string", "T cannot have any other properties"]
+explanation = "A constraint describes the minimum structure required. T may still contain additional properties."
+
+[questions.ts-018]
+prompt = '''~~~ts
+function getProperty<T, K extends keyof T>(object: T, key: K): T[K] {
+  return object[key];
+}
+~~~
+What is the role of `K extends keyof T`?'''
+options = ["It allows any string as a key", "It limits the key to valid keys of T and preserves the corresponding value type in the return type", "It makes every property optional", "It only allows a numeric key"]
+explanation = "keyof T creates a union of keys; K is constrained to that union, and T[K] returns the type at the selected key."
+
+[questions.ts-019]
+prompt = "Choose the correct descriptions of a generic function."
+options = ["A type parameter can be inferred from arguments", "An extends constraint limits valid operations on T", "Each call can infer a different T", "A generic always creates a separate runtime copy of the function for each type"]
+explanation = "Generics are statically checked type parameters that can be inferred for each call. Type parameters are erased when JavaScript is emitted."
+
+[questions.ts-020]
+prompt = "Which type operator, {{blank}}, creates a union of the property names of an object type T?"
+explanation = "keyof T creates a union type from the keys that can be accessed on T."
+
+[questions.ts-021]
+title = "Result<T, E> Helpers"
+prompt = '''Implement these JavaScript helpers for a Result type:
+- `ok(value)` creates `{ ok: true, value }`.
+- `err(error)` creates `{ ok: false, error }`.
+- `mapResult(result, fn)` applies `fn` only on success and preserves the error on failure.
+- `flatMapResult(result, fn)` returns an error result unchanged or directly returns the Result produced by `fn`.
+- `unwrapOr(result, fallback)` returns the value on success and the fallback on failure.'''
+explanation = "A discriminated union Result<T, E> represents success and failure without using a placeholder value."
+hints = ["Branch on result.ok.", "On failure, preserve the Result object so the error type is retained."]
+
+[modules.ts-type-programming]
+title = "Utility, Mapped, Conditional, and Template Literal Types"
+description = "Systematically transform types with utility types, mapped types, conditionals, and template literals."
+lesson = '''
+### Transform types at compile time
+Built-in utility types such as `Partial<T>`, `Required<T>`, `Readonly<T>`, `Pick<T, K>`, `Omit<T, K>`, `Record<K, V>`, and `ReturnType<F>` describe derived types without copying their structure. A mapped type iterates over keys and can add or remove modifiers such as `readonly` or `?`; a conditional type chooses a branch based on a relation such as `T extends U`.
+
+| Tool | Example use |
+|---|---|
+| `Pick` with the `id` and `name` keys | Keep only selected properties |
+| `Omit<User, "secret">` | Remove a property from a type |
+| `T extends U ? A : B` | Choose a type based on a condition |
+| Template literal type | Build string types from a union |
+
+A conditional type distributes over a union when the type on the left of `extends` is a naked type parameter. Wrap both sides in tuples to check the union as a whole. These types are erased when JavaScript is emitted, so `Readonly<T>` does not freeze an object at runtime. A common mistake is confusing a static guarantee with runtime validation or immutability.
+'''
+
+[questions.ts-022]
+prompt = "Which utility type creates a type with the same properties as T but makes every property optional?"
+options = ["Required<T>", "Partial<T>", "Pick<T, K>", "Record<K, V>"]
+explanation = "Partial<T> makes each property optional; Required<T> does the opposite."
+
+[questions.ts-023]
+prompt = '''~~~ts
+type ElementType<T> = T extends readonly (infer Item)[] ? Item : T;
+type A = ElementType<readonly string[]>;
+~~~
+What is the type of A?'''
+options = ["readonly string[]", "string", "unknown", "never"]
+explanation = "infer Item extracts the element type from the array type in the true branch; for readonly string[], Item is string."
+
+[questions.ts-024]
+prompt = 'Given `type User = { id: number; name: string; password: string }`, what does `Pick<User, "id" | "name">` keep?'
+options = ["Only id and name", "Only password", "All properties, but made optional", "No properties"]
+explanation = "Pick selects a set of keys from the original type and retains the corresponding value types."
+
+[questions.ts-025]
+prompt = "Choose the correct descriptions of type-level programming."
+options = ["A mapped type can iterate over keyof T", "A conditional type can choose a type based on an extends relationship", "Readonly<T> calls Object.freeze automatically at runtime", "A template literal type combines string literal types"]
+explanation = "Mapped, conditional, and template literal types transform static types. The Readonly utility type does not change a JavaScript object at runtime."
+
+[questions.ts-026]
+prompt = '''~~~ts
+type ToArray<T> = T extends unknown ? T[] : never;
+type A = ToArray<string | number>;
+type B = [string | number] extends [unknown] ? (string | number)[] : never;
+~~~
+Choose the correct descriptions.'''
+options = ["A distributes the conditional type over each union member", "A is equivalent to string[] | number[]", "B checks the union as a whole and yields (string | number)[]", "A conditional type always distributes even when T is not a type parameter"]
+explanation = "A conditional type distributes when a type parameter is on the left of extends. Wrapping the types in a tuple prevents distribution and checks the union as a whole."
+
+[questions.ts-027]
+prompt = "Which utility type, {{blank}}, extracts the return type of a function type F?"
+explanation = "ReturnType<F> infers the return type from a function type F."
+
+[questions.ts-028]
+title = "Runtime Deep Freeze"
+prompt = """Implement `deepFreeze(value)` to recursively call `Object.freeze` on every object and array in the object tree, then return the same value. Ignore primitives and null. The function must safely handle circular references without looping forever and must not change the data structure."""
+explanation = "Readonly<T> only affects the type checker; deep freezing is a separate runtime behavior."
+hints = ["Track objects that have already been visited to stop circular references.", "Freeze child properties before freezing their parent object."]
+
+[questions.ts-029]
+title = "Runtime Pick and Omit"
+prompt = """Implement `pick(object, keys)` and `omit(object, keys)`:
+- Consider only own, enumerable string properties.
+- `pick` returns a new object containing only the requested keys that actually exist on the object.
+- `omit` returns a new object containing keys that are not in the exclusion list.
+- Do not modify the source object or include inherited properties."""
+explanation = "Pick<T, K> and Omit<T, K> transform types only; these helpers create new objects at runtime."
+hints = ["Object.keys lists only own, enumerable string keys.", "Use a Set for fast lookup of keys to exclude in omit."]
+
+[modules.ts-project]
+title = "tsconfig, Modules, Declarations, and Project Integration"
+description = "Compiler options, strictness, module resolution, declaration files, and JavaScript/TypeScript boundaries."
+lesson = '''
+### Using TypeScript in a project
+`tsconfig.json` defines the files in scope, the JavaScript target, module format, import resolution, and checking level. `strict: true` enables a group of strict checks; consider the runtime and bundler when changing individual options. `module` describes the output module format, while `moduleResolution` should match the environment, such as Node.js or a bundler. A file with `import` or `export` is treated as a module; a file without them may belong to the global script scope.
+
+| File or option | Role |
+|---|---|
+| `tsconfig.json` | Compiler configuration and project scope |
+| `*.d.ts` | Type descriptions for JavaScript or packages without types |
+| `declaration` | Emit declaration files for a library |
+| `import type` | Import used only in type positions |
+
+`.d.ts` files contain no runtime implementation; declarations must reflect the real API to avoid making false type promises. TypeScript checks statically but does not validate JSON, network responses, or user input at runtime. Common mistakes include assuming `paths` changes runtime resolution or that a type declaration validates data. The bundler or runtime still needs matching configuration, and external data needs a validator.
+'''
+
+[questions.ts-030]
+prompt = "What is a practical benefit of setting `strict: true` in tsconfig?"
+options = ["It validates JSON at runtime", "It enables a group of strict checks such as strictNullChecks and noImplicitAny", "It installs missing dependencies automatically", "It requires JavaScript output to target ES5"]
+explanation = "strict enables multiple strict static checks; it does not add runtime data checks or choose the target."
+
+[questions.ts-031]
+prompt = "A modern bundler processes imports in an application, and the app does not run CommonJS output directly. Which configuration approach is usually more appropriate?"
+options = ["Choose moduleResolution bundler and a module setting compatible with the bundler, following the toolchain guidance", "Always force moduleResolution classic", "Remove tsconfig so the compiler can infer everything", "Set moduleResolution node10 for every new project"]
+explanation = "Choose the module format and resolution strategy for the actual environment. Bundler mode models many bundler resolution behaviors; no single configuration fits every runtime."
+
+[questions.ts-032]
+prompt = "What is the main role of a `.d.ts` declaration file?"
+options = ["It contains JavaScript that the runtime executes in place of the implementation", "It describes an API's types so the compiler and editor can understand it", "It automatically checks input values at runtime", "It replaces package.json"]
+explanation = "A declaration file describes an API's shape for the type system; it does not provide a runtime implementation."
+
+[questions.ts-033]
+prompt = '''~~~ts
+import type { User } from "./models";
+~~~
+What is the purpose of `import type`?'''
+options = ["Import the User value for runtime calls", "Mark the import as type-only so it does not need a runtime binding", "Create a models.d.ts file automatically", "Change module resolution paths"]
+explanation = "import type makes clear that an import is used only in type space; it does not create a runtime value to call."
+
+[questions.ts-034]
+prompt = "Choose the correct descriptions of configuration and declarations in a TypeScript project."
+options = ["include helps identify source files covered by the configuration", "declaration can ask the compiler to emit .d.ts files", "paths usually configures aliases for every runtime without bundler or runtime support", "moduleResolution should account for the Node or bundler environment in use"]
+explanation = "include defines the file scope, and declaration emits public types. paths helps the compiler resolve imports, but the corresponding runtime or bundler toolchain also needs configuration."
+
+[questions.ts-035]
+prompt = "In tsconfig, which option, {{blank}}, enables the strict mode group of checks?"
+explanation = "strict enables strict checks such as strictNullChecks and noImplicitAny."
+
+[questions.ts-036]
+prompt = "A declaration-only file describes types and commonly has the extension {{blank}}; it contains no JavaScript implementation."
+explanation = "Declaration files use the .d.ts extension to provide type descriptions."
+
+[questions.ts-037]
+prompt = "A team adds an alias with compilerOptions.paths, but the running application fails to find the module. Explain a possible cause and how to investigate it."
+keywords = [["paths", "alias"], ["compiler only", "does not change runtime", "does not configure runtime"], ["bundler", "module resolution", "runtime"], ["synchronized configuration", "align configurations", "check the configuration"]]
+model_answer = '''`paths` only helps the compiler resolve types; it does not change the runtime and usually does not rewrite imports in emitted JavaScript. Check `moduleResolution`, the runtime environment, and the synchronized configuration of the bundler or runtime so each resolves the same path.'''
+explanation = "The compiler, bundler, and runtime can use different module resolution rules."
+
+[questions.ts-038]
+title = "Minimal Schema Validator"
+prompt = '''Implement this JavaScript API to model runtime validation:
+- `schema.string()`, `schema.number()`, `schema.optional(inner)`, `schema.array(inner)`, and `schema.object(shape)`
+- `parse(schema, value)` returns `{ success: true, data }` when valid; otherwise it returns `{ success: false, error: { issues } }`.
+- Each issue has `{ path, message }`; `path` is an array of keys and indexes from the root. Messages are `Expected string`, `Expected number`, `Expected array`, or `Expected object`.
+- A number is valid only when `typeof` is `number` and `Number.isFinite(value)` is true. Objects reject null and arrays and return only keys declared in `shape`. A missing required field creates an issue at that field's path; optional allows undefined, and a missing optional key must not appear in `data`.
+- Arrays must validate every element and accumulate all errors.'''
+explanation = "TypeScript describes types at compile time; a validator, like a schema library, checks actual data at runtime."
+hints = ["Write a recursive validate function that receives a schema, value, path, and issue list.", "Skip a missing optional key; append an array index to the path for an element error."]
+
+[modules.typescript-dv-objects-functions]
+title = "Object Types, Interfaces, and Functions"
+description = "Design object shapes, function APIs, and callbacks with clear types."
+lesson = '''
+### Describe data and behavior with types
+An object type describes the properties needed by its consumers. TypeScript compares types structurally, so an object with extra properties can often be assigned to the target type. Both interfaces and type aliases can describe object shapes. Interfaces support declaration merging and can be extended with `extends`; type aliases are more flexible for naming unions, primitives, and other type combinations. Excess property checking mainly applies when an object literal is passed directly, rather than acting as an exact-object rule for every assignment.
+
+| Concept | Effect | Limitation to remember |
+|---|---|---|
+| Optional property `name?` | Allows the property to be absent | Its value may be `undefined` when read |
+| `readonly` | Prevents assignment through that type | Does not freeze the object at runtime |
+| Index signature | Describes a dynamic set of keys | Defines the value type for those keys |
+| Function type | Declares parameters and result | Does not check runtime behavior |
+
+Function signatures should describe inputs, outputs, and callbacks precisely. An optional parameter may be `undefined` in the function body; a rest parameter represents multiple arguments of the same type. Overloads are useful when different call forms have a clear relationship to their result types. A union parameter is often a better fit when all input forms are handled the same way and have the same return type. TypeScript can infer callback parameter types from context.
+
+Example:
+~~~ts
+interface Contact {
+  name: string;
+  email?: string;
+  readonly id: number;
+}
+function greet(contact: Contact): string {
+  return contact.email ? contact.name + " <" + contact.email + ">" : contact.name;
+}
+~~~
+
+Common mistakes include reading an optional property as if it always has a value, treating `readonly` as a runtime immutability guarantee, or adding a broad index signature that hides misspelled keys. For object-literal configuration, excess property checks often catch mistakes early. Data from outside the application still needs runtime validation, regardless of its declared type.
+'''
+
+[questions.typescript-dv001]
+prompt = '''~~~ts
+interface Profile { name: string; nickname?: string }
+function label(profile: Profile) {
+  return profile.nickname.toUpperCase();
+}
+~~~
+Why does TypeScript report an error when `nickname` is accessed this way?'''
+options = ["An optional property may be undefined, so it must be checked before calling a method", "An interface cannot contain string properties", "nickname automatically becomes any", "The function must be async"]
+explanation = "The question mark allows the property to be absent; when read, its value may be undefined. Check it or provide a default before calling a method."
+
+[questions.typescript-dv002]
+prompt = '''~~~ts
+interface User { id: number }
+const source = { id: 3, debug: true };
+const user: User = source;
+~~~
+Why is this assignment usually valid even though source has an extra `debug` property?'''
+options = ["TypeScript uses structural compatibility and checks excess properties more strictly on a direct object literal", "An interface automatically removes all extra properties at runtime", "All extra properties are ignored in every context", "debug is inferred as never"]
+explanation = "TypeScript mainly checks the required structure. Excess property checking is an additional check that usually applies when an object literal is assigned or passed directly."
+
+[questions.typescript-dv003]
+prompt = "What does `readonly` on an object type guarantee?"
+options = ["The property cannot be reassigned through a reference with that type during static checking", "The object is always frozen with Object.freeze", "The property cannot be changed through any alias", "The property is serialized as a constant"]
+explanation = "readonly is a static restriction when accessing through the declared type; it does not freeze the object or protect every alias at runtime."
+
+[questions.typescript-dv004]
+prompt = "A function has two call forms: a string input returns a number, while a number input returns the corresponding string. Which technique best describes the exact relationship between each call form and its result type?"
+options = ["A pair of overload signatures with a compatible implementation", "A parameter of any and a return type of any", "An index signature on Function", "An empty interface"]
+explanation = "Overload signatures tell callers which output type corresponds to each input form; the implementation must be compatible with all overloads."
+
+[questions.typescript-dv005]
+prompt = "Choose the correct descriptions of interfaces and type aliases in TypeScript."
+options = ["Both can describe an object shape", "An interface can be extended with extends", "An interface supports declaration merging in a valid shared scope", "A type alias can only name an object", "Type aliases and interfaces always follow the same rules for repeated declarations"]
+explanation = "Both can describe objects; interfaces can be extended and support declaration merging. A type alias can also name a union or another type, and repeating an alias declaration with the same name usually causes an error."
+
+[questions.typescript-dv006]
+prompt = "Choose the correct statements about function signatures and callbacks."
+options = ["TypeScript can infer callback parameter types from context", "An optional parameter may be undefined in the function body", "A rest parameter receives an array of values of the same type", "A union parameter always preserves the input-output mapping provided by overloads", "A function signature validates data at runtime"]
+explanation = "Contextual typing often infers callback types; optional parameters may be absent; rest parameters collect multiple arguments. A union alone does not always represent an overload relationship, and signatures only provide static checking."
+
+[questions.typescript-dv007]
+prompt = '''In an object type, which symbol goes after a property name to allow that property to be absent?
+~~~ts
+type Options = { timeout{{blank}}: number };
+~~~'''
+explanation = "A question mark after a property name marks it as optional."
+
+[questions.typescript-dv008]
+prompt = "In an interview, explain when you would choose overloads and when you would choose a union parameter for a function API."
+keywords = [["overload", "overloads"], ["union", "union parameter"], ["call site", "caller"], ["return type"], ["implementation"]]
+model_answer = '''Choose overloads when different call forms need different return types or the caller needs precise checking for each input form. Choose a union parameter when the inputs follow the same handling rules and share a return type; this keeps the API simpler. With overloads, the implementation still needs to handle every published case.'''
+explanation = "Base the decision on the relationship between inputs and outputs that callers need, not just on the number of parameter types."
+
+[questions.typescript-dvc01]
+title = "Pick Own Properties by Key"
+prompt = '''Implement `pickOwnProperties(source, keys)` to return a new object containing only requested keys that `source` directly owns.
+- Ignore keys that do not exist or are inherited from the prototype.
+- Preserve every existing value, including `false`, `0`, `null`, and `undefined`.
+- Do not modify `source`, and preserve the selected value for each key.'''
+explanation = "This exercise checks selecting object properties by key and distinguishing property existence from truthiness."
+hints = ["Use hasOwnProperty.call to check that a key belongs directly to the object.", "Do not use a truthiness check: false, 0, and null are values that must be preserved."]
+
+[modules.typescript-dv-classes]
+title = "Classes, Inheritance, and Encapsulation"
+description = "Design TypeScript classes, interface contracts, inheritance, and access control."
+lesson = '''
+### A class provides both an instance type and a runtime value
+A class declaration creates a constructor used at runtime and a type that describes its instances. TypeScript checks members, parameters, and method return types before emitting JavaScript. A class can implement multiple interfaces to check structural contracts; `implements` does not add methods or fields and does not validate objects at runtime. `extends` inherits implementation and state from a base class, so a subclass constructor must initialize the base class according to JavaScript rules.
+
+| Member or keyword | Main meaning | Runtime protection? |
+|---|---|---|
+| `public` | A publicly accessible member; this is the default | No |
+| TypeScript `private` | Restricts access during static checking | No |
+| `#field` | A JavaScript private field | Yes |
+| `protected` | Access within the class and subclasses under static checking | No |
+| `abstract` | Defines a contract or base implementation | An abstract class cannot be instantiated directly |
+| `override` | Requires a matching member in the base class | Primarily static checking |
+
+A class can also declare static members on the constructor rather than on instances, accessors to control reading and writing, and parameter properties that declare a field from a constructor parameter. `readonly` prevents assignment through the type after initialization according to TypeScript rules, but it does not create runtime immutability. The `noImplicitOverride` option helps catch a subclass method whose name accidentally fails to match the method it was meant to override.
+
+Example:
+~~~ts
+interface Clock { now(): number }
+class SystemClock implements Clock {
+  now(): number { return Date.now(); }
+}
+~~~
+
+Common mistakes include assuming `implements` generates code, treating TypeScript `private` as a JavaScript private field, or accessing a static member through an instance. Use `#field` for encapsulation enforced by JavaScript; TypeScript `private` may be sufficient when only the project API needs a static restriction. Deep inheritance increases coupling, so interfaces and composition are often easier to replace when shared implementation is not needed.
+'''
+
+[questions.typescript-dv009]
+prompt = '''~~~ts
+interface Serializable { serialize(): string }
+class Report implements Serializable {
+  serialize() { return "ok"; }
+}
+~~~
+What does `implements` do in this example?'''
+options = ["Statically checks that Report satisfies the Serializable contract", "Generates serialize if the class does not have it", "Creates a separate Serializable object at runtime", "Requires Report to inherit an implementation from the interface"]
+explanation = "implements requires the class to be compatible with the interface during type checking; the interface does not provide a runtime implementation."
+
+[questions.typescript-dv010]
+prompt = "What is an important difference between a TypeScript `private` property and a private field written with `#`?"
+options = ["TypeScript private is mainly checked statically, while # is enforced by JavaScript at runtime", "# can only be used on an interface", "TypeScript private always emits a WeakMap", "Both approaches provide the same runtime protection"]
+explanation = "TypeScript private does not create JavaScript privacy; #field is runtime syntax whose access is restricted by the engine."
+
+[questions.typescript-dv011]
+prompt = "Which statement correctly describes an abstract class?"
+options = ["It cannot be instantiated directly, but a subclass can inherit its implementation", "It is always removed completely from JavaScript and cannot contain methods", "It is only used to describe an object literal", "It automatically implements every abstract method at runtime"]
+explanation = "An abstract class can contain shared state and implementation; it cannot be instantiated directly, and a concrete subclass must provide its abstract members."
+
+[questions.typescript-dv012]
+prompt = "When should you use the `override` keyword on a subclass method?"
+options = ["When the method intentionally overrides a base-class member and the compiler should check its name and signature", "To make the method static", "To automatically call the base-class method before its body runs", "To skip return-type checking"]
+explanation = "override clarifies intent and catches a method name that does not exist on the base class; it does not call super automatically."
+
+[questions.typescript-dv013]
+prompt = "Choose the correct descriptions of class members."
+options = ["A member is public by default when no other modifier is given", "A static member belongs to the constructor rather than each instance", "A parameter property can declare a field from a constructor parameter", "implements automatically adds missing methods to a class", "A class creates both an instance type and a constructor value at runtime"]
+explanation = "Public is the default; static members live on the class constructor; a parameter property abbreviates a field declaration; a class has both a type and a value side. implements only checks compatibility."
+
+[questions.typescript-dv014]
+prompt = "Choose the correct statements about access control and inheritance."
+options = ["TypeScript private does not provide the same runtime protection as #field", "protected allows a subclass to access a member under static checking", "readonly automatically calls Object.freeze on an instance", "override lets the compiler check for a member on the base class", "Both extends and implements provide an implementation from a parent type"]
+explanation = "TypeScript private and protected are mainly static restrictions; #field provides runtime protection. readonly does not freeze an object, and only extends inherits implementation."
+
+[questions.typescript-dv015]
+prompt = '''Which keyword makes it clear that a subclass member intentionally overrides a member of its base class?
+~~~ts
+class Child extends Parent {
+  {{blank}} save(): void {}
+}
+~~~'''
+explanation = "override communicates intent and lets the compiler report an error if there is no corresponding member in the base class."
+
+[questions.typescript-dv016]
+prompt = "In an interview, compare an interface with an abstract class when designing contracts for different services."
+keywords = [["interface"], ["abstract class"], ["implementation"], ["state"], ["multiple", "multiple contracts", "multiple interfaces"]]
+model_answer = '''An interface describes a structural contract that multiple classes can implement; it carries no runtime implementation or state. An abstract class fits when services need to share state, a constructor, or common implementation while leaving abstract parts for subclasses to complete. A class can implement multiple interfaces, while inheriting implementation from a class is best when that relationship has clear meaning.'''
+explanation = "Choose based on whether behavior and state need to be shared, rather than using inheritance just to reuse a few lines of code."
+
+[questions.typescript-dvc02]
+title = "Counter with Private State"
+prompt = '''Implement a JavaScript `Counter` class with a `#value` private field:
+- `constructor(initial = 0)` accepts a non-negative integer; otherwise, throw a RangeError with the message `Initial value must be a non-negative integer`.
+- The `value` getter returns the current state.
+- `increment(amount = 1)` accepts only a positive integer; otherwise, throw a RangeError with the message `Increment must be a positive integer`. If valid, add it to the state.
+- `reset()` sets the state to 0.'''
+explanation = "A JavaScript private field preserves a runtime invariant; the class also groups related state and behavior."
+hints = ["Store the state in #value and expose it for reading only through a getter.", "Check Number.isInteger and the lower bound before updating the state."]
+
+[modules.typescript-dv-declarations]
+title = "Declaration Files and Library Types"
+description = "Read, write, and publish types for JavaScript or packages without type declarations."
+lesson = '''
+### Describe a runtime API without rewriting its implementation
+A declaration file has the `.d.ts` extension and gives the compiler type information about existing JavaScript, external packages, or a published API. Declarations such as `declare function`, `declare class`, and `declare module` do not create a JavaScript implementation. A declaration can therefore be syntactically valid but still misrepresent the real API, allowing callers to write code that fails without a compiler warning.
+
+| Need | Common declaration approach | Scope |
+|---|---|---|
+| Describe a package with modules | Export its functions, classes, or types | Callers import from the module |
+| Describe an untyped JavaScript package | Ambient module for the exact module specifier | Import that package name |
+| Describe a global variable | Declare it in an appropriate script declaration | Project-wide global scope |
+| Extend an existing API | Module augmentation or `declare global` | Extend an existing declaration |
+| Publish types with a library | Generate or package declarations matching the entry point | Library consumers |
+
+A declaration file without a top-level `import` or `export` is usually treated as a script, so declarations may be in the global scope. When a file has an import or export, it becomes a module; use `declare global` if that module needs to add a global declaration. A module augmentation must target the module consumers actually import; it does not create a runtime implementation and cannot add every kind of declaration arbitrarily.
+
+Example declaration for an untyped JavaScript library:
+~~~ts
+declare module "legacy-format" {
+  export function formatDate(value: Date): string;
+}
+~~~
+
+When publishing a package, declarations must match the JavaScript exports, parameters, overloads, and return values exactly. Package configuration and module resolution must also let the compiler find the declaration at the actual entry point. For a project's own JavaScript, `tsc` declaration emit can generate types instead of maintaining a handwritten copy.
+
+Common mistakes include using overly broad `any` to silence errors, mixing global declarations into the wrong module scope, or copying an imagined API that does not exist at runtime. Check the actual source or API documentation, try the declaration in a small consumer project, and update it alongside implementation changes. Declarations do not replace validation of data received from a network or user.
+'''
+
+[questions.typescript-dv017]
+prompt = "What is the main role of a `.d.ts` file in a JavaScript package?"
+options = ["Describe the API and types so the compiler can check callers, without providing a runtime implementation", "Completely replace the JavaScript file when the application runs", "Automatically validate every network input", "Create a JavaScript copy for each type"]
+explanation = "A declaration provides a static type contract for an existing implementation; it does not run or check data at runtime."
+
+[questions.typescript-dv018]
+prompt = "An application imports a JavaScript package named `legacy-format`, but the compiler cannot find its types. If the package cannot be changed, which declaration approach describes the module?"
+options = ["Write an ambient module declaration for the exact module specifier and real exports", "Add any interface to a .ts file", "Change every import to any", "Use declare global for every function in the package"]
+explanation = "An ambient module associates a declaration with the exact module specifier so callers can import its types; the declaration must reflect the real runtime exports."
+
+[questions.typescript-dv019]
+prompt = "How is a `.d.ts` file with a top-level export or import usually treated?"
+options = ["As a module with module scope", "As a global script in every case", "As executable JavaScript", "Ignored when the compiler looks for types"]
+explanation = "A top-level import or export makes the file a module. To add a global declaration from it, use the appropriate declare global structure."
+
+[questions.typescript-dv020]
+prompt = "When publishing declarations with a library, what matters most for keeping the type contract safe?"
+options = ["The declaration must match the real runtime API exports and behavior", "Set every result to any for compatibility", "Declare extra convenience methods even if they do not exist at runtime", "Only check that the .d.ts file is syntactically valid"]
+explanation = "The compiler trusts declarations, so a mismatch between the published types and implementation can create errors that static checking will not catch."
+
+[questions.typescript-dv021]
+prompt = "Choose the good practices when writing declarations for a JavaScript library."
+options = ["Compare declared signatures with the runtime implementation", "Describe exports that consumers can actually import", "Use broad any everywhere to avoid reading the API", "Try the declaration from a consumer project or small example", "Keep declarations aligned as the implementation API changes"]
+explanation = "Declarations are contracts trusted by the compiler; they need to match the real API and be checked from a consumer's perspective."
+
+[questions.typescript-dv022]
+prompt = "Choose the correct descriptions of declaration scope."
+options = ["An ambient module should target the module specifier imported by callers", "declare global can add global declarations from a module using the valid structure", "Module augmentation automatically adds an implementation to JavaScript", "A declaration file can describe an API without implementation code", "A file with a top-level export is still always a global script"]
+explanation = "Ambient modules and declare global describe type scope; declarations do not generate runtime code. A top-level export makes a file a module."
+
+[questions.typescript-dv023]
+prompt = "The common TypeScript extension for a file that contains only type declarations is {{blank}}."
+explanation = "A declaration file commonly uses the .d.ts extension."
+
+[questions.typescript-dv024]
+prompt = "A JavaScript package has no types, so a TypeScript application cannot import its API. Describe how you would investigate the cause and create a trustworthy declaration."
+keywords = [["declaration file", ".d.ts"], ["runtime api", "implementation"], ["ambient module", "declare module"], ["module specifier"], ["consumer"]]
+model_answer = '''First check the module specifier, exports, and the package's real runtime API. If the package has no types, create a declaration file or ambient module for the exact module name and describe its actual exports instead of using broad `any`. Then test it from a small TypeScript consumer to confirm module resolution finds the declaration and its signatures match the implementation; update the declaration when the runtime API changes.'''
+explanation = "Distinguish a module lookup problem from a missing declaration, then make sure the type contract reflects the actual package."

@@ -1,0 +1,15 @@
+Dịch toàn bộ chữ giao diện (UI) của Bovabon Edu sang tiếng Anh, dùng hạ tầng i18n có sẵn. Đọc phần đầu `static/i18n.js` (cách hoạt động) và `CLAUDE.md`.
+
+Cơ chế:
+- `static/i18n.js` có từ điển `EN` (khoá = chuỗi tiếng Việt nguyên văn đã trim, giá trị = tiếng Anh). Khi người dùng chọn English, mọi text node / aria-label / title / placeholder khớp NGUYÊN VĂN một khoá sẽ tự được dịch (MutationObserver) — chuỗi tĩnh chỉ cần thêm vào `EN`, không cần sửa app.js.
+- Chuỗi có biến hoặc ghép nối (template literal như `${n} câu hỏi`, `Đã lưu: bật ${a}/${b} lộ trình`, toast, confirmDialog, crumbs/document.title, nhãn tính toán): trong `static/app.js` bọc bằng hàm `tr('… {n} …', { n })` (đã khai báo ở đầu app.js; KHÔNG dùng tên `t` vì `t` là biến cục bộ ở nhiều hàm) và thêm khoá có `{biến}` vào `EN`.
+- Đoạn văn bản bị tách thành nhiều text node bởi thẻ con (vd. `Đã có <b>5</b> câu`) → đưa về một chuỗi `tr()` hoặc tách thành các text node có nghĩa độc lập.
+- Nội dung bài học/câu hỏi/tên danh mục do server trả (đã dịch qua ?lang=en) — KHÔNG đưa vào từ điển.
+
+Việc cần làm:
+1. Rà hết `static/app.js` và `static/index.html`: mọi chuỗi tiếng Việt hiển thị cho người dùng (kể cả TYPE_LABEL, nhãn độ khó, trạng thái, nút, tiêu đề trang, thông báo lỗi, toast, xác nhận, thẻ đồng bộ đám mây, trang cài đặt, Code Lab, thi thử, tiến độ, ngày giờ tương đối "x phút trước"…). Định dạng ngày theo `toLocaleString(UI_LANG === 'en' ? 'en-US' : 'vi-VN')`.
+2. Thêm bản tiếng Anh tự nhiên, ngắn gọn, đúng giọng một app học lập trình (không dịch word-by-word) vào `EN` trong `static/i18n.js`, nhóm theo màn hình kèm comment.
+3. Kiểm tra sót: viết script node tạm (trong /tmp) tìm chuỗi có dấu tiếng Việt trong app.js nằm ngoài lệnh gọi `tr(...)` và không có khoá trong `EN`; lặp tới khi chỉ còn comment/log nội bộ.
+4. Không đổi logic, không đổi id/class/data-*. Chỉ sửa `static/app.js`, `static/i18n.js`, `static/index.html`.
+
+Kiểm tra: `node --check static/app.js && node --check static/i18n.js`; `cargo build --release`; chạy `PORT=18991 ./target/release/bovabon_edu` và `curl -s localhost:18991/i18n.js | head` (bỏ qua chạy server nếu một file data khác đang được job khác sửa dở làm server không khởi động). Dừng server khi xong.

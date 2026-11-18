@@ -1,0 +1,533 @@
+id = "english-cefr-b2"
+title = "Tiếng Anh B2 · Trung cao cấp"
+icon = "B2"
+color = "#16a34a"
+group = "Tiếng Anh"
+area = "english"
+description = "Luyện tiếng Anh B2 qua ngữ pháp kể chuyện, từ vựng theo cụm, giao tiếp thuyết phục và văn bản nghị luận, báo cáo, đánh giá, thư trang trọng."
+
+[[modules]]
+id = "cefr-b2-grammar-plus"
+title = "B2 · Ngữ pháp trong ngữ cảnh"
+description = "Kể chuyện, tương lai trong quá khứ, verb patterns đổi nghĩa, lượng từ, cụm danh từ, nhấn mạnh và lược bỏ tự nhiên."
+lesson = '''
+### Kể chuyện và nhìn lại kế hoạch
+| Cấu trúc | Dùng khi | Ví dụ |
+|---|---|---|
+| Past simple | sự kiện chính nối tiếp | *Mia opened the email and called her manager.* |
+| Past continuous | bối cảnh hoặc việc đang diễn ra | *I was driving when the storm began.* |
+| Past perfect | việc xảy ra trước một mốc quá khứ | *They had left before we arrived.* |
+| Past perfect continuous | nhấn mạnh khoảng thời gian trước mốc quá khứ | *He had been waiting for an hour when the bus came.* |
+| was/were going to; would | dự định hoặc tương lai nhìn từ quá khứ | *I was going to call, but I forgot.* / *She said she would help.* |
+
+### Động từ theo sau bởi to V hoặc V-ing
+Hình thức sau động từ có thể đổi nghĩa. *Remember to lock the door* là nhớ việc cần làm; *remember locking it* là nhớ đã làm. *Stop to answer the phone* nghĩa là dừng việc đang làm để trả lời; *stop answering calls* nghĩa là ngừng trả lời. *Try to restart the app* là cố gắng khởi động; *try restarting it* là thử cách đó. *Regret to say* thường báo tin không vui; *regret saying it* là hối tiếc lời đã nói. Hãy đọc cả ngữ cảnh thay vì học một danh sách máy móc.
+
+### Lượng từ và cụm danh từ
+| Cụm | Sắc thái | Ví dụ |
+|---|---|---|
+| few / little | hầu như không có, thường mang ý tiêu cực | *Few people noticed the change.* |
+| a few / a little | có một ít, đủ để nói đến | *We have a few options and a little time.* |
+
+Danh từ có thể bổ nghĩa cho danh từ khác: *a customer service team*, *a three-day trip*. Tính từ ghép thường có gạch nối trước danh từ: *a well-known author*, *a time-consuming task*. Thứ tự nhiều tính từ thường là ý kiến, kích thước/tuổi, màu sắc, nguồn gốc, chất liệu rồi đến danh từ; không cần xếp chuỗi dài nếu câu có thể viết gọn hơn.
+
+### Nhấn mạnh, đánh giá và tránh lặp
+*I do understand your concern* dùng *do/does/did + động từ nguyên mẫu* để nhấn mạnh lời khẳng định; không thêm *-s* hay *-ed* sau trợ động từ. *You should have checked the date* là lời phê bình/nuối tiếc về việc đã qua. *You needn't have brought food* cho biết người nghe đã mang nhưng việc đó không cần thiết; *You didn't need to bring food* chỉ nói không có nhu cầu, chưa khẳng định họ đã mang hay chưa. Khi tránh lặp, dùng *one/ones* cho danh từ đếm được (*the blue one*), *do so* thay một hành động vừa nêu, hoặc *so/not* sau các động từ như *think* (*I think so; I hope not*). Người Việt hay dùng *few* thay *a few*, giữ nguyên động từ sau *did*, hoặc viết *I am agree*; nhớ phân biệt lượng từ, dùng động từ nguyên mẫu sau *do*, và nói *I do agree* nếu cần nhấn mạnh.
+'''
+
+[[questions]]
+id = "cefr-b2-001"
+module = "cefr-b2-grammar-plus"
+type = "single"
+difficulty = 1
+prompt = "Choose the best words to complete the story: *While I ______ for the train, I noticed that I ______ my wallet at home.*"
+options = ["waited / left", "was waiting / had left", "had waited / was leaving", "was waiting / leave"]
+answer = [1]
+explanation = "Past continuous tạo bối cảnh đang diễn ra; past perfect cho biết việc để quên ví xảy ra trước lúc nhận ra."
+
+[[questions]]
+id = "cefr-b2-002"
+module = "cefr-b2-grammar-plus"
+type = "single"
+difficulty = 2
+prompt = "At first, the team ______ launch the new website in May, but a delay changed the plan."
+options = ["was going to", "would have", "had launched", "is going to"]
+answer = [0]
+explanation = "*Was going to* diễn đạt dự định trong quá khứ; mệnh đề sau cho biết kế hoạch đã thay đổi."
+
+[[questions]]
+id = "cefr-b2-003"
+module = "cefr-b2-grammar-plus"
+type = "single"
+difficulty = 2
+prompt = "The sign said 'No entry', so we stopped ______ the building."
+options = ["to enter", "entering", "enter", "entered"]
+answer = [1]
+explanation = "*Stop + V-ing* nghĩa là ngừng hành động đó. *Stop to enter* sẽ có nghĩa dừng một việc khác để vào."
+
+[[questions]]
+id = "cefr-b2-004"
+module = "cefr-b2-grammar-plus"
+type = "single"
+difficulty = 1
+prompt = "The first bus was almost empty, so only ______ passengers got on."
+options = ["a few", "few", "a little", "little"]
+answer = [1]
+explanation = "Danh từ *passengers* đếm được số nhiều. *Few* nhấn mạnh số lượng rất ít; *a few* có nghĩa là có một vài người."
+
+[[questions]]
+id = "cefr-b2-005"
+module = "cefr-b2-grammar-plus"
+type = "single"
+difficulty = 2
+prompt = "Your colleague doubts your experience. Which sentence most naturally adds emphasis to your positive reply?"
+options = ["I do have experience with this kind of project.", "I am have experience with this kind of project.", "I does have experience with this kind of project.", "I did had experience with this kind of project."]
+answer = [0]
+explanation = "Trong câu khẳng định nhấn mạnh, dùng *do + động từ nguyên mẫu*: *I do have*. Không dùng *am* hoặc chia động từ sau *do/did*."
+
+[[questions]]
+id = "cefr-b2-006"
+module = "cefr-b2-grammar-plus"
+type = "multiple"
+difficulty = 2
+prompt = "Select the sentences in which the past perfect clearly places one event before another past event."
+options = ["By the time we arrived, the film had started.", "She had finished dinner before her guests came.", "They had been at the café yesterday.", "I have met him before we moved here.", "When I called, he had already gone to bed."]
+answer = [0, 1, 4]
+explanation = "Các câu đúng dùng *had + past participle* cho sự việc xảy ra trước mốc quá khứ. Câu 3 không cần past perfect cho một trạng thái tại thời điểm cụ thể; câu 4 trộn present perfect với mốc quá khứ đã kết thúc."
+
+[[questions]]
+id = "cefr-b2-007"
+module = "cefr-b2-grammar-plus"
+type = "multiple"
+difficulty = 3
+prompt = "Which pairs correctly match the meaning of the verb pattern?"
+options = ["I remembered to send the form. — I did not forget to send it.", "I remember sending the form. — I have a memory of doing it.", "She stopped to talk to Sam. — She ended her habit of talking to Sam.", "He tried restarting the computer. — He tested that as a possible solution.", "They regret to buy the tickets. — They are sorry they bought them."]
+answer = [0, 1, 3]
+explanation = "*Remember to do* là nhớ cần làm; *remember doing* nhớ đã làm. *Stop to talk* là dừng việc khác để nói chuyện. *Try doing* là thử một giải pháp. Câu cuối phải là *regret buying*."
+
+[[questions]]
+id = "cefr-b2-008"
+module = "cefr-b2-grammar-plus"
+type = "fill"
+difficulty = 1
+prompt = "Complete the sentence with the phrase that means there is some time, though not much: *We have {{blank}} time before the shop closes, so let's choose quickly.*"
+blanks = [["a little"]]
+explanation = "*Time* không đếm được; *a little* nói rằng còn một lượng nhỏ. *Little time* nhấn mạnh gần như không còn thời gian."
+
+[[questions]]
+id = "cefr-b2-009"
+module = "cefr-b2-grammar-plus"
+type = "fill"
+difficulty = 2
+prompt = "Complete the sentence with the earlier action: *When the teacher arrived, the students {{blank}} the classroom.* Use *leave* in the past perfect."
+blanks = [["had left"]]
+explanation = "Học sinh rời đi trước khi giáo viên đến, nên hành động sớm hơn dùng past perfect."
+
+[[questions]]
+id = "cefr-b2-010"
+module = "cefr-b2-grammar-plus"
+type = "fill"
+difficulty = 2
+prompt = "Complete the sentence with the correct form of *remember*: *Please {{blank}} the lights before you leave; we need to do it later.*"
+blanks = [["remember to switch off", "remember to turn off"]]
+explanation = "Yêu cầu nhắc ai làm việc về sau dùng *remember + to V*. Hai cách nói *switch off* và *turn off* đều tự nhiên trong ngữ cảnh này."
+
+[[questions]]
+id = "cefr-b2-011"
+module = "cefr-b2-grammar-plus"
+type = "essay"
+difficulty = 2
+prompt = "Write two or three sentences about a plan that changed. Include one background action, one event that had happened earlier, and the original plan."
+keywords = [["was waiting", "were waiting", "was working", "were working", "was walking", "was driving", "was sitting"], ["had left", "had finished", "had missed", "had already", "had gone", "had been"], ["was going to", "were going to", "had planned", "planned to"]]
+min_keywords = 2
+model_answer = '''I was waiting at the station when I realised I had left my ticket at home. I was going to take the early train, but I bought another ticket for the next one.'''
+explanation = "Đoạn trả lời có nền quá khứ tiếp diễn, sự việc sớm hơn ở past perfect, và kế hoạch ban đầu với *was going to*."
+
+[[modules]]
+id = "cefr-b2-vocab"
+title = "B2 · Từ vựng theo cụm và sắc thái"
+description = "Collocation, phrasal verb nhiều nghĩa, word formation, thành ngữ thông dụng và những cặp từ dễ nhầm."
+lesson = '''
+### Học từ theo cụm
+Ở B2, biết nghĩa riêng của từng từ chưa đủ; cần nhớ các từ thường đi cùng nhau. Ví dụ: *make progress*, *heavy traffic*, *reach a decision*, *raise awareness*, *take responsibility*, *meet a deadline*. Tránh dịch từng từ từ tiếng Việt: không nói *do a progress* hay *strong rain* trong các cụm này. Khi ghi từ mới, lưu cả cụm và một câu có ngữ cảnh.
+
+### Phrasal verbs: đọc ngữ cảnh để chọn nghĩa
+| Cụm | Nghĩa thường gặp | Ví dụ |
+|---|---|---|
+| bring up | nêu một chủ đề; nuôi dạy | *She brought up the cost at the meeting.* |
+| put off | hoãn | *They put off the trip until June.* |
+| take over | tiếp quản; giành quyền kiểm soát | *A new manager took over the team.* |
+| find out | tìm ra / biết được thông tin | *We found out why the bus was late.* |
+| turn down | từ chối; giảm âm lượng | *He turned down the offer.* |
+
+Các cụm có thể có nhiều nghĩa, nên xác định tân ngữ và tình huống trước khi dịch. Với đại từ làm tân ngữ, một số cụm tách được: *turn it down*, không nói *turn down it*.
+
+### Tạo từ và cặp từ dễ nhầm
+Tiền tố/hậu tố thay đổi loại từ hoặc nghĩa: *rely → reliable → reliability*; *decide → decision*; *success → successful → successfully*; *possible → impossible*. Nhìn vị trí trong câu để đoán loại từ cần điền: sau *a/an/the* thường là danh từ; trước danh từ thường là tính từ; sau động từ có thể cần trạng từ.
+
+| Từ | Dùng thường gặp | Ví dụ |
+|---|---|---|
+| affect | động từ: tác động đến | *Noise can affect sleep.* |
+| effect | danh từ: kết quả / tác động | *The change had little effect.* |
+| economic | liên quan đến nền kinh tế | *economic growth* |
+| economical | tiết kiệm khi sử dụng | *an economical car* |
+
+Thành ngữ thông dụng nên dùng đúng tình huống, không chen vào thư trang trọng nếu nghe suồng sã: *break the ice* (giúp mọi người bắt đầu trò chuyện), *under the weather* (không khoẻ), *once in a while* (thỉnh thoảng). Người Việt thường nhầm *affect/effect*, dùng sai giới từ trong collocation, hoặc thay một từ trong thành ngữ. Mẹo là tra cả cụm, ghi từ loại và tự đặt câu mới; khi chưa chắc sắc thái, chọn cách nói trực tiếp, trung tính.
+'''
+
+[[questions]]
+id = "cefr-b2-012"
+module = "cefr-b2-vocab"
+type = "single"
+difficulty = 1
+prompt = "The course helped me ______ a lot of progress in writing formal emails."
+options = ["do", "make", "take", "reach"]
+answer = [1]
+explanation = "Collocation tự nhiên là *make progress*. Tránh dịch máy móc thành *do progress*."
+
+[[questions]]
+id = "cefr-b2-013"
+module = "cefr-b2-vocab"
+type = "single"
+difficulty = 2
+prompt = "At the end of the meeting, Jo ______ the problem of late deliveries, which started a useful discussion."
+options = ["brought up", "brought about", "brought in", "brought out"]
+answer = [0]
+explanation = "*Bring up an issue* là nêu vấn đề để mọi người thảo luận."
+
+[[questions]]
+id = "cefr-b2-014"
+module = "cefr-b2-vocab"
+type = "single"
+difficulty = 1
+prompt = "The outdoor concert was ______ until Saturday because of the storm."
+options = ["put off", "put out", "put up", "put through"]
+answer = [0]
+explanation = "*Put off* có nghĩa là hoãn một sự kiện hoặc kế hoạch."
+
+[[questions]]
+id = "cefr-b2-015"
+module = "cefr-b2-vocab"
+type = "single"
+difficulty = 2
+prompt = "The article describes the ______ effects of tourism on local jobs and prices."
+options = ["economical", "economic", "economy", "economically"]
+answer = [1]
+explanation = "*Economic effects* là tác động liên quan đến nền kinh tế; *economical* thường nghĩa là tiết kiệm khi sử dụng."
+
+[[questions]]
+id = "cefr-b2-016"
+module = "cefr-b2-vocab"
+type = "single"
+difficulty = 1
+prompt = "The organiser started with a simple game to help people who had never met ______."
+options = ["break the ice", "miss the boat", "cost an arm and a leg", "under the weather"]
+answer = [0]
+explanation = "*Break the ice* là làm giảm sự ngượng ngùng ban đầu để mọi người dễ bắt chuyện."
+
+[[questions]]
+id = "cefr-b2-017"
+module = "cefr-b2-vocab"
+type = "multiple"
+difficulty = 2
+prompt = "Select all sentences that use a strong collocation naturally."
+options = ["The team made steady progress this month.", "We had heavy traffic near the bridge.", "Please do a decision before Friday.", "The campaign aims to raise awareness of road safety.", "She took a progress in her English class."]
+answer = [0, 1, 3]
+explanation = "Các cụm tự nhiên là *make progress*, *heavy traffic* và *raise awareness*. Dùng *make a decision*, còn *progress* không đi với *take* theo cách này."
+
+[[questions]]
+id = "cefr-b2-018"
+module = "cefr-b2-vocab"
+type = "multiple"
+difficulty = 3
+prompt = "Which sentences use the phrasal verb with the stated meaning shown by context?"
+options = ["The new director took over the department in April. — became responsible for it", "We put off the meeting until Monday. — postponed it", "She brought up three children on her own. — raised them", "He turned down the music. — accepted it", "I found out the answer in the manual. — discovered it"]
+answer = [0, 1, 2, 4]
+explanation = "*Take over* là tiếp quản; *put off* là hoãn; *bring up* cũng có nghĩa nuôi dạy; *find out* là tìm ra thông tin. *Turn down the music* là giảm âm lượng, không phải chấp nhận."
+
+[[questions]]
+id = "cefr-b2-019"
+module = "cefr-b2-vocab"
+type = "fill"
+difficulty = 1
+prompt = "Choose the noun that completes the sentence: *The new timetable had a positive {{blank}} on attendance.*"
+blanks = [["effect"]]
+explanation = "Ở đây cần danh từ *effect*. *Affect* thường là động từ: *The timetable affected attendance.*"
+
+[[questions]]
+id = "cefr-b2-020"
+module = "cefr-b2-vocab"
+type = "fill"
+difficulty = 2
+prompt = "Complete the sentence with the correct form of *rely*: *The guide is clear and {{blank}}; visitors can use it without help.*"
+blanks = [["reliable"]]
+explanation = "Cần tính từ sau *is* để mô tả guide: *reliable*."
+
+[[questions]]
+id = "cefr-b2-021"
+module = "cefr-b2-vocab"
+type = "fill"
+difficulty = 1
+prompt = "Complete the common collocation: *There was {{blank}} traffic on the road, so the journey took an extra hour.*"
+blanks = [["heavy"]]
+explanation = "Cụm cố định thông dụng là *heavy traffic* để nói đường đông xe."
+
+[[questions]]
+id = "cefr-b2-022"
+module = "cefr-b2-vocab"
+type = "essay"
+difficulty = 2
+prompt = "Write two or three sentences to persuade your local library to hold a monthly event for new residents. Use at least two suitable collocations or phrasal verbs."
+keywords = [["break the ice", "help people meet", "meet new people"], ["raise awareness", "bring people together", "bring together"], ["take responsibility", "take over", "put off"]]
+min_keywords = 2
+model_answer = '''A monthly book evening could help new residents meet local people and break the ice. The library could also raise awareness of its free classes. I hope the organisers will take responsibility for arranging the first event.'''
+explanation = "Câu trả lời thuyết phục nêu lợi ích cụ thể và dùng các cụm từ phù hợp với tình huống cộng đồng."
+
+[[modules]]
+id = "cefr-b2-functions"
+title = "B2 · Thảo luận, thuyết phục và đàm phán"
+description = "Diễn đạt mức độ chắc chắn, nêu lý do, phản biện lịch sự, tìm thoả hiệp, thuyết trình và điều phối lượt nói."
+lesson = '''
+### Suy đoán có căn cứ
+Khi chưa biết chắc, hãy cho người nghe biết mức độ tự tin và lý do: *It might be a delivery delay; the roads are very busy.* Với bằng chứng mạnh hơn: *She must be on the train; she sent us a photo from the platform.* Nếu một khả năng gần như không thể: *That can't be the right room; the sign shows a different number.* Phân biệt điều mình biết với điều mình suy ra; tránh nói *definitely* khi chỉ có một manh mối.
+
+### Thuyết phục và phản biện
+Một lập luận rõ thường có đề xuất, lý do và lợi ích cụ thể: *We should extend the opening hours because many students finish work at six.* Có thể nhấn mạnh lợi ích thực tế: *This would give more people time to use the service.* Để phản biện mà vẫn lịch sự, công nhận một phần ý kiến rồi nêu giới hạn: *I see your point about cost. However, the current system also wastes staff time.* Tránh *You are wrong* hoặc *I agree, but…* nếu giọng điệu có thể bị hiểu là bác bỏ hoàn toàn; nêu dữ kiện hay hệ quả thay vì phán xét người nói.
+
+### Đàm phán và điều phối
+Thỏa thuận thường cần đề xuất lựa chọn, hỏi nhu cầu của bên kia và xác nhận phần đã thống nhất: *Could we try this for one month?* · *Would a later start work for you?* · *It sounds as if we agree on the date.* Có thể đề nghị gặp nhau ở giữa (*meet halfway*) hoặc thử phương án trong thời gian ngắn rồi đánh giá lại. Người điều phối giúp mọi người tham gia: *Could we hear from someone who hasn't spoken yet?*; làm rõ: *Could you explain what you mean by “flexible”?*; tóm tắt: *So far, we have agreed to…* và báo trước khi chuyển ý.
+
+### Thuyết trình rõ ràng
+Mở đầu bằng mục tiêu: *Today I'd like to explain…*; chuyển phần: *Let me move on to the next point*; đưa ví dụ: *For example…*; kết lại: *To sum up…*; mời câu hỏi: *Are there any questions?* Các cụm này giúp người nghe theo dõi cấu trúc, không cần dùng từ nối quá trang trọng. Trong văn bản và hội thoại, người Việt đôi khi dịch trực tiếp thành *I very agree* hoặc phản biện quá thẳng. Dùng *I completely agree* khi đồng tình; nếu không, thử *I understand your concern, although…* hoặc *Could we consider…?* để giữ trao đổi hợp tác.
+'''
+
+[[questions]]
+id = "cefr-b2-023"
+module = "cefr-b2-functions"
+type = "single"
+difficulty = 1
+prompt = "The train is ten minutes late, and the station is unusually quiet. Which reply expresses a cautious inference?"
+options = ["It may have been delayed.", "It definitely left yesterday.", "It must be cancelled because all trains are cancelled in winter.", "It can't have any passengers."]
+answer = [0]
+explanation = "*May have been delayed* nêu một khả năng dựa trên thông tin hạn chế. Các lựa chọn khác khẳng định quá mức hoặc không có căn cứ."
+
+[[questions]]
+id = "cefr-b2-024"
+module = "cefr-b2-functions"
+type = "single"
+difficulty = 2
+prompt = "Your town is considering a free Saturday bus service. Which comment is the clearest attempt to persuade the council?"
+options = ["You must do this because I like buses.", "A free Saturday service could help people reach the market, which may also support local shops.", "Buses are things that go on roads.", "I don't know. Perhaps something could happen."]
+answer = [1]
+explanation = "Đề xuất được hỗ trợ bằng lý do và lợi ích có thể thấy; cách diễn đạt không áp đặt kết luận tuyệt đối."
+
+[[questions]]
+id = "cefr-b2-025"
+module = "cefr-b2-functions"
+type = "single"
+difficulty = 2
+prompt = "A colleague says, 'We should reduce the support team's hours to save money.' Which response disagrees politely while recognising the concern?"
+options = ["That's a terrible idea and you don't understand the problem.", "I see your point about costs. However, shorter hours could leave customers without help in the evening.", "No. I am not agree with you.", "You are completely right, so we should not discuss it."]
+answer = [1]
+explanation = "Câu trả lời công nhận mối quan tâm về chi phí rồi nêu một hệ quả cụ thể, giữ giọng điệu lịch sự."
+
+[[questions]]
+id = "cefr-b2-026"
+module = "cefr-b2-functions"
+type = "single"
+difficulty = 2
+prompt = "Two departments disagree about when to run a training session. One wants mornings; the other wants afternoons. What is the most constructive proposal?"
+options = ["Let's ignore the other department and choose mornings.", "Could we run the first session in the morning and the next one in the afternoon, then compare attendance?", "There is no point in discussing this.", "I will decide for everyone without asking."]
+answer = [1]
+explanation = "Đề xuất thử cả hai lựa chọn và so sánh kết quả là một thoả hiệp có thể kiểm tra được."
+
+[[questions]]
+id = "cefr-b2-027"
+module = "cefr-b2-functions"
+type = "single"
+difficulty = 1
+prompt = "You have finished explaining the problem and are ready to discuss possible solutions. Which transition fits a presentation?"
+options = ["Let me move on to some possible solutions.", "I have arrived at the solutions before the problem.", "Give to me your attention now.", "I am agree to change the subject."]
+answer = [0]
+explanation = "*Let me move on to…* là cụm báo hiệu chuyển sang phần tiếp theo một cách tự nhiên."
+
+[[questions]]
+id = "cefr-b2-028"
+module = "cefr-b2-functions"
+type = "multiple"
+difficulty = 2
+prompt = "You are chairing a discussion. Select the phrases that invite participation or help the group follow the discussion."
+options = ["Could we hear from someone who hasn't spoken yet?", "So far, we seem to agree on the date.", "Your idea is boring; let's stop talking about it.", "Could you explain what you mean by 'low-cost option'?", "Only my view matters here."]
+answer = [0, 1, 3]
+explanation = "Các câu đúng mời thêm người tham gia, tóm tắt điểm đồng thuận và yêu cầu làm rõ."
+
+[[questions]]
+id = "cefr-b2-029"
+module = "cefr-b2-functions"
+type = "multiple"
+difficulty = 3
+prompt = "Select the responses that make a reasoned, tactful counterpoint."
+options = ["I understand why you prefer the cheaper option; however, it may not last as long.", "I see your point. Could we also look at how much time each option takes?", "You are wrong, and there is nothing else to say.", "That is the only sensible idea, so I agree with everything.", "I agree that speed matters, but we should also check whether the new service is reliable."]
+answer = [0, 1, 4]
+explanation = "Các câu được chọn vừa công nhận ý kiến/ưu tiên của bên kia, vừa bổ sung lý do hoặc tiêu chí khác để cân nhắc."
+
+[[questions]]
+id = "cefr-b2-030"
+module = "cefr-b2-functions"
+type = "fill"
+difficulty = 1
+prompt = "Complete the polite request for clarification: *Could you {{blank}} how the new booking system works?*"
+blanks = [["explain"]]
+explanation = "*Could you explain…?* là cách lịch sự để yêu cầu người khác làm rõ thông tin."
+
+[[questions]]
+id = "cefr-b2-031"
+module = "cefr-b2-functions"
+type = "fill"
+difficulty = 2
+prompt = "Complete the negotiation phrase: *To find a solution that suits both teams, could we {{blank}}?*"
+blanks = [["meet halfway"]]
+explanation = "*Meet halfway* diễn đạt việc mỗi bên nhượng bộ một phần để đạt thoả thuận."
+
+[[questions]]
+id = "cefr-b2-032"
+module = "cefr-b2-functions"
+type = "fill"
+difficulty = 2
+prompt = "Complete the chair's sentence with a verb meaning 'give a short account of the main points': *Before we finish, let me {{blank}} what we have agreed.*"
+blanks = [["summarise", "summarize"]]
+explanation = "*Summarise/summarize* có nghĩa là tóm tắt. Cả cách viết Anh-Anh và Anh-Mỹ đều được chấp nhận."
+
+[[questions]]
+id = "cefr-b2-033"
+module = "cefr-b2-functions"
+type = "essay"
+difficulty = 3
+prompt = "A colleague wants to replace the weekly team meeting with email updates. Write two or three sentences that acknowledge one benefit, raise one concern, and suggest a compromise."
+keywords = [["I understand", "I see your point", "I can see why"], ["however", "but", "although"], ["could we", "how about", "perhaps we could"]]
+min_keywords = 2
+model_answer = '''I understand that email updates can save time. However, they may not give everyone a chance to ask questions. Could we keep a short meeting every other week and use email in between?'''
+explanation = "Câu trả lời thể hiện nhượng bộ, nêu mối lo ngại và đề xuất một phương án dung hoà."
+
+[[modules]]
+id = "cefr-b2-reading-writing"
+title = "B2 · Đọc hiểu và viết văn bản rõ ràng"
+description = "Tổ chức bài luận, báo cáo, bài đánh giá và thư trang trọng; kiểm soát register, cohesion và paraphrase."
+lesson = '''
+### Bài luận opinion và for-and-against
+Bài luận opinion nêu chủ đề và quan điểm rõ ở phần mở đầu, sau đó phát triển từng lý do bằng giải thích hoặc ví dụ; kết luận nhắc lại lập trường bằng cách diễn đạt khác. Bài for-and-against trình bày cả lợi ích lẫn bất lợi trước khi kết luận. Mỗi đoạn nên có một câu chủ đề và các câu hỗ trợ cùng hướng. *Firstly*, *in addition*, *on the other hand* và *finally* giúp chỉ quan hệ giữa ý, nhưng không thay cho lập luận.
+
+### Báo cáo, đánh giá và thư trang trọng
+Báo cáo thường có tiêu đề hoặc các mục ngắn như *Purpose*, *Findings* và *Recommendations*. Tập trung vào kết quả, dùng câu rõ và giọng điệu trung tính: *The survey found that…*; *It is recommended that the opening hours be extended.* Bài đánh giá nên nêu tiêu chí, điểm mạnh, hạn chế và nhận xét cuối thay vì chỉ nói *It was good*. Trong thư trang trọng, dùng lời chào phù hợp (*Dear Ms Lee,*), nêu mục đích sớm (*I am writing to enquire about…*) và kết thư lịch sự (*Kind regards,*). Không dùng cách viết thân mật như *Hey*, *gonna* hay *send me this now* khi viết cho cơ quan hoặc khách hàng.
+
+### Cohesion và paraphrase
+Cohesion làm các câu nối với nhau nhờ đại từ quy chiếu rõ (*The library changed its hours. This decision…*), từ nối đúng quan hệ (*however* cho tương phản; *as a result* cho kết quả), và tránh lặp từ quá mức. Đại từ như *it/they/this* phải có đối tượng tham chiếu dễ nhận ra. Paraphrase giữ nguyên thông tin nhưng thay cấu trúc hoặc từ vựng phù hợp: *The council reduced fares* có thể diễn đạt là *Bus tickets became cheaper*. Không chỉ đổi một từ nếu làm lệch ý; không thêm kết luận mà nguồn không nói. Người Việt hay viết *In my opinion, I think* (lặp quan điểm), *regarding to* (dùng sai cụm), hoặc nối nhiều mệnh đề bằng dấu phẩy. Chọn *In my opinion* hoặc *I think*, viết *regarding the issue*, và tách câu hoặc dùng từ nối có dấu câu đúng.
+'''
+
+[[questions]]
+id = "cefr-b2-034"
+module = "cefr-b2-reading-writing"
+type = "single"
+difficulty = 1
+prompt = "Which outline is most suitable for a short for-and-against essay about working from home?"
+options = ["State the topic, discuss advantages, discuss disadvantages, then give a balanced conclusion.", "List unrelated facts and finish without a conclusion.", "Repeat the same advantage in every paragraph.", "Give only a personal story and do not explain the topic."]
+answer = [0]
+explanation = "Bài for-and-against nên triển khai cả hai phía rồi kết luận; các đoạn cần hỗ trợ một cấu trúc rõ ràng."
+
+[[questions]]
+id = "cefr-b2-035"
+module = "cefr-b2-reading-writing"
+type = "single"
+difficulty = 2
+prompt = "Which sentence works best as the topic sentence for a paragraph about the benefits of public parks?"
+options = ["Public parks offer several benefits to people living in cities.", "I went to a park last Sunday with my cousin.", "There are many things in the world.", "In conclusion, public transport should be cheaper."]
+answer = [0]
+explanation = "Câu chủ đề giới thiệu đúng ý chính sẽ được phát triển: lợi ích của công viên đô thị."
+
+[[questions]]
+id = "cefr-b2-036"
+module = "cefr-b2-reading-writing"
+type = "single"
+difficulty = 2
+prompt = "A manager asks for a short report on staff training. Which sentence best suits the findings section?"
+options = ["The survey found that most staff wanted more practice with the new booking system.", "Hey, everyone really wants more practice, I guess.", "I think training is nice and stuff.", "You should do what I say about training."]
+answer = [0]
+explanation = "Câu báo cáo trung tính, nêu kết quả cụ thể và phù hợp với phần findings."
+
+[[questions]]
+id = "cefr-b2-037"
+module = "cefr-b2-reading-writing"
+type = "single"
+difficulty = 1
+prompt = "You are emailing a company to ask about an advertised internship. Which opening is most appropriate?"
+options = ["Dear Ms Brown, I am writing to enquire about the summer internship advertised on your website.", "Hey, tell me more about that job.", "Give me information fast.", "Hi mate, what is this internship thing?"]
+answer = [0]
+explanation = "Lời chào và câu mở đầu lịch sự nêu rõ mục đích, phù hợp với thư gửi công ty."
+
+[[questions]]
+id = "cefr-b2-038"
+module = "cefr-b2-reading-writing"
+type = "single"
+difficulty = 2
+prompt = "Which sentence uses a clear reference word to connect to the previous sentence? Previous sentence: *The council has extended the library's evening hours.*"
+options = ["This change will make the library more useful to people who work late.", "It is very good and they are there.", "That has them doing it.", "The change, they, useful, later."]
+answer = [0]
+explanation = "*This change* có đối tượng tham chiếu rõ là việc kéo dài giờ mở cửa; các lựa chọn khác mơ hồ hoặc sai cấu trúc."
+
+[[questions]]
+id = "cefr-b2-039"
+module = "cefr-b2-reading-writing"
+type = "single"
+difficulty = 3
+prompt = "The source says: *After the city lowered bus fares, more residents used public transport.* Which sentence is the best paraphrase?"
+options = ["More residents travelled by public transport after the city reduced bus fares.", "The city increased bus fares, so residents stopped travelling.", "Public transport is always the best way to travel.", "The city lowered fares because residents used public transport more."]
+answer = [0]
+explanation = "Câu đầu giữ nguyên quan hệ thời gian và kết quả, đồng thời thay đổi cấu trúc/từ ngữ. Các câu khác đổi nghĩa hoặc thêm ý."
+
+[[questions]]
+id = "cefr-b2-040"
+module = "cefr-b2-reading-writing"
+type = "multiple"
+difficulty = 2
+prompt = "Select the sentences that link ideas clearly and use correct punctuation and grammar."
+options = ["The museum improved its website. As a result, more people booked online.", "The museum has a new website. It is easier to use than the old one.", "The website is clearer; however, some pages are still difficult to use.", "The website is clearer, because. Some pages are still difficult to use.", "The museum improved its website. This have helped visitors."]
+answer = [0, 1, 2]
+explanation = "Các câu được chọn dùng quan hệ kết quả, đại từ quy chiếu rõ hoặc từ nối tương phản với dấu câu phù hợp."
+
+[[questions]]
+id = "cefr-b2-041"
+module = "cefr-b2-reading-writing"
+type = "fill"
+difficulty = 2
+prompt = "Complete the sentence with a contrast clause linker: *{{blank}} the survey included only 40 people, the results showed similar preferences in both age groups.*"
+blanks = [["although", "even though", "though"]]
+explanation = "Các từ này nối một mệnh đề nhượng bộ với mệnh đề chính. Sau *despite* phải là danh từ hoặc V-ing, không phải mệnh đề hoàn chỉnh."
+
+[[questions]]
+id = "cefr-b2-042"
+module = "cefr-b2-reading-writing"
+type = "fill"
+difficulty = 1
+prompt = "Use a singular reference word for the whole previous statement: *The school received 200 applications. {{blank}} surprised the admissions team.*"
+blanks = [["this"]]
+explanation = "*This* có thể quy chiếu đến toàn bộ thông tin vừa nêu; chủ ngữ này cần động từ số ít *surprised*."
+
+[[questions]]
+id = "cefr-b2-043"
+module = "cefr-b2-reading-writing"
+type = "fill"
+difficulty = 2
+prompt = "Paraphrase the verb without changing the meaning: *According to the report, sales {{blank}} by 10% compared with last year.*"
+blanks = [["increased", "rose"]]
+explanation = "Cả *increased* và *rose* đều tự nhiên để nói doanh số tăng."
+
+[[questions]]
+id = "cefr-b2-044"
+module = "cefr-b2-reading-writing"
+type = "essay"
+difficulty = 3
+prompt = "Write three or four sentences in a formal register to evaluate a new online course for your team. Mention one strength, one limitation, and a recommendation."
+keywords = [["easy to access", "easy to use", "accessible", "well organised", "well organized", "well-structured", "flexible", "strength"], ["however", "on the other hand", "although", "limitation", "drawback"], ["recommend", "it is advisable", "it would be advisable"]]
+min_keywords = 2
+model_answer = '''The course is easy to access and provides useful practice for new staff. However, some lessons are too short to explain difficult topics in detail. I recommend adding a short example to each lesson before the course is offered to the whole team.'''
+explanation = "Bài đánh giá cân bằng nêu điểm mạnh, giới hạn và đề xuất bằng register phù hợp với báo cáo công việc."

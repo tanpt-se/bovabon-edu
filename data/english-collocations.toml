@@ -1,0 +1,758 @@
+id = "english-collocations"
+title = "Cụm từ theo ngữ cảnh"
+icon = "CT"
+color = "#0f766e"
+group = "Tiếng Anh"
+area = "english"
+description = "Collocation và cụm từ học thuật theo chức năng: nêu lựa chọn, nguyên nhân – kết quả, thay đổi, so sánh, trách nhiệm, hiệu quả và mức độ chắc chắn — kèm các lỗi người Việt hay mắc."
+
+# ─────────────────────────────────────────────────────────────
+[[modules]]
+id = "col-preferences-time"
+title = "Mong muốn, lựa chọn & thời gian"
+description = "want / prefer / tend to / opt for / prioritise / be inclined to; have time for, make time for, afford, have access to, within / out of reach."
+lesson = '''
+Một ý giản dị như "tôi thích…", "tôi không có tiền…" có thể nói ở nhiều mức trang trọng. Hãy nắm cả cụm, kể cả giới từ và dạng động từ đi sau.
+
+### Nói về mong muốn và lựa chọn
+| Cụm từ | Theo sau là | Sắc thái | Ví dụ |
+|---|---|---|---|
+| want to / would like to | V nguyên mẫu | thân mật / lịch sự | *I'd like to change my seat.* |
+| prefer A **to** B | N hoặc V-ing | thích A hơn B | *She prefers trains to planes.* |
+| prefer to V (rather than V) | V nguyên mẫu | thích làm gì hơn | *I prefer to walk rather than wait for the bus.* |
+| tend to | V nguyên mẫu | thường có xu hướng | *Prices tend to rise before Tết.* |
+| opt for | N / V-ing | chọn sau khi cân nhắc | *Most guests opted for the vegetarian menu.* |
+| prioritise (AmE prioritize) | N | đặt lên hàng đầu | *The school prioritises safety.* |
+| be inclined to | V nguyên mẫu | có khuynh hướng, hơi muốn | *I'm inclined to agree with you.* |
+
+**Lưu ý:** *prefer A to B* — không dùng *than*. Nếu hai vế là động từ: *prefer cooking to eating out* (hai V-ing) hoặc *prefer to cook rather than eat out*.
+
+### Thời gian, tiền bạc và khả năng tiếp cận
+| Cụm từ | Nghĩa | Ví dụ |
+|---|---|---|
+| have time for + N / have time to V | có thời gian cho | *I don't have time for a long lunch today.* |
+| make time for + N | cố dành thời gian (dù bận) | *He always makes time for his kids.* |
+| (can't) afford + N / afford **to** V | (không) đủ tiền / điều kiện | *We can't afford to repair the roof this year.* |
+| have access to + N | được tiếp cận, sử dụng | *Every student has access to the lab.* |
+| within reach (of) | trong tầm với, khả thi | *A first job in IT is within reach if you build a portfolio.* |
+| out of reach (of) | ngoài tầm với | *Housing in the city centre is out of reach for many young families.* |
+
+*afford* luôn đi với **to V**, không đi với V-ing: ~~afford buying~~ → *afford to buy*.
+
+### Ghép vào câu
+- *Many young workers **prefer** flexible hours **to** a higher salary, and they **tend to** change jobs more often.*
+- *When money is tight, families **opt for** cheaper brands and **prioritise** basic needs.*
+- *Even with a busy schedule, try to **make time for** exercise.*
+'''
+
+[[questions]]
+id = "col-001"
+module = "col-preferences-time"
+type = "single"
+difficulty = 1
+prompt = "Many commuters ___ cycling to driving because it saves money and time."
+options = ["tend", "prefer", "opt", "prioritise"]
+answer = [1]
+explanation = "*prefer A to B*: thích A hơn B. *tend* phải đi với *to V*, *opt* cần *for*, còn *prioritise* không đi với cấu trúc *A to B*."
+
+[[questions]]
+id = "col-002"
+module = "col-preferences-time"
+type = "single"
+difficulty = 1
+prompt = "After comparing three laptops, she finally ___ the lightest one."
+options = ["preferred to", "tended", "opted for", "was inclined"]
+answer = [2]
+explanation = "*opt for + N*: chọn sau khi cân nhắc. Các phương án còn lại thiếu hoặc sai giới từ/cấu trúc."
+
+[[questions]]
+id = "col-003"
+module = "col-preferences-time"
+type = "fill"
+difficulty = 1
+prompt = '''
+Điền **một động từ** để nói về xu hướng chung:
+
+Young people {{blank}} to spend more time online than older adults.
+'''
+blanks = [["tend"]]
+explanation = "*tend to + V*: thường có xu hướng làm gì."
+
+[[questions]]
+id = "col-004"
+module = "col-preferences-time"
+type = "multiple"
+difficulty = 2
+prompt = "Câu nào dùng đúng *afford* và *make time*? Chọn mọi câu đúng."
+options = ["I can't afford to buy a new phone this month.", "I can't afford buying a new phone this month.", "Most families in the village can't afford a second car.", "She makes time for yoga every morning, even on busy days."]
+answer = [0, 2, 3]
+explanation = "*afford* đi với danh từ hoặc *to V*, không đi với V-ing. *make time for + N* là cách nói đúng."
+
+[[questions]]
+id = "col-005"
+module = "col-preferences-time"
+type = "single"
+difficulty = 2
+prompt = "With cheaper data plans, fast internet is now ___ for most students in the city."
+options = ["in reach of", "within reach", "reachable to", "out of access"]
+answer = [1]
+explanation = "*within reach*: trong tầm với, khả thi. *in reach of* cần thêm tân ngữ và nghĩa khác; *reachable to* và *out of access* không phải collocation tự nhiên."
+
+[[questions]]
+id = "col-006"
+module = "col-preferences-time"
+type = "fill"
+difficulty = 1
+prompt = "The new public library gives residents free {{blank}} to thousands of online journals."
+blanks = [["access"]]
+explanation = "*give / have access to + N*: được quyền sử dụng, tiếp cận."
+
+[[questions]]
+id = "col-007"
+module = "col-preferences-time"
+type = "single"
+difficulty = 1
+prompt = "Busy parents should ___ time for their children, even if it is only twenty minutes a day."
+options = ["do", "keep", "make", "pass"]
+answer = [2]
+explanation = "*make time for*: cố gắng dành thời gian dù bận rộn."
+
+[[questions]]
+id = "col-008"
+module = "col-preferences-time"
+type = "single"
+difficulty = 2
+prompt = "Câu nào **trang trọng nhất** để nêu khuynh hướng đồng ý của bạn trong một cuộc họp?"
+options = ["I wanna agree with you.", "I'm inclined to agree with you.", "I agree you, yeah.", "I like agree with you."]
+answer = [1]
+explanation = "*be inclined to + V* lịch sự và thận trọng; các câu còn lại hoặc quá suồng sã, hoặc sai ngữ pháp."
+
+[[questions]]
+id = "col-009"
+module = "col-preferences-time"
+type = "essay"
+difficulty = 2
+prompt = '''
+Viết **hai câu tiếng Anh** nói về cách bạn thích học (buổi nào, ở đâu…) và lý do. Dùng *prefer … to …* hoặc *tend to*, và nêu lý do.
+'''
+keywords = [["prefer"], ["tend to", "tends to"], ["because", "since", "so that", "which"]]
+min_keywords = 2
+model_answer = '''I prefer studying in the morning to studying at night because my mind is clearer. I tend to remember new words better after a good sleep.'''
+explanation = "Hai cấu trúc lựa chọn/xu hướng kết hợp với một mệnh đề lý do giúp câu trả lời rõ ràng."
+
+# ─────────────────────────────────────────────────────────────
+[[modules]]
+id = "col-problems-causes"
+title = "Khó khăn, nguyên nhân & kết quả"
+description = "find it difficult, struggle, deal with, address, overcome; because of, make + adj, lead to, result in / from, contribute to, be associated with."
+lesson = '''
+### Nói về khó khăn và cách giải quyết
+| Cụm từ | Cấu trúc | Ví dụ |
+|---|---|---|
+| find it difficult / hard to | find **it** + adj + to V | *Many freshers find it hard to manage their money.* |
+| have difficulty (in) | + V-ing | *He had difficulty finding a parking space.* |
+| struggle to / struggle with | + V / + N | *She struggled to stay awake. · They struggle with deadlines.* |
+| ask for help | ask (sb) for + N | *Don't be afraid to ask for help.* |
+| deal with / cope with | + N | *The team dealt with the complaint quickly.* |
+| address + N | **không** có giới từ | *The report addresses the issue of noise.* |
+| overcome + N | vượt qua | *She overcame her fear of flying.* |
+| tackle + N | bắt tay giải quyết | *The city is tackling air pollution.* |
+
+### Nguyên nhân và kết quả
+| Cụm từ | Hướng | Ví dụ |
+|---|---|---|
+| because of / due to + N | nguyên nhân | *The match was delayed because of the rain.* |
+| because + mệnh đề | nguyên nhân | *The match was delayed because it was raining.* |
+| make + O + adj | gây ra trạng thái | *Long meetings make people tired.* |
+| lead to + N / V-ing | nguyên nhân → kết quả | *Skipping breakfast can lead to poor focus.* |
+| A **result in** B | nguyên nhân → kết quả | *The storm resulted in power cuts.* |
+| B **result from** A | kết quả ← nguyên nhân | *The power cuts resulted from the storm.* |
+| contribute to + N / **V-ing** | góp phần (một trong nhiều nguyên nhân) | *Tourism contributes to creating jobs.* |
+| be associated with | có liên hệ (chưa chắc là nguyên nhân) | *Late nights are associated with lower grades.* |
+
+### Phân biệt quan trọng
+- *result in* ≠ *result from*: đổi chiều là đổi nghĩa.
+- *contribute to* và *lead to*: **to** là giới từ, nên theo sau là danh từ hoặc V-ing (~~contribute to reduce~~).
+- *be associated with* chỉ nói **có liên hệ**; muốn khẳng định nguyên nhân phải dùng *cause / lead to* và cần bằng chứng mạnh.
+'''
+
+[[questions]]
+id = "col-010"
+module = "col-problems-causes"
+type = "single"
+difficulty = 1
+prompt = "Many new employees find ___ difficult to understand company jargon."
+options = ["that", "it", "this", "so"]
+answer = [1]
+explanation = "*find it + adj + to V*: *it* là tân ngữ giả, cần có."
+
+[[questions]]
+id = "col-011"
+module = "col-problems-causes"
+type = "single"
+difficulty = 2
+prompt = "The council must ___ the problem of traffic jams near schools."
+options = ["address to", "solve with", "address", "deal"]
+answer = [2]
+explanation = "*address + N* không có giới từ. *deal* phải là *deal with*; *solve with* sai."
+
+[[questions]]
+id = "col-012"
+module = "col-problems-causes"
+type = "fill"
+difficulty = 1
+prompt = "Poor sleep can {{blank}} to lower concentration at work."
+blanks = [["lead", "contribute"]]
+explanation = "*lead to / contribute to + N*: dẫn đến / góp phần gây ra."
+
+[[questions]]
+id = "col-013"
+module = "col-problems-causes"
+type = "single"
+difficulty = 2
+prompt = "Higher fuel prices ___ a sharp drop in car sales last year."
+options = ["resulted from", "resulted in", "were associated", "leaded to"]
+answer = [1]
+explanation = "Giá xăng là nguyên nhân → *result in* + kết quả. *result from* đảo chiều; *leaded* không tồn tại (quá khứ là *led*)."
+
+[[questions]]
+id = "col-014"
+module = "col-problems-causes"
+type = "multiple"
+difficulty = 2
+prompt = "Câu nào dùng đúng các cụm động từ và cụm danh từ thông dụng? Chọn mọi câu đúng."
+options = ["Many students struggle with time management.", "She had difficulty finding a quiet place to study.", "The heavy rain made the roads dangerous.", "The flight was cancelled because the storm."]
+answer = [0, 1, 2]
+explanation = "*because* + mệnh đề; trước danh từ phải dùng *because of*: *because of the storm*."
+
+[[questions]]
+id = "col-015"
+module = "col-problems-causes"
+type = "fill"
+difficulty = 1
+prompt = "Regular practice helped him {{blank}} his fear of public speaking."
+blanks = [["overcome"]]
+explanation = "*overcome a fear / a problem*: vượt qua."
+
+[[questions]]
+id = "col-016"
+module = "col-problems-causes"
+type = "single"
+difficulty = 3
+prompt = "Một khảo sát chỉ cho thấy hai hiện tượng xảy ra cùng nhau. Câu nào mô tả **đúng mức** kết quả?"
+options = ["Screen time causes poorer sleep.", "Screen time leads to poorer sleep.", "Screen time is associated with poorer sleep.", "Screen time results in poorer sleep."]
+answer = [2]
+explanation = "Khảo sát tương quan chỉ đủ để nói *is associated with*; ba câu kia khẳng định quan hệ nhân quả."
+
+[[questions]]
+id = "col-017"
+module = "col-problems-causes"
+type = "single"
+difficulty = 2
+prompt = "Cleaner public transport has contributed to ___ air pollution in the city centre."
+options = ["reduce", "reducing", "reduced", "be reduced"]
+answer = [1]
+explanation = "*to* trong *contribute to* là giới từ → theo sau bằng V-ing."
+
+[[questions]]
+id = "col-018"
+module = "col-problems-causes"
+type = "essay"
+difficulty = 2
+prompt = '''
+Viết **2–3 câu tiếng Anh** về một vấn đề ở thành phố của bạn: nêu nguyên nhân, kết quả và điều cần làm. Dùng ít nhất hai nhóm cụm từ trong bài (nguyên nhân, kết quả, giải quyết).
+'''
+keywords = [["lead to", "leads to", "led to", "result in", "results in", "resulted in"], ["because of", "due to", "caused by", "result from", "results from"], ["deal with", "address", "overcome", "tackle", "cope with"]]
+min_keywords = 2
+model_answer = '''Traffic in my city is getting worse because of the growing number of motorbikes. Long traffic jams lead to stress and air pollution, so the government needs to address the problem soon.'''
+explanation = "Một câu nêu nguyên nhân (*because of*), một câu nêu kết quả (*lead to*) và hướng giải quyết (*address*)."
+
+# ─────────────────────────────────────────────────────────────
+[[modules]]
+id = "col-change-compare"
+title = "Thay đổi & so sánh"
+description = "get better / worse, increase / fall from A to B, by vs to, level off, give way to; the same as, different from, compared with, unlike, outweigh, on a par with."
+lesson = '''
+### Mô tả thay đổi
+| Xu hướng | Động từ | Danh từ |
+|---|---|---|
+| tăng | increase, rise, grow, go up | an increase / a rise **in** + N |
+| giảm | fall, drop, decline, go down | a fall / a drop **in** + N |
+| ổn định sau khi thay đổi | level off, stabilise | — |
+| giữ nguyên | remain stable, stay the same | — |
+| lên xuống thất thường | fluctuate | fluctuation |
+| tốt / xấu đi | improve, get better / get worse, deteriorate | improvement |
+| bị thay thế dần | give way to + N | — |
+
+**by hay to?** — *by* chỉ **mức thay đổi**, *to* chỉ **mức cuối**:
+- *Visitors increased **from** 400 **to** 600.* (mức đầu → mức cuối)
+- *Visitors increased **by** 200.* (chênh lệch)
+- *There was **a rise of** 50% **in** online orders.*
+
+### So sánh
+| Cụm từ | Ví dụ |
+|---|---|
+| the same as | *My schedule is the same as yours.* |
+| similar **to** | *The new logo is similar to the old one.* |
+| different **from** | *City life is very different from village life.* |
+| compared with / to | *Compared with 2020, rents are much higher.* |
+| unlike + N (đầu câu) | *Unlike her sister, Lan loves maths.* |
+| whereas / while + mệnh đề | *Hà Nội has four seasons, whereas Sài Gòn has two.* |
+| outweigh | *The advantages outweigh the disadvantages.* |
+| on a par with | *Their salaries are now on a par with those in Singapore.* |
+
+**Lỗi hay gặp:** ~~similar with~~ → *similar to*; ~~different with~~ → *different from*; ~~the same like~~ → *the same as*.
+'''
+
+[[questions]]
+id = "col-019"
+module = "col-change-compare"
+type = "single"
+difficulty = 1
+prompt = "The share of online shoppers rose from 20% ___ 35% in five years."
+options = ["by", "to", "at", "on"]
+answer = [1]
+explanation = "*from A to B*: từ mức đầu đến mức cuối."
+
+[[questions]]
+id = "col-020"
+module = "col-change-compare"
+type = "single"
+difficulty = 2
+prompt = "A shop sold 200 bikes in May and 260 in June. Sales increased ___ 60 units."
+options = ["to", "with", "by", "at"]
+answer = [2]
+explanation = "60 là **mức chênh lệch** → *increase by*. Nếu nói mức cuối thì *increased to 260*."
+
+[[questions]]
+id = "col-021"
+module = "col-change-compare"
+type = "fill"
+difficulty = 2
+prompt = "After rising quickly for three years, house prices finally levelled {{blank}}."
+blanks = [["off"]]
+explanation = "*level off*: chững lại, không tăng/giảm thêm."
+
+[[questions]]
+id = "col-022"
+module = "col-change-compare"
+type = "single"
+difficulty = 1
+prompt = "___ his brother, Nam prefers quiet hobbies like reading and chess."
+options = ["Different", "Compare", "Unlike", "Same as"]
+answer = [2]
+explanation = "*Unlike + N* đứng đầu câu để chỉ sự trái ngược."
+
+[[questions]]
+id = "col-023"
+module = "col-change-compare"
+type = "multiple"
+difficulty = 2
+prompt = "Câu nào dùng đúng giới từ trong các cấu trúc so sánh? Chọn mọi câu đúng."
+options = ["This phone is the same as mine.", "Her answer was different from mine.", "Compared with last year, prices are higher.", "This model is similar with the old one."]
+answer = [0, 1, 2]
+explanation = "*similar* đi với *to*: *similar to the old one*."
+
+[[questions]]
+id = "col-024"
+module = "col-change-compare"
+type = "single"
+difficulty = 2
+prompt = "For most users, the benefits of the update ___ the small risks."
+options = ["overweigh", "outweigh", "weigh over", "outweight"]
+answer = [1]
+explanation = "*outweigh*: lớn hơn, quan trọng hơn (lợi ích vượt trội rủi ro)."
+
+[[questions]]
+id = "col-025"
+module = "col-change-compare"
+type = "fill"
+difficulty = 2
+prompt = "In many schools, printed textbooks are gradually giving {{blank}} to digital ones."
+blanks = [["way"]]
+explanation = "*give way to + N*: dần nhường chỗ, bị thay thế bởi."
+
+[[questions]]
+id = "col-026"
+module = "col-change-compare"
+type = "single"
+difficulty = 3
+prompt = "The new graduate's coding skills are already ___ a par with those of experienced staff."
+options = ["at", "in", "on", "by"]
+answer = [2]
+explanation = "*on a par with*: ngang bằng với."
+
+[[questions]]
+id = "col-027"
+module = "col-change-compare"
+type = "essay"
+difficulty = 2
+prompt = '''
+Một biểu đồ cho thấy số người đến thư viện là 500 (2020), 900 (2023) và vẫn 900 (2024). Viết **2 câu tiếng Anh** mô tả xu hướng và so sánh với năm 2020.
+'''
+keywords = [["increased", "rose", "grew", "went up"], ["from"], ["levelled off", "leveled off", "level off", "remained stable", "stayed the same"], ["compared with", "compared to", "unlike", "whereas"]]
+min_keywords = 3
+model_answer = '''The number of library visitors rose from 500 in 2020 to 900 in 2023, and then it levelled off. Compared with 2020, the library is now much busier.'''
+explanation = "Dùng *from … to …* cho giai đoạn tăng, *level off* cho giai đoạn ổn định, *compared with* để so sánh."
+
+# ─────────────────────────────────────────────────────────────
+[[modules]]
+id = "col-learning-work"
+title = "Học tập, công việc & trách nhiệm"
+description = "learn to, get used to, keep up with, put into practice, build on; care about, get on with, rely on, be responsible for, take for granted, take into account."
+lesson = '''
+### Học và thích nghi
+| Cụm từ | Theo sau là | Ví dụ |
+|---|---|---|
+| learn to / learn how to | V | *Kids learn to swim faster than adults.* |
+| get used to / be used to | **V-ing** / N | *I'm getting used to waking up early.* |
+| used to | V (thói quen trong quá khứ) | *I used to live in Huế.* |
+| keep up with | N | *It's hard to keep up with new frameworks.* |
+| catch up with | N | *I missed a week, so I need to catch up with the class.* |
+| put sth into practice | — | *Put the new grammar into practice in your emails.* |
+| develop an understanding of | N | *The course helps you develop an understanding of data.* |
+| build on | N | *Lesson 2 builds on the ideas from lesson 1.* |
+
+**Ba dạng dễ nhầm:** *used to + V* (trước đây thường làm) · *be used to + V-ing* (đã quen) · *get used to + V-ing* (đang dần quen).
+
+### Quan hệ và trách nhiệm
+| Cụm từ | Nghĩa | Ví dụ |
+|---|---|---|
+| care about | quan tâm, coi trọng | *She really cares about her students.* |
+| get on (well) with | hòa hợp với | *I get on well with my flatmates.* |
+| rely on / depend on | dựa vào, tin cậy | *You can rely on Minh to fix it.* |
+| be responsible **for** + N / V-ing | chịu trách nhiệm | *Who is responsible for booking the room?* |
+| take sth for granted | coi là hiển nhiên, không trân trọng | *We often take electricity for granted.* |
+| take sth into account | tính đến, cân nhắc | *Take the traffic into account when you plan.* |
+
+~~responsible of~~ là lỗi rất hay gặp — luôn dùng **for**.
+'''
+
+[[questions]]
+id = "col-028"
+module = "col-learning-work"
+type = "single"
+difficulty = 1
+prompt = "It took me a month to get used to ___ in an open-plan office."
+options = ["work", "working", "worked", "have worked"]
+answer = [1]
+explanation = "*get used to + V-ing*: dần quen với việc gì."
+
+[[questions]]
+id = "col-029"
+module = "col-learning-work"
+type = "single"
+difficulty = 1
+prompt = "Technology changes so fast that it is hard to keep ___ with it."
+options = ["on", "in", "up", "out"]
+answer = [2]
+explanation = "*keep up with*: theo kịp."
+
+[[questions]]
+id = "col-030"
+module = "col-learning-work"
+type = "fill"
+difficulty = 1
+prompt = "Team leaders are responsible {{blank}} checking the weekly reports."
+blanks = [["for"]]
+explanation = "*be responsible for + V-ing / N*."
+
+[[questions]]
+id = "col-031"
+module = "col-learning-work"
+type = "single"
+difficulty = 2
+prompt = "The course gave me the theory, but my internship let me ___ it into practice."
+options = ["make", "put", "take", "bring"]
+answer = [1]
+explanation = "*put sth into practice*: áp dụng vào thực tế."
+
+[[questions]]
+id = "col-032"
+module = "col-learning-work"
+type = "multiple"
+difficulty = 2
+prompt = "Câu nào dùng đúng collocation hoặc phrasal verb? Chọn mọi câu đúng."
+options = ["She gets on well with her new colleagues.", "You can rely on him to finish on time.", "We should take the weather into account when we plan the trip.", "Many people take clean water for grant."]
+answer = [0, 1, 2]
+explanation = "Cụm đúng là *take sth for granted* (phân từ *granted*)."
+
+[[questions]]
+id = "col-033"
+module = "col-learning-work"
+type = "fill"
+difficulty = 2
+prompt = "Don't take your health for {{blank}}; get a check-up every year."
+blanks = [["granted"]]
+explanation = "*take sth for granted*: coi là hiển nhiên nên không trân trọng."
+
+[[questions]]
+id = "col-034"
+module = "col-learning-work"
+type = "single"
+difficulty = 2
+prompt = "The second workshop ___ the skills that participants learned in the first one."
+options = ["builds up", "builds in", "builds on", "builds with"]
+answer = [2]
+explanation = "*build on sth*: phát triển dựa trên nền tảng có sẵn."
+
+[[questions]]
+id = "col-035"
+module = "col-learning-work"
+type = "single"
+difficulty = 2
+prompt = "When I was a child, I ___ walk to school every day, but now I take the bus."
+options = ["was used to", "got used to", "used to", "use to"]
+answer = [2]
+explanation = "Thói quen trong quá khứ (nay không còn) → *used to + V*."
+
+[[questions]]
+id = "col-036"
+module = "col-learning-work"
+type = "essay"
+difficulty = 2
+prompt = '''
+Viết **2–3 câu tiếng Anh** về giai đoạn bạn mới vào trường hoặc công việc mới: bạn phải quen với điều gì, theo kịp điều gì, và dựa vào ai.
+'''
+keywords = [["get used to", "got used to", "getting used to"], ["keep up with", "catch up with"], ["rely on", "depend on"], ["responsible for"]]
+min_keywords = 2
+model_answer = '''When I started university, it took me a while to get used to living alone. I had to work hard to keep up with my classes, but I could always rely on my roommate for help.'''
+explanation = "Kết hợp *get used to + V-ing*, *keep up with* và *rely on* để kể một trải nghiệm thích nghi."
+
+# ─────────────────────────────────────────────────────────────
+[[modules]]
+id = "col-usefulness-opinion"
+title = "Hiệu quả, ý kiến & bằng chứng"
+description = "useful for, worth + V-ing, benefit from, meet needs, effective vs efficient; I think, not sure whether, seem to, suggest that, provide evidence, rule out."
+lesson = '''
+### Lợi ích và hiệu quả
+| Cụm từ | Theo sau là | Ví dụ |
+|---|---|---|
+| useful for + N / V-ing | mục đích | *This app is useful for learning new words.* |
+| (be) worth + **V-ing** / N | đáng làm | *The museum is worth visiting.* · *It's worth the money.* |
+| benefit from + N / V-ing | được lợi từ | *Shy students benefit from working in pairs.* |
+| be of benefit to + sb | có ích cho | *The new park is of benefit to everyone.* |
+| meet sb's needs | đáp ứng nhu cầu | *The service doesn't meet customers' needs.* |
+| effective (in V-ing) | **đạt kết quả** mong muốn | *The medicine was effective in reducing pain.* |
+| efficient | **ít tốn** thời gian / tiền / năng lượng | *An efficient way to travel is by metro.* |
+
+**effective vs efficient:** một phương pháp có thể *effective* (có kết quả) nhưng không *efficient* (tốn quá nhiều công sức).
+
+### Ý kiến và mức độ chắc chắn (hedging)
+| Mức độ | Cụm từ |
+|---|---|
+| nêu quan điểm | *I think / I believe / In my opinion,* |
+| chưa chắc | *I'm not sure whether / if…* |
+| thận trọng | *It seems that… / X seems to + V / It is likely that…* |
+| dẫn chứng | *The data suggest(s) that + mệnh đề · The study provides evidence for / of + N* |
+| loại trừ | *rule out + N* (loại bỏ khả năng) |
+
+- *suggest* + mệnh đề hoặc V-ing, **không** *suggest sb to V*: ~~suggests us to buy~~ → *suggests that we buy*.
+- Trong bài luận, dùng *seem to / it is likely that* khi bằng chứng chưa đủ mạnh, thay vì *prove* hay *always*.
+'''
+
+[[questions]]
+id = "col-037"
+module = "col-usefulness-opinion"
+type = "single"
+difficulty = 1
+prompt = "This guidebook is really worth ___ before your first trip abroad."
+options = ["to read", "read", "reading", "to reading"]
+answer = [2]
+explanation = "*be worth + V-ing*."
+
+[[questions]]
+id = "col-038"
+module = "col-usefulness-opinion"
+type = "single"
+difficulty = 2
+prompt = "The vaccine was highly ___ in preventing the disease, although it was expensive to produce."
+options = ["efficient", "effective", "effect", "efficiency"]
+answer = [1]
+explanation = "Nói về **kết quả** (ngăn được bệnh) → *effective*. Chi phí cao cho thấy nó không hẳn *efficient*."
+
+[[questions]]
+id = "col-039"
+module = "col-usefulness-opinion"
+type = "single"
+difficulty = 2
+prompt = "A dishwasher is a more ___ way to clean dishes because it uses less water and time."
+options = ["effect", "efficient", "affective", "efficiency"]
+answer = [1]
+explanation = "Nhấn mạnh **tiết kiệm** nước và thời gian → *efficient*."
+
+[[questions]]
+id = "col-040"
+module = "col-usefulness-opinion"
+type = "fill"
+difficulty = 1
+prompt = "Small businesses can {{blank}} from free online training courses."
+blanks = [["benefit"]]
+explanation = "*benefit from + N*: được lợi từ."
+
+[[questions]]
+id = "col-041"
+module = "col-usefulness-opinion"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn **các câu diễn đạt thận trọng** (hedging), phù hợp khi bằng chứng chưa chắc chắn."
+options = ["The results seem to show a clear pattern.", "It is likely that prices will rise next year.", "I'm not sure whether this method works for everyone.", "This proves that the method always works."]
+answer = [0, 1, 2]
+explanation = "*prove* và *always* là khẳng định tuyệt đối, không phải hedging."
+
+[[questions]]
+id = "col-042"
+module = "col-usefulness-opinion"
+type = "fill"
+difficulty = 2
+prompt = "Engineers have not {{blank}} out the possibility of a software fault."
+blanks = [["ruled"]]
+explanation = "*rule out*: loại trừ khả năng; ở thì hiện tại hoàn thành dùng *ruled*."
+
+[[questions]]
+id = "col-043"
+module = "col-usefulness-opinion"
+type = "single"
+difficulty = 2
+prompt = "The survey ___ most customers want faster delivery."
+options = ["suggests to", "suggests that", "is suggested", "suggests us"]
+answer = [1]
+explanation = "*suggest that + mệnh đề*. *suggest* không đi với *to V* hay tân ngữ chỉ người theo kiểu ~~suggest us~~."
+
+[[questions]]
+id = "col-044"
+module = "col-usefulness-opinion"
+type = "single"
+difficulty = 1
+prompt = "The new bus routes are designed to ___ the needs of elderly passengers."
+options = ["reach", "meet", "fill", "make"]
+answer = [1]
+explanation = "*meet sb's needs*: đáp ứng nhu cầu."
+
+[[questions]]
+id = "col-045"
+module = "col-usefulness-opinion"
+type = "essay"
+difficulty = 3
+prompt = '''
+Viết **2 câu tiếng Anh** nêu quan điểm về việc học trực tuyến cho người đi làm. Nêu ý kiến, dùng một cách nói thận trọng, nhắc đến bằng chứng và lợi ích.
+'''
+keywords = [["i think", "i believe", "in my opinion"], ["seem to", "seems to", "it is likely", "it appears"], ["evidence", "research", "studies", "survey"], ["worth", "benefit", "effective", "efficient"]]
+min_keywords = 3
+model_answer = '''I think online courses are worth taking for busy adults. Recent surveys seem to show that learners benefit from studying at their own pace, although the evidence is still limited.'''
+explanation = "Câu trả lời tốt vừa nêu quan điểm, vừa giữ mức thận trọng (*seem to*) và nhắc giới hạn của bằng chứng."
+
+# ─────────────────────────────────────────────────────────────
+[[modules]]
+id = "col-practice-mistakes"
+title = "Vận dụng & lỗi thường gặp"
+description = "Ghép cụm từ thành đoạn văn mạch lạc và sửa các lỗi hay gặp: afford to, worth V-ing, contribute to V-ing, responsible for, by vs to, effective vs efficient, tương quan vs nhân quả."
+lesson = '''
+### Ghép cụm từ thành đoạn văn
+Một đoạn ngắn (IELTS, email, báo cáo) thường có 4 bước. Mỗi bước có sẵn "bộ cụm từ" từ các bài trước:
+
+| Bước | Chức năng | Cụm từ gợi ý |
+|---|---|---|
+| 1. Câu chủ đề | nêu xu hướng / lựa chọn | *tend to, prefer … to …, opt for* |
+| 2. Lý do | nguyên nhân, khó khăn | *because of, struggle to, find it hard to* |
+| 3. Kết quả | hệ quả, so sánh | *lead to, result in, compared with, outweigh* |
+| 4. Đánh giá | thận trọng, kết luận | *seem to, it is likely that, worth + V-ing* |
+
+**Đoạn mẫu:** *Many retired people now **opt for** smaller flats in the city. They often **find it hard to** look after a large house, and moving **leads to** lower living costs. **Compared with** life in the suburbs, city flats also give them easier **access to** hospitals. Overall, downsizing **seems to** be **worth considering** for older couples.*
+
+### Bảng lỗi thường gặp
+| Sai | Đúng | Ghi nhớ |
+|---|---|---|
+| ~~can't afford buying~~ | can't afford **to buy** | afford + to V |
+| ~~worth to read~~ | worth **reading** | worth + V-ing |
+| ~~get used to work~~ | get used to **working** | *to* là giới từ |
+| ~~contributed to reduce~~ | contributed to **reducing** | *to* là giới từ |
+| ~~responsible of~~ | responsible **for** | |
+| ~~prefer tea than coffee~~ | prefer tea **to** coffee | |
+| ~~discuss about the plan~~ | **discuss** the plan | discuss không cần giới từ |
+| ~~address to the issue~~ | **address** the issue | |
+| increased **to** 50 (mức cuối) | increased **by** 50 (mức tăng) | hai nghĩa khác nhau |
+| ~~an effective way to save time~~ (khi ý là tiết kiệm) | an **efficient** way | efficient = ít hao phí |
+| ~~X causes Y~~ (khi chỉ có số liệu tương quan) | X **is associated with** Y | tương quan ≠ nhân quả |
+'''
+
+[[questions]]
+id = "col-046"
+module = "col-practice-mistakes"
+type = "single"
+difficulty = 2
+prompt = "Chọn câu **đúng ngữ pháp**."
+options = ["Cycling to work contributed to reduce my stress.", "Cycling to work contributed reducing my stress.", "Cycling to work contributed to reducing my stress.", "Cycling to work contributed for reducing my stress."]
+answer = [2]
+explanation = "*contribute to + V-ing*: *to* là giới từ."
+
+[[questions]]
+id = "col-047"
+module = "col-practice-mistakes"
+type = "single"
+difficulty = 1
+prompt = "I prefer green tea ___ coffee in the afternoon."
+options = ["than", "to", "from", "with"]
+answer = [1]
+explanation = "*prefer A to B*, không dùng *than*."
+
+[[questions]]
+id = "col-048"
+module = "col-practice-mistakes"
+type = "multiple"
+difficulty = 2
+prompt = "Câu nào dùng đúng cụm tính từ–giới từ hoặc thành ngữ? Chọn mọi câu đúng."
+options = ["Most students can't afford to buy new textbooks.", "This museum is worth visiting.", "Parents are responsible of their children's safety.", "The meeting discussed about the budget."]
+answer = [0, 1]
+explanation = "Sửa: *responsible **for** their children's safety*; *discussed the budget* (bỏ *about*)."
+
+[[questions]]
+id = "col-049"
+module = "col-practice-mistakes"
+type = "fill"
+difficulty = 2
+prompt = "We need to {{blank}} the issue of late deliveries before the holiday season. (một động từ, không cần giới từ)"
+blanks = [["address", "tackle", "solve", "resolve", "fix", "handle"]]
+explanation = "*address / tackle / solve the issue* — các động từ này đi thẳng với tân ngữ."
+
+[[questions]]
+id = "col-050"
+module = "col-practice-mistakes"
+type = "single"
+difficulty = 3
+prompt = "A study found that people who drink a lot of coffee sleep less. Which conclusion is the **most careful**?"
+options = ["Coffee causes people to sleep less.", "Heavy coffee drinking is associated with shorter sleep.", "Coffee always ruins sleep.", "The study proves that coffee is harmful."]
+answer = [1]
+explanation = "Dữ liệu chỉ cho thấy tương quan → *is associated with*. Có thể người ngủ ít uống nhiều cà phê hơn, chứ không phải ngược lại."
+
+[[questions]]
+id = "col-051"
+module = "col-practice-mistakes"
+type = "fill"
+difficulty = 2
+prompt = "The town had 50,000 people. Now it has 65,000. The population increased {{blank}} 15,000."
+blanks = [["by"]]
+explanation = "15,000 là **mức tăng** → *by*. Mức cuối thì *increased to 65,000*."
+
+[[questions]]
+id = "col-052"
+module = "col-practice-mistakes"
+type = "single"
+difficulty = 2
+prompt = "Chọn câu **đúng**."
+options = ["It took her weeks to get used to work night shifts.", "It took her weeks to get used to working night shifts.", "It took her weeks to used to working night shifts.", "It took her weeks to get use to working night shifts."]
+answer = [1]
+explanation = "*get used to + V-ing*."
+
+[[questions]]
+id = "col-053"
+module = "col-practice-mistakes"
+type = "essay"
+difficulty = 3
+prompt = '''
+Viết **một đoạn 3–4 câu tiếng Anh** về làm việc tại nhà (working from home). Dùng **ít nhất bốn nhóm** cụm từ khác nhau: lựa chọn/xu hướng, thời gian/chi phí, kết quả, so sánh, mức độ chắc chắn, thích nghi.
+'''
+keywords = [["prefer", "tend to", "opt for"], ["time for", "afford"], ["lead to", "leads to", "contribute to", "contributes to", "result in", "results in"], ["compared with", "compared to", "unlike", "outweigh"], ["seem to", "seems to", "it is likely", "i think"], ["get used to", "getting used to", "keep up with", "rely on"]]
+min_keywords = 4
+model_answer = '''Many office workers now prefer working from home to commuting every day. Without long journeys, they have more time for their families, and this can lead to lower stress. Compared with office life, however, it seems to be harder to keep up with teammates, so the benefits may not outweigh the costs for everyone.'''
+explanation = "Đoạn mẫu đi theo 4 bước: xu hướng (*prefer … to*), lợi ích (*time for, lead to*), so sánh (*compared with*), đánh giá thận trọng (*seems to*)."

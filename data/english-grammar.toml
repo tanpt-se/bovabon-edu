@@ -3,6 +3,7 @@ title = "Ngữ pháp tiếng Anh A2 → C1"
 icon = "📘"
 color = "#0d9488"
 group = "Ngoại ngữ"
+area = "english"            # khu Tiếng Anh: không có bài code
 description = "Ôn ngữ pháp theo khung CEFR: A2 (thì cơ bản, so sánh, modal) → B1 (hoàn thành, bị động, điều kiện, mệnh đề quan hệ) → B2 (điều kiện hỗn hợp, suy đoán, tường thuật, wish) → C1 (đảo ngữ, câu chẻ, giả định, mệnh đề phân từ và văn phong kỹ thuật)."
 
 # ============================================================ MODULES
@@ -342,7 +343,7 @@ id = "gr-a2-02"
 module = "gr-a2-tenses"
 type = "single"
 difficulty = 1
-prompt = "Câu nào **đúng**?"
+prompt = "Câu nào dùng đúng động từ trạng thái *know*?"
 options = ["I am knowing the answer.", "I know the answer.", "I knowing the answer.", "I am know the answer."]
 answer = [1]
 explanation = "*know* là động từ trạng thái, không dùng ở thể tiếp diễn."
@@ -499,7 +500,7 @@ id = "gr-b1-04"
 module = "gr-b1-tenses"
 type = "multiple"
 difficulty = 3
-prompt = "Câu nào **đúng**?"
+prompt = "Câu nào mô tả thói quen trong quá khứ hoặc sự quen thuộc hiện tại bằng cấu trúc đúng? Chọn mọi câu đúng."
 options = [
   "I used to live in Hue.",
   "When I was a child, I would play in the rice fields every afternoon.",
@@ -739,7 +740,7 @@ id = "gr-b2-11"
 module = "gr-b2-linking"
 type = "multiple"
 difficulty = 3
-prompt = "Câu nào **đúng**?"
+prompt = "Câu nào diễn đạt sự tương phản bằng từ nối đúng ngữ pháp? Chọn mọi câu đúng."
 options = [
   "Despite feeling ill, she went to work.",
   "Despite she felt ill, she went to work.",
@@ -965,264 +966,6 @@ explanation = "Ở trình độ C1, mục tiêu là dùng các cấu trúc này 
 
 # ============================================================ CODE — quy tắc ngữ pháp bằng JavaScript
 [[questions]]
-id = "gr-c01"
-module = "gr-a2-tenses"
-type = "code"
-difficulty = 1
-title = "Ngôi thứ ba số ít (he/she/it + V-s)"
-prompt = '''
-Viết `thirdPerson(verb)` trả về dạng động từ ở hiện tại đơn với **he/she/it**:
-
-1. Bất quy tắc: `be → is`, `have → has`
-2. Tận cùng **s, x, z, ch, sh, o** → thêm **es** (`watch → watches`, `go → goes`)
-3. **Phụ âm + y** → **ies** (`study → studies`); nguyên âm + y chỉ thêm s (`play → plays`)
-4. Còn lại thêm **s**
-'''
-starter = '''
-function thirdPerson(verb) {
-  return verb + 's';
-}
-'''
-solution = '''
-function thirdPerson(verb) {
-  const irregular = { be: 'is', have: 'has' };
-  if (irregular[verb]) return irregular[verb];
-  if (/(s|x|z|ch|sh|o)$/.test(verb)) return verb + 'es';
-  if (/[^aeiou]y$/.test(verb)) return verb.slice(0, -1) + 'ies';
-  return verb + 's';
-}
-'''
-tests = '''
-test('thêm s', () => {
-  expect(['work', 'play', 'make', 'enjoy'].map(thirdPerson)).toEqual(['works', 'plays', 'makes', 'enjoys']);
-});
-test('thêm es', () => {
-  expect(['watch', 'fix', 'go', 'do', 'wash', 'miss', 'buzz'].map(thirdPerson)).toEqual(['watches', 'fixes', 'goes', 'does', 'washes', 'misses', 'buzzes']);
-});
-test('y → ies', () => {
-  expect(['study', 'try', 'fly'].map(thirdPerson)).toEqual(['studies', 'tries', 'flies']);
-});
-test('bất quy tắc', () => {
-  expect(thirdPerson('have')).toBe('has');
-  expect(thirdPerson('be')).toBe('is');
-});
-'''
-hints = ["Kiểm tra bất quy tắc trước, rồi tới các đuôi đặc biệt.", "Regex `/[^aeiou]y$/` bắt phụ âm + y."]
-explanation = "Quy tắc *-es* giúp phát âm dễ hơn: /ɪz/ sau âm xuýt (watches, misses)."
-
-[[questions]]
-id = "gr-c02"
-module = "gr-a2-basics"
-type = "code"
-difficulty = 2
-title = "So sánh hơn & so sánh nhất"
-prompt = '''
-Viết `compare(adj)` trả về mảng `[soSánhHơn, soSánhNhất]`:
-
-1. Bất quy tắc: good → better/best, bad → worse/worst, far → farther/farthest, little → less/least, many & much → more/most
-2. Đếm **âm tiết** = số cụm nguyên âm liên tiếp (a, e, i, o, u, y); nếu từ có hơn 1 cụm và kết thúc bằng `e` thì không tính cụm `e` cuối đó
-3. **1 âm tiết**:
-   - tận cùng `e` → thêm `r` / `st` (large → larger/largest)
-   - phụ âm + nguyên âm + phụ âm (phụ âm cuối không phải w, x, y) → **gấp đôi** phụ âm cuối (big → bigger/biggest)
-   - phụ âm + y → `ier` / `iest` (dry → drier/driest)
-   - còn lại → `er` / `est`
-4. **2 âm tiết** tận cùng phụ âm + y → `ier` / `iest` (happy → happier/happiest)
-5. Còn lại → `more X` / `most X`
-'''
-starter = '''
-function compare(adj) {
-  return [adj + 'er', adj + 'est'];
-}
-'''
-solution = '''
-const IRREGULAR = {
-  good: ['better', 'best'], bad: ['worse', 'worst'], far: ['farther', 'farthest'],
-  little: ['less', 'least'], many: ['more', 'most'], much: ['more', 'most'],
-};
-
-function syllables(w) {
-  const groups = w.match(/[aeiouy]+/g) || [];
-  let n = groups.length;
-  if (n > 1 && w.endsWith('e') && /[aeiouy]$/.test(w) && !/[aeiouy]{2}$/.test(w)) n--;
-  return Math.max(1, n);
-}
-
-function compare(adj) {
-  if (IRREGULAR[adj]) return IRREGULAR[adj].slice();
-  const n = syllables(adj);
-  const consonantY = /[^aeiou]y$/.test(adj);
-  if (n === 1) {
-    if (adj.endsWith('e')) return [adj + 'r', adj + 'st'];
-    if (/(^|[^aeiou])[aeiou][^aeiouwxy]$/.test(adj)) {
-      const last = adj[adj.length - 1];
-      return [adj + last + 'er', adj + last + 'est'];
-    }
-    if (consonantY) return [adj.slice(0, -1) + 'ier', adj.slice(0, -1) + 'iest'];
-    return [adj + 'er', adj + 'est'];
-  }
-  if (n === 2 && consonantY) return [adj.slice(0, -1) + 'ier', adj.slice(0, -1) + 'iest'];
-  return ['more ' + adj, 'most ' + adj];
-}
-'''
-tests = '''
-test('1 âm tiết', () => {
-  expect(compare('fast')).toEqual(['faster', 'fastest']);
-  expect(compare('slow')).toEqual(['slower', 'slowest']);
-  expect(compare('cool')).toEqual(['cooler', 'coolest']);
-});
-test('tận cùng e', () => {
-  expect(compare('large')).toEqual(['larger', 'largest']);
-  expect(compare('nice')).toEqual(['nicer', 'nicest']);
-});
-test('gấp đôi phụ âm', () => {
-  expect(compare('big')).toEqual(['bigger', 'biggest']);
-  expect(compare('hot')).toEqual(['hotter', 'hottest']);
-  expect(compare('thin')).toEqual(['thinner', 'thinnest']);
-  expect(compare('new')).toEqual(['newer', 'newest']);
-});
-test('tận cùng y', () => {
-  expect(compare('happy')).toEqual(['happier', 'happiest']);
-  expect(compare('easy')).toEqual(['easier', 'easiest']);
-  expect(compare('dry')).toEqual(['drier', 'driest']);
-  expect(compare('grey')).toEqual(['greyer', 'greyest']);
-});
-test('tính từ dài', () => {
-  expect(compare('modern')).toEqual(['more modern', 'most modern']);
-  expect(compare('beautiful')).toEqual(['more beautiful', 'most beautiful']);
-  expect(compare('expensive')).toEqual(['more expensive', 'most expensive']);
-});
-test('bất quy tắc', () => {
-  expect(compare('good')).toEqual(['better', 'best']);
-  expect(compare('bad')).toEqual(['worse', 'worst']);
-  expect(compare('little')).toEqual(['less', 'least']);
-});
-'''
-hints = ["`adj.match(/[aeiouy]+/g)` cho các cụm nguyên âm.", "Gấp đôi khi khớp `/(^|[^aeiou])[aeiou][^aeiouwxy]$/` và từ chỉ có 1 âm tiết."]
-explanation = "Đếm âm tiết theo cụm nguyên âm chỉ là xấp xỉ, nhưng đủ đúng cho phần lớn tính từ thông dụng — luyện để ghi nhớ quy tắc."
-
-[[questions]]
-id = "gr-c03"
-module = "gr-b1-tenses"
-type = "code"
-difficulty = 2
-title = "Quá khứ đơn: -ed & bất quy tắc"
-prompt = '''
-Viết `pastSimple(verb)`:
-
-1. Bất quy tắc: be → was, have → had, do → did, go → went, see → saw, make → made, take → took, write → wrote, get → got, come → came, know → knew, think → thought, buy → bought, teach → taught, run → ran
-2. Tận cùng `e` → thêm `d` (like → liked)
-3. Phụ âm + y → `ied` (study → studied); nguyên âm + y → `ed` (play → played)
-4. Gấp đôi phụ âm cuối khi động từ kết thúc bằng phụ âm + nguyên âm + phụ âm (phụ âm cuối không phải w, x, y) **và** (có 1 cụm nguyên âm **hoặc** thuộc danh sách trọng âm cuối: prefer, admit, occur, commit, refer, control, permit) — stop → stopped, prefer → preferred, nhưng visit → visited, open → opened
-5. Còn lại thêm `ed`
-'''
-starter = '''
-function pastSimple(verb) {
-  return verb + 'ed';
-}
-'''
-solution = '''
-const IRREGULAR = {
-  be: 'was', have: 'had', do: 'did', go: 'went', see: 'saw', make: 'made', take: 'took',
-  write: 'wrote', get: 'got', come: 'came', know: 'knew', think: 'thought', buy: 'bought',
-  teach: 'taught', run: 'ran',
-};
-const STRESS_LAST = new Set(['prefer', 'admit', 'occur', 'commit', 'refer', 'control', 'permit']);
-
-function pastSimple(verb) {
-  if (IRREGULAR[verb]) return IRREGULAR[verb];
-  if (verb.endsWith('e')) return verb + 'd';
-  if (/[^aeiou]y$/.test(verb)) return verb.slice(0, -1) + 'ied';
-  const groups = (verb.match(/[aeiouy]+/g) || []).length;
-  if (/(^|[^aeiou])[aeiou][^aeiouwxy]$/.test(verb) && (groups === 1 || STRESS_LAST.has(verb))) {
-    return verb + verb[verb.length - 1] + 'ed';
-  }
-  return verb + 'ed';
-}
-'''
-tests = '''
-test('thêm ed / d', () => {
-  expect(['work', 'like', 'play', 'want', 'fix', 'show'].map(pastSimple)).toEqual(['worked', 'liked', 'played', 'wanted', 'fixed', 'showed']);
-});
-test('y → ied', () => {
-  expect(['study', 'try', 'carry'].map(pastSimple)).toEqual(['studied', 'tried', 'carried']);
-});
-test('gấp đôi phụ âm', () => {
-  expect(['stop', 'plan', 'prefer', 'admit', 'control'].map(pastSimple)).toEqual(['stopped', 'planned', 'preferred', 'admitted', 'controlled']);
-});
-test('không gấp đôi khi trọng âm không ở cuối', () => {
-  expect(['visit', 'open', 'listen', 'happen'].map(pastSimple)).toEqual(['visited', 'opened', 'listened', 'happened']);
-});
-test('bất quy tắc', () => {
-  expect(['go', 'buy', 'think', 'write', 'be'].map(pastSimple)).toEqual(['went', 'bought', 'thought', 'wrote', 'was']);
-});
-'''
-hints = ["Thứ tự: bất quy tắc → đuôi e → phụ âm + y → gấp đôi → thêm ed.", "Đếm cụm nguyên âm: `(verb.match(/[aeiouy]+/g) || []).length`."]
-explanation = "Quy tắc gấp đôi phụ thuộc **trọng âm**: chỉ gấp khi âm tiết cuối được nhấn (preFER → preferred, VISit → visited). Tiếng Anh–Anh còn gấp đôi *l*: travelled."
-
-[[questions]]
-id = "gr-c04"
-module = "gr-a2-basics"
-type = "code"
-difficulty = 2
-title = "Chọn mạo từ a / an theo âm"
-prompt = '''
-Viết `withArticle(phrase)` trả về `"a " + phrase` hoặc `"an " + phrase` dựa trên **từ đầu tiên** `w` (so khớp không phân biệt hoa thường, giữ nguyên `phrase`):
-
-1. **Viết tắt** (từ đầu gồm ≥ 2 chữ IN HOA, chỉ chữ cái): dùng `an` nếu chữ cái đầu đọc bắt đầu bằng nguyên âm — một trong `A E F H I L M N O R S X` — ngược lại `a` (an FBI agent, an HTTP request, a URL, a CPU)
-2. **h câm** — từ bắt đầu bằng `hour`, `honest`, `honor`, `honour`, `heir` → `an`
-3. Âm /juː/ hoặc /w/ — từ bắt đầu bằng `uni`, `use`, `usu`, `uti`, `eu`, `one`, `once` → `a`
-4. Còn lại: bắt đầu bằng nguyên âm a, e, i, o, u → `an`, ngược lại `a`
-'''
-starter = '''
-function withArticle(phrase) {
-  return 'a ' + phrase;
-}
-'''
-solution = '''
-function withArticle(phrase) {
-  const first = phrase.split(/[\s-]/)[0];
-  const w = first.toLowerCase();
-  let an;
-  if (/^[A-Z]{2,}$/.test(first)) an = 'AEFHILMNORSX'.includes(first[0]);
-  else if (/^(hour|honest|honor|honour|heir)/.test(w)) an = true;
-  else if (/^(uni|use|usu|uti|eu|one|once)/.test(w)) an = false;
-  else an = /^[aeiou]/.test(w);
-  return (an ? 'an ' : 'a ') + phrase;
-}
-'''
-tests = '''
-test('quy tắc thường', () => {
-  expect(withArticle('apple')).toBe('an apple');
-  expect(withArticle('book')).toBe('a book');
-  expect(withArticle('umbrella')).toBe('an umbrella');
-  expect(withArticle('interesting idea')).toBe('an interesting idea');
-});
-test('h câm', () => {
-  expect(withArticle('hour')).toBe('an hour');
-  expect(withArticle('honest mistake')).toBe('an honest mistake');
-  expect(withArticle('house')).toBe('a house');
-});
-test('âm /juː/ và /w/', () => {
-  expect(withArticle('university')).toBe('a university');
-  expect(withArticle('user')).toBe('a user');
-  expect(withArticle('European country')).toBe('a European country');
-  expect(withArticle('one-time password')).toBe('a one-time password');
-});
-test('viết tắt', () => {
-  expect(withArticle('HTTP request')).toBe('an HTTP request');
-  expect(withArticle('URL')).toBe('a URL');
-  expect(withArticle('FBI agent')).toBe('an FBI agent');
-  expect(withArticle('CPU')).toBe('a CPU');
-  expect(withArticle('MBA')).toBe('an MBA');
-});
-test('giữ nguyên chữ hoa', () => {
-  expect(withArticle('Hour of Code')).toBe('an Hour of Code');
-});
-'''
-hints = ["Lấy từ đầu bằng `phrase.split(/[\\s-]/)[0]`.", "Kiểm tra viết tắt trước — dùng bản gốc (chưa lowercase) để phát hiện chữ in hoa."]
-explanation = "Quy tắc a/an phụ thuộc **âm**, không phải **chữ cái**: *an MBA* (/em/), *a university* (/juː/)."
-
-[[questions]]
 id = "gr-x001"
 module = "gr-a2-tenses"
 type = "single"
@@ -1363,66 +1106,16 @@ explanation = "Know và want thường là động từ trạng thái, nên dùn
 [[questions]]
 id = "gr-x013"
 module = "gr-a2-tenses"
-type = "essay"
+type = "fill"
 difficulty = 2
-prompt = '''
-Viết 3 câu tiếng Anh làm status update cho một dự án IT: một câu về lịch họp đã chốt (hiện tại tiếp diễn), một câu về việc bạn dự định làm từ trước (be going to), và một câu về quyết định bạn vừa đưa ra (will).
-'''
-keywords = [["am meeting", "is meeting", "are meeting"], ["going to"], ["will ", "'ll "]]
-min_keywords = 3
-model_answer = '''
-I am meeting the security team at 3 p.m. tomorrow. I am going to review the access logs before the meeting. The alert has just arrived, so I will check the production dashboard now.
-'''
-explanation = "Mỗi câu nêu rõ một ngữ cảnh để phân biệt lịch đã sắp xếp, dự định có trước và quyết định tức thời."
+prompt = '''Điền dạng phù hợp của động từ để hoàn thành status update. Tín hiệu trong ngoặc cho biết ý:
 
-[[questions]]
-id = "gr-xc01"
-module = "gr-a2-tenses"
-type = "code"
-difficulty = 2
-title = "Quá khứ đơn: quy tắc -ed và bảng bất quy tắc"
-prompt = '''
-Viết `pastSimple(verb)` cho động từ nguyên mẫu viết thường. Dùng bảng bất quy tắc `be → was`, `go → went`, `have → had`, `make → made`, `see → saw`; với động từ có quy tắc thêm `d` sau e, đổi phụ âm + y thành `ied`, gấp đôi phụ âm cuối cho từ một âm tiết dạng phụ âm-nguyên âm-phụ âm (trừ w/x/y), còn lại thêm `ed`. Ví dụ: `like → liked`, `study → studied`, `stop → stopped`, `work → worked`.
+1. The team {{blank}} (meet) the security team at 3 p.m. tomorrow. *(lịch đã sắp xếp)*
+2. I {{blank}} (review) the access logs before the meeting. *(dự định từ trước)*
+3. The alert has just arrived, so I {{blank}} (check) the production dashboard now. *(quyết định tức thời)*
 '''
-starter = '''
-function pastSimple(verb) {
-  return verb + 'ed';
-}
-'''
-solution = '''
-function pastSimple(verb) {
-  const irregular = { be: 'was', go: 'went', have: 'had', make: 'made', see: 'saw' };
-  if (irregular[verb]) return irregular[verb];
-  if (verb.endsWith('e')) return verb + 'd';
-  if (/[^aeiou]y$/.test(verb)) return verb.slice(0, -1) + 'ied';
-  const vowelGroups = (verb.match(/[aeiouy]+/g) || []).length;
-  if (vowelGroups === 1 && /(^|[^aeiou])[aeiou][^aeiouwxy]$/.test(verb)) return verb + verb[verb.length - 1] + 'ed';
-  return verb + 'ed';
-}
-'''
-tests = '''
-test('regular -ed and final e', () => {
-  expect(pastSimple('work')).toBe('worked');
-  expect(pastSimple('like')).toBe('liked');
-});
-test('consonant plus y', () => {
-  expect(pastSimple('study')).toBe('studied');
-  expect(pastSimple('play')).toBe('played');
-});
-test('double final consonant', () => {
-  expect(pastSimple('stop')).toBe('stopped');
-  expect(pastSimple('plan')).toBe('planned');
-});
-test('do not double unstressed final consonant', () => {
-  expect(pastSimple('visit')).toBe('visited');
-  expect(pastSimple('open')).toBe('opened');
-});
-test('irregular verbs', () => {
-  expect(['be', 'go', 'have', 'make', 'see'].map(pastSimple)).toEqual(['was', 'went', 'had', 'made', 'saw']);
-});
-'''
-hints = ["Tra bảng bất quy tắc trước khi áp dụng quy tắc chính tả.", "Chỉ gấp đôi với từ một âm tiết có mẫu phụ âm-nguyên âm-phụ âm đã nêu."]
-explanation = "Thứ tự kiểm tra giúp không biến động từ bất quy tắc hoặc tận cùng y thành dạng sai."
+blanks = [["is meeting"], ["am going to review"], ["will check", "'ll check"]]
+explanation = "Hiện tại tiếp diễn diễn đạt lịch đã sắp xếp; be going to diễn đạt dự định có trước; will diễn đạt quyết định tức thời."
 
 [[questions]]
 id = "gr-x014"
@@ -1561,64 +1254,12 @@ explanation = "Fast tạo faster; good là bất quy tắc với best ở so sá
 [[questions]]
 id = "gr-x026"
 module = "gr-a2-basics"
-type = "essay"
+type = "multiple"
 difficulty = 2
-prompt = '''
-Viết 3 câu tiếng Anh về một môi trường IT: dùng there is/are với danh từ đúng số, một lượng từ phù hợp cho danh từ không đếm được, và một câu so sánh hơn có than. Có thể nhắc đến vị trí hoặc thời gian cuộc họp.
-'''
-keywords = [["there is", "there are"], ["much", "a little", "some information", "a lot of information"], ["than"], ["on ", "in ", "at "]]
-min_keywords = 3
-model_answer = '''
-There are four test servers in the lab. We have a little time before the release, but there isn't much information about the memory leak. The new dashboard is faster than the old one, and our review is at 2 p.m. on Thursday.
-'''
-explanation = "Bài viết thể hiện danh từ đếm được/không đếm được và cấu trúc so sánh trong ngữ cảnh cụ thể."
-
-[[questions]]
-id = "gr-xc02"
-module = "gr-a2-basics"
-type = "code"
-difficulty = 2
-title = "Chuyển câu hiện tại/quá khứ sang phủ định và nghi vấn"
-prompt = '''
-Viết `sentenceForms(subject, verb, object, tense)` trả về object `{ negative, question }` cho câu có động từ thường, không phải be. `subject` là một trong I/you/we/they/he/she/it; `verb` ở nguyên mẫu; `tense` là `present` hoặc `past`. Dùng don't/doesn't/didn't ở câu phủ định và Do/Does/Did ở câu hỏi. Giữ nguyên subject và object. Ví dụ `('She','check','the logs','present')` cho `She doesn't check the logs.` và `Does she check the logs?`.
-'''
-starter = '''
-function sentenceForms(subject, verb, object, tense) {
-  return {
-    negative: subject + ' do not ' + verb + ' ' + object + '.',
-    question: 'Do ' + subject + ' ' + verb + ' ' + object + '?'
-  };
-}
-'''
-solution = '''
-function sentenceForms(subject, verb, object, tense) {
-  const third = ['he', 'she', 'it'].includes(subject.toLowerCase());
-  const aux = tense === 'past' ? 'did' : third ? 'does' : 'do';
-  const negativeAux = aux === 'does' ? "doesn't" : aux === 'did' ? "didn't" : "don't";
-  const questionAux = aux[0].toUpperCase() + aux.slice(1);
-  const questionSubject = subject.toLowerCase() === 'i' ? 'I' : subject.toLowerCase();
-  return {
-    negative: subject + ' ' + negativeAux + ' ' + verb + ' ' + object + '.',
-    question: questionAux + ' ' + questionSubject + ' ' + verb + ' ' + object + '?'
-  };
-}
-'''
-tests = '''
-test('present with third person singular', () => {
-  expect(sentenceForms('She', 'check', 'the logs', 'present')).toEqual({ negative: "She doesn't check the logs.", question: 'Does she check the logs?' });
-});
-test('present with I', () => {
-  expect(sentenceForms('I', 'review', 'the patch', 'present')).toEqual({ negative: "I don't review the patch.", question: 'Do I review the patch?' });
-});
-test('past uses did for every subject', () => {
-  expect(sentenceForms('They', 'deploy', 'the build', 'past')).toEqual({ negative: "They didn't deploy the build.", question: 'Did they deploy the build?' });
-});
-test('past irregular base remains unchanged after did', () => {
-  expect(sentenceForms('He', 'go', 'to the lab', 'past').question).toBe('Did he go to the lab?');
-});
-'''
-hints = ["Chọn auxiliary dựa vào tense trước; trong hiện tại kiểm tra he/she/it.", "Sau do/does/did, giữ verb ở dạng nguyên mẫu."]
-explanation = "Do-support mang dấu thì và hòa hợp; động từ chính giữ nguyên mẫu trong câu phủ định và nghi vấn."
+prompt = "Chọn tất cả câu đúng ngữ pháp trong status update này."
+options = ["There are four test servers in the lab.", "We have a little time before the release.", "There isn't much information about the memory leak.", "The new dashboard is more faster than the old one.", "There are a little time before the release.", "The review starts at 2 p.m. on Thursday."]
+answer = [0, 1, 2, 5]
+explanation = "Servers là danh từ số nhiều nên dùng there are; time và information không đếm được nên dùng a little/much; so sánh hơn không thêm more trước faster; dùng at với giờ và on với thứ."
 
 [[questions]]
 id = "gr-x027"
@@ -1753,80 +1394,16 @@ explanation = "Các mốc thời gian giúp người đọc phân biệt kết q
 [[questions]]
 id = "gr-x038"
 module = "gr-b1-tenses"
-type = "essay"
+type = "fill"
 difficulty = 2
-prompt = '''
-Viết 4 câu tiếng Anh kể lại một sự cố IT theo đúng trình tự: dùng past continuous cho việc đang diễn ra, past simple cho sự kiện xen vào, past perfect cho nguyên nhân xảy ra trước, và used to cho một thói quen cũ nay đã thay đổi.
-'''
-keywords = [["was monitoring", "were monitoring", "was checking", "were checking"], ["when ", "while "], ["had failed", "had stopped", "had expired"], ["used to"], ["now"]]
-min_keywords = 4
-model_answer = '''
-We were monitoring the release when the login service stopped responding. The certificate had expired earlier that morning, so users could not sign in. The team used to renew certificates manually, but it now uses an automated reminder. We fixed the issue before the afternoon support shift began.
-'''
-explanation = "Past perfect cho biết certificate hết hạn trước khi dịch vụ lỗi; used to đối chiếu thói quen cũ với hiện tại."
+prompt = '''Điền dạng động từ phù hợp để kể lại sự cố theo đúng trình tự:
 
-[[questions]]
-id = "gr-xc03"
-module = "gr-b1-tenses"
-type = "code"
-difficulty = 2
-title = "Kiểm tra subject–verb agreement hiện tại đơn"
-prompt = '''
-Viết `agrees(subject, verb)` trả về boolean cho chủ ngữ đại từ `I/you/we/they/he/she/it` và động từ hiện tại đơn viết thường. Hỗ trợ `be` (am/is/are), `have/has`, `do/does`, và động từ thường theo quy tắc hiện tại đơn (-s/-es/-ies). Ví dụ `agrees('she','works')` là true, còn `agrees('they','works')` là false.
+1. We {{blank}} (monitor) the release when the login service {{blank}} (stop) responding.
+2. The certificate {{blank}} (expire) earlier that morning.
+3. The team {{blank}} (renew) certificates manually, but it now uses an automated reminder.
 '''
-starter = '''
-function agrees(subject, verb) {
-  return true;
-}
-'''
-solution = '''
-function thirdPerson(verb) {
-  if (/(s|x|z|ch|sh|o)$/.test(verb)) return verb + 'es';
-  if (/[^aeiou]y$/.test(verb)) return verb.slice(0, -1) + 'ies';
-  return verb + 's';
-}
-
-function agrees(subject, verb) {
-  const s = subject.toLowerCase();
-  const v = verb.toLowerCase();
-  const singular = ['he', 'she', 'it'].includes(s);
-  const base = /[^aeiou]ies$/.test(v) ? v.slice(0, -3) + 'y'
-    : /(s|x|z|ch|sh|o)es$/.test(v) ? v.slice(0, -2)
-      : /[^s]s$/.test(v) ? v.slice(0, -1) : v;
-  const expected = ['am', 'is', 'are'].includes(v)
-    ? ({ i: 'am', you: 'are', we: 'are', they: 'are', he: 'is', she: 'is', it: 'is' })[s]
-    : ['have', 'has'].includes(v)
-      ? (singular ? 'has' : 'have')
-      : ['do', 'does'].includes(v)
-        ? (singular ? 'does' : 'do')
-        : (singular ? thirdPerson(base) : base);
-  return expected === v;
-}
-'''
-tests = '''
-test('regular lexical verbs', () => {
-  expect(agrees('she', 'works')).toBe(true);
-  expect(agrees('they', 'work')).toBe(true);
-  expect(agrees('he', 'work')).toBe(false);
-});
-test('have and do', () => {
-  expect(agrees('it', 'has')).toBe(true);
-  expect(agrees('we', 'have')).toBe(true);
-  expect(agrees('she', 'does')).toBe(true);
-  expect(agrees('you', 'does')).toBe(false);
-});
-test('be forms', () => {
-  expect(agrees('I', 'am')).toBe(true);
-  expect(agrees('they', 'are')).toBe(true);
-  expect(agrees('he', 'are')).toBe(false);
-});
-test('regular spelling endings', () => {
-  expect(agrees('she', 'watches')).toBe(true);
-  expect(agrees('it', 'carries')).toBe(true);
-});
-'''
-hints = ["Trước tiên xác định chủ ngữ có phải he/she/it không.", "Be, have và do có dạng riêng; động từ thường theo quy tắc -s/-es/-ies."]
-explanation = "Chủ ngữ số ít ngôi thứ ba cần dạng động từ tương ứng; các đại từ còn lại dùng động từ nguyên mẫu ở hiện tại đơn."
+blanks = [["were monitoring"], ["stopped"], ["had expired"], ["used to renew"]]
+explanation = "Past continuous nêu việc đang diễn ra; past simple nêu sự kiện xen vào; past perfect cho biết chứng chỉ hết hạn trước sự cố; used to mô tả thói quen cũ đã thay đổi."
 
 [[questions]]
 id = "gr-x039"
@@ -1972,43 +1549,6 @@ Ella said that the server was down. The manager told me to restart the service. 
 explanation = "Câu trần thuật lùi am/is xuống was; mệnh lệnh dùng told + object + (not) to-infinitive."
 
 [[questions]]
-id = "gr-xc04"
-module = "gr-b1-structures"
-type = "code"
-difficulty = 2
-title = "Lùi trợ động từ trong reported speech"
-prompt = '''
-Viết `backshift(aux)` nhận một trợ động từ viết thường trong câu trực tiếp và trả về dạng dùng khi lùi thì: `am/is → was`, `are → were`, `do/does → did`, `have/has → had`, `will → would`, `can → could`, `may → might`. Các dạng khác (ví dụ `was`, `did`) giữ nguyên. Đầu vào luôn là một từ trong bảng hoặc một dạng đã ở quá khứ.
-'''
-starter = '''
-function backshift(aux) {
-  return aux;
-}
-'''
-solution = '''
-function backshift(aux) {
-  const table = { am: 'was', is: 'was', are: 'were', do: 'did', does: 'did', have: 'had', has: 'had', will: 'would', can: 'could', may: 'might' };
-  return table[aux] || aux;
-}
-'''
-tests = '''
-test('be forms', () => {
-  expect(['am', 'is', 'are'].map(backshift)).toEqual(['was', 'was', 'were']);
-});
-test('do and have forms', () => {
-  expect(['do', 'does', 'have', 'has'].map(backshift)).toEqual(['did', 'did', 'had', 'had']);
-});
-test('modals', () => {
-  expect(['will', 'can', 'may'].map(backshift)).toEqual(['would', 'could', 'might']);
-});
-test('past forms stay unchanged', () => {
-  expect(['was', 'were', 'did', 'had'].map(backshift)).toEqual(['was', 'were', 'did', 'had']);
-});
-'''
-hints = ["Dùng object làm bảng ánh xạ giữa dạng trực tiếp và dạng lùi thì.", "Nếu không có khóa trong bảng, trả lại đầu vào."]
-explanation = "Bảng ánh xạ giúp lùi thì nhất quán; ngữ cảnh đầy đủ vẫn quyết định đại từ và trạng từ thời gian."
-
-[[questions]]
 id = "gr-x051"
 module = "gr-b2-advanced"
 type = "single"
@@ -2141,62 +1681,16 @@ explanation = "Các mệnh đề nêu rõ giả định quá khứ, hệ quả h
 [[questions]]
 id = "gr-x062"
 module = "gr-b2-advanced"
-type = "essay"
+type = "fill"
 difficulty = 3
-prompt = '''
-Viết 3 câu báo cáo một cuộc họp: tường thuật một câu hỏi yes/no ở quá khứ, tường thuật một hướng dẫn phủ định, và dùng cấu trúc have/get something done để nói nhóm đã thuê người ngoài nâng cấp cơ sở dữ liệu.
-'''
-keywords = [["asked if", "asked whether"], ["had passed", "was ready", "had finished"], ["told us not to", "told the team not to"], ["had the database upgraded", "got the database upgraded"]]
-min_keywords = 4
-model_answer = '''
-The manager asked whether the backup had finished. She told the team not to restart the service during the migration. We had the database upgraded by an external specialist over the weekend.
-'''
-explanation = "Câu hỏi yes/no dùng whether/if với trật tự khẳng định; mệnh lệnh phủ định dùng told + object + not to V; causative dùng have + object + V3."
+prompt = '''Điền cụm từ để tường thuật cuộc họp, giữ nguyên ý và dùng đúng cấu trúc:
 
-[[questions]]
-id = "gr-xc05"
-module = "gr-b2-advanced"
-type = "code"
-difficulty = 2
-title = "Tạo past participle cho câu bị động"
-prompt = '''
-Viết `pastParticiple(verb)` cho các động từ viết thường. Bảng bất quy tắc: `be → been`, `do → done`, `go → gone`, `have → had`, `make → made`, `see → seen`, `take → taken`, `write → written`. Động từ có quy tắc: tận cùng e thêm d; phụ âm + y đổi thành ied; từ một âm tiết dạng phụ âm-nguyên âm-phụ âm (không kết thúc w/x/y) gấp đôi phụ âm cuối; còn lại thêm ed. Ví dụ: `live → lived`, `study → studied`, `stop → stopped`.
+1. The manager asked {{blank}} the backup {{blank}} by noon. *(finish)*
+2. She told the team {{blank}} the service during migration. *(not / restart)*
+3. Before release, we {{blank}} by an external specialist over the weekend. *(upgrade the database)*
 '''
-starter = '''
-function pastParticiple(verb) {
-  return verb + 'ed';
-}
-'''
-solution = '''
-function pastParticiple(verb) {
-  const irregular = { be: 'been', do: 'done', go: 'gone', have: 'had', make: 'made', see: 'seen', take: 'taken', write: 'written' };
-  if (irregular[verb]) return irregular[verb];
-  if (verb.endsWith('e')) return verb + 'd';
-  if (/[^aeiou]y$/.test(verb)) return verb.slice(0, -1) + 'ied';
-  const vowelGroups = (verb.match(/[aeiouy]+/g) || []).length;
-  if (vowelGroups === 1 && /(^|[^aeiou])[aeiou][^aeiouwxy]$/.test(verb)) return verb + verb[verb.length - 1] + 'ed';
-  return verb + 'ed';
-}
-'''
-tests = '''
-test('irregular participles', () => {
-  expect(['be', 'do', 'go', 'have'].map(pastParticiple)).toEqual(['been', 'done', 'gone', 'had']);
-});
-test('other irregular participles', () => {
-  expect(['make', 'see', 'take', 'write'].map(pastParticiple)).toEqual(['made', 'seen', 'taken', 'written']);
-});
-test('regular endings', () => {
-  expect(['live', 'work', 'study', 'play'].map(pastParticiple)).toEqual(['lived', 'worked', 'studied', 'played']);
-});
-test('double final consonant', () => {
-  expect(['stop', 'plan'].map(pastParticiple)).toEqual(['stopped', 'planned']);
-});
-test('do not double unstressed final consonant', () => {
-  expect(['visit', 'open'].map(pastParticiple)).toEqual(['visited', 'opened']);
-});
-'''
-hints = ["Tra bảng bất quy tắc trước.", "Áp dụng lần lượt e cuối, phụ âm + y, mẫu CVC rồi mới thêm ed."]
-explanation = "Past participle tạo thành phần động từ chính trong nhiều cấu trúc bị động và perfect; một số động từ cần học theo bảng bất quy tắc."
+blanks = [["whether", "if"], ["had finished"], ["not to restart"], ["had the database upgraded", "got the database upgraded"]]
+explanation = "Câu hỏi yes/no gián tiếp dùng if/whether và trật tự khẳng định; lời dặn phủ định dùng told + object + not to; have/get something done diễn đạt việc thuê người khác làm."
 
 [[questions]]
 id = "gr-x063"
@@ -2316,47 +1810,6 @@ model_answer = '''
 Although the test window was short, the team completed the security review. The release, which fixes the login issue, is ready for a staged rollout. The mobile client uses REST, whereas the internal analytics service uses gRPC. By Friday, we will have deployed the update to all regions.
 '''
 explanation = "Các cấu trúc được gắn với thông tin release cụ thể, giúp thể hiện nhượng bộ, tương phản, thông tin bổ sung và hạn hoàn thành."
-
-[[questions]]
-id = "gr-xc06"
-module = "gr-b2-linking"
-type = "code"
-difficulty = 2
-title = "Tạo cụm tương lai tiếp diễn hoặc hoàn thành"
-prompt = '''
-Viết `futurePhrase(verbForm, kind)` với `verbForm` đã ở dạng V-ing hoặc V3. Nếu `kind` là `continuous`, trả về `will be ` + verbForm; nếu là `perfect`, trả về `will have ` + verbForm. Đầu vào luôn hợp lệ. Ví dụ `futurePhrase('monitoring','continuous')` trả về `will be monitoring`; `futurePhrase('completed','perfect')` trả về `will have completed`.
-'''
-starter = '''
-function futurePhrase(verbForm, kind) {
-  return 'will ' + verbForm;
-}
-'''
-solution = '''
-function futurePhrase(verbForm, kind) {
-  if (kind === 'continuous') return 'will be ' + verbForm;
-  return 'will have ' + verbForm;
-}
-'''
-tests = '''
-test('future continuous', () => {
-  expect(futurePhrase('monitoring', 'continuous')).toBe('will be monitoring');
-  expect(futurePhrase('working', 'continuous')).toBe('will be working');
-});
-test('future perfect', () => {
-  expect(futurePhrase('completed', 'perfect')).toBe('will have completed');
-  expect(futurePhrase('built', 'perfect')).toBe('will have built');
-});
-test('different verb forms', () => {
-  expect(futurePhrase('migrating', 'continuous')).toBe('will be migrating');
-  expect(futurePhrase('written', 'perfect')).toBe('will have written');
-});
-test('irregular participles remain unchanged', () => {
-  expect(futurePhrase('being', 'continuous')).toBe('will be being');
-  expect(futurePhrase('seen', 'perfect')).toBe('will have seen');
-});
-'''
-hints = ["Dạng continuous cần be trước V-ing.", "Dạng perfect cần have trước V3."]
-explanation = "Hai cụm chia sẻ will nhưng khác trợ động từ: be cho hành động đang diễn ra, have cho kết quả hoàn tất trước mốc tương lai."
 
 [[questions]]
 id = "gr-x073"
@@ -2492,3 +1945,154 @@ prompt = '''
 '''
 blanks = [["the"], ["a"], ["the"]]
 explanation = "Dùng the khi đối tượng đã xác định/được nhắc lần trước; dùng a khi giới thiệu lần đầu một danh từ đếm được số ít."
+
+[[questions]]
+id = "gr-x085"
+module = "gr-b2-advanced"
+type = "single"
+difficulty = 2
+prompt = "If the team had taken a database snapshot before the migration, it ______ customer records."
+options = ["would not lose", "will not have lost", "would not have lost", "did not lose"]
+answer = [2]
+explanation = "Điều kiện loại 3 diễn tả kết quả khác trong quá khứ: if + past perfect, would have + V3."
+
+[[questions]]
+id = "gr-x086"
+module = "gr-b2-advanced"
+type = "fill"
+difficulty = 3
+prompt = "If the service had checked the certificate, it {{blank}} vulnerable to this attack now."
+blanks = [["would not be", "wouldn't be"]]
+explanation = "Đây là điều kiện hỗn hợp: điều kiện không có thật trong quá khứ tạo ra kết quả ở hiện tại."
+
+[[questions]]
+id = "gr-x087"
+module = "gr-b2-advanced"
+type = "single"
+difficulty = 2
+prompt = "The deployment team regrets ignoring the warning. Which sentence expresses that past regret?"
+options = ["They wish they had paid attention to the warning.", "They wish they pay attention to the warning.", "They wish they would pay attention to the warning yesterday.", "They wish they have paid attention to the warning."]
+answer = [0]
+explanation = "Wish + past perfect diễn tả sự tiếc nuối về một việc đã xảy ra trong quá khứ."
+
+[[questions]]
+id = "gr-x088"
+module = "gr-b2-advanced"
+type = "fill"
+difficulty = 2
+prompt = "We will have the load balancer {{blank}} by an external team before launch."
+blanks = [["configured"]]
+explanation = "Causative have + object + past participle diễn tả việc nhờ người khác làm: have the load balancer configured."
+
+[[questions]]
+id = "gr-x089"
+module = "gr-b2-advanced"
+type = "single"
+difficulty = 2
+prompt = "The customer asked, “Can you restore the last backup?” Choose the correct reported question."
+options = ["The customer asked whether we could restore the last backup.", "The customer asked can we restore the last backup.", "The customer asked whether could we restore the last backup.", "The customer asked that we can restore the last backup."]
+answer = [0]
+explanation = "Câu hỏi gián tiếp dùng whether/if + chủ ngữ + động từ; can thường lùi thành could khi động từ tường thuật ở quá khứ."
+
+[[questions]]
+id = "gr-x090"
+module = "gr-b2-linking"
+type = "multiple"
+difficulty = 3
+prompt = "Chọn các mệnh đề quan hệ không xác định được viết đúng."
+options = ["The release, which was delayed by a certificate issue, is now live.", "Linh, who maintains the API gateway, reviewed the migration plan.", "The endpoint, that handles exports, is rate-limited.", "The cache that stores session data, is encrypted.", "The engineer, which wrote the patch, joined the review."]
+answer = [0, 1]
+explanation = "Mệnh đề không xác định dùng dấu phẩy và who cho người, which cho vật; không dùng that trong loại mệnh đề này."
+
+[[questions]]
+id = "gr-x091"
+module = "gr-b1-structures"
+type = "fill"
+difficulty = 2
+prompt = '''
+Điền modal phù hợp. Chính sách bắt chủ sở hữu thu hồi khóa bị lộ ngay; người phân tích chỉ đọc log và không bắt buộc sửa môi trường production.
+
+1. The owner {{blank}} revoke the exposed key immediately.
+2. An analyst {{blank}} change production.
+'''
+blanks = [["must", "has to"], ["does not have to", "doesn't have to"]]
+explanation = "Must/has to diễn tả nghĩa vụ; does not have to diễn tả việc không bắt buộc, khác với must not là bị cấm."
+
+[[questions]]
+id = "gr-x092"
+module = "gr-c1"
+type = "single"
+difficulty = 3
+prompt = "Choose the grammatically correct nominalised version of “The team reviewed the incident before approving the rollback.”"
+options = ["The team's review of the incident preceded approval of the rollback.", "The team review the incident preceding to approval of the rollback.", "The team's reviewed incident before the approval of the rollback.", "The review of the incident was preceded the rollback approval."]
+answer = [0]
+explanation = "Review và approval được dùng như danh từ; cấu trúc giữ được quan hệ thời gian và nghĩa của câu gốc."
+
+[[questions]]
+id = "gr-x093"
+module = "gr-c1"
+type = "fill"
+difficulty = 3
+prompt = "{{blank}} the migration twice, the engineers approved the rollout. *(dùng perfect participle)*"
+blanks = [["Having tested"]]
+explanation = "Having + V3 cho biết việc kiểm tra hoàn tất trước khi các kỹ sư phê duyệt; chủ thể của hai hành động đều là the engineers."
+
+[[questions]]
+id = "gr-x094"
+module = "gr-c1"
+type = "essay"
+difficulty = 3
+prompt = '''
+Viết hai câu cho báo cáo sự cố. Dùng despite + cụm danh từ và cấu trúc have/get + tân ngữ + past participle để nói rằng nhà cung cấp đã kiểm tra API gateway. Câu thứ hai có mệnh đề quan hệ không xác định.
+'''
+keywords = [["despite"], ["had", "got"], ["reviewed", "checked"], ["which", "who"]]
+min_keywords = 3
+model_answer = '''
+Despite the short maintenance window, we had the API gateway reviewed by the vendor. The gateway, which handles external requests, stayed available throughout the check.
+'''
+explanation = "Câu mẫu dùng despite với cụm danh từ, causative have + object + V3, và mệnh đề which bổ sung thông tin."
+
+[[questions]]
+id = "gr-c01"
+module = "gr-a2-tenses"
+type = "single"
+difficulty = 1
+prompt = "The monitoring service ______ each failed login and sends a report every morning."
+options = ["log", "logs", "logging", "have logged"]
+answer = [1]
+explanation = "Với chủ ngữ ngôi thứ ba số ít ở hiện tại đơn, động từ thường thêm -s: log → logs."
+
+[[questions]]
+id = "gr-c02"
+module = "gr-a2-basics"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn tất cả câu dùng so sánh hơn hoặc so sánh nhất đúng."
+options = ["Version 2 is more reliable than version 1.", "Of the three replicas, node B is the most stable.", "The migration was easier than we expected.", "That parser is more simpler than the previous one.", "This is the most easiest test to run."]
+answer = [0, 1, 2]
+explanation = "Tính từ dài như reliable thường dùng more ở so sánh hơn; tính từ ngắn như easy thường thêm -er/-est. Không kết hợp more với dạng -er, cũng không kết hợp most với dạng -est."
+
+[[questions]]
+id = "gr-c03"
+module = "gr-b1-tenses"
+type = "fill"
+difficulty = 2
+prompt = '''
+Điền dạng quá khứ đơn. Mọi sự kiện xảy ra trong mốc quá khứ đã kết thúc:
+
+1. We {{blank}} (deploy) the hotfix yesterday.
+2. Mai {{blank}} (go) to the data centre last Monday.
+3. The build {{blank}} (stop) at 6 p.m. yesterday.
+'''
+blanks = [["deployed"], ["went"], ["stopped"]]
+explanation = "Yesterday và last Monday xác định thời điểm quá khứ đã kết thúc; stop gấp đôi phụ âm cuối trước -ed."
+
+[[questions]]
+id = "gr-c04"
+module = "gr-a2-basics"
+type = "single"
+difficulty = 1
+prompt = "At the start of an incident report, introduce one previously unmentioned account: ______ user account was disabled after the security audit."
+options = ["A", "An", "The", "No article"]
+answer = [0]
+explanation = "User bắt đầu bằng âm /j/ (giống âm đầu trong you), nên dùng a theo âm chứ không theo chữ cái u."

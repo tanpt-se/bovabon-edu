@@ -9,7 +9,7 @@ docs = ["javascript", "css", "dom", "html", "typescript"]
 # ============================================================ MODULES
 [[modules]]
 id = "fe-js"
-sources = ["javascript/global_objects/promise/allsettled", "javascript/operators/optional_chaining", "javascript/global_objects/proxy"]
+sources = ["javascript/global_objects/promise/allsettled", "javascript/operators/optional_chaining", "javascript/global_objects/proxy", "javascript/operators/this", "javascript/statements/async_function", "javascript/classes"]
 title = "JavaScript cốt lõi"
 description = "Scope, closure, this, prototype, event loop, Promise/async, ES2015+."
 lesson = '''
@@ -24,7 +24,7 @@ lesson = '''
 
 [[modules]]
 id = "fe-html-css"
-sources = ["css/selectors/:has", "css/at-rules/@container", "css/at-rules/@layer", "html/reference/elements/dialog"]
+sources = ["css/selectors/:has", "css/at-rules/@container", "css/at-rules/@layer", "html/reference/elements/dialog", "css/properties/box-sizing", "css/properties/position", "html/reference/elements/button"]
 title = "HTML, CSS & Accessibility"
 description = "Semantic HTML, box model, specificity, Flexbox/Grid, position, responsive, a11y."
 lesson = '''
@@ -44,7 +44,7 @@ lesson = '''
 
 [[modules]]
 id = "fe-browser"
-sources = ["dom/intersectionobserver", "dom/abortcontroller", "dom/window/requestanimationframe"]
+sources = ["dom/intersectionobserver", "dom/abortcontroller", "dom/window/requestanimationframe", "dom/performance", "html/reference/elements/script", "dom/window/localstorage", "dom/storage"]
 title = "Trình duyệt & Hiệu năng Web"
 description = "Critical rendering path, reflow/repaint, Core Web Vitals, cache HTTP, lưu trữ, event delegation."
 lesson = '''
@@ -67,7 +67,7 @@ HTML → **DOM**, CSS → **CSSOM** → **Render tree** → **Layout** (reflow) 
 
 [[modules]]
 id = "fe-ts"
-sources = ["typescript/docs/handbook/utility-types", "typescript/docs/handbook/2/mapped-types", "typescript/docs/handbook/2/conditional-types"]
+sources = ["typescript/docs/handbook/utility-types", "typescript/docs/handbook/2/mapped-types", "typescript/docs/handbook/2/conditional-types", "typescript/docs/handbook/2/everyday-types", "typescript/docs/handbook/2/narrowing", "typescript/docs/handbook/2/generics"]
 title = "TypeScript"
 description = "Kiểu cơ bản, union/intersection, generic, narrowing, utility types, `unknown` vs `any`."
 lesson = '''
@@ -82,7 +82,7 @@ lesson = '''
 
 [[modules]]
 id = "fe-tooling"
-sources = ["html/reference/attributes/rel/preload", "dom/performance"]
+sources = ["html/reference/attributes/rel/preload", "dom/performance", "html/reference/elements/script", "dom/window/fetch", "dom/cspviolationreport"]
 title = "Tooling, Testing & Bảo mật"
 description = "Bundler, tree-shaking, Vite, testing pyramid, XSS, CSRF, CORS, CSP."
 lesson = '''
@@ -1527,3 +1527,447 @@ test('allSettled rỗng', async () => {
 hints = ["`Object.create(null)` tạo object không kế thừa `toString`, `__proto__`…", "Bọc mỗi phần tử bằng `Promise.resolve(p).then(onOk, onErr)` rồi `Promise.all`."]
 explanation = "Object không prototype tránh va chạm với key như `constructor`. `Map.groupBy` dùng khi cần key không phải chuỗi."
 sources = ["javascript/global_objects/object/groupby", "javascript/global_objects/promise/allsettled"]
+
+[[modules]]
+id = "frontend-dv-forms"
+title = "HTML Forms & Validation"
+description = "Form controls, native constraint validation, FormData, submit lifecycle và thiết kế lỗi dễ dùng."
+sources = ["html/reference/elements/form", "html/reference/elements/input", "html/guides/constraint_validation", "html/reference/elements/label", "dom/htmlformelement", "dom/formdata"]
+lesson = '''
+### Form là hợp đồng dữ liệu
+Một form tốt cho biết dữ liệu sẽ được gửi đi đâu, bằng cách nào và mỗi giá trị có tên gì. `action` xác định đích, `method="get"` phù hợp với truy vấn có thể chia sẻ, còn `method="post"` thường dùng khi gửi dữ liệu làm thay đổi trạng thái. Mỗi control cần `name` để trở thành cặp dữ liệu gửi đi; `id` chủ yếu giúp liên kết `<label for>` và không thay thế `name`.
+
+| Cách kiểm tra | Vai trò | Giới hạn |
+|---|---|---|
+| HTML constraint (`required`, `type`, `min`, `pattern`) | Báo lỗi sớm theo ngữ nghĩa của control | Có thể bị bỏ qua hoặc sửa từ client |
+| JavaScript phía client | Kiểm tra tương tác nhiều trường, hiển thị lỗi theo ngữ cảnh | Không phải ranh giới bảo mật |
+| Server | Xác thực dữ liệu trước khi lưu hoặc thực hiện hành động | Luôn cần thiết với dữ liệu không đáng tin |
+
+Ví dụ: `<label for="email">Email</label><input id="email" name="email" type="email" required>` vừa có nhãn đọc được, vừa có tên dữ liệu và kiểm tra định dạng cơ bản. `autocomplete` giúp trình duyệt gợi ý dữ liệu phù hợp. Với checkbox chưa chọn hoặc control bị `disabled`, giá trị thường không được gửi. `FormData` giữ các giá trị lặp lại; dùng `getAll("topic")` khi một tên có nhiều lựa chọn, còn `get()` chỉ lấy một giá trị.
+
+Trong xử lý JavaScript, nghe sự kiện `submit` trên form để kiểm tra hoặc gửi bất đồng bộ. Gọi `event.preventDefault()` nếu ứng dụng chủ động thay hành vi submit mặc định. `requestSubmit()` đi qua constraint validation và phát sự kiện `submit`; `form.submit()` bỏ qua cả hai bước này. Hãy dùng `requestSubmit()` khi cần kích hoạt quy trình submit chuẩn.
+
+Lỗi hay gặp: dùng placeholder thay cho label; quên `name`; nút phụ trong form không đặt `type="button"` nên vô tình submit; chỉ xác thực ở client; hoặc gọi `submit()` rồi thắc mắc vì sao handler không chạy. Khi tự hiển thị lỗi, gắn thông báo với control và giữ được thông tin lỗi bằng văn bản, không chỉ đổi màu viền.
+'''
+
+[[questions]]
+id = "frontend-dv001"
+module = "frontend-dv-forms"
+type = "single"
+difficulty = 1
+prompt = "Một `<input>` có id là email và name là contact. Khi gửi form, key nào biểu diễn giá trị của input?"
+options = ["`email`", "`contact`", "Cả `email` và `contact`", "Không có key nào nếu thiếu `value`"]
+answer = [1]
+explanation = "Tên control trong payload đến từ `name`; `id` hữu ích cho label và thao tác DOM nhưng không đặt tên trường gửi đi."
+sources = ["html/reference/elements/form", "html/reference/elements/input"]
+
+[[questions]]
+id = "frontend-dv002"
+module = "frontend-dv-forms"
+type = "single"
+difficulty = 2
+prompt = "Trong một form, nút chỉ dùng để mở phần trợ giúp nhưng lại làm trang tải lại khi bấm. Cách sửa phù hợp nhất là gì?"
+options = ["Đặt `type=button` cho nút", "Đặt `method=get` cho form", "Bỏ `name` khỏi nút", "Chuyển nút thành `<a>`"]
+answer = [0]
+explanation = "`<button>` nằm trong form mặc định có hành vi submit; khai báo `type=button` cho hành động phụ."
+sources = ["html/reference/elements/button", "html/reference/elements/form"]
+
+[[questions]]
+id = "frontend-dv003"
+module = "frontend-dv-forms"
+type = "multiple"
+difficulty = 2
+prompt = "Những phát biểu nào đúng về constraint validation và việc gửi form?"
+options = [
+  "`required` có thể khiến control rỗng không hợp lệ trước khi submit thông thường.",
+  "`type=email` kiểm tra mọi quy tắc nghiệp vụ của địa chỉ email.",
+  "Validation phía trình duyệt có thể bị bỏ qua, nên server vẫn cần kiểm tra dữ liệu.",
+  "Control `disabled` thường không được đưa vào dữ liệu gửi form.",
+  "`id` tự động trở thành key trong `FormData` dù thiếu `name`."
+]
+answer = [0, 2, 3]
+explanation = "Constraint validation hỗ trợ trải nghiệm nhưng không xác minh đầy đủ nghiệp vụ hay thay server. Các control muốn gửi dữ liệu cần có `name` và không bị disabled."
+sources = ["html/guides/constraint_validation", "html/reference/elements/input"]
+
+[[questions]]
+id = "frontend-dv004"
+module = "frontend-dv-forms"
+type = "fill"
+difficulty = 2
+prompt = '''
+Để lấy mọi giá trị có cùng tên `topic` từ một `FormData`, hoàn thành biểu thức:
+
+```js
+const topics = formData.{{blank}}("topic");
+```
+'''
+blanks = [["getAll"]]
+explanation = "`getAll(name)` trả về mảng các giá trị cùng tên; `get(name)` chỉ lấy một giá trị."
+sources = ["dom/formdata"]
+
+[[questions]]
+id = "frontend-dv005"
+module = "frontend-dv-forms"
+type = "single"
+difficulty = 3
+prompt = "Một handler cần phát sự kiện `submit` và chạy kiểm tra HTML native trước khi gửi bằng code. Nên gọi API nào?"
+options = ["`form.submit()`", "`form.requestSubmit()`", "Phát một sự kiện click thủ công trên form", "`form.checkValidity()` vì API này tự gửi form"]
+answer = [1]
+explanation = "`requestSubmit()` đi qua validation và quy trình submit thông thường. `submit()` bỏ qua validation cũng như sự kiện `submit`; `checkValidity()` chỉ kiểm tra."
+sources = ["dom/htmlformelement/requestsubmit", "dom/htmlformelement/submit", "dom/htmlformelement/checkvalidity"]
+
+[[questions]]
+id = "frontend-dv006"
+module = "frontend-dv-forms"
+type = "multiple"
+difficulty = 2
+prompt = "Khi tự xử lý submit bằng JavaScript, phát biểu nào mô tả đúng các API sự kiện?"
+options = [
+  "`preventDefault()` hủy hành vi submit mặc định nếu sự kiện có thể bị hủy.",
+  "`preventDefault()` đồng thời chặn sự kiện nổi bọt lên tổ tiên.",
+  "`stopPropagation()` chặn sự kiện đi tiếp nhưng tự nó không hủy hành vi mặc định.",
+  "Sau khi chặn submit ở client, không cần kiểm tra dữ liệu ở server nữa."
+]
+answer = [0, 2]
+explanation = "Hủy hành vi mặc định và dừng lan truyền là hai việc riêng. Dữ liệu từ client vẫn phải được xác thực ở server."
+sources = ["dom/event/preventdefault", "dom/event/stoppropagation", "dom/htmlformelement/submit_event"]
+
+[[questions]]
+id = "frontend-dv007"
+module = "frontend-dv-forms"
+type = "essay"
+difficulty = 3
+prompt = "Trong một form đăng ký, bạn sẽ phối hợp native constraint validation, thông báo lỗi accessible và kiểm tra ở server như thế nào?"
+keywords = [["constraint validation", "native validation", "required"], ["server validation", "server-side validation"], ["label", "accessible", "aria-live", "accessibility"]]
+min_keywords = 2
+model_answer = '''
+Dùng `required`, `type` và các constraint phù hợp để trình duyệt báo lỗi cơ bản; giữ label và chỉ rõ lỗi bằng văn bản gắn với trường để hỗ trợ accessibility. Khi submit, có thể dùng `reportValidity()` hoặc xử lý submit để trình bày lỗi phù hợp. Server phải xác thực lại mọi dữ liệu vì client không đáng tin cậy.
+'''
+explanation = "Ứng viên nên phân biệt hỗ trợ UX ở client với việc thực thi quy tắc đáng tin cậy ở server."
+sources = ["html/guides/constraint_validation", "html/reference/elements/label", "dom/htmlformelement/reportvalidity"]
+
+[[questions]]
+id = "frontend-dvc01"
+module = "frontend-dv-forms"
+type = "code"
+difficulty = 2
+title = "Validate dữ liệu đăng ký"
+lang = "javascript"
+prompt = '''
+Viết `validateRegistration(values)` cho object có các trường `name`, `email`, `password`, `confirmPassword` (giá trị là chuỗi; trường thiếu được coi như chuỗi rỗng). Trả về object có đúng bốn key này, mỗi giá trị là thông báo lỗi hoặc `null` nếu hợp lệ.
+- `name` và `email` được trim trước khi kiểm tra; tên rỗng báo `Name is required`.
+- Email rỗng báo `Email is required`; email khác rỗng phải khớp dạng đơn giản `local@domain.tld`, nếu không báo `Email is invalid`.
+- Mật khẩu rỗng báo `Password is required`; ít hơn 8 ký tự báo `Password must be at least 8 characters`.
+- Xác nhận rỗng báo `Please confirm password`; nếu khác mật khẩu gốc báo `Passwords do not match`.
+- Đây là kiểm tra hỗ trợ giao diện. Server vẫn phải xác thực dữ liệu.
+'''
+starter = '''
+function validateRegistration(values) {
+  return { name: null, email: null, password: null, confirmPassword: null };
+}
+'''
+solution = '''
+function validateRegistration(values) {
+  const name = String(values.name ?? "").trim();
+  const email = String(values.email ?? "").trim();
+  const password = String(values.password ?? "");
+  const confirmPassword = String(values.confirmPassword ?? "");
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  return {
+    name: name ? null : "Name is required",
+    email: !email ? "Email is required" : emailPattern.test(email) ? null : "Email is invalid",
+    password: !password ? "Password is required" : password.length < 8 ? "Password must be at least 8 characters" : null,
+    confirmPassword: !confirmPassword ? "Please confirm password" : confirmPassword !== password ? "Passwords do not match" : null,
+  };
+}
+'''
+tests = '''
+test('accepts valid values', () => {
+  expect(validateRegistration({ name: 'Lan', email: 'lan@example.com', password: 'strongpass', confirmPassword: 'strongpass' })).toEqual({ name: null, email: null, password: null, confirmPassword: null });
+});
+test('trims name and email', () => {
+  expect(validateRegistration({ name: '  Lan  ', email: ' lan@example.com ', password: 'strongpass', confirmPassword: 'strongpass' }).email).toBe(null);
+  expect(validateRegistration({ name: '   ', email: 'lan@example.com', password: 'strongpass', confirmPassword: 'strongpass' }).name).toBe('Name is required');
+});
+test('reports required fields', () => {
+  expect(validateRegistration({}).name).toBe('Name is required');
+  expect(validateRegistration({}).email).toBe('Email is required');
+  expect(validateRegistration({}).password).toBe('Password is required');
+  expect(validateRegistration({}).confirmPassword).toBe('Please confirm password');
+});
+test('rejects a malformed email', () => {
+  expect(validateRegistration({ name: 'Lan', email: 'lan.example.com', password: 'strongpass', confirmPassword: 'strongpass' }).email).toBe('Email is invalid');
+});
+test('checks password length and confirmation', () => {
+  const result = validateRegistration({ name: 'Lan', email: 'lan@example.com', password: 'short', confirmPassword: 'different' });
+  expect(result.password).toBe('Password must be at least 8 characters');
+  expect(result.confirmPassword).toBe('Passwords do not match');
+});
+'''
+hints = ["Tạo chuỗi rỗng mặc định cho trường thiếu, rồi trim riêng `name` và `email`.", "Kiểm tra trường rỗng trước, sau đó mới kiểm tra định dạng hoặc độ dài."]
+explanation = "Tách validation thành hàm thuần giúp kiểm thử dễ và tái sử dụng trong giao diện; server vẫn phải kiểm tra độc lập."
+
+[[modules]]
+id = "frontend-dv-motion"
+title = "CSS Motion & Transitions"
+description = "Transitions, keyframe animation, reduced motion, scroll-driven animation và View Transitions."
+sources = ["css/properties/transition", "css/at-rules/@keyframes", "css/properties/animation", "css/at-rules/@media/prefers-reduced-motion", "css/properties/view-timeline", "css/at-rules/@view-transition"]
+lesson = '''
+### Chọn đúng cơ chế chuyển động
+CSS có nhiều công cụ cho chuyển động, nhưng mỗi công cụ phù hợp với một loại tín hiệu khác nhau. Transition phản hồi khi một style đổi trạng thái, chẳng hạn nút từ bình thường sang hover hoặc focus. Animation dùng `@keyframes` khi cần nhiều mốc, lặp, hoặc chạy độc lập với tương tác trực tiếp. Scroll-driven animation ánh xạ tiến độ animation vào scroll hoặc vùng nhìn thấy của phần tử; View Transitions giúp trình duyệt chuyển giữa hai trạng thái hiển thị của trang.
+
+| Cơ chế | Điều khiển bởi | Hợp với |
+|---|---|---|
+| `transition` | Thay đổi computed style | Hover, focus, mở/đóng một trạng thái |
+| `@keyframes` + `animation` | Timeline theo thời gian | Chuỗi nhiều bước, lặp hoặc tự chạy |
+| Scroll/view timeline | Vị trí cuộn hoặc mức độ xuất hiện | Tiến độ đọc, hiệu ứng gắn với nội dung trong viewport |
+| View Transition | Hai snapshot giao diện | Chuyển cảnh giữa trạng thái hoặc trang |
+
+Ví dụ: `.card { transition: transform 180ms ease; } .card:hover { transform: translateY(-2px); }` tạo chuyển động ngắn khi trạng thái đổi. Với animation, `animation-fill-mode: forwards` giữ style ở keyframe cuối sau khi hoàn tất; mặc định style animation không được giữ lâu dài. Transition chỉ tác động các thuộc tính phù hợp và thường cần giá trị đầu/cuối có thể nội suy. Tránh `transition: all` nếu một component có nhiều thuộc tính thay đổi ngoài dự kiến.
+
+Tôn trọng lựa chọn giảm chuyển động của người dùng bằng `@media (prefers-reduced-motion: reduce)`: giảm khoảng cách, thời lượng hoặc bỏ chuyển động trang trí, nhưng vẫn giữ tín hiệu rõ ràng về trạng thái. Dùng transform/opacity thường giảm layout work, song cần đo trên trang thật vì hiệu ứng lọc, vùng lớn hoặc nhiều layer vẫn tốn tài nguyên. Với scroll-driven và View Transitions, cung cấp trạng thái tĩnh dễ hiểu khi tính năng không được hỗ trợ.
+
+Lỗi hay gặp: chỉ gắn hiệu ứng vào `:hover` nên người dùng bàn phím không thấy phản hồi; nghĩ rằng `transition` có thể tự tạo nhiều bước như keyframes; quên `animation-fill-mode`; dùng chuyển động lớn để truyền đạt thông tin quan trọng; hoặc bỏ qua `prefers-reduced-motion`. Chuyển động nên giúp hiểu quan hệ và trạng thái, không làm giao diện chậm hoặc gây khó chịu.
+'''
+
+[[questions]]
+id = "frontend-dv008"
+module = "frontend-dv-motion"
+type = "single"
+difficulty = 1
+prompt = "Một nút đổi từ `opacity: 0.7` sang `opacity: 1` khi focus. Cơ chế CSS nào phù hợp để nội suy mượt giữa hai trạng thái?"
+options = ["`transition`", "`@keyframes` bắt buộc", "`@font-face`", "`@container`"]
+answer = [0]
+explanation = "Transition phù hợp khi style thay đổi theo trạng thái và cần nội suy giữa giá trị trước, sau."
+sources = ["css/properties/transition"]
+
+[[questions]]
+id = "frontend-dv009"
+module = "frontend-dv-motion"
+type = "single"
+difficulty = 2
+prompt = "Một hiệu ứng cần đi qua nhiều mốc thời gian và lặp vô hạn mà không phụ thuộc hover. Nên dùng cấu trúc nào?"
+options = ["`@keyframes` kết hợp `animation`", "Chỉ `transition`", "`@media` kết hợp `display`", "`animation-timeline: view()` cho mọi trường hợp"]
+answer = [0]
+explanation = "Keyframes mô tả nhiều mốc; thuộc tính animation đặt thời lượng, lặp, hướng và cách áp dụng chúng."
+sources = ["css/at-rules/@keyframes", "css/properties/animation"]
+
+[[questions]]
+id = "frontend-dv010"
+module = "frontend-dv-motion"
+type = "single"
+difficulty = 2
+prompt = "Media query nào dùng để điều chỉnh chuyển động theo lựa chọn accessibility của hệ điều hành?"
+options = ["`prefers-reduced-motion`", "`prefers-color-scheme`", "`hover`", "`pointer`"]
+answer = [0]
+explanation = "`prefers-reduced-motion: reduce` cho phép giảm hoặc loại bỏ chuyển động không cần thiết theo lựa chọn người dùng."
+sources = ["css/at-rules/@media/prefers-reduced-motion"]
+
+[[questions]]
+id = "frontend-dv011"
+module = "frontend-dv-motion"
+type = "multiple"
+difficulty = 2
+prompt = "Những nguyên tắc nào giúp chuyển động trong giao diện dễ tiếp cận hơn?"
+options = [
+  "Cung cấp biến thể giảm chuyển động khi `prefers-reduced-motion` là `reduce`.",
+  "Giữ thông tin trạng thái bằng chữ hoặc cấu trúc, không chỉ bằng animation.",
+  "Xóa mọi chỉ báo focus khi người dùng yêu cầu giảm chuyển động.",
+  "Đảm bảo thao tác bàn phím cũng nhận được phản hồi phù hợp, không chỉ hover."
+]
+answer = [0, 1, 3]
+explanation = "Giảm chuyển động không có nghĩa là bỏ phản hồi hoặc trạng thái; focus và thông tin cần vẫn dễ nhận biết."
+sources = ["css/at-rules/@media/prefers-reduced-motion"]
+
+[[questions]]
+id = "frontend-dv012"
+module = "frontend-dv-motion"
+type = "multiple"
+difficulty = 3
+prompt = "Chọn các mô tả đúng về motion gắn với cuộn và View Transitions."
+options = [
+  "Scroll timeline có thể gắn tiến độ animation với vị trí cuộn.",
+  "View timeline liên hệ tiến độ với phần tử đi vào hoặc đi qua vùng nhìn thấy.",
+  "View Transition dùng snapshot trạng thái cũ và mới để tạo chuyển cảnh.",
+  "Các tính năng này khiến mọi CSS animation tự động tôn trọng reduced motion.",
+  "Nên có cách trình bày tĩnh, dễ hiểu nếu hiệu ứng không chạy."
+]
+answer = [0, 1, 2, 4]
+explanation = "Scroll và view timeline thay nguồn tiến độ của animation; chúng không tự thay thế chính sách reduced motion hay fallback của sản phẩm."
+sources = ["css/properties/view-timeline", "css/at-rules/@view-transition"]
+
+[[questions]]
+id = "frontend-dv013"
+module = "frontend-dv-motion"
+type = "single"
+difficulty = 3
+prompt = "Một thành phần cũ và mới cần được nhận diện riêng trong View Transition để có thể style snapshot tương ứng. Thuộc tính nào đặt tên nhóm chuyển tiếp cho phần tử?"
+options = ["`view-transition-name`", "`animation-name`", "`transition-property`", "`timeline-scope`"]
+answer = [0]
+explanation = "`view-transition-name` đặt tên cho phần tử để ghép với các pseudo-element của View Transition."
+sources = ["css/at-rules/@view-transition"]
+
+[[questions]]
+id = "frontend-dv014"
+module = "frontend-dv-motion"
+type = "fill"
+difficulty = 2
+prompt = '''
+Giữ style tại keyframe cuối sau khi animation hoàn tất:
+
+```css
+.toast {
+  animation-fill-mode: {{blank}};
+}
+```
+'''
+blanks = [["forwards"]]
+explanation = "`forwards` giữ style được xác định ở keyframe cuối cho tới khi animation bị loại bỏ hoặc style khác ghi đè."
+sources = ["css/properties/animation"]
+
+[[questions]]
+id = "frontend-dv015"
+module = "frontend-dv-motion"
+type = "essay"
+difficulty = 3
+prompt = "Trong phỏng vấn, hãy giải thích cách chọn giữa transition, keyframe animation và scroll-driven animation; nêu cách xử lý người dùng giảm chuyển động."
+keywords = [["transition", "trạng thái"], ["keyframes", "nhiều mốc", "animation"], ["scroll timeline", "view timeline", "scroll-driven"], ["prefers-reduced-motion", "reduced motion", "giảm chuyển động"]]
+min_keywords = 3
+model_answer = '''
+Transition phù hợp khi style đổi theo trạng thái; `@keyframes` mô tả chuỗi nhiều mốc theo thời gian; scroll timeline phù hợp khi tiến độ cần gắn với cuộn hoặc phần tử trong viewport. Với `prefers-reduced-motion`, giảm hoặc bỏ chuyển động trang trí nhưng vẫn giữ thông tin trạng thái và phản hồi rõ ràng.
+'''
+explanation = "Câu trả lời tốt gắn lựa chọn kỹ thuật với nguồn tiến độ và nhu cầu accessibility."
+sources = ["css/properties/transition", "css/at-rules/@keyframes", "css/properties/view-timeline", "css/at-rules/@media/prefers-reduced-motion"]
+
+[[modules]]
+id = "frontend-dv-tsconfig"
+title = "TypeScript Modules & Project Setup"
+description = "ES modules, module resolution, compiler options, declaration files và project references."
+sources = ["typescript/docs/handbook/modules/introduction", "typescript/docs/handbook/modules/guides/choosing-compiler-options", "typescript/docs/handbook/modules/reference", "typescript/tsconfig/index", "typescript/docs/handbook/project-references", "typescript/docs/handbook/declaration-files/consumption"]
+lesson = '''
+### Cấu hình TypeScript theo môi trường chạy
+TypeScript kiểm tra và biến đổi mã, nhưng không tự quyết định mọi quy tắc của runtime. File có top-level `import` hoặc `export` được xử lý như module; file script không có chúng có thể làm khai báo rò rỉ vào scope toàn cục. Trong dự án hiện đại, nên dùng ES module syntax rõ ràng và cấu hình compiler theo runtime hoặc bundler thật sự đang chạy mã.
+
+| Cấu hình | Ý nghĩa chính | Chọn theo |
+|---|---|---|
+| `target` | Mức cú pháp JavaScript được phát ra khi TypeScript emit | Runtime cần hỗ trợ |
+| `lib` | Các khai báo API có sẵn để type-check, không thêm API vào runtime | Môi trường browser/server và polyfill thực tế |
+| `module` | Dạng module được giữ lại hoặc phát ra | Cách ứng dụng được đóng gói/chạy |
+| `moduleResolution` | Cách tìm file khi gặp import | Node.js hoặc bundler mà dự án dùng |
+
+Ví dụ, app được đóng gói bằng bundler thường cần cách phân giải import phù hợp với bundler; mã Node.js nên dùng cấu hình Node hiện đại, tương thích với cách Node xử lý ESM và CommonJS. `module` và `moduleResolution` liên quan nhau, nên tránh chọn một giá trị chỉ để làm hết lỗi mà không kiểm tra runtime. `noEmit` phù hợp khi bundler khác chịu trách nhiệm tạo JavaScript; TypeScript vẫn có thể chạy kiểm tra kiểu.
+
+Khi thư viện muốn công bố kiểu cho người dùng, `declaration` tạo file `.d.ts`; declaration mô tả API lúc biên dịch chứ không cung cấp implementation ở runtime. Dự án lớn có thể tách thành nhiều project dùng project references. Mỗi project tham chiếu có ranh giới build rõ, thường bật `composite`; `tsc --build` sắp xếp thứ tự và chỉ build phần cần thiết.
+
+Lỗi hay gặp: nghĩ `lib` sẽ polyfill API trình duyệt; đặt `target` mà quên kiểm tra runtime; dùng `moduleResolution` không khớp Node hoặc bundler; coi `.d.ts` là JavaScript có thể chạy; hoặc tạo project references nhưng không cấu hình dependency build. Cấu hình tốt mô tả môi trường phát triển và triển khai, thay vì che lỗi import bằng tuỳ chọn ngẫu nhiên.
+'''
+
+[[questions]]
+id = "frontend-dv016"
+module = "frontend-dv-tsconfig"
+type = "single"
+difficulty = 2
+prompt = "Trong `tsconfig`, khác biệt chính giữa `target` và `lib` là gì?"
+options = ["`target` chọn cú pháp JavaScript đầu ra; `lib` cung cấp khai báo kiểu cho API môi trường", "Cả hai đều tự cài polyfill vào runtime", "`lib` chọn định dạng module; `target` chọn cách phân giải import", "`target` chỉ bật kiểm tra kiểu nghiêm ngặt"]
+answer = [0]
+explanation = "`lib` ảnh hưởng API được nhận diện khi type-check, còn `target` điều khiển mức cú pháp được emit; không thuộc tính nào tự cài polyfill runtime."
+sources = ["typescript/tsconfig/index"]
+
+[[questions]]
+id = "frontend-dv017"
+module = "frontend-dv-tsconfig"
+type = "single"
+difficulty = 2
+prompt = "Một ứng dụng browser được đóng gói bằng Vite cần TypeScript phân giải import theo quy tắc của bundler. Giá trị `moduleResolution` nào phù hợp nhất?"
+options = ["`bundler`", "`classic`", "`node10` cho mọi dự án mới", "`system`"]
+answer = [0]
+explanation = "Chế độ `bundler` mô hình hoá cách các bundler hiện đại giải quyết import; cấu hình cần phối hợp với `module` theo tài liệu TypeScript."
+sources = ["typescript/docs/handbook/modules/guides/choosing-compiler-options", "typescript/docs/handbook/modules/reference"]
+
+[[questions]]
+id = "frontend-dv018"
+module = "frontend-dv-tsconfig"
+type = "single"
+difficulty = 2
+prompt = "Vite đã chịu trách nhiệm biến đổi và emit JavaScript. Dự án vẫn muốn TypeScript kiểm tra kiểu nhưng không tạo file JavaScript trùng. Nên cân nhắc tuỳ chọn nào?"
+options = ["`noEmit`", "`skipLibCheck`", "`allowJs`", "`declaration`"]
+answer = [0]
+explanation = "`noEmit` tắt việc phát file của `tsc`, trong khi TypeScript vẫn có thể được dùng cho type-check; bundler thực hiện khâu biến đổi."
+sources = ["typescript/tsconfig/index", "typescript/docs/handbook/modules/guides/choosing-compiler-options"]
+
+[[questions]]
+id = "frontend-dv019"
+module = "frontend-dv-tsconfig"
+type = "single"
+difficulty = 1
+prompt = "Một file không có import/export đang vô tình chia sẻ khai báo toàn cục với file khác. Cách trực tiếp để đánh dấu file này là module là gì?"
+options = ["Thêm `export {}`", "Thêm `target: ESNext`", "Đổi phần mở rộng thành `.d.ts`", "Thêm `declare global`"]
+answer = [0]
+explanation = "Một import hoặc export ở top level khiến file được xử lý như module; `export {}` là cách tối thiểu để tạo ranh giới module."
+sources = ["typescript/docs/handbook/modules/introduction", "typescript/docs/handbook/2/modules"]
+
+[[questions]]
+id = "frontend-dv020"
+module = "frontend-dv-tsconfig"
+type = "multiple"
+difficulty = 3
+prompt = "Những điều nào đúng về project references trong một monorepo TypeScript?"
+options = [
+  "Một project có thể khai báo phụ thuộc build vào project khác bằng `references`.",
+  "`tsc --build` có thể build các project theo thứ tự phụ thuộc.",
+  "Project được tham chiếu thường cần thiết lập `composite`.",
+  "Project references tự động cài dependency package còn thiếu.",
+  "Chia project luôn làm mọi lần build nhanh hơn, bất kể cấu hình và quy mô."
+]
+answer = [0, 1, 2]
+explanation = "References mô tả ranh giới và dependency build; chúng không thay thế trình quản lý package, và lợi ích phụ thuộc cách tổ chức dự án."
+sources = ["typescript/docs/handbook/project-references"]
+
+[[questions]]
+id = "frontend-dv021"
+module = "frontend-dv-tsconfig"
+type = "multiple"
+difficulty = 2
+prompt = "Phát biểu nào đúng về file declaration `.d.ts`?"
+options = [
+  "Mô tả kiểu của API để TypeScript kiểm tra tại thời điểm biên dịch.",
+  "Thay thế implementation JavaScript cần có khi chạy ứng dụng.",
+  "Có thể giúp TypeScript sử dụng thư viện JavaScript không kèm kiểu tích hợp.",
+  "Thay đổi `target` để polyfill các API runtime bị thiếu."
+]
+answer = [0, 2]
+explanation = "Declaration files cung cấp thông tin kiểu, không triển khai chức năng hoặc thêm API vào môi trường chạy."
+sources = ["typescript/docs/handbook/declaration-files/consumption"]
+
+[[questions]]
+id = "frontend-dv022"
+module = "frontend-dv-tsconfig"
+type = "fill"
+difficulty = 1
+prompt = '''
+Để bật nhóm kiểm tra nghiêm ngặt được TypeScript cung cấp, điền tên compiler option:
+
+```json
+{
+  "{{blank}}": true
+}
+```
+'''
+blanks = [["strict"]]
+explanation = "`strict` bật nhóm tuỳ chọn type-check nghiêm ngặt; có thể tinh chỉnh từng tuỳ chọn khi có lý do cụ thể."
+sources = ["typescript/tsconfig/index"]
+
+[[questions]]
+id = "frontend-dv023"
+module = "frontend-dv-tsconfig"
+type = "essay"
+difficulty = 3
+prompt = "Bạn sẽ giải thích và chọn `target`, `lib`, `moduleResolution`, `noEmit` và project references ra sao cho ứng dụng được bundler đóng gói?"
+keywords = [["target", "syntax output", "cú pháp đầu ra"], ["lib", "type declarations", "khai báo kiểu api"], ["moduleResolution", "bundler"], ["noEmit", "bundler emit"], ["project references", "composite", "build graph"]]
+min_keywords = 3
+model_answer = '''
+Chọn `target` theo runtime được hỗ trợ và `lib` theo API thật sự có trong môi trường, nhớ rằng khai báo kiểu không phải polyfill. Chọn `moduleResolution` tương thích với bundler và phối hợp với `module`. Nếu bundler emit JavaScript thì `noEmit` có thể giữ `tsc` ở vai trò type-check. Project references và `composite` hữu ích khi chia monorepo thành các project có dependency build rõ ràng.
+'''
+explanation = "Cấu hình cần mô tả cả môi trường chạy lẫn pipeline build, không chỉ làm cho một lỗi import biến mất."
+sources = ["typescript/docs/handbook/modules/guides/choosing-compiler-options", "typescript/docs/handbook/project-references", "typescript/tsconfig/index"]

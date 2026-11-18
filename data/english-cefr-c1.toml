@@ -1,0 +1,679 @@
+id = "english-cefr-c1"
+title = "Tiếng Anh C1 · Cao cấp"
+icon = "C1"
+color = "#16a34a"
+group = "Tiếng Anh"
+area = "english"
+description = "Luyện năng lực C1 trong giao tiếp học thuật và nghề nghiệp: ngữ pháp mở rộng, từ vựng theo sắc thái, lập luận, đọc hàm ý và điều chỉnh văn phong."
+
+[[modules]]
+id = "cefr-c1-grammar-plus"
+title = "C1 · Ngữ pháp mở rộng"
+description = "Modal suy luận và thái độ, điều kiện biến thể, fronting và mệnh đề quan hệ có giới từ."
+lesson = '''
+### Modal suy luận và thái độ
+| Mẫu | Ý nghĩa thường gặp | Ví dụ |
+|---|---|---|
+| **be bound to + V** | gần như chắc chắn sẽ xảy ra | *With three teams involved, the launch is bound to take longer.* |
+| **may well + V** | có khả năng thực sự; nhận định có căn cứ nhưng chưa chắc chắn | *The new policy may well improve staff retention.* |
+| **might as well + V** | chọn làm việc hợp lý nhất khi phương án tốt hơn không còn | *The train is delayed, so we might as well get a coffee.* |
+
+Đừng đồng nhất *be bound to* với nghĩa “bị buộc phải” trong *be bound by a contract*: theo sau bởi động từ nguyên mẫu, *is bound to happen* thường dự đoán điều rất dễ xảy ra. *Might as well* không phải cách nói xác suất thấp; nó thường hàm ý “đằng nào cũng vậy / đây là lựa chọn thực tế nhất”.
+
+### Điều kiện linh hoạt và điều kiện đảo
+| Mẫu | Cách dùng | Ví dụ |
+|---|---|---|
+| **but for + noun phrase** | nêu yếu tố đã ngăn kết quả khác xảy ra | *But for Maya's warning, we would have missed the deadline.* |
+| **provided (that) + clause** | đặt điều kiện rõ ràng, thường trong quy định hoặc thoả thuận | *You may quote the report provided that you name the source.* |
+| **supposing (that) + clause** | đưa ra giả định để cân nhắc hệ quả | *Supposing the supplier says no, what is our next option?* |
+
+Đảo ngữ điều kiện với *Had / Were / Should* đã được học trong `gr-c1`; ở đây chỉ cần nhận ra nó có thể cùng diễn đạt giả định trang trọng: *Had the team known about the delay, it would have changed the schedule.* Không dùng *would* ngay trong mệnh đề điều kiện. Nhớ dấu phẩy khi mệnh đề điều kiện đứng đầu câu.
+
+### Fronting và relative clause có giới từ
+Fronting đưa thông tin cần nhấn lên đầu, thường tạo nhịp trang trọng trong báo cáo: *At the centre of the proposal is a six-month trial.* Khi cụm chỉ nơi chốn đứng đầu, đôi khi động từ đứng trước chủ ngữ; không phải mọi trạng từ đầu câu đều bắt buộc đảo. Mệnh đề quan hệ trang trọng có thể giữ giới từ trước đại từ: *the colleague to whom I sent the draft*; với người dùng *whom*, với vật dùng *which*: *the framework on which the decision depends*. Trong hội thoại, giới từ thường đứng cuối: *the colleague I sent the draft to*. Tránh thêm đại từ tân ngữ lần nữa (*to whom I sent it to*). Mẹo nhớ: chọn cấu trúc theo mức trang trọng, kiểm tra giới từ đi với động từ, rồi đọc lại để chắc câu vẫn dễ hiểu.
+
+**Lỗi người Việt hay gặp:** dịch *bound* thành “bắt buộc” trong mọi trường hợp; dùng *will* sau *provided that* khi nói điều kiện tương lai; nhầm *might as well* với *may well*; viết *to who* trong mệnh đề trang trọng; hoặc đảo mọi câu sau cụm trạng ngữ. Hãy học cả cụm và xem quan hệ nghĩa trước khi chọn dạng.
+'''
+
+[[questions]]
+id = "cefr-c1-001"
+module = "cefr-c1-grammar-plus"
+type = "single"
+difficulty = 1
+prompt = "The budget is approved and the venue is booked, so the launch ______ go ahead on Friday."
+options = ["is bound to", "is binding to", "might as well", "has bound to"]
+answer = [0]
+explanation = "*Be bound to + động từ nguyên mẫu* dự đoán một việc gần như chắc chắn xảy ra. *Might as well* nói về lựa chọn thực tế nhất, không phải mức độ chắc chắn."
+
+[[questions]]
+id = "cefr-c1-002"
+module = "cefr-c1-grammar-plus"
+type = "single"
+difficulty = 2
+prompt = "The figures are preliminary, but they ______ indicate that demand is rising."
+options = ["may well", "is bound to", "might as well", "may to"]
+answer = [0]
+explanation = "*May well* nêu khả năng đáng kể nhưng vẫn để ngỏ kết luận. *Is bound to* khẳng định mạnh hơn và không hợp chủ ngữ số nhiều *they*."
+
+[[questions]]
+id = "cefr-c1-003"
+module = "cefr-c1-grammar-plus"
+type = "single"
+difficulty = 2
+prompt = "The next train leaves in five minutes and the current one has been cancelled. We ______ take the next train."
+options = ["might as well", "may well", "are bound to", "might better"]
+answer = [0]
+explanation = "Không còn lựa chọn tốt hơn nên *might as well* diễn đạt quyết định thực tế. *May well* thiên về dự đoán khả năng."
+
+[[questions]]
+id = "cefr-c1-004"
+module = "cefr-c1-grammar-plus"
+type = "single"
+difficulty = 2
+prompt = "You may use the figures in your presentation, provided that you ______ the original report."
+options = ["cite", "will cite", "cited", "would cite"]
+answer = [0]
+explanation = "Sau *provided that*, dùng hiện tại đơn để nêu điều kiện cho tương lai; không cần *will* trong mệnh đề điều kiện."
+
+[[questions]]
+id = "cefr-c1-005"
+module = "cefr-c1-grammar-plus"
+type = "single"
+difficulty = 3
+prompt = "Choose the formal relative clause: *The consultant ______ we sent the revised proposal replied this morning.*"
+options = ["to whom", "to who", "which", "to whom to"]
+answer = [0]
+explanation = "Trong mệnh đề quan hệ trang trọng, giới từ có thể đứng trước *whom* khi quy chiếu người: *the consultant to whom we sent…*."
+
+[[questions]]
+id = "cefr-c1-006"
+module = "cefr-c1-grammar-plus"
+type = "multiple"
+difficulty = 2
+prompt = "Select the sentences with natural fronting and word order."
+options = [
+  "At the centre of the proposal is a six-month trial.",
+  "In the appendix you will find the full data table.",
+  "Particularly useful is the short summary at the end.",
+  "In the final section explains the author the limitations.",
+  "On the agenda are a review of costs and a staffing update."
+]
+answer = [0, 1, 2, 4]
+explanation = "Các câu đúng đưa cụm quan trọng lên đầu; với cụm chỉ vị trí, động từ có thể đứng trước chủ ngữ. Câu 4 thiếu chủ ngữ đúng chỗ và xếp trật tự từ không tự nhiên."
+
+[[questions]]
+id = "cefr-c1-007"
+module = "cefr-c1-grammar-plus"
+type = "multiple"
+difficulty = 3
+prompt = "Select the formal relative clauses that are grammatically correct."
+options = [
+  "The issue to which the report refers remains unresolved.",
+  "The colleague with whom I discussed the proposal sent a summary.",
+  "The policy on which our decision depends has changed.",
+  "The client to who we spoke requested an update.",
+  "The framework in which we relied needs revision."
+]
+answer = [0, 1, 2]
+explanation = "Dùng *to which*, *with whom* và *on which* theo đúng giới từ của *refer to, discuss with, depend on*. Với *rely*, giới từ là *on*, không phải *in*."
+
+[[questions]]
+id = "cefr-c1-008"
+module = "cefr-c1-grammar-plus"
+type = "fill"
+difficulty = 1
+prompt = "Complete the counterfactual sentence: *{{blank}} the storm, the outdoor event would have gone ahead.*"
+blanks = [["But for"]]
+explanation = "*But for + cụm danh từ* nghĩa là “nếu không vì”; phần sau thường nêu kết quả giả định."
+
+[[questions]]
+id = "cefr-c1-009"
+module = "cefr-c1-grammar-plus"
+type = "fill"
+difficulty = 2
+prompt = "Complete the condition: *You can share the summary {{blank}} you remove all personal details.*"
+blanks = [["provided that", "provided"]]
+explanation = "*Provided (that)* đặt ra điều kiện; *that* có thể được lược bỏ mà nghĩa vẫn rõ."
+
+[[questions]]
+id = "cefr-c1-010"
+module = "cefr-c1-grammar-plus"
+type = "essay"
+difficulty = 3
+prompt = "Write two or three sentences advising a colleague about a delayed launch. Include a realistic condition and a prediction or practical alternative."
+keywords = [["provided that", "as long as", "on condition that", "providing that", "unless"], ["may well", "bound to", "likely to", "could well"], ["might as well", "alternatively", "in the meantime"]]
+min_keywords = 2
+model_answer = '''Provided that the final review is complete by Thursday, we may well launch on Friday. If it is not, we might as well move the launch to Monday and give the support team time to prepare.'''
+explanation = "Câu trả lời mẫu nêu một điều kiện rõ ràng, dự đoán có chừng mực và phương án dự phòng phù hợp với tình huống nghề nghiệp."
+
+[[modules]]
+id = "cefr-c1-vocab"
+title = "C1 · Từ vựng học thuật và nghề nghiệp"
+description = "AWL trong ngữ cảnh, sắc thái động từ lập luận, collocation và ẩn dụ/thành ngữ thông dụng."
+lesson = '''
+### Từ học thuật theo họ và ngữ cảnh
+Academic Word List (AWL) gồm những từ thường gặp trong văn bản học thuật thuộc nhiều lĩnh vực, không phải một danh sách từ “cao siêu” cần nhồi riêng. Học chúng trong câu và chú ý từ loại: *assess* (đánh giá) → *assessment*; *analyse* → *analysis*; *establish* (thiết lập/xác lập); *indicate* (cho thấy); *interpret* (diễn giải); *relevant* (liên quan); *require* (đòi hỏi). Một từ quen có thể mang nghĩa chuyên biệt: *significant* có thể là “đáng kể/quan trọng”, nhưng trong thống kê chỉ nên gọi kết quả là *statistically significant* khi phép kiểm định hỗ trợ cách gọi đó.
+
+### Claim, assert và maintain
+| Động từ | Sắc thái thường gặp | Ví dụ |
+|---|---|---|
+| **claim** | nêu điều được cho là đúng; bản thân từ này không xác nhận bằng chứng | *The company claims that the update reduces energy use.* |
+| **assert** | khẳng định mạnh, dứt khoát; thường cần bằng chứng hoặc phản hồi | *The spokesperson asserted that no customer data had been lost.* |
+| **maintain** | tiếp tục bảo vệ một quan điểm, nhất là khi có tranh luận | *The authors maintain that longer trials are necessary.* |
+
+Đây là khác biệt về cách trình bày, không phải thang đo chắc chắn cố định: hãy xem ai nói, bằng chứng nào được đưa ra và văn bản có đang phản biện hay không. Tránh dùng *prove* khi dữ liệu chỉ gợi ý một khả năng.
+
+### Collocation và ẩn dụ
+Ghi nhớ cả cụm: *conduct research*, *assess the impact*, *draw on evidence*, *address a concern*, *raise an issue*, *reach a consensus*, *meet a requirement*, *set priorities*, *deliver a presentation*. Không dịch từng chữ theo tiếng Việt: thường nói *conduct research*, không phải *make research*; *address a concern*, không phải *answer a concern*.
+
+| Cụm | Nghĩa trong ngữ cảnh | Ví dụ |
+|---|---|---|
+| **shed light on** | giúp làm rõ | *The interviews shed light on why staff left.* |
+| **the tip of the iceberg** | phần nhỏ nhìn thấy của vấn đề lớn hơn | *The late invoices may be the tip of the iceberg.* |
+| **move the goalposts** | thay đổi tiêu chí khi người khác đã làm theo yêu cầu cũ | *The client moved the goalposts after approval.* |
+| **be on the same page** | cùng hiểu hoặc đồng thuận về kế hoạch | *Let's confirm that we are on the same page.* |
+
+Ẩn dụ và idioms tự nhiên trong trao đổi nghề nghiệp, nhưng có thể quá thân mật trong bài luận hoặc proposal. Mẹo: học cụm cùng ví dụ, kiểm tra register, rồi dùng cách diễn đạt trực tiếp nếu sắc thái chưa chắc chắn. Người Việt thường đặt sai giới từ, nhầm từ loại, hoặc giữ nguyên hình ảnh ẩn dụ khi dịch; hãy đọc collocation như một đơn vị.
+'''
+
+[[questions]]
+id = "cefr-c1-011"
+module = "cefr-c1-vocab"
+type = "single"
+difficulty = 1
+prompt = "A news report is describing a company's position without judging whether the evidence is strong. Which verb is the most neutral choice?"
+options = ["claims", "proves", "admits", "guarantees"]
+answer = [0]
+explanation = "*Claim* tường thuật điều một bên nói là đúng nhưng tự nó không xác nhận điều đó đã được chứng minh. *Prove* và *guarantee* khẳng định mạnh hơn."
+
+[[questions]]
+id = "cefr-c1-012"
+module = "cefr-c1-vocab"
+type = "single"
+difficulty = 2
+prompt = "After the results were challenged, the authors continued to defend their position. Choose the best verb: *The authors ______ that further trials are needed.*"
+options = ["maintain", "borrow", "achieve", "attend"]
+answer = [0]
+explanation = "*Maintain that* diễn tả việc tiếp tục giữ và bảo vệ một nhận định, phù hợp khi ý kiến đang được tranh luận."
+
+[[questions]]
+id = "cefr-c1-013"
+module = "cefr-c1-vocab"
+type = "single"
+difficulty = 2
+prompt = "Which verb best fits a firm, public statement by a spokesperson? *The spokesperson ______ that no customer data had been lost.*"
+options = ["asserted", "interpreted", "assessed", "conducted"]
+answer = [0]
+explanation = "*Assert* là khẳng định dứt khoát, trang trọng. *Interpret* là diễn giải; *assess* là đánh giá; *conduct* cần danh từ như *research*."
+
+[[questions]]
+id = "cefr-c1-014"
+module = "cefr-c1-vocab"
+type = "single"
+difficulty = 3
+prompt = "The interviews helped explain why experienced staff were leaving. Which phrase completes the sentence? *The interviews ______ the reasons for staff turnover.*"
+options = ["shed light on", "moved the goalposts", "reached a consensus", "met a deadline"]
+answer = [0]
+explanation = "*Shed light on* nghĩa là giúp làm rõ một vấn đề. Các lựa chọn còn lại lần lượt nói về đổi tiêu chí, đạt đồng thuận và hoàn thành đúng hạn."
+
+[[questions]]
+id = "cefr-c1-015"
+module = "cefr-c1-vocab"
+type = "single"
+difficulty = 2
+prompt = "A client keeps adding new acceptance criteria after each version meets the previous ones. Which idiom describes this behaviour?"
+options = ["moving the goalposts", "being on the same page", "shedding light on the issue", "drawing on evidence"]
+answer = [0]
+explanation = "*Move the goalposts* là thay đổi tiêu chí sau khi bên kia đã cố đáp ứng các yêu cầu trước đó."
+
+[[questions]]
+id = "cefr-c1-016"
+module = "cefr-c1-vocab"
+type = "multiple"
+difficulty = 2
+prompt = "Select the natural academic or professional collocations."
+options = [
+  "conduct research",
+  "draw on evidence",
+  "address a concern",
+  "make a research",
+  "answer a concern"
+]
+answer = [0, 1, 2]
+explanation = "Các cụm tự nhiên là *conduct research*, *draw on evidence* và *address a concern*. Tránh dịch trực tiếp *make research* hoặc *answer a concern*."
+
+[[questions]]
+id = "cefr-c1-017"
+module = "cefr-c1-vocab"
+type = "fill"
+difficulty = 1
+prompt = "Complete the sentence with the verb meaning “evaluate”: *Before choosing a supplier, we need to {{blank}} the reliability of each service.*"
+blanks = [["assess"]]
+explanation = "*Assess* nghĩa là đánh giá có cân nhắc. Danh từ cùng họ là *assessment*."
+
+[[questions]]
+id = "cefr-c1-018"
+module = "cefr-c1-vocab"
+type = "fill"
+difficulty = 2
+prompt = "Complete the collocation: *The report {{blank}} evidence from three independent studies.*"
+blanks = [["draws on", "draws upon", "cites"]]
+explanation = "*Draw on/upon evidence* nghĩa là sử dụng bằng chứng làm cơ sở cho phân tích."
+
+[[questions]]
+id = "cefr-c1-019"
+module = "cefr-c1-vocab"
+type = "fill"
+difficulty = 3
+prompt = "Complete the idiom meaning “help make a situation clearer”: *The survey results may {{blank}} why new staff leave within a year.*"
+blanks = [["shed light on", "throw light on", "cast light on"]]
+explanation = "Cụm cố định là *shed light on + vấn đề/câu hỏi*."
+
+[[questions]]
+id = "cefr-c1-020"
+module = "cefr-c1-vocab"
+type = "essay"
+difficulty = 3
+prompt = "Write a short summary of two studies that reach different conclusions. Report one position neutrally, describe what the other authors continue to argue, and avoid claiming that either study proves more than its evidence supports."
+keywords = [["claim", "claims"], ["maintain", "maintains"], ["evidence"], ["suggest", "indicate"]]
+min_keywords = 3
+model_answer = '''One study claims that remote work improves retention, while its evidence comes from a small sample. The second team maintains that the effect depends on job type and indicates that larger trials are needed. Neither study proves that one policy works for every organisation.'''
+explanation = "Câu mẫu dùng *claim* để tường thuật, *maintain* để nêu lập trường được giữ vững, và giới hạn mức khẳng định theo bằng chứng."
+
+[[modules]]
+id = "cefr-c1-functions"
+title = "C1 · Lập luận và tương tác nghề nghiệp"
+description = "Tranh luận có cấu trúc, bất đồng ngoại giao, điều phối họp và phản hồi xây dựng."
+lesson = '''
+### Trình bày một lập luận có cấu trúc
+Một lập luận dễ theo dõi thường có luận điểm, lý do, bằng chứng hoặc ví dụ, sự thừa nhận giới hạn, rồi kết luận hay đề xuất. Có thể mở bằng *The main reason I support this option is…*, đưa bằng chứng bằng *For example…*, và thừa nhận ý trái chiều bằng *Although the initial cost is higher…*. Sau đó giải thích vì sao luận điểm chính vẫn hợp lý. Đừng dùng nhiều từ nối nếu quan hệ giữa các ý đã rõ; mỗi câu cần có chức năng.
+
+### Bất đồng lịch sự và nói giảm
+| Mục đích | Cách nói tự nhiên | Tác dụng |
+|---|---|---|
+| công nhận ý kiến | *I see your point about the cost.* | cho thấy đã lắng nghe |
+| nêu dè dặt | *I'm not sure that the current figures support that conclusion.* | tập trung vào bằng chứng |
+| đề nghị xem lại | *Could we also consider the effect on support staff?* | mở rộng thảo luận mà không công kích |
+| hiệu chỉnh quan điểm | *That may be true in the short term; however…* | công nhận một phần rồi bổ sung |
+
+Nói giảm nên làm rõ mức độ chắc chắn, không biến thông điệp thành mơ hồ. Phê bình luận điểm hoặc quy trình, không gán tính cách cho người nói. Tránh dịch nguyên xi “Tôi không đồng ý” thành lời mở đầu sắc lạnh nếu mục tiêu là cùng giải quyết vấn đề.
+
+### Điều phối cuộc họp và phản hồi xây dựng
+Người điều phối nêu mục tiêu, mời ý kiến, quản lý thời gian và kết thúc bằng quyết định, người phụ trách cùng hạn chót. Cụm hữu ích: *Shall we turn to the budget?*, *We haven't heard from Minh yet; would you like to add anything?*, *Let me summarise the decision before we move on.* Khi ý kiến lệch chủ đề, nhắc lại mục tiêu rồi ghi nhận việc cần bàn sau; không cắt lời để áp đặt kết luận.
+
+Phản hồi tốt mô tả hành vi quan sát được, tác động, rồi đề xuất bước tiếp theo: *The report is clear, and adding a short summary of the risks would help the client make a decision.* Tránh đánh giá chung như *Your work is careless*. Khi bất đồng, nhắc lại mối quan tâm của bên kia, hỏi điều gì sẽ thuyết phục họ, rồi đề nghị cách kiểm tra chung. Mẹo nhớ: **listen → clarify → respond → agree next step**. Người Việt thường lặp *I think* ở mọi câu hoặc dùng câu hỏi nghe như chất vấn; hãy chọn một cụm mở đầu phù hợp và kết thúc bằng đề xuất cụ thể.
+'''
+
+[[questions]]
+id = "cefr-c1-021"
+module = "cefr-c1-functions"
+type = "single"
+difficulty = 1
+prompt = "You are presenting a recommendation. Which sequence makes the reasoning easiest to follow?"
+options = ["Claim, reason, evidence, limitation, recommendation", "Several examples, a new topic, then an unexplained conclusion", "Conclusion, unrelated detail, repeated claim", "Personal criticism, evidence, and no recommendation"]
+answer = [0]
+explanation = "Trình tự này giúp người nghe hiểu ý chính, cơ sở, giới hạn của bằng chứng và hành động được đề nghị."
+
+[[questions]]
+id = "cefr-c1-022"
+module = "cefr-c1-functions"
+type = "single"
+difficulty = 2
+prompt = "A colleague proposes a conclusion that seems stronger than the available data. Which response is both diplomatic and clear?"
+options = ["I'm not sure the current figures support that conclusion; could we check the larger sample?", "You are completely wrong, and everyone can see it.", "Yes, absolutely, although I will ignore the figures.", "I don't like this idea because it is yours."]
+answer = [0]
+explanation = "Câu đúng tập trung vào bằng chứng, nêu dè dặt vừa đủ và đề nghị bước kiểm tra cụ thể thay vì công kích cá nhân."
+
+[[questions]]
+id = "cefr-c1-023"
+module = "cefr-c1-functions"
+type = "single"
+difficulty = 2
+prompt = "The group has finished discussing staffing and needs to move to the next agenda item. What should the facilitator say?"
+options = ["Shall we turn to the budget now?", "Why are we still talking about staffing?", "The meeting is over, so no one can speak.", "I will decide the next item without telling you."]
+answer = [0]
+explanation = "*Shall we turn to…?* chuyển sang chủ đề tiếp theo một cách tự nhiên và mời nhóm cùng tham gia."
+
+[[questions]]
+id = "cefr-c1-024"
+module = "cefr-c1-functions"
+type = "single"
+difficulty = 3
+prompt = "Which feedback gives a colleague an actionable next step without judging their personality?"
+options = ["The report is clear; adding a short section on risks would help the client compare the options.", "You are careless and should try harder.", "This is bad, but I cannot explain why.", "Everyone knows you never listen."]
+answer = [0]
+explanation = "Phản hồi hữu ích gắn với sản phẩm cụ thể, nêu tác động và đề xuất hành động có thể thực hiện."
+
+[[questions]]
+id = "cefr-c1-025"
+module = "cefr-c1-functions"
+type = "multiple"
+difficulty = 2
+prompt = "Select the responses that acknowledge another view while making room for a different one."
+options = [
+  "I see your point about cost; could we also consider the effect on support staff?",
+  "That may be true in the short term; however, the maintenance costs remain unclear.",
+  "You clearly have no idea how this works.",
+  "I understand the concern. Would a small trial help us compare the options?",
+  "I agree with everything, so there is no need to discuss the risks."
+]
+answer = [0, 1, 3]
+explanation = "Các câu đúng công nhận mối quan tâm, sau đó bổ sung góc nhìn hoặc đề xuất kiểm tra. Lịch sự không có nghĩa là đồng ý với mọi điều."
+
+[[questions]]
+id = "cefr-c1-026"
+module = "cefr-c1-functions"
+type = "multiple"
+difficulty = 3
+prompt = "Which actions help a facilitator keep a decision-focused meeting inclusive and clear?"
+options = [
+  "Invite a participant who has not yet spoken to contribute.",
+  "Summarise the decision and confirm the owner and deadline.",
+  "Interrupt every speaker as soon as they disagree.",
+  "Park an unrelated topic and note when it will be revisited.",
+  "Assume silence means everyone agrees."
+]
+answer = [0, 1, 3]
+explanation = "Mời người chưa phát biểu, ghi rõ quyết định và xử lý chủ đề ngoài agenda giúp nhóm tham gia và theo dõi việc cần làm. Im lặng không đủ để kết luận đã đồng thuận."
+
+[[questions]]
+id = "cefr-c1-027"
+module = "cefr-c1-functions"
+type = "fill"
+difficulty = 1
+prompt = "Complete the diplomatic contrast: *I see your point. {{blank}}, the latest figures suggest a different pattern.*"
+blanks = [["However", "That said"]]
+explanation = "*However* và *That said* đều có thể mở đầu ý tương phản sau khi đã công nhận quan điểm trước đó."
+
+[[questions]]
+id = "cefr-c1-028"
+module = "cefr-c1-functions"
+type = "fill"
+difficulty = 2
+prompt = "Complete the meeting transition: *We have agreed on the timeline. Shall we {{blank}} the budget now?*"
+blanks = [["turn to", "move on to", "move to"]]
+explanation = "Cụm *turn to + topic* dùng để chuyển sang mục tiếp theo trong cuộc họp."
+
+[[questions]]
+id = "cefr-c1-029"
+module = "cefr-c1-functions"
+type = "fill"
+difficulty = 3
+prompt = "Complete the constructive feedback: *The summary is easy to follow. One suggestion would be to {{blank}} the recommendation with a recent example.*"
+blanks = [["support", "illustrate", "strengthen", "back up"]]
+explanation = "*Support a recommendation with an example* là cách đề nghị thêm căn cứ cụ thể và khả thi."
+
+[[questions]]
+id = "cefr-c1-030"
+module = "cefr-c1-functions"
+type = "essay"
+difficulty = 3
+prompt = "Write three or four sentences to disagree with a colleague about a proposed deadline. Acknowledge their concern, state your reservation tactfully, refer to a shared goal, and suggest a practical next step."
+keywords = [["I see your point", "I understand your concern", "you raise a fair point"], ["I'm not sure", "I am not sure", "I wonder whether"], ["shared goal", "both want", "we both"], ["could we", "perhaps we could", "why don't we"]]
+min_keywords = 3
+model_answer = '''I see your point about keeping the client informed. I'm not sure the current deadline leaves enough time for a reliable review, and we both want to avoid sending incomplete figures. Could we share a brief update today and agree on a final date after the review?'''
+explanation = "Câu mẫu ghi nhận ý kiến, nêu dè dặt có căn cứ, nhắc mục tiêu chung và đề xuất bước tiếp theo."
+
+[[modules]]
+id = "cefr-c1-reading-writing"
+title = "C1 · Đọc hiểu và viết học thuật"
+description = "Đọc hàm ý và giọng điệu, tổ chức proposal/report/essay, tóm tắt và tổng hợp nhiều nguồn."
+lesson = '''
+### Đọc điều văn bản hàm ý
+Khi đọc văn bản dài, tách **điều được nói trực tiếp** khỏi **điều có thể suy ra**. Tìm luận điểm, bằng chứng, giới hạn, từ chỉ mức độ và quan hệ giữa các đoạn. *The pilot's results are encouraging, although the sample remains small* vừa ghi nhận tín hiệu tích cực vừa giới hạn mức kết luận. Từ *although* cho thấy tác giả không muốn người đọc xem kết quả ban đầu là bằng chứng dứt khoát. Một câu như *The committee was thanked for its patience* sau khi nhắc nhiều lần bị trễ có thể gợi ý sự chậm trễ gây bất tiện, nhưng cần dựa vào ngữ cảnh thay vì đoán thêm cảm xúc.
+
+| Dấu hiệu | Cách đọc có căn cứ |
+|---|---|
+| *may, appears, preliminary* | kết luận còn dè dặt |
+| *however, despite this* | có giới hạn hoặc ý đối lập quan trọng |
+| *only, still, even* | có thể nhấn mạnh sự khác kỳ vọng |
+| đánh giá mạnh như *unacceptable* | quan điểm phê phán rõ hơn |
+
+Giọng điệu (tone) có thể là *measured* (chừng mực), *cautiously optimistic* (lạc quan dè dặt), *critical* (phê bình) hoặc *skeptical* (hoài nghi). Chủ đề tiêu cực không tự động có nghĩa là giọng giận dữ. Hãy trích dấu hiệu từ ngữ và cấu trúc để giải thích suy luận.
+
+### Tổ chức proposal, report và essay
+| Văn bản | Khung thường dùng | Trọng tâm |
+|---|---|---|
+| **Proposal** | vấn đề → mục tiêu → phương án → nguồn lực/lịch → cách đánh giá | thuyết phục người đọc chọn hành động |
+| **Report** | phạm vi → phát hiện → phân tích → kết luận/khuyến nghị | trình bày kết quả có thể kiểm tra |
+| **Academic essay** | luận điểm → các đoạn có luận cứ → phản biện/giới hạn → kết luận | phát triển một lập luận mạch lạc |
+
+### Tóm tắt và tổng hợp nguồn
+Tóm tắt rút ý chính của một nguồn bằng lời của mình, giữ đúng mức độ chắc chắn và không thêm nhận xét riêng. Tổng hợp (synthesis) đặt các nguồn cạnh nhau: chúng cùng kết luận ở điểm nào, khác nhau vì mẫu/phương pháp/bối cảnh nào, và khi đọc chung ta có thể nói gì. Ví dụ: *Lee's survey links flexible hours with retention, whereas Tran's interviews highlight the role of team support. Taken together, the studies suggest that flexibility may help, but it is not the only factor.* Ghi rõ ý của nguồn, diễn đạt lại chính xác và trích dẫn theo yêu cầu; không ghép các câu gần giống để thành paraphrase giả. Mẹo: **claim → evidence → limit → implication**. Người Việt hay dịch từng chữ, liệt kê từng nguồn mà không kết nối, hoặc dùng *therefore* dù bằng chứng chỉ cho thấy khả năng; hãy kiểm tra liên kết và mức độ khẳng định ở mỗi đoạn.
+'''
+
+[[questions]]
+id = "cefr-c1-031"
+module = "cefr-c1-reading-writing"
+type = "single"
+difficulty = 2
+prompt = "Read the sentence: *The pilot's results are encouraging, although the sample remains small.* What is the author's position?"
+options = ["Cautiously positive, while acknowledging a limitation", "Certain that the pilot will succeed everywhere", "Angry that the sample was not larger", "Uninterested in the results"]
+answer = [0]
+explanation = "*Encouraging* thể hiện đánh giá tích cực, còn *although* và giới hạn về cỡ mẫu khiến kết luận trở nên dè dặt."
+
+[[questions]]
+id = "cefr-c1-032"
+module = "cefr-c1-reading-writing"
+type = "single"
+difficulty = 2
+prompt = "A report says, *The committee was thanked for its patience after three postponed reviews.* Which inference is best supported?"
+options = ["The repeated postponements may have caused inconvenience.", "The committee approved every proposal.", "The committee was responsible for the delays.", "The author is definitely furious."]
+answer = [0]
+explanation = "Các lần hoãn và lời cảm ơn vì sự kiên nhẫn gợi ý sự bất tiện, nhưng không chứng minh ai gây ra chậm trễ hay tác giả đang tức giận."
+
+[[questions]]
+id = "cefr-c1-033"
+module = "cefr-c1-reading-writing"
+type = "single"
+difficulty = 3
+prompt = "A technical report has compared three options and found that one is safer but more expensive. What should its recommendation section do?"
+options = ["State the preferred action and explain how it balances safety, cost, and the report's evidence.", "Repeat every result without explaining what action to take.", "Introduce a new option that was not assessed.", "Use personal criticism to make the decision sound urgent."]
+answer = [0]
+explanation = "Khuyến nghị cần nối phát hiện với hành động, nêu căn cứ và đánh đổi để người đọc ra quyết định."
+
+[[questions]]
+id = "cefr-c1-034"
+module = "cefr-c1-reading-writing"
+type = "single"
+difficulty = 2
+prompt = "You are writing a synthesis of two studies on staff retention. What is the strongest approach?"
+options = ["Compare their shared findings and differences, then explain what the evidence suggests overall.", "Summarise one study in each paragraph without relating them.", "Copy the most persuasive sentences from both studies.", "Choose the study you prefer and omit conflicting results."]
+answer = [0]
+explanation = "Synthesis kết nối các nguồn, chỉ ra điểm tương đồng/khác biệt và đưa ra kết luận có giới hạn theo bằng chứng."
+
+[[questions]]
+id = "cefr-c1-035"
+module = "cefr-c1-reading-writing"
+type = "multiple"
+difficulty = 3
+prompt = "A report states: *Managers praised the pilot's quick start. However, only one department used it, and no long-term retention figures are available.* Which conclusions are supported?"
+options = [
+  "Some managers responded positively to the pilot's quick start.",
+  "The report treats the evidence as limited in scope and duration.",
+  "The pilot has already improved retention across the organisation.",
+  "More evidence would be needed to assess long-term retention.",
+  "The author rejects the pilot as a failure."
+]
+answer = [0, 1, 3]
+explanation = "Câu đầu ghi nhận phản hồi tích cực; số phòng ban ít và thiếu dữ liệu dài hạn giới hạn kết luận. Văn bản không cho biết tác động toàn tổ chức hay gọi pilot là thất bại."
+
+[[questions]]
+id = "cefr-c1-036"
+module = "cefr-c1-reading-writing"
+type = "fill"
+difficulty = 1
+prompt = "Complete the contrast between two sources: *Lee's survey highlights flexible hours, {{blank}} Tran's interviews emphasise team support.*"
+blanks = [["whereas"]]
+explanation = "*Whereas* đặt hai phát hiện tương phản cạnh nhau trong cùng một câu."
+
+[[questions]]
+id = "cefr-c1-037"
+module = "cefr-c1-reading-writing"
+type = "fill"
+difficulty = 2
+prompt = "Complete the synthesis sentence: *{{blank}}, the two studies suggest that flexibility may help retention, but it is not the only factor.*"
+blanks = [["Taken together"]]
+explanation = "*Taken together* báo hiệu người viết đang rút ra nhận xét khi xem nhiều nguồn như một tổng thể."
+
+[[questions]]
+id = "cefr-c1-038"
+module = "cefr-c1-reading-writing"
+type = "fill"
+difficulty = 3
+prompt = "Complete the proposal heading for the resources and dates needed to run a trial: *Resources and {{blank}}*"
+blanks = [["timeline", "schedule", "timeframe", "timescale"]]
+explanation = "Proposal cần nêu nguồn lực và lịch thực hiện để người đọc đánh giá tính khả thi."
+
+[[questions]]
+id = "cefr-c1-039"
+module = "cefr-c1-reading-writing"
+type = "fill"
+difficulty = 2
+prompt = "Choose a cautious reporting verb: *Based on the small sample, the findings {{blank}} that flexible hours may improve retention.*"
+blanks = [["suggest"]]
+explanation = "*Suggest* phù hợp với bằng chứng còn hạn chế; *prove* sẽ khẳng định quá mức."
+
+[[questions]]
+id = "cefr-c1-040"
+module = "cefr-c1-reading-writing"
+type = "essay"
+difficulty = 3
+prompt = "Write three or four sentences synthesising two short findings: one survey links flexible hours with retention, while interviews identify team support as another factor. Compare the sources, state a cautious overall implication, and do not claim that either factor guarantees retention."
+keywords = [["survey", "questionnaire"], ["interviews", "interview"], ["whereas", "while", "although"], ["may", "might", "suggest"], ["team support", "support"]]
+min_keywords = 4
+model_answer = '''The survey links flexible hours with higher retention, whereas the interviews highlight the importance of team support. Taken together, the findings suggest that flexible hours may help, but their effect could depend on the wider working environment. Neither source shows that one change guarantees retention.'''
+explanation = "Câu mẫu đặt hai nguồn cạnh nhau, tổng hợp điểm khác biệt và giữ kết luận ở mức dè dặt."
+
+[[modules]]
+id = "cefr-c1-register"
+title = "C1 · Văn phong và đối tượng đọc"
+description = "Chọn register, kiểm soát mật độ danh hoá, mức độ chắc chắn, từ nối và độ rõ theo người đọc."
+lesson = '''
+### Chọn văn phong theo người đọc và mục đích
+Register là mức độ trang trọng và cách diễn đạt phù hợp với người đọc, quan hệ và kênh giao tiếp. Email cho khách hàng thường cần lời yêu cầu rõ, lịch sự và ít tiếng lóng; tin nhắn nội bộ có thể ngắn, thân thiện, dùng contraction nếu đó là quy ước nhóm. Trang trọng không đồng nghĩa với dài hoặc dùng từ hiếm: *Could you confirm the revised date?* thường tốt hơn một câu vòng vo nhiều tầng. Hãy tự hỏi: người đọc cần biết gì, cần làm gì, và họ có quen thuật ngữ này không?
+
+### Danh hoá và độ rõ
+`gr-c1` đã giới thiệu cách tạo danh từ từ động từ; ở đây trọng tâm là chọn mức danh hoá theo tác dụng. Danh hoá giúp gom thông tin trong báo cáo (*The review identified three risks* → *The review's identification of three risks…*) nhưng chuỗi danh từ dài có thể che khuất ai làm gì. Trong status update, câu có chủ thể và động từ thường rõ hơn: *The new process should reduce delays* thay vì *The implementation of the new process will result in the reduction of delays*. Dùng danh hoá khi muốn đặt một sự kiện làm chủ đề hoặc giữ cấu trúc báo cáo gọn; dùng động từ khi cần nêu tác nhân và hành động.
+
+### Hedging, boosting và từ nối
+Hedging/boosting đã có ở `gr-c1`; thực hành ở đây là cân mức khẳng định với độ tin cậy của bằng chứng và nhu cầu người đọc. Dữ liệu sơ bộ thường hợp với *suggests, may, appears to*; bằng chứng lặp lại và nhất quán có thể hỗ trợ *strongly indicates*. Tránh cả khẳng định tuyệt đối thiếu căn cứ (*proves beyond doubt*) lẫn dè dặt chồng lớp (*may perhaps possibly suggest*).
+
+| Quan hệ | Từ nối | Ví dụ |
+|---|---|---|
+| thêm thông tin | **furthermore, in addition** | *The plan is affordable. Furthermore, it can start next month.* |
+| tương phản/nhượng bộ | **however, nevertheless, by contrast** | *The sample is small. Nevertheless, the pattern is consistent.* |
+| kết quả | **therefore, consequently** | *Costs fell; consequently, the team extended the trial.* |
+| ví dụ | **for instance** | *Several teams changed their process; for instance, the support group added a review step.* |
+
+Không dùng nhiều từ nối đầu câu như danh sách, và không coi chúng là từ thay thế lẫn nhau: *therefore* báo kết quả, còn *however* báo tương phản. Đọc lại để kiểm tra mạch ý, câu chủ động/bị động, thuật ngữ và mức trang trọng nhất quán. Người Việt hay dịch sát câu khẩu ngữ, dùng từ nối quá dày hoặc làm câu trang trọng thành khó đọc; mẹo là viết bản rõ trước, rồi chỉ chỉnh register ở những chỗ người đọc thực sự cần.
+'''
+
+[[questions]]
+id = "cefr-c1-041"
+module = "cefr-c1-register"
+type = "single"
+difficulty = 1
+prompt = "You are writing to an external client who needs to send revised figures today. Which request is clear and professionally neutral?"
+options = ["Could you send the revised figures by 3 p.m. today so we can include them in the report?", "Hey, chuck those numbers over whenever.", "Send the stuff now, okay?", "It would be most agreeable if the numerical materials were perhaps transmitted at some point."]
+answer = [0]
+explanation = "Câu đúng nêu yêu cầu, hạn chót và lý do bằng giọng lịch sự, rõ ràng. Các lựa chọn khác quá thân mật, cộc lốc hoặc vòng vo."
+
+[[questions]]
+id = "cefr-c1-042"
+module = "cefr-c1-register"
+type = "single"
+difficulty = 2
+prompt = "You are sending a brief message to a familiar teammate. Which sentence sounds friendly and still professional?"
+options = ["Could you look over the draft when you have a moment?", "Would you be so gracious as to undertake a comprehensive examination of the aforementioned draft?", "Yo, do the draft thing.", "You are hereby instructed to inspect the document."]
+answer = [0]
+explanation = "Câu đầu ngắn, thân thiện và vẫn phù hợp trao đổi công việc. Văn phong tốt không nhất thiết phải tối đa hoá độ trang trọng."
+
+[[questions]]
+id = "cefr-c1-043"
+module = "cefr-c1-register"
+type = "single"
+difficulty = 2
+prompt = "A short status update needs to be easy to scan. Which sentence is clearest?"
+options = ["The new process should reduce delays.", "The implementation of the new process will result in the reduction of delays.", "A reduction in delay-related outcomes is anticipated through implementation.", "The process, being new, is of a reducing nature regarding delays."]
+answer = [0]
+explanation = "Câu chủ động với động từ cụ thể diễn đạt cùng ý ngắn và rõ; chuỗi danh hoá khiến các lựa chọn còn lại nặng nề."
+
+[[questions]]
+id = "cefr-c1-044"
+module = "cefr-c1-register"
+type = "single"
+difficulty = 3
+prompt = "Choose the connector that correctly signals a contrast: *The first trial was costly. ______, it reduced waiting times enough to justify a second trial.*"
+options = ["Nevertheless", "Consequently", "For instance", "Furthermore"]
+answer = [0]
+explanation = "Câu sau đưa ra điểm tích cực bất chấp chi phí, nên *Nevertheless* diễn đạt quan hệ nhượng bộ/tương phản."
+
+[[questions]]
+id = "cefr-c1-045"
+module = "cefr-c1-register"
+type = "single"
+difficulty = 2
+prompt = "Twenty independent trials have produced consistent results. Which sentence gives a confident but measured summary?"
+options = ["The results strongly indicate that the treatment is effective.", "The results may perhaps possibly suggest that the treatment could work.", "The results prove beyond any doubt that the treatment always works.", "The results might have no relation to the treatment at all."]
+answer = [0]
+explanation = "*Strongly indicate* phản ánh bằng chứng nhất quán mà không biến kết quả nghiên cứu thành khẳng định tuyệt đối."
+
+[[questions]]
+id = "cefr-c1-046"
+module = "cefr-c1-register"
+type = "multiple"
+difficulty = 2
+prompt = "Select the sentences in which the connector accurately signals the relationship between ideas."
+options = [
+  "The trial reduced waiting times; consequently, the clinic kept it.",
+  "The plan is affordable. Furthermore, it can start next month.",
+  "The sample was small. Nevertheless, the pattern was consistent.",
+  "The proposal is useful. For instance, the team approved it.",
+  "The test passed; however, the team recorded the result."
+]
+answer = [0, 1, 2]
+explanation = "*Consequently* nêu kết quả, *furthermore* bổ sung ý và *nevertheless* cho biết điều xảy ra bất chấp giới hạn. *For instance* cần đưa ví dụ; *however* cần tạo tương phản."
+
+[[questions]]
+id = "cefr-c1-047"
+module = "cefr-c1-register"
+type = "multiple"
+difficulty = 3
+prompt = "Choose clear, professional wording for an external project update."
+options = [
+  "We have completed the initial review; the full findings will follow on Friday.",
+  "The aforementioned analytical undertaking was executed in relation to the initial review.",
+  "The update did not address the issue; we recommend adding a test before release.",
+  "FYI, it totally blew up.",
+  "You folks messed it up, so fix it."
+]
+answer = [0, 2]
+explanation = "Hai câu đúng truyền đạt tình trạng và hành động đề nghị trực tiếp bằng giọng chuyên nghiệp. Câu 2 quá nặng danh hoá; câu 4–5 quá thân mật hoặc đổ lỗi."
+
+[[questions]]
+id = "cefr-c1-048"
+module = "cefr-c1-register"
+type = "fill"
+difficulty = 1
+prompt = "Complete the contrast. The deadline is tight. {{blank}}, we can submit a complete draft by Thursday."
+blanks = [["Nevertheless", "Even so", "Nonetheless", "Still"]]
+explanation = "*Nevertheless* và *Even so* đều nêu kết quả tích cực bất chấp thời hạn gấp."
+
+[[questions]]
+id = "cefr-c1-049"
+module = "cefr-c1-register"
+type = "fill"
+difficulty = 2
+prompt = "Replace the informal phrase *sort out* with a suitable formal verb: *We need to {{blank}} the issue before the next review.*"
+blanks = [["resolve", "address"]]
+explanation = "*Resolve an issue* phù hợp văn phong báo cáo và giữ nghĩa giải quyết vấn đề."
+
+[[questions]]
+id = "cefr-c1-050"
+module = "cefr-c1-register"
+type = "fill"
+difficulty = 3
+prompt = "The sample is small, so complete the sentence with a cautious reporting verb: *The findings {{blank}} a possible link between sleep and accuracy.*"
+blanks = [["suggest"]]
+explanation = "*Suggest a possible link* phù hợp với mẫu nhỏ; *prove* sẽ khẳng định quá mức."

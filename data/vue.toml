@@ -122,6 +122,96 @@ State nên ở phạm vi hẹp nhất đủ cho nơi sử dụng: state componen
 Tối ưu trước hết bằng component nhỏ, dữ liệu ổn định và danh sách có `key` tốt; kiểm tra bằng Vue DevTools hoặc profiling trình duyệt. Cache làm giảm khởi tạo nhưng giữ bộ nhớ; state cache vẫn có thể cần đồng bộ. Không thêm memoization chỉ vì một biểu thức trông phức tạp: đo, tìm nguyên nhân, rồi chọn thay đổi nhỏ nhất.
 '''
 
+[[modules]]
+id = "vue-dv-render"
+title = "Async component, Teleport và transition"
+description = "Tổ chức component tải trễ, modal ngoài cây DOM và hiệu ứng vào/ra hoặc danh sách."
+sources = ["vue~3/guide/components/async", "vue~3/api/built-in-components#teleport", "vue~3/api/built-in-components#transition", "vue~3/api/built-in-components#transitiongroup", "vue~3/guide/built-ins/teleport", "vue~3/guide/built-ins/transition-group"]
+lesson = '''
+### Component tải trễ và render tích hợp
+
+Vue cung cấp các component tích hợp để giải quyết những vấn đề giao diện mà một component thông thường khó làm gọn: tải mã theo nhu cầu, đặt một nhánh giao diện ở vị trí khác trong DOM và phối hợp class hoặc lifecycle với CSS transition. `defineAsyncComponent()` nhận loader trả về Promise; component chỉ cần được tải khi xuất hiện trong cây render. Đây là cách chia nhỏ bundle, nhưng trạng thái loading, lỗi tải và retry cần được thiết kế cho trải nghiệm thật.
+
+| API | Trường hợp dùng | Điều cần nhớ |
+|---|---|---|
+| `defineAsyncComponent` | màn hình hoặc widget ít dùng | loader trả Promise; có thể cấu hình loading/error component |
+| `<Teleport>` | modal, popover, toast | đổi vị trí DOM, vẫn thuộc cây component ban đầu |
+| `<Transition>` | một phần tử hoặc component vào/ra | CSS class được gắn theo các pha transition |
+| `<TransitionGroup>` | nhiều phần tử danh sách thay đổi | mỗi phần tử cần `key` ổn định, mặc định không thêm wrapper |
+
+Ví dụ: `const ReportsPage = defineAsyncComponent(() => import('./ReportsPage.vue'))` chỉ tạo điểm tải trễ; route-level splitting cũng là lựa chọn khi màn hình được chọn qua Router. Modal thường được Teleport tới phần tử overlay gần `body` để tránh bị cắt bởi `overflow` hoặc stacking context của tổ tiên. Dù DOM được chuyển chỗ, quan hệ component, props và event vẫn theo cây Vue ban đầu. `<TransitionGroup>` hữu ích khi thêm/xóa/sắp xếp hàng trong danh sách; `key` theo index có thể khiến Vue tái sử dụng nhầm node và hiệu ứng nhìn sai.
+
+Lỗi hay gặp là nghĩ Teleport tự quản lý focus, Escape hay khóa cuộn: đây vẫn là trách nhiệm của thiết kế modal. Transition cũng không chạy nếu điều kiện không làm phần tử vào/ra đúng cách, và class CSS phải khớp tên transition. Với component bất đồng bộ, tránh tạo component mới trong mỗi lần render và cung cấp trạng thái lỗi/loading hợp lý. `<Suspense>` tồn tại nhưng vẫn là API thử nghiệm; không nên dựa vào nó như hợp đồng ổn định nếu dự án chưa chấp nhận rủi ro thay đổi.
+'''
+
+[[modules]]
+id = "vue-dv-router-data"
+title = "Route metadata và data fetching"
+description = "Thiết kế metadata lồng nhau, tải dữ liệu theo điều hướng và bọc route view."
+sources = ["vue_router~5/guide/advanced/meta", "vue_router~5/guide/advanced/data-fetching", "vue_router~5/guide/advanced/router-view-slot", "vue_router~5/guide/advanced/scroll-behavior", "vue_router~5/guide/advanced/navigation-guards", "vue_router~5/guide/essentials/active-links"]
+lesson = '''
+### Metadata route và dữ liệu màn hình
+
+Route record có thể mô tả chính sách hoặc thông tin trình bày ngoài `path` và `component`. Trường `meta` phù hợp cho dữ liệu khai báo như yêu cầu đăng nhập, tiêu đề trang hay quyền cần có. Với route lồng nhau, Vue Router tạo `route.meta` bằng cách gộp nông các meta record đã match theo thứ tự cha đến con; giá trị cùng khóa ở route con thay giá trị của cha. Đây không phải phép gộp sâu cho object lồng nhau.
+
+| Chiến lược | Hành vi điều hướng | Hợp với |
+|---|---|---|
+| Tải sau khi vào route | hiện loading trong trang rồi cập nhật | giao diện muốn phản hồi sớm hoặc giữ màn hình cũ |
+| Tải trước khi vào route | guard chờ dữ liệu rồi mới cho tiếp tục | màn hình không thể render nếu thiếu dữ liệu |
+| `route.meta` | đọc metadata đã gộp nông | title hoặc chính sách đơn giản |
+| `route.matched` | duyệt từng record cha/con đã match | cần xét mọi ràng buộc tổ tiên |
+
+Ví dụ kiểm tra yêu cầu đăng nhập lồng nhau: `to.matched.some(record => record.meta.requiresAuth)` sẽ nhận ra metadata ở bất kỳ record nào trong nhánh. Dùng `to.meta.requiresAuth` thì đọc giá trị đã gộp; nếu con đặt `false`, nó có thể ghi đè giá trị cha. Guard chỉ điều khiển trải nghiệm ở client, không thay thế xác thực và phân quyền của API.
+
+`RouterView` có slot để lấy component route hiện tại và bọc nó bằng `Transition` hoặc `KeepAlive`. Hãy cân nhắc key khi muốn hiệu ứng chạy lại giữa các route khác nhau. `scrollBehavior` tách khôi phục vị trí cuộn khỏi component; ứng dụng có thể trả vị trí mới hoặc khôi phục `savedPosition` khi back/forward. Lỗi thường gặp là tải cùng dữ liệu ở cả guard lẫn component, gộp sâu metadata theo giả định, hoặc để guard chờ vô hạn khi request không có timeout/cancel. Chọn một chủ sở hữu cho request và thể hiện rõ trạng thái loading, lỗi, retry.
+'''
+
+[[modules]]
+id = "vue-dv-state"
+title = "VueUse state, storage và history"
+description = "Chia sẻ state có chủ đích, lưu trữ phản ứng và hoàn tác thay đổi dữ liệu."
+sources = ["vueuse/core/usestorage/index", "vueuse/core/userefhistory/index", "vueuse/shared/createglobalstate/index", "vueuse/shared/createsharedcomposable/index", "vueuse/core/useasyncstate/index"]
+lesson = '''
+### State dùng chung và persistence với VueUse
+
+State lưu trong component phù hợp với dữ liệu chỉ có một chủ sở hữu. Khi nhiều màn hình cần cùng một trạng thái, hãy chọn rõ phạm vi chia sẻ và vòng đời thay vì đưa mọi thứ vào một biến toàn cục. VueUse có các helper cho state chia sẻ, đồng bộ với storage, lịch sử giá trị và tác vụ bất đồng bộ. Các helper này giảm phần lặp nhưng không thay thế quyết định về quyền sở hữu dữ liệu.
+
+| API | Mục đích | Phạm vi hoặc lưu ý |
+|---|---|---|
+| `useStorage` | đồng bộ ref với storage | dữ liệu phải serialize/parse được; storage thuộc môi trường browser |
+| `useRefHistory` | lưu snapshot để undo/redo | cần `deep: true` nếu theo dõi thay đổi lồng bên trong object |
+| `createGlobalState` | tạo state được dùng lại qua nhiều lần gọi | vòng đời có thể dài bằng module/app; cân nhắc SSR |
+| `createSharedComposable` | chia sẻ một composable giữa consumer | chia sẻ đến khi không còn consumer theo quản lý scope |
+| `useAsyncState` | biểu diễn kết quả tác vụ bất đồng bộ | UI vẫn cần loading, lỗi, retry và chính sách request mới/cũ |
+
+Ví dụ, `const settings = useStorage('settings', { theme: 'light' })` giúp đồng bộ preference với storage phía client. Với object, serialization là ranh giới quan trọng: function, circular reference hoặc dữ liệu không hợp JSON không phù hợp làm giá trị lưu mặc định. Không lưu bí mật có giá trị cao trong localStorage vì script cùng origin có thể đọc được. Trong SSR, module-level mutable state có nguy cơ bị dùng chung giữa request; phải kiểm tra scope hoặc khởi tạo theo request.
+
+`useRefHistory` hữu ích cho undo hoặc xem thay đổi; nếu chỉ theo dõi thay object nhưng lại mutate thuộc tính lồng, cần cấu hình theo dõi sâu hoặc thay object bất biến. Lỗi phổ biến là nhầm `createGlobalState` với state riêng theo component, hoặc vô tình chia sẻ dữ liệu người dùng khác nhau. Chọn persistence khi cần sống qua reload, history khi cần quay lui trong phiên, và shared composable khi nhiều consumer phải quan sát cùng một nguồn sống có vòng đời xác định.
+'''
+
+[[modules]]
+id = "vue-dv-network"
+title = "VueUse network và browser APIs"
+description = "Chọn composable cho HTTP, luồng sự kiện, WebSocket và capability của browser."
+sources = ["vueuse/core/usefetch/index", "vueuse/core/useeventsource/index", "vueuse/core/usewebsocket/index", "vueuse/core/useclipboard/index", "vueuse/core/usepermission/index"]
+lesson = '''
+### Kết nối mạng và capability của browser
+
+VueUse gom một số thao tác browser thường gặp thành composable reactive, nhưng mỗi API có mô hình giao tiếp và giới hạn môi trường khác nhau. Chọn theo chiều dữ liệu, vòng đời và cách trình duyệt cấp quyền. Dù trạng thái được bọc thành ref, request vẫn có thể lỗi, bị hủy, trả về sai thứ tự hoặc không được hỗ trợ trong môi trường đang chạy.
+
+| API | Kiểu giao tiếp | Khi phù hợp |
+|---|---|---|
+| `useFetch` | HTTP request/response | tải hoặc gửi dữ liệu theo request hữu hạn |
+| `useEventSource` | server gửi sự kiện về client | cập nhật một chiều như tiến độ hoặc thông báo |
+| `useWebSocket` | kết nối hai chiều tồn tại lâu | chat hoặc dữ liệu realtime cần gửi và nhận |
+| `useClipboard` | capability của browser | sao chép văn bản khi môi trường cho phép |
+| `usePermission` | trạng thái quyền browser | hiển thị khả năng hiện tại, không quyết định quyền truy cập server |
+
+Ví dụ, `useFetch('/api/profile')` phù hợp cho response hữu hạn; một dashboard nhận thông báo liên tục có thể dùng EventSource, còn chat thường cần giao tiếp hai chiều qua WebSocket. Với kết nối lâu, cần hiển thị trạng thái, xử lý mất mạng, reconnect có giới hạn và đóng kết nối khi scope không còn dùng. Không gửi token hoặc dữ liệu nhạy cảm qua query string nếu có thể dùng một cơ chế xác thực phù hợp hơn.
+
+Clipboard và permission phụ thuộc browser, secure context, user activation hoặc policy của trang; hãy kiểm tra khả năng hỗ trợ và bắt lỗi thay vì giả định luôn thành công. Permission browser cũng không phải authorization của API. Lỗi thường gặp là dùng WebSocket chỉ để tải một lần, không dọn socket/listener, hoặc cho phép response cũ ghi đè kết quả của request mới. Khi request gắn với input thay đổi nhanh, hủy request cũ nếu có thể hoặc so sánh request id trước khi cập nhật state. Trong SSR, không chạm vào API browser ở thời điểm module được import; chỉ sử dụng khi có môi trường phù hợp.
+'''
+
 [[questions]]
 id = "vue-001"
 module = "vue-template"
@@ -1080,3 +1170,662 @@ min_keywords = 3
 model_answer = '''Dùng Vue DevTools hoặc browser profiler để đo component và subtree gây render chậm. Kiểm tra key ổn định, giảm component cập nhật không cần thiết, phân trang hoặc virtualization cho danh sách rất dài; chỉ thử `v-memo` sau khi đo. Memoization thiếu dependency có thể giữ UI stale, còn KeepAlive cache quá nhiều instance làm tăng bộ nhớ.'''
 explanation = "Tối ưu tốt bắt đầu bằng đo lường, chọn giải pháp theo nguyên nhân và nêu đánh đổi cụ thể."
 sources = ["vue~3/guide/best-practices/performance", "vue~3/api/built-in-directives#v-memo"]
+
+[[questions]]
+id = "vue-dv001"
+module = "vue-dv-render"
+type = "single"
+difficulty = 2
+prompt = "Một modal nằm trong component bị cắt bởi `overflow: hidden` của tổ tiên. `Teleport` giải quyết vấn đề nào?"
+options = ["Chuyển vị trí node DOM được render tới target khác nhưng giữ quan hệ component Vue", "Tạo một Vue app độc lập cho modal", "Tự động khóa cuộn và quản lý focus", "Chuyển component sang Web Worker"]
+answer = [0]
+explanation = "Teleport thay đổi nơi render trong DOM; state, props và event vẫn thuộc cây component ban đầu. Focus và cuộn vẫn cần xử lý riêng."
+sources = ["vue~3/guide/built-ins/teleport"]
+
+[[questions]]
+id = "vue-dv002"
+module = "vue-dv-render"
+type = "single"
+difficulty = 1
+prompt = "`defineAsyncComponent(() => import('./ReportsPage.vue'))` chủ yếu giúp ích điều gì?"
+options = ["Tải mã component khi cần, hỗ trợ chia nhỏ bundle", "Tự tạo route tương ứng với tên file", "Tự cache instance sau khi unmount", "Biến component thành server component"]
+answer = [0]
+explanation = "Dynamic import trả Promise và `defineAsyncComponent` bọc loader thành component tải theo nhu cầu; route vẫn cần được khai báo riêng nếu dùng Router."
+sources = ["vue~3/guide/components/async"]
+
+[[questions]]
+id = "vue-dv008"
+module = "vue-dv-router-data"
+type = "single"
+difficulty = 2
+prompt = "Trong route cha có `meta: { requiresAuth: true }`, route con khai báo `meta: { requiresAuth: false }`. Giá trị `route.meta.requiresAuth` của route con là gì?"
+options = ["`false`, vì meta được gộp nông và route con ghi đè cùng khóa", "`true`, vì route cha luôn có ưu tiên cao nhất", "Một mảng `[true, false]`", "Lỗi cấu hình route"]
+answer = [0]
+explanation = "`route.meta` là kết quả gộp nông từ cha tới con; giá trị con cùng khóa thay giá trị cha."
+sources = ["vue_router~5/guide/advanced/meta"]
+
+[[questions]]
+id = "vue-dv009"
+module = "vue-dv-router-data"
+type = "single"
+difficulty = 2
+prompt = "Một màn hình có thể render skeleton rồi mới hiện dữ liệu. Cách tải nào cho phép navigation hoàn tất trước khi request xong?"
+options = ["Tải sau khi vào route và quản lý trạng thái loading trong component", "Chặn navigation bằng guard cho đến khi mọi request xong", "Chỉ tải dữ liệu trong `scrollBehavior`", "Đặt dữ liệu trong `route.meta` để Router tự gọi API"]
+answer = [0]
+explanation = "Tải sau navigation cho phép component hiện trạng thái loading ngay; tải trước navigation sẽ chờ dữ liệu trước khi chuyển màn hình."
+sources = ["vue_router~5/guide/advanced/data-fetching"]
+
+[[questions]]
+id = "vue-dv010"
+module = "vue-dv-router-data"
+type = "single"
+difficulty = 2
+prompt = "Cần áp dụng `Transition` quanh component route hiện tại. API nào cung cấp component được render bởi `RouterView`?"
+options = ["Slot của `RouterView` với biến `Component`", "`route.matched[0].path`", "`router.currentRoute.component`", "`route.meta.view`"]
+answer = [0]
+explanation = "Slot của RouterView expose component route để bọc bằng component động như `Transition` hoặc `KeepAlive`."
+sources = ["vue_router~5/guide/advanced/router-view-slot"]
+
+[[questions]]
+id = "vue-dv011"
+module = "vue-dv-router-data"
+type = "multiple"
+difficulty = 3
+prompt = "Chọn các cách xử lý hợp lý khi route con phải kế thừa yêu cầu đăng nhập từ mọi route cha."
+options = ["Duyệt `to.matched` và kiểm tra từng record có `meta.requiresAuth`", "Dùng guard để redirect sang trang đăng nhập khi chưa xác thực", "Coi client navigation guard là lớp bảo vệ duy nhất cho dữ liệu", "Giả định `route.meta` gộp sâu mọi object lồng nhau"]
+answer = [0, 1]
+explanation = "Duyệt các record đã match giúp thấy chính sách ở tổ tiên; guard điều hướng người dùng phù hợp. API phía server vẫn phải tự xác thực và phân quyền."
+sources = ["vue_router~5/guide/advanced/meta", "vue_router~5/guide/advanced/navigation-guards"]
+
+[[questions]]
+id = "vue-dv012"
+module = "vue-dv-router-data"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các nhận định đúng về tải dữ liệu và cuộn khi điều hướng."
+options = ["Tải sau navigation cho phép component thể hiện loading state", "Tải trước navigation có thể giữ route hiện tại cho đến khi request xong", "`scrollBehavior` chỉ được dùng để gọi API lấy dữ liệu trang", "Có thể khôi phục vị trí cuộn cũ khi điều hướng back/forward"]
+answer = [0, 1, 3]
+explanation = "Hai chiến lược fetch có trải nghiệm điều hướng khác nhau; scrollBehavior quản lý vị trí cuộn và có thể dùng saved position."
+sources = ["vue_router~5/guide/advanced/data-fetching", "vue_router~5/guide/advanced/scroll-behavior"]
+
+[[questions]]
+id = "vue-dv013"
+module = "vue-dv-router-data"
+type = "fill"
+difficulty = 1
+prompt = '''
+Điền thuộc tính để kiểm tra yêu cầu đăng nhập trên mọi route record trong nhánh đã match:
+```js
+const requiresAuth = to.{{blank}}.some((record) => record.meta.requiresAuth)
+```
+'''
+blanks = [["matched"]]
+explanation = "`to.matched` chứa các route record cha/con đã khớp với URL."
+sources = ["vue_router~5/guide/advanced/meta"]
+
+[[questions]]
+id = "vue-dv014"
+module = "vue-dv-router-data"
+type = "essay"
+difficulty = 3
+prompt = "Câu hỏi phỏng vấn: thiết kế luồng tải dữ liệu cho route chi tiết có thể mở trực tiếp và có thể điều hướng liên tục giữa các id. So sánh tải trước/sau navigation, giải thích vai trò của metadata và guard, đồng thời nêu cách tránh response cũ làm sai màn hình."
+keywords = [["before navigation", "trước navigation"], ["after navigation", "sau navigation"], ["route.meta", "meta"], ["navigation guard", "guard"], ["stale response", "response cũ", "hủy request"]]
+min_keywords = 3
+model_answer = '''Tải sau navigation giúp render skeleton và trạng thái lỗi sớm; tải trước trong navigation guard giữ route cũ đến khi dữ liệu sẵn sàng. Dùng `route.meta` để khai báo yêu cầu hoặc chính sách, còn guard điều khiển chuyển hướng. Khi id thay đổi nhanh, hủy request trước bằng cleanup hoặc gắn request id để bỏ response cũ. API server vẫn phải kiểm tra quyền.'''
+explanation = "Câu trả lời tốt nêu được đánh đổi UX giữa hai chiến lược và xử lý race condition khi route đổi nhanh."
+sources = ["vue_router~5/guide/advanced/data-fetching", "vue_router~5/guide/advanced/meta", "vue_router~5/guide/advanced/navigation-guards"]
+
+[[questions]]
+id = "vue-dvc02"
+module = "vue-dv-router-data"
+type = "code"
+difficulty = 2
+title = "Gộp metadata của route records"
+lang = "javascript"
+prompt = '''Viết `mergeRouteMeta(records)` nhận các route record đã match theo thứ tự từ cha đến con.
+- Mỗi record có thể có `meta` là object hoặc không có `meta`.
+- Trả object mới chứa các key từ mọi `meta`.
+- Khi nhiều record có cùng key, giá trị ở record sau ghi đè giá trị trước theo phép gộp nông.
+- Không làm thay đổi object `meta` đầu vào.
+'''
+starter = '''function mergeRouteMeta(records) {
+  return {};
+}
+'''
+solution = '''function mergeRouteMeta(records) {
+  const result = {};
+  for (const record of records) {
+    if (!record || !record.meta) continue;
+    for (const key of Object.keys(record.meta)) result[key] = record.meta[key];
+  }
+  return result;
+}
+'''
+tests = '''test('gộp metadata theo thứ tự cha đến con', () => {
+  const result = mergeRouteMeta([
+    { meta: { requiresAuth: true, title: 'Admin' } },
+    { meta: { title: 'Users' } }
+  ]);
+  expect(result).toEqual({ requiresAuth: true, title: 'Users' });
+});
+test('record con có thể ghi đè một giá trị bằng false', () => {
+  const result = mergeRouteMeta([
+    { meta: { requiresAuth: true } },
+    { meta: { requiresAuth: false } }
+  ]);
+  expect(result.requiresAuth).toBe(false);
+});
+test('gộp nông nên object cùng khóa ở con thay object của cha', () => {
+  const result = mergeRouteMeta([
+    { meta: { policy: { read: true, edit: true } } },
+    { meta: { policy: { read: false } } }
+  ]);
+  expect(result.policy).toEqual({ read: false });
+});
+test('bỏ qua record thiếu meta và trả object rỗng khi không có dữ liệu', () => {
+  expect(mergeRouteMeta([{}, null, { meta: null }])).toEqual({});
+});
+test('không mutate metadata đầu vào', () => {
+  const parentMeta = { title: 'Parent' };
+  const result = mergeRouteMeta([{ meta: parentMeta }, { meta: { title: 'Child' } }]);
+  expect(parentMeta).toEqual({ title: 'Parent' });
+  expect(result).toEqual({ title: 'Child' });
+});
+'''
+hints = ["Duyệt records từ trái sang phải và gán từng key vào object kết quả mới.", "Phép gộp nông thay cả value của một key; không cần đệ quy vào object con."]
+explanation = "Mô phỏng phép gộp nông của route meta giúp thấy rõ quy tắc ghi đè giữa record cha và con."
+sources = ["vue_router~5/guide/advanced/meta"]
+
+[[questions]]
+id = "vue-dv003"
+module = "vue-dv-render"
+type = "single"
+difficulty = 2
+prompt = "Danh sách có phần tử được thêm, xóa và sắp xếp cần hiệu ứng di chuyển. Lựa chọn nào phù hợp nhất?"
+options = ["`TransitionGroup` với `key` ổn định cho mỗi phần tử", "`Transition` bao quanh từng node nhưng bỏ `key`", "`Teleport` cho từng hàng", "`KeepAlive` cho toàn bộ danh sách"]
+answer = [0]
+explanation = "`TransitionGroup` phối hợp hiệu ứng trên nhiều node thay đổi; key ổn định giúp Vue nhận biết đúng danh tính từng phần tử."
+sources = ["vue~3/guide/built-ins/transition-group"]
+
+[[questions]]
+id = "vue-dv004"
+module = "vue-dv-render"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các nhận định đúng về component render tích hợp của Vue."
+options = ["`Transition` phù hợp với một phần tử hoặc component vào/ra", "`TransitionGroup` dùng key ổn định cho các con được lặp", "Teleport làm component mất quan hệ với tổ tiên trong cây Vue", "`TransitionGroup` luôn tự thêm một wrapper DOM"]
+answer = [0, 1]
+explanation = "Transition xử lý một nhánh vào/ra; TransitionGroup xử lý danh sách con có key. Teleport chỉ thay đổi vị trí DOM và TransitionGroup mặc định không tạo wrapper."
+sources = ["vue~3/api/built-in-components#transition", "vue~3/api/built-in-components#transitiongroup", "vue~3/api/built-in-components#teleport"]
+
+[[questions]]
+id = "vue-dv005"
+module = "vue-dv-render"
+type = "multiple"
+difficulty = 3
+prompt = "Khi cấu hình async component cho một trang báo cáo lớn, chọn các cách làm hợp lý."
+options = ["Loader trả Promise, thường lấy từ dynamic import", "Cân nhắc loading component và error component cho trạng thái tải", "Đặt tên component mới bên trong mỗi lần render để ép tải lại", "Dùng async component để thay thế khai báo route và quyền truy cập"]
+answer = [0, 1]
+explanation = "Loader bất đồng bộ và UI loading/error giúp chia bundle có trải nghiệm rõ ràng. Tạo component liên tục có thể làm mất ổn định định danh; async component không thay thế Router hay kiểm soát quyền."
+sources = ["vue~3/guide/components/async"]
+
+[[questions]]
+id = "vue-dv006"
+module = "vue-dv-render"
+type = "fill"
+difficulty = 1
+prompt = '''
+Điền API bọc loader để tạo một async component:
+```js
+const ReportsPage = {{blank}}(() => import('./ReportsPage.vue'))
+```
+'''
+blanks = [["defineAsyncComponent"]]
+explanation = "`defineAsyncComponent` chuyển loader trả Promise thành component bất đồng bộ."
+sources = ["vue~3/guide/components/async"]
+
+[[questions]]
+id = "vue-dv007"
+module = "vue-dv-render"
+type = "essay"
+difficulty = 3
+prompt = "Trong phỏng vấn, hãy mô tả cách xây modal có thể render bên ngoài container của trang nhưng vẫn tích hợp với component Vue. Nêu vai trò của Teleport, hiệu ứng đóng/mở và ít nhất hai trách nhiệm accessibility cần tự xử lý."
+keywords = [["Teleport", "đổi vị trí DOM"], ["Transition", "hiệu ứng vào ra"], ["focus", "focus trap"], ["Escape", "keyboard"], ["scroll", "khóa cuộn"]]
+min_keywords = 3
+model_answer = '''Dùng `Teleport` để render modal tới vùng overlay gần `body`, trong khi component vẫn giữ props và event trong cây Vue. Bọc nội dung bằng `Transition` nếu cần hiệu ứng vào/ra. Modal cần chuyển focus vào bên trong, giữ focus trap và trả focus về nút mở khi đóng; hỗ trợ Escape và quản lý khóa cuộn. Teleport không tự thực hiện các hành vi accessibility này.'''
+explanation = "Câu trả lời cần phân biệt việc đổi vị trí DOM với quản lý tương tác bàn phím và focus của modal."
+sources = ["vue~3/guide/built-ins/teleport", "vue~3/guide/built-ins/transition"]
+
+[[questions]]
+id = "vue-dvc01"
+module = "vue-dv-render"
+type = "code"
+difficulty = 3
+title = "Async loader dùng chung và retry"
+lang = "javascript"
+prompt = '''Viết `createAsyncLoader(load)` trả về hàm `loadOnce()`.
+- `load` có thể trả giá trị hoặc Promise.
+- Chỉ gọi `load` khi `loadOnce()` được gọi lần đầu; các lời gọi đồng thời phải dùng chung Promise đang chạy.
+- Sau khi thành công, lưu kết quả và những lần gọi tiếp theo trả lại kết quả đó mà không gọi lại `load`.
+- Nếu `load` lỗi, xóa trạng thái đang chạy để lần gọi sau có thể thử lại; lỗi phải được truyền về caller.
+'''
+starter = '''function createAsyncLoader(load) {
+  return function loadOnce() {
+    return Promise.resolve(load());
+  };
+}
+'''
+solution = '''function createAsyncLoader(load) {
+  let hasValue = false;
+  let value;
+  let pending = null;
+  return function loadOnce() {
+    if (hasValue) return Promise.resolve(value);
+    if (pending) return pending;
+    pending = Promise.resolve().then(load).then(
+      (result) => {
+        value = result;
+        hasValue = true;
+        pending = null;
+        return result;
+      },
+      (error) => {
+        pending = null;
+        throw error;
+      }
+    );
+    return pending;
+  };
+}
+'''
+tests = '''test('không tải trước khi được gọi và cache kết quả thành công', async () => {
+  let calls = 0;
+  const loadOnce = createAsyncLoader(() => { calls++; return 'module'; });
+  expect(calls).toBe(0);
+  expect(await loadOnce()).toBe('module');
+  expect(await loadOnce()).toBe('module');
+  expect(calls).toBe(1);
+});
+test('các caller đồng thời dùng chung Promise', async () => {
+  let resolveLoad;
+  let calls = 0;
+  const loadOnce = createAsyncLoader(() => {
+    calls++;
+    return new Promise((resolve) => { resolveLoad = resolve; });
+  });
+  const first = loadOnce();
+  const second = loadOnce();
+  expect(first).toBe(second);
+  expect(calls).toBe(0);
+  await Promise.resolve();
+  expect(calls).toBe(1);
+  resolveLoad('ready');
+  expect(await first).toBe('ready');
+});
+test('lỗi được truyền và lần sau có thể thử lại', async () => {
+  let calls = 0;
+  const loadOnce = createAsyncLoader(() => {
+    calls++;
+    if (calls === 1) throw new Error('offline');
+    return 'recovered';
+  });
+  let message = '';
+  try { await loadOnce(); } catch (error) { message = error.message; }
+  expect(message).toBe('offline');
+  expect(await loadOnce()).toBe('recovered');
+  expect(calls).toBe(2);
+});
+test('giá trị thành công null vẫn được cache', async () => {
+  let calls = 0;
+  const loadOnce = createAsyncLoader(() => { calls++; return null; });
+  expect(await loadOnce()).toBeNull();
+  expect(await loadOnce()).toBeNull();
+  expect(calls).toBe(1);
+});
+'''
+hints = ["Tách trạng thái đã có kết quả khỏi giá trị kết quả, vì `null` vẫn có thể là kết quả hợp lệ.", "Giữ Promise đang chạy; khi reject phải xóa nó để lần gọi kế tiếp thử lại."]
+explanation = "Một loader dùng chung tránh tải lặp khi nhiều phần giao diện cùng yêu cầu module; lỗi không nên bị cache vĩnh viễn."
+sources = ["vue~3/guide/components/async"]
+
+[[questions]]
+id = "vue-dv015"
+module = "vue-dv-state"
+type = "single"
+difficulty = 1
+prompt = "Một preference cần còn nguyên sau khi người dùng reload trang. API VueUse nào phù hợp nhất?"
+options = ["`useStorage`", "`useRefHistory`", "`createSharedComposable`", "`watchOnce`"]
+answer = [0]
+explanation = "`useStorage` đồng bộ ref với storage; state được chia sẻ trong bộ nhớ không tự tồn tại qua lần reload."
+sources = ["vueuse/core/usestorage/index"]
+
+[[questions]]
+id = "vue-dv016"
+module = "vue-dv-state"
+type = "single"
+difficulty = 2
+prompt = "`useRefHistory` đang theo dõi một ref chứa object. Thay đổi `state.value.profile.name` không được ghi vào history. Cấu hình nào cần xem xét?"
+options = ["Bật theo dõi sâu bằng `deep: true`", "Đổi ref thành `shallowRef`", "Gọi `createGlobalState`", "Tắt serialization"]
+answer = [0]
+explanation = "Theo dõi sâu giúp history quan sát thay đổi lồng bên trong object; mặc định theo dõi thay đổi ref không đồng nghĩa mọi mutation sâu đều tạo snapshot."
+sources = ["vueuse/core/userefhistory/index"]
+
+[[questions]]
+id = "vue-dv017"
+module = "vue-dv-state"
+type = "single"
+difficulty = 3
+prompt = "Một composable cần dùng chung instance cho nhiều component đang mounted, rồi dọn scope khi consumer cuối cùng rời đi. Helper nào khớp mục tiêu này nhất?"
+options = ["`createSharedComposable`", "`createGlobalState`", "`useStorage`", "`useRefHistory`"]
+answer = [0]
+explanation = "`createSharedComposable` chia sẻ instance composable giữa các consumer và quản lý vòng đời chia sẻ theo scope; global state có thể sống lâu hơn dự kiến."
+sources = ["vueuse/shared/createsharedcomposable/index"]
+
+[[questions]]
+id = "vue-dv018"
+module = "vue-dv-state"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các nhận định đúng khi dùng VueUse để quản lý state."
+options = ["`useStorage` cần dữ liệu có thể serialize theo định dạng storage đã chọn", "`useRefHistory` có thể hỗ trợ undo/redo bằng snapshot", "`createGlobalState` luôn tạo state riêng cho mỗi component gọi", "`createSharedComposable` có thể chia sẻ kết quả composable cho nhiều consumer"]
+answer = [0, 1, 3]
+explanation = "Storage cần biểu diễn được dữ liệu, ref history lưu snapshot và shared composable dùng chung instance. `createGlobalState` có chủ ý tái sử dụng state giữa các lần gọi."
+sources = ["vueuse/core/usestorage/index", "vueuse/core/userefhistory/index", "vueuse/shared/createsharedcomposable/index"]
+
+[[questions]]
+id = "vue-dv019"
+module = "vue-dv-state"
+type = "multiple"
+difficulty = 3
+prompt = "Một trang có preference lưu qua reload, undo cho chỉnh sửa biểu mẫu và request khởi chạy khi người dùng bấm nút. Chọn các cách ghép phù hợp."
+options = ["Dùng `useStorage` cho preference phù hợp với browser storage", "Dùng `useRefHistory` cho các snapshot cần undo", "Dùng `useAsyncState` để biểu diễn trạng thái tác vụ bất đồng bộ", "Dùng một `createGlobalState` duy nhất cho mọi dữ liệu, kể cả dữ liệu riêng từng người dùng"]
+answer = [0, 1, 2]
+explanation = "Mỗi helper giải quyết một nhu cầu riêng; state toàn cục không nên chứa bừa dữ liệu có chủ sở hữu hoặc vòng đời khác nhau."
+sources = ["vueuse/core/usestorage/index", "vueuse/core/userefhistory/index", "vueuse/core/useasyncstate/index"]
+
+[[questions]]
+id = "vue-dv020"
+module = "vue-dv-state"
+type = "fill"
+difficulty = 1
+prompt = '''
+Điền composable để lưu preference reactive vào storage:
+```js
+const preferences = {{blank}}('preferences', { theme: 'light' })
+```
+'''
+blanks = [["useStorage"]]
+explanation = "`useStorage` tạo state reactive được đồng bộ với storage."
+sources = ["vueuse/core/usestorage/index"]
+
+[[questions]]
+id = "vue-dv021"
+module = "vue-dv-state"
+type = "essay"
+difficulty = 3
+prompt = "Câu hỏi phỏng vấn: thiết kế state cho preference cần tồn tại sau reload, dữ liệu biểu mẫu cần undo và state dùng chung bởi nhiều component. Nêu cách chọn VueUse API, các ranh giới serialization/vòng đời cần kiểm tra và một vấn đề riêng của SSR."
+keywords = [["useStorage", "storage"], ["useRefHistory", "history", "undo"], ["shared composable", "createSharedComposable", "createGlobalState"], ["serialization", "serialize"], ["SSR", "request scope"]]
+min_keywords = 3
+model_answer = '''Dùng `useStorage` cho preference có thể serialize và cần sống qua reload; tránh lưu bí mật trong browser storage. Dùng `useRefHistory` cho snapshot cần undo, bật theo dõi sâu nếu có mutation lồng. Với state dùng chung, chọn `createSharedComposable` hoặc `createGlobalState` theo vòng đời mong muốn. Trong SSR cần bảo đảm state mutable không vô tình bị chia sẻ giữa các request.'''
+explanation = "Câu trả lời cần ánh xạ đúng API với persistence, history và chia sẻ, đồng thời xem xét serialization và phạm vi state."
+sources = ["vueuse/core/usestorage/index", "vueuse/core/userefhistory/index", "vueuse/shared/createglobalstate/index", "vueuse/shared/createsharedcomposable/index"]
+
+[[questions]]
+id = "vue-dvc03"
+module = "vue-dv-state"
+type = "code"
+difficulty = 2
+title = "Ref lưu trữ với JSON"
+lang = "javascript"
+prompt = '''Viết `createStorageRef(storage, key, initialValue)` dùng một đối tượng `storage` có `getItem(key)` và `setItem(key, value)`.
+- Khi tạo, nếu key có chuỗi JSON hợp lệ thì dùng giá trị đã parse; nếu key chưa có hoặc JSON lỗi thì dùng `initialValue`.
+- Trả object có getter/setter `.value`.
+- Khi gán `.value`, cập nhật giá trị hiện tại và ghi `JSON.stringify(value)` vào storage.
+- Không cần mô phỏng reactivity hoặc storage event từ tab khác.
+'''
+starter = '''function createStorageRef(storage, key, initialValue) {
+  return {
+    value: initialValue
+  };
+}
+'''
+solution = '''function createStorageRef(storage, key, initialValue) {
+  let value = initialValue;
+  const raw = storage.getItem(key);
+  if (raw !== null) {
+    try { value = JSON.parse(raw); } catch {}
+  }
+  return {
+    get value() { return value; },
+    set value(next) {
+      value = next;
+      storage.setItem(key, JSON.stringify(next));
+    }
+  };
+}
+'''
+tests = '''function createMemoryStorage(initial = {}) {
+  const values = { ...initial };
+  return {
+    values,
+    getItem(key) { return Object.prototype.hasOwnProperty.call(values, key) ? values[key] : null; },
+    setItem(key, value) { values[key] = value; }
+  };
+}
+test('đọc giá trị JSON có sẵn', () => {
+  const storage = createMemoryStorage({ prefs: '{"theme":"dark"}' });
+  const ref = createStorageRef(storage, 'prefs', { theme: 'light' });
+  expect(ref.value).toEqual({ theme: 'dark' });
+});
+test('dùng giá trị mặc định khi key chưa có', () => {
+  const storage = createMemoryStorage();
+  const initial = { theme: 'light' };
+  const ref = createStorageRef(storage, 'prefs', initial);
+  expect(ref.value).toBe(initial);
+  expect(storage.getItem('prefs')).toBeNull();
+});
+test('setter cập nhật ref và ghi JSON vào storage', () => {
+  const storage = createMemoryStorage();
+  const ref = createStorageRef(storage, 'count', 0);
+  ref.value = 4;
+  expect(ref.value).toBe(4);
+  expect(storage.getItem('count')).toBe('4');
+});
+test('JSON lỗi quay về giá trị mặc định', () => {
+  const storage = createMemoryStorage({ prefs: '{broken' });
+  const ref = createStorageRef(storage, 'prefs', 'fallback');
+  expect(ref.value).toBe('fallback');
+});
+test('null là giá trị JSON hợp lệ, khác với key không tồn tại', () => {
+  const storage = createMemoryStorage({ value: 'null' });
+  const ref = createStorageRef(storage, 'value', 'fallback');
+  expect(ref.value).toBeNull();
+});
+'''
+hints = ["Phân biệt `getItem` trả `null` với một chuỗi JSON hợp lệ biểu diễn giá trị null.", "Bọc `JSON.parse` bằng try/catch để dữ liệu cũ hoặc lỗi không làm hỏng khởi tạo."]
+explanation = "Bài tập mô phỏng phần serialization cơ bản ở ranh giới storage; ứng dụng thật còn cần xét SSR, quota và đồng bộ nhiều tab."
+sources = ["vueuse/core/usestorage/index"]
+
+[[questions]]
+id = "vue-dv022"
+module = "vue-dv-network"
+type = "single"
+difficulty = 1
+prompt = "Một màn hình tải dữ liệu JSON theo request hữu hạn và cần trạng thái reactive cho dữ liệu/loading/lỗi. Composable nào phù hợp nhất?"
+options = ["`useFetch`", "`useWebSocket`", "`useEventSource`", "`useClipboard`"]
+answer = [0]
+explanation = "`useFetch` hướng tới HTTP request/response; WebSocket và EventSource dành cho kết nối realtime, Clipboard là capability browser."
+sources = ["vueuse/core/usefetch/index"]
+
+[[questions]]
+id = "vue-dv023"
+module = "vue-dv-network"
+type = "single"
+difficulty = 2
+prompt = "Server chỉ cần đẩy thông báo một chiều liên tục tới dashboard. API nào thường phù hợp hơn WebSocket nếu client không cần gửi message realtime?"
+options = ["`useEventSource`", "`useClipboard`", "`usePermission`", "`useRefHistory`"]
+answer = [0]
+explanation = "EventSource phù hợp với luồng sự kiện một chiều từ server; WebSocket dành cho giao tiếp hai chiều tồn tại lâu."
+sources = ["vueuse/core/useeventsource/index", "vueuse/core/usewebsocket/index"]
+
+[[questions]]
+id = "vue-dv024"
+module = "vue-dv-network"
+type = "single"
+difficulty = 3
+prompt = "`usePermission` cho biết browser hiện cấp quyền clipboard hay không. Kết luận nào an toàn và chính xác?"
+options = ["Đó là tín hiệu capability phía client; API server vẫn phải tự kiểm tra quyền truy cập dữ liệu", "Có quyền clipboard nghĩa là user đã được phép đọc mọi dữ liệu server", "Permission luôn được hỗ trợ và không cần xử lý lỗi", "Có thể bỏ xác thực server nếu client dùng permission composable"]
+answer = [0]
+explanation = "Permission API phản ánh quyền của browser đối với một capability; nó không phải cơ chế phân quyền cho backend."
+sources = ["vueuse/core/usepermission/index"]
+
+[[questions]]
+id = "vue-dv025"
+module = "vue-dv-network"
+type = "multiple"
+difficulty = 2
+prompt = "Ghép các nhu cầu với composable VueUse phù hợp. Chọn mọi lựa chọn đúng."
+options = ["HTTP request/response cho dữ liệu hồ sơ: `useFetch`", "Server đẩy sự kiện một chiều: `useEventSource`", "Chat gửi và nhận message realtime: `useWebSocket`", "Sao chép văn bản vào clipboard: `usePermission`"]
+answer = [0, 1, 2]
+explanation = "Ba loại kết nối mạng có mô hình khác nhau; thao tác clipboard thuộc `useClipboard`, còn `usePermission` chỉ quan sát trạng thái quyền browser."
+sources = ["vueuse/core/usefetch/index", "vueuse/core/useeventsource/index", "vueuse/core/usewebsocket/index", "vueuse/core/useclipboard/index", "vueuse/core/usepermission/index"]
+
+[[questions]]
+id = "vue-dv026"
+module = "vue-dv-network"
+type = "multiple"
+difficulty = 3
+prompt = "Một composable có request theo query thay đổi nhanh và một WebSocket sống theo component. Chọn các biện pháp phù hợp."
+options = ["Bỏ qua response request cũ bằng request id hoặc hủy request", "Thể hiện trạng thái lỗi/loading và cho phép retry phù hợp", "Đóng kết nối hoặc gỡ listener khi scope không còn dùng", "Coi trạng thái permission phía browser là quyền truy cập backend"]
+answer = [0, 1, 2]
+explanation = "Request có thể về sai thứ tự; kết nối lâu cần quản lý trạng thái và vòng đời. Permission browser không thay thế authorization của server."
+sources = ["vueuse/core/usefetch/index", "vueuse/core/usewebsocket/index", "vueuse/core/usepermission/index"]
+
+[[questions]]
+id = "vue-dv027"
+module = "vue-dv-network"
+type = "fill"
+difficulty = 1
+prompt = '''
+Điền composable cho server-sent events một chiều:
+```js
+const stream = {{blank}}('/api/events')
+```
+'''
+blanks = [["useEventSource"]]
+explanation = "`useEventSource` bọc kết nối Server-Sent Events từ server tới client."
+sources = ["vueuse/core/useeventsource/index"]
+
+[[questions]]
+id = "vue-dv028"
+module = "vue-dv-network"
+type = "essay"
+difficulty = 3
+prompt = "Câu hỏi phỏng vấn: thiết kế một trang hiển thị dữ liệu HTTP ban đầu, sau đó nhận cập nhật realtime và có nút sao chép kết quả. Chọn composable cho từng phần, nêu cách xử lý lỗi/vòng đời và giải thích giới hạn của permission browser."
+keywords = [["useFetch", "http"], ["useEventSource", "server-sent events"], ["useWebSocket", "websocket"], ["loading", "error", "retry"], ["permission", "authorization", "quyền server"]]
+min_keywords = 3
+model_answer = '''Dùng `useFetch` cho dữ liệu HTTP ban đầu và thể hiện loading/error/retry. Nếu server chỉ đẩy cập nhật một chiều, chọn `useEventSource`; nếu client cũng cần gửi message realtime thì cân nhắc `useWebSocket`. Đóng kết nối khi component scope kết thúc. Dùng `useClipboard` khi người dùng yêu cầu sao chép và xử lý lỗi capability; browser permission không thay thế authorization của server.'''
+explanation = "Câu trả lời cần chọn transport theo chiều giao tiếp, quản lý lỗi và vòng đời, đồng thời phân biệt browser permission với quyền backend."
+sources = ["vueuse/core/usefetch/index", "vueuse/core/useeventsource/index", "vueuse/core/usewebsocket/index", "vueuse/core/useclipboard/index", "vueuse/core/usepermission/index"]
+
+[[questions]]
+id = "vue-dvc04"
+module = "vue-dv-network"
+type = "code"
+difficulty = 3
+title = "Chỉ nhận kết quả request mới nhất"
+lang = "javascript"
+prompt = '''Viết `createLatestRequestState()` trả về `{ state, begin, resolve, reject, cancel }`.
+- `state` bắt đầu là `{ requestId: 0, loading: false, data: null, error: null }`.
+- `begin()` tăng request id, đặt `loading` thành true, xóa `error`, giữ nguyên `data`, rồi trả id mới.
+- `resolve(id, value)` chỉ nhận kết quả khi id là request hiện tại và đang loading; nếu nhận thì cập nhật `data`, tắt loading và trả true.
+- `reject(id, error)` áp dụng cùng quy tắc, lưu error, tắt loading và trả true.
+- Kết quả cũ hoặc settle lặp phải trả false và không đổi state. `cancel(id)` chỉ hủy request hiện tại đang loading, tăng id để vô hiệu token cũ, tắt loading và trả true; trường hợp khác trả false.
+'''
+starter = '''function createLatestRequestState() {
+  const state = { requestId: 0, loading: false, data: null, error: null };
+  return {
+    state,
+    begin() { return state.requestId; },
+    resolve() { return false; },
+    reject() { return false; },
+    cancel() { return false; }
+  };
+}
+'''
+solution = '''function createLatestRequestState() {
+  const state = { requestId: 0, loading: false, data: null, error: null };
+  function isCurrent(id) { return state.loading && id === state.requestId; }
+  return {
+    state,
+    begin() {
+      state.requestId++;
+      state.loading = true;
+      state.error = null;
+      return state.requestId;
+    },
+    resolve(id, value) {
+      if (!isCurrent(id)) return false;
+      state.data = value;
+      state.loading = false;
+      return true;
+    },
+    reject(id, error) {
+      if (!isCurrent(id)) return false;
+      state.error = error;
+      state.loading = false;
+      return true;
+    },
+    cancel(id) {
+      if (!isCurrent(id)) return false;
+      state.requestId++;
+      state.loading = false;
+      return true;
+    }
+  };
+}
+'''
+tests = '''test('begin tạo id mới và bật loading, đồng thời xóa lỗi cũ', () => {
+  const requests = createLatestRequestState();
+  requests.state.error = 'old error';
+  const id = requests.begin();
+  expect(id).toBe(1);
+  expect(requests.state.loading).toBe(true);
+  expect(requests.state.error).toBeNull();
+});
+test('resolve của request hiện tại cập nhật data và tắt loading', () => {
+  const requests = createLatestRequestState();
+  const id = requests.begin();
+  expect(requests.resolve(id, { name: 'Ada' })).toBe(true);
+  expect(requests.state.data).toEqual({ name: 'Ada' });
+  expect(requests.state.loading).toBe(false);
+});
+test('response cũ bị bỏ qua sau khi request mới bắt đầu', () => {
+  const requests = createLatestRequestState();
+  const oldId = requests.begin();
+  const newId = requests.begin();
+  expect(requests.resolve(oldId, 'old')).toBe(false);
+  expect(requests.state.loading).toBe(true);
+  expect(requests.resolve(newId, 'new')).toBe(true);
+  expect(requests.state.data).toBe('new');
+});
+test('reject hiện tại lưu lỗi, reject cũ không đổi state', () => {
+  const requests = createLatestRequestState();
+  const oldId = requests.begin();
+  const currentId = requests.begin();
+  expect(requests.reject(oldId, 'stale')).toBe(false);
+  expect(requests.reject(currentId, 'offline')).toBe(true);
+  expect(requests.state.error).toBe('offline');
+  expect(requests.state.loading).toBe(false);
+});
+test('cancel vô hiệu token hiện tại và settle lặp bị từ chối', () => {
+  const requests = createLatestRequestState();
+  const id = requests.begin();
+  expect(requests.cancel(id)).toBe(true);
+  expect(requests.state.loading).toBe(false);
+  expect(requests.resolve(id, 'late')).toBe(false);
+  expect(requests.cancel(id)).toBe(false);
+});
+'''
+hints = ["Dùng `requestId` tăng dần và chỉ settle khi token còn hiện tại đồng thời loading.", "Hủy request cần vô hiệu token cũ để callback về muộn không thể ghi vào state."]
+explanation = "Mã lượt request là lớp bảo vệ state khi nhiều request cạnh tranh; trong ứng dụng thật hãy ưu tiên hủy công việc cũ nếu transport hỗ trợ."
+sources = ["vueuse/core/usefetch/index"]

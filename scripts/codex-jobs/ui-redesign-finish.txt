@@ -1,0 +1,9 @@
+Hoàn tất đợt làm lại giao diện bằng **taste-skill** (`~/.codex/skills/taste-skill/SKILL.md`) đã bị dừng giữa chừng vì hết hạn mức. Đọc `scripts/codex-jobs/ui-redesign.txt` (yêu cầu gốc, phạm vi, ràng buộc giữ id/class/data-*) và `.codex-logs/ui-audit.md` (Design Read, audit, danh sách "Cần sửa").
+
+Phần đã làm (giữ nguyên, không làm lại): icon Tabler thay emoji, huy hiệu chữ cho danh mục, token mới trong `:root`. Việc còn lại:
+1. Đối chiếu từng mục "Cần sửa" trong ui-audit.md với `static/app.css`, `static/index.html`, `static/app.js` hiện tại; làm nốt mục nào chưa xong, áp dụng nhất quán cho mọi màn hình (luyện tập & phản hồi, Code Lab, thi thử, kho câu hỏi, tiến độ, cài đặt & thẻ đồng bộ, toast/dialog, tab Tài liệu gốc) ở cả light và dark, 375px không tràn ngang.
+2. Dọn CSS: xoá quy tắc trùng/chết, dùng token thay giá trị cứng.
+3. Cập nhật `DESIGN.md` cho khớp hệ mới.
+4. Chạy pre-flight check của taste-skill, ghi kết quả vào mục "Pre-flight" và thay "Đang chờ triển khai" ở mục "Tóm tắt" bằng tóm tắt thay đổi thực tế.
+
+Kiểm tra: `node --check static/app.js`; `cargo build --release`; chạy `PORT=18990 ./target/release/bovabon_edu`, `curl -s localhost:18990/ | head`, rồi dừng server.

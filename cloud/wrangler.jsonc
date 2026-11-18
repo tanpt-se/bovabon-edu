@@ -1,0 +1,15 @@
+{
+  // API đồng bộ của Bovabon Edu (tuỳ chọn — app vẫn chạy offline khi không đăng nhập)
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "bovabon-edu-api",
+  "main": "src/index.js",
+  "compatibility_date": "2026-04-01",
+  "observability": { "enabled": true },
+  "triggers": { "crons": ["*/5 * * * *"] },
+  "ratelimits": [
+    { "name": "AUTH_LIMITER", "namespace_id": "1001", "simple": { "limit": 40, "period": 60 } }
+  ],
+  "d1_databases": [
+    { "binding": "DB", "database_name": "bovabon-edu", "database_id": "d05c2eba-3f8d-4939-925f-3fe20dce51e1", "migrations_dir": "migrations" }
+  ]
+}

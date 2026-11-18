@@ -1,0 +1,577 @@
+[modules.php-modern]
+title = "Modern PHP"
+description = "Type declarations, enums, readonly, match, named arguments, the nullsafe operator, and first-class callables."
+lesson = '''### Modern types and syntax
+Type declarations on parameters, properties, and return values make a function's contract clearer. PHP supports union types; enums can be pure or backed. A readonly property can be initialized only once, and readonly classes have been available since PHP 8.2. `match` uses strict comparison and must match an arm; otherwise, it throws `UnhandledMatchError`.
+
+| Syntax | Use it when |
+|---|---|
+| `int|string` | Either of two types is accepted |
+| `Status::Paid` | A finite set of named states is needed |
+| `match ($value)` | An expression must be mapped to a result |
+| `send(to: $email)` | A call with several arguments should be easy to read |
+
+Example:
+```php
+$label = match ($status) {
+    'paid' => 'Complete',
+    'pending' => 'Waiting',
+    default => 'Unknown',
+};
+$handler = $service->handle(...);
+```
+
+The nullsafe operator `?->` returns null when its left-hand side is null; it does not replace authorization checks or validation. Named arguments refer to parameter names and can omit optional parameters. First-class callable syntax uses `...` to create a Closure that can be passed around. Common mistakes include assuming `match` uses the same loose comparison as `switch`, or assuming readonly makes an object deeply immutable.'''
+
+[questions.php-001]
+prompt = "A function accepts an email address or a phone number, but no other types. Which declaration describes that contract most directly?"
+options = ["mixed", "string|int", "object", "callable"]
+explanation = "The `string|int` union type restricts input to exactly the two supported types."
+
+[questions.php-002]
+prompt = "When is a string-backed enum most useful?"
+options = ["When arbitrary user-entered values must be allowed", "When a finite set of states also needs stable values stored in a database or sent through an API", "When every class needs to be replaced with an enum", "When every label needs to be translated automatically"]
+explanation = "A backed enum assigns each case a stable scalar value for storage or exchange while keeping the set of values finite."
+
+[questions.php-003]
+prompt = "What happens if a `match` expression matches no arm and has no `default`?"
+options = ["It returns null", "It runs the first arm", "It throws `UnhandledMatchError`", "It is coerced to false"]
+explanation = "A `match` expression must match an arm. If no arm matches and there is no `default`, PHP throws `UnhandledMatchError`."
+
+[questions.php-004]
+prompt = "Which value below does NOT cause the nullsafe operator to stop the access chain?"
+options = ["The left-hand side is null", "The left-hand side is a valid object", "A property does not exist on the object", "The left-hand side is false"]
+explanation = "The nullsafe operator short-circuits only when its left-hand side is null. It does not handle missing properties or replace type checks."
+
+[questions.php-005]
+prompt = "Select the correct statements about modern PHP syntax."
+options = ["Named arguments call parameters by name and allow optional parameters to be omitted", "A readonly property can be initialized only once", "`match` uses loose comparison like `switch`", "A first-class callable creates a Closure that can be passed as a value", "A pure enum must have an integer backing value"]
+explanation = "Named arguments make calls clearer, readonly prevents reassignment, and first-class callables package a callable. `match` uses strict comparison; a pure enum has no backing value."
+
+[questions.php-006]
+prompt = '''Complete the syntax for mapping a state with a `match` expression:
+
+$statusLabel = {{blank}} ($status) {
+    'paid' => 'Complete',
+    default => 'Unknown',
+};
+'''
+explanation = "`match` is an expression, so it returns the value of the matching arm."
+
+[questions.php-007]
+prompt = "Compare `match` with `switch` when mapping business states; name one difference in comparison and one way to handle an unmatched value."
+keywords = [["strict comparison", "strict equality", "comparison with ==="], ["default", "default arm", "fallback branch"], ["UnhandledMatchError", "error when no arm matches"]]
+model_answer = '''`match` uses strict comparison and returns a value directly as an expression. A `default` arm can handle an unknown state; if no arm matches and there is no `default`, PHP throws `UnhandledMatchError`.'''
+explanation = "A good answer distinguishes an important `match` semantic and explains how to handle exhaustiveness."
+
+[modules.php-oop]
+title = "OOP, Composer, and PSR"
+description = "Encapsulation, interfaces, traits, autoloading, and PSR-4 conventions in PHP projects."
+lesson = '''### Organizing PHP code
+A class groups state and behavior; an interface describes a contract that multiple classes can implement. A trait shares implementation across classes, but overusing traits can make the source of behavior difficult to trace. Composer manages dependencies and generates an autoloader from the `composer.json` configuration.
+
+| Component | Role | Example |
+|---|---|---|
+| interface | Method contract | `PaymentGateway` |
+| trait | Shared behavior | `LogsActivity` |
+| PSR-4 | Maps namespaces to directories | `App\\Services\\` → `app/Services/` |
+
+After changing autoload configuration, Composer is commonly run with `composer dump-autoload`. Namespace and file names should follow the PSR-4 mapping so classes can be found automatically. In a package, declare dependencies with clear version constraints; do not commit the `vendor` directory as application source code. A common mistake is a case mismatch between a namespace, class name, and path; this may appear only on a case-sensitive filesystem.'''
+
+[questions.php-008]
+prompt = "Several payment gateways need to provide the same `charge` method. Which construct is appropriate for defining a shared contract?"
+options = ["Trait", "Interface", "Global constant", "Composer script"]
+explanation = "An interface describes the methods that every implementation must provide."
+
+[questions.php-009]
+prompt = "What is the best use case for a trait?"
+options = ["Creating a required contract for multiple classes", "Sharing a group of implementations among classes outside the same inheritance tree", "Managing dependency versions", "Creating a database table"]
+explanation = "A trait reuses implementation; an interface defines a type contract."
+
+[questions.php-010]
+prompt = "A class `App\\Services\\Mailer` is in `app/Services/Mailer.php`. Composer's PSR-4 configuration maps `App\\` to `app/`. Why is the class autoloaded automatically?"
+options = ["Composer maps the namespace prefix to a directory and converts the remaining namespace to a path", "PHP scans every project file on each request", "PSR-4 requires declaring the class in the global scope", "The `Mailer` trait forces PHP to load the file"]
+explanation = "Composer's autoloader uses the PSR-4 mapping to infer a file path from the namespace and class name."
+
+[questions.php-011]
+prompt = "Which are reasonable benefits of using Composer autoloading with PSR-4?"
+options = ["Classes can be loaded by namespace without manually requiring every file", "A namespace prefix can map to one or more directories", "Composer guarantees that every class is bug-free", "Class names and paths must follow the mapping convention", "PSR-4 creates the database schema automatically"]
+explanation = "PSR-4 defines how classes map to paths; it does not check logic quality or create a database."
+
+[questions.php-012]
+prompt = "Which PHP keyword declares a method contract that a class can implement: {{blank}}?"
+explanation = "An interface declares the contract; a class provides the implementation."
+
+[modules.laravel-core]
+title = "Laravel Fundamentals"
+description = "Routing, controllers, the request lifecycle, the middleware onion, and Blade."
+lesson = '''### From request to response
+In Laravel 11, `public/index.php` boots the application through `bootstrap/app.php`; the application handles the request, runs middleware, matches a route, calls a controller, and sends a response. Middleware can inspect or transform the request before calling `next`, then process the response after that call returns. This is the onion structure.
+
+| Component | Responsibility |
+|---|---|
+| Route | Maps a method and URI to a handler |
+| Controller | Coordinates processing for a group of endpoints |
+| Middleware | Checks or adds processing around a request |
+| Blade | Renders a server-side view |
+
+For example, a route can point to `[UserController::class, 'show']`; route model binding can resolve the `{user}` parameter. Blade uses `{{ $name }}` to escape HTML; `{!! !!}` outputs raw HTML and is appropriate only for trusted content. In Laravel 11, middleware is commonly configured in `bootstrap/app.php`. Common mistakes include treating middleware as code that only runs before a controller, or outputting user data with unescaped Blade syntax.'''
+
+[questions.php-013]
+prompt = "In the GET route `/users/{id}`, which value describes the dynamic part of the URI?"
+options = ["`{id}`", "Controller", "Middleware", "View"]
+explanation = "A route parameter is enclosed in braces in the URI and is passed to the handler or controller."
+
+[questions.php-014]
+prompt = "Middleware needs to inspect a request before the controller and add a header after the controller creates a response. What is the correct structure?"
+options = ["Call `next(request)`, then transform the returned response", "Run code only after `next` without calling it", "Put the check in a migration", "Render Blade before matching the route"]
+explanation = "Middleware wraps `next`: it processes the request first, calls downstream code, then processes the response."
+
+[questions.php-015]
+prompt = "A Blade template displays a name from user input. Which syntax escapes HTML by default?"
+options = ["`{!! $name !!}`", "`{{ $name }}`", "`{% $name %}`", "`@raw($name)`"]
+explanation = "Blade's `{{ }}` syntax escapes HTML. `{!! !!}` outputs raw content and should be used only with trusted data."
+
+[questions.php-016]
+prompt = "Select the reasonable steps in the Laravel request lifecycle."
+options = ["The entry point boots the application from `bootstrap/app.php`", "Middleware can run before and after a route handler through `next`", "The controller is always called before the route is matched", "The application sends a response after the handler completes", "Blade determines every route"]
+explanation = "The application is booted before the request passes through middleware and route matching; the handler creates a response, which is then sent."
+
+[questions.php-017]
+prompt = "In Laravel 11, which file configures application bootstrapping and commonly configures middleware: {{blank}}?"
+explanation = "Laravel 11 uses `bootstrap/app.php` to configure and create the application."
+
+[questions.php-018]
+title = "Minimal service container"
+prompt = '''Implement a `MiniContainer` class with `bind(string $id, callable $factory)`, `singleton(string $id, callable $factory)`, and `resolve(string $id): mixed`. The factory receives the current container as an argument. `bind` creates a new instance on every `resolve`; `singleton` calls the factory only the first time and then returns that same instance. Re-registering an ID must replace its binding and clear any cached singleton instance. Resolving an unregistered ID throws `InvalidArgumentException`.
+'''
+explanation = "A container resolves dependencies through factories; singleton is a binding lifecycle policy."
+hints = ["Store each binding with its factory and a singleton flag.", "Use `array_key_exists` to distinguish a cached instance from a `null` value."]
+
+[questions.php-019]
+title = "Middleware onion pipeline"
+prompt = '''Implement `runPipeline(array $middlewares, callable $destination, mixed $request): mixed`. Each middleware is a callable that receives `(request, next)`. The first middleware in the array is the outermost layer; `next` passes the request to the next layer, and the response travels back through the layers. A middleware can short-circuit by not calling `next`. Preserve the correct before/after order and return the final response.
+'''
+explanation = "The onion structure lets middleware process both the incoming request and the outgoing response."
+hints = ["Start with the destination, then wrap middleware in reverse order.", "Each layer calls `next` to receive the downstream response, then transforms that response."]
+
+[questions.php-020]
+title = "Match a dynamic route"
+prompt = '''Implement `matchRoute(string $pattern, string $path): ?array` for routes such as `/users/{id}` and routes with an optional segment such as `/posts/{slug?}`. Return an array mapping parameter names to string values, or `null` if there is no match. An optional segment may be omitted only when it is the final whole segment; when omitted, it has no corresponding key. Match exactly and allow a trailing slash by trimming boundary slashes. The input is a path without a query string.
+'''
+explanation = "Matching individual segments keeps literals safe and makes optional segments explicit."
+hints = ["Split the pattern and path into segments after trimming slashes from both ends.", "Use a regex to recognize `{name}` and `{name?}` segments; do not build one regex string for the whole route."]
+
+[modules.laravel-data]
+title = "Eloquent and Databases"
+description = "Models, relationships, eager loading, migrations, the query builder, and the N+1 problem."
+lesson = '''### Queries and data relationships
+An Eloquent model maps to a table; relationships describe connections such as `hasMany` and `belongsTo`. If code loops over several models and reads a relationship that has not been loaded, each access may issue another query. This is the N+1 problem. Eager loading with `with('posts')` loads the relationship in a batch and often reduces the number of queries significantly.
+
+| Need | Tool |
+|---|---|
+| Track schema changes over time | Migration |
+| Query through models | Eloquent |
+| Flexible queries without models | Query Builder |
+| Read relationships for a list | `with` / `load` |
+
+Example:
+```php
+$users = User::with('posts')->get();
+$recent = DB::table('orders')->where('status', 'paid')->get();
+```
+
+A migration should have suitable `up` and `down` operations so schema changes can be managed. The Query Builder binds values safely, but dynamic column names cannot be bound like values; whitelist sort columns from input. Eloquent Collections provide an API for processing query results, which is different from building an SQL query. Common mistakes include eager-loading one relationship but accessing another, or creating a query inside a loop.'''
+
+[questions.php-021]
+prompt = "A list of users is iterated over, and each iteration reads `user->posts` without eager loading. What is the most likely symptom?"
+options = ["One fixed query for the entire system", "N+1 queries because each user triggers another relationship query", "The migration runs again on every iteration", "The cache invalidates itself"]
+explanation = "Accessing an unloaded relationship inside a loop can issue one query per model."
+
+[questions.php-022]
+prompt = "You need a list of users with their posts while avoiding a lazy query for each user. What should you use?"
+options = ["`User::with('posts')->get()`", "Call `User::all()` and then access posts in a loop", "Run a migration before every request", "Cache all data forever"]
+explanation = "`with` eager-loads the relationship in a batch before iterating over the collection."
+
+[questions.php-023]
+prompt = "When a user chooses a sort column, why should you not insert the input column name directly into raw SQL?"
+options = ["Column names are always bound automatically like values", "Bound values cannot replace identifiers; map to or whitelist valid column names", "The Query Builder does not support `orderBy`", "Migrations escape all input"]
+explanation = "Parameter binding protects values; it does not make an arbitrary identifier a safe column name."
+
+[questions.php-024]
+prompt = "Select the correct statements about Eloquent and databases."
+options = ["Migrations record schema changes that can be applied in order", "Eager loading often reduces repeated queries when reading relationships for multiple models", "The Query Builder automatically makes every input column name a safe identifier", "Relationships describe connections between models", "A Collection always defers its database query"]
+explanation = "Migrations manage schema, relationships describe connections, and eager loading reduces N+1 queries. A Collection processes results; it is not always a lazy query builder."
+
+[questions.php-025]
+prompt = "Which Eloquent method is commonly used to eager-load a relationship as part of a query: {{blank}}?"
+explanation = "`with('relationship')` loads a relationship along with the model query."
+
+[questions.php-026]
+title = "Fluent mini collection"
+prompt = '''Implement `MiniCollection`, initialized with an array, with `map(callable)`, `filter(?callable)`, `pluck(string $key)`, `groupBy(string|callable)`, and `all()`. Operations return a new `MiniCollection` and preserve original keys where appropriate. The `map` callback receives `(item, key)`; the `filter` callback receives `(item, key)`, while `filter` without a callback keeps truthy items. `pluck` reads a field from an array or a public object property; a missing field becomes `null`. `groupBy` accepts a field name or a callback `(item, key)`, groups by a scalar value, and preserves original keys within each group.
+'''
+explanation = "A fluent Collection wraps array operations and returns new collections that can be chained."
+hints = ["Implement each transformation with a loop so you can preserve keys deliberately.", "Use `get_object_vars` to read only public object properties."]
+
+[questions.php-027]
+title = "Detect N+1-style queries"
+prompt = '''Implement `detectNPlusOne(array $queryLog, int $threshold = 3): array`. The log is a list of SQL query strings. Normalize them by lowercasing, normalizing whitespace, removing a trailing semicolon, and replacing numeric literals or single-quoted string literals with `?`. Consider only `SELECT` statements and group queries by normalized SQL. Return an associative array of normalized SQL => occurrence count for groups with `count >= threshold`, in the order each group first appeared. This is a heuristic for detecting repeated query shapes; full SQL parsing is not required.
+'''
+explanation = "N+1 behavior often produces many queries with the same structure but different relationship key literals."
+hints = ["Normalize each query before counting by its normalized string.", "Keep counts in an ordered array and filter by the threshold after processing the log."]
+
+[modules.laravel-services]
+title = "Validation, Authentication, and Operations"
+description = "Validation, authentication and authorization, queues, caching, and application testing."
+lesson = '''### Application services
+Validation checks input at the request boundary; only validated data should be passed into business logic. Authentication establishes identity, while authorization decides what that person is allowed to do. Queues suit slow work such as sending email; jobs need a considered retry policy and idempotent behavior. Caching reduces repeated work, but requires a defined key, expiration, and invalidation strategy.
+
+| Task | Suggestion |
+|---|---|
+| Validate input | Form Request or Validator |
+| Check permissions | Policy or gate |
+| Run background work | Queue job with retries |
+| Reduce repeated queries | Cache with an explicit TTL |
+| Verify behavior | Feature and database tests |
+
+Example:
+```php
+$validated = $request->validate(['email' => ['required', 'email']]);
+SendReceipt::dispatch($order);
+```
+
+Laravel tests can check HTTP responses, the database, and queues with the appropriate assertions or fakes. Unit tests suit pure logic; feature tests check that several components work together. Common mistakes include confusing a successful login with permission to access a resource, caching authorization data for too long, or letting a retried job repeat side effects.'''
+
+[questions.php-028]
+prompt = "What status code commonly represents a failed Laravel validation for a JSON request?"
+options = ["201", "302", "422", "503"]
+explanation = "For a request expecting JSON, validation errors are commonly returned as `422 Unprocessable Entity` with an error list."
+
+[questions.php-029]
+prompt = "A user is logged in but must not edit another person's order. Which concept checks this permission?"
+options = ["Authentication", "Authorization through a policy or gate", "Cache", "Queue retry"]
+explanation = "Authentication identifies a user; authorization decides whether an action on a resource is permitted."
+
+[questions.php-030]
+prompt = "A job that sends email fails temporarily and is retried. What helps prevent duplicate emails or other repeated side effects?"
+options = ["Design the job to be idempotent or record processing state with a unique key", "Increase the retry count without limit", "Disable the queue and send email in every request", "Cache every response forever"]
+explanation = "A queue retry can run a job again; idempotent logic or deduplication helps control side effects."
+
+[questions.php-031]
+prompt = "Select appropriate approaches when building a Laravel application."
+options = ["Use a policy or gate to check permissions for an action or resource", "Define a clear TTL or invalidation strategy for the cache", "Assume each queued job runs exactly once", "Use a feature test to check an HTTP and database flow", "Pass unvalidated input directly into business logic"]
+explanation = "Authorization is separate from authentication; caches need invalidation; queues may retry, and feature tests check integrated flows."
+
+[questions.php-032]
+prompt = "A feature test creates database data and verifies a request that updates a resource. Select the correct statements."
+options = ["Database testing can manage isolated test data", "Verify both the response and the expected database state", "Mocking every component always makes a test more reliable", "A test can fake the queue to verify a job was dispatched without running it", "A test should depend on the execution order of other tests"]
+explanation = "Integration tests check observable behavior; database isolation and queue fakes keep the test focused without unintended side effects."
+
+[questions.php-033]
+prompt = "A Laravel facade or helper used to dispatch a job to the queue commonly ends the call with {{blank}}."
+explanation = "`dispatch` enqueues a job using the current connection and configuration."
+
+[questions.php-034]
+prompt = "In the validation rule `required|email|min:3`, which rule sets the minimum length: {{blank}}?"
+explanation = "`min:3` sets the minimum to 3 according to the type of data being validated."
+
+[questions.php-035]
+prompt = "Explain the difference between authentication and authorization for an order update endpoint; name a suitable Laravel abstraction."
+keywords = [["authentication", "identity verification", "establishing identity"], ["authorization", "access control", "permission check"], ["policy", "gate"]]
+model_answer = "Authentication verifies who the caller is, such as whether the user is logged in. Authorization checks whether that user can update a particular order; Laravel policies or gates can define this rule."
+explanation = "A good answer distinguishes identity from permission to perform an action on a resource."
+
+[questions.php-036]
+prompt = "Propose a test strategy for a profile update endpoint that validates email, requires login, and writes to the database. Name a test type and at least two things to verify."
+keywords = [["feature test", "HTTP test"], ["validation", "422", "validation error"], ["authentication", "login"], ["database", "database state", "assert database"]]
+model_answer = "Use a feature test to send an HTTP request as a logged-in user. Send an invalid email to verify that validation returns a 422 error; send valid data to verify a successful response and the updated database state. A case with no authenticated user can also check authentication."
+explanation = "A feature test checks multiple application layers through endpoint behavior rather than calling an isolated function."
+
+[questions.php-037]
+title = "Basic validator rules"
+prompt = '''Implement `validateData(array $data, array $rules): array` for each field, using a pipe-separated rule string. Support `required`, `email`, and `min:n`. Return an error array keyed by field; each value is a list of failed rule names in declaration order. `required` fails when a field is missing, null, or an empty string after trimming; if `required` fails, skip the field's remaining rules. For an empty field that is not required, skip the other rules. For `email`, use `filter_var` with `FILTER_VALIDATE_EMAIL`. `min:n` accepts only a string whose `strlen` is at least n; other types fail. Ignore unsupported rules.
+'''
+explanation = "A validator separates empty-value handling from each rule check and returns structured errors."
+hints = ["Split the rules on `|` and determine whether the value is empty first.", "If `required` fails, record the error and skip the field's remaining rules."]
+
+[modules.php-laravel-dv-errors]
+title = "PHP Errors and Exceptions"
+description = "Distinguish Error, Exception, and Throwable, and handle failures at the right boundary."
+lesson = '''### PHP's error model
+In PHP, `Throwable` is the base interface implemented by both `Error` and `Exception`. An `Exception` commonly represents a business condition or invalid input that the program is expected to handle; an `Error` commonly signals an execution or programming problem such as `TypeError`. Therefore, `catch (Exception $e)` does not catch every throwable error.
+
+| Kind | Example | Common handling approach |
+|---|---|---|
+| `Exception` | `InvalidArgumentException` | Catch near the point where invalid input can be reported or business flow can change |
+| `Error` | `TypeError` | Fix the cause; catch only at a boundary that needs to log or clean up |
+| `Throwable` | Both kinds | Use when a boundary truly needs to observe every failure and then propagate it |
+
+Example:
+```php
+function requirePositiveId(int $id): int {
+    if ($id <= 0) {
+        throw new InvalidArgumentException('ID must be positive');
+    }
+    return $id;
+}
+```
+
+`catch` clauses are considered in order, so a specific branch must come before a broad one. `finally` is appropriate for releasing resources or completing cleanup whether the `try` block succeeds or throws. A common mistake is catching `Throwable` everywhere and returning `null`, which loses the cause and makes incorrect state difficult to trace. Catch the failure type the current layer can handle; propagate failures it cannot recover from.'''
+
+[questions.php-laravel-dv001]
+prompt = "A function call causes a `TypeError`. Which type catches that error in PHP?"
+options = ["Exception", "Error", "InvalidArgumentException", "RuntimeException"]
+explanation = "`TypeError` belongs to the `Error` branch. Both `Error` and `Exception` implement `Throwable`, but neither inherits from the other."
+
+[questions.php-laravel-dv002]
+prompt = "Why is `catch (Exception $e)` not a way to catch every possible failure in PHP?"
+options = ["Because Exception catches only syntax errors", "Because Error also implements Throwable but does not inherit from Exception", "Because catch works only for errors in finally", "Because PHP does not allow catching exceptions"]
+explanation = "`Exception` and `Error` are separate branches that both implement `Throwable`; `catch (Exception)` does not catch errors such as `TypeError`."
+
+[questions.php-laravel-dv003]
+prompt = "A function must clean up a temporary file whether processing succeeds or throws an exception. Which structure is most appropriate?"
+options = ["Put the cleanup command after try/catch", "Put the cleanup command in `finally`", "Catch all failures and ignore them", "Use `return` only in catch"]
+explanation = "`finally` runs after try/catch on both the success path and the failure path, making it suitable for cleanup."
+
+[questions.php-laravel-dv004]
+prompt = "Select the practices that help keep error handling maintainable in a PHP application."
+options = ["Catch a specific exception type at a layer that can recover", "Use `finally` to clean up resources", "Catch `Throwable` in every function and return an empty value", "Propagate failures that cannot be handled after adding suitable context"]
+explanation = "Catching specific failures and cleaning up deliberately preserves meaning. Swallowing every `Throwable` often hides programming errors and produces incorrect results."
+
+[questions.php-laravel-dv005]
+prompt = '''To catch both `Error` and `Exception` objects, provide the base interface:
+
+```php
+catch ({{blank}} $error) {
+    report($error);
+}
+```'''
+explanation = "`Throwable` is the interface implemented by both `Error` and `Exception`."
+
+[questions.php-laravel-dv006]
+prompt = '''Which block is suitable for cleanup that runs after try/catch whether an exception occurs or not?
+
+```php
+try { work(); } catch (Throwable $error) { report($error); } {{blank}} { cleanup(); }
+```'''
+explanation = "`finally` is for operations that need to run after try/catch on ordinary execution paths."
+
+[questions.php-laravel-dv007]
+prompt = "In an interview, explain the difference between `Error` and `Exception`, then describe where to catch failures in a web request."
+keywords = [["Throwable", "Throwable interface"], ["Error", "TypeError"], ["Exception", "application exception"], ["specific catch", "catch a specific type", "specific failure type"], ["propagate", "rethrow"]]
+model_answer = "Both `Error` and `Exception` implement `Throwable`, but they are separate branches. An `Error` commonly reflects an execution failure such as `TypeError`, while an `Exception` commonly describes an expected application condition. Catch a specific failure at a layer that can handle it or turn it into a suitable response; the outermost layer can log an unhandled failure and propagate it instead of silently returning fake data."
+explanation = "A strong answer distinguishes the type relationship and explains the recovery boundary rather than only listing catch syntax."
+
+[questions.php-laravel-dvc01]
+title = "Safely parse a positive integer"
+prompt = '''Implement `positiveInt(mixed $value): int`. The function accepts a positive integer or a string containing only decimal digits; a string may have surrounding whitespace and leading zeros. Return the normalized integer. For zero, a negative number, a boolean, a float, a string containing any non-digit character, or a value greater than `PHP_INT_MAX`, throw `InvalidArgumentException`.
+'''
+explanation = "Validate the representation before casting to avoid accepting invalid data or overflowing while converting a string to an integer."
+hints = ["Check the input type before trimming or matching the string.", "Compare the length and lexicographic order of the digit string with `PHP_INT_MAX` before casting."]
+
+[modules.php-laravel-dv-api]
+title = "API Resources and Pagination"
+description = "Design stable JSON responses and choose the right pagination strategy."
+lesson = '''### API response contracts
+An Eloquent Resource creates a presentation layer between a model and a JSON response. Instead of returning the raw model with every attribute it currently has, a resource explicitly selects public fields, renames fields when needed, and can format nested data. This prevents internal schema changes from accidentally breaking the client contract. For relationships, use a loaded-state check such as `whenLoaded` so a response does not silently trigger another query.
+
+| Strategy | Total count | Best for | Considerations |
+|---|---|---|---|
+| `paginate` | Yes | UI needs page numbers and a total | Requires a count query; can be costly on large datasets |
+| `simplePaginate` | No | Simple previous/next navigation | Does not provide a total number of pages |
+| `cursorPaginate` | No | Large tables browsed continuously in order | Requires a stable order and a suitable cursor column |
+
+Example:
+```php
+return UserResource::collection(User::with('profile')->paginate(25));
+```
+
+Laravel creates a paginated response with `data`, `links`, and `meta`; check the structure the client needs rather than assembling inconsistent metadata by hand. Offset pagination is convenient for jumping to any page, but inserts or deletions between requests can cause records to repeat or be skipped. Cursor pagination continues after a sort value and is often more stable and efficient for large lists, but is not suitable when a client must jump directly to page 40. Common mistakes include paginating without a stable `orderBy`, or having a Resource access a relationship that was not eager-loaded.'''
+
+[questions.php-laravel-dv008]
+prompt = "What is the main benefit of using an Eloquent Resource instead of returning a model directly?"
+options = ["It creates a database index automatically", "It controls the public JSON response separately from the model structure", "It disables middleware for a route", "It guarantees that every query runs only once"]
+explanation = "A Resource defines an explicit API representation, helping avoid exposing internal fields and reducing client dependence on the model."
+
+[questions.php-laravel-dv009]
+prompt = "An endpoint returns millions of records over time, and the client only needs to continue from the last record it saw. Which option is usually more suitable?"
+options = ["`paginate` because it is always cheaper", "`simplePaginate` to get an exact total", "`cursorPaginate` with a stable ordering", "Load the entire collection and slice it in PHP"]
+explanation = "Cursor pagination suits large, ordered streams when the total number of pages is not required."
+
+[questions.php-laravel-dv010]
+prompt = "When is `simplePaginate` a reasonable choice?"
+options = ["When the UI must show the exact number of pages", "When only previous/next navigation is needed and the full result count is not", "When every record must be returned in one response", "When the data has no defined order"]
+explanation = "`simplePaginate` does not need a total record count, so it suits a UI that only needs previous and next page links."
+
+[questions.php-laravel-dv011]
+prompt = "Select the good practices for creating a paginated JSON response with a Resource."
+options = ["Expose only the fields the client needs", "Use `whenLoaded` for optional relationships to avoid unintended lazy loading", "Always remove pagination metadata to make the response shorter", "Set a stable ordering before using cursor pagination"]
+explanation = "A Resource should define the public contract deliberately; cursor pagination needs a stable order. Keep metadata when the client needs navigation or pagination state."
+
+[questions.php-laravel-dv012]
+prompt = '''Provide the resource name so Laravel can create a JSON collection from the `$users` list:
+
+```php
+return {{blank}}::collection($users);
+```'''
+explanation = "A Resource class provides a collection method to present a list of models under the same contract."
+
+[questions.php-laravel-dv013]
+prompt = '''The query needs cursor pagination for a large list. Provide the appropriate method:
+
+```php
+$users = User::orderBy('id')->{{blank}}(50);
+```'''
+explanation = "`cursorPaginate` continues from a cursor instead of an offset, and the query needs a stable ordering."
+
+[questions.php-laravel-dv014]
+prompt = "In an interview, compare offset pagination with cursor pagination and explain why an API should use a Resource."
+keywords = [["offset pagination"], ["cursor pagination"], ["stable ordering", "stable order"], ["response contract", "JSON contract"], ["total count", "total"]]
+model_answer = "Offset pagination supports jumping to a page and often provides a total count, but large queries can be costly and changes between requests can shift results. Cursor pagination uses a stable ordering to continue from the last position; it suits large lists but is not convenient for jumping to an arbitrary page. A Resource keeps the response contract independent from the model and limits which fields are public."
+explanation = "Balance navigation options, query cost, data stability, and the JSON contract."
+
+[questions.php-laravel-dvc02]
+title = "Paginate a result list"
+prompt = '''Implement `paginateRecords(array $items, int $perPage, int $page): array`. Return an array with `data` containing the requested page slice and `meta` containing `current_page`, `per_page`, `total`, and `last_page`. `page` and `perPage` must be at least 1; otherwise throw `InvalidArgumentException`. `last_page` must be at least 1, even for an empty list. If `page` is greater than `last_page`, `data` must be an empty array and `current_page` must remain the requested page.'''
+explanation = "Pagination metadata is part of the response contract; test the final page and an empty list to catch boundary errors."
+hints = ["Calculate the offset from `page` and `perPage` after validating them.", "Calculate `last_page` with `ceil(total / perPage)`, then ensure it is at least 1."]
+
+[modules.php-laravel-dv-http-client]
+title = "HTTP Client and Service Integration"
+description = "Call external services with timeouts, handle responses explicitly, and test without network access."
+lesson = '''### Controlled HTTP calls
+Laravel's HTTP Client provides a fluent API for setting headers, sending payloads, and reading responses from external services. Set an explicit timeout so a request cannot hold a worker indefinitely. An HTTP error status such as 404 or 503 usually still returns a response object; check `successful` or `failed`, or call `throw()` to turn a 4xx/5xx status into an exception. A connection failure and an error status are different cases and should be logged and handled according to separate policies.
+
+| Need | Tool | Note |
+|---|---|---|
+| Limit the wait time | `timeout` | Choose a threshold based on the dependency SLA |
+| Retry temporary failures | `retry` | Limit the number of attempts and delay |
+| Handle an unsuccessful status | `failed` or `throw` | Do not assume every response succeeded |
+| Test a request | `Http::fake` and assertions | Do not call the real service in a test |
+
+Example:
+```php
+$response = Http::timeout(3)->retry(2, 100)->get($url);
+$response->throw();
+```
+
+Retries can repeat side effects if a write request was already processed by the other service. For an operation that creates a transaction, retry only when it is designed to be idempotent or uses an idempotency key that the service actually supports. Retry temporary failures a limited number of times; do not retry forever or retry every 4xx error. Tests can use `Http::fake` to simulate a status and body and assert the method, URL, headers, and payload. This keeps tests stable and independent from the network. Common mistakes include forgetting a timeout, ignoring error statuses, or configuring a fake after the request has already been sent.'''
+
+[questions.php-laravel-dv015]
+prompt = "A request through Laravel's HTTP Client receives status 503. Which statement about the response is correct?"
+options = ["It always throws an exception before a response object exists", "You can inspect the status or call `throw()` to convert the error status into an exception", "Laravel retries automatically without limit", "Status 503 is considered successful"]
+explanation = "The HTTP Client returns a response so the application can decide how to handle it; `throw()` converts an HTTP error status into a `RequestException`."
+
+[questions.php-laravel-dv016]
+prompt = "A payment-creation endpoint may have processed a request, but the client timed out before receiving the response. What matters most before retrying?"
+options = ["Increase the timeout without limit", "Ensure the operation is idempotent or use an idempotency key supported by the service", "Retry continuously until a 200 response arrives", "Change POST to GET without changing the contract"]
+explanation = "A timeout does not prove the server failed to perform the operation. Idempotency helps prevent duplicate transactions on retry."
+
+[questions.php-laravel-dv017]
+prompt = "You want to test a service that calls a partner API without depending on the real network. What should you do?"
+options = ["Call the real endpoint in every test", "Register `Http::fake` before the call, then assert the request and response", "Disable all test assertions", "Replace the HTTP Client with a sleep"]
+explanation = "An HTTP fake simulates the external service and lets the test assert the request without making a network call."
+
+[questions.php-laravel-dv018]
+prompt = "Select the measures that make HTTP integration more reliable in production."
+options = ["Set a clear timeout", "Limit retries and retry only suitable failures", "Retry every 401 authentication error forever", "Use a fake and assertions in tests to verify the request"]
+explanation = "Timeouts, bounded retries, and test fakes improve control. Retrying a 401 forever does not fix the cause and may increase load."
+
+[questions.php-laravel-dv019]
+prompt = '''Provide the facade used to configure a fake response before calling an external service in a test:
+
+```php
+{{blank}}::fake(['partner.test/*' => Http::response(['ok' => true], 200)]);
+```'''
+explanation = "The Laravel HTTP Client fake configures a simulated response for requests made in a test."
+
+[questions.php-laravel-dv020]
+prompt = '''Provide the method that turns a 4xx/5xx response into an exception:
+
+```php
+$response = Http::get($url);
+$response->{{blank}}();
+```'''
+explanation = "`throw` throws an exception when a response has an HTTP error status, so execution can move to the appropriate catch handler."
+
+[questions.php-laravel-dv021]
+prompt = "In an interview, describe timeout, retry, and testing policies for a client that calls an external payment API."
+keywords = [["timeout", "time limit"], ["bounded retry", "limited retries"], ["idempotent", "idempotency"], ["idempotency key"], ["Http::fake", "HTTP fake"]]
+model_answer = "I set a timeout based on the service SLA so a worker does not wait indefinitely. Retries are limited and target temporary failures. Since a timeout can occur after the partner creates a transaction, the operation must be idempotent or use an idempotency key supported by both parties. In tests, I use `Http::fake` to simulate successful and failed responses and verify the request without making a real network call."
+explanation = "Treat a timeout as an uncertain outcome and protect write operations from being performed more than once."
+
+[questions.php-laravel-dvc03]
+title = "Calculate bounded backoff"
+prompt = '''Implement `retryDelayMs(int $attempt, int $baseMs, int $maxMs): int` for exponential backoff. Attempts start at 1; the first delay is `baseMs`, and each later delay doubles, but must not exceed `maxMs`. `attempt` must be between 1 and 20, and `baseMs` and `maxMs` must be non-negative; values outside these bounds must throw `InvalidArgumentException`.'''
+explanation = "Bounded backoff reduces retry bursts; in a real integration, combine it with a timeout and classification of temporary failures."
+hints = ["Validate the input bounds before calculating.", "Stop early when the delay has reached `maxMs` or the next multiplication could exceed it."]
+
+[modules.php-laravel-dv-events]
+title = "Events, Notifications, and Mail"
+description = "Separate domain events from side effects and send notifications through suitable channels."
+lesson = '''### Separating events from notifications
+A domain event describes something that has happened, such as `OrderPaid`; a listener reacts by updating a projection, sending email, or publishing information to another system. This keeps a controller from needing to know about every side effect. An event describes a business occurrence, while a notification chooses recipients and channels such as mail, database, or broadcast. Mail is appropriate when custom email content is needed; a Notification is useful when the same message can be delivered through multiple channels.
+
+| Tool | Responsibility | Example |
+|---|---|---|
+| Event | Describes something that happened | `OrderPaid` |
+| Listener | Reacts to an event | Create a receipt |
+| Notification | Chooses content, recipients, and channels | Mail + database |
+| Queue | Moves slow work to a worker | Send email outside the request |
+
+Example of sending a notification to multiple users:
+```php
+Notification::send($users, new InvoicePaid($invoice));
+```
+
+A listener or notification can implement `ShouldQueue` when slow work needs to run in the background; queues still need bounded retries and a way to handle final failure. If an event depends on data written in a transaction, dispatch it after commit so a listener does not read an uncommitted record. In tests, `Notification::fake` and `Event::fake` verify that a notification or event was dispatched without sending it for real. Common mistakes include sending email synchronously in a request, dispatching an event before a transaction commits, or assuming that retries prevent duplicate side effects.'''
+
+[questions.php-laravel-dv022]
+prompt = "In an event/listener architecture, what should `OrderPaid` represent?"
+options = ["An SQL query", "A business event that has occurred", "An email sent to the buyer", "An HTTP middleware"]
+explanation = "An event describes what happened; a listener decides which reaction should run."
+
+[questions.php-laravel-dv023]
+prompt = "A listener reads an order immediately after an event is dispatched inside a transaction, but cannot find the record. What is a suitable fix?"
+options = ["Dispatch the event after the transaction commits", "Disable transactions for the whole application", "Retry indefinitely in the controller", "Change the event to an email"]
+explanation = "A listener may run before the transaction commits. Delaying dispatch until after commit lets it read the persisted state."
+
+[questions.php-laravel-dv024]
+prompt = "A message needs to reach a user by both email and database. Which choice correctly describes the role of a Laravel Notification?"
+options = ["A Notification can define multiple channels for the same message", "Each notification can be sent through only one SMTP server", "A Notification replaces a database transaction", "A Notification can only be used in a controller"]
+explanation = "A Notification can choose one or more channels based on the recipient and context."
+
+[questions.php-laravel-dv025]
+prompt = "Select reasonable decisions when implementing a notification after an order is paid."
+options = ["Dispatch an event to represent that the order was paid", "Queue slow email delivery when appropriate", "Fake notifications in tests", "Dispatch the event before commit and assume the listener always sees committed data"]
+explanation = "Events separate business logic from side effects; a queue reduces request time; fakes prevent real sends in tests. Transaction consistency must be handled deliberately."
+
+[questions.php-laravel-dv026]
+prompt = '''Provide the interface that lets Laravel queue notification delivery:
+
+```php
+class InvoicePaid extends Notification implements {{blank}} {
+}
+```'''
+explanation = "A Notification can implement `ShouldQueue` so a worker handles delivery."
+
+[questions.php-laravel-dv027]
+prompt = '''Provide the facade used to record a notification in a test without sending it through a real channel:
+
+```php
+{{blank}}::fake();
+```'''
+explanation = "`Notification::fake` replaces real delivery and provides assertions for tests."
+
+[questions.php-laravel-dv028]
+prompt = "In an interview, explain how to separate order payment from email delivery and ensure a listener can read committed data."
+keywords = [["domain event", "business event"], ["listener", "event listener"], ["queue", "queued job"], ["after commit", "after the transaction commits"], ["notification", "user notification"]]
+model_answer = "After a payment succeeds, the application dispatches a domain event such as `OrderPaid`. A listener handles email delivery or creates a notification, keeping the controller separate from side effects. Slow work can run through a queue. If the event depends on a record created in a transaction, dispatch it after commit so the listener runs only after the data has been committed. A test can use `Notification::fake` to verify the notification without sending a real email."
+explanation = "A good answer identifies the business boundary, background processing, and consistency with the transaction."
+
+[questions.php-laravel-dvc04]
+title = "Deduplicate notification recipients"
+prompt = '''Implement `uniqueRecipientIds(array $ids): array`. Keep only IDs that are positive integers, remove duplicates, and preserve the order of first appearance. Ignore values that are not positive integers; do not cast numeric strings to integers.'''
+explanation = "Deduplicating recipient lists helps prevent repeated notifications when the same user appears in multiple sources."
+hints = ["Iterate once and add each valid ID to the result array.", "Use strict comparison when checking whether an ID is already present so values of different types are not combined."]

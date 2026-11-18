@@ -1,0 +1,20 @@
+Làm lại hệ giao diện (UI system) cho Bovabon Edu bằng skill **taste-skill** (`~/.codex/skills/taste-skill/SKILL.md`, tên trong file: design-taste-frontend) để app trông như sản phẩm do designer làm thủ công, KHÔNG còn "mùi AI".
+
+Đọc TOÀN BỘ `~/.codex/skills/taste-skill/SKILL.md` trước, rồi `DESIGN.md` (hệ thiết kế hiện tại: tông "giấy", moss, typography Source Sans 3) và `CLAUDE.md` (kiến trúc).
+
+Cách áp dụng taste-skill cho app này (skill viết cho landing/portfolio — lấy phần phù hợp với một ứng dụng học tập dùng hằng ngày, bỏ phần dành riêng cho landing như hero, testimonial, scroll-pinning, motion nặng):
+- Mục 0: viết dòng "Design Read" — đây là **redesign (giữ bản sắc, nâng chất lượng)** cho **người Việt học lập trình/tiếng Anh, đọc lâu, ôn thi/phỏng vấn**; ngôn ngữ thiết kế điềm tĩnh, biên tập (editorial), tông giấy hiện có. Chọn giá trị 3 dial (mục 1): DESIGN_VARIANCE thấp–vừa, MOTION_INTENSITY thấp, VISUAL_DENSITY vừa–cao. Ghi Design Read + dial vào đầu `.codex-logs/ui-audit.md`.
+- Mục 11 (redesign): audit-first — giữ tài sản thương hiệu (logo, màu moss/giấy, font), liệt kê điều cần giữ / cần sửa trong `.codex-logs/ui-audit.md` trước khi sửa code.
+- Mục 9 (AI tells): rà từng dấu hiệu và loại bỏ — emoji dùng làm icon (nav, công tắc Lập trình/Tiếng Anh, nút 🌐, icon danh mục), badge/chip tràn lan, card lồng card, bóng/bo góc đồng loạt, gradient/glow, khoảng cách không theo thang, chữ xám nhạt khó đọc, căn giữa mọi thứ, tiêu đề kiểu marketing, nút cùng trọng lượng, dấu gạch ngang dài (em-dash) trong chữ giao diện (mục 9.G — thay bằng dấu phẩy/hai chấm/ngoặc).
+- Mục 3.C/3.D: icon dùng bộ Tabler sẵn có trong `static/icons.svg` (`iconSvg()` / `<use href="/icons.svg#...">`, có thể thêm symbol Tabler mới vào file này); icon danh mục (`trackMark`) đổi thành huy hiệu chữ viết tắt + màu của danh mục.
+- Mục 4 (typography, màu, layout, materiality, interactive states, form, layout discipline, density) và mục 6/8 (accessibility, reduced motion, dark mode — app có `[data-theme="dark"]`, kiểm tra cả hai chế độ).
+- Stack giữ nguyên: CSS thuần + vanilla JS, KHÔNG thêm framework/thư viện/CDN (bỏ qua phần Tailwind/React/package của skill).
+
+Phạm vi được sửa: `static/app.css`, `static/index.html`, `static/icons.svg`, các chuỗi HTML/markup trong hàm render của `static/app.js`, và cập nhật `DESIGN.md` cho khớp. KHÔNG sửa `src/`, `data/`, `cloud/`, `static/i18n.js`, logic JS (luồng dữ liệu, xử lý sự kiện, router, Store, Sync).
+
+Áp dụng nhất quán cho mọi màn hình: sidebar (công tắc khu vực, danh mục + mục con mở/đóng, nút ngôn ngữ, nút đổi tông), topbar, trang chủ, trang danh mục, trang module (tab Bài học / Câu hỏi / Tài liệu gốc), luyện tập & phản hồi đúng/sai, Code Lab (editor + kết quả test), thi thử, kho câu hỏi, tiến độ, cài đặt & thẻ đồng bộ, toast/dialog. Hệ token rõ ràng trong `:root` (spacing, type scale, màu light + dark, tối đa 2–3 mức radius, bóng tối thiểu). Độ rộng dòng bài học ~70ch, tương phản WCAG AA, focus rõ, vùng bấm ≥ 40px trên mobile, 375px không tràn ngang.
+
+Giữ nguyên: mọi `id`, `class` mà JS đang query (`$('#...')`, `$$('.…')`, `classList`), mọi `data-*` attribute, cấu trúc route. Nếu đổi tên class thì sửa đồng bộ ở cả JS và CSS. Nhãn chữ mới phải là tiếng Việt (bản tiếng Anh sẽ do job ui-i18n thêm sau).
+
+Cuối cùng chạy pre-flight check của taste-skill (mục kiểm tra cuối trong SKILL.md) trên kết quả và ghi vào `.codex-logs/ui-audit.md`.
+Kiểm tra: `node --check static/app.js`; `cargo build --release` (static được nhúng vào binary); chạy `PORT=18990 ./target/release/bovabon_edu` rồi `curl -s localhost:18990/ | head` và `curl -s localhost:18990/app.css | head` (nếu server không khởi động vì một file `data/*.toml` đang được job khác sửa dở thì bỏ qua bước chạy server). Dừng server khi xong. Ghi tóm tắt thay đổi vào cuối `.codex-logs/ui-audit.md`.

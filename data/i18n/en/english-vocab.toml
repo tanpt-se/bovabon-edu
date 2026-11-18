@@ -1,0 +1,476 @@
+[modules.vocab-workflow]
+title = "Software Development Workflow"
+description = "Requirement, estimate, deadline, scope creep, backlog, deploy, rollback, and hotfix."
+lesson = '''
+### Vocabulary Across a Development Cycle
+| Term | IPA | Part of speech | Meaning | IT example |
+|---|---|---|---|---|
+| requirement | /rɪˈkwaɪərmənt/ | noun | requirement; condition to be met | We clarified the login requirements before coding. |
+| estimate | /ˈestɪmeɪt/ | noun/verb | estimate; an estimated amount | The team estimated three days for the migration. |
+| deadline | /ˈdedlaɪn/ | noun | final due date | We must meet the release deadline. |
+| scope creep | /ˈskoʊp kriːp/ | noun | uncontrolled growth in project scope | New requests caused scope creep during the sprint. |
+| backlog | /ˈbæklɔːɡ/ | noun | list of work waiting to be reviewed or done | Move the bug to the product backlog. |
+| deploy | /dɪˈplɔɪ/ | verb | release to an environment | We will deploy the patch after review. |
+| rollback | /ˈroʊlbæk/ | noun/verb | return a deployment to an earlier version | Roll back the release if checkout errors increase. |
+| hotfix | /ˈhɑːtfɪks/ | noun | urgent fix | A hotfix restored payment processing. |
+
+### Quick distinctions
+A requirement describes what must be delivered; an estimate predicts the effort or time needed; a deadline is the point by which work must be finished. Deploying puts a change into an environment, while rolling back returns to an earlier version. A hotfix usually addresses a serious issue affecting users.
+
+### Common mistakes
+- Using deadline to describe duration: “The task takes two days” describes duration; “The deadline is Friday” gives the due date.
+- Confusing rollback with roll out: rollback reverts a change, while roll out releases it, often gradually.
+- Accepting every new request into a sprint without negotiation; this can lead to scope creep.
+'''
+
+[questions.voc-001]
+prompt = '''In the sentence “The product owner clarified the requirements before the team estimated the work,” what is the closest meaning of requirements?'''
+options = ["Requirements to be met", "Bugs that have been deployed", "Payment milestones", "Backups"]
+explanation = '''A requirement is something a product must satisfy or deliver.'''
+
+[questions.voc-002]
+prompt = '''During a sprint, the team keeps accepting extra features without changing the deadline or resources. What is this situation usually called?'''
+explanation = '''Scope creep is the uncontrolled growth of project work without corresponding adjustments to the plan or resources.'''
+
+[questions.voc-003]
+prompt = '''Which sentence uses deadline correctly?'''
+explanation = '''A deadline is the latest time by which work must be finished; the time needed to do it is its duration.'''
+
+[questions.voc-004]
+prompt = '''A serious payment bug is affecting production users. What is a small, urgently released fix usually called?'''
+explanation = '''A hotfix is an urgent fix for an issue that needs immediate attention.'''
+
+[questions.voc-005]
+prompt = '''Choose the natural word combinations used in a software development workflow.'''
+explanation = '''“Meet a deadline,” “deploy a release,” and “roll back a deployment” are natural collocations. “Do a deadline” is incorrect; estimate is usually used with effort, time, or cost.'''
+
+[questions.voc-006]
+explanation = '''Estimate means to predict the effort or time needed before committing to a plan.'''
+
+[questions.voc-007]
+explanation = '''A backlog is a list of work recorded for later review or completion.'''
+
+[questions.voc-008]
+prompt = '''Write 3–5 sentences in English describing a delayed new feature. Use at least four of these words or phrases: requirement, estimate, deadline, scope creep, rollback.'''
+explanation = '''A clear description states the requirement, explains what affected the plan, and describes how release risk will be reduced.'''
+
+[questions.voc-067]
+explanation = '''A workaround is a temporary solution that lets people continue working before the underlying issue is fixed.'''
+
+[questions.voc-068]
+explanation = '''Roll out means to release or deploy a feature to users; this can be done gradually.'''
+
+[modules.vocab-frontend]
+title = "Frontend and User Interfaces"
+description = "Layout, responsive design, accessibility, rendering, state, components, and breakpoints."
+lesson = '''
+### Interface Vocabulary
+| Term | IPA | Part of speech | Meaning | IT example |
+|---|---|---|---|---|
+| layout | /ˈleɪaʊt/ | noun | arrangement of interface elements | The new layout keeps the form readable on small screens. |
+| responsive | /rɪˈspɑːnsɪv/ | adjective | adapting to screen size | Make the dashboard responsive before launch. |
+| accessibility | /əkˌsesəˈbɪləti/ | noun | the ability to access and use a product | Accessibility includes keyboard and screen reader support. |
+| render | /ˈrendər/ | verb | display or produce an interface | The component renders a loading message first. |
+| state | /steɪt/ | noun | the current data in an interface | Keep the selected tab in local state. |
+| component | /kəmˈpoʊnənt/ | noun | a reusable interface building block | Reuse the button component across settings pages. |
+| breakpoint | /ˈbreɪkpɔɪnt/ | noun | a viewport width at which the layout changes | Add a breakpoint for the tablet layout. |
+
+### Using the Words in Context
+We render a component, manage state, and design a responsive layout. Accessibility involves more than color; keyboard navigation, form labels, and alternative text also matter.
+
+### Common Mistakes
+- Responsive describes an interface that adapts to its display; it does not mean the page loads quickly.
+- State is data that can change through interaction, not the entire HTML document.
+- Accessible is an adjective used before a noun, as in “an accessible form.” Accessibility is the noun for the quality or field.
+'''
+
+[questions.voc-009]
+prompt = '''In interface design, what does layout mean?'''
+options = ["How elements are arranged on the screen", "The server's response time", "Data sent in a request", "A service account's permissions"]
+explanation = '''Layout describes how interface regions and elements are arranged.'''
+
+[questions.voc-010]
+prompt = '''What do we call a page that changes its layout to work well on both phones and large screens?'''
+explanation = '''Responsive describes an interface that adapts to a device's screen size or display.'''
+
+[questions.voc-011]
+prompt = '''In the sentence “The component renders a loading indicator while data is pending,” what does renders mean?'''
+options = ["Displays or renders", "Encrypts", "Backs up", "Revokes"]
+explanation = '''Render means to display or produce an interface from a component and the data currently available.'''
+
+[questions.voc-012]
+prompt = '''A user can operate a form using only a keyboard, and a screen reader can identify its labels. What does this demonstrate?'''
+explanation = '''Accessibility is the ability of a wide range of people, including people using assistive technology, to access and use a product.'''
+
+[questions.voc-013]
+prompt = '''Choose the natural phrases used when talking about frontend development.'''
+explanation = '''“Render a component,” “manage state,” and “responsive layout” are common combinations. We usually say “improve accessibility” and “set a breakpoint.”'''
+
+[questions.voc-014]
+explanation = '''A breakpoint is the point at which a layout or display style changes based on screen size.'''
+
+[questions.voc-015]
+explanation = '''State is data that represents the current condition of an interface or application.'''
+
+[questions.voc-016]
+explanation = '''Accessible is an adjective; accessibility is the noun.'''
+
+[modules.vocab-backend-data]
+title = "Backend and Data"
+description = "Endpoint, payload, latency, throughput, query, index, migration, and schema."
+lesson = '''
+### API and Database Vocabulary
+| Term | IPA | Part of speech | Meaning | IT example |
+|---|---|---|---|---|
+| endpoint | /ˈendpɔɪnt/ | noun | API access point | The endpoint returns the current user profile. |
+| payload | /ˈpeɪloʊd/ | noun | the data sent in a request or response | Validate the request payload before saving it. |
+| latency | /ˈleɪtənsi/ | noun | delay | Caching reduced the endpoint latency. |
+| throughput | /ˈθruːpʊt/ | noun | amount of work processed per unit of time | The service handles higher throughput after scaling. |
+| query | /ˈkwɪri/ | noun/verb | a data request; to request data | This query loads the latest invoices. |
+| index | /ˈɪndeks/ | noun/verb | a lookup structure; to create an index | Add an index to speed up searches by email. |
+| migration | /maɪˈɡreɪʃən/ | noun | a managed schema change | Run the database migration before deploying the API. |
+| schema | /ˈskiːmə/ | noun | data structure | The schema requires an account identifier. |
+
+### Latency and Throughput
+Latency measures how long an operation takes to respond; throughput measures how many operations finish in a period of time. A system may handle many requests per second while each individual request still has high latency.
+
+### Common Mistakes
+- A payload is the data in a request or response, not the entire network connection.
+- A query reads or changes data; an index helps locate data but adds cost to writes.
+- Migrations need to be ordered and planned for compatibility when multiple application versions are running at once.
+'''
+
+[questions.voc-017]
+prompt = '''In API documentation, what does an endpoint usually refer to?'''
+options = ["An API address or access point for a function", "A scheduled backup", "A release deadline", "A responsive interface type"]
+explanation = '''An endpoint is an API access point, usually identified by a path and an HTTP method.'''
+
+[questions.voc-018]
+prompt = '''An API handles 2,000 requests per second, but each request responds slowly. Which term describes the wait time for an individual request?'''
+explanation = '''Latency is delay or response time; throughput is the amount of work completed over time.'''
+
+[questions.voc-019]
+prompt = '''What does the sentence “The query selects unpaid invoices from the database” describe?'''
+options = ["A data query", "A security patch", "A gradual release", "A CSS breakpoint"]
+explanation = '''A query is a request used to read or change data in a system.'''
+
+[questions.voc-020]
+prompt = '''Searches by email are frequent and slow. What change could help the database search faster?'''
+explanation = '''An index on a frequently queried column can speed up lookups, though it adds costs when data is written or updated.'''
+
+[questions.voc-021]
+prompt = '''Choose the sentences that use backend and data terms correctly.'''
+explanation = '''A payload is request data; an index helps with lookups; and a migration manages schema changes. Latency is wait time, not throughput.'''
+
+[questions.voc-022]
+explanation = '''A payload is the data sent in a request or response.'''
+
+[questions.voc-023]
+explanation = '''A migration applies schema changes in an order that can be tracked and controlled.'''
+
+[questions.voc-024]
+prompt = '''Write 3–5 sentences in English describing an investigation into a slow API. Use at least four of these words: endpoint, latency, throughput, query, index, migration.'''
+explanation = '''The response should distinguish the delay of an individual request from the system's overall throughput.'''
+
+[modules.vocab-devops-cloud]
+title = "DevOps and Cloud"
+description = "Pipeline, container, provision, scale out, outage, incident, and postmortem."
+lesson = '''
+### Operations Vocabulary
+| Term | IPA | Part of speech | Meaning | IT example |
+|---|---|---|---|---|
+| pipeline | /ˈpaɪplaɪn/ | noun | automated sequence of steps | The pipeline runs tests before deployment. |
+| container | /kənˈteɪnər/ | noun | packaged application environment | The worker runs in a container. |
+| provision | /prəˈvɪʒən/ | verb | allocate or prepare resources | Provision a database for the staging environment. |
+| scale out | /skeɪl aʊt/ | phrasal verb | add more machines or instances | We scaled out the API workers during the sale. |
+| outage | /ˈaʊtɪdʒ/ | noun | service interruption | The outage lasted twelve minutes. |
+| incident | /ˈɪnsɪdənt/ | noun | an event that needs a coordinated response | The on-call engineer declared an incident. |
+| postmortem | /ˌpoʊstˈmɔːrtəm/ | noun | review or report after an incident | The postmortem identified a missing alert. |
+| monitor | /ˈmɑːnɪtər/ | verb/noun | observe; a monitoring tool | Monitor error rates after the rollout. |
+
+### Scale and Incidents
+Scaling out adds instances to distribute load; scaling up adds resources to one machine. An incident is an event that requires a coordinated response; an outage is a period when a service is unavailable. A postmortem records causes and follow-up work to reduce the chance of recurrence.
+
+### Common Mistakes
+- Provision usually means to allocate or prepare resources; deploy means to release an application version to an environment.
+- A container packages a runtime environment, but it does not by itself make an application fault-tolerant.
+- An effective postmortem focuses on systems, decisions, and improvements instead of blaming individuals.
+'''
+
+[questions.voc-025]
+prompt = '''A CI pipeline runs unit tests automatically after every pull request. What does pipeline mean here?'''
+options = ["An ordered sequence of automated steps", "A type of credential", "A SQL query", "A layout for a phone"]
+explanation = '''A pipeline is a sequence of tasks or automated steps, such as build, test, and deploy.'''
+
+[questions.voc-026]
+prompt = '''In DevOps, what does a container mainly help a team do?'''
+options = ["Package an application with the environment it needs to run", "Predict a deadline", "Raise a concern in a meeting", "Create an index in a table"]
+explanation = '''A container packages an application and the components it needs to run consistently across environments.'''
+
+[questions.voc-027]
+prompt = '''A cloud team must provision a database for the new staging environment. What is the closest meaning of provision?'''
+options = ["Allocate and prepare resources", "Revoke all credentials", "Measure latency", "Correct spelling"]
+explanation = '''Provision means to allocate or prepare resources such as servers, databases, or accounts.'''
+
+[questions.voc-028]
+prompt = '''A service needs to increase its number of workers from 4 to 12 during a sale. What is this action called?'''
+explanation = '''Scale out means to add instances or workers; scale up usually means to add resources to each instance.'''
+
+[questions.voc-029]
+prompt = '''Choose the correct statements about system operations.'''
+explanation = '''Scaling out adds instances; an outage is a period of service interruption; and a postmortem records causes and follow-up actions.'''
+
+[questions.voc-030]
+prompt = '''After an incident affecting an API, which steps would be reasonable ways to improve operations?'''
+explanation = '''Monitoring after recovery, analyzing causes, and adding relevant tests can improve operations. Deleting records or assuming containers alone prevent outages is not reasonable.'''
+
+[questions.voc-031]
+explanation = '''Provision describes allocating or preparing resources before they are needed.'''
+
+[questions.voc-032]
+explanation = '''An outage is an interruption that makes a service unavailable for a period of time.'''
+
+[questions.voc-065]
+explanation = '''Provision is a verb meaning to prepare or allocate the infrastructure, accounts, or resources that are needed.'''
+
+[questions.voc-070]
+prompt = '''Write a two-sentence update after an incident. State how the impact was reduced, the root cause, and the follow-up action.'''
+explanation = '''Summarize the incident by covering three points: reducing its impact, identifying the root cause, and stating a follow-up action.'''
+
+[modules.vocab-security]
+title = "Software Security"
+description = "Vulnerability, exploit, credential, leak, patch, least privilege, and response verbs."
+lesson = '''
+### Security Vocabulary
+| Term | IPA | Part of speech | Meaning | IT example |
+|---|---|---|---|---|
+| vulnerability | /ˌvʌlnərəˈbɪləti/ | noun | security weakness | The scan found a vulnerability in an old dependency. |
+| exploit | /ˈeksplɔɪt/ | noun/verb | a method or code that takes advantage of a vulnerability; to take advantage of one | The team confirmed that the exploit was blocked. |
+| credential | /krəˈdenʃəl/ | noun | authentication information | Revoke the exposed credential immediately. |
+| leak | /liːk/ | noun/verb | disclosure; to disclose unintentionally | A debug log caused a token leak. |
+| patch | /pætʃ/ | noun/verb | corrective update; to fix with an update | Install the security patch this afternoon. |
+| least privilege | /liːst ˈprɪvəlɪdʒ/ | noun phrase | only the minimum permissions required | Apply least privilege to service accounts. |
+| revoke | /rɪˈvoʊk/ | verb | withdraw access or invalidate a credential | Revoke old keys after rotating the secret. |
+| encrypt | /ɪnˈkrɪpt/ | verb | convert data into an encoded form | Encrypt backups before storing them off-site. |
+
+### Safe Response
+When a leak is found, identify the affected credential, revoke or rotate it, investigate the scope, and patch the vulnerability. Least privilege limits the impact if an account is exposed.
+
+### Common Mistakes
+- A vulnerability is a weakness; an exploit is a way to take advantage of that weakness.
+- A credential is authentication data such as a token or password; do not write credentials to logs or source code.
+- Patches need to be tested and deployed in a controlled order, but delaying action on an actively exploited vulnerability also creates risk.
+'''
+
+[questions.voc-033]
+prompt = '''A scanner reports that an old library has a flaw that allows unauthorized data access. What is this weakness called?'''
+explanation = '''A vulnerability is a weakness that can affect a system's security or reliability.'''
+
+[questions.voc-034]
+prompt = '''In a security report, what does exploit usually refer to?'''
+options = ["A method or code that takes advantage of a vulnerability", "A to-do list", "A page layout", "The number of requests per second"]
+explanation = '''An exploit is a method or code that takes advantage of a vulnerability; the terms are related but not interchangeable.'''
+
+[questions.voc-035]
+prompt = '''API tokens, passwords, and private keys can all be referred to by what general term?'''
+explanation = '''A credential is information used to authenticate an identity or authorize access.'''
+
+[questions.voc-036]
+prompt = '''A service account can read only one required bucket instead of having administrator access across the cloud. Which principle is being applied?'''
+explanation = '''Least privilege grants only the permissions needed for a task, reducing the impact if an account is exposed.'''
+
+[questions.voc-037]
+prompt = '''A credential has been exposed in a log. Choose the appropriate response actions.'''
+explanation = '''Revoke or rotate the credential, investigate its exposure, and prevent future logs from exposing secrets. Do not publish the credential or grant excessive access.'''
+
+[questions.voc-038]
+explanation = '''Credentials include tokens, passwords, or keys used for authentication.'''
+
+[questions.voc-039]
+explanation = '''A patch is an update that fixes a known bug or vulnerability.'''
+
+[questions.voc-040]
+prompt = '''Write 3–5 sentences in English about responding to an exposed token. Use at least four of these words: leak, credential, revoke, patch, least privilege.'''
+explanation = '''The response should describe the incident, how access was limited, and how recurrence will be prevented.'''
+
+[questions.voc-041]
+prompt = '''Choose the correct word: “Please ___ the old API key before removing it from the deployment configuration.”'''
+explanation = '''Revoke means to invalidate a key or withdraw its access.'''
+
+[questions.voc-066]
+prompt = '''Choose the natural collocations in a security incident update.'''
+explanation = '''“Mitigate the impact,” “identify the root cause,” and “apply a security patch” are natural collocations; people usually say “perform a rollback.”'''
+
+[modules.vocab-phrasal-verbs]
+title = "Workplace Phrasal Verbs"
+description = "Common phrasal verbs for communication, troubleshooting, and teamwork."
+lesson = '''
+### Common Phrasal Verbs
+| Term | IPA | Part of speech | Meaning | IT example |
+|---|---|---|---|---|
+| roll out | /roʊl aʊt/ | phrasal verb | release in stages | We will roll out the new editor to ten percent of users. |
+| look into | /lʊk ˈɪntuː/ | phrasal verb | investigate | I will look into the failed build. |
+| figure out | /ˈfɪɡjər aʊt/ | phrasal verb | discover how something works or why it happened | We figured out why the cache was stale. |
+| set up | /set ʌp/ | phrasal verb | configure or prepare | Set up an alert for repeated login failures. |
+| back up | /bæk ʌp/ | phrasal verb | make a copy for safekeeping | Back up the database before the migration. |
+| bring up | /brɪŋ ʌp/ | phrasal verb | mention an issue | She brought up a concern during review. |
+| follow up | /ˈfɑːloʊ ʌp/ | phrasal verb | contact someone or take further action | Please follow up with the vendor tomorrow. |
+| run into | /rʌn ˈɪntuː/ | phrasal verb | encounter a problem | We ran into a permission issue in staging. |
+| wrap up | /ræp ʌp/ | phrasal verb | finish | Let’s wrap up the incident review. |
+
+### Using Them in Conversation
+Phrasal verbs often sound informal and natural in team conversations. You might say “look into the error” when taking on an investigation, then “follow up with the team” after finding out more.
+
+### Common Mistakes
+- Changing the particle can change the meaning: bring up means mention an issue; back up means create a backup.
+- Roll out means release; roll back means revert.
+- In this learning path, recognize the forms shown in the table; the exercises do not require you to guess inflections.
+'''
+
+[questions.voc-042]
+prompt = '''The team will roll out the new editor to five percent of users first. What does roll out mean?'''
+options = ["Release or deploy in stages", "Revoke a credential", "Back up a database", "Encounter an error"]
+explanation = '''Roll out means to release or put a change into use, often for groups of users in stages.'''
+
+[questions.voc-043]
+prompt = '''“I will look into the failed build and share what I find.” What will the speaker do?'''
+options = ["Investigate the failed build", "Delete the pipeline", "Release the build to everyone", "End the meeting"]
+explanation = '''Look into means to investigate or learn more about an issue.'''
+
+[questions.voc-044]
+prompt = '''What does the sentence “We ran into a permission issue in staging” mean?'''
+options = ["The team encountered a permissions problem in staging", "The team finished fixing permissions in production", "The team backed up the permissions", "The team is ending the incident"]
+explanation = '''Run into describes unexpectedly encountering a problem or obstacle.'''
+
+[questions.voc-045]
+prompt = '''Match each meaning to the appropriate phrasal verb. Select all correct answers.'''
+explanation = '''Look into means investigate, set up means configure, and bring up means mention. Wrap up means finish; back up means make a backup.'''
+
+[questions.voc-046]
+prompt = '''Choose the sentences that use phrasal verbs naturally in IT work.'''
+explanation = '''“Back up a database,” “follow up with someone,” and “wrap up a review” are natural. Set up usually means configure; figure out takes a problem or answer as its object.'''
+
+[questions.voc-047]
+explanation = '''Follow up with someone means to contact them or take further action with them.'''
+
+[questions.voc-048]
+explanation = '''Set up means to configure or prepare something for use.'''
+
+[questions.voc-049]
+prompt = '''Write 3–5 sentences in English describing how a team handled a newly discovered bug. Use at least four of these phrases: run into, look into, figure out, set up, follow up, wrap up.'''
+explanation = '''Phrasal verbs make it natural to describe the sequence of actions from discovering an issue through following up afterward.'''
+
+[modules.vocab-workplace]
+title = "Workplace Collocations and Idioms"
+description = "Natural word combinations, workplace idioms, and commonly confused word pairs."
+lesson = '''
+### Common Word Combinations
+| Term | IPA | Part of speech | Meaning | IT example |
+|---|---|---|---|---|
+| make a decision | /meɪk ə dɪˈsɪʒən/ | collocation | make a choice | We need to make a decision about the database. |
+| meet a deadline | /miːt ə ˈdedlaɪn/ | collocation | finish by the due date | The team met the deadline without skipping review. |
+| raise a concern | /reɪz ə kənˈsɜːrn/ | collocation | mention a worry or risk | Raise a concern if the migration can lose data. |
+| on the same page | /ɑːn ðə seɪm peɪdʒ/ | idiom | sharing the same understanding or agreement | Let’s confirm that product and engineering are on the same page. |
+| ballpark figure | /ˈbɔːlbɑːrk ˈfɪɡjər/ | idiom | rough estimate | Give us a ballpark figure for the storage cost. |
+| in the loop | /ɪn ðə luːp/ | idiom | kept informed | Keep support in the loop during the rollout. |
+
+### Commonly Confused Pairs
+| Pair | Distinction | IT example |
+|---|---|---|
+| affect / effect | affect is usually a verb meaning “influence”; effect is usually a noun meaning “result” | The change may affect latency; the effect is visible in the chart. |
+| ensure / insure | ensure means “make certain”; insure means “buy insurance” | Ensure the backup works; insure the laptop against damage. |
+| lose / loose | lose means “misplace or fail to keep”; loose means “not tight” | Users may lose data if a loose cable disconnects the drive. |
+| fix / repair | fix commonly means correct a bug or problem; repair commonly means restore a damaged object or device | Fix the parsing bug; repair the damaged server fan. |
+
+### Common Mistakes
+- English uses “make a decision” but “meet a deadline.”
+- A ballpark figure is a rough estimate, not a precise commitment.
+- Fix and repair sometimes overlap; choose based on the object and the natural phrasing.
+'''
+
+[questions.voc-050]
+prompt = '''Choose the correct word: “A missing database index can ___ the response time of the search endpoint.”'''
+explanation = '''Affect is usually a verb meaning “influence.” Effect is usually a noun, as in “the effect on response time.”'''
+
+[questions.voc-051]
+prompt = '''Choose the sentence that uses ensure and insure correctly.'''
+explanation = '''Ensure means to make certain of an outcome; insure means to buy insurance for a person or property.'''
+
+[questions.voc-052]
+prompt = '''Choose the correct word: “Without an autosave, users may ___ their unsaved changes.”'''
+explanation = '''Lose is a verb meaning to fail to keep something; loose is an adjective meaning not tight.'''
+
+[questions.voc-053]
+prompt = '''Which sentence is most appropriate when talking about a logic bug in production code?'''
+explanation = '''“Fix a bug” is a natural collocation for correcting a software issue. Repair usually refers to restoring a damaged device or object, though the verbs can sometimes overlap.'''
+
+[questions.voc-054]
+prompt = '''In the sentence “The fix had an unexpected effect on startup time,” what part of speech is effect?'''
+options = ["A noun meaning an impact or result", "A verb meaning to influence", "An adjective meaning not tight", "A verb meaning to make certain"]
+explanation = '''In the phrase “an effect on,” effect is a noun. Affect is usually a verb: “The fix may affect startup time.”'''
+
+[questions.voc-055]
+prompt = '''Choose the correct collocations used in the workplace.'''
+explanation = '''We commonly say “make a decision,” “meet a deadline,” and “raise a concern.”'''
+
+[questions.voc-056]
+prompt = '''Choose the idioms commonly used in workplace conversations and their matching meanings.'''
+options = ["on the same page = share the same understanding or agreement", "ballpark figure = rough estimate", "keep someone in the loop = continue keeping someone informed", "wrap up = add more instances", "run into = revoke a token"]
+explanation = '''The first three are common workplace idioms. Wrap up means finish; run into means encounter a problem.'''
+
+[questions.voc-057]
+explanation = '''A ballpark figure is a rough estimate, not an exact amount or a commitment.'''
+
+[questions.voc-058]
+explanation = '''Keep someone in the loop means to continue giving them updates.'''
+
+[questions.voc-069]
+explanation = '''A backlog is a list of unfinished work that has not yet been scheduled; a sprint backlog is the subset selected for a particular sprint.'''
+
+[modules.vocab-word-formation]
+title = "Word Formation in IT"
+description = "The prefixes re-, de-, and un-; the suffixes -able, -ize, and -ment; and related word families."
+lesson = '''
+### Common Prefixes and Suffixes
+| Term | IPA | Part of speech | Meaning | IT example |
+|---|---|---|---|---|
+| redeploy | /ˌriːdɪˈplɔɪ/ | verb | deploy again | Redeploy the service after updating its configuration. |
+| deprovision | /ˌdiːprəˈvɪʒən/ | verb | withdraw previously allocated resources | Deprovision the test account after the audit. |
+| unavailable | /ˌʌnəˈveɪləbəl/ | adjective | not available | The endpoint is unavailable during maintenance. |
+| configurable | /kənˈfɪɡjərəbəl/ | adjective | able to be configured | The timeout is configurable per environment. |
+| normalize | /ˈnɔːrməlaɪz/ | verb | standardize | Normalize user input before comparison. |
+| deployment | /dɪˈplɔɪmənt/ | noun | the act or result of deploying | The deployment completed without errors. |
+| secure / security / securely | /ˈsɪkjʊr/ /sɪˈkjʊrəti/ /sɪˈkjʊrli/ | adjective/noun/adverb | safe / protection / in a safe way | Store the credential securely and review its security settings. |
+
+### Recognizing Word Families
+Re- often means doing something again; de- can mean removing or reversing something; un- forms a negative. The suffix -able often forms an adjective describing possibility, -ize forms a verb, and -ment often forms a noun for an action or result.
+
+### Common Mistakes
+- Not every word can be combined with every prefix or suffix; learn words in context and check a dictionary.
+- Deployment is a noun and deploy is a verb; configurable is an adjective and configure is a verb.
+- Do not guess meaning from form alone: check the part of speech and collocations in context.
+'''
+
+[questions.voc-059]
+prompt = '''Choose the noun in the same word family as secure in the sentence “Store the token securely.”'''
+explanation = '''Secure can be an adjective or verb; security is a noun, while securely is an adverb.'''
+
+[questions.voc-060]
+prompt = '''What meaning does the prefix re- usually add to redeploy?'''
+options = ["Do something again", "Be unable to do something", "Remove something completely", "A person who does something"]
+explanation = '''Re- often means “again” or “once more”; redeploy means to deploy again.'''
+
+[questions.voc-061]
+prompt = '''Choose the correct noun to complete the sentence: “The deployment was delayed by a network outage.” Which verb is deployment formed from?'''
+explanation = '''Deploy is the verb meaning to put into an environment; deployment is the noun for the act or result of deploying.'''
+
+[questions.voc-062]
+prompt = '''Choose the correct statements about prefixes in word formation.'''
+explanation = '''Re-, un-, and de- often express repetition, negation, or removal/reversal, but they cannot be applied mechanically to every word.'''
+
+[questions.voc-063]
+prompt = '''Choose the correct word formations and parts of speech.'''
+explanation = '''Configurable is an adjective, normalize is a verb, and deployment is a noun. Securely is an adverb; availability is a noun.'''
+
+[questions.voc-064]
+explanation = '''Configurable is an adjective meaning able to be configured; the suffix -able often expresses possibility or capability.'''

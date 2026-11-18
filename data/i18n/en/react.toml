@@ -1,0 +1,1322 @@
+[modules.react-basics]
+title = "JSX & Components"
+description = "How JSX is transformed, function components, props, children, conditional rendering, lists, and keys."
+lesson = '''### JSX, components, and lists
+JSX describes React elements. The modern JSX transform converts it to calls such as `jsx(...)`, while the classic runtime uses `React.createElement(...)`. A component is a capitalized function that receives props and returns an element. Props are read-only; use a Fragment when you need multiple nodes without adding a DOM element.
+
+| Situation | Approach | Why |
+|---|---|---|
+| A list can be reordered | `key={item.id}` | React preserves the identity and state of each row |
+| A condition depends on a count | `items.length > 0 && <List />` | `0 && ...` renders the number zero |
+| DOM attributes | `className`, `htmlFor`, `onClick` | These names follow the React DOM API |
+
+```jsx
+function TodoList({ items }) {
+  return <ul>{items.map(item => <li key={item.id}>{item.text}</li>)}</ul>;
+}
+```
+
+### Common mistakes
+- Using `key={index}` for a list that can have items inserted, removed, or reordered can attach a row's state to the wrong item.
+- Defining a component with a lowercase name or mutating its props.
+- Using `condition && node` when the condition might be `0`.
+
+### Interview checklist
+- Does JSX immediately create a DOM node, or describe an element?
+- Within what scope must a `key` be unique, and why is it not an ordinary prop?
+- When is the shorthand `<>` Fragment insufficient because you need a `key`?
+'''
+
+[questions.react-001]
+options = ["`document.createElement('h1')`", "`jsx('h1', { className: 't', children: 'Hi' })`", "`new HTMLElement('h1')`", "A string of HTML: `'<h1 class=\"t\">Hi</h1>'`"]
+prompt = '''With the **automatic JSX runtime** (React 17+), what does `<h1 className="t">Hi</h1>` compile to?'''
+explanation = '''Babel, TypeScript, or SWC transforms JSX into a call to `jsx()` from `react/jsx-runtime`, which returns a **React element**—an object that describes the UI, not a DOM node.'''
+
+[questions.react-002]
+options = ["That is only a convention; lowercase names work the same way", "JSX treats lowercase names as HTML/intrinsic elements (strings) and capitalized names as component variable references", "Because ESLint requires it", "Because React exports only capitalized components"]
+prompt = '''Why must a component name in JSX start with a **capital letter** (`<MyButton />`)?'''
+explanation = '''`<button />` becomes `jsx('button')` (a string), while `<Button />` becomes `jsx(Button)` (a variable reference). A lowercase name is treated as an intrinsic DOM tag, so React would create an unknown `<mybutton>` element.'''
+
+[questions.react-003]
+options = ["Nothing is displayed", "The number `0` is displayed", "`false` is displayed", "A runtime error"]
+prompt = '''What does this code display when `messages = []`?
+
+```jsx
+<div>{messages.length && <Badge count={messages.length} />}</div>
+```'''
+explanation = '''`0 && X` evaluates to `0`, and React **renders the number zero** (it skips only `false`, `null`, `undefined`, and `true`). Use `messages.length > 0 && ...` instead.'''
+
+[questions.react-004]
+options = ["Unique across the entire application", "Unique among siblings and stable across renders", "Must be an increasing integer", "Must be `Math.random()` to guarantee there are no duplicates"]
+prompt = '''What requirements should a list `key` meet?'''
+explanation = '''A key only needs to be unique among siblings. `Math.random()` changes the key on every render, causing React to unmount and remount the entire item, which loses state and hurts performance.'''
+
+[questions.react-005]
+prompt = '''Which attribute is the correct way to set a CSS class in JSX?'''
+explanation = '''`class` is a JavaScript keyword, so React uses `className` (the corresponding DOM property is `element.className`). Similarly, use `htmlFor` instead of `for`.'''
+
+[questions.react-006]
+options = ["`null`", "`false`", "`0`", "`undefined`", "`''` (an empty string)", "`true`"]
+prompt = '''Which values **render nothing** when placed in JSX as `{value}`? (Select all that apply.)'''
+explanation = '''`null`, `undefined`, `true`, and `false` are omitted; an empty string renders an empty text node, which is not visible. `0` (and `NaN`) **is rendered**.'''
+
+[questions.react-007]
+prompt = '''Complete the code so it returns multiple elements **without** adding an enclosing DOM element:
+
+```jsx
+function Row() {
+  return (
+    {{blank}}
+      <td>A</td>
+      <td>B</td>
+    {{blank}}
+  );
+}
+```'''
+explanation = '''A Fragment groups multiple elements without creating an extra DOM node. This matters inside `<tr>`, where inserting a `<div>` would be invalid.'''
+
+[questions.react-008]
+prompt = '''Render the list with the correct key:
+
+```jsx
+<ul>
+  {todos.map(todo => <li {{blank}}={todo.id}>{todo.text}</li>)}
+</ul>
+```'''
+explanation = '''A `key` helps React match items across renders during reconciliation.'''
+
+[questions.react-009]
+prompt = '''Which statement about `props.children` is correct?'''
+options = ["It is always an array", "It is the content between a component's opening and closing tags and can be any kind of node (a string, element, array, function, and so on)", "It can only be used with class components", "A function cannot be passed as children"]
+explanation = '''`children` can be a single element, a string, an array, or a function (render props). Use the `React.Children` utilities when you need to traverse children safely.'''
+
+[questions.react-010]
+prompt = '''Which inline style is valid in React DOM?'''
+explanation = '''The `style` prop accepts an **object** whose keys use camelCase. For most properties, a number without a unit is interpreted as pixels.'''
+
+[questions.react-011]
+prompt = '''Briefly explain **why you should avoid using an array index as a `key`** when a list can have items added, removed, or reordered.'''
+keywords = [["state", "component state"], ["order", "ordering", "sorting", "reordering", "position"], ["reuse", "wrong component", "incorrect component", "mismatch", "attached to the wrong item"]]
+model_answer = '''React uses keys to identify items across renders. If you use an **index**, inserting, removing, or reordering items changes their **positions** while the index keys remain tied to those positions. React may then **reuse** an old component or DOM node for different data, attaching internal **state** (such as input text, a checkbox, or an animation) to the wrong item and making rendering less efficient. Use a stable ID from the data instead.'''
+explanation = '''An index is safe only when the list is static, its order never changes, and its items have no state.'''
+
+[questions.react-012]
+prompt = '''Explore how JSX works by implementing it yourself:
+
+1. `h(type, props, ...children)` returns an object `{ type, props }`. `props.children` must be a **flattened array**, with `null`, `undefined`, `false`, and `true` removed. `props` may be `null`.
+2. `renderToString(node)`:
+   - converts strings and numbers to text, escaping `&`, `<`, and `>`
+   - when `type` is a string, returns `<type attr="v">children</type>`; outputs `className` as `class`, and ignores `children` and props whose values are functions
+   - when `type` is a function, calls `type(props)` and renders the result (function component)'''
+hints = ["`children.flat(Infinity)` flattens arrays at every nesting level.", "In `renderToString`, handle cases in this order: primitive → array → function component → string tag."]
+explanation = '''This demonstrates the core idea behind JSX: it is a function call that creates an object describing a UI tree. A renderer such as `react-dom` or `react-native` turns that object into an actual interface.'''
+
+[questions.react-x001]
+prompt = '''A `users` list is sorted by name. After the user expands the second row, the list order changes. What is the main risk of using `key={index}`?'''
+options = ["React will not render the list again", "A row's local state may follow its position instead of its user", "React automatically converts the index to `user.id`", "It only produces a warning and does not affect the UI"]
+explanation = '''Keys identify items across renders. After reordering, index keys still identify positions, so state or input values can become associated with a different user. Use each user's stable ID.'''
+
+[questions.react-xc01]
+explanation = '''Each component has its own local state identity. Immutable updates help React detect changes and make selection behavior easier to test.'''
+
+[modules.react-state]
+title = "State, Props & Events"
+description = "useState, immutable updates, batching, lifting state up, and controlled versus uncontrolled inputs."
+lesson = '''### State is a snapshot
+`useState` returns the value for the current render. Calling a setter schedules another render; it does not change the variable in the current closure. If the next value depends on the previous one, use an updater function. Replace state objects and arrays with new values rather than mutating them.
+
+| Update | Example | Note |
+|---|---|---|
+| Independent value | `setOpen(true)` | Pass a value directly |
+| Based on previous state | `setCount(c => c + 1)` | Safe when several updates happen in one event |
+| Object or array | `setUser(u => ({ ...u, name }))` | Do not mutate the old object |
+| Shared by multiple components | Move state to their common parent | Keep one source of truth |
+
+```jsx
+function addItem(item) {
+  setItems(current => [...current, item]);
+}
+```
+
+React 18+ automatically batches multiple updates in the same processing turn. `useState(() => expensive())` uses a lazy initializer, avoiding repeated initialization work on every render.
+
+### Common mistakes
+- Calling `setCount(count + 1)` several times in one handler and expecting each call to read a new snapshot.
+- Mutating the array with `items.push(item)` and passing the same array back.
+- Keeping the same data in both a parent and child, allowing the copies to drift apart.
+- Using a controlled input (`value`) without updating state in `onChange`.
+
+### Interview checklist
+- Why doesn't a setter change the state variable in the current handler?
+- When should you use local state, lift state up, or choose a controlled or uncontrolled input?
+- How can you update one array item without mutating the array?
+'''
+
+[questions.react-020]
+options = ["1", "3", "0", "Infinite-loop error"]
+prompt = '''After one click, what value does `count` display? (It starts at 0.)
+
+```jsx
+function Counter() {
+  const [count, setCount] = useState(0);
+  const onClick = () => {
+    setCount(count + 1);
+    setCount(count + 1);
+    setCount(count + 1);
+  };
+  return <button onClick={onClick}>{count}</button>;
+}
+```'''
+explanation = '''In this render, `count` is the snapshot `0`, so all three calls set state to `1`. To reach `3`, use the updater `setCount(c => c + 1)`.'''
+
+[questions.react-021]
+prompt = '''Which approach correctly adds an item to the `items` array in state **immutably**?'''
+explanation = '''`push` mutates the old array. Because its reference stays the same, React (which compares with `Object.is`) may skip the render. Always create a new array.'''
+
+[questions.react-022]
+options = ["2 times", "1 time (automatic batching)", "0 times", "It depends on the browser"]
+prompt = '''In React 18, how many renders do these two calls inside a `setTimeout` cause?
+
+```js
+setA(1);
+setB(2);
+```'''
+explanation = '''With `createRoot`, React 18 automatically batches updates in timeouts, promises, and native events as well. React 17 batched only updates inside React event handlers.'''
+
+[questions.react-023]
+options = ["It has a `ref` attribute", "Its value is controlled by React state through `value` and updated with `onChange`", "It uses `defaultValue`", "It is inside a `<form>` element"]
+prompt = '''An input is a **controlled component** when:'''
+explanation = '''For a controlled input, React is the single source of truth (`value` + `onChange`). For an uncontrolled input, the DOM holds the value; read it with a `ref` and initialize it with `defaultValue`.'''
+
+[questions.react-024]
+options = ["There is no difference", "The second form calls `expensiveCompute` only on the initial render; the first calls it on **every** render (even though the result is discarded)", "The second form stores the function in state", "The first form is faster because it does not create a closure"]
+prompt = '''How do `useState(expensiveCompute())` and `useState(() => expensiveCompute())` differ?'''
+explanation = '''This is **lazy initial state**. Pass an initializer function to avoid doing unnecessary work on every render.'''
+
+[questions.react-025]
+prompt = '''Which operations **mutate** state and should be avoided when the state is an array or object?'''
+explanation = '''`sort`, `splice`, `reverse`, `push`, and property assignments modify the original value. `filter`, `map`, `slice`, spread, `toSorted`, `toSpliced`, and `with` return a new value.'''
+
+[questions.react-026]
+prompt = '''Safely increment the counter based on its previous value:
+
+```jsx
+setCount({{blank}} => prev + 1);
+```'''
+explanation = '''An updater function receives the latest queued state, so multiple consecutive updates are all applied.'''
+
+[questions.react-027]
+prompt = '''Immutably update the nested property `user.address.city`:
+
+```js
+setUser({
+  ...user,
+  address: { {{blank}}, city: 'Hà Nội' },
+});
+```'''
+explanation = '''Spread each level that you change; otherwise, replacing `address` will discard its other fields.'''
+
+[questions.react-028]
+prompt = '''What does “lifting state up” mean, and when should you use it?'''
+keywords = [["parent", "common parent", "ancestor"], ["props", "properties"], ["shared", "share", "synchronize", "multiple components"]]
+model_answer = '''When **multiple child components need to share or synchronize** data, move the state to their nearest **common parent**, then pass the value down through **props** and pass an update function (callback) so children can report changes. This keeps a single source of truth.'''
+explanation = '''If prop drilling becomes too deep, consider Context or a state manager.'''
+
+[questions.react-029]
+title = "Immutable todoReducer"
+prompt = '''Write a reducer `todoReducer(state, action)` that manages a todo list without mutating the old state.
+
+State is an array of `{ id, text, done }` objects. Handle these actions:
+- `{ type: 'added', id, text }` → append a todo with `done: false`
+- `{ type: 'toggled', id }` → toggle `done`
+- `{ type: 'deleted', id }` → delete the todo
+- `{ type: 'cleared' }` → remove completed todos
+- unknown action → `throw new Error('Unknown action: ' + type)`'''
+hints = ["Use `map` to update one item, `filter` to remove items, and spread syntax to append.", "The state is `Object.freeze`d; mutation will have no effect or may throw an error."]
+explanation = '''A reducer should be a pure function: the same input produces the same output, with no side effects or mutation.'''
+
+[questions.react-x002]
+options = ["4", "5", "6", "Unknown"]
+prompt = '''Inside an event handler, `count` is currently `4`:
+
+```js
+setCount(count + 1);
+setCount(count + 1);
+```
+
+What value will it have after the next render?'''
+explanation = '''Both expressions read the snapshot `count === 4`, so both queue the value `5`. To increment twice, use `setCount(c => c + 1)` for each update.'''
+
+[questions.react-xc02]
+explanation = '''A reducer groups related state transitions in one place, while each action describes an intent. Every branch preserves the old state immutably.'''
+
+[modules.react-hooks]
+title = "Hooks"
+description = "useEffect, useRef, useMemo, useCallback, useReducer, useContext, custom hooks, and the Rules of Hooks."
+lesson = '''### Rules of Hooks
+1. Call hooks **at the top level** (not inside an `if`, loop, or nested function).
+2. Call hooks only from a **function component** or a **custom hook** (whose name starts with `use`).
+
+### Choose a hook by its purpose
+| Hook | Use it when | Do not use it to |
+|---|---|---|
+| `useEffect` | Synchronize a subscription, timer, or external system | Calculate data that can be derived during render |
+| `useRef` | Hold a mutable value that does not need to trigger a render | Store UI data that must be displayed |
+| `useMemo` / `useCallback` | Cache a value or function when measurement gives you a reason | Make code correct |
+| `useReducer` | Several actions update related state | Put all state into one object |
+| `useContext` | Read shared data through the component tree | Replace every kind of state management |
+
+```jsx
+useEffect(() => {
+  const connection = connect(roomId);
+  return () => connection.disconnect();
+}, [roomId]);
+```
+
+An Effect without a dependency array runs after every render; `[]` means there are no reactive dependencies. Cleanup runs before the next setup and when the component unmounts. In development, Strict Mode adds a setup-cleanup cycle to expose missing cleanup logic.
+
+### Common mistakes
+- Calling a hook in a conditional branch changes the order of hooks.
+- Omitting a dependency can make a callback read stale state.
+- Using an Effect to synchronize two pieces of state when one can be calculated from the other.
+- Adding memoization before measuring a rendering problem.
+
+### Interview checklist
+- Where does each Effect dependency come from?
+- Which resource created by setup must cleanup undo?
+- Can you calculate the value during render or handle it in an event handler instead of using an Effect?
+
+The coding exercises in this module use MiniReact, which provides `useState`, `useEffect`, `useRef`, `useMemo`, `useCallback`, `useReducer`, `renderHook`, and `act`.
+'''
+
+[questions.react-040]
+prompt = '''Which statement violates the **Rules of Hooks**?'''
+options = ["Calling `useState` at the top of a function component", "Calling `useEffect` inside `if (isOpen) { ... }`", "Calling the custom hook `useFetch` in a component", "Calling `useState` several times in a row"]
+explanation = '''React identifies hooks by their **call order**. A conditional call changes that order between renders, which can associate state with the wrong hook.'''
+
+[questions.react-041]
+options = ["Only when the component unmounts", "Before the Effect runs again (when dependencies change) and on unmount", "Immediately after the Effect finishes", "Never when dependencies are `[]`"]
+prompt = '''When does a `useEffect` cleanup function run?'''
+explanation = '''With `[]`, cleanup runs on unmount. In development, Strict Mode also runs it once after the initial mount as a check.'''
+
+[questions.react-042]
+options = ["Yes, just like `setState`", "No — a ref is a mutable container, and changing it does not trigger a render", "Only when the ref is attached to the DOM", "Only in Strict Mode"]
+prompt = '''Does changing `ref.current` in `useRef` trigger a re-render?'''
+explanation = '''Use a ref for values that do not affect the UI, such as a timer ID, a previous value, a DOM node, or an `isMounted` flag.'''
+
+[questions.react-043]
+options = ["`useMemo` caches the **result** of `fn()`, while `useCallback` caches the **function itself**", "`useCallback` is only for event handlers", "`useMemo` runs asynchronously", "There is no difference"]
+prompt = '''What is the main difference between `useMemo(fn, deps)` and `useCallback(fn, deps)`?'''
+explanation = '''`useCallback(fn, deps)` is equivalent to `useMemo(() => fn, deps)`.'''
+
+[questions.react-044]
+options = ["A memory leak because the interval is not cleared", "A stale closure: `count` stays at 0, so the count stops at 1", "The interval runs twice per second", "There is no problem"]
+prompt = '''What is wrong with this code?
+
+```jsx
+useEffect(() => {
+  const id = setInterval(() => setCount(count + 1), 1000);
+  return () => clearInterval(id);
+}, []);
+```'''
+explanation = '''The closure captures `count` from the first render. Use `setCount(c => c + 1)` or include `count` in the dependencies.'''
+
+[questions.react-045]
+options = ["When fetching data", "When you need to measure the DOM layout and update it synchronously before the browser paints to avoid flicker", "When you want the Effect to run on the server", "Always, because it is faster"]
+prompt = '''When should you use `useLayoutEffect` instead of `useEffect`?'''
+explanation = '''`useLayoutEffect` runs synchronously after the DOM is mutated but before the browser paints. It blocks painting, so use it only when necessary.'''
+
+[questions.react-046]
+prompt = '''According to “You Might Not Need an Effect,” which situations **do not need** `useEffect`?'''
+options = ["Deriving a value from props or state (for example, `fullName = first + ' ' + last`)", "Subscribing to a WebSocket when a component mounts", "Handling logic when the user clicks a button (such as submitting a form)", "Resetting all state when the `userId` prop changes (use `key={userId}` instead)", "Synchronizing with an external jQuery widget"]
+explanation = '''Effects are for synchronizing with **external systems**. Calculate derived data during render, put event logic in the handler, and reset state with a `key`.'''
+
+[questions.react-047]
+prompt = '''Complete the Effect that subscribes to the resize event and cleans up, running once after mount:
+
+```jsx
+useEffect(() => {
+  const onResize = () => setWidth(window.innerWidth);
+  window.addEventListener('resize', onResize);
+  return () => window.{{blank}}('resize', onResize);
+}, {{blank}});
+```'''
+explanation = '''Cleanup removes the exact same handler reference. An empty dependency array means the Effect runs after mount and cleans up on unmount.'''
+
+[questions.react-048]
+prompt = '''Create a context and read it:
+
+```jsx
+const ThemeContext = {{blank}}('light');
+
+function Button() {
+  const theme = {{blank}}(ThemeContext);
+  return <button className={theme}>OK</button>;
+}
+```'''
+explanation = '''Use `createContext(defaultValue)`, `<ThemeContext.Provider value=...>` (React 19 also allows `<ThemeContext value=...>`), and `useContext` (or `use` in React 19).'''
+
+[questions.react-049]
+prompt = '''Explain **stale closures** in React hooks and describe how to fix them.'''
+keywords = [["closure", "closed-over value"], ["stale value", "old value", "previous render", "snapshot"], ["updater function", "functional update", "prev =>", "c =>"], ["dependencies", "dependency array"], ["ref", "useRef"]]
+model_answer = '''Each render creates new functions that **close over the props and state values from that render**. A callback created in an earlier render (for example, in a `setInterval` Effect with `[]`, or a `useCallback` with missing dependencies) can keep reading a **stale value**.
+
+Ways to fix it:
+- Use a **functional updater**, such as `setX(prev => ...)`, so the update does not depend on the closed-over value.
+- Declare all **dependencies** (`eslint react-hooks/exhaustive-deps`).
+- Store the latest value in a **useRef** and read `ref.current` inside the callback.'''
+explanation = '''This is one of the most common bugs with timers, subscriptions, and event listeners in hooks.'''
+
+[questions.react-050]
+prompt = '''Write a custom hook `useToggle(initial = false)` that returns the array `[value, toggle, setValue]`:
+- `toggle()` switches the value
+- `setValue(v)` sets the value directly
+- `toggle` must **keep the same reference** between renders (use `useCallback`)
+
+> The environment provides `useState`, `useCallback`, and other MiniReact hooks, plus `renderHook` and `act` for testing.'''
+hints = ["Use the functional update `setValue(v => !v)` so two consecutive toggles still work correctly.", "`useCallback(fn, [])` keeps a stable reference."]
+explanation = '''A functional update keeps `toggle` independent of its closure, so `useCallback` can have an empty dependency array.'''
+
+[questions.react-051]
+title = "useCounter with min/max"
+prompt = '''Write `useCounter(initial = 0, { min = -Infinity, max = Infinity, step = 1 } = {})` to return an object:
+`{ count, increment, decrement, reset, set }`
+- `increment` and `decrement` change the count by `step` and **clamp** it to `[min, max]`
+- `set(n)` must also clamp the value
+- `reset()` restores `initial`, clamped to the range'''
+hints = ["Write a helper `clamp(n) = Math.min(max, Math.max(min, n))`."]
+explanation = '''A custom hook packages stateful logic for reuse; each component that calls it gets its own state.'''
+
+[questions.react-052]
+prompt = '''Write a `usePrevious(value)` hook that returns the value from the **previous render** (on the first render, return `undefined`).
+
+A classic approach is `useRef` + `useEffect`.'''
+hints = ["The Effect runs **after** rendering, so `ref.current` still holds the old value during render."]
+explanation = '''With `[value]` as the dependency array, if a render happens without a value change, the previous value remains the one from the most recent change.'''
+
+[questions.react-053]
+prompt = '''Write a `useDebouncedValue(value, delay)` hook that returns a value only after it has **stopped changing** for `delay` milliseconds (useful for a search field).
+
+- On the first render, return the initial `value`.
+- Whenever `value` changes, cancel the old timer (cleanup) and start a new one.
+
+The environment uses **fake timers**; tests call `jest.advanceTimersByTime(ms)`.'''
+hints = ["Call `clearTimeout` in the Effect cleanup.", "Use `[value, delay]` as the Effect dependencies."]
+explanation = '''This debounce pattern uses an Effect and cleanup: whenever the value changes, cleanup cancels the old timer before the next Effect starts a new one.'''
+
+[questions.react-054]
+title = "useAsync — data loading state"
+prompt = '''Write a hook `useAsync(asyncFn, deps)` that calls `asyncFn()` in an Effect and returns `{ status, data, error }`:
+- initial state: `status: 'pending'`, `data: undefined`, `error: undefined`
+- on success: `status: 'success'`, `data: result`
+- on failure: `status: 'error'`, `error: the error`
+- If the dependencies change or the component unmounts before the promise settles, **ignore** the old result to avoid a race condition. Use an `ignore` flag in cleanup.'''
+hints = ["Set `let ignore = false;` in the Effect and set `ignore = true` in cleanup.", "Check `if (!ignore)` before calling a state setter."]
+explanation = '''This is the pattern React documents for fetching in an Effect without a race condition. In practice, consider TanStack Query, SWR, or a framework data loader.'''
+
+[questions.rx-dd03]
+prompt = '''Generate an ID that stays consistent between server and client, to connect a `<label>` with an `<input>`:
+
+```jsx
+function EmailField() {
+  const id = {{blank}}();
+  return (<>
+    <label htmlFor={id}>Email</label>
+    <input id={id} type="email" />
+  </>);
+}
+```
+
+Safely subscribe to a data source outside React (for example, `navigator.onLine`) during concurrent rendering:
+
+```js
+const online = {{blank}}(subscribe, () => navigator.onLine);
+```'''
+explanation = '''`useId` generates IDs that match during hydration (do not use `Math.random`). `useSyncExternalStore(subscribe, getSnapshot)` avoids tearing when reading an external store.'''
+
+[questions.rx-dd05]
+prompt = '''When do you **not** need `useEffect`? Give at least three commonly overused cases and the right approach for each.'''
+keywords = [["derived data", "derive during render", "calculate during render", "direct calculation"], ["useMemo", "memoization"], ["event handler", "event callback", "onsubmit", "onclick"], ["key", "reset state", "remount"], ["extra render", "render loop", "chained effect"]]
+model_answer = '''Effects synchronize with **external systems** (DOM APIs, networks, subscriptions). Common cases that do not need an Effect:
+
+1. **Data derived from props or state** (filtering, totals, joined strings): calculate during render; use `useMemo` if the calculation is expensive. An Effect with `setState` causes an **extra render** and can leave values out of sync.
+2. **Responding to a user action** (submitting a form, making a purchase, showing a toast): put it in an **event handler**, where the triggering action is known.
+3. **Resetting state when a prop changes** (for example, a new `userId`): pass `key={userId}` so React recreates the component instead of using an Effect to call `setState`.
+4. **Chaining Effects that update state**: move the logic into one handler or reducer.
+5. **Notifying a parent component**: call the parent's callback from the handler instead of using an Effect to watch state.'''
+explanation = '''Every unnecessary Effect adds an extra render and another source of synchronization bugs.'''
+
+[questions.rx-dd06]
+title = "External store for useSyncExternalStore"
+prompt = '''`useSyncExternalStore(subscribe, getSnapshot)` needs a store with two stable functions. Write `createStore(initial)` that returns:
+
+- `getSnapshot()` → the current state (**the same reference** while the state is unchanged)
+- `setState(next)` — `next` is an object **or** a function `(prev) => object`; shallow-merge it into the old state to create a new object. If every new key is `Object.is`-equal to its old value, **do not** change the reference or notify listeners.
+- `subscribe(listener)` → returns an unsubscribe function; whenever the state changes, call every listener with no arguments
+- `select(selector)` → a function `() => selector(getSnapshot())`'''
+hints = ["Use a `Set` to store listeners; the unsubscribe function only needs to call `delete`.", "Compare each key with `Object.is` before creating a new object."]
+explanation = '''A snapshot must be **immutable and stable**. If `getSnapshot` returns a new object on every call, `useSyncExternalStore` can render forever.'''
+
+[questions.react-x003]
+prompt = '''A component calls `useEffect` only inside `if (enabled)`. Why is this a design error?'''
+options = ["Effects can only be called in class components", "The hook order can change between renders", "Dependencies must be objects", "Hooks must be called after `return`"]
+explanation = '''React associates hook state by call order. A conditional call changes that order; call the hook at the top level and put the condition inside the Effect logic instead.'''
+
+[questions.react-xc03]
+explanation = '''Cleanup cancels the old timer before the Effect runs again, ensuring that only the latest value is published after the delay.'''
+
+[modules.react-perf]
+title = "Rendering & Performance"
+description = "Reconciliation, keys, React.memo, avoiding unnecessary renders, code splitting, and concurrent features."
+lesson = '''### Rendering and optimization
+A component can render again when its state or a context it reads changes, or when its parent renders. A re-render does not mean the entire DOM is replaced; React compares the element trees, then commits the necessary changes.
+
+| Tool | Effect | Consideration |
+|---|---|---|
+| `React.memo` | Skips a render when shallowly compared props have not changed | New objects or functions still count as changed props |
+| `useMemo` | Caches a calculated result | Add it only when the calculation or identity matters |
+| `useCallback` | Preserves a function identity | Often useful with a memoized component |
+| `useTransition` | Marks an update as non-urgent | Does not move a CPU-heavy task to the background |
+| `lazy` + `Suspense` | Loads a component when needed | Choose an appropriate boundary and fallback |
+
+```jsx
+const visible = useMemo(
+  () => todos.filter(todo => todo.title.includes(query)),
+  [todos, query]
+);
+```
+
+Stable keys help reconciliation preserve the right identity after reordering. Use the Profiler and measure a user flow before optimizing; React Compiler can automatically memoize code in compatible configurations.
+
+### Common mistakes
+- Expecting `React.memo` to block updates from context or a component's own state.
+- Creating a new dependency object on every render, which invalidates a cache.
+- Using an index as a key in a list that can change order.
+- Wrapping every callback in `useCallback` without a measured benefit.
+
+### Interview checklist
+- Which render actually takes time according to the Profiler?
+- Which identity changes and causes an unnecessary child render?
+- Can you split a component or state, or load code later, before adding memoization?
+'''
+
+[questions.react-060]
+options = ["Only re-renders if props change", "Always re-renders", "Never re-renders", "Re-renders if it has state"]
+prompt = '''By default, when a parent component renders again, what happens to a child component that does not use `memo`?'''
+explanation = '''By default, React renders the entire child tree again. `React.memo` is what compares props and may skip a child render.'''
+
+[questions.react-061]
+options = ["Because `memo` works only with class components", "Because `options` and `onSelect` are new objects/functions on every render, so shallow comparison sees them as different", "Because `Child` has no key", "Because `useState` always makes every component render"]
+prompt = '''`Child` is wrapped in `React.memo`. Why does it still render whenever `Parent` renders?
+
+```jsx
+function Parent() {
+  const [n, setN] = useState(0);
+  const options = { sort: 'asc' };
+  return <Child options={options} onSelect={() => setN(n + 1)} />;
+}
+```'''
+explanation = '''Use `useMemo` for `options` (or move it outside the component if it is constant) and `useCallback` for `onSelect`.'''
+
+[questions.react-062]
+options = ["The process of synchronizing state with the server", "The algorithm that compares the new element tree with the old one to find the minimal changes to apply to the UI", "The process of compiling JSX", "React's garbage-collection mechanism"]
+prompt = '''What is “reconciliation” in React?'''
+explanation = '''React uses an O(n) heuristic: a different `type` replaces the whole subtree, the same type updates props, and list items are matched by `key`.'''
+
+[questions.react-063]
+options = ["Creating a CSS transition effect", "Marking a state update as non-urgent so the UI stays responsive (the input does not lag) during expensive rendering", "Navigating between pages in React Router", "Delaying an Effect"]
+prompt = '''What is `useTransition` used for?'''
+explanation = '''`const [isPending, startTransition] = useTransition();` — updates inside `startTransition` can be interrupted by urgent updates.'''
+
+[questions.react-064]
+options = ["`const Page = require('./Page')`", "`const Page = lazy(() => import('./Page'))` together with `<Suspense fallback={...}>`", "`const Page = await import('./Page')` at the top level of a component", "`<Page lazy />`"]
+prompt = '''What is the correct way to lazy-load a page with React?'''
+explanation = '''`React.lazy` with dynamic `import()` creates a separate chunk; `Suspense` displays a fallback while it loads.'''
+
+[questions.react-065]
+prompt = '''Which techniques can reduce unnecessary renders or rendering cost?'''
+options = ["Keep state close to where it is used (state colocation)", "Pass a heavy component as `children` so it does not re-render when wrapper state changes", "Use `key={Math.random()}`", "Virtualize long lists (react-window, FlashList)", "Split a large Context into smaller contexts or memoize its `value`", "Wrap everything in `useMemo` without measuring"]
+explanation = '''`Math.random()` changes the key and causes a remount. Unnecessary memoization costs memory and comparison time; measure with the Profiler first.'''
+
+[questions.react-066]
+prompt = '''Wrap a component so it can skip rendering when its props have not changed:
+
+```jsx
+const Row = {{blank}}(function Row({ item }) {
+  return <li>{item.name}</li>;
+});
+```'''
+explanation = '''`React.memo(Component, arePropsEqual?)` accepts an optional second argument to customize the comparison.'''
+
+[questions.react-067]
+prompt = '''When should you **avoid** `useMemo` and `useCallback`? Briefly explain.'''
+keywords = [["cheap", "simple", "lightweight", "low-cost calculation"], ["overhead", "memory", "dependency comparison"], ["memo", "React.memo", "not memoized", "referential stability", "stable reference"], ["measure", "profiler", "measurement"]]
+model_answer = '''Avoid them when a calculation is **cheap**, or when a value or function is not passed to a **memoized** component and is not used as a dependency for another hook. Memoization itself has **overhead** (memory, dependency comparisons, and harder-to-read code) without providing useful **referential stability**. **Measure with the Profiler** before optimizing. React Compiler also memoizes automatically in many cases.'''
+explanation = '''Premature optimization often creates unnecessary complexity.'''
+
+[questions.react-068]
+prompt = '''By default, `React.memo` compares props with **shallow equality**. Implement `shallowEqual(a, b)`:
+- Return `true` if `Object.is(a, b)` is true.
+- If either value is not an object (or is `null`), return `false`.
+- Otherwise, require the same number of keys and `Object.is(a[key], b[key])` for every key.'''
+hints = ["`Object.is` differs from `===` for `NaN` and `+0`/`-0`.", "Check that each key actually exists in `b` with `hasOwnProperty`."]
+explanation = '''Understanding `shallowEqual` explains why inline objects and functions can defeat `React.memo`.'''
+
+[questions.rx-dd01]
+prompt = '''Filtering a list of 10,000 items makes typing in a search field lag. Which approach keeps the input responsive without manually debouncing?'''
+options = ["Wrap the list update in `startTransition` (from `useTransition`) so React treats it as non-urgent and interruptible", "Use `useEffect` without a dependency array", "Use `useLayoutEffect` to render synchronously", "Call `forceUpdate` after each keystroke"]
+explanation = '''Updates in a transition have lower priority: React can update the input immediately and render the list when time is available, interrupting that render if the user types again. `isPending` indicates that the transition is in progress.'''
+
+[questions.rx-dd02]
+prompt = '''Which statements about `useDeferredValue(value)` are **correct**?'''
+options = ["It returns a deferred version of the value; during an urgent render it may still hold the previous value", "It is often combined with `memo` on an expensive child so that skipped renders are effective", "It fully replaces debouncing API calls and reduces the number of network requests", "You can compare `value !== deferred` to show a stale state, such as dimming results"]
+explanation = '''`useDeferredValue` defers **rendering**; it does not reduce network requests. Use debounce or throttle separately when you need to limit API calls.'''
+
+[questions.react-x004]
+options = ["A render of any kind, even when Row's state changes", "A render caused by the parent when shallowly compared props are equal", "A render caused by a context Row reads changing", "A render caused by Row calling its own setter"]
+prompt = '''Which render does `React.memo(Row)` usually skip?'''
+explanation = '''By default, `memo` shallowly compares props. It does not block updates to the component's own state or to a context it reads.'''
+
+[questions.react-x027]
+options = ["The update can be marked non-urgent", "The pending state can be read", "A heavy synchronous JavaScript loop runs faster", "React can prioritize urgent updates"]
+prompt = '''`useTransition` can make a large filter update more responsive. What does it not guarantee?'''
+explanation = '''A transition lets React prioritize other rendering and defer non-urgent UI. It does not reduce the CPU complexity of a heavy synchronous loop.'''
+
+[questions.react-x048]
+prompt = '''The API that creates a component loaded asynchronously from a module when needed is `{{blank}}`; it is commonly placed inside `Suspense`.'''
+explanation = '''`lazy` loads a component from a Promise; `Suspense` displays a fallback while it loads.'''
+
+[questions.react-xc06]
+explanation = '''Virtualization renders only the rows that intersect the viewport, plus an overscan region. An exclusive end index can be passed directly to `slice(start, end)`.'''
+
+[questions.react-x038]
+prompt = '''You use `useMemo` in a selector that filters 20,000 rows. Which practices are correct? (Select all that apply.)'''
+options = ["Include both `items` and `filter` in the dependency list", "Measure with the Profiler before and after to check the benefit", "Keep the `items` identity stable when its contents have not changed", "Omit the `filter` dependency to keep the cache longer", "Remember that `useMemo` is a performance optimization, not the source of truth for state"]
+explanation = '''Memoization is correct only when dependencies represent every input. It can avoid recalculation when identities are stable, but it does not replace the source of truth or measurement.'''
+
+[modules.react-patterns]
+title = "Patterns & Ecosystem"
+description = "Context, composition, error boundaries, Suspense, Server Components, forms, and testing."
+lesson = '''### Patterns and boundaries
+| Pattern | Use it when | Keep in mind |
+|---|---|---|
+| Composition with `children` | Separating a layout from its content | Often more flexible than many boolean props |
+| Context | Sharing a theme, locale, or tree-wide data | Consumers re-render when the value changes |
+| Error Boundary | Recovering the UI when a descendant throws during rendering | It does not catch ordinary event-handler errors |
+| Portal | A modal or tooltip must escape an overflow region | React events still bubble through the React tree |
+| Suspense / `lazy` | Loading code or data that supports Suspense | Place the boundary where its fallback is useful |
+
+```jsx
+function Panel({ title, children }) {
+  return <section><h2>{title}</h2>{children}</section>;
+}
+```
+
+React 19 adds Actions, `useActionState`, `useOptimistic`, and `use(promise)`, and allows `ref` as a prop. Server Components and Client Components have a module boundary: `'use client'` creates a client boundary, while `'use server'` marks a Server Function.
+
+### Common mistakes
+- Using Context for all data can make many consumers re-render together.
+- Expecting an Error Boundary to catch errors in a click callback or an arbitrary promise.
+- Assuming a portal separates events from the React tree.
+- Testing detailed DOM structure instead of querying by role and accessible name.
+
+### Interview checklist
+- Why is composition often preferable to prop flags or inheritance?
+- Which errors does an Error Boundary cover, and which need separate handling?
+- How should a modal portal manage focus, Escape-to-close, and accessible state?
+'''
+
+[questions.react-080]
+options = ["An error while rendering a child component", "An error in a child component's lifecycle method or constructor", "An error thrown in an `onClick` event handler", "An error in a grandchild's render function"]
+prompt = '''Which error is **not** caught by an Error Boundary?'''
+explanation = '''Error Boundaries do not catch errors in event handlers, asynchronous code (`setTimeout`, promises), server-side rendering, or the boundary itself. Use `try/catch` for event handlers.'''
+
+[questions.react-081]
+options = ["Only the Provider re-renders", "Every component below the Provider that calls `useContext` for that context re-renders, even if wrapped in `memo`", "No component re-renders", "Only direct child components re-render"]
+prompt = '''What happens when the `value` of a Context Provider changes?'''
+explanation = '''Context updates are not blocked by `memo`. Consider memoizing the `value` with `useMemo` and splitting contexts by how often their data changes.'''
+
+[questions.react-082]
+options = ["They can use `useState` and `useEffect`", "They run on the server, can use async/await to access a database directly, and do not send their own code in the client bundle", "They completely replace SSR", "They must have `'use server'` at the top of the file"]
+prompt = '''Which statement about **React Server Components** is correct?'''
+explanation = '''`'use client'` marks a Client Component boundary. `'use server'` is for **Server Functions/Actions**, not Server Components.'''
+
+[questions.react-083]
+options = ["Calling an API", "Rendering a modal or tooltip into a different DOM node (for example, `document.body`) while preserving Context and event bubbling through the React tree", "Sharing state between tabs", "Creating a Web Worker"]
+prompt = '''What is `createPortal` commonly used for?'''
+explanation = '''Events still bubble through the **React** tree, not the DOM tree.'''
+
+[questions.react-084]
+options = ["`getByTestId`", "`container.querySelector('.btn')`", "`getByRole('button', { name: /save/i })`", "`getByClassName`"]
+prompt = '''According to the React Testing Library philosophy, which query should you **prefer**?'''
+explanation = '''Prefer queries that reflect how users and assistive technologies such as screen readers find UI: `getByRole`, `getByLabelText`, `getByText`, and so on. Use `getByTestId` as a last resort.'''
+
+[questions.react-085]
+prompt = '''Which APIs are **new in React 19**?'''
+options = ["`useActionState`", "`useFormStatus`", "`useOptimistic`", "`use(promise)`", "`ref` can be passed as a prop", "`componentWillMount`"]
+explanation = '''React 19 adds Actions (`useActionState`, `useFormStatus`, `useOptimistic`), `use()` for reading a promise or context, and `ref` as a prop. `componentWillMount` was removed long ago.'''
+
+[questions.react-086]
+prompt = '''Mark the file as a Client Component in the Next.js App Router (first line of the file):
+
+```jsx
+{{blank}}
+import { useState } from 'react';
+```'''
+explanation = '''The `'use client'` directive declares a boundary: this file and the modules it imports are bundled for the client.'''
+
+[questions.react-087]
+prompt = '''Compare the **Context API** with a state management library such as Redux Toolkit or Zustand. When should you use each?'''
+keywords = [["re-render", "rerender", "render again"], ["selector", "select", "partial subscription", "subscribe to part"], ["devtools", "middleware", "debugging"], ["infrequent changes", "theme", "locale", "auth", "rarely changes"], ["complex", "large", "frequent updates", "changes frequently"]]
+model_answer = '''- **Context** passes data through a tree (dependency injection); it is not optimized for frequent updates because every consumer can **re-render** when the value changes. It suits data that changes **infrequently**, such as a theme, locale, or authenticated user.
+- **Redux Toolkit / Zustand** provide an external store with **selectors**; a component re-renders only when the selected state changes. They also offer **devtools and middleware**, with clear patterns for **large, complex state that changes frequently**.
+- Server data is usually better handled by TanStack Query or SWR than placed in a global store.'''
+explanation = '''There is no single right answer; what matters is understanding the trade-offs in rendering and complexity.'''
+
+[questions.react-088]
+prompt = '''Write a `cx(...args)` function like the `clsx` library for combining conditional class names:
+- keep non-empty strings and non-zero numbers
+- for an object, include keys whose values are truthy
+- process arrays recursively
+- ignore falsy values (`false`, `null`, `undefined`, `0`, `''`)
+- join the result with a single space'''
+hints = ["Process arrays recursively with `cx(...a)`. "]
+explanation = '''This small utility is very common in React and Tailwind projects.'''
+
+[questions.rx-dd04]
+prompt = '''In React 19, a comment form should show the new comment **immediately** before the server responds, then return to the actual state when the request completes. Which hook is the best fit?'''
+explanation = '''`useOptimistic(state, updateFn)` returns an optimistic state that exists only while an Action is running. Combine it with `useActionState` to receive the Action's result or error.'''
+
+[questions.react-x005]
+prompt = '''An error is thrown by a button's `onClick` handler. Which statement about Error Boundaries is correct?'''
+options = ["A parent boundary always catches event-handler errors", "A boundary catches errors only if `componentDidCatch` is used in a function component", "A boundary does not automatically catch ordinary event-handler errors; the handler must handle them", "React retries the handler until it succeeds"]
+explanation = '''Error Boundaries handle errors while rendering a descendant tree. Errors from event handlers or asynchronous callbacks need to be handled where they occur.'''
+
+[questions.react-x023]
+prompt = '''A Provider passes `value={{ theme, setTheme }}`. An unrelated state update makes its parent render and the consumer read a changed context. What is the most immediate cause?'''
+options = ["Context always updates on every render even when the value is unchanged", "The new object has a different identity; stabilize it or split the context if measurement shows a problem", "React.memo blocks every context update automatically", "Context accepts only primitive values"]
+explanation = '''An object literal gets a new identity on every render, so React treats the context value as changed. You can memoize the value or split context by data; measure the impact before optimizing.'''
+
+[questions.react-xc05]
+explanation = '''This selector preserves the referential stability of its selected result. Skipping subscription updates by field requires selective subscription support; a memoized selector alone does not block renders caused by Context.'''
+
+[questions.react-x037]
+prompt = '''Choose the reasonable statements about state colocation and Context. (Select all that apply.)'''
+options = ["Keeping state near its use often reduces the number of dependent consumers", "Lifting state up fits when a few components need the same state", "A changed Context value can re-render consumers that read that context", "Context automatically selects fields and notifies only consumers of those fields", "An external store with selectors is useful when selective subscriptions are needed"]
+explanation = '''Colocation and lifting state up handle smaller sharing scopes. Context does not provide field-based subscriptions by default; a selector-based store can provide selective updates with additional trade-offs.'''
+
+[modules.react-19]
+title = "React 19: Actions & Compiler"
+description = "Actions, new hooks, the ref prop, document metadata, use(), and React Compiler."
+lesson = '''### React 19 APIs
+| API | Role | Remember |
+|---|---|---|
+| `useActionState` | Associates an Action with its result state and pending status | The Action receives the previous state and an input |
+| `useOptimistic` | Shows a temporary result while an Action is running | The final UI still needs to reflect the authoritative result |
+| `useFormStatus` | Reads the parent form's status from a child component | The hook must be inside the `<form>` subtree |
+| `use(value)` | Reads a Promise or Context during render | A pending Promise may trigger Suspense |
+
+```jsx
+function SubmitButton() {
+  const { pending } = useFormStatus();
+  return <button disabled={pending}>{pending ? 'Saving' : 'Save'}</button>;
+}
+```
+
+React 19 allows a function component to receive `ref` as a prop; `forwardRef` remains common in older code. React DOM can hoist `<title>` and some `<meta>` elements from a component to the document. React Compiler can automatically memoize compatible code, but the compiler must be enabled and configured in the build.
+
+### Common mistakes
+- Calling `useFormStatus` in the component that owns `<form>` instead of a child component.
+- Creating a new Promise on every render and passing it to `use()`.
+- Assuming `useOptimistic` replaces storing a successful server result.
+- Assuming every project has React Compiler enabled by default.
+
+### Interview checklist
+- What arguments does an Action receive, and where does pending state come from?
+- When does optimistic state need to roll back?
+- How is `use()` different from an ordinary hook?
+'''
+
+[questions.react-x006]
+prompt = '''In React 19, how should a function component pass a `ref` through to a DOM input?'''
+options = ["Receive `ref` as a regular prop and attach it to the input", "Use `createRef` only in a class", "Rename the prop to `key`", "Wrap the component in `React.memo` so the ref is forwarded automatically"]
+explanation = '''React 19 allows a function component to receive `ref` as a prop, so new components do not need `forwardRef` just to pass a ref through.'''
+
+[questions.react-x007]
+prompt = '''A React DOM component renders `<title>Account</title>`. Which behavior does React 19 support?'''
+options = ["`title` always stays in the body as an ordinary element", "React can hoist supported metadata into the document head", "React changes the title to `aria-label`", "Only a Server Component can render a title"]
+explanation = '''React DOM supports document metadata such as `title` and `meta`. You can declare it near the component that uses it, and React handles its placement in the document.'''
+
+[questions.react-x008]
+prompt = '''A team enables React Compiler in its build. Which expectation is reasonable?'''
+options = ["The compiler optimizes every third-party library automatically", "It can automatically memoize compatible code; the build still needs configuration and verification", "All hooks become synchronous", "Performance measurement and testing are no longer needed"]
+explanation = '''When integrated correctly, React Compiler automatically memoizes code it can analyze. It does not remove the need to measure performance, test, or account for code it cannot compile.'''
+
+[questions.react-x009]
+options = ["The Action was cancelled", "The Action is in progress", "There is a validation error", "The component is unmounting"]
+prompt = '''In `const [state, dispatchAction, isPending] = useActionState(action, initialState)`, what does the third value represent?'''
+explanation = '''`isPending` indicates that the Action is currently running. It is useful for disabling a submit button or showing a loading state.'''
+
+[questions.react-x010]
+prompt = '''`useFormStatus()` does not return `pending: true` as expected. The hook is called in the component that owns the `<form>`. What is the right fix?'''
+options = ["Move the hook to a child component rendered inside the form", "Call the hook after submitting", "Wrap the form in `useMemo`", "Change `<form>` to `<div>`"]
+explanation = '''`useFormStatus` reads the nearest parent form's status, so the component that calls the hook must be inside that form's descendant tree.'''
+
+[questions.react-x011]
+options = ["React renders the Promise as a string", "Rendering may suspend until the Promise settles; an appropriate boundary is needed", "React automatically turns the Promise into local state", "The Promise is cancelled immediately"]
+prompt = '''A component calls `use(userPromise)` while the Promise is still pending. What may happen?'''
+explanation = '''`use` can read a Promise during render. A pending Promise suspends the component, and a rejection should be handled by an Error Boundary.'''
+
+[questions.react-x028]
+prompt = '''Unlike an ordinary hook, in which case can `use(promise)` be called?'''
+options = ["Inside a component or hook, including a conditional branch or loop; the Promise still needs a stable identity", "Inside any JavaScript function outside React", "After the component has unmounted", "Only inside `useEffect`"]
+explanation = '''`use` is a special API that can be used in a condition or loop while rendering a component or hook. Do not create a new Promise on every render, which can cause repeated suspension.'''
+
+[questions.react-x029]
+prompt = '''Which roles are appropriate for `useActionState`? (Select all that apply.)'''
+options = ["Keep the result state returned by an Action", "Provide the Action's pending status", "Automatically turn every click handler into a Server Function", "Use an Action as a form action", "Completely replace server-side validation"]
+explanation = '''`useActionState` manages state returned by an Action and its pending status; the Action can also be attached to a form. It does not automatically make a function a Server Action or replace server-side validation.'''
+
+[questions.react-x030]
+prompt = '''Choose the correct statements about `useOptimistic`. (Select all that apply.)'''
+options = ["It can display a predicted state while an Action is running", "The authoritative state still needs to be updated when the server responds", "If the Action fails, the UI can return to the authoritative state", "Optimistic state guarantees that the server request succeeds", "Use a stable temporary key for a new item"]
+explanation = '''Optimistic UI improves responsiveness but does not guarantee success. The Action or server still owns the authoritative result and error handling; temporary items need stable identities for matching.'''
+
+[questions.react-x041]
+prompt = '''The React DOM hook that lets a child component read `pending`, `data`, `method`, and `action` from its parent form is `{{blank}}`.'''
+explanation = '''`useFormStatus` is exported from React DOM and must be called in a child component beneath the form being tracked.'''
+
+[questions.react-x042]
+prompt = '''The React 19 API that reads a Promise or Context during render and may suspend while the Promise is pending is `{{blank}}`.'''
+explanation = '''`use(value)` reads a Promise or Context; a pending Promise may trigger Suspense.'''
+
+[questions.react-x052]
+prompt = '''Describe how `useActionState`, `useOptimistic`, and `useFormStatus` can work together when submitting a profile update form.'''
+keywords = [["useActionState"], ["useOptimistic"], ["useFormStatus"], ["pending", "in progress", "loading"], ["rollback", "revert", "authoritative state"]]
+model_answer = '''`useActionState` holds the Action result state and pending status. `useFormStatus` in a child component lets the submit button show that it is **pending** or disabled. `useOptimistic` can show predicted profile data as soon as the Action starts; then use the authoritative result on success or **roll back** to the authoritative state on failure.'''
+explanation = '''The three APIs serve different parts of form submission. Optimistic UI does not replace the authoritative result from the server.'''
+
+[questions.react-xc07]
+explanation = '''Keeping the authoritative state separate from its temporary display makes commit and rollback clear. A real app would usually use `useOptimistic` directly inside an Action or transition.'''
+
+[questions.react-xc08]
+explanation = '''The Action receives the previous state and submitted data, then returns the next state for `useActionState` to publish. A real application still needs server-side validation.'''
+
+[questions.react-x039]
+prompt = '''The hook that takes an Action and initial state, then returns state, a dispatch function, and pending status is `{{blank}}`.'''
+explanation = '''`useActionState(action, initialState)` returns `[state, dispatchAction, isPending]`.'''
+
+[questions.react-x040]
+prompt = '''In React 19, the hook for displaying temporary state while an Action is running is `{{blank}}`.'''
+explanation = '''`useOptimistic` creates optimistic state while waiting for the Action or server result.'''
+
+[modules.react-server]
+title = "Server Components & Streaming"
+description = "Server/client boundaries, directives, Suspense, streaming, and hydration."
+lesson = '''### Choose where a component runs
+| Kind | Can it use state/effects? | Is its JavaScript sent to the browser? |
+|---|---|---|
+| Server Component | No client hooks | Its component implementation is not sent |
+| Client Component | Yes, through a `'use client'` boundary | Yes |
+| Server Function | Runs on the server when called | The client receives a reference it can call |
+
+`'use client'` goes at the top of a module and creates a boundary for its client-side imports. Props crossing the boundary must be serializable. `'use server'` marks a Server Function; it does not turn a component into a Server Component.
+
+```jsx
+// Server Component
+export default async function Page() {
+  const user = await loadUser();
+  return <Profile name={user.name} />;
+}
+```
+
+Suspense lets a framework stream content that is ready while a slower part displays a fallback. Hydration attaches client events and state to server-rendered HTML; the initial server and client output must match.
+
+### Common mistakes
+- Importing browser APIs or calling `useState` in a Server Component.
+- Passing an ordinary callback/function through server-to-client props.
+- Treating `'use server'` as equivalent to `'use client'`.
+- Rendering `Date.now()`, random values, or browser-dependent data differently during the initial render.
+
+### Interview checklist
+- Which imported modules fall under a `'use client'` boundary?
+- Where in the tree can Suspense help with streaming?
+- What causes a hydration mismatch, and in what order would you investigate it?
+'''
+
+[questions.react-x012]
+prompt = '''A Server Component needs to read server data before returning JSX. Which statement is correct?'''
+options = ["It can use async/await, but not client state/effect hooks such as `useState`", "It must add `'use client'`", "Every server component sends its JavaScript source to the browser", "Only class components can run on the server"]
+explanation = '''Server Components run on the server and can read data there. Client interaction hooks such as state and effects belong in Client Components.'''
+
+[questions.react-x013]
+prompt = '''A file has `'use client'` at the top of its module and then imports `SearchBox`. What is the directive's main meaning?'''
+options = ["Only the first component in the file becomes a client component", "The module becomes a client boundary and its dependencies are included on the client", "The component runs exclusively on the server", "The directive enables hydration for the whole site"]
+explanation = '''`'use client'` marks a module boundary. Modules imported beneath that boundary belong to the client graph; child files do not each need the directive.'''
+
+[questions.react-x014]
+prompt = '''A file has `'use server'` on an order-saving function. Which interpretation is correct?'''
+options = ["Every component in the file becomes a Server Component", "The function is marked as a Server Function that can be called from the client through framework integration", "The file becomes a Client Component", "React skips input validation for the function"]
+explanation = '''`'use server'` marks a Server Function, often used as a server Action. It differs from `'use client'` and does not change the classification of every component in the module.'''
+
+[questions.react-x015]
+prompt = '''During streaming SSR, a child region inside `<Suspense>` is still waiting for data. What does the boundary allow?'''
+options = ["Block the entire response until every region is ready", "Send a fallback first, then stream the content when that region is ready", "Skip hydration for the whole page", "Retry forever if the data fails"]
+explanation = '''Suspense boundaries let the server send ready content along with a fallback, then stream the slower region when it becomes available.'''
+
+[questions.react-x016]
+prompt = '''An SSR page shows different times on the server and during the first client render, causing a hydration mismatch. What is the best fix?'''
+options = ["Make the initial output deterministic, then read the time on the client after hydration", "Disable all of React Strict Mode", "Add `key={Date.now()}` to the root", "Wrap every component in `React.memo`"]
+explanation = '''The server HTML and initial client render need to match. Pass in stable data, or render browser-dependent content in an Effect after hydration.'''
+
+[questions.react-x051]
+prompt = '''Explain the difference between `'use client'`, `'use server'`, Server Components, and Server Functions. Include the constraint on props that cross the boundary.'''
+keywords = [["use client", "client boundary"], ["use server", "Server Function", "server function"], ["Server Component", "server component"], ["serializable", "serialization"]]
+model_answer = '''A Server Component runs on the server and cannot use client state or Effect hooks. `'use client'` creates a client boundary for a module and its dependencies. `'use server'` marks a Server Function that can be called from the client through the framework; it does not turn a component into a Client Component. Ordinary props that cross the boundary must be **serializable**.'''
+explanation = '''The two directives mark different boundaries. Confusing them can lead to code running in the wrong place or invalid data crossing the boundary.'''
+
+[questions.react-x053]
+prompt = '''Describe common causes of a hydration mismatch and how you would diagnose and fix a UI that depends on time or browser APIs.'''
+keywords = [["hydration mismatch", "hydration error"], ["deterministic", "stable", "consistent"], ["initial render", "first render"], ["browser-only", "window", "browser API"]]
+model_answer = '''A hydration mismatch occurs when server HTML and the initial client render are not **deterministic**, for example because each reads a different time or the client uses a **browser-only** API. Pass stable data so the **initial render** matches; if a browser value is truly needed, read it in an Effect after hydration and check the relevant boundary.'''
+explanation = '''React needs to hydrate matching markup. Fix the difference between the two renders instead of hiding the warning.'''
+
+[questions.react-x031]
+prompt = '''When passing data from a Server Component to a Client Component, which rules should you remember? (Select all that apply.)'''
+options = ["Props crossing the boundary must be serializable", "You can keep interactions in a small client subtree", "A Server Function is an exception that can be passed as a callable reference", "Passing an ordinary JavaScript callback is always safe", "`'use client'` at the top of a module creates a boundary"]
+explanation = '''The client-server boundary requires serializable props. Server Functions have their own reference mechanism; ordinary callbacks cannot be passed directly across the boundary.'''
+
+[questions.react-x032]
+prompt = '''Which benefits or requirements are associated with Suspense and streaming SSR? (Select all that apply.)'''
+options = ["A boundary can send a fallback before slower content", "Independent regions can finish at different times", "Hydration mismatches still need to be handled separately", "Suspense automatically fixes all differences between server and client", "A fallback should communicate a useful loading state"]
+explanation = '''Streaming can send regions and fallbacks incrementally. It does not automatically fix hydration mismatches; the server output and initial client render still need to be consistent.'''
+
+[modules.react-effects]
+title = "Effects & Synchronization"
+description = "Avoiding unnecessary Effects, cleanup, safe fetching, Strict Mode, layout effects, and Effect Events."
+lesson = '''### Do you really need an Effect?
+| Need | Preferred approach |
+|---|---|
+| Calculate a value from props or state | Calculate during render; memoize if needed |
+| Respond to a user action | Handle it in an event handler |
+| Synchronize with an external system | Use `useEffect` and cleanup |
+| Measure layout before paint | Use `useLayoutEffect` sparingly |
+
+```jsx
+useEffect(() => {
+  const controller = new AbortController();
+  loadUser(userId, { signal: controller.signal });
+  return () => controller.abort();
+}, [userId]);
+```
+
+Cleanup runs before the Effect synchronizes with a new dependency and when the component leaves the tree. In development, Strict Mode runs an extra setup-cleanup cycle to expose asymmetric lifecycles. `useEffectEvent` lets an Effect call logic that reads the latest values without re-subscribing to a resource just because those values changed.
+
+### Common mistakes
+- Copying props into state with an Effect, then having to keep two sources of data synchronized.
+- Omitting cleanup and leaving an old timer or subscription active.
+- Ignoring an old fetch result without also cancelling a request when cancellation is available.
+- Using `useLayoutEffect` for work that does not need to finish before paint.
+
+### Interview checklist
+- Which external system is the Effect synchronizing with?
+- Does cleanup cancel the resource created by the matching setup?
+- Could the logic go in render or an event handler instead?
+'''
+
+[questions.react-x017]
+prompt = '''`fullName` is just `firstName` joined with `lastName`. A component stores `fullName` in state and updates it in an Effect. What is the simpler and more correct approach?'''
+options = ["Calculate `fullName` directly during render", "Add a second Effect to synchronize it", "Use a ref instead of state", "Use `useLayoutEffect` to make it run faster"]
+explanation = '''Derived values should be calculated from props or state during render. Storing a copy and updating it in an Effect adds a render and risks stale state.'''
+
+[questions.react-x018]
+options = ["connect", "connect then disconnect", "connect, disconnect, connect", "disconnect then connect then disconnect"]
+prompt = '''In development with Strict Mode, what order might an Effect with `connect()` and cleanup `disconnect()` log on its first mount?'''
+explanation = '''In development, Strict Mode runs an extra setup-cleanup cycle to expose resources that are not cleaned up correctly. The final setup leaves the connection active.'''
+
+[questions.react-x021]
+options = ["`useEffect`, because it always runs before paint", "`useLayoutEffect`, because it runs after commit but before paint", "`useMemo`, because it reads the DOM", "`useDeferredValue`, because it blocks layout"]
+prompt = '''A popover needs to measure the DOM and set its position before the user sees the first frame. Which hook is a better fit?'''
+explanation = '''`useLayoutEffect` runs after the DOM is committed and before the browser paints, which suits layout measurements that must avoid flicker. It can block painting, so do not use it for ordinary work.'''
+
+[questions.react-x022]
+prompt = '''An Effect creates a connection based on `roomId`. A logging callback needs the latest `theme`, but changing the theme should not reconnect. What should you consider in React 19?'''
+options = ["Add `theme` to the dependencies and accept reconnection", "Use `useEffectEvent` for the logging logic called by the Effect", "Read the theme from a global variable", "Remove `roomId` from the dependencies"]
+explanation = '''An Effect Event reads the latest props and state without making the Effect re-subscribe just because those values change. Call it from an Effect or its callback; do not use it as a UI event handler.'''
+
+[questions.react-x043]
+prompt = '''The function returned by `useEffect` to clean up a subscription or timer is called a `{{blank}}` function.'''
+explanation = '''Cleanup releases resources created by setup before the next synchronization and when the component unmounts.'''
+
+[questions.react-x044]
+prompt = '''The React 19 API that lets an Effect call logic needing the latest props/state without adding them as subscription dependencies is `{{blank}}`.'''
+explanation = '''`useEffectEvent` separates Effect Event logic from subscription setup. Call it only inside an Effect or a callback created by that Effect.'''
+
+[questions.react-x045]
+prompt = '''The Effect hook that runs after commit but before the browser paints, suitable for layout measurements that must avoid flicker, is `{{blank}}`.'''
+explanation = '''`useLayoutEffect` runs before paint and can block it. Prefer `useEffect` unless you need synchronous layout measurement.'''
+
+[questions.react-x049]
+prompt = '''Explain how to decide whether `useEffect` is needed. Give at least one case that should be calculated during render or handled in an event handler, and one case where an Effect is appropriate.'''
+keywords = [["derived state", "derived value", "calculate during render"], ["event handler", "event callback"], ["external system", "subscription", "timer"]]
+model_answer = '''You do not need an Effect for **derived state** such as `fullName` from `firstName` and `lastName`; calculate it during render. Handle user-triggered actions in an **event handler**. Use `useEffect` to synchronize with an **external system**, such as a subscription or timer, and return the matching cleanup.'''
+explanation = '''Effects should synchronize with systems outside React, not serve as the default way to connect pieces of state.'''
+
+[questions.react-x050]
+prompt = '''Describe how to avoid a race condition when fetching as `userId` changes quickly. Distinguish cancelling a request from ignoring an old result.'''
+keywords = [["AbortController", "abort", "cancel request", "cancellation"], ["cleanup", "clean up"], ["ignore flag", "stale result", "ignore old result"], ["race condition", "request race"]]
+model_answer = '''In an Effect keyed by `userId`, create an `AbortController` and cancel the request in cleanup when the ID changes or the component unmounts. If the client cannot cancel the operation, use an ignore flag to avoid committing a **stale result**. Cleanup and the guard both prevent a **race condition** in which old user data overwrites new data.'''
+explanation = '''Cancelling a request saves resources when the API supports it; guarding the result still protects state if an old response arrives late.'''
+
+[questions.react-xc10]
+explanation = '''Cleanup cancels an operation when the underlying API supports a cancellation token. An `ignore` flag still blocks an old completion if the transport cannot cancel. In a real app, use the standard `AbortController`/signal and verify request ownership.'''
+
+[questions.react-xc11]
+explanation = '''The hook emits the initial value immediately, then limits update frequency while still preserving the final value in the waiting period.'''
+
+[questions.react-xc12]
+explanation = '''Cleanup mirrors setup, while the functional updater reads the latest state without re-registering the interval on every tick.'''
+
+[questions.react-x033]
+prompt = '''An Effect creates a subscription based on `roomId`. Choose the correct practices. (Select all that apply.)'''
+options = ["Clean up the old subscription before synchronizing with the new room", "Include every required dependency so the Effect does not read a stale closure", "Ensure setup-cleanup-setup leaves exactly one active subscription", "Skip cleanup because Strict Mode runs only in development", "Use an Effect Event for callback logic that needs the latest value without changing the subscription"]
+explanation = '''An Effect must declare its reactive dependencies and provide matching cleanup. Strict Mode helps expose bugs early; an Effect Event separates logic that reads the latest value from the subscription dependencies.'''
+
+[modules.react-forms-a11y]
+title = "Forms & Accessibility"
+description = "Controlled forms, validation, focus management, ARIA, and modal portals."
+lesson = '''### Usable forms
+| Input type | Initial value | Who holds the value? |
+|---|---|---|
+| Controlled | `value` / `checked` | React state, updated through `onChange` |
+| Uncontrolled | `defaultValue` / `defaultChecked` | The DOM; read it when needed through a ref or FormData |
+
+```jsx
+<label htmlFor="email">Email</label>
+<input id="email" value={email} onChange={event => setEmail(event.target.value)} aria-invalid={Boolean(error)} aria-describedby="email-error" />
+<p id="email-error">{error}</p>
+```
+
+Validation messages should be associated with their fields. After a failed submission, move focus to the first field with an error. Use real labels, preserve keyboard operation, and expose error state to assistive technology. A portal suits a modal, but the modal still needs to manage focus in and out, Escape handling, an accessible name, and background interaction.
+
+### Common mistakes
+- Using a placeholder instead of a label, or using color alone to show an error.
+- Setting `aria-invalid` without linking the message through `aria-describedby`.
+- Showing errors after submission while leaving focus on the submit button.
+- Creating a modal portal without keeping and restoring focus to the opener.
+
+### Interview checklist
+- What gives a field its accessible name and error state?
+- Where is the value stored in a controlled versus uncontrolled input?
+- After an invalid submission, where should keyboard users go?
+'''
+
+[questions.react-x019]
+prompt = '''An input has `value={email}` but no `onChange`, so the user cannot edit it. Why?'''
+options = ["`value` creates a controlled input, so React keeps the value fixed unless state is updated", "React allows input only with `defaultValue`", "The input must be inside a portal", "`value` is only for checkboxes"]
+explanation = '''A controlled input gets its value from React state. Add an `onChange` handler to update that state; to let the DOM hold the value, use `defaultValue` for an uncontrolled input.'''
+
+[questions.react-x024]
+prompt = '''Which attribute should associate the “Invalid email” message with the input so assistive technology can identify the error description?'''
+options = ["`aria-describedby` pointing to the message's ID", "`data-error` pointing to a CSS class", "`tabIndex=-1` on the input", "`aria-hidden=true` on the message"]
+explanation = '''`aria-describedby` links a description, including an error message, to the input. You can also set `aria-invalid` while the field has an error.'''
+
+[questions.react-x046]
+prompt = '''The ARIA attribute that links a description or error message to an input by ID is `{{blank}}`.'''
+explanation = '''`aria-describedby` points to the ID of an element describing the input, often including instructions or a validation error.'''
+
+[questions.react-x054]
+prompt = '''Design accessible validation feedback for a multi-field form. Cover labels, error associations, invalid state, focus after submission, and requirements for a modal portal.'''
+keywords = [["label", "accessible label"], ["aria-describedby", "describedby"], ["aria-invalid", "invalid state"], ["focus", "focus the field", "move focus"], ["portal", "modal"]]
+model_answer = '''Give every input a correctly associated **label**. When it has an error, set `aria-invalid` and link the error text with `aria-describedby`; after a failed submission, move **focus** to the first invalid field. If the form is in a modal **portal**, give the dialog an accessible name, manage focus inside it, support an appropriate close action, and restore focus to the opener.'''
+explanation = '''Validation must communicate both the error state and how to fix it to keyboard users and assistive technology.'''
+
+[questions.react-xc14]
+explanation = '''Fields usually follow the order in which users see them. The result can be used to move focus after submission; focus the DOM from the component.'''
+
+[questions.react-x034]
+prompt = '''A form has client-side validation. Which steps make an invalid field easier to identify and fix? (Select all that apply.)'''
+options = ["Associate a label with the input", "Link the message with `aria-describedby`", "Set `aria-invalid` when the field has an error", "After an invalid submission, focus the first invalid field", "Use red as the only error indicator"]
+explanation = '''A label, linked description, error state, and focus movement help users identify the problem and reach the field to fix it. Pair color with another signal.'''
+
+[questions.react-x035]
+prompt = '''A modal is rendered through a portal. Which requirements still need to be handled? (Select all that apply.)'''
+options = ["An accessible name for the dialog", "Move focus into the dialog and manage focus inside it", "Restore focus to the opener when the dialog closes", "Allow closing with Escape when appropriate", "Assume the portal creates a focus trap automatically"]
+explanation = '''A portal only changes the DOM location. It does not provide semantics, a focus trap, Escape handling, or focus restoration automatically; events still follow the React tree.'''
+
+[modules.react-testing-arch]
+title = "Testing & Component Architecture"
+description = "Role-based queries, module organization, state colocation, context/store, error boundaries, and lazy loading."
+lesson = '''### Organization and testing
+| Problem | Approach | Trade-off |
+|---|---|---|
+| Testing UI | Query by role and accessible name | Matches how users find controls |
+| State used in one area | Keep it near the component that owns that area | Reduces dependencies and broad re-renders |
+| Data shared within a tree | Use Context | A changed Provider value updates consumers |
+| Many subscriptions or selective updates | Use a store with selectors | Adds concepts and subscription machinery |
+
+```jsx
+const Page = lazy(() => import('./Page'));
+<Suspense fallback={<p>Loading</p>}><Page /></Suspense>
+```
+
+Testing Library usually prefers `getByRole('button', { name: 'Save' })`; use `findByRole` when an element appears asynchronously. An Error Boundary recovers a rendering region from errors; `lazy` splits a chunk and needs a Suspense boundary. Keeping state near where it is used limits the number of dependent components. Lift it only when multiple areas truly need the same data.
+
+### Common mistakes
+- Querying by class or fragile DOM structure instead of role and name.
+- Moving all state to the root or putting everything in Context from the start.
+- Assuming Context automatically provides a subscription for each field.
+- Omitting a fallback while a lazy component loads.
+
+### Interview checklist
+- Could this state live lower in the tree while still serving every consumer?
+- Does the test check user behavior or implementation details?
+- When is Context enough, and when do you need an external store with selectors?
+'''
+
+[questions.react-x020]
+prompt = '''You need to verify that a save button has the accessible name “Save” and calls its handler when clicked. Which Testing Library query should you prefer?'''
+options = ["`container.querySelector('.blue')`", "`getByRole('button', { name: 'Save' })`", "`getByTestId('save-1')`", "Find the third node in the body"]
+explanation = '''A query by role and accessible name reflects how users find a control and can also reveal missing accessibility semantics.'''
+
+[questions.react-x025]
+prompt = '''A filter is used by `FilterPanel` and `Results`, two sibling components. Where is a reasonable first place to keep the state?'''
+options = ["A global variable outside React", "The nearest common parent that needs to coordinate the two components", "Separate state in each component and synchronize it with an Effect", "A whole-app store regardless of scope"]
+explanation = '''Lifting state to the nearest common parent creates one source of truth for both consumers without expanding the state scope unnecessarily.'''
+
+[questions.react-x047]
+prompt = '''In a React test, the React API for wrapping an operation that updates state and waiting for the update to be applied before asserting is `{{blank}}`.'''
+explanation = '''`act` batches React updates caused by a test operation before assertions run. Testing Library already wraps common interactions in it in many cases.'''
+
+[questions.react-x055]
+prompt = '''Explain how to organize tests and state for a page with a filter, lazily loaded results, and a region that can fail. Name an appropriate Testing Library query.'''
+keywords = [["getByRole", "role-based query", "accessible role"], ["state colocation", "colocation", "keep state near where it is used"], ["Context", "context"], ["Error Boundary", "error boundary"], ["lazy", "code splitting"], ["Suspense", "fallback"]]
+model_answer = '''Keep filter state near `FilterPanel` and `Results`, lifting it to their common parent when both need it; use Context only when data truly needs to cross multiple levels. Test behavior with `getByRole` and an accessible name. Load large result sections with `lazy` inside `Suspense` with a fallback, and place an Error Boundary around the region that needs recovery.'''
+explanation = '''State scope, error boundaries, and loading fallbacks should follow product areas; tests should check the semantics visible to users.'''
+
+[questions.react-xc15]
+explanation = '''History is a suitable state transition for a reducer. Test the hook with `renderHook` and `act` to verify undo/redo behavior and history limits.'''
+
+[questions.react-x036]
+prompt = '''Choose the appropriate Testing Library queries. (Select all that apply.)'''
+options = ["Use `getByRole` for an element that should be present immediately", "Use `findByRole` when an element will appear asynchronously", "Use `queryByRole` to check that an element is currently absent", "Always prefer `getByTestId` over a role", "Use the accessible name to distinguish buttons with the same role"]
+explanation = '''`getBy` fails immediately when there is no match, `findBy` waits asynchronously, and `queryBy` returns `null` when there is no match. Prefer role and name because they reflect accessibility.'''
+
+[modules.react-dv-rules]
+title = "Rules of React & Linting"
+description = "Render purity, the Rules of Hooks, immutable updates, and diagnostics from eslint-plugin-react-hooks."
+lesson = '''### Why does React need these rules?
+React needs components and hooks that can be called again safely. During render, the same props, state, and context should produce the same result; rendering should not mutate external data, register listeners, or start side-effecting work. React may render again, pause, or retry a branch, so pure rendering keeps the UI independent of how many times a function runs.
+
+| Rule | Good practice | Sign of a violation |
+|---|---|---|
+| Pure components | Derive JSX from props/state; handle actions in events | `Date.now()` changes content between renders |
+| Call Hooks in a consistent order | Call them at the top of a function component or custom hook | A hook is inside an `if`, loop, or ordinary callback |
+| Immutability | Create a new array/object when updating | `push`, `sort`, or assigning a field on props/state |
+| Complete dependencies | Declare reactive values read by an Effect or callback | A closure reads stale values or lint reports missing dependencies |
+
+```jsx
+function addTodo(todos, todo) {
+  return [...todos, todo];
+}
+
+function TodoCount({ todos }) {
+  return <p>{todos.length} items</p>;
+}
+```
+
+`eslint-plugin-react-hooks` checks the Rules of Hooks, dependencies, immutability, and some risky state-update patterns. Address its diagnostics instead of disabling lint broadly; these rules also help React Compiler analyze code reliably.
+
+### Common mistakes
+- Calling a component as `Child(props)` instead of letting React call `<Child />`.
+- Calling `useState` only when a condition is true, changing hook order between renders.
+- Mutating `props.items` with `sort()` and reusing the array.
+- Omitting a dependency to force an Effect not to rerun, leaving its callback with stale data.
+- Calling a setter during render to “fix” data, which can create a render loop.
+'''
+
+[questions.react-dv001]
+prompt = '''A component needs to display a list sorted by name. Why should it avoid calling `items.sort(compareByName)` directly on a prop during render?'''
+options = ["`sort` mutates the input array, so rendering causes a side effect and may affect other components", "React allows sorting only in an event handler", "`sort` always runs asynchronously", "A sorted array cannot have keys"]
+explanation = '''`Array.sort` mutates the original array. Copy the array before sorting so render does not change data received from elsewhere.'''
+
+[questions.react-dv002]
+prompt = '''A component needs `useState` only when `enabled` is true. Which fix follows the Rules of Hooks?'''
+options = ["Call `useState` unconditionally at the top of the component, then use `enabled` to decide what UI to show", "Call `useState` inside `if (enabled)`", "Call `useState` inside the button's enable callback", "Call `useState` in a loop only when enabled"]
+explanation = '''Hooks must be called in the same order on every render. Apply the condition to the logic or JSX after calling the hook.'''
+
+[questions.react-dv003]
+prompt = '''A component calls `setTotal(total + 1)` in its function body during render to update itself. What is the main problem?'''
+options = ["Updating state during render can create a render loop and violate purity", "A setter works only in a class component", "React ignores every setter in a function component", "`total + 1` always returns a string"]
+explanation = '''Render should calculate UI from the current state. Updating state during render usually loops indefinitely; derive the value or update it in an appropriate event or Effect.'''
+
+[questions.react-dv004]
+prompt = '''What problems or violations can this code cause? (Select all that apply.)
+
+```js
+useMemo(() => items.sort(compare).filter(item => item.name.includes(query)), [items])
+```'''
+options = ["`sort` mutates the `items` array", "`query` is missing from the dependencies, so the result may use a stale query", "`filter` always changes component identity", "The compiler does not support every call to `filter`", "`useMemo` cannot be called in a component"]
+explanation = '''The callback mutates its input with `sort` and reads `query` even though the dependencies include only `items`. Copy the array and declare every reactive input.'''
+
+[questions.react-dv005]
+prompt = '''Which behaviors make rendering impure or unsafe if React calls a component again? (Select all that apply.)'''
+options = ["Calling `Date.now()` to put the current time in JSX", "Calling `window.addEventListener` directly during render", "Calling `items.push(newItem)` on props", "Creating a new array with `items.filter(...)`", "Displaying `count + 1` from props"]
+explanation = '''Time changes between calls, a listener creates a side effect, and `push` mutates input data. Calculating on a new array and pure addition can safely be repeated.'''
+
+[questions.react-dv006]
+prompt = '''To sort a prop array without mutating the original, first make a copy with `{{blank}}`.'''
+explanation = '''`slice()` or spread creates a new array. You can sort that copy instead of mutating the prop.'''
+
+[questions.react-dv007]
+prompt = '''In an interview, explain why React encourages pure components and immutable state updates. Connect this to React being able to re-render or retry a component.'''
+keywords = [["pure", "purity", "pure component"], ["same inputs", "same output", "same inputs produce the same output"], ["retry", "interrupted", "re-render", "render again"], ["immutable", "immutability", "immutable update"]]
+model_answer = '''A **pure** component produces the same result for the **same inputs** and does not cause side effects during render. React can call it again, interrupt it, or retry the render without unexpectedly changing external data. An **immutable** state update creates a new array or object so React can detect the change while keeping calculations safe to repeat.'''
+explanation = '''A strong answer connects purity, flexible re-rendering, and change detection through new identities.'''
+
+[questions.react-dvc01]
+title = "Immutable todo update"
+prompt = '''Write `updateTodo(todos, id, patch)` to return a **new array**. For the todo whose `id` matches, create a new object by merging the fields of `patch` into the old todo. Preserve order; do not mutate the input array or objects. Non-matching todos must keep their identity. If no ID matches, still return a new array containing the old elements.'''
+hints = ["Use `map` to preserve order and create a new array.", "Create a new object only for the item with the matching ID; return the existing object for all other items."]
+explanation = '''Immutable updates give React a new identity for the changed value without corrupting a data snapshot that another component may still use.'''
+
+[modules.react-dv-compiler]
+title = "React Compiler"
+description = "Build-time component analysis, automatic memoization, directives, and incremental adoption."
+lesson = '''### What does the compiler do?
+React Compiler analyzes components and custom Hooks at build time, then can cache values or components that can be reused. It is not a hook that runs during rendering: code must still work correctly without optimization, and you do not call a compiler API from a component. The goal is to reduce repeated calculations or renders without changing the UI result.
+
+| Part | Role | Safe assumption |
+|---|---|---|
+| Compiler in the build | Analyzes code and adds memoization when eligible | Do not assume every component is optimized |
+| `eslint-plugin-react-hooks` | Reports patterns that block analysis or violate rules | Fix the cause instead of disabling lint broadly |
+| Configuration/gating | Selects the scope and how the compiler enters the app | Roll out incrementally and monitor results |
+| Directives | Control compilation in supported scopes | Use them only for a specific reason and with the configuration understood |
+
+```jsx
+function ProductList({ products, query }) {
+  const normalized = query.trim().toLowerCase();
+  const visible = products.filter(product => product.name.toLowerCase().includes(normalized));
+  return <List items={visible} />;
+}
+```
+
+This function only reads its inputs and calculates a result, which is easier to analyze than code that mutates props or reads values that change implicitly. A project can still keep `useMemo` or `useCallback` where measurement shows a benefit or where identity is part of an existing integration. Use the project's configuration and linting to learn which code the compiler recognizes.
+
+### Common mistakes
+- Assuming the compiler is enabled just because the project uses React 19; it must be integrated into the build.
+- Treating memoization as a correctness guarantee instead of an optimization that can be skipped.
+- Trying to force compilation of code with mutation or side effects during render instead of making the code pure.
+- Removing all manual memoization without checking configuration, the Profiler, and app behavior.
+- Ignoring compiler/lint diagnostics and losing visibility into skipped code.
+'''
+
+[questions.react-dv008]
+prompt = '''At what stage does React Compiler primarily analyze components and add optimizations?'''
+options = ["During the application build", "When a user clicks for the first time", "When the server receives its first request", "In an Effect after every render"]
+explanation = '''The compiler is integrated into the build process to analyze source code and produce optimized code; it is not a hook that runs when a component renders.'''
+
+[questions.react-dv009]
+prompt = '''What is the purpose of the `'use no memo'` directive in code processed by React Compiler?'''
+options = ["Tell the compiler to skip the marked scope", "Clear every browser cache", "Disable `useMemo` across the entire app at runtime", "Force React to render a component exactly once"]
+explanation = '''The directive controls compilation for the corresponding scope. It is not a runtime command that changes the cache across the whole application.'''
+
+[questions.react-dv010]
+prompt = '''After enabling React Compiler, what is a reasonable approach when a component still renders frequently?'''
+options = ["Check compiler diagnostics and measure with the Profiler rather than assuming every component is cached", "Add `useMemo` to every expression", "Remove Effect dependencies to reduce renders", "Skip tests because the compiler guarantees the code has no bugs"]
+explanation = '''The compiler does not guarantee that every piece of code is compiled or that every render is eliminated. Diagnostics and the Profiler show the actual scope and remaining cost.'''
+
+[questions.react-dv011]
+prompt = '''A team wants to adopt React Compiler in a stable application. Which steps can reduce risk? (Select all that apply.)'''
+options = ["Read the configuration guidance for the toolchain in use", "Use lint and diagnostics to find incompatible code", "Limit the scope or use gating during rollout", "Assume the compiler will fix mutations in components", "Compare behavior and performance before and after on representative flows"]
+explanation = '''Correct configuration, diagnostics, controlled rollout, and measurement make adoption safer. The compiler does not turn impure or incorrect code into correct code.'''
+
+[questions.react-dv012]
+prompt = '''Choose the correct statements about memoization with React Compiler. (Select all that apply.)'''
+options = ["The compiler can automatically add caching for suitable calculations or components", "Code that the compiler does not optimize must still return the correct result", "You can keep `useMemo` and `useCallback` when there is a specific reason", "The compiler guarantees that a component will never render again", "Every value created during render must be manually wrapped in `useMemo`"]
+explanation = '''The compiler applies optimizations conditionally but does not change correctness requirements. Manual memoization can still be useful when measurement or an integration requires stable identity.'''
+
+[questions.react-dv013]
+prompt = '''One optimization React Compiler can automatically add to suitable code is `{{blank}}`.'''
+explanation = '''The compiler analyzes code and can add memoization to reuse values or render results.'''
+
+[questions.react-dv014]
+prompt = '''In an interview, describe how to introduce React Compiler into a large application and how to tell whether it helps without affecting correctness.'''
+model_answer = '''Integrate the compiler into the build using the right toolchain, then use lint and diagnostics to see which code is compiled. Roll it out incrementally, with gating for part of the application, and run tests while comparing representative flows with the Profiler. Code must retain the same behavior even when it is not memoized; keep or add manual memoization only for a measured reason.'''
+explanation = '''A good answer covers build configuration, diagnostics, controlled rollout, and verification of performance and correctness.'''
+
+[questions.react-dvc02]
+title = "Pure product selector"
+prompt = '''Write `filterProducts(products, query)` to return products whose `name` contains the query, ignoring case. Trim leading and trailing whitespace from the query, preserve the input order, and do not mutate the array or product objects. An empty query must return every product.'''
+hints = ["Normalize the query once with `trim()` and `toLowerCase()`.", "Use `filter` instead of sorting or mutating the input array."]
+explanation = '''A pure selector depends only on its inputs and does not mutate data, making it easy to test and suitable for compiler analysis.'''
+
+[modules.react-dv-ssr]
+title = "SSR, Streaming & Hydration"
+description = "Choosing server-rendering APIs, streaming HTML, and attaching React to rendered markup without mismatches."
+lesson = '''### Server HTML and React in the browser
+Server rendering creates initial HTML so the browser can show content early. For interactive HTML, the client calls `hydrateRoot` to attach events and let React manage the existing tree. If the page is rendered entirely on the client into an empty container, use `createRoot`. Hydration expects the initial client markup to match the server HTML; the two sides must not choose different values for the first render.
+
+| API | Purpose | Main characteristic |
+|---|---|---|
+| `renderToString` | Creates an HTML string | Does not stream; more limited with Suspense |
+| `renderToPipeableStream` | Server runtime with Node streams | Sends the shell and content as a stream |
+| `renderToReadableStream` | Runtime that supports Web Streams | Also streams through a `ReadableStream` |
+| `prerender` | Creates static HTML after data is ready | Returns a Promise when Suspense regions have completed |
+| `hydrateRoot` | Hydrates existing server-rendered markup | The initial client HTML should match the server |
+| `createRoot` | Renders a client app into a container | Does not hydrate server-rendered markup |
+
+With streaming, the server can send the page shell when it is ready, followed by slower regions through Suspense. Choose an API based on the server's stream environment and how the framework manages scripts and responses. Static prerendering is useful when you want to wait for data before emitting HTML.
+
+### Common mistakes
+- Calling `createRoot` on a container that already has server HTML, bypassing hydration.
+- Using `Date.now()`, random values, browser data, or different locales in the initial markup.
+- Assuming `renderToString` streams or handles every Suspense case like the streaming APIs.
+- Hiding a mismatch with `suppressHydrationWarning` instead of finding different server and client inputs.
+- Calling `hydrateRoot` multiple times for the same root instead of keeping the created root.
+
+### Debug in this order
+Compare the server's props and input data with the client's first render; check time zones/locales, random values, and `window`-dependent conditions; inspect the HTML after the browser parses it; then use the root's recoverable-error callback to collect useful diagnostics.
+'''
+
+[questions.react-dv015]
+prompt = '''The server has sent HTML for `<App />`. Which API should the client call to attach React to that markup?'''
+explanation = '''`hydrateRoot` is for server-rendered HTML; `createRoot` is for client rendering into a new container.'''
+
+[questions.react-dv016]
+prompt = '''A client-only page mounts into an empty container. Which API is appropriate?'''
+explanation = '''`createRoot` initializes a client-side React root when the container does not need to hydrate server HTML.'''
+
+[questions.react-dv017]
+prompt = '''A Node server wants to stream React HTML through a Node writable stream. Which API is designed for this case?'''
+explanation = '''`renderToPipeableStream` integrates with Node streams; `renderToReadableStream` is for Web Streams.'''
+
+[questions.react-dv018]
+prompt = '''A hydration warning appears because the initial client markup differs from the server HTML. What is the best response?'''
+options = ["Find the different data or logic and make the two initial renders consistent", "Always wrap the component in `suppressHydrationWarning`", "Call `createRoot` instead of `hydrateRoot` to preserve the markup", "Disable Strict Mode in production"]
+explanation = '''A mismatch often comes from non-deterministic inputs or environment differences. Fix the source of the difference before using a narrow escape hatch.'''
+
+[questions.react-dv019]
+prompt = '''Which differences can make the server markup and the client's first render disagree? (Select all that apply.)'''
+options = ["Using `Date.now()` to create content", "Using a random number during render", "Depending on different time zones or locales on the server and browser", "Reading `window.innerWidth` directly to choose client markup", "Creating an object during render without using it to produce markup"]
+explanation = '''Time, randomness, locale, and browser-only data can differ between environments. An object that does not affect the markup does not cause a mismatch.'''
+
+[questions.react-dv020]
+prompt = '''Choose the correct descriptions of server-rendering APIs. (Select all that apply.)'''
+options = ["`renderToPipeableStream` uses Node streams", "`renderToReadableStream` uses Web Streams", "`hydrateRoot` continues from existing server HTML", "`createRoot` hydrates existing server HTML", "`renderToString` sends chunks as Suspense regions complete"]
+explanation = '''The two streaming APIs serve different runtime stream types; hydration uses `hydrateRoot`. `createRoot` does not hydrate, and `renderToString` synchronously creates a string rather than streaming.'''
+
+[questions.react-dv021]
+prompt = '''To hydrate server markup, use `{{blank}}(container, <App />)`.'''
+explanation = '''`hydrateRoot` takes the container holding server HTML and the React tree for the client.'''
+
+[questions.react-dv022]
+prompt = '''Explain common causes of a hydration mismatch and the order in which you would investigate it in an SSR application.'''
+keywords = [["server", "client"], ["same", "match", "consistent markup"], ["date", "random", "locale", "timezone", "browser API"], ["deterministic", "consistent", "initial render"]]
+model_answer = '''Hydration requires the server markup and the client's first render to **match**. I would compare the data and props on both sides, then look for non-deterministic values such as `Date.now()`, randomness, locale/time-zone differences, or a branch that reads a browser API. Next I would inspect the HTML parsed by the browser and fix the input so both environments produce the same initial markup.'''
+explanation = '''A good answer connects the requirement for matching markup with environment-dependent differences and a systematic investigation.'''
+
+[questions.react-x026]
+prompt = "The `Chart` module exports only a named export. Which use of `lazy` creates the shape React expects?"
+options = ["`lazy(() => import('./Chart'))` even though the module has no default export", "`lazy(() => import('./Chart').then(m => ({ default: m.Chart })))`", "`lazy(Chart)`", "`lazy(() => Promise.resolve(Chart))`"]
+explanation = "`lazy` expects a Promise that resolves to an object with a `default` property containing the component. A named export can be mapped to that shape."

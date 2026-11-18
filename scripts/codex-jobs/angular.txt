@@ -1,0 +1,12 @@
+Soạn lộ trình mới: file `data/angular.toml`. id = "angular", title = "Angular & RxJS", icon = "🅰️", color = "#dd0031", group = "Frontend", docs = ["angular", "rxjs"]. Tiền tố câu hỏi: `ng-` (bài code `ng-c01`…), id module bắt đầu bằng `ng-` hoặc `rxjs-`. Module gợi ý (6): component & template (standalone component, control flow @if/@for/@switch, binding, input()/output()/model()); signals & change detection (signal/computed/effect, linkedSignal, OnPush, zoneless); dependency injection & service (inject(), providedIn, hierarchical injector, InjectionToken); router & forms (route config, lazy loadComponent, guard/resolver dạng hàm, reactive forms, typed forms, validator); RxJS căn bản (Observable/Observer/Subscription, Subject/BehaviorSubject/ReplaySubject, cold vs hot, pipe); RxJS nâng cao & tích hợp Angular (switchMap/mergeMap/concatMap/exhaustMap, debounceTime, combineLatest/forkJoin, catchError/retry, takeUntilDestroyed, toSignal/toObservable, HttpClient + interceptor). Quy mô 40–45 câu, đủ 5 dạng, có 3–4 câu essay kiểu câu hỏi phỏng vấn. Bài code lang = "javascript" (không có Angular/RxJS thật trong sandbox — tự cài đặt bản mini bằng JS thuần): mini Observable với subscribe/unsubscribe + teardown; toán tử map/filter/take dạng pipeable; switchMap huỷ inner cũ (dùng fake timers); debounceTime với fake timers; BehaviorSubject; mini signal/computed (lazy + dirty) và effect; DI container nhỏ có scope cha/con.
+
+Sau khi `./target/release/bovabon_edu check data/angular.toml` in ✅, sửa thêm đúng 1 file `data/categories.toml`: thêm một danh mục ngay sau danh mục "vue":
+[[categories]]
+id = "angular"
+title = "Angular"
+icon = "🅰️"
+color = "#dd0031"
+group = "Frontend"
+description = "<mô tả ngắn>"
+modules = [<toàn bộ id module của data/angular.toml, đúng thứ tự>]
+`build.rs` tự nhúng mọi file `data/*.toml`; không sửa `src/bank.rs`.

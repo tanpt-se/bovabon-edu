@@ -1,0 +1,538 @@
+[modules.db-sql-basics]
+title = "SQL fundamentals"
+description = "SELECT, JOIN types, filtering and grouping data, subqueries, and NULL."
+lesson = '''
+### Reading and combining data
+A query commonly filters rows with WHERE, groups them with GROUP BY, filters groups with HAVING, and then sorts and limits the result. JOIN combines tables using a condition; identify how many matching rows each side can contribute so joins do not multiply data and distort aggregates.
+
+| Construct | Purpose |
+|---|---|
+| INNER JOIN | Keeps only rows with a match on both sides |
+| LEFT JOIN | Keeps every left-side row; right-side columns are NULL when there is no match |
+| FULL JOIN | Keeps matching and unmatched rows from both sides |
+| GROUP BY / HAVING | Groups rows, then filters groups by aggregate results |
+
+Example: **SELECT department, COUNT(*) FROM employees WHERE active = 1 GROUP BY department HAVING COUNT(*) >= 3**. A subquery can return one value for comparison or a set of rows for filtering with EXISTS. NULL means a value is unknown or absent; comparing it with the equality operator yields UNKNOWN, so use IS NULL, IS NOT NULL, or COALESCE when a fallback value is needed.
+
+Common mistakes: putting a condition on the right-hand table in WHERE after a LEFT JOIN removes unmatched rows; joining a parent table to multiple child rows and then summing a parent column counts it repeatedly; using COUNT(*) instead of COUNT(column) when you mean to count non-NULL values.
+'''
+
+[questions.db-001]
+prompt = "To keep only departments with at least four active employees, where should you check COUNT(*) after GROUP BY?"
+options = ["WHERE", "HAVING", "ORDER BY", "ON"]
+explanation = "WHERE filters rows before grouping; HAVING filters groups based on aggregate results."
+
+[questions.db-002]
+prompt = "A query with WHERE email = NULL finds no rows with a missing email. What is the correct check?"
+options = ["email = NULL", "email IS NULL", "email == NULL", "email IN NULL"]
+explanation = "NULL cannot be compared with the equality operator; IS NULL checks for an unknown or absent value."
+
+[questions.db-003]
+prompt = "You need to list every customer, including those with no orders, and join only orders with status paid. Which query keeps customers with no orders?"
+options = ["LEFT JOIN orders o ON o.customer_id = c.id AND o.status = 'paid'", "LEFT JOIN orders o ON o.customer_id = c.id WHERE o.status = 'paid'", "INNER JOIN orders o ON o.customer_id = c.id", "CROSS JOIN orders o"]
+explanation = "Keeping the right-table condition in ON still allows unmatched left-side rows. A WHERE condition on a right-side column removes rows where that column is NULL, making the result behave much like an INNER JOIN."
+
+[questions.db-004]
+prompt = "Select all correct statements about JOIN."
+options = ["INNER JOIN keeps only row pairs that satisfy the join condition", "LEFT JOIN keeps every left-side row even when there is no matching right-side row", "FULL JOIN keeps unmatched rows from both sides and fills the missing side with NULL", "CROSS JOIN requires an ON condition", "In a LEFT JOIN, conditions in ON and WHERE are always equivalent"]
+explanation = "CROSS JOIN creates a Cartesian product and does not need ON. With an outer join, moving a condition between ON and WHERE can change whether unmatched rows are kept."
+
+[questions.db-005]
+prompt = '''Complete the condition for finding customers who have not provided an email address:
+
+    WHERE email {{blank}}
+'''
+explanation = "IS NULL checks for a NULL value; email = NULL does not evaluate to TRUE."
+
+[questions.db-006]
+title = "Monthly revenue report"
+prompt = '''Write monthly_revenue(orders, items), using sqlite3 and an in-memory database.
+orders is a list of tuples (order_id, created_at, status), where the date is an ISO YYYY-MM-DD string. items is a list of tuples (order_id, quantity, unit_price_cents). Count only orders whose status is paid; each line's revenue is quantity multiplied by unit_price_cents.
+Return a list of tuples (YYYY-MM, revenue_cents), grouped by month and sorted by month in ascending order. A month with no paid order that has items must not appear. Do not use floating-point numbers for money.
+Example: a paid order dated 2026-03-02 with one line of quantity 2 and unit_price_cents 450 should produce [("2026-03", 900)].
+'''
+hints = ["Create two tables in an in-memory SQLite database and join items to orders.", "Use substr(created_at, 1, 7), GROUP BY, and SUM(quantity * unit_price_cents)."]
+explanation = "Keep money in the smallest currency unit as an integer to avoid floating-point errors."
+
+[modules.db-sql-advanced]
+title = "Advanced SQL"
+description = "Window functions, recursive CTEs, UPSERT, and JSON data."
+lesson = '''
+### Window functions, CTEs, and writes
+A window function calculates a value across related rows while keeping each row in the result. PARTITION BY divides rows into independent groups; ORDER BY determines their order within each group. ROW_NUMBER assigns a unique number, while RANK and DENSE_RANK handle ties differently. Choose a function based on whether you need “exactly N rows” or “all rows tied at the cutoff.”
+
+| Tool | When to use it |
+|---|---|
+| CTE with WITH | Name part of a query to make it easier to read or reuse |
+| WITH RECURSIVE | Start from seed rows and follow child rows, such as a category tree |
+| UPSERT | INSERT and handle a key conflict with DO UPDATE or DO NOTHING |
+| JSON / JSONB | Store and query flexible structures; JSONB is a PostgreSQL-specific type |
+
+Example for the top two in each group: create a CTE with ROW_NUMBER() OVER (PARTITION BY category ORDER BY score DESC), then filter for row numbers up to two. A recursive CTE has an anchor part and a recursive part that joins against prior results; data with cycles needs a limit or path tracking to avoid infinite recursion. An UPSERT needs a key or unique constraint as its conflict target.
+
+Common mistakes: using GROUP BY when you need to retain row-level details; misunderstanding ranking when scores tie; writing a recursive CTE without a stopping condition; assuming JSON and JSONB behave the same across database systems.
+'''
+
+[questions.db-007]
+prompt = "You need at most three products per category while retaining every product and breaking score ties by name. Which structure should you use?"
+options = ["GROUP BY category, then MAX(score)", "ROW_NUMBER() OVER (PARTITION BY category ORDER BY score DESC, name), then filter for row numbers <= 3", "HAVING score <= 3", "DISTINCT category"]
+explanation = "A window function numbers rows within each category without collapsing product details; ROW_NUMBER gives a deterministic row limit."
+
+[questions.db-008]
+prompt = "What does a recursive CTE need to traverse a category tree?"
+options = ["Only one SELECT with GROUP BY", "An anchor query and a recursive query that joins to prior results", "Only an UPDATE", "ORDER BY in every branch"]
+explanation = "The anchor query provides the starting point; the recursive query references prior results to expand the traversal, and a stopping condition bounds it."
+
+[questions.db-009]
+prompt = "A settings table has UNIQUE(key). You want to insert a new key or update value if the key already exists. Which approach fits?"
+options = ["INSERT ... ON CONFLICT(key) DO UPDATE SET value = excluded.value", "SELECT, then INSERT regardless of the result", "DELETE the whole table, then INSERT", "UPDATE can only change rows that do not yet exist"]
+explanation = "UPSERT ties the update action to a unique or primary-key conflict in one statement, avoiding a race between SELECT and INSERT."
+
+[questions.db-010]
+prompt = "Select all correct statements."
+options = ["A window function can calculate a rank while keeping each row", "PARTITION BY restarts the window calculation for each group", "ROW_NUMBER always assigns the same number to tied rows", "A recursive CTE commonly has an anchor part and a recursive part", "JSONB is a PostgreSQL-specific data type"]
+explanation = "ROW_NUMBER always assigns different numbers; RANK and DENSE_RANK preserve ties."
+
+[questions.db-011]
+prompt = '''Which keyword starts a CTE that traverses a recursive structure?
+
+    WITH {{blank}} tree AS (...)
+'''
+explanation = "WITH RECURSIVE allows a CTE to reference itself."
+
+[questions.db-012]
+title = "Top N per group with a window function"
+prompt = '''Write top_n_per_group(records, n), using sqlite3.connect(":memory:").
+records contains tuples (category, item, score), where item is unique within each category. Return at most n tuples per category, ordered by descending score; break ties by ascending item. The final result must be ordered by ascending category and then by rank within each group. If n <= 0 or records is empty, return an empty list.
+Example: [("fruit", "pear", 5), ("fruit", "apple", 8)] with n=1 returns [("fruit", "apple", 8)].
+You must rank rows with ROW_NUMBER() OVER (PARTITION BY ...); do not process groups with a Python loop.
+'''
+hints = ["Calculate ROW_NUMBER in a CTE, partitioned by category.", "Filter for position <= n, then ORDER BY category, position."]
+explanation = "A window function retains each product's details while ranking it within its group."
+
+[questions.db-013]
+title = "Traverse a category tree with a recursive CTE"
+prompt = '''Write category_tree(categories, root_id), using an in-memory SQLite database.
+categories contains tuples (id, parent_id, name); parent_id is None for a root node. Each id is a unique integer. Return a list of (id, name, depth), starting with root_id at depth 0 and followed by all descendants. Sort by ascending depth, then id. If root_id does not exist, return [].
+The data may contain a cycle due to an error; no id may appear more than once in the result. Use WITH RECURSIVE and track the path to stop cycles.
+'''
+hints = ["The anchor part selects root_id and assigns depth 0.", "Keep visited ids in path; exclude the next id if it is already in that path string."]
+explanation = "A recursive CTE fits hierarchical data; tracking the path safely stops traversal when bad data contains a cycle."
+
+[questions.db-014]
+title = "UPSERT a setting"
+prompt = '''Write upsert_setting(existing, key, value), using a SQLite table in an in-memory database.
+existing is a list of initial (key, value) tuples; key is unique. Insert or update the new key/value pair with one UPSERT statement using ON CONFLICT(key) DO UPDATE. Return all settings as a list of tuples sorted by ascending key.
+Example: existing=[("theme", "light")], key="theme", value="dark" must return [("theme", "dark")].
+'''
+hints = ["Make key a PRIMARY KEY so SQLite can detect conflicts.", "In DO UPDATE, use excluded.value for the value being inserted."]
+explanation = "ON CONFLICT handles write races in the database instead of splitting SELECT and INSERT into two steps."
+
+[modules.db-data-model]
+title = "Data modeling and normalization"
+description = "Primary keys, foreign keys, constraints, 1NF–3NF, and intentional denormalization."
+lesson = '''
+### A schema keeps data consistent
+Choose a stable primary key for each entity; foreign keys represent relationships and help prevent orphaned records. UNIQUE, NOT NULL, and CHECK turn business rules into conditions the database checks on every write path.
+
+| Normal form | Main idea |
+|---|---|
+| 1NF | Each cell contains one attribute value, not a repeating list in one column |
+| 2NF | Meets 1NF, and each non-key attribute depends on the entire composite key |
+| 3NF | Meets 2NF, and non-key attributes do not depend transitively on the key |
+
+For example, instead of repeating a customer's name in every order, store customers in a separate table and reference them by customer_id. Normalization reduces inconsistencies during updates and deletes, and clarifies data ownership. Denormalization can make sense for read-heavy reports or precomputed data, but measure the actual workload and define how copies stay synchronized to avoid stale data.
+
+Common mistakes: using foreign keys but forgetting to enable foreign-key enforcement in SQLite; allowing NULL when the business rule requires a value; storing multiple phone numbers separated by commas; adding an aggregate column without a consistent update process.
+'''
+
+[questions.db-015]
+prompt = "A table has invoices with invoice_id and customer_id. What are appropriate roles for these two columns?"
+options = ["invoice_id is the PRIMARY KEY; customer_id is a FOREIGN KEY referencing customers", "Both must be UNIQUE", "customer_id is a CHECK constraint", "invoice_id must equal customer_id"]
+explanation = "The primary key uniquely identifies an invoice; the foreign key links it to a customer and can appear on multiple invoices."
+
+[questions.db-016]
+prompt = "In orders(order_id, customer_id, customer_name), customer_name depends on customer_id rather than directly on order_id. What does this indicate?"
+options = ["The table is denormalized with a transitive dependency; customers could be moved to a separate table", "The table is definitely in 3NF", "A B-tree index is missing", "customer_id should be changed to NULL"]
+explanation = "The customer's name depends on the customer, not on the order; storing it repeatedly can create inconsistencies when the name changes."
+
+[questions.db-017]
+prompt = "Select the constraints that enforce data rules in the database itself."
+options = ["CHECK (quantity > 0)", "FOREIGN KEY (customer_id) REFERENCES customers(id)", "UNIQUE (email)", "NOT NULL on created_at", "ORDER BY created_at"]
+explanation = "ORDER BY sorts query results; it is not a data constraint."
+
+[questions.db-018]
+prompt = '''Which constraint uniquely identifies a row and does not allow NULL?
+
+    id INTEGER {{blank}}
+'''
+explanation = "PRIMARY KEY requires both uniqueness and a non-NULL value."
+
+[questions.db-019]
+prompt = "Explain when data should be normalized and when partial denormalization may improve read performance. Include how to prevent data from becoming inconsistent."
+keywords = [["1NF", "first normal form"], ["2NF", "second normal form"], ["3NF", "third normal form"], ["read workload", "read-heavy workload"], ["consistency", "consistent updates"], ["measure workload", "benchmark performance"]]
+model_answer = "Normalization to 1NF, 2NF, and 3NF helps remove repeating value groups and invalid dependencies, reducing update anomalies. If the read workload dominates and measurements show that JOINs are a bottleneck, partial denormalization may be appropriate. In that case, use transactions, triggers, or a consistent update process for the copies, then monitor consistency and measure performance after the change."
+explanation = "Denormalization is an intentional tradeoff between write and consistency costs and read speed; base it on a measured workload."
+
+[modules.db-index-performance]
+title = "Indexes and performance"
+description = "B-tree, composite indexes, EXPLAIN, covering indexes, and write costs."
+lesson = '''
+### Speed up the right queries
+An index is a secondary structure that can make finding or sorting rows faster; B-tree works well for many equality, range, and ordering operations. Indexes are not free: they use storage and add work to INSERT, UPDATE, and DELETE.
+
+| Index | Notes |
+|---|---|
+| Single-column B-tree | Useful for filtering, range comparisons, and compatible ORDER BY clauses |
+| Composite (a, b) | Often useful for the a prefix and conditions on both a and b |
+| Covering index | Includes the filter/sort columns and requested output columns, potentially avoiding a table read |
+| EXPLAIN | Shows the planned query; EXPLAIN ANALYZE also runs it in PostgreSQL |
+
+For example, a query filtering by tenant_id and then created_at may benefit from an index on (tenant_id, created_at). Change the column order if the workload mostly filters by a different column; there is no “most selective column first” order that is right for every query. Use EXPLAIN or EXPLAIN QUERY PLAN on representative data, then compare the plan and execution time.
+
+Common mistakes: indexing every column; assuming the planner must use an index; looking only at tiny queries; forgetting that indexes can slow writes and consume storage; using SELECT * so a covering index is harder to achieve.
+'''
+
+[questions.db-020]
+prompt = "There is a composite index on (tenant_id, created_at). Why can queries filtering by tenant_id = ? and a created_at range often use this index effectively?"
+options = ["A composite B-tree usually supports a prefix starting with the first column and can continue with a condition on the next column", "The index automatically sorts every column in every order", "Having an index means the database never reads the table", "created_at is always searchable on its own, just like a single-column index"]
+explanation = "Column order matters; an index on (a, b) is often useful for a or for a together with b, but does not guarantee efficient filtering on b alone."
+
+[questions.db-021]
+prompt = "What is EXPLAIN QUERY PLAN in SQLite most useful for?"
+options = ["Seeing how the planner expects to find and combine rows", "Automatically creating an optimal index without inspection", "Guaranteeing a query is fast at every data size", "Changing data to make it faster"]
+explanation = "The plan shows table scans, index scans, and execution structure; representative data is still needed for evaluation."
+
+[questions.db-022]
+prompt = "When can a covering index avoid an additional read from the main table?"
+options = ["When the index contains the columns the query needs to filter and return", "When the index contains only the primary key but the query needs many other columns", "When the query uses SELECT *", "For every query with ORDER BY"]
+explanation = "If the index already contains the required information, some plans can return results directly from it; this depends on the planner and database system."
+
+[questions.db-023]
+prompt = "Select all correct statements about indexes."
+options = ["B-tree works well for many equality, range, and sorting queries", "An index on (a, b) is usually as useful for filtering only on b as a single-column index on b", "Indexes increase storage use and write costs", "The planner may choose a table scan when the table is small or most rows are needed", "EXPLAIN ANALYZE in PostgreSQL actually runs the statement being analyzed"]
+explanation = "Composite indexes depend on their prefix and conditions; an index on (a, b) is not equivalent to a single-column index on b."
+
+[questions.db-024]
+prompt = '''Which common index type supports equality and range lookups?
+
+    CREATE INDEX idx ON events USING {{blank}} (created_at)
+'''
+explanation = "B-tree is PostgreSQL's default index type and suits many common comparisons."
+
+[modules.db-transactions]
+title = "Transactions and concurrency"
+description = "ACID, isolation levels, locks, deadlocks, MVCC, and rollback."
+lesson = '''
+### Multi-step transactions
+A transaction groups multiple operations into one unit. ACID stands for atomicity (all or nothing), consistency (preserve constraints), isolation (limit interference between concurrent work), and durability (once committed, changes persist according to the storage configuration).
+
+| Concept | Practical meaning |
+|---|---|
+| Isolation level | How transactions observe each other's changes |
+| Lock | Coordinates access; a transaction may have to wait |
+| MVCC | Multiple versions let readers observe a snapshot while writers change data |
+| Deadlock | Two transactions wait for resources held by the other; the database usually aborts one |
+
+For a transfer, conditionally subtract the balance, verify that exactly one row changed, add the amount to the receiving account, and then commit. If funds are insufficient or a later step fails, roll back so only part of the transfer is not lost. PostgreSQL defaults to READ COMMITTED; higher isolation levels may detect conflicts and require the application to retry the transaction. SQLite has a different write model from PostgreSQL and allows only one active writer at a time.
+
+Common mistakes: committing halfway through; reading a balance and updating without checking the condition in the UPDATE statement; holding locks too long; failing to retry safely after a deadlock; assuming MVCC removes all conflicts.
+'''
+
+[questions.db-025]
+prompt = "During a transfer, the system subtracts from the sender's account but fails before adding to the receiver's. Which ACID property requires both steps to succeed together or both to be cancelled?"
+options = ["Atomicity", "Consistency", "Isolation", "Durability"]
+explanation = "Atomicity ensures that a multi-step transaction is either fully committed or fully rolled back."
+
+[questions.db-026]
+prompt = "With PostgreSQL at READ COMMITTED, why can two SELECT statements in one transaction see newly committed data between them?"
+options = ["Each statement reads a snapshot taken at its own start", "READ COMMITTED keeps one fixed snapshot for the whole transaction", "PostgreSQL disables MVCC at this level", "SELECT always locks every writer"]
+explanation = "READ COMMITTED takes a snapshot for each statement; REPEATABLE READ keeps a more stable snapshot throughout the transaction."
+
+[questions.db-027]
+prompt = "Two transactions each hold a row lock and wait for the lock held by the other. What is a good way to reduce the risk and handle the failure?"
+options = ["Always acquire locks in the same order and retry the transaction aborted by the database after a deadlock", "Disable all constraints", "Increase the timeout indefinitely", "Commit after every UPDATE even if the operation is incomplete"]
+explanation = "Consistent lock ordering reduces wait cycles; deadlocks can still happen, so the application needs bounded, safe retries."
+
+[questions.db-028]
+prompt = "Select all correct statements about transactions and concurrency."
+options = ["A transaction can roll back uncommitted changes after an error", "MVCC helps readers see a version appropriate to their snapshot", "MVCC removes every lock and every write conflict", "A deadlock can cause the database to abort a transaction", "A balance condition in one UPDATE statement can help prevent a negative balance caused by a race"]
+explanation = "MVCC reduces some read/write conflicts, but it does not remove locks or conflicts between writers."
+
+[questions.db-029]
+prompt = '''What multi-version technique lets readers observe a data snapshot while new data is being written?
+
+    {{blank}}
+'''
+explanation = "MVCC manages row versions to support consistent reads during concurrent activity."
+
+[questions.db-030]
+prompt = "Describe how to transfer money between two accounts without losing or creating money when requests run concurrently or an error occurs partway through."
+keywords = [["transaction"], ["atomicity"], ["conditional update", "balance >= amount"], ["rollback"], ["deadlock", "retry"], ["constraint"]]
+model_answer = "Read and update both accounts in one transaction to preserve atomicity. Subtract money with a conditional update that checks balance >= amount, then verify the affected row count; add the money to the receiving account in the same transaction and commit only when every step is valid. If funds are insufficient or an account is missing, roll back. A transaction can encounter a deadlock or serialization failure, so the application should retry a bounded number of times and avoid repeating side effects outside the database."
+explanation = "Putting the balance condition in the UPDATE avoids checking stale data and then overwriting it; rollback keeps both accounts consistent."
+
+[questions.db-031]
+title = "Transfer funds with rollback"
+prompt = '''Write transfer(conn, sender, receiver, amount_cents) using a SQLite connection that already has an accounts(id TEXT PRIMARY KEY, balance_cents INTEGER NOT NULL) table.
+If amount_cents <= 0, or either account is missing, raise ValueError. Subtract funds with a conditional UPDATE where balance_cents >= amount_cents; if the balance is insufficient, raise ValueError with the message "insufficient funds". Then add the same amount to the receiver's account. Both changes must be in one transaction; an error must roll back so balances remain unchanged.
+On success, return a list of tuples (id, balance_cents), sorted by ascending id. Do not close the connection; it belongs to the caller.
+'''
+hints = ["Use with conn to commit on success and roll back when an exception occurs.", "Subtract with the condition balance_cents >= amount_cents, then check rowcount."]
+explanation = "The condition in UPDATE avoids a race between reading the balance and writing it; both updates belong in one transaction."
+
+[modules.db-redis]
+title = "Redis and NoSQL"
+description = "Data types, TTL, cache-aside, rate limiting, and Pub/Sub."
+lesson = '''
+### Choose a structure for fast access
+Redis stores key/value pairs and provides purpose-built data structures: String for values and counters, Hash for an object's fields, List for an ordered sequence, Set for unique members, Sorted Set for score-based ranking, and Stream for event logs. Choose based on the operations you need, not only on the shape of your JSON.
+
+| Pattern | How it works |
+|---|---|
+| TTL | Expiration time for a key; EXPIRE sets it and TTL reads the remaining time |
+| Cache-aside | Read the cache; on a miss, load from the source of truth and populate the cache; TTL or invalidation limits stale data |
+| Rate limiting | INCR counts requests in a window; set a TTL atomically so the counter expires |
+| Pub/Sub | Sends messages to currently listening subscribers; it is not a durable queue |
+
+For example, cache a profile under user:id with a short TTL; after updating the profile, delete the key or publish an invalidation event. For a rate-limit counter, coordinate incrementing and setting the TTL atomically so an error between the two steps does not leave a key that never expires. For data that must be read again after a disconnect, use a suitable Stream or queue instead of relying on Pub/Sub.
+
+Common mistakes: omitting a TTL on cache entries; allowing stale data because invalidation is missing; a cache miss storm overwhelming the database; assuming Pub/Sub retains messages for later subscribers; using oversized keys or inconsistent namespace conventions.
+'''
+
+[questions.db-032]
+prompt = "Redis TTL returns -1 for an existing key with no expiration; which value indicates that the key does not exist?"
+explanation = "TTL returns -2 when the key does not exist and -1 when it exists without an expiration."
+
+[questions.db-033]
+prompt = "In cache-aside, what should the application do on a cache miss?"
+options = ["Read from the source of truth, populate the cache with a TTL, and return the result", "Return an error without reading from the source", "Clear the entire cache on every miss", "Only publish a message and assume the data is available"]
+explanation = "With cache-aside, the application populates the cache on demand; use a TTL or invalidation to limit stale data."
+
+[questions.db-034]
+prompt = "Select the appropriate Redis data structure/command pairs."
+options = ["INCR increments an integer counter", "A Hash stores fields and values under one key", "A Sorted Set orders members by score", "Pub/Sub stores every message so later subscribers can read it", "A Set keeps unique members"]
+explanation = "Pub/Sub delivers to subscribers that are listening at the time; use a durable structure such as a Stream or suitable queue to retain and read messages later."
+
+[questions.db-035]
+prompt = '''Which Redis command atomically increments an integer counter key?
+
+    {{blank}} api:limit:user-42
+'''
+explanation = "INCR increments the counter on the server without requiring the client to read and write it back."
+
+[questions.db-036]
+prompt = "Cache-aside can return stale data after the source of truth is updated. Describe how to reduce this problem and one operational risk to monitor."
+keywords = [["TTL", "expiration"], ["invalidation", "cache invalidation"], ["cache-aside"], ["cache stampede", "thundering herd"], ["Pub/Sub", "publish/subscribe"], ["source of truth", "primary data source"]]
+model_answer = "With cache-aside, use a TTL to limit how long data can remain stale and perform invalidation after the source of truth is updated. You can publish an event so each instance clears its cache, but a subscriber that is offline when the event is sent may miss it. Monitor for a cache stampede when an expiring key causes many requests to load the database at once; request coalescing or staggered expiration times can reduce the surge."
+explanation = "A TTL limits staleness but does not guarantee immediate consistency; invalidation also needs to account for multiple instances."
+
+[questions.db-037]
+title = "Simulate Redis cache-aside with a TTL"
+prompt = '''Write cache_aside(key, cache, loader, now, ttl) to simulate Redis cache-aside with a Python dictionary.
+cache maps key -> (value, expires_at). If the key exists and now < expires_at, return the value without calling loader. If the key is missing or expired, call loader(key), store the new result with expires_at = now + ttl when ttl > 0, and return it. When ttl <= 0, do not store the new value. Replace an expired cache entry with the freshly loaded result.
+Example: with an empty cache, a loader that returns "Ada", now=10, and ttl=5, the function returns "Ada" and cache["user:1"] is ("Ada", 15).
+'''
+hints = ["A cached value is valid only when now is less than expires_at.", "Remove an old entry before calling loader; store the result only when ttl is positive."]
+explanation = "This simulates cache-aside and TTL; multi-process systems also need to handle concurrency and invalidation."
+
+[modules.databases-dv-pg-search]
+title = "PostgreSQL full-text search"
+description = "Build text indexes, parse queries, rank results, and choose a text search configuration."
+lesson = '''
+### Searching by words and meaning
+Full-text search normalizes text into lexemes for word matching instead of scanning substrings as LIKE does. PostgreSQL uses tsvector for analyzed content and tsquery for search expressions; the @@ operator checks whether a vector matches a query. A configuration such as english or simple controls tokenization, stop-word removal, and stemming, so choose one based on the data language and keep it consistent between indexing and querying.
+
+| Approach | Behavior | Tradeoff |
+|---|---|---|
+| LIKE / ILIKE | Matches a substring pattern | Does not normalize words; a pattern starting with % often cannot use a B-tree effectively |
+| tsvector @@ tsquery | Matches analyzed lexemes | Supports stop words, stemming, phrases, and operators |
+| GIN on tsvector | Quickly finds candidate lexemes | Adds write cost; ranking still has to be computed on the results |
+
+For example, create a search_vector column from title and body, use coalesce so NULL does not nullify the whole expression, and then create a GIN index on that column. Query it with search_vector @@ websearch_to_tsquery('simple', $1) using a bound parameter; websearch_to_tsquery accepts syntax close to web search, while plainto_tsquery is useful when ordinary input should be treated as words that must match together. ts_rank can sort by relevance; setweight can give title more importance than body.
+
+Common mistakes: using different configurations to build the vector and query; indexing an expression but querying a different one; forgetting to handle NULL; confusing full-text search with substring search; assuming GIN provides relevance order automatically. For multilingual data, one configuration may not suit every record.
+'''
+
+[questions.databases-dv001]
+prompt = "In PostgreSQL, which type represents text analyzed into lexemes and positions for full-text search?"
+explanation = "tsvector stores normalized lexemes; tsquery represents the search condition."
+
+[questions.databases-dv002]
+prompt = "You need to index a tsvector column to speed up @@ matching over a large set of words. Which index type fits best?"
+options = ["GIN", "B-tree on the original string", "Hash on the query string", "It cannot be indexed"]
+explanation = "GIN is a common choice for searching lexemes; it helps find candidates but does not sort them by relevance score."
+
+[questions.databases-dv003]
+prompt = "An application has records in English and Vietnamese. Why should you choose the text search configuration deliberately?"
+options = ["The configuration controls tokenization, stop words, and stemming, affecting both the vector and the query", "The configuration only changes byte encoding", "Each configuration creates its own GIN index automatically", "The configuration makes @@ work without a tsvector"]
+explanation = "Different analysis can produce different lexemes, so the same word may fail to match or may be normalized incorrectly."
+
+[questions.databases-dv004]
+prompt = "A query that only ranks results with ts_rank is slow. Which statement is most accurate?"
+options = ["Filter candidates with @@ and a suitable index first; ts_rank still needs to be calculated for matching results", "GIN automatically sorts every row by ts_rank", "Changing GIN to B-tree always solves ranking", "Remove the search condition so PostgreSQL can rank faster"]
+explanation = "An index supports matching the vector condition; relevance scoring is a separate calculation on selected rows."
+
+[questions.databases-dv005]
+prompt = "Select appropriate practices when accepting a search query entered by a user."
+options = ["Bind the input as a parameter to the tsquery-conversion function", "Use websearch_to_tsquery when you want syntax similar to web search", "Concatenate the input directly into an SQL string", "Use coalesce when combining columns that may be NULL", "Treat GIN as the final relevance order"]
+explanation = "Binding parameters avoids concatenating input into SQL; the query-conversion function handles search syntax, while coalesce preserves non-NULL content."
+
+[questions.databases-dv006]
+prompt = "Which changes can make full-text search return unexpected matches or prevent use of an expression index?"
+options = ["Use one configuration to create tsvector and a different one to create tsquery", "Change the indexed expression but keep querying with the old expression", "Add a GIN index that exactly matches the tsvector column", "Fail to handle NULL when combining multiple columns", "Add ORDER BY ts_rank after the @@ condition"]
+explanation = "The configuration and expression are part of how the vector is built; the index must match the query. ORDER BY ts_rank is an intentional ranking step."
+
+[questions.databases-dv007]
+prompt = '''Fill in the operator that checks whether a tsvector matches a tsquery:
+
+    search_vector {{blank}} plainto_tsquery('simple', 'database index')
+'''
+explanation = "@@ is the full-text search match operator."
+
+[questions.databases-dv008]
+prompt = "When designing search over article titles and body text in PostgreSQL, explain how to build the vector, choose an index, handle input, and rank results."
+keywords = [["tsvector"], ["tsquery"], ["GIN"], ["ranking", "ts_rank"], ["configuration", "text search configuration"]]
+model_answer = "Normalize title and body into a tsvector with the same configuration, handle NULL with coalesce, and create a GIN index for the vector. Convert bound input to a tsquery with websearch_to_tsquery or plainto_tsquery, then filter with @@. Use ts_rank to rank results and setweight to prioritize the title; choose a configuration appropriate for the data language."
+explanation = "The design must use consistent analysis, configuration, and indexed expressions; GIN finds candidates while ts_rank calculates scores."
+
+[questions.databases-dvc01]
+title = "Rank search candidates"
+prompt = '''Write rank_search(documents, terms). documents is a list of dictionaries with the keys id, title, and body; terms is a list of words to search for.
+Normalize by splitting strings into groups of Unicode letters and digits and comparing case-insensitively. A document qualifies only if every search term appears in either its title or body. Simulated score: each term in the title is worth 2 points, and each term in the body is worth 1 point; a term in both fields earns both. Return the document ids in descending score order; for ties, preserve input order. Ignore duplicate terms in terms; if no terms remain, return an empty list.
+This exercise simulates basic filtering and field weights; you do not need to reproduce PostgreSQL stemming or ts_rank.
+Example: a document with title Rust database and body index qualifies for a search for rust and database.
+'''
+hints = ["Use re.findall with a Unicode pattern and casefold to normalize words.", "Build sets from title and body; keep documents containing every term, then sort by score and original position."]
+explanation = "This exercise simulates AND search and field weighting; PostgreSQL also has stemming, text search configurations, and its own ranking functions."
+
+[modules.databases-dv-pg-recovery]
+title = "PostgreSQL backup, recovery, and replication"
+description = "Choose logical/physical backups, PITR, and replication based on RPO/RTO goals."
+lesson = '''
+### Recovering and copying data
+A backup is valuable only if it can be restored within an acceptable time. RPO is the maximum amount of data you can afford to lose; RTO is the maximum time before the service is running again. pg_dump creates a logical dump for one database, which is convenient for selective recovery or data migration; pg_dumpall can save cluster-wide objects such as roles. A physical backup such as pg_basebackup copies the cluster structure and is suitable for creating a standby or for physical recovery.
+
+| Approach | Scope / purpose | Notes |
+|---|---|---|
+| Logical dump | Schema and data for a database | Easy to select objects; manage global objects separately |
+| Physical backup | PostgreSQL cluster | Suitable for physical recovery and standbys |
+| PITR | Recover to a point in the past | Requires a base backup and a continuous chain of archived WAL |
+| Logical replication | Sends row changes selected by a publication | Publisher and subscriber have separate schemas and lifecycles |
+| Physical replication | Replays WAL for a cluster standby | Suitable for hot standby and coordinated failover |
+
+For PITR, the operations team needs to create a base backup, store archived WAL somewhere that will not be lost with the database server, and rehearse recovery to a specific point in time. Logical replication initializes a copy and then sends changes through a publication/subscription; it is useful for selecting tables, integration, or upgrades, but it does not automatically replicate all DDL or sequences. Tables with UPDATE/DELETE need an appropriate replica identity. A replication slot helps a lagging subscriber retain required WAL, but an abandoned slot can retain WAL indefinitely and fill the disk.
+
+Common mistakes: confusing replication with backup; checking that a backup job succeeded without testing a restore; failing to monitor WAL archives or slots; assuming logical replication creates the schema; failing to plan promotion and connection switching during failover. Regularly measure restore time, verify consistency, and document the recovery order.
+'''
+
+[questions.databases-dv009]
+prompt = "You need a logical backup of one PostgreSQL database for selective table recovery or data migration. Which tool is most suitable?"
+options = ["pg_dump", "pg_basebackup", "VACUUM", "pg_ctl"]
+explanation = "pg_dump creates a logical dump for one database; pg_basebackup creates a physical backup at cluster level."
+
+[questions.databases-dv010]
+prompt = "You want to restore a database to a point before a user accidentally deleted data. Besides a base backup, what do you need?"
+options = ["A continuous chain of archived WAL through the target recovery time", "One ANALYZE run after the incident", "A copy of pg_stat_activity", "Only a pg_dump of a different database"]
+explanation = "PITR replays WAL from the base backup to the recovery target; without a segment in the chain, you cannot reach the desired point."
+
+[questions.databases-dv011]
+prompt = "A standby needs to follow all changes from the primary cluster to serve hot-standby reads. Which replication type is most suitable?"
+options = ["Physical replication", "Logical replication from one publication", "Run pg_dump periodically", "Create a foreign key between the two servers"]
+explanation = "Physical replication replays WAL at cluster level; logical replication selects row changes and publication objects."
+
+[questions.databases-dv012]
+prompt = "A replication slot still exists, but its subscriber has been down for a long time. What is the main operational risk?"
+options = ["WAL needed by the subscriber may be retained and consume more disk space", "PostgreSQL automatically deletes every table on the publisher", "The slot automatically turns into a logical backup", "Every new transaction is immediately rolled back"]
+explanation = "A slot retains WAL required by its consumer; monitor lag and remove slots that are no longer in use."
+
+[questions.databases-dv013]
+prompt = "Select all correct statements about PostgreSQL backups."
+options = ["pg_dump commonly creates a logical backup of one database", "A physical backup can be the basis for cluster recovery or creating a standby", "A pg_dump of one database always includes every cluster-wide role", "PITR requires a base backup and suitable archived WAL", "A successful backup proves that a restore will succeed"]
+explanation = "Global objects need separate management; rehearse restores because storage, configuration, or missing-WAL problems may only surface during recovery."
+
+[questions.databases-dv014]
+prompt = "Select all correct statements about logical replication."
+options = ["A publication defines the changes/tables sent from the publisher", "A subscription receives changes from the publisher and can perform an initial copy", "Logical replication automatically synchronizes all DDL changes", "Tables need an appropriate replica identity to apply UPDATE or DELETE", "Logical replication completely replaces a backup process"]
+explanation = "Logical replication sends supported changes; it does not replicate the entire schema definition or provide an independent backup."
+
+[questions.databases-dv015]
+prompt = '''Fill in the name of the log that must be archived continuously with a base backup to support point-in-time recovery:
+
+    Write-Ahead {{blank}}
+'''
+explanation = "A WAL archive lets PostgreSQL replay changes made after the base backup was created."
+
+[questions.databases-dv016]
+prompt = "A service can lose at most a few minutes of data and must recover within one hour. Describe the backup/restore plan and how to prove that it meets these goals."
+keywords = [["base backup"], ["WAL archive", "archived WAL"], ["PITR", "point-in-time recovery"], ["restore test", "test restore"], ["RPO"], ["RTO"]]
+model_answer = "Create regular base backups and continuously archive WAL to an independent location to support PITR. Choose the backup schedule and monitor WAL lag against the RPO; optimize storage, resources, and the recovery process against the RTO. Regularly rehearse a restore to a recovery target, validate the data, and measure completion time. Monitor archive failures, replication slots, and access to backups."
+explanation = "Confirm RPO/RTO with measurements from recovery rehearsals, not only from a backup job's success status."
+
+[modules.databases-dv-redis-workflows]
+title = "Redis transactions and Stream consumer groups"
+description = "Combine atomic operations, detect conflicts, and handle events that may be delivered again."
+lesson = '''
+### From atomic operations to event processing
+Redis MULTI queues commands and EXEC runs them consecutively as a unit that other client commands cannot interleave with. A Redis transaction is not the same as SQL rollback: if a command fails at execution time, that command fails, but the remaining commands may still run. WATCH provides optimistic concurrency: if a watched key changes before EXEC, the transaction is aborted so the application can read again and retry.
+
+| Mechanism | Guarantee | When to use it |
+|---|---|---|
+| MULTI / EXEC | Commands are not interleaved by another client | Group ordered Redis operations |
+| WATCH | Detects a key change before EXEC | Update based on a value you just read |
+| Stream consumer group | Distributes entries and tracks unacknowledged entries | Background workers that need to resume after failures |
+| XACK | Acknowledges a processed entry | Removes an entry from the group's pending list |
+
+With Streams, XADD adds an entry, XGROUP CREATE creates a group, and XREADGROUP reads new entries and puts them in the pending-entry list. A worker should call XACK only after the business effect has been durably stored; unacknowledged entries can be inspected with XPENDING and delivered to another worker. Consumers must therefore tolerate at-least-once delivery: if a process dies after writing to the database but before XACK, the event may arrive again. Use an event id as an idempotency key or a unique constraint to avoid applying the same effect twice.
+
+MULTI does not create a distributed transaction across Redis and a database. If both need updating, design for retries, an outbox/inbox, or reconciliation; even “write to the database, then ACK” can lead to redelivery. Keep transactions short, limit the number of entries per batch, and have a strategy to claim pending entries so a dead worker cannot hold work indefinitely.
+
+Common mistakes: assuming one command error rolls back the whole EXEC; acknowledging before a side effect is durable; treating a Stream consumer group like Pub/Sub; ignoring pending entries; assuming each event is delivered exactly once; updating multiple systems without idempotency.
+'''
+
+[questions.databases-dv017]
+prompt = "What does MULTI/EXEC primarily guarantee in Redis?"
+options = ["Commands run consecutively without another client interleaving", "Every command is rolled back if one command fails at runtime", "One SQL transaction covers every database", "The backup result is automatically saved to disk"]
+explanation = "Redis runs the queued commands consecutively during EXEC; an execution-time error in one command does not automatically roll back the others."
+
+[questions.databases-dv018]
+prompt = "An application reads a key, calculates a new value, and wants to discard its update if another client changed the key. Which mechanism fits?"
+options = ["WATCH the key, then use MULTI/EXEC and read again if EXEC is aborted", "PUBLISH the key and assume nothing changed", "XACK the key before writing", "Use a longer TTL"]
+explanation = "WATCH detects a concurrent change to the key and prevents EXEC from applying the queued transaction."
+
+[questions.databases-dv019]
+prompt = "In Redis Streams, where does XREADGROUP usually place a new entry read for a consumer group while it is still unacknowledged?"
+options = ["The consumer group's pending-entry list", "The Pub/Sub subscriber list", "The key's metadata hash", "PostgreSQL's WAL archive"]
+explanation = "Delivered entries that have not been XACKed are tracked in the pending-entry list so they can be inspected and redelivered."
+
+[questions.databases-dv020]
+prompt = "Select safer ways to handle a Redis Stream consumer that may receive the same entry again."
+options = ["Store event ids to prevent duplicate business effects", "Call XACK after the side effect has been durably stored", "Call XACK before processing to reduce pending entries", "Track pending entries and provide a way to claim abandoned entries", "Assume a consumer group guarantees exactly-once processing"]
+explanation = "Redelivery helps recovery but can cause duplicate processing; idempotency and correctly timed acknowledgement protect side effects."
+
+[questions.databases-dv021]
+prompt = "Select all correct statements about MULTI/EXEC and WATCH."
+options = ["WATCH supports optimistic concurrency on watched keys", "EXEC runs queued transactions in order", "A runtime error in one command always rolls back the whole transaction", "A key changed after WATCH can cause EXEC to be aborted", "MULTI atomically commits changes in Redis and PostgreSQL together"]
+explanation = "A Redis transaction is not an SQL rollback transaction and does not provide atomic commits across multiple systems."
+
+[questions.databases-dv022]
+prompt = '''Which command acknowledges that a consumer has processed an entry in a Stream group?
+
+    {{blank}} stream_key group_name entry_id
+'''
+explanation = "XACK marks an entry as processed and removes it from the consumer group's pending-entry list."
+
+[questions.databases-dv023]
+prompt = "A worker writes a result to the database and then stops before acknowledging an entry on a Redis Stream. Describe how to handle redelivery without duplicating the business effect."
+keywords = [["at-least-once"], ["idempotent", "idempotency"], ["XACK"], ["pending"], ["event id"]]
+model_answer = "A consumer group can redeliver an entry that has not been XACKed, so assume at-least-once delivery. Use the event id as an idempotency key or unique constraint so a redelivery does not apply the side effect again. Durably store the business effect first, then call XACK; if a worker stops between those steps, the entry remains pending and the next attempt can proceed safely. Monitor pending entries so abandoned work can be claimed."
+explanation = "Acknowledging after processing preserves the ability to retry; idempotency makes retries safe from duplicate effects."
+
+[questions.databases-dvc02]
+title = "Filter already-processed events"
+prompt = '''Write select_new_events(event_ids, processed_ids). event_ids is a list of ids received from a Redis Stream batch; processed_ids is the set of ids already applied to the business system.
+Return a tuple (accepted, updated_ids). accepted contains each unprocessed id exactly once, in order of first appearance in the batch. updated_ids is a new set containing processed_ids and all accepted ids. Do not modify the input processed_ids. Ignore an event id repeated in the batch or already present in processed_ids.
+Example: if event_ids is ["a", "b", "a"] and processed_ids is {"b"}, accepted should be ["a"].
+'''
+hints = ["Copy processed_ids into a new set so you can update it without changing the input.", "Iterate through event_ids in order and add each accepted id to the set immediately to filter duplicates within the batch."]
+explanation = "This exercise simulates consumer-side deduplication; real systems need to persist event ids and side effects reliably."

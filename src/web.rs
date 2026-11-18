@@ -16,18 +16,28 @@ use std::time::Duration;
 
 const INDEX: &str = include_str!("../static/index.html");
 const APP_JS: &str = include_str!("../static/app.js");
+const I18N_JS: &str = include_str!("../static/i18n.js");
 const APP_CSS: &str = include_str!("../static/app.css");
 const FAVICON: &str = include_str!("../static/favicon.svg");
+const ICONS: &str = include_str!("../static/icons.svg");
 const SOURCE_SANS: &[u8] = include_bytes!("../assets/fonts/SourceSans3VF-Upright.woff2");
 
 pub type AppState = Arc<Bank>;
+
+/// `?lang=en` → nội dung đã dịch (nếu có), mặc định tiếng Việt.
+#[derive(Deserialize, Default)]
+struct LangQ {
+    lang: Option<String>,
+}
 
 pub fn router(bank: Arc<Bank>) -> Router {
     Router::new()
         .route("/", get(|| async { Html(INDEX) }))
         .route("/app.js", get(|| async { asset("text/javascript; charset=utf-8", APP_JS) }))
+        .route("/i18n.js", get(|| async { asset("text/javascript; charset=utf-8", I18N_JS) }))
         .route("/app.css", get(|| async { asset("text/css; charset=utf-8", APP_CSS) }))
         .route("/favicon.svg", get(|| async { asset("image/svg+xml", FAVICON) }))
+        .route("/icons.svg", get(|| async { asset("image/svg+xml", ICONS) }))
         .route("/fonts/SourceSans3VF-Upright.woff2", get(|| async { font_asset() }))
         .route("/api/health", get(|| async { Json(json!({"ok": true})) }))
         .route("/api/catalog", get(catalog))
@@ -56,8 +66,11 @@ fn not_found(id: &str) -> Response {
     (StatusCode::NOT_FOUND, Json(json!({"error": format!("Không tìm thấy câu hỏi {id}")}))).into_response()
 }
 
-async fn catalog(State(b): State<AppState>) -> Json<Value> {
-    let tracks = b.track_infos();
+async fn catalog(State(b0): State<AppState>, Query(l): Query<LangQ>) -> Json<Value> {
+    let b = b0.localized(l.lang.as_deref());
+    let tracks = b.category_infos();
+    let mut langs: Vec<&str> = std::iter::once("vi").chain(b0.locales.keys().map(|k| k.as_str())).collect();
+    langs.dedup();
     let mut by_type = std::collections::HashMap::new();
     for q in b.all_questions() {
         *by_type.entry(q.qtype).or_insert(0usize) += 1;
@@ -68,6 +81,7 @@ async fn catalog(State(b): State<AppState>) -> Json<Value> {
         "tracks": tracks,
         "total": b.by_id.len(),
         "by_type": by_type,
+        "langs": langs,
     }))
 }
 
@@ -78,6 +92,7 @@ struct ListQ {
     #[serde(rename = "type")]
     qtype: Option<String>,
     ids: Option<String>,
+    lang: Option<String>,
 }
 
 fn parse_types(s: &str) -> Vec<QType> {
@@ -86,7 +101,8 @@ fn parse_types(s: &str) -> Vec<QType> {
         .collect()
 }
 
-async fn list_questions(State(b): State<AppState>, Query(q): Query<ListQ>) -> Json<Vec<PublicQuestion>> {
+async fn list_questions(State(b0): State<AppState>, Query(q): Query<ListQ>) -> Json<Vec<PublicQuestion>> {
+    let b = b0.localized(q.lang.as_deref());
     let types = q.qtype.as_deref().map(parse_types);
     if let Some(ids) = q.ids {
         let out = ids
@@ -98,7 +114,7 @@ async fn list_questions(State(b): State<AppState>, Query(q): Query<ListQ>) -> Js
     }
     let out = b
         .all_questions()
-        .filter(|x| q.track.as_ref().is_none_or(|t| t == "all" || &x.track == t))
+        .filter(|x| q.track.as_ref().is_none_or(|t| t == "all" || &x.category == t || &x.track == t))
         .filter(|x| q.module.as_ref().is_none_or(|m| &x.module == m))
         .filter(|x| types.as_ref().is_none_or(|ts| ts.is_empty() || ts.contains(&x.qtype)))
         .map(|x| x.public())
@@ -106,7 +122,8 @@ async fn list_questions(State(b): State<AppState>, Query(q): Query<ListQ>) -> Js
     Json(out)
 }
 
-async fn get_question(State(b): State<AppState>, Path(id): Path<String>) -> Response {
+async fn get_question(State(b0): State<AppState>, Path(id): Path<String>, Query(l): Query<LangQ>) -> Response {
+    let b = b0.localized(l.lang.as_deref());
     match b.by_id.get(&id) {
         Some(q) => Json(q.public()).into_response(),
         None => not_found(&id),
@@ -118,7 +135,8 @@ struct CheckBody {
     answer: Value,
 }
 
-async fn check(State(b): State<AppState>, Path(id): Path<String>, Json(body): Json<CheckBody>) -> Response {
+async fn check(State(b0): State<AppState>, Path(id): Path<String>, Query(l): Query<LangQ>, Json(body): Json<CheckBody>) -> Response {
+    let b = b0.localized(l.lang.as_deref());
     let Some(q) = b.by_id.get(&id) else { return not_found(&id) };
     if q.qtype == QType::Code {
         return (StatusCode::BAD_REQUEST, Json(json!({"error": "Bài code dùng /run"}))).into_response();
@@ -145,7 +163,8 @@ async fn run_code(State(b): State<AppState>, Path(id): Path<String>, Json(body):
     Json(rep).into_response()
 }
 
-async fn hint(State(b): State<AppState>, Path((id, n)): Path<(String, usize)>) -> Response {
+async fn hint(State(b0): State<AppState>, Path((id, n)): Path<(String, usize)>, Query(l): Query<LangQ>) -> Response {
+    let b = b0.localized(l.lang.as_deref());
     let Some(q) = b.by_id.get(&id) else { return not_found(&id) };
     match q.hints.get(n) {
         Some(h) => Json(json!({"index": n, "html": md(h), "total": q.hints.len()})).into_response(),
@@ -153,7 +172,8 @@ async fn hint(State(b): State<AppState>, Path((id, n)): Path<(String, usize)>) -
     }
 }
 
-async fn solution(State(b): State<AppState>, Path(id): Path<String>) -> Response {
+async fn solution(State(b0): State<AppState>, Path(id): Path<String>, Query(l): Query<LangQ>) -> Response {
+    let b = b0.localized(l.lang.as_deref());
     let Some(q) = b.by_id.get(&id) else { return not_found(&id) };
     Json(json!({
         "solution": q.solution,
@@ -169,6 +189,7 @@ struct ExamQ {
     count: Option<usize>,
     types: Option<String>,
     seed: Option<u64>,
+    lang: Option<String>,
 }
 
 /// Xáo trộn Fisher–Yates với PRNG xorshift (không cần crate rand).
@@ -184,7 +205,8 @@ fn shuffle<T>(v: &mut [T], mut seed: u64) {
     }
 }
 
-async fn exam(State(b): State<AppState>, Query(q): Query<ExamQ>) -> Json<Value> {
+async fn exam(State(b0): State<AppState>, Query(q): Query<ExamQ>) -> Json<Value> {
+    let b = b0.localized(q.lang.as_deref());
     let types = q
         .types
         .as_deref()
@@ -193,7 +215,7 @@ async fn exam(State(b): State<AppState>, Query(q): Query<ExamQ>) -> Json<Value> 
         .unwrap_or_else(|| vec![QType::Single, QType::Multiple, QType::Fill]);
     let mut pool: Vec<PublicQuestion> = b
         .all_questions()
-        .filter(|x| q.track.as_ref().is_none_or(|t| t == "all" || &x.track == t))
+        .filter(|x| q.track.as_ref().is_none_or(|t| t == "all" || t.split(',').any(|s| s == x.category || s == x.track)))
         .filter(|x| types.contains(&x.qtype))
         .map(|x| x.public())
         .collect();

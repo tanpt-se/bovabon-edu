@@ -10,7 +10,7 @@ description = "Cú pháp & kiểu dữ liệu, error handling, goroutine/channel
 id = "go-basics"
 title = "Cú pháp, kiểu & interface"
 description = "Zero value, slice/map, struct, method, interface ngầm định, generics."
-sources = ["go/slices/index", "go/maps/index", "go/fmt/index"]
+sources = ["go/builtin/index#append", "go/slices/index#Clone", "go/maps/index#Clone", "go/cmp/index#Ordered", "go/fmt/index#Stringer"]
 lesson = '''
 ### Ý chính
 - **Zero value**: biến khai báo không gán có giá trị mặc định (`0`, `""`, `false`, `nil`). Map `nil` đọc được nhưng **ghi sẽ panic**.
@@ -28,7 +28,7 @@ lesson = '''
 id = "go-errors"
 title = "Error handling"
 description = "error là giá trị, wrapping với %w, errors.Is/As, sentinel error, panic/recover, defer."
-sources = ["go/errors/index", "go/errors/index#Is"]
+sources = ["go/errors/index#New", "go/errors/index#Is", "go/errors/index#As", "go/fmt/index#Errorf", "go/builtin/index#panic", "go/builtin/index#recover"]
 lesson = '''
 ### Ý chính
 - Error là **giá trị**: hàm trả về `(T, error)`; kiểm tra `if err != nil` ngay.
@@ -43,7 +43,7 @@ lesson = '''
 id = "go-concurrency"
 title = "Concurrency"
 description = "Goroutine, channel, select, sync.WaitGroup/Mutex, context, worker pool, race condition."
-sources = ["go/sync/index", "go/context/index", "go/sync/index#WaitGroup"]
+sources = ["go/sync/index#WaitGroup", "go/sync/index#Mutex", "go/context/index#Context", "go/context/index#WithCancel", "go/context/index#WithTimeout", "go/builtin/index#close"]
 lesson = '''
 ### Ý chính
 - **Goroutine** (`go f()`) rất nhẹ (vài KB stack), được Go runtime lập lịch M:N.
@@ -59,7 +59,7 @@ lesson = '''
 id = "go-web"
 title = "net/http & JSON"
 description = "http.Handler, ServeMux pattern (Go 1.22), middleware, encoding/json, struct tag, graceful shutdown."
-sources = ["go/net/http/index", "go/net/http/index#Handler", "go/encoding/json/index"]
+sources = ["go/net/http/index#Handler", "go/net/http/index#ServeMux", "go/net/http/index#Request.PathValue", "go/net/http/index#Server.Shutdown", "go/encoding/json/index#Decoder", "go/encoding/json/index#Encoder"]
 lesson = '''
 ### Ý chính
 - `http.Handler` là interface có `ServeHTTP(w http.ResponseWriter, r *http.Request)`; `http.HandlerFunc` biến hàm thành Handler.
@@ -68,6 +68,68 @@ lesson = '''
 - Gọi `w.WriteHeader(code)` **trước** `w.Write`; header phải set trước khi ghi body.
 - JSON: `json.NewDecoder(r.Body).Decode(&v)`, `json.NewEncoder(w).Encode(v)`; struct tag `json:"name,omitempty"`; chỉ field **viết hoa** (exported) mới được encode.
 - Server production: đặt `ReadTimeout`, `WriteTimeout`; graceful shutdown bằng `srv.Shutdown(ctx)`.
+'''
+
+[[modules]]
+id = "go-dv-database"
+title = "database/sql & giao dịch"
+description = "Connection pool, truy vấn theo context, parameterized query, Rows và transaction."
+sources = ["go/database/sql/index#DB", "go/database/sql/index#Open", "go/database/sql/index#DB.QueryContext", "go/database/sql/index#DB.QueryRowContext", "go/database/sql/index#DB.ExecContext", "go/database/sql/index#DB.BeginTx"]
+lesson = '''
+### `sql.DB` là connection pool
+`*sql.DB` là handle an toàn cho nhiều goroutine và quản lý một pool kết nối; nó không đại diện cho một kết nối đơn. `sql.Open` thường chỉ kiểm tra cấu hình driver, chưa chắc đã kết nối được, nên ứng dụng cần `PingContext` khi muốn kiểm tra kết nối lúc khởi động. Hãy tạo một `DB` dùng lâu dài, cấu hình giới hạn pool theo tải và gọi `Close` khi ứng dụng dừng.
+
+| API | Dùng khi | Kết quả cần xử lý |
+|---|---|---|
+| `QueryContext` | Truy vấn có thể trả nhiều hàng | `Rows`, rồi `Next`, `Scan`, `Err` |
+| `QueryRowContext` | Kết quả tối đa một hàng | Gọi `Scan`; không có hàng sẽ là `sql.ErrNoRows` |
+| `ExecContext` | INSERT/UPDATE/DELETE không cần đọc hàng | `sql.Result` và `RowsAffected` |
+
+Truyền `context.Context` vào thao tác để timeout hoặc huỷ truy vấn theo request. Dữ liệu phải truyền qua placeholder và arguments, ví dụ `db.QueryContext(ctx, "SELECT id FROM users WHERE email = ?", email)`. Dấu placeholder phụ thuộc database driver; không nối input vào chuỗi SQL bằng `fmt.Sprintf`.
+
+Khi dùng `Rows`, gọi `defer rows.Close()` ngay sau khi kiểm tra lỗi tạo rows; sau vòng `for rows.Next()` vẫn phải kiểm tra `rows.Err()`. Với thao tác nhiều bước cần tính nguyên tử, mở `tx` bằng `BeginTx`, defer `Rollback` để dọn dẹp mọi nhánh, rồi `Commit` khi tất cả bước thành công. Lỗi hay gặp là quên kiểm tra lỗi `Scan`, bỏ qua `Rows.Err`, hoặc gọi `db` thay vì `tx` giữa giao dịch khiến truy vấn chạy trên kết nối khác.
+'''
+
+[[modules]]
+id = "go-dv-testing"
+title = "Testing, benchmark & fuzzing"
+description = "Unit test, table-driven subtest, cleanup, benchmark, fuzz test và kiểm tra race."
+sources = ["go/testing/index#T", "go/testing/index#T.Run", "go/testing/index#T.Cleanup", "go/testing/index#T.TempDir", "go/testing/index#B", "go/testing/index#F.Add"]
+lesson = '''
+### Test có thể lặp lại
+Go nhận diện test trong file `*_test.go` qua hàm `TestXxx(t *testing.T)`. Một test nên kiểm tra hành vi nhìn thấy được, có tên mô tả tình huống và không phụ thuộc thứ tự chạy. `t.Error` ghi nhận lỗi rồi tiếp tục test hiện tại; `t.Fatal` đánh dấu thất bại và dừng goroutine đang chạy test đó. Không gọi `Fatal` từ goroutine phụ; gửi lỗi về goroutine test hoặc đồng bộ trước.
+
+| Công cụ | Mục tiêu | Dùng khi |
+|---|---|---|
+| Table-driven + `t.Run` | Chạy cùng quy tắc trên nhiều input | Biên, input sai, case thường |
+| `t.Cleanup` / `t.TempDir` | Thu hồi tài nguyên sau test | File tạm, server giả, fixture |
+| `BenchmarkXxx(*testing.B)` | Đo chi phí lặp lại | So sánh thay đổi hiệu năng |
+| `FuzzXxx(*testing.F)` | Khám phá input bất thường | Parser, decoder, validator |
+
+Ví dụ table-driven: khai báo các case gồm `name`, input và expected, rồi chạy `t.Run(tc.name, ...)`. Subtest giúp biết chính xác case lỗi. Dùng `t.Cleanup` để đóng tài nguyên; `TempDir` tự xoá thư mục khi test kết thúc. Tránh `time.Sleep` để chờ hệ thống và tránh dùng mạng thật vì làm test chậm, không ổn định.
+
+Benchmark phải lặp theo `b.N`, không chọn số vòng cố định; đặt setup trước vòng đo hoặc gọi `b.ResetTimer`. Fuzz test thêm seed bằng `f.Add`, sau đó callback phải kiểm tra bất biến với mọi input. Chạy `go test ./...`, dùng `-race` để tìm data race, `-bench` để đo benchmark; một lần benchmark không tự chứng minh mọi tải production đều nhanh hơn. Lỗi hay gặp là chỉ test happy path, bỏ qua lỗi trả về, hoặc test phụ thuộc trạng thái global.
+'''
+
+[[modules]]
+id = "go-dv-io"
+title = "I/O, buffering & file handling"
+description = "io.Reader/Writer, streaming, bufio.Scanner, file lifecycle và xử lý lỗi đọc."
+sources = ["go/io/index#Reader", "go/io/index#Copy", "go/io/index#ReadAll", "go/bufio/index#NewScanner", "go/bufio/index#Scanner.Buffer", "go/os/index#ReadFile"]
+lesson = '''
+### Đọc theo stream
+`io.Reader` và `io.Writer` là interface nhỏ giúp hàm làm việc với file, memory buffer, network hoặc test double mà không phụ thuộc nguồn cụ thể. `Read(p)` trả số byte đã đọc cùng lỗi; phải xử lý `n` byte trước khi xử lý `err`, vì một lần gọi có thể trả dữ liệu hợp lệ đồng thời với `io.EOF`. Không giả định một lần `Read` lấp đầy buffer.
+
+| API | Cách dùng | Đánh đổi |
+|---|---|---|
+| `os.ReadFile` / `io.ReadAll` | Nạp toàn bộ nội dung vào memory | Đơn giản, không phù hợp dữ liệu lớn hoặc không giới hạn |
+| `io.Copy(dst, src)` | Chuyển dữ liệu tuần tự giữa hai stream | Ít memory, phù hợp file lớn |
+| `bufio.Scanner` | Tách input theo dòng hoặc token | Gọn, có giới hạn kích thước token cần cấu hình |
+| `bufio.Reader` | Đọc từng phần, peek hoặc kiểm soát delimiter | Linh hoạt hơn, cần xử lý EOF rõ ràng |
+
+Ví dụ đọc dòng: mở file bằng `os.Open`, defer `Close`, tạo `bufio.Scanner`, lặp `Scan` và sau vòng lặp kiểm tra `scanner.Err()`. Nếu dòng có thể dài hơn giới hạn mặc định, gọi `scanner.Buffer` với mức tối đa phù hợp; vượt mức đó vẫn là lỗi. `ScanLines` bỏ newline và carriage return trước newline, giữ dòng rỗng, đồng thời trả dòng cuối không có newline.
+
+Chọn `ReadFile` cho cấu hình nhỏ đã biết kích thước; với upload hay log lớn hãy stream hoặc giới hạn bytes bằng `io.LimitReader`. Lỗi thường gặp là bỏ qua lỗi cuối của Scanner, gọi `ReadAll` trên input không tin cậy gây tốn RAM, không đóng file, hoặc coi `io.EOF` luôn có nghĩa là lần đọc không trả dữ liệu.
 '''
 
 # ------------------------------------------------------------ BASICS
@@ -1102,3 +1164,602 @@ model_answer = '''
 '''
 explanation = "Quan trọng khi deploy trên Kubernetes (rolling update gửi SIGTERM)."
 sources = ["go/net/http/index", "go/context/index"]
+
+[[questions]]
+id = "go-dv001"
+module = "go-dv-database"
+type = "single"
+difficulty = 2
+prompt = "Một service gọi `sql.Open` thành công nhưng truy vấn đầu tiên báo không kết nối được database. Kết luận nào đúng?"
+options = ["`sql.Open` luôn mở sẵn và xác minh một connection", "`sql.Open` có thể chỉ tạo pool handle; dùng `PingContext` để kiểm tra kết nối", "`sql.Open` đã tự chạy `BeginTx`", "`sql.Open` chỉ dùng được từ một goroutine"]
+answer = [1]
+explanation = "`sql.DB` quản lý pool và `Open` thường không xác minh kết nối thực tế; `PingContext` chủ động kiểm tra, có deadline theo context."
+sources = ["go/database/sql/index#Open", "go/database/sql/index#DB.PingContext"]
+
+[[questions]]
+id = "go-dv002"
+module = "go-dv-database"
+type = "single"
+difficulty = 2
+prompt = "Repository cần lấy tối đa một user theo email và phân biệt trường hợp không có hàng. API nào phù hợp?"
+options = ["`db.ExecContext` rồi ép kiểu kết quả thành user", "`db.QueryContext`, nhưng không cần gọi `Next`", "`db.QueryRowContext` rồi gọi `Scan`, xử lý `sql.ErrNoRows`", "`db.BeginTx` rồi đọc field từ `sql.Tx`"]
+answer = [2]
+explanation = "`QueryRowContext` phù hợp với không hoặc một hàng; `Scan` báo `sql.ErrNoRows` nếu không có kết quả."
+sources = ["go/database/sql/index#DB.QueryRowContext", "go/database/sql/index#Row.Scan"]
+
+[[questions]]
+id = "go-dv003"
+module = "go-dv-database"
+type = "single"
+difficulty = 2
+prompt = "Sau `for rows.Next() { rows.Scan(&id) }`, kiểm tra nào còn cần thiết để phát hiện lỗi đọc giữa chừng?"
+options = ["`rows.Err()`", "`rows.Close()` trả về số hàng", "`db.PingContext` trên mỗi hàng", "Không cần kiểm tra thêm"]
+answer = [0]
+explanation = "`Next` kết thúc cả khi hết hàng lẫn khi có lỗi; sau vòng lặp phải kiểm tra `Rows.Err`."
+sources = ["go/database/sql/index#Rows.Next", "go/database/sql/index#Rows.Err"]
+
+[[questions]]
+id = "go-dv004"
+module = "go-dv-database"
+type = "multiple"
+difficulty = 3
+prompt = "Chọn các thực hành an toàn khi chạy truy vấn từ dữ liệu request."
+options = ["Truyền `context.Context` vào `QueryContext` hoặc `ExecContext`", "Truyền dữ liệu qua arguments của placeholder", "Dùng `fmt.Sprintf` chèn email trực tiếp vào SQL", "Đóng `Rows` và kiểm tra `Rows.Err()`", "Mở một `sql.DB` mới cho mỗi request"]
+answer = [0, 1, 3]
+explanation = "Context hỗ trợ timeout/huỷ, arguments tránh SQL injection, còn Rows cần được đóng và kiểm tra lỗi. `sql.DB` nên được tái sử dụng như pool dùng chung."
+sources = ["go/database/sql/index#DB.QueryContext", "go/database/sql/index#Rows.Close", "go/database/sql/index#Rows.Err"]
+
+[[questions]]
+id = "go-dv005"
+module = "go-dv-database"
+type = "fill"
+difficulty = 2
+prompt = '''
+Truy vấn trả về nhiều hàng; sau khi kiểm tra `err`, duyệt và kiểm tra lỗi cuối:
+
+```go
+rows, err := db.{{blank}}Context(ctx, query, status)
+defer rows.Close()
+for rows.{{blank}}() {
+    var id int
+    _ = rows.Scan(&id)
+}
+err = rows.Err()
+```
+'''
+blanks = [["Query"], ["Next"]]
+explanation = "`QueryContext` trả về `*Rows`; `Next` tiến tới từng hàng và `Err` báo lỗi phát sinh khi lặp. Trong code thật cần return ngay nếu `QueryContext` lỗi trước khi defer."
+sources = ["go/database/sql/index#DB.QueryContext", "go/database/sql/index#Rows.Next", "go/database/sql/index#Rows.Err"]
+
+[[questions]]
+id = "go-dv006"
+module = "go-dv-database"
+type = "fill"
+difficulty = 2
+prompt = '''
+Mở transaction với context và xác nhận thành công sau khi hoàn tất các lệnh:
+
+```go
+tx, err := db.{{blank}}(ctx, nil)
+if err != nil { return err }
+defer tx.Rollback()
+if err := tx.{{blank}}(); err != nil { return err }
+```
+'''
+blanks = [["BeginTx"], ["Commit"]]
+explanation = "Defer `Rollback` giúp dọn transaction ở mọi nhánh; sau `Commit`, rollback deferred chỉ trả `sql.ErrTxDone` và thường được bỏ qua."
+sources = ["go/database/sql/index#DB.BeginTx", "go/database/sql/index#Tx.Commit", "go/database/sql/index#Tx.Rollback"]
+
+[[questions]]
+id = "go-dv007"
+module = "go-dv-database"
+type = "essay"
+difficulty = 3
+prompt = "Trong phỏng vấn, hãy mô tả cách viết repository dùng `database/sql` an toàn khi truy vấn nhiều hàng và khi cập nhật nhiều bảng trong một thao tác."
+keywords = [
+  ["connection pool", "pool", "sql.db"],
+  ["context", "timeout", "deadline"],
+  ["placeholder", "parameter", "arguments"],
+  ["rows.close", "rows.err", "scan"],
+  ["transaction", "beginTx", "commit", "rollback"],
+]
+min_keywords = 4
+model_answer = '''
+Tái sử dụng một `*sql.DB` làm connection pool và truyền `context.Context` xuống truy vấn để hỗ trợ timeout hoặc cancellation. Dùng placeholder cùng arguments thay vì ghép dữ liệu vào SQL. Với nhiều hàng, gọi `QueryContext`, đóng `Rows`, lặp bằng `Next`, xử lý lỗi `Scan` và kiểm tra `Rows.Err` sau vòng lặp. Khi cập nhật nhiều bảng cần tính nguyên tử, gọi `BeginTx`, defer `Rollback` để dọn mọi nhánh và chỉ `Commit` sau khi tất cả bước thành công.
+'''
+explanation = "Câu trả lời tốt nhắc tới vòng đời connection, an toàn truy vấn và cleanup giao dịch, không chỉ kể tên API."
+sources = ["go/database/sql/index#DB", "go/database/sql/index#DB.QueryContext", "go/database/sql/index#DB.BeginTx"]
+
+[[questions]]
+id = "go-dvc01"
+module = "go-dv-database"
+type = "code"
+lang = "go"
+difficulty = 2
+title = "Tạo truy vấn IN có tham số"
+prompt = '''
+Viết `BuildFindUsersQuery(statuses []string) (string, []any)` cho driver SQL dùng dấu `?`:
+- Luôn bắt đầu bằng `SELECT id, name FROM users`.
+- Nếu `statuses` rỗng, trả truy vấn gốc và danh sách arguments rỗng.
+- Nếu có status, thêm ` WHERE status IN (?, ...)` với đúng một dấu `?` cho mỗi phần tử.
+- Trả các status theo đúng thứ tự trong `[]any`; tuyệt đối không chèn giá trị vào chuỗi SQL.
+
+Ví dụ `[]string{"active", "paused"}` cho truy vấn `SELECT id, name FROM users WHERE status IN (?, ?)` và arguments `[]any{"active", "paused"}`.
+'''
+starter = '''
+package main
+
+func BuildFindUsersQuery(statuses []string) (string, []any) {
+	return "SELECT id, name FROM users", nil
+}
+'''
+solution = '''
+package main
+
+func BuildFindUsersQuery(statuses []string) (string, []any) {
+	query := "SELECT id, name FROM users"
+	args := make([]any, len(statuses))
+	if len(statuses) == 0 {
+		return query, args
+	}
+	query += " WHERE status IN ("
+	for i, status := range statuses {
+		if i > 0 {
+			query += ", "
+		}
+		query += "?"
+		args[i] = status
+	}
+	query += ")"
+	return query, args
+}
+'''
+tests = '''
+package main
+
+import (
+	"reflect"
+)
+
+var _ = Test("không lọc status", func(t *T) {
+	query, args := BuildFindUsersQuery(nil)
+	if query != "SELECT id, name FROM users" || len(args) != 0 {
+		t.Errorf("got %q, %#v", query, args)
+	}
+})
+
+var _ = Test("một status", func(t *T) {
+	query, args := BuildFindUsersQuery([]string{"active"})
+	if query != "SELECT id, name FROM users WHERE status IN (?)" {
+		t.Errorf("query = %q", query)
+	}
+	if !reflect.DeepEqual(args, []any{"active"}) {
+		t.Errorf("args = %#v", args)
+	}
+})
+
+var _ = Test("nhiều status theo thứ tự", func(t *T) {
+	query, args := BuildFindUsersQuery([]string{"active", "paused", "closed"})
+	if query != "SELECT id, name FROM users WHERE status IN (?, ?, ?)" {
+		t.Errorf("query = %q", query)
+	}
+	if !reflect.DeepEqual(args, []any{"active", "paused", "closed"}) {
+		t.Errorf("args = %#v", args)
+	}
+})
+
+var _ = Test("input trông giống SQL vẫn chỉ là argument", func(t *T) {
+	value := "active') OR 1=1 --"
+	query, args := BuildFindUsersQuery([]string{value})
+	if query != "SELECT id, name FROM users WHERE status IN (?)" || !reflect.DeepEqual(args, []any{value}) {
+		t.Errorf("query = %q, args = %#v", query, args)
+	}
+})
+'''
+hints = ["Tạo placeholder theo số phần tử, không theo nội dung của status.", "Tạo slice `[]any` cùng độ dài và gán từng giá trị theo index."]
+explanation = "Tách cấu trúc SQL khỏi dữ liệu giúp driver bind arguments an toàn và tránh SQL injection."
+sources = ["go/database/sql/index#DB.QueryContext"]
+
+[[questions]]
+id = "go-dv008"
+module = "go-dv-testing"
+type = "single"
+difficulty = 1
+prompt = "Hàm nào được `go test` nhận diện như một test thông thường?"
+options = ["`func testParser(t *testing.T)` trong file bất kỳ", "`func TestParser(t *testing.T)` trong file `*_test.go`", "`func TestParser()` trong file `main.go`", "`func BenchmarkParser(t *testing.T)`"]
+answer = [1]
+explanation = "Test thường có tên bắt đầu bằng `Test`, nhận `*testing.T` và nằm trong file `*_test.go`."
+sources = ["go/testing/index#T"]
+
+[[questions]]
+id = "go-dv009"
+module = "go-dv-testing"
+type = "single"
+difficulty = 2
+prompt = "Trong một subtest, điều gì phù hợp nhất khi assertion thất bại nhưng các kiểm tra tiếp theo trong cùng test vẫn có ích?"
+options = ["Gọi `t.Error` để ghi lỗi và tiếp tục", "Gọi `t.Fatal` từ mọi goroutine", "Bỏ qua assertion", "Gọi `os.Exit(1)`"]
+answer = [0]
+explanation = "`Error` đánh dấu test thất bại nhưng tiếp tục; `Fatal` dừng goroutine test hiện tại và không nên gọi từ goroutine phụ."
+sources = ["go/testing/index#T.Error", "go/testing/index#T.Fatal"]
+
+[[questions]]
+id = "go-dv010"
+module = "go-dv-testing"
+type = "single"
+difficulty = 2
+prompt = "Một benchmark Go nên lặp thao tác cần đo theo giá trị nào để `go test` điều chỉnh số lần chạy?"
+options = ["`b.N`", "`runtime.NumCPU()`", "`testing.Short()`", "`t.Parallel()`"]
+answer = [0]
+explanation = "Benchmark dùng vòng `for i := 0; i < b.N; i++` để framework hiệu chỉnh thời lượng đo."
+sources = ["go/testing/index#B"]
+
+[[questions]]
+id = "go-dv011"
+module = "go-dv-testing"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các thực hành giúp test Go dễ bảo trì và ổn định."
+options = ["Đặt nhiều input/expected thành table và đặt tên cho từng case bằng `t.Run`", "Dùng `t.Cleanup` để đăng ký dọn tài nguyên", "Dùng `time.Sleep` dài để đồng bộ mọi goroutine", "Dùng `t.TempDir` cho file test cần thư mục tạm", "Mọi test đều dùng chung một file cố định trong thư mục làm việc"]
+answer = [0, 1, 3]
+explanation = "Table-driven subtests làm rõ case; cleanup và thư mục tạm cô lập tài nguyên. Sleep và file dùng chung tạo flakiness, va chạm giữa test."
+sources = ["go/testing/index#T.Run", "go/testing/index#T.Cleanup", "go/testing/index#T.TempDir"]
+
+[[questions]]
+id = "go-dv012"
+module = "go-dv-testing"
+type = "fill"
+difficulty = 1
+prompt = '''
+Chạy mỗi trường hợp như một subtest có tên:
+
+```go
+t.{{blank}}("empty input", func(t *testing.T) {
+    got, ok := ParsePort("")
+    if ok || got != 0 { t.Errorf("got %d, %v", got, ok) }
+})
+```
+'''
+blanks = [["Run"]]
+explanation = "`T.Run` đặt tên và thực thi một subtest, giúp báo cáo chỉ rõ case nào thất bại."
+sources = ["go/testing/index#T.Run"]
+
+[[questions]]
+id = "go-dv013"
+module = "go-dv-testing"
+type = "fill"
+difficulty = 2
+prompt = '''
+Benchmark phải dùng số vòng lặp do framework hiệu chỉnh:
+
+```go
+func BenchmarkParse(b *testing.B) {
+    for i := 0; i < b.{{blank}}; i++ {
+        ParsePort("8080")
+    }
+}
+```
+'''
+blanks = [["N"]]
+explanation = "`b.N` thay đổi theo thời lượng chạy để tạo phép đo benchmark có độ phân giải phù hợp."
+sources = ["go/testing/index#B"]
+
+[[questions]]
+id = "go-dv014"
+module = "go-dv-testing"
+type = "essay"
+difficulty = 3
+prompt = "Trong phỏng vấn, hãy mô tả cách thiết kế test cho một hàm parser có input hợp lệ, input biên và input sai; khi nào bạn dùng benchmark hoặc fuzzing?"
+keywords = [
+  ["table-driven", "table driven", "bảng test"],
+  ["subtest", "t.run"],
+  ["edge case", "biên", "input sai", "invalid"],
+  ["deterministic", "ổn định", "lặp lại"],
+  ["benchmark", "b.n"],
+  ["fuzz", "fuzzing", "f.add"],
+]
+min_keywords = 4
+model_answer = '''
+Tôi sẽ tạo các case dạng table-driven gồm input và kết quả mong đợi, rồi chạy mỗi case bằng subtest để tên lỗi chỉ rõ tình huống. Ngoài input hợp lệ, cần kiểm tra chuỗi rỗng, giá trị biên, định dạng sai và overflow. Test nên deterministic, không phụ thuộc mạng hay thời gian. Khi cần so sánh chi phí thực thi, viết benchmark lặp theo `b.N`; với parser có không gian input rộng, fuzzing bắt đầu từ seed bằng `f.Add` và kiểm tra bất biến để tìm panic hoặc kết quả không hợp lệ.
+'''
+explanation = "Câu trả lời cần nêu chiến lược kiểm thử, case biên và phân biệt mục đích benchmark với fuzzing."
+sources = ["go/testing/index#T.Run", "go/testing/index#B", "go/testing/index#F.Add"]
+
+[[questions]]
+id = "go-dvc02"
+module = "go-dv-testing"
+type = "code"
+lang = "go"
+difficulty = 2
+title = "Parse và xác thực port"
+prompt = '''
+Viết `ParsePort(input string) (int, bool)`:
+- Bỏ khoảng trắng ở hai đầu.
+- Chỉ chấp nhận một hoặc nhiều chữ số ASCII thập phân; không chấp nhận dấu `+`, dấu `-`, dấu chấm hay chuỗi rỗng.
+- Giá trị phải nằm trong khoảng 1 đến 65535, bao gồm hai đầu.
+- Nếu hợp lệ, trả số nguyên và `true`; nếu không hợp lệ hoặc bị overflow, trả `0, false`.
+
+Ví dụ: `" 8080 "` trả `8080, true`; `"0"` và `"80x"` không hợp lệ.
+'''
+starter = '''
+package main
+
+func ParsePort(input string) (int, bool) {
+	return 0, false
+}
+'''
+solution = '''
+package main
+
+import (
+	"strconv"
+	"strings"
+)
+
+func ParsePort(input string) (int, bool) {
+	input = strings.TrimSpace(input)
+	if input == "" {
+		return 0, false
+	}
+	for i := 0; i < len(input); i++ {
+		if input[i] < '0' || input[i] > '9' {
+			return 0, false
+		}
+	}
+	value, err := strconv.Atoi(input)
+	if err != nil || value < 1 || value > 65535 {
+		return 0, false
+	}
+	return value, true
+}
+'''
+tests = '''
+package main
+
+var _ = Test("port hợp lệ và có khoảng trắng", func(t *T) {
+	got, ok := ParsePort(" 8080 ")
+	if !ok || got != 8080 {
+		t.Errorf("got %d, %v", got, ok)
+	}
+})
+
+var _ = Test("hai biên hợp lệ", func(t *T) {
+	low, lowOK := ParsePort("1")
+	high, highOK := ParsePort("65535")
+	if !lowOK || low != 1 || !highOK || high != 65535 {
+		t.Errorf("got (%d, %v), (%d, %v)", low, lowOK, high, highOK)
+	}
+})
+
+var _ = Test("từ chối ngoài miền", func(t *T) {
+	for _, input := range []string{"0", "65536", "-1", "+80", "80.0", "", "   "} {
+		if value, ok := ParsePort(input); ok || value != 0 {
+			t.Errorf("ParsePort(%q) = %d, %v", input, value, ok)
+		}
+	}
+})
+
+var _ = Test("từ chối chữ và overflow", func(t *T) {
+	for _, input := range []string{"80x", "999999999999999999999999999999999999"} {
+		if value, ok := ParsePort(input); ok || value != 0 {
+			t.Errorf("ParsePort(%q) = %d, %v", input, value, ok)
+		}
+	}
+})
+'''
+hints = ["Sau khi `strings.TrimSpace`, kiểm tra từng byte nằm trong `'0'..'9'`.", "Dùng `strconv.Atoi` để phát hiện overflow rồi kiểm tra miền port."]
+explanation = "Hàm nhỏ, thuần và có đầu vào biên rõ ràng phù hợp với table-driven unit test."
+sources = ["go/testing/index#T.Run"]
+
+[[questions]]
+id = "go-dv015"
+module = "go-dv-io"
+type = "single"
+difficulty = 2
+prompt = "Một lần gọi `Read(p)` trả `n > 0` cùng `io.EOF`. Caller nên làm gì?"
+options = ["Bỏ qua `p[:n]` vì EOF luôn có nghĩa không có dữ liệu", "Xử lý `p[:n]` trước, rồi xử lý EOF", "Gọi `Read` lại đến khi `n == len(p)` mà không kiểm tra lỗi", "Chuyển EOF thành panic"]
+answer = [1]
+explanation = "Interface `io.Reader` cho phép trả dữ liệu và lỗi cuối luồng cùng lúc; bytes đọc được vẫn phải được tiêu thụ."
+sources = ["go/io/index#Reader"]
+
+[[questions]]
+id = "go-dv016"
+module = "go-dv-io"
+type = "single"
+difficulty = 2
+prompt = "Cần sao chép một file lớn từ `src io.Reader` sang `dst io.Writer` mà không nạp toàn bộ nội dung vào RAM. API nào phù hợp?"
+options = ["`io.Copy(dst, src)`", "`io.ReadAll(src)` rồi giữ byte slice", "`os.ReadFile` trên một path không có", "`bufio.Scanner` bất kể định dạng dữ liệu"]
+answer = [0]
+explanation = "`io.Copy` chuyển dữ liệu theo stream; `ReadAll` cần giữ toàn bộ bytes trong memory."
+sources = ["go/io/index#Copy", "go/io/index#ReadAll"]
+
+[[questions]]
+id = "go-dv017"
+module = "go-dv-io"
+type = "single"
+difficulty = 2
+prompt = "`bufio.Scanner` dừng trước khi đọc hết một dòng rất dài. Cách xử lý phù hợp là gì?"
+options = ["Bỏ qua `scanner.Err()`", "Tăng buffer và giới hạn token bằng `scanner.Buffer` phù hợp, đồng thời vẫn kiểm tra `Err`", "Gọi `Scan` thêm một lần để tự bỏ giới hạn", "Chuyển sang `io.ReadAll` cho mọi input không giới hạn"]
+answer = [1]
+explanation = "Scanner có giới hạn token; tăng giới hạn có chủ đích hoặc chọn `bufio.Reader` nếu cần kiểm soát dòng lớn hơn."
+sources = ["go/bufio/index#Scanner.Buffer", "go/bufio/index#Scanner.Err"]
+
+[[questions]]
+id = "go-dv018"
+module = "go-dv-io"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các thực hành đúng khi đọc file theo dòng trong Go."
+options = ["Đóng file bằng `defer file.Close()` sau khi mở thành công", "Kiểm tra `scanner.Err()` sau vòng `Scan`", "Giả định `Read` luôn lấp đầy buffer", "Tăng giới hạn Scanner nếu dòng hợp lệ có thể vượt mặc định", "Dùng `io.ReadAll` với body không giới hạn của client"]
+answer = [0, 1, 3]
+explanation = "File cần được đóng, Scanner có lỗi cuối vòng lặp và giới hạn token cần được điều chỉnh theo dữ liệu. `Read` có thể đọc ít hơn buffer; input không giới hạn không nên nạp toàn bộ vào RAM."
+sources = ["go/os/index#File.Close", "go/bufio/index#Scanner.Err", "go/bufio/index#Scanner.Buffer", "go/io/index#Reader"]
+
+[[questions]]
+id = "go-dv019"
+module = "go-dv-io"
+type = "fill"
+difficulty = 1
+prompt = '''
+Stream dữ liệu từ reader sang writer:
+
+```go
+n, err := io.{{blank}}(dst, src)
+```
+'''
+blanks = [["Copy"]]
+explanation = "`io.Copy` trả số byte đã ghi và lỗi nếu quá trình chuyển stream thất bại."
+sources = ["go/io/index#Copy"]
+
+[[questions]]
+id = "go-dv020"
+module = "go-dv-io"
+type = "fill"
+difficulty = 2
+prompt = '''
+Sau vòng lặp `for scanner.Scan()`, lấy lỗi đọc cuối cùng bằng:
+
+```go
+if err := scanner.{{blank}}(); err != nil {
+    return err
+}
+```
+'''
+blanks = [["Err"]]
+explanation = "`Scan` trả false cả khi hết dữ liệu lẫn khi có lỗi; `Err` phân biệt trường hợp lỗi."
+sources = ["go/bufio/index#Scanner.Scan", "go/bufio/index#Scanner.Err"]
+
+[[questions]]
+id = "go-dv021"
+module = "go-dv-io"
+type = "essay"
+difficulty = 3
+prompt = "Trong phỏng vấn, hãy chọn giữa `os.ReadFile`, `io.Copy`, `bufio.Scanner` và `bufio.Reader` cho các loại input khác nhau; nêu cách xử lý EOF và lỗi."
+keywords = [
+  ["readfile", "readall", "toàn bộ memory", "toàn bộ bộ nhớ"],
+  ["io.copy", "stream", "luồng"],
+  ["scanner", "buffer", "giới hạn token"],
+  ["reader", "delimiter", "delimiter"],
+  ["eof", "io.eof", "xử lý bytes"],
+  ["err", "scanner.err", "đóng file", "close"],
+]
+min_keywords = 4
+model_answer = '''
+`os.ReadFile` hoặc `io.ReadAll` tiện cho nội dung nhỏ đã biết giới hạn nhưng giữ toàn bộ bytes trong memory. `io.Copy` hợp với file lớn vì stream giữa `Reader` và `Writer`. `bufio.Scanner` đơn giản cho dòng/token, cần tăng buffer nếu token hợp lệ dài; `bufio.Reader` phù hợp khi cần điều khiển delimiter hoặc đọc từng phần. Với `Read`, xử lý số bytes trả về trước cả khi lỗi là `io.EOF`; sau vòng Scan kiểm tra `scanner.Err`. File mở thành công cần được đóng.
+'''
+explanation = "Lựa chọn dựa trên kích thước, cách phân tách input và giới hạn memory; không bỏ qua lỗi cuối luồng."
+sources = ["go/io/index#Reader", "go/io/index#Copy", "go/bufio/index#Scanner", "go/os/index#ReadFile"]
+
+[[questions]]
+id = "go-dvc03"
+module = "go-dv-io"
+type = "code"
+lang = "go"
+difficulty = 3
+title = "Đọc dòng từ io.Reader"
+prompt = '''
+Viết `ReadLines(r io.Reader) ([]string, error)` bằng thư viện chuẩn:
+- Tách theo quy tắc dòng của `bufio.Scanner`: giữ dòng rỗng, bỏ `\n` và `\r` của CRLF, giữ dòng cuối không có newline.
+- Input rỗng trả slice rỗng và `nil` error.
+- Hỗ trợ dòng dài tối đa 1 MiB; nếu reader lỗi hoặc dòng vượt giới hạn, trả `nil, error`.
+- Không đóng `r` vì hàm không sở hữu reader.
+'''
+starter = '''
+package main
+
+import "io"
+
+func ReadLines(r io.Reader) ([]string, error) {
+	return nil, nil
+}
+'''
+solution = '''
+package main
+
+import (
+	"bufio"
+	"errors"
+	"io"
+)
+
+func ReadLines(r io.Reader) ([]string, error) {
+	scanner := bufio.NewScanner(r)
+	scanner.Buffer(make([]byte, 64*1024), 1024*1024+2)
+	lines := []string{}
+	for scanner.Scan() {
+		if len(scanner.Bytes()) > 1024*1024 {
+			return nil, errors.New("line exceeds 1 MiB")
+		}
+		lines = append(lines, scanner.Text())
+	}
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+	return lines, nil
+}
+'''
+tests = '''
+package main
+
+import (
+	"errors"
+	"reflect"
+	"strings"
+)
+
+type brokenReader struct{}
+
+func (brokenReader) Read([]byte) (int, error) {
+	return 0, errors.New("read failed")
+}
+
+var _ = Test("dòng thường, rỗng và CRLF", func(t *T) {
+	got, err := ReadLines(strings.NewReader("alpha\r\n\r\nbeta\n"))
+	if err != nil || !reflect.DeepEqual(got, []string{"alpha", "", "beta"}) {
+		t.Errorf("got %#v, %v", got, err)
+	}
+})
+
+var _ = Test("dòng cuối không có newline", func(t *T) {
+	got, err := ReadLines(strings.NewReader("last line"))
+	if err != nil || !reflect.DeepEqual(got, []string{"last line"}) {
+		t.Errorf("got %#v, %v", got, err)
+	}
+})
+
+var _ = Test("input rỗng trả slice rỗng", func(t *T) {
+	got, err := ReadLines(strings.NewReader(""))
+	if err != nil || !reflect.DeepEqual(got, []string{}) {
+		t.Errorf("got %#v, %v", got, err)
+	}
+})
+
+var _ = Test("đọc dòng dài hơn buffer mặc định", func(t *T) {
+	line := strings.Repeat("x", 70*1024)
+	got, err := ReadLines(strings.NewReader(line))
+	if err != nil || len(got) != 1 || got[0] != line {
+		t.Errorf("len=%d, err=%v", len(got), err)
+	}
+})
+
+var _ = Test("chấp nhận dòng đúng 1 MiB và từ chối dài hơn", func(t *T) {
+	line := strings.Repeat("x", 1024*1024)
+	got, err := ReadLines(strings.NewReader(line + "\r\n"))
+	if err != nil || len(got) != 1 || got[0] != line {
+		t.Errorf("độ dài biên: got=%d err=%v", len(got), err)
+	}
+	got, err = ReadLines(strings.NewReader(line + "x"))
+	if err == nil || got != nil {
+		t.Errorf("dòng vượt giới hạn: got=%d err=%v", len(got), err)
+	}
+})
+
+var _ = Test("trả lỗi từ reader", func(t *T) {
+	got, err := ReadLines(brokenReader{})
+	if err == nil || got != nil {
+		t.Errorf("got %#v, %v", got, err)
+	}
+})
+'''
+hints = ["Dùng `bufio.Scanner` và cấu hình buffer tối đa 1 MiB.", "Luôn kiểm tra `scanner.Err()` sau khi `Scan` kết thúc."]
+explanation = "Hàm xử lý một stream mượn từ caller, giữ quy tắc dòng rõ ràng và trả lỗi đọc thay vì âm thầm bỏ dữ liệu."
+sources = ["go/bufio/index#NewScanner", "go/bufio/index#Scanner.Buffer", "go/bufio/index#Scanner.Err"]

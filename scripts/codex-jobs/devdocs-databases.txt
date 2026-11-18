@@ -1,0 +1,6 @@
+Mở rộng lộ trình có sẵn theo mục lục DevDocs: chỉ sửa file `data/databases.toml` (id = "databases", hiện 6 module / 37 câu, docs = ['sqlite', 'postgresql~18', 'redis']). Đọc mục "Mở rộng một lộ trình có sẵn" và "Bám mục lục DevDocs" trong AGENTS.md.
+1. Với từng slug trong `docs`, đọc `.devdocs/<slug>.json` (nếu thiếu file thì bỏ qua slug đó), liệt kê `types` và đối chiếu với các module hiện có để tìm 2–4 nhóm chủ đề quan trọng (hay gặp khi làm thực tế / phỏng vấn) mà lộ trình chưa phủ hoặc phủ mỏng.
+2. Thêm 2–4 module mới cho các nhóm đó: id module dạng `databases-dv-<tên-ngắn>`, `lesson` Markdown tự viết (≥ 600 ký tự: khái niệm, bảng so sánh, ví dụ, lỗi hay gặp), `sources` 3–6 đường dẫn entries tiêu biểu có thật trong mục lục.
+3. Mỗi module mới 8–10 câu, đủ dạng single/multiple/fill + 1 essay kiểu câu hỏi phỏng vấn; thêm 1 bài code (≥ 4 test) cho module nào phù hợp. Id câu hỏi mới: `databases-dv001`, `databases-dv002`… (bài code `databases-dvc01`…).
+4. Rà các module cũ: bổ sung `sources` còn thiếu/sai cho đúng mục lục DevDocs (không đổi id).
+Không sửa `data/categories.toml` (người giao việc sẽ xếp danh mục). Làm từng module một, chạy `./target/release/bovabon_edu check data/databases.toml` sau mỗi module.

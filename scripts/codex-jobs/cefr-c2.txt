@@ -1,0 +1,11 @@
+Soạn lộ trình mới: file `data/english-cefr-c2.toml`. id = "english-cefr-c2", title = "Tiếng Anh C2 · Thành thạo", icon = "C2", color = "#16a34a", group = "Tiếng Anh", area = "english" (KHÔNG có câu code, không khai báo docs/sources).
+Căn cứ: phần **C2** trong `docs/cefr-syllabus.md` (can-do, ngữ pháp, từ vựng, chức năng giao tiếp, đọc–viết, lỗi hay gặp của người Việt).
+Module (đúng id & thứ tự này):
+   - `cefr-c2-grammar-style`: chọn cấu trúc theo hiệu ứng tu từ: đảo ngữ & fronting, subjunctive trang trọng, end-weight/end-focus, mệnh đề danh ngữ phức, sắc thái thì & thể
+   - `cefr-c2-vocab-idiom`: thành ngữ cố định, ẩn dụ, connotation, khẩu ngữ phổ biến (nhận biết), collocation hiếm
+   - `cefr-c2-discourse`: hàm ý, mỉa mai, nói giảm, vague language, giản lược khẩu ngữ, điều chỉnh mức trang trọng tinh tế
+   - `cefr-c2-reading-writing`: phân tích văn bản báo chí/văn học, bài phê bình, luận điểm phức tạp, parallelism, biên tập câu súc tích
+   - `cefr-c2-mediation`: tóm tắt & tổng hợp đa nguồn, diễn giải lại cho đối tượng/văn phong khác, chuyển tải ý giữa các bên
+Quy mô ~55 câu, rải đều các module; dạng single (~45%), multiple (~15%), fill (~25%), essay (2–4 câu: viết câu/đoạn ngắn theo tình huống, chấm theo từ khoá). difficulty trộn 1–3 trong phạm vi bậc. Id câu: `cefr-c2-001`, `cefr-c2-002`…
+Yêu cầu chất lượng: giải thích bằng tiếng Việt, câu/ví dụ bằng tiếng Anh tự nhiên, đúng chuẩn bậc C2 (không dùng từ/cấu trúc vượt bậc trong đề); lựa chọn nhiễu dựa trên lỗi hay gặp của người Việt; fill chỉ 1 đáp án rõ ràng (liệt kê đủ biến thể chấp nhận: viết tắt/đầy đủ như "don't" / "do not"); mỗi module có `lesson` Markdown ≥ 800 ký tự (bảng cấu trúc, ví dụ, lỗi hay gặp, mẹo nhớ). Nội dung tự soạn, không chép sách/tài liệu.
+Không sửa `data/categories.toml` (đã khai báo sẵn các module trên). Làm từng module, chạy `./target/release/bovabon_edu check data/english-cefr-c2.toml` sau mỗi module.

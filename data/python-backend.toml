@@ -10,7 +10,7 @@ description = "Flask (app/request context, blueprint, factory), FastAPI (path/qu
 id = "py-flask"
 title = "Flask"
 description = "Route, request/app context, g, session, blueprint, application factory, testing."
-sources = ["flask/quickstart/index", "flask/appcontext/index", "flask/reqcontext/index", "flask/patterns/appfactories/index"]
+sources = ["flask/quickstart/index", "flask/appcontext/index", "flask/reqcontext/index", "flask/patterns/appfactories/index", "flask/api/index#flask.session", "flask/api/index#flask.Blueprint", "flask/testing/index", "flask/deploying/index"]
 lesson = '''
 ### Ý chính
 - `@app.route("/users/<int:user_id>", methods=["GET", "POST"])` — converter `int`, `float`, `path`, `uuid`.
@@ -28,7 +28,7 @@ lesson = '''
 id = "py-fastapi"
 title = "FastAPI"
 description = "Path/query/body params, Pydantic model, response_model, Depends, HTTPException, middleware, BackgroundTasks."
-sources = ["fastapi/tutorial/path-params/index", "fastapi/tutorial/query-params/index", "fastapi/tutorial/body/index", "fastapi/tutorial/response-model/index", "fastapi/tutorial/handling-errors/index"]
+sources = ["fastapi/tutorial/path-params/index", "fastapi/tutorial/query-params/index", "fastapi/tutorial/body/index", "fastapi/tutorial/response-model/index", "fastapi/tutorial/handling-errors/index", "fastapi/tutorial/dependencies/index", "fastapi/tutorial/background-tasks/index", "fastapi/tutorial/testing/index"]
 lesson = '''
 ### Ý chính
 - FastAPI dựa trên **Starlette** (ASGI) + **Pydantic** (validate dữ liệu) và **type hints**.
@@ -46,7 +46,7 @@ lesson = '''
 id = "py-async"
 title = "Async Python & hiệu năng"
 description = "async/await, event loop, def vs async def trong FastAPI, asyncio.gather, Semaphore, WSGI vs ASGI."
-sources = ["fastapi/async/index", "flask/async-await/index"]
+sources = ["fastapi/async/index", "flask/async-await/index", "python~3.14/library/asyncio-task#asyncio.gather", "python~3.14/library/asyncio-sync#asyncio.Semaphore"]
 lesson = '''
 ### Ý chính
 - **WSGI** (Flask, Django cổ điển): đồng bộ, mỗi request một worker/thread. **ASGI** (FastAPI, Starlette): bất đồng bộ, hỗ trợ WebSocket.
@@ -916,3 +916,615 @@ def _():
 hints = ["Khi decode cần thêm lại padding: `s + '=' * (-len(s) % 4)`.", "Kiểm tra thuật toán **trước** khi kiểm tra chữ ký."]
 explanation = "Thực tế dùng PyJWT/python-jose, nhưng tự cài giúp hiểu vì sao phải cố định thuật toán và so sánh hằng thời gian."
 sources = ["fastapi/tutorial/security/index"]
+
+[[modules]]
+id = "python-backend-dv-flask-structure"
+title = "Flask: cấu trúc ứng dụng & kiểm thử"
+description = "Blueprint, application factory, cấu hình theo môi trường và test client."
+sources = ["flask/patterns/appfactories/index", "flask/api/index#flask.Blueprint", "flask/testing/index", "flask/config/index", "flask/deploying/index"]
+lesson = '''
+### Chia ứng dụng Flask theo trách nhiệm
+
+Khi một ứng dụng lớn dần, gom mọi route vào một file khiến import, cấu hình và kiểm thử khó kiểm soát. **Blueprint** nhóm route và hook theo một phần chức năng; Blueprint chưa phải app độc lập và chỉ hoạt động sau khi được đăng ký vào một Flask application. Khi đăng ký, có thể thêm **url_prefix** để tạo không gian URL rõ ràng.
+
+| Thành phần | Vai trò | Ví dụ |
+|---|---|---|
+| Application factory | Tạo app mới và áp cấu hình mỗi lần gọi | create_app(test_config) |
+| Blueprint | Nhóm route theo chức năng | users, admin |
+| Test client | Gửi request giả lập qua app | client.get("/health") |
+| Config TESTING | Bật hành vi phù hợp cho test | app.config.update(TESTING=True) |
+
+Ví dụ tổ chức:
+
+~~~python
+from flask import Blueprint, Flask
+
+api = Blueprint("api", __name__)
+
+@api.get("/health")
+def health():
+    return {"ok": True}
+
+def create_app(config=None):
+    app = Flask(__name__)
+    app.config.from_mapping(SECRET_KEY="replace-in-deployment")
+    if config:
+        app.config.update(config)
+    app.register_blueprint(api, url_prefix="/api")
+    return app
+~~~
+
+Trong test, gọi factory với cấu hình riêng, sau đó dùng app.test_client() để chạy qua routing và middleware của Flask mà không mở cổng mạng. Mỗi test có thể tạo app mới để tránh cấu hình hoặc trạng thái toàn cục rò sang test khác. Kiểm tra status, header và JSON response; dùng session_transaction() khi cần chuẩn bị session.
+
+Lỗi hay gặp là import module route trước khi factory cấu hình xong rồi tạo app toàn cục, làm test khó cô lập; quên đăng ký Blueprint khiến route trả 404; và dùng app.run() như server production. Factory giúp tạo app nhất quán, còn server production phải là WSGI server được cấu hình riêng. Không đặt secret thật trong mã nguồn hay cấu hình test.
+'''
+
+[[questions]]
+id = "python-backend-dv001"
+module = "python-backend-dv-flask-structure"
+type = "single"
+difficulty = 1
+prompt = "Một Blueprint Flask được hiểu đúng nhất là gì?"
+options = ["Một app Flask độc lập tự lắng nghe cổng riêng", "Một nhóm route và hook có thể đăng ký vào app", "Một kết nối cơ sở dữ liệu dùng chung", "Một test client giả lập HTTP"]
+answer = [1]
+explanation = "Blueprint tổ chức chức năng theo module nhưng cần được đăng ký vào một Flask application trước khi route hoạt động."
+sources = ["flask/api/index#flask.Blueprint"]
+
+[[questions]]
+id = "python-backend-dv002"
+module = "python-backend-dv-flask-structure"
+type = "single"
+difficulty = 2
+prompt = "Vì sao application factory hữu ích khi test cùng ứng dụng với nhiều cấu hình?"
+options = ["Mỗi lần gọi có thể tạo app mới với cấu hình riêng", "Factory tự tạo một database production", "Factory bỏ qua toàn bộ middleware", "Factory biến Flask thành ASGI"]
+answer = [0]
+explanation = "Factory cho phép tạo app độc lập, chẳng hạn bật TESTING hoặc thay secret giả mà không làm đổi cấu hình app khác."
+sources = ["flask/patterns/appfactories/index"]
+
+[[questions]]
+id = "python-backend-dv003"
+module = "python-backend-dv-flask-structure"
+type = "single"
+difficulty = 1
+prompt = "Flask test client phù hợp với trường hợp nào?"
+options = ["Gửi request qua app trong test mà không mở server mạng", "Đo độ trễ từ trình duyệt thật qua Internet", "Khởi chạy Gunicorn trong production", "Tạo migration cho database"]
+answer = [0]
+explanation = "Test client gọi ứng dụng trong tiến trình test, hữu ích để kiểm tra route và response mà không cần bind cổng."
+sources = ["flask/testing/index"]
+
+[[questions]]
+id = "python-backend-dv004"
+module = "python-backend-dv-flask-structure"
+type = "single"
+difficulty = 2
+prompt = "Đăng ký Blueprint tên api với prefix /v1 bằng cách nào?"
+options = ["app.register_blueprint(api, url_prefix=\"/v1\")", "api.run(prefix=\"/v1\")", "app.config[\"BLUEPRINT\"] = api", "Blueprint(\"/v1\", app)"]
+answer = [0]
+explanation = "Prefix được áp dụng khi đăng ký Blueprint lên app."
+sources = ["flask/api/index#flask.Blueprint"]
+
+[[questions]]
+id = "python-backend-dv005"
+module = "python-backend-dv-flask-structure"
+type = "multiple"
+difficulty = 2
+prompt = "Những lợi ích nào thường đạt được khi chia ứng dụng Flask bằng Blueprint?"
+options = ["Nhóm route theo miền chức năng", "Có thể gắn prefix khi đăng ký", "Blueprint tự trở thành process độc lập", "Có thể đăng ký cùng Blueprint vào nhiều app phù hợp"]
+answer = [0, 1, 3]
+explanation = "Blueprint giúp cấu trúc và tái sử dụng cấu hình route; nó không phải process hay server riêng."
+sources = ["flask/api/index#flask.Blueprint"]
+
+[[questions]]
+id = "python-backend-dv006"
+module = "python-backend-dv-flask-structure"
+type = "multiple"
+difficulty = 3
+prompt = "Một test cần kiểm tra endpoint /api/health và session. Chọn các thực hành phù hợp."
+options = ["Tạo app bằng factory với TESTING=True", "Dùng app.test_client() để gửi request", "Dùng session_transaction() nếu cần chuẩn bị session", "Chạy app.run() trên cổng công khai trong mỗi test"]
+answer = [0, 1, 2]
+explanation = "Factory và test client giữ test gọn, cô lập; session_transaction hỗ trợ thiết lập session trong test."
+sources = ["flask/testing/index", "flask/patterns/appfactories/index"]
+
+[[questions]]
+id = "python-backend-dv007"
+module = "python-backend-dv-flask-structure"
+type = "fill"
+difficulty = 1
+prompt = '''
+Hoàn tất đăng ký Blueprint:
+
+~~~python
+app.{{blank}}(api, url_prefix="/v1")
+~~~
+'''
+blanks = [["register_blueprint"]]
+explanation = "Blueprint được gắn vào Flask app bằng register_blueprint."
+sources = ["flask/api/index#flask.Blueprint"]
+
+[[questions]]
+id = "python-backend-dv008"
+module = "python-backend-dv-flask-structure"
+type = "essay"
+difficulty = 3
+prompt = "Trong một codebase Flask có nhiều khu vực chức năng, hãy giải thích cách application factory, Blueprint và test client phối hợp để giữ ứng dụng dễ mở rộng và dễ kiểm thử."
+keywords = [["application factory", "create_app"], ["blueprint"], ["test client", "testing"], ["isolated configuration", "cấu hình riêng", "test configuration"]]
+min_keywords = 3
+model_answer = '''Application factory tạo app mới và nhận test configuration, nhờ đó mỗi test có thể chạy với trạng thái cô lập. Blueprint nhóm route theo chức năng rồi được đăng ký trong factory, thường kèm url_prefix. Test client gửi request trực tiếp qua app để xác minh status và response mà không cần mở server mạng.'''
+explanation = "Câu trả lời tốt cần nêu vai trò riêng của factory, Blueprint và test client, đồng thời giải thích cách cấu hình test không ảnh hưởng app khác."
+sources = ["flask/patterns/appfactories/index", "flask/api/index#flask.Blueprint", "flask/testing/index"]
+
+[[questions]]
+id = "python-backend-dvc01"
+module = "python-backend-dv-flask-structure"
+type = "code"
+difficulty = 2
+lang = "python"
+title = "Ghép cấu hình cho app factory"
+prompt = '''Viết build_config(defaults, environment, overrides) trả về dict cấu hình mới. Hợp nhất theo thứ tự: giá trị trong defaults, sau đó ghi đè bằng environment, cuối cùng ghi đè bằng overrides. Không được sửa bất kỳ dict đầu vào nào.'''
+starter = '''def build_config(defaults, environment, overrides):
+    return dict(defaults)
+'''
+solution = '''def build_config(defaults, environment, overrides):
+    config = dict(defaults)
+    config.update(environment)
+    config.update(overrides)
+    return config
+'''
+tests = '''
+@test("giá trị ghi đè theo độ ưu tiên")
+def _():
+    result = build_config({"DEBUG": False}, {"DEBUG": True}, {"DEBUG": False})
+    expect(result).to_equal({"DEBUG": False})
+
+@test("giữ các khóa không trùng")
+def _():
+    result = build_config({"A": 1}, {"B": 2}, {"C": 3})
+    expect(result).to_equal({"A": 1, "B": 2, "C": 3})
+
+@test("không sửa dict đầu vào")
+def _():
+    defaults = {"A": 1}
+    environment = {"A": 2}
+    overrides = {"B": 3}
+    build_config(defaults, environment, overrides)
+    expect(defaults).to_equal({"A": 1})
+    expect(environment).to_equal({"A": 2})
+    expect(overrides).to_equal({"B": 3})
+
+@test("kết quả là dict độc lập")
+def _():
+    defaults = {"A": 1}
+    result = build_config(defaults, {}, {})
+    result["A"] = 9
+    expect(defaults["A"]).to_be(1)
+'''
+hints = ["Tạo dict mới từ defaults trước khi cập nhật.", "Gọi update theo đúng thứ tự ưu tiên."]
+explanation = "Factory có thể áp giá trị mặc định, cấu hình môi trường rồi cấu hình kiểm thử; bản sao mới giúp tránh rò trạng thái giữa các app."
+sources = ["flask/patterns/appfactories/index", "flask/config/index"]
+
+[[modules]]
+id = "python-backend-dv-fastapi-deps"
+title = "FastAPI: dependency lifecycle & kiểm thử"
+description = "Dependency graph, cleanup bằng yield, cache theo request và dependency overrides."
+sources = ["fastapi/tutorial/dependencies/index", "fastapi/tutorial/dependencies/sub-dependencies/index", "fastapi/tutorial/dependencies/dependencies-with-yield/index", "fastapi/tutorial/testing/index", "fastapi/advanced/testing-dependencies/index"]
+lesson = '''
+### Dependency như một ranh giới có thể thay thế
+
+FastAPI dùng **Depends** để khai báo dependency ngay trong chữ ký endpoint. Dependency có thể nhận dependency con, vì vậy framework xây một đồ thị giải quyết theo thứ tự trước khi gọi endpoint. Đây là nơi phù hợp để cung cấp người dùng đã xác thực, cấu hình, session database hoặc logic dùng chung mà không gắn chặt route vào cách tạo tài nguyên.
+
+| Cách viết | Tác dụng | Khi dùng |
+|---|---|---|
+| Hàm dependency thường | Tạo hoặc trả một giá trị | Cấu hình, quyền truy cập |
+| Dependency có yield | Cấp tài nguyên rồi dọn dẹp | Session DB, file, lock |
+| Sub-dependency | Tái sử dụng dependency khác | User phụ thuộc token |
+| dependency_overrides | Thay dependency khi test | Fake DB hoặc user |
+
+Ví dụ một resource cần đóng kể cả khi endpoint có lỗi:
+
+~~~python
+def get_connection():
+    connection = open_connection()
+    try:
+        yield connection
+    finally:
+        connection.close()
+
+@app.get("/items")
+def list_items(connection = Depends(get_connection)):
+    return query_items(connection)
+~~~
+
+FastAPI chạy phần trước yield để chuẩn bị tài nguyên và phần finally để dọn dẹp theo vòng đời dependency. Dependency được tái sử dụng trong một request thường được cache, nên cùng dependency được tham chiếu từ nhiều nhánh không nhất thiết tạo nhiều kết nối. Khi cần hành vi khác, có thể tắt cache bằng use_cache=False; không nên dựa vào cache để chia sẻ trạng thái giữa các request.
+
+Khi test, TestClient gửi request qua app, còn app.dependency_overrides ánh xạ hàm dependency gốc sang hàm thay thế. Cách này giúp test không gọi database thật, không cần token thật và có thể dựng dữ liệu xác định. Sau test phải khôi phục hoặc xóa override để test tiếp theo không bị ảnh hưởng. Lỗi hay gặp là override sai object dependency, quên dọn override, hoặc mở resource nhưng không đặt thao tác đóng trong finally. Chỉ dùng dependency để chia sẻ logic có ranh giới rõ; middleware phù hợp hơn với hành vi áp dụng rộng cho hầu hết request như ghi nhận thời lượng.
+'''
+
+[[questions]]
+id = "python-backend-dv009"
+module = "python-backend-dv-fastapi-deps"
+type = "single"
+difficulty = 1
+prompt = "Một endpoint cần dùng chung hàm lấy user hiện tại và kiểm tra quyền. FastAPI thường khai báo sự phụ thuộc đó bằng cách nào?"
+options = ["Đặt Depends(get_current_user) trong chữ ký endpoint", "Tạo biến global rồi sửa trong mỗi request", "Gọi app.run() từ endpoint", "Truyền dependency qua query string"]
+answer = [0]
+explanation = "Depends khai báo dependency rõ ràng để FastAPI giải quyết và đưa kết quả vào endpoint."
+sources = ["fastapi/tutorial/dependencies/index"]
+
+[[questions]]
+id = "python-backend-dv010"
+module = "python-backend-dv-fastapi-deps"
+type = "single"
+difficulty = 2
+prompt = "Vì sao dependency quản lý database session thường dùng try/finally quanh yield?"
+options = ["Để đóng session sau khi dùng, kể cả khi có exception", "Để tự biến endpoint đồng bộ thành bất đồng bộ", "Để bỏ qua validation của request", "Để lưu session vào cookie"]
+answer = [0]
+explanation = "Phần finally của dependency có yield dùng cho cleanup đáng tin cậy sau khi tài nguyên được cấp."
+sources = ["fastapi/tutorial/dependencies/dependencies-with-yield/index"]
+
+[[questions]]
+id = "python-backend-dv011"
+module = "python-backend-dv-fastapi-deps"
+type = "single"
+difficulty = 2
+prompt = "Cùng một dependency được tham chiếu nhiều lần trong một request thường được FastAPI xử lý thế nào?"
+options = ["Cache kết quả trong request theo mặc định", "Gọi dependency đúng một lần cho toàn bộ vòng đời process", "Lưu kết quả vào cookie", "Từ chối request vì dependency trùng"]
+answer = [0]
+explanation = "FastAPI mặc định cache dependency trong một request; cache đó không phải trạng thái dùng chung giữa các request."
+sources = ["fastapi/tutorial/dependencies/sub-dependencies/index"]
+
+[[questions]]
+id = "python-backend-dv012"
+module = "python-backend-dv-fastapi-deps"
+type = "single"
+difficulty = 2
+prompt = "Cách phù hợp để endpoint test dùng fake repository thay cho dependency repository thật là gì?"
+options = ["Gán hàm fake vào app.dependency_overrides theo dependency gốc", "Sửa trực tiếp hàm endpoint trong production", "Đổi mọi response thành status 204", "Tạo token ngẫu nhiên trong query string"]
+answer = [0]
+explanation = "dependency_overrides cho phép thay đúng dependency trong app test mà không sửa mã endpoint."
+sources = ["fastapi/advanced/testing-dependencies/index"]
+
+[[questions]]
+id = "python-backend-dv013"
+module = "python-backend-dv-fastapi-deps"
+type = "multiple"
+difficulty = 2
+prompt = "Những lý do nào khiến dependency overrides hữu ích trong test API?"
+options = ["Tránh kết nối tới database thật", "Cấp user test có quyền xác định", "Giữ endpoint dùng cùng chữ ký như production", "Tự kiểm chứng hiệu năng production chính xác"]
+answer = [0, 1, 2]
+explanation = "Override thay đúng dependency ở ranh giới test; nó không thay cho kiểm thử hiệu năng của hệ thống production."
+sources = ["fastapi/advanced/testing-dependencies/index", "fastapi/tutorial/testing/index"]
+
+[[questions]]
+id = "python-backend-dv014"
+module = "python-backend-dv-fastapi-deps"
+type = "multiple"
+difficulty = 3
+prompt = "Chọn các phát biểu đúng về dependency có yield."
+options = ["Có thể dùng để quản lý vòng đời tài nguyên", "Đặt cleanup trong finally giúp chạy khi luồng xử lý phát sinh lỗi", "Mỗi request luôn dùng chung một object dependency với mọi request khác", "Có thể lồng dependency để chia nhỏ các bước chuẩn bị"]
+answer = [0, 1, 3]
+explanation = "Yield phù hợp với setup/cleanup và dependency có thể có sub-dependency; cache mặc định nằm trong phạm vi request."
+sources = ["fastapi/tutorial/dependencies/dependencies-with-yield/index", "fastapi/tutorial/dependencies/sub-dependencies/index"]
+
+[[questions]]
+id = "python-backend-dv015"
+module = "python-backend-dv-fastapi-deps"
+type = "fill"
+difficulty = 2
+prompt = '''
+Điền thuộc tính dùng để ánh xạ dependency gốc sang dependency fake trong test:
+
+~~~python
+app.{{blank}}[get_db] = get_test_db
+~~~
+'''
+blanks = [["dependency_overrides"]]
+explanation = "FastAPI cung cấp dependency_overrides trên app để thay dependency khi kiểm thử."
+sources = ["fastapi/advanced/testing-dependencies/index"]
+
+[[questions]]
+id = "python-backend-dv016"
+module = "python-backend-dv-fastapi-deps"
+type = "essay"
+difficulty = 3
+prompt = "Giải thích cách dependency có yield và dependency override giúp một endpoint dùng tài nguyên an toàn trong production nhưng vẫn kiểm thử được độc lập."
+keywords = [["dependency injection", "depends"], ["yield"], ["cleanup", "finally"], ["dependency overrides", "override"], ["isolated tests", "test isolation"]]
+min_keywords = 3
+model_answer = '''Dependency injection giúp endpoint nhận tài nguyên qua Depends thay vì tự tạo chúng. Dependency có yield chuẩn bị tài nguyên và đặt cleanup trong finally để đóng session kể cả khi có lỗi. Trong test, dependency overrides thay database hoặc user thật bằng fake có dữ liệu xác định. Test cần khôi phục override sau khi chạy để giữ isolated tests và tránh ảnh hưởng test khác.'''
+explanation = "Cần nhắc tới setup/cleanup bằng yield và thay dependency có kiểm soát trong test."
+sources = ["fastapi/tutorial/dependencies/dependencies-with-yield/index", "fastapi/advanced/testing-dependencies/index"]
+
+[[questions]]
+id = "python-backend-dvc02"
+module = "python-backend-dv-fastapi-deps"
+type = "code"
+difficulty = 3
+lang = "python"
+title = "Override registry có phạm vi"
+prompt = '''Viết context manager override_scope(registry, replacements). Khi vào with, cập nhật registry bằng replacements. Khi thoát, luôn khôi phục giá trị ban đầu của các khóa đã có và xóa các khóa mới được thêm, kể cả khi khối with phát sinh exception. Hỗ trợ phạm vi lồng nhau. Chỉ dùng thư viện chuẩn.'''
+starter = '''from contextlib import contextmanager
+
+@contextmanager
+def override_scope(registry, replacements):
+    yield registry
+'''
+solution = '''from contextlib import contextmanager
+
+@contextmanager
+def override_scope(registry, replacements):
+    missing = object()
+    previous = {key: registry.get(key, missing) for key in replacements}
+    registry.update(replacements)
+    try:
+        yield registry
+    finally:
+        for key, value in previous.items():
+            if value is missing:
+                registry.pop(key, None)
+            else:
+                registry[key] = value
+'''
+tests = '''
+registry = {"db": "real", "cache": None}
+
+@test("override chỉ có hiệu lực bên trong with")
+def _():
+    with override_scope(registry, {"db": "fake"}):
+        expect(registry["db"]).to_be("fake")
+    expect(registry["db"]).to_be("real")
+
+@test("khóa mới được dọn sau khi thoát")
+def _():
+    with override_scope(registry, {"auth": "test-user"}):
+        expect(registry["auth"]).to_be("test-user")
+    expect("auth" in registry).to_be_false()
+
+@test("khôi phục cả khi có exception")
+def _():
+    try:
+        with override_scope(registry, {"db": "broken", "new": 1}):
+            raise RuntimeError("failed request")
+    except RuntimeError:
+        pass
+    expect(registry).to_equal({"db": "real", "cache": None})
+
+@test("phạm vi lồng nhau khôi phục về override bên ngoài")
+def _():
+    with override_scope(registry, {"db": "outer"}):
+        with override_scope(registry, {"db": "inner"}):
+            expect(registry["db"]).to_be("inner")
+        expect(registry["db"]).to_be("outer")
+    expect(registry["db"]).to_be("real")
+
+@test("giữ nguyên giá trị None")
+def _():
+    with override_scope(registry, {"cache": "fake"}):
+        expect(registry["cache"]).to_be("fake")
+    expect(registry["cache"]).to_be_none()
+'''
+hints = ["Lưu lại giá trị cũ của từng khóa; dùng sentinel riêng để phân biệt khóa vắng với giá trị None.", "Khôi phục trong finally để xử lý cả khi khối with thất bại."]
+explanation = "Test override là trạng thái tạm thời của app; context manager giúp đảm bảo registry được dọn kể cả khi request hoặc assertion ném lỗi."
+sources = ["fastapi/advanced/testing-dependencies/index"]
+
+[[modules]]
+id = "python-backend-dv-sqlite"
+title = "SQLite: truy vấn an toàn & giao dịch"
+description = "Bind tham số, quản lý connection và bảo đảm cập nhật dữ liệu nguyên tử."
+sources = ["python~3.14/library/sqlite3#how-to-guides", "python~3.14/library/sqlite3#sqlite3.Connection.execute", "python~3.14/library/sqlite3#sqlite3.Connection.commit", "python~3.14/library/sqlite3#sqlite3.Connection.rollback", "python~3.14/library/sqlite3#sqlite3.Connection.in_transaction"]
+lesson = '''
+### Dùng SQLite an toàn trong ứng dụng Python
+
+sqlite3 là thư viện chuẩn để lưu trữ dữ liệu quan hệ trong một file hoặc database tạm trong bộ nhớ. Một Connection giữ kết nối và ranh giới giao dịch; execute() chạy câu SQL, còn Cursor cho phép đọc kết quả. Với web app, thường tạo connection theo phạm vi request và đóng nó khi request kết thúc, thay vì chia sẻ một cursor toàn cục.
+
+| Nhu cầu | Cách làm | Tránh |
+|---|---|---|
+| Đưa giá trị vào SQL | Placeholder ? và tuple tham số | Nối chuỗi từ input |
+| Nhiều thay đổi cùng logic | Một transaction | Commit sau từng câu liên quan |
+| Hoàn tất thành công | commit hoặc context manager | Bỏ thay đổi chưa commit |
+| Có lỗi giữa chừng | rollback transaction | Để dữ liệu ở trạng thái nửa cập nhật |
+
+Ví dụ truy vấn có tham số:
+
+~~~python
+row = connection.execute(
+    "SELECT id, email FROM users WHERE email = ?",
+    (email,),
+).fetchone()
+~~~
+
+Placeholder chỉ dành cho **giá trị**, không thay tên bảng hay tên cột. Nếu cần chọn cột, hãy dùng danh sách cho phép cố định thay vì đưa chuỗi tùy ý vào SQL. Không dùng f-string để ghép input vào câu truy vấn vì có thể tạo SQL injection.
+
+Transaction giúp nhiều câu lệnh cùng thành công hoặc cùng bị hủy. Chuyển tiền là ví dụ: trừ tài khoản nguồn rồi cộng tài khoản đích; nếu tài khoản đích không tồn tại, thay đổi trừ tiền phải rollback. Với connection context manager, lỗi trong khối khiến giao dịch rollback và thoát bình thường thì commit khi transaction đang mở; context manager không tự đóng connection. Chọn rõ autocommit/transaction mode trong cấu hình connection để tránh phụ thuộc vào mặc định legacy.
+
+SQLite có kiểu lưu trữ linh hoạt hơn nhiều database server, nên ứng dụng nên kiểm tra dữ liệu đầu vào và dùng integer cho tiền theo đơn vị nhỏ nhất thay vì float. Bật foreign key enforcement cho từng connection nếu schema dựa vào khóa ngoại. Lỗi thường gặp là quên commit, gọi commit quá sớm làm một thao tác nhiều bước không còn nguyên tử, dùng một connection đồng thời không đúng cách, và nuốt sqlite3.Error khiến không biết giao dịch thất bại.
+'''
+
+[[questions]]
+id = "python-backend-dv017"
+module = "python-backend-dv-sqlite"
+type = "single"
+difficulty = 1
+prompt = "Cách an toàn để đưa địa chỉ email do người dùng nhập vào điều kiện SQL là gì?"
+options = ["Dùng placeholder ? rồi truyền email riêng trong tuple", "Ghép email trực tiếp bằng f-string", "Dùng repr(email) để tạo câu SQL", "Xóa dấu nháy đơn rồi ghép chuỗi"]
+answer = [0]
+explanation = "Bind tham số tách dữ liệu khỏi cú pháp SQL và giúp ngăn SQL injection."
+sources = ["python~3.14/library/sqlite3#how-to-guides"]
+
+[[questions]]
+id = "python-backend-dv018"
+module = "python-backend-dv-sqlite"
+type = "single"
+difficulty = 2
+prompt = "Một thao tác cập nhật gồm trừ tiền từ A rồi cộng cho B. Nếu bước cộng thất bại, yêu cầu nào quan trọng nhất?"
+options = ["Rollback để hoàn tác cả bước trừ", "Commit bước trừ trước rồi bỏ qua lỗi", "Đóng cursor để tự khôi phục dữ liệu", "Retry riêng bước cộng mà không kiểm tra trạng thái"]
+answer = [0]
+explanation = "Transaction bảo đảm thao tác nhiều bước nguyên tử, tránh trạng thái chỉ trừ mà chưa cộng."
+sources = ["python~3.14/library/sqlite3#sqlite3.Connection.rollback"]
+
+[[questions]]
+id = "python-backend-dv019"
+module = "python-backend-dv-sqlite"
+type = "single"
+difficulty = 2
+prompt = "Với connection context manager của sqlite3, điều nào đúng?"
+options = ["Có thể commit khi khối kết thúc bình thường và rollback khi có lỗi nếu transaction đang mở", "Luôn đóng connection khi thoát khỏi khối", "Tự mở một server SQLite riêng", "Tự chuyển mọi dữ liệu thành JSON"]
+answer = [0]
+explanation = "Context manager quản lý commit/rollback theo transaction nhưng không đóng connection."
+sources = ["python~3.14/library/sqlite3#how-to-guides"]
+
+[[questions]]
+id = "python-backend-dv020"
+module = "python-backend-dv-sqlite"
+type = "single"
+difficulty = 2
+prompt = "Cột balance lưu số tiền theo cent nên dùng kiểu nào trong ứng dụng để tránh sai số số thực?"
+options = ["INTEGER chứa số cent", "REAL cho mọi phép tính tiền", "Chuỗi đã định dạng có dấu phẩy", "BLOB chứa biểu diễn float"]
+answer = [0]
+explanation = "Lưu đơn vị nhỏ nhất dưới dạng số nguyên giúp tránh sai số làm tròn của floating point."
+sources = ["python~3.14/library/sqlite3#how-to-guides"]
+
+[[questions]]
+id = "python-backend-dv021"
+module = "python-backend-dv-sqlite"
+type = "multiple"
+difficulty = 2
+prompt = "Những thực hành nào giúp truy vấn SQLite an toàn và dễ bảo trì?"
+options = ["Bind input bằng placeholder", "Dùng transaction cho cập nhật nhiều bước có liên hệ", "Đưa tên cột từ người dùng trực tiếp vào placeholder giá trị", "Đóng connection theo đúng vòng đời ứng dụng"]
+answer = [0, 1, 3]
+explanation = "Placeholder bảo vệ giá trị; identifier cần chọn từ allowlist nếu phải cấu hình động. Connection cần có vòng đời rõ."
+sources = ["python~3.14/library/sqlite3#how-to-guides", "python~3.14/library/sqlite3#sqlite3.Connection.execute"]
+
+[[questions]]
+id = "python-backend-dv022"
+module = "python-backend-dv-sqlite"
+type = "multiple"
+difficulty = 3
+prompt = "Khi transaction chuyển tiền thất bại sau khi đã trừ nguồn, chọn các xử lý đúng."
+options = ["Rollback toàn bộ transaction", "Kiểm tra cả số dư nguồn và việc cập nhật đích", "Bắt lỗi rồi commit phần thay đổi còn dang dở", "Giữ hai cập nhật trong cùng một transaction"]
+answer = [0, 1, 3]
+explanation = "Cần bảo đảm cả hai thay đổi thuộc cùng transaction; commit trạng thái một nửa phá vỡ tính nguyên tử."
+sources = ["python~3.14/library/sqlite3#sqlite3.Connection.commit", "python~3.14/library/sqlite3#sqlite3.Connection.rollback"]
+
+[[questions]]
+id = "python-backend-dv023"
+module = "python-backend-dv-sqlite"
+type = "fill"
+difficulty = 1
+prompt = '''
+Hoàn tất truy vấn bind giá trị an toàn:
+
+~~~python
+row = connection.execute(
+    "SELECT id FROM users WHERE email = {{blank}}",
+    (email,),
+).fetchone()
+~~~
+'''
+blanks = [["?"]]
+explanation = "Qmark placeholder nhận giá trị từ tuple tham số thay vì ghép input vào SQL."
+sources = ["python~3.14/library/sqlite3#how-to-guides"]
+
+[[questions]]
+id = "python-backend-dv024"
+module = "python-backend-dv-sqlite"
+type = "essay"
+difficulty = 3
+prompt = "Mô tả cách triển khai một thao tác chuyển tiền an toàn bằng sqlite3, từ bind tham số đến xử lý lỗi giao dịch."
+keywords = [["parameter binding", "placeholder"], ["transaction"], ["rollback"], ["atomic", "all-or-nothing"], ["commit"]]
+min_keywords = 3
+model_answer = '''Dùng placeholder và bind tham số để không ghép dữ liệu người dùng vào SQL. Trừ nguồn và cộng đích trong cùng một transaction để thao tác atomic. Nếu một cập nhật thất bại, rollback để khôi phục số dư ban đầu; chỉ commit khi cả hai bước đều thành công.'''
+explanation = "Câu trả lời cần nối bind an toàn với rollback/commit và tính nguyên tử của thao tác."
+sources = ["python~3.14/library/sqlite3#how-to-guides", "python~3.14/library/sqlite3#sqlite3.Connection.commit", "python~3.14/library/sqlite3#sqlite3.Connection.rollback"]
+
+[[questions]]
+id = "python-backend-dvc03"
+module = "python-backend-dv-sqlite"
+type = "code"
+difficulty = 3
+lang = "python"
+title = "Chuyển tiền nguyên tử"
+prompt = '''Viết transfer(connection, source_id, target_id, amount) cho bảng accounts(id INTEGER PRIMARY KEY, balance INTEGER NOT NULL). amount là số cent nguyên dương và hai id phải khác nhau. Trả về True nếu chuyển thành công. Trả về False nếu amount không hợp lệ, nguồn không tồn tại hoặc không đủ tiền, hay đích không tồn tại. Nếu bất kỳ bước cập nhật nào thất bại, không được để lại thay đổi một phần. Dùng placeholder cho mọi giá trị SQL.'''
+starter = '''import sqlite3
+
+def transfer(connection, source_id, target_id, amount):
+    return False
+'''
+solution = '''import sqlite3
+
+class _TransferAbort(Exception):
+    pass
+
+def transfer(connection, source_id, target_id, amount):
+    if type(amount) is not int or amount <= 0 or source_id == target_id:
+        return False
+    try:
+        with connection:
+            debit = connection.execute(
+                "UPDATE accounts SET balance = balance - ? WHERE id = ? AND balance >= ?",
+                (amount, source_id, amount),
+            )
+            if debit.rowcount != 1:
+                raise _TransferAbort
+            credit = connection.execute(
+                "UPDATE accounts SET balance = balance + ? WHERE id = ?",
+                (amount, target_id),
+            )
+            if credit.rowcount != 1:
+                raise _TransferAbort
+    except _TransferAbort:
+        return False
+    return True
+'''
+tests = '''
+import sqlite3
+
+def _make_accounts():
+    connection = sqlite3.connect(":memory:")
+    connection.execute("CREATE TABLE accounts (id INTEGER PRIMARY KEY, balance INTEGER NOT NULL)")
+    connection.executemany("INSERT INTO accounts(id, balance) VALUES (?, ?)", [(1, 1000), (2, 300)])
+    connection.commit()
+    return connection
+
+def _balances(connection):
+    return dict(connection.execute("SELECT id, balance FROM accounts").fetchall())
+
+@test("chuyển thành công cập nhật cả hai tài khoản")
+def _():
+    connection = _make_accounts()
+    expect(transfer(connection, 1, 2, 250)).to_be_true()
+    expect(_balances(connection)).to_equal({1: 750, 2: 550})
+
+@test("không đủ tiền không đổi số dư")
+def _():
+    connection = _make_accounts()
+    expect(transfer(connection, 1, 2, 5000)).to_be_false()
+    expect(_balances(connection)).to_equal({1: 1000, 2: 300})
+
+@test("đích không tồn tại rollback bước trừ")
+def _():
+    connection = _make_accounts()
+    expect(transfer(connection, 1, 9, 100)).to_be_false()
+    expect(_balances(connection)).to_equal({1: 1000, 2: 300})
+
+@test("nguồn không tồn tại")
+def _():
+    connection = _make_accounts()
+    expect(transfer(connection, 8, 2, 100)).to_be_false()
+    expect(_balances(connection)).to_equal({1: 1000, 2: 300})
+
+@test("amount phải là số nguyên dương")
+def _():
+    connection = _make_accounts()
+    expect(transfer(connection, 1, 2, 0)).to_be_false()
+    expect(transfer(connection, 1, 2, -1)).to_be_false()
+    expect(transfer(connection, 1, 2, True)).to_be_false()
+    expect(_balances(connection)).to_equal({1: 1000, 2: 300})
+
+@test("không chuyển vào cùng tài khoản")
+def _():
+    connection = _make_accounts()
+    expect(transfer(connection, 1, 1, 100)).to_be_false()
+    expect(_balances(connection)).to_equal({1: 1000, 2: 300})
+'''
+hints = ["Dùng UPDATE có điều kiện balance >= amount và kiểm tra rowcount.", "Nếu cập nhật nguồn hoặc đích không đúng một dòng, ném exception bên trong with để SQLite rollback."]
+explanation = "Hai UPDATE trong cùng transaction bảo đảm thao tác atomic; parameter binding giữ input tách khỏi cú pháp SQL."
+sources = ["python~3.14/library/sqlite3#sqlite3.Connection.execute", "python~3.14/library/sqlite3#sqlite3.Connection.rollback"]

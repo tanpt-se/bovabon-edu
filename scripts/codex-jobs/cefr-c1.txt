@@ -1,0 +1,11 @@
+Soạn lộ trình mới: file `data/english-cefr-c1.toml`. id = "english-cefr-c1", title = "Tiếng Anh C1 · Cao cấp", icon = "C1", color = "#16a34a", group = "Tiếng Anh", area = "english" (KHÔNG có câu code, không khai báo docs/sources).
+Căn cứ: phần **C1** trong `docs/cefr-syllabus.md` (can-do, ngữ pháp, từ vựng, chức năng giao tiếp, đọc–viết, lỗi hay gặp của người Việt). Bậc này đã có module ngữ pháp `gr-c1` trong `data/english-grammar.toml` (đọc để KHÔNG lặp lại điểm ngữ pháp đã có).
+Module (đúng id & thứ tự này):
+   - `cefr-c1-grammar-plus`: phần ngữ pháp C1 mà gr-c1 chưa phủ: be bound to / may well / might as well, điều kiện biến thể (but for, provided that, supposing), đảo ngữ điều kiện, fronting, mệnh đề quan hệ có giới từ
+   - `cefr-c1-vocab`: từ vựng học thuật (AWL), sắc thái đồng nghĩa claim/assert/maintain, collocation học thuật & nghề nghiệp, ẩn dụ & thành ngữ phổ biến
+   - `cefr-c1-functions`: tranh luận có cấu trúc, nói giảm & ngoại giao, điều phối họp, phản hồi xây dựng, xử lý bất đồng
+   - `cefr-c1-reading-writing`: đọc hàm ý, giọng điệu tác giả; viết proposal, report, essay học thuật, tóm tắt & tổng hợp nhiều nguồn
+   - `cefr-c1-register`: trang trọng vs thân mật, danh hoá, hedging/boosting, từ nối học thuật, điều chỉnh văn phong theo người đọc
+Quy mô ~50 câu, rải đều các module; dạng single (~45%), multiple (~15%), fill (~25%), essay (2–4 câu: viết câu/đoạn ngắn theo tình huống, chấm theo từ khoá). difficulty trộn 1–3 trong phạm vi bậc. Id câu: `cefr-c1-001`, `cefr-c1-002`…
+Yêu cầu chất lượng: giải thích bằng tiếng Việt, câu/ví dụ bằng tiếng Anh tự nhiên, đúng chuẩn bậc C1 (không dùng từ/cấu trúc vượt bậc trong đề); lựa chọn nhiễu dựa trên lỗi hay gặp của người Việt; fill chỉ 1 đáp án rõ ràng (liệt kê đủ biến thể chấp nhận: viết tắt/đầy đủ như "don't" / "do not"); mỗi module có `lesson` Markdown ≥ 800 ký tự (bảng cấu trúc, ví dụ, lỗi hay gặp, mẹo nhớ). Nội dung tự soạn, không chép sách/tài liệu.
+Không sửa `data/categories.toml` (đã khai báo sẵn các module trên). Làm từng module, chạy `./target/release/bovabon_edu check data/english-cefr-c1.toml` sau mỗi module.

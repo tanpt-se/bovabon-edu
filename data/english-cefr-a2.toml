@@ -1,0 +1,596 @@
+id = "english-cefr-a2"
+title = "Tiếng Anh A2 · Sơ cấp"
+icon = "A2"
+color = "#16a34a"
+group = "Tiếng Anh"
+area = "english"
+description = "Luyện tiếng Anh A2 qua ngữ pháp bổ sung, từ vựng đời sống, giao tiếp quen thuộc và đọc–viết văn bản ngắn."
+
+[[modules]]
+id = "cefr-a2-grammar-plus"
+title = "Ngữ pháp A2 mở rộng"
+description = "Hiện tại hoàn thành cho trải nghiệm, verb patterns, too/enough, mệnh đề thời gian, câu hỏi chủ ngữ và đại từ bất định."
+lesson = '''
+### Trải nghiệm với hiện tại hoàn thành
+Dùng **have/has + past participle (V3)** để hỏi hoặc kể một trải nghiệm tính đến hiện tại, thường đi với *ever* (đã từng) và *never* (chưa từng). Không nói rõ một thời điểm đã kết thúc trong quá khứ ở câu này.
+
+| Mẫu | Ví dụ |
+|---|---|
+| Have/Has + chủ ngữ + ever + V3? | *Have you ever stayed in a hotel?* |
+| Chủ ngữ + have/has never + V3 | *He has never tried sushi.* |
+| Trải nghiệm có rồi | *We have visited Da Lat.* |
+
+Nếu có mốc đã kết thúc như *last year*, dùng quá khứ đơn: *I went to Hue last year.* Tránh ghép *have* với động từ quá khứ đơn: ~~She has went~~ → *She has gone*. *Been to* thường nói đã đến rồi trở về; *gone to* nói người đó đã đi và hiện chưa ở đây.
+
+### Động từ đi với to V hoặc V-ing
+Một số động từ thường gặp chọn dạng theo sau cố định. Hãy học cả cụm: *want/need/hope/decide/plan + to V*; *enjoy/finish + V-ing*. Ví dụ: *I hope to see you soon.* / *They finished packing at six.* Không thêm *to* trước V-ing: ~~enjoy to play~~; cũng không bỏ *to* sau *decide*: ~~decided visit~~.
+
+### Lượng từ, too và enough
+| Cấu trúc | Ví dụ |
+|---|---|
+| a lot of + danh từ số nhiều / không đếm được | *a lot of bags / a lot of rain* |
+| too many + danh từ đếm được số nhiều | *too many suitcases* |
+| too much + danh từ không đếm được | *too much luggage* |
+| too + tính từ | *too cold to swim* |
+| tính từ + enough / enough + danh từ | *old enough; enough time* |
+
+*Too* nghĩa là quá mức, thường gây vấn đề; *enough* là đủ. Vị trí khác nhau: *big enough*, nhưng *enough space*. Tránh ~~enough big~~ và ~~too much people~~.
+
+### Mệnh đề thời gian, câu hỏi chủ ngữ và đại từ bất định
+*When, before,* và *after* nối hai hành động: *Call me when you arrive.* Với ý tương lai, sau từ nối thời gian vẫn dùng hiện tại đơn, không dùng *will*: *I'll wait until the bus comes.* Trong câu hỏi chủ ngữ, *who/what* tự làm chủ ngữ nên không thêm *do*: *Who called you?* Nếu hỏi người nhận hành động, dùng *Who did you call?* Các từ *someone/anyone/no one/everyone*, *something/anything/nothing*, *somewhere/anywhere/nowhere* chỉ người, vật, nơi không xác định; động từ với *everyone/no one* chia số ít. Câu hỏi và phủ định thường dùng *any-*, còn câu khẳng định thường dùng *some-*.
+
+**Mẹo nhớ:** học động từ theo cặp *decide to go*, *enjoy going*; kiểm tra danh từ đếm được trước *many*; và tìm chủ ngữ thật trước khi thêm trợ động từ. Người Việt hay dịch từng chữ thành ~~Who did come?~~ hoặc dùng *will* sau *when*.
+'''
+
+[[questions]]
+id = "cefr-a2-001"
+module = "cefr-a2-grammar-plus"
+type = "single"
+difficulty = 2
+prompt = "Chọn câu hỏi tự nhiên để hỏi bạn mình đã từng ở khách sạn chưa."
+options = ["Have you ever stayed in a hotel?", "Did you ever stayed in a hotel?", "Have you ever stay in a hotel?", "Has you ever stayed in a hotel?"]
+answer = [0]
+explanation = "Hỏi trải nghiệm dùng *Have + you + ever + V3?*; sau *did* phải là V nguyên mẫu, còn *you* đi với *have*."
+
+[[questions]]
+id = "cefr-a2-002"
+module = "cefr-a2-grammar-plus"
+type = "single"
+difficulty = 2
+prompt = "Nam đã đi Đà Lạt và đã trở về. Chọn câu đúng."
+options = ["Nam has been to Da Lat.", "Nam has went to Da Lat.", "Nam have been to Da Lat.", "Nam has go to Da Lat."]
+answer = [0]
+explanation = "*Has been to* diễn tả Nam đã đến nơi đó và trở về; *has* đi với V3 *been*, không đi với *went* hay *go*."
+
+[[questions]]
+id = "cefr-a2-003"
+module = "cefr-a2-grammar-plus"
+type = "single"
+difficulty = 1
+prompt = "My sister decided ______ a taxi because it was raining."
+options = ["to take", "taking", "take", "to taking"]
+answer = [0]
+explanation = "*Decide* thường theo sau bởi *to + động từ nguyên mẫu*: *decided to take*."
+
+[[questions]]
+id = "cefr-a2-004"
+module = "cefr-a2-grammar-plus"
+type = "single"
+difficulty = 1
+prompt = "We enjoy ______ board games together after dinner."
+options = ["playing", "to play", "play", "played"]
+answer = [0]
+explanation = "*Enjoy* đi với V-ing: *enjoy playing*. Đây là cụm cần ghi nhớ cùng động từ chính."
+
+[[questions]]
+id = "cefr-a2-005"
+module = "cefr-a2-grammar-plus"
+type = "single"
+difficulty = 2
+prompt = "The soup is ______ hot for the child to eat now."
+options = ["too", "enough", "many", "much"]
+answer = [0]
+explanation = "*Too + tính từ* nghĩa là quá mức: món súp nóng quá để em bé ăn lúc này. *Enough* đứng sau tính từ."
+
+[[questions]]
+id = "cefr-a2-006"
+module = "cefr-a2-grammar-plus"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các câu dùng lượng từ đúng."
+options = ["We have enough time to catch the train.", "There are too many bags in the car.", "I put too much sugar in my tea.", "The room is enough large for six people.", "There are too much people at the shop."]
+answer = [0, 1, 2]
+explanation = "*Enough* đứng trước danh từ nhưng sau tính từ; dùng *many* với danh từ đếm được số nhiều và *much* với danh từ không đếm được."
+
+[[questions]]
+id = "cefr-a2-007"
+module = "cefr-a2-grammar-plus"
+type = "multiple"
+difficulty = 3
+prompt = "Chọn các câu hỏi mà từ để hỏi chính là chủ ngữ."
+options = ["Who called you this morning?", "What happened after the match?", "Who did you call this morning?", "What did your sister buy?", "Who does work at the front desk?"]
+answer = [0, 1]
+explanation = "Trong hai câu đầu, *who/what* là người làm hành động nên không cần *do/did*. Các câu còn lại hỏi tân ngữ; câu cuối thừa trợ động từ."
+
+[[questions]]
+id = "cefr-a2-008"
+module = "cefr-a2-grammar-plus"
+type = "fill"
+difficulty = 2
+prompt = '''
+Điền dạng V3 phù hợp để nói về trải nghiệm:
+
+1. Have you ever {{blank}} (eat) Indian food?
+2. I have never {{blank}} (fly) on a plane.
+3. My parents have {{blank}} (see) this film before.
+'''
+blanks = [["eaten"], ["flown"], ["seen"]]
+explanation = "Cấu trúc hiện tại hoàn thành cần V3: *eat–eaten, fly–flown, see–seen*."
+
+[[questions]]
+id = "cefr-a2-009"
+module = "cefr-a2-grammar-plus"
+type = "fill"
+difficulty = 2
+prompt = '''
+Hoàn thành câu với dạng đúng của động từ trong ngoặc:
+
+1. I need {{blank}} (buy) a ticket today.
+2. They finished {{blank}} (pack) at six.
+'''
+blanks = [["to buy"], ["packing"]]
+explanation = "*Need* đi với *to + V*; *finish* đi với V-ing. Học dạng theo sau cùng với động từ chính."
+
+[[questions]]
+id = "cefr-a2-010"
+module = "cefr-a2-grammar-plus"
+type = "fill"
+difficulty = 2
+prompt = "Điền từ nối có nghĩa là “ngay khi / vào lúc”: I'll call you {{blank}} I get off the bus."
+blanks = [["when"]]
+explanation = "*When* nối thời điểm cuộc gọi với lúc xuống xe. Trong mệnh đề thời gian nói về tương lai, dùng hiện tại đơn *get*, không dùng *will get*."
+
+[[questions]]
+id = "cefr-a2-011"
+module = "cefr-a2-grammar-plus"
+type = "essay"
+difficulty = 3
+prompt = "Viết 3 câu tiếng Anh kể về trải nghiệm du lịch hoặc món ăn: có ít nhất một việc bạn đã làm và một việc bạn chưa từng làm. Dùng hiện tại hoàn thành."
+keywords = [["have been to", "'ve been to", "have visited", "'ve visited", "has been to", "has visited"], ["have tried", "'ve tried", "have eaten", "'ve eaten", "has tried"], ["never"]]
+min_keywords = 3
+model_answer = '''I have been to Da Nang with my family. I have tried local noodles, but I have never eaten crab. I want to visit the city again.'''
+explanation = "Bài mẫu dùng hiện tại hoàn thành cho các trải nghiệm, kể cả một trải nghiệm chưa có với *never*."
+
+[[modules]]
+id = "cefr-a2-vocab-daily"
+title = "Từ vựng đời sống"
+description = "Cụm từ thiết yếu về du lịch, sức khoẻ, mua sắm, công việc, giải trí, cảm xúc và phrasal verbs thông dụng."
+lesson = '''
+### Cụm từ theo tình huống
+Học từ mới trong cụm và câu ngắn giúp nhớ cách dùng tự nhiên. Các từ dưới đây hữu ích khi đi lại, hỏi thăm sức khoẻ hoặc làm việc thường ngày.
+
+| Chủ đề | Cụm từ A2 | Ví dụ |
+|---|---|---|
+| Du lịch | book a room, catch a bus, check in, luggage | *We booked a room near the station.* |
+| Sức khoẻ | have a cold, have a headache, feel ill, see a doctor | *I have a sore throat, so I will see a doctor.* |
+| Mua sắm | try on, pay by card, size, receipt | *Can I try on this jacket?* |
+| Công việc | colleague, take a break, start work, finish work | *My colleague takes a short break at noon.* |
+| Giải trí | go out, play tennis, watch a film, listen to music | *We go out with friends on Fridays.* |
+
+### Cảm xúc: -ed và -ing
+Tính từ tận cùng **-ed** thường mô tả cảm giác của người; tính từ **-ing** thường mô tả điều tạo ra cảm giác đó: *I am bored because the film is boring.* / *She is excited about the exciting trip.* Có thể nhớ: người **cảm thấy** (-ed), sự việc **gây ra** cảm giác (-ing). Tránh nói ~~I am boring~~ khi muốn nói “tôi thấy chán”; câu đó có nghĩa là “tôi làm người khác chán”.
+
+### Phrasal verbs rất thông dụng
+| Cụm | Nghĩa thường gặp | Ví dụ |
+|---|---|---|
+| get up | thức dậy, rời giường | *I get up at seven.* |
+| turn on | bật thiết bị | *Please turn on the light.* |
+| look for | tìm kiếm | *He is looking for his phone.* |
+| put on | mặc / đội vào | *Put on your coat; it is cold.* |
+
+Với *look for*, *for* là một phần của cụm; nói *look for my keys*, không bỏ *for*. Một số cụm có thể tách: *put on your coat* hoặc *put your coat on*. Với đại từ, đặt đại từ ở giữa: *put it on*, không nói ~~put on it~~. Tránh dịch sát tiếng Việt: *have a headache* là cụm tự nhiên, không phải ~~get a headache pain~~. Khi mua sắm, *try on* là mặc thử quần áo; *try* một món ăn là nếm thử. Hãy dựa vào vật đi cùng để chọn đúng cụm.
+
+**Mẹo nhớ:** ghi theo cặp *bored/boring*, *excited/exciting*; luyện phrasal verb cùng một vật cụ thể; và dùng cụm từ thay vì dịch từng chữ. Các ví dụ đều dùng câu ngắn, thời hiện tại/quá khứ đơn và từ vựng quen thuộc ở A2.
+'''
+
+[[questions]]
+id = "cefr-a2-012"
+module = "cefr-a2-vocab-daily"
+type = "single"
+difficulty = 1
+prompt = "You arrive at a hotel. You booked a room yesterday. What can you say at the desk?"
+options = ["I have a reservation.", "I have a receipt for my headache.", "I want to try on a room.", "I am looking for my suitcase size."]
+answer = [0]
+explanation = "*Reservation* là việc đặt chỗ trước; đây là cụm phù hợp để báo với nhân viên khách sạn."
+
+[[questions]]
+id = "cefr-a2-013"
+module = "cefr-a2-vocab-daily"
+type = "single"
+difficulty = 1
+prompt = "You don't feel well and your head hurts. Which sentence is natural?"
+options = ["I have a headache.", "I make a headache.", "I am headache.", "I have headache pain in my head."]
+answer = [0]
+explanation = "Cụm tự nhiên là *have a headache*. Danh từ số ít *headache* cần *a*."
+
+[[questions]]
+id = "cefr-a2-014"
+module = "cefr-a2-vocab-daily"
+type = "single"
+difficulty = 1
+prompt = "You want to see if a jacket is the right size. What do you ask?"
+options = ["Can I try it on?", "Can I look it for?", "Can I turn it on?", "Can I catch it up?"]
+answer = [0]
+explanation = "*Try on* quần áo nghĩa là mặc thử. Với đại từ *it*, đặt đại từ giữa cụm: *try it on*."
+
+[[questions]]
+id = "cefr-a2-015"
+module = "cefr-a2-vocab-daily"
+type = "single"
+difficulty = 2
+prompt = "Mai works with An in the same office. An is Mai's ______."
+options = ["colleague", "luggage", "receipt", "appointment"]
+answer = [0]
+explanation = "*Colleague* là đồng nghiệp; các từ còn lại lần lượt là hành lý, hoá đơn và cuộc hẹn."
+
+[[questions]]
+id = "cefr-a2-016"
+module = "cefr-a2-vocab-daily"
+type = "single"
+difficulty = 2
+prompt = "The long film was ______, so I felt ______ and went to sleep."
+options = ["boring / bored", "bored / boring", "exciting / excited", "excited / exciting"]
+answer = [0]
+explanation = "Bộ phim gây cảm giác chán nên dùng *boring*; người xem cảm thấy chán nên dùng *bored*."
+
+[[questions]]
+id = "cefr-a2-017"
+module = "cefr-a2-vocab-daily"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các câu dùng phrasal verb đúng với nghĩa trong ngoặc."
+options = ["I get up at seven every morning. (thức dậy)", "Please turn on the light. (bật)", "We are looking for the bus stop. (tìm)", "She puts on it before she leaves. (mặc áo khoác)", "I look my phone for after work. (tìm)"]
+answer = [0, 1, 2]
+explanation = "*Get up, turn on,* và *look for* được dùng đúng. Với đại từ, nói *put it on*; *look for* không tách *for* khỏi cụm."
+
+[[questions]]
+id = "cefr-a2-018"
+module = "cefr-a2-vocab-daily"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các cụm từ tự nhiên."
+options = ["catch a bus", "book a room", "have a sore throat", "do a headache", "pay in card"]
+answer = [0, 1, 2]
+explanation = "Ta nói *catch a bus*, *book a room*, *have a sore throat*. Dùng *have a headache* và *pay by card*."
+
+[[questions]]
+id = "cefr-a2-019"
+module = "cefr-a2-vocab-daily"
+type = "fill"
+difficulty = 1
+prompt = "We stayed at a small {{blank}} near the beach. (nơi trả tiền để ngủ khi đi du lịch)"
+blanks = [["hotel"]]
+explanation = "*Hotel* là khách sạn; câu mô tả một nơi lưu trú trong chuyến đi."
+
+[[questions]]
+id = "cefr-a2-020"
+module = "cefr-a2-vocab-daily"
+type = "fill"
+difficulty = 1
+prompt = "It's dark in here. Could you {{blank}} the light, please? (bật)"
+blanks = [["turn on", "switch on"]]
+explanation = "*Turn on the light* nghĩa là bật đèn."
+
+[[questions]]
+id = "cefr-a2-021"
+module = "cefr-a2-vocab-daily"
+type = "fill"
+difficulty = 2
+prompt = "This game is very {{blank}}. I want to play it again. (làm người chơi hào hứng)"
+blanks = [["exciting"]]
+explanation = "Trò chơi tạo ra cảm xúc nên dùng tính từ *exciting*; người chơi có thể cảm thấy *excited*."
+
+[[questions]]
+id = "cefr-a2-022"
+module = "cefr-a2-vocab-daily"
+type = "essay"
+difficulty = 2
+prompt = "Viết 3–4 câu tiếng Anh về một ngày nghỉ gần đây: kể ít nhất một hoạt động mua sắm hoặc giải trí và nói bạn cảm thấy thế nào."
+keywords = [["went shopping", "went out"], ["looked for", "tried on"], ["happy", "excited", "tired"]]
+min_keywords = 3
+model_answer = '''I went shopping with my sister on Sunday. We looked for a blue jacket and tried it on. The shop was busy, but we were happy.'''
+explanation = "Bài mẫu kể một hoạt động, dùng cụm *looked for / tried on* và nêu cảm xúc bằng tính từ phù hợp."
+
+[[modules]]
+id = "cefr-a2-functions"
+title = "Giao tiếp trong tình huống quen thuộc"
+description = "Mời và đáp lời, gợi ý, nhờ giúp, đặt lịch, gọi điện, mô tả người/nơi và kể trải nghiệm ngắn."
+lesson = '''
+### Mời, nhận lời và từ chối lịch sự
+| Mục đích | Cách nói tự nhiên |
+|---|---|
+| Mời | *Would you like to have lunch with us?* |
+| Nhận lời | *I'd love to. What time?* |
+| Từ chối nhẹ nhàng | *I'd love to, but I'm busy on Saturday.* |
+| Gợi ý | *Why don't we meet at the café?* / *How about going by bus?* |
+
+Có thể thêm lý do ngắn khi từ chối để lời đáp thân thiện. Sau *How about* dùng danh từ hoặc V-ing: *How about a walk? / How about walking?* Với *Why don't we*, dùng động từ nguyên mẫu: *Why don't we meet at six?* Tránh ~~Why we don't meet?~~ khi muốn đưa ra gợi ý.
+
+### Yêu cầu, đề nghị giúp và hẹn lịch
+*Could you help me with these bags, please?* là lời nhờ lịch sự; *Shall I carry one for you?* là đề nghị giúp. Khi đặt lịch, nêu hoạt động, ngày và giờ: *Can we meet on Friday at ten?* / *Are you free this afternoon?* Hỏi lại giờ nếu chưa rõ: *What time shall we meet?* *On* thường đi với thứ/ngày, còn *at* đi với giờ.
+
+### Gọi điện thoại
+| Tình huống | Câu mẫu |
+|---|---|
+| Xin gặp ai | *Hello, could I speak to Anna, please?* |
+| Người đó không có đây | *I'm sorry, she's not here right now.* |
+| Để lại lời nhắn | *Can I leave a message?* |
+| Xin nói lại | *Sorry, could you say that again?* |
+
+Nói tên người cần gặp sớm, phát âm rõ và dùng *please* khi nhờ. Nếu tín hiệu kém, có thể nói *I can't hear you very well* rồi xin người kia nhắc lại.
+
+### Mô tả và kể trải nghiệm
+Để mô tả người, nêu ngoại hình hoặc tính cách: *My brother is tall and friendly. He has short dark hair.* Dùng *be* với tính từ (*is friendly*) và *have* với tóc/mắt (*has brown eyes*). Để mô tả nơi chốn, nêu quy mô, cảm giác hoặc vị trí: *The town is small and quiet. It is near the sea.* Khi kể trải nghiệm, chọn 2–3 câu ngắn, thêm thời gian hoặc cảm nhận: *We visited a small market. I bought a scarf, and the people were kind.* Không cần dùng từ hoa mỹ; câu rõ và đúng tình huống sẽ giúp người nghe theo kịp.
+
+**Lỗi hay gặp:** dịch thẳng “Bạn có thể giúp tôi?” thành câu thiếu lịch sự; dùng *How about we go* thay vì mẫu đang luyện *How about going*; quên *to* trong *speak to*; hoặc chỉ nói *He is hair short*. Mẹo là nhớ câu theo chức năng, rồi thay tên, hoạt động, ngày và giờ.
+'''
+
+[[questions]]
+id = "cefr-a2-023"
+module = "cefr-a2-functions"
+type = "single"
+difficulty = 1
+prompt = "You want to invite a friend to dinner. Which sentence is polite and natural?"
+options = ["Would you like to have dinner with us?", "Do you like have dinner with us?", "Would you like having dinner with us?", "You want dinner with us?"]
+answer = [0]
+explanation = "*Would you like to + V?* là cách mời lịch sự, phù hợp với một người bạn."
+
+[[questions]]
+id = "cefr-a2-024"
+module = "cefr-a2-functions"
+type = "single"
+difficulty = 1
+prompt = "Your friend invites you to a concert, but you have to work. Which reply is friendly?"
+options = ["I'd love to, but I have to work tonight.", "No. Your concert is bad.", "I don't want you.", "I am agree, but I work yesterday."]
+answer = [0]
+explanation = "*I'd love to, but…* nhận lời một cách thân thiện rồi nêu lý do không thể tham gia."
+
+[[questions]]
+id = "cefr-a2-025"
+module = "cefr-a2-functions"
+type = "single"
+difficulty = 1
+prompt = "You and your friend want to meet at the weekend. Choose a suggestion."
+options = ["Why don't we meet on Saturday?", "Why we don't meet on Saturday?", "How about meet on Saturday?", "Why don't we to meet on Saturday?"]
+answer = [0]
+explanation = "Mẫu gợi ý là *Why don't we + động từ nguyên mẫu?* Sau *How about* phải dùng danh từ hoặc V-ing."
+
+[[questions]]
+id = "cefr-a2-026"
+module = "cefr-a2-functions"
+type = "single"
+difficulty = 1
+prompt = "Your suitcase is heavy. You want your friend to help you. What do you say?"
+options = ["Could you help me with this suitcase, please?", "Could you to help me this suitcase?", "You help me with suitcase now.", "Could help you I with this?"]
+answer = [0]
+explanation = "*Could you help me with…?* là lời yêu cầu lịch sự; sau *could* dùng động từ nguyên mẫu."
+
+[[questions]]
+id = "cefr-a2-027"
+module = "cefr-a2-functions"
+type = "single"
+difficulty = 2
+prompt = "You call a clinic and want to speak to Dr Lee. What is a natural opening?"
+options = ["Hello, could I speak to Dr Lee, please?", "Hello, I speak Dr Lee now.", "Hello, could I say Dr Lee?", "Hello, give Dr Lee to me."]
+answer = [0]
+explanation = "Khi gọi điện, có thể lịch sự hỏi *Could I speak to [name], please?*"
+
+[[questions]]
+id = "cefr-a2-028"
+module = "cefr-a2-functions"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn một câu nhờ người khác và một câu đề nghị giúp đỡ."
+options = ["Could you open the window, please?", "Shall I carry your bag?", "Could you to open the window?", "Shall I to carry your bag?", "You must carrying your bag."]
+answer = [0, 1]
+explanation = "*Could you + V?* nhờ người khác làm; *Shall I + V?* đề nghị mình làm giúp. Sau hai mẫu này dùng động từ nguyên mẫu."
+
+[[questions]]
+id = "cefr-a2-029"
+module = "cefr-a2-functions"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các câu mô tả người hoặc nơi chốn tự nhiên."
+options = ["My cousin is tall and has short dark hair.", "The village is quiet and near the river.", "My brother is a friendly.", "The town have many small shops.", "She has very kind."]
+answer = [0, 1]
+explanation = "Dùng *be + tính từ* (*is tall, is quiet*) và *have + đặc điểm* (*has short hair*). Không dùng *a* trước tính từ đơn hoặc *have* với chủ ngữ số ít."
+
+[[questions]]
+id = "cefr-a2-030"
+module = "cefr-a2-functions"
+type = "fill"
+difficulty = 1
+prompt = "Would you like to join us {{blank}} dinner on Friday?"
+blanks = [["for"]]
+explanation = "Cụm tự nhiên là *join us for dinner*."
+
+[[questions]]
+id = "cefr-a2-031"
+module = "cefr-a2-functions"
+type = "fill"
+difficulty = 2
+prompt = "Điền từ phù hợp khi gọi điện: Could I {{blank}} to Mr Brown, please?"
+blanks = [["speak", "talk"]]
+explanation = "Cả *speak to* và *talk to* đều tự nhiên khi xin nói chuyện với ai qua điện thoại."
+
+[[questions]]
+id = "cefr-a2-032"
+module = "cefr-a2-functions"
+type = "fill"
+difficulty = 1
+prompt = "Our appointment is {{blank}} Friday at 10 a.m."
+blanks = [["on"]]
+explanation = "Dùng *on* với thứ/ngày; *at* đã được dùng trước giờ cụ thể."
+
+[[questions]]
+id = "cefr-a2-033"
+module = "cefr-a2-functions"
+type = "essay"
+difficulty = 2
+prompt = "Viết một đoạn hội thoại 3–4 lượt bằng tiếng Anh: mời bạn đi xem phim, nhận lời và thống nhất ngày cùng giờ gặp."
+keywords = [["would you like to", "do you want to", "shall we"], ["i'd love to", "i would love to", "yes, please", "sounds great", "that sounds good"], ["how about", "why don't we", "let's meet", "what about"], ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday", "tomorrow", "tonight", "this evening", "next week"], ["at 1", "at 2", "at 3", "at 4", "at 5", "at 6", "at 7", "at 8", "at 9", "o'clock", "p.m.", "pm", "a.m."]]
+min_keywords = 4
+model_answer = '''A: Would you like to see a film with me? B: I'd love to. How about Saturday? A: Great. Let's meet at 3 p.m. at the cinema.'''
+explanation = "Đoạn mẫu có lời mời, nhận lời, thống nhất ngày và nói giờ gặp."
+
+[[modules]]
+id = "cefr-a2-reading-writing"
+title = "Đọc và viết văn bản ngắn"
+description = "Đọc email, tin nhắn, thông báo và truyện ngắn; viết email cá nhân với từ nối cơ bản."
+lesson = '''
+### Đọc để tìm thông tin
+Email cá nhân thường cho biết người viết, lý do viết, thời gian hoặc việc cần người nhận trả lời. Tin nhắn và thông báo ngắn hay đặt thông tin quan trọng ở ngay đầu: giờ mở cửa, địa điểm, thay đổi kế hoạch hoặc việc cần làm. Đọc câu hỏi trước, rồi tìm tên, ngày, giờ và động từ liên quan trong văn bản. Ví dụ, *The shop closes at six. Please come before 5:30* nghĩa là cần đến trước 5:30, không phải đúng 6 giờ. Trong truyện ngắn, theo dõi ai làm gì và việc nào xảy ra trước; *then* thường báo bước tiếp theo.
+
+### Viết email cá nhân 50–80 từ
+| Phần | Nội dung gợi ý |
+|---|---|
+| Lời chào | *Hi Anna,* |
+| Mục đích | *I'm writing to invite you…* |
+| Chi tiết | ngày, giờ, nơi gặp hoặc lý do |
+| Kết thư | *Hope you can come. See you soon!* |
+| Tên | *Lan* |
+
+Với email mời, nói rõ hoạt động, thời gian và nơi gặp. Email cảm ơn nên nêu điều bạn biết ơn; email xin lỗi cần nói điều đã xảy ra và một câu giải thích ngắn. Dùng câu đơn giản, xuống dòng hợp lý, viết hoa tên và đặt dấu chấm/phẩy. Đếm từ gần đúng để ở trong khoảng yêu cầu; đừng thêm câu dài chỉ để đạt số lượng.
+
+### Nối ý rõ ràng
+| Từ nối | Ý nghĩa | Ví dụ |
+|---|---|---|
+| and | thêm ý | *We had lunch and watched a film.* |
+| but | tương phản | *I wanted to come, but I was ill.* |
+| so | kết quả | *It was late, so we took a taxi.* |
+| because | lý do | *I stayed home because I was tired.* |
+| then | bước tiếp theo | *We ate dinner. Then we went home.* |
+
+*Because* đứng trước lý do; *so* nối nguyên nhân với kết quả. Không đặt cả hai cho cùng một quan hệ theo mẫu ~~Because I was tired, so I slept~~; viết *Because I was tired, I slept* hoặc *I was tired, so I slept*. Người Việt cũng hay nối mọi câu bằng *and* hoặc quên dấu phẩy giữa hai mệnh đề. Hãy chọn từ nối theo quan hệ thật giữa hai ý, rồi đọc lại email để xem người nhận có hiểu kế hoạch và lời nhắn không.
+'''
+
+[[questions]]
+id = "cefr-a2-034"
+module = "cefr-a2-reading-writing"
+type = "single"
+difficulty = 1
+prompt = '''
+Đọc thông báo:
+
+"The library closes at 5 p.m. today. Please return your books before 4:45 p.m."
+
+When should you return your books?
+'''
+options = ["Before 4:45 p.m.", "At 5:00 p.m.", "After 5:00 p.m.", "Tomorrow morning."]
+answer = [0]
+explanation = "Thông báo yêu cầu trả sách trước 4:45; thư viện đóng cửa lúc 5 giờ."
+
+[[questions]]
+id = "cefr-a2-035"
+module = "cefr-a2-reading-writing"
+type = "single"
+difficulty = 1
+prompt = '''
+Đọc tin nhắn:
+
+"Hi Ben, meet me outside the cinema at 6. I have two tickets. See you, Alex"
+
+Where should Ben meet Alex?
+'''
+options = ["Outside the cinema.", "Inside the library.", "At Alex's office.", "At Ben's house."]
+answer = [0]
+explanation = "Tin nhắn nói rõ địa điểm gặp là bên ngoài rạp chiếu phim."
+
+[[questions]]
+id = "cefr-a2-036"
+module = "cefr-a2-reading-writing"
+type = "single"
+difficulty = 1
+prompt = "I was very tired, ______ I went to bed early."
+options = ["so", "because", "but", "then"]
+answer = [0]
+explanation = "Mệt là nguyên nhân dẫn đến kết quả đi ngủ sớm, nên dùng *so*."
+
+[[questions]]
+id = "cefr-a2-037"
+module = "cefr-a2-reading-writing"
+type = "single"
+difficulty = 2
+prompt = "Chọn câu nối ý chỉ lý do đúng."
+options = ["I stayed home because it was raining.", "I stayed home so it was raining.", "Because I was tired, so I went home.", "I because stayed home it was raining."]
+answer = [0]
+explanation = "Dùng *because + mệnh đề* để nêu lý do. Không dùng thêm *so* cho cùng quan hệ nguyên nhân–kết quả trong mẫu này."
+
+[[questions]]
+id = "cefr-a2-038"
+module = "cefr-a2-reading-writing"
+type = "single"
+difficulty = 1
+prompt = "Bạn viết email thân mật mời bạn cùng lớp đi dã ngoại. Cách mở đầu nào phù hợp nhất?"
+options = ["Hi Mai,", "Dear Picnic,", "Hello, I am a picnic.", "To whom it may concern, my friend,"]
+answer = [0]
+explanation = "*Hi + tên,* là lời chào thân mật, tự nhiên khi viết cho bạn."
+
+[[questions]]
+id = "cefr-a2-039"
+module = "cefr-a2-reading-writing"
+type = "multiple"
+difficulty = 2
+prompt = '''
+Đọc truyện ngắn:
+
+"On Saturday, Tom missed the bus, so he walked to the station. It started to rain, but a woman gave him an umbrella. Then he called his sister, and she met him at the station."
+
+Chọn các thông tin đúng.
+'''
+options = ["Tom walked to the station.", "A woman gave Tom an umbrella.", "Tom's sister met him at the station.", "Tom took the bus to the station.", "Tom called his brother."]
+answer = [0, 1, 2]
+explanation = "Tom lỡ xe buýt nên đi bộ; một người phụ nữ đưa ô; sau đó em gái gặp cậu ở ga."
+
+[[questions]]
+id = "cefr-a2-040"
+module = "cefr-a2-reading-writing"
+type = "fill"
+difficulty = 1
+prompt = "I wanted to go for a walk, {{blank}} it started to rain. (ý tương phản)"
+blanks = [["but"]]
+explanation = "*But* nối hai ý tương phản: muốn đi dạo nhưng trời bắt đầu mưa."
+
+[[questions]]
+id = "cefr-a2-041"
+module = "cefr-a2-reading-writing"
+type = "fill"
+difficulty = 1
+prompt = "We stayed inside {{blank}} it was raining. (nêu lý do)"
+blanks = [["because"]]
+explanation = "*Because* đứng trước mệnh đề nêu lý do ở lại trong nhà."
+
+[[questions]]
+id = "cefr-a2-042"
+module = "cefr-a2-reading-writing"
+type = "fill"
+difficulty = 1
+prompt = "First, we had dinner. {{blank}}, we watched a film. (sau đó)"
+blanks = [["then", "after that", "afterwards", "next"]]
+explanation = "*Then* báo việc tiếp theo trong một chuỗi hoạt động."
+
+[[questions]]
+id = "cefr-a2-043"
+module = "cefr-a2-reading-writing"
+type = "essay"
+difficulty = 3
+prompt = "Viết email 50–80 từ bằng tiếng Anh cảm ơn bạn đã mời bạn dự tiệc. Nói bạn đã vui thế nào, nêu một lý do và nhắc một chi tiết bạn muốn sắp xếp."
+keywords = [["thank you", "thanks again"], ["had a great time", "enjoyed the party"], ["because", "as"], ["but", "however"], ["hope to see", "see you soon"]]
+min_keywords = 4
+model_answer = '''Hi Mia,
+
+Thank you for inviting me to your birthday party. I had a great time because the food was delicious and the music was fun. I wanted to stay longer, but I had to catch the last bus. I left my blue scarf at your house. Could you bring it on Monday? Thanks again, and I hope to see you soon.
+
+Best,
+Lan'''
+explanation = "Email có lời cảm ơn, cảm nhận, lý do, ý tương phản và lời kết thân mật; câu ngắn giúp người nhận dễ hiểu."

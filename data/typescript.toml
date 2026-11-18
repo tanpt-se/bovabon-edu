@@ -969,3 +969,547 @@ test('từ chối null và array ở vị trí object', () => {
 hints = ["Viết validate đệ quy nhận schema, value, path và danh sách issues.", "Optional thiếu key thì bỏ qua; lỗi của phần tử array nối index vào path."]
 explanation = "TypeScript mô tả kiểu ở compile time; validator tương tự schema library xác thực dữ liệu thực tế lúc runtime."
 sources = ["typescript/docs/handbook/2/narrowing", "typescript/docs/handbook/2/everyday-types"]
+
+[[modules]]
+id = "typescript-dv-objects-functions"
+title = "Object Types, Interfaces & Functions"
+description = "Thiết kế shape cho object, API hàm và callback có kiểu rõ ràng."
+sources = ["typescript/docs/handbook/2/objects", "typescript/docs/handbook/2/functions", "typescript/docs/handbook/interfaces"]
+lesson = '''
+### Mô tả dữ liệu và hành vi bằng kiểu
+Object type mô tả những thuộc tính mà nơi sử dụng cần có; TypeScript so sánh theo cấu trúc nên object có thêm thuộc tính vẫn thường gán được cho kiểu đích. Interface và type alias đều mô tả object shape. Interface hỗ trợ declaration merging và có thể mở rộng bằng extends; type alias linh hoạt hơn khi đặt tên union, primitive hoặc tổ hợp kiểu. Kiểm tra thuộc tính dư chủ yếu áp dụng khi truyền object literal trực tiếp, không phải quy tắc exact object cho mọi phép gán.
+
+| Khái niệm | Tác dụng | Giới hạn cần nhớ |
+|---|---|---|
+| Thuộc tính optional name? | Cho phép thiếu thuộc tính | Khi đọc, giá trị có thể là undefined |
+| readonly | Chặn phép gán qua kiểu đó | Không đóng băng object lúc runtime |
+| Index signature | Mô tả tập key động | Quy định kiểu cho giá trị qua các key đó |
+| Function type | Khai báo tham số và kết quả | Không kiểm tra hành vi thực thi |
+
+Chữ ký hàm nên diễn tả chính xác đầu vào, đầu ra và callback. Tham số optional cũng có thể là undefined trong thân hàm; rest parameter biểu diễn nhiều đối số cùng kiểu. Overload hữu ích khi nhiều dạng gọi có quan hệ rõ với kiểu kết quả; union parameter hợp lý hơn khi các dạng đầu vào có cùng cách xử lý và cùng kiểu trả về. TypeScript có thể suy ra kiểu tham số callback theo ngữ cảnh.
+
+Ví dụ:
+~~~ts
+interface Contact {
+  name: string;
+  email?: string;
+  readonly id: number;
+}
+function greet(contact: Contact): string {
+  return contact.email ? contact.name + " <" + contact.email + ">" : contact.name;
+}
+~~~
+
+Lỗi hay gặp là đọc thuộc tính optional như thể luôn có giá trị, dùng readonly như bảo đảm bất biến runtime, hoặc thêm index signature rộng làm mất kiểm tra chính tả tên key. Với object literal cấu hình, kiểm tra thuộc tính dư thường giúp bắt lỗi sớm; nếu dữ liệu đến từ ngoài ứng dụng, kiểu khai báo vẫn cần bước validation lúc chạy.
+'''
+
+[[questions]]
+id = "typescript-dv001"
+module = "typescript-dv-objects-functions"
+type = "single"
+difficulty = 1
+prompt = '''
+~~~ts
+interface Profile { name: string; nickname?: string }
+function label(profile: Profile) {
+  return profile.nickname.toUpperCase();
+}
+~~~
+Vì sao TypeScript báo lỗi khi truy cập nickname như vậy?
+'''
+options = ["Thuộc tính optional có thể là undefined nên cần kiểm tra trước khi gọi method", "Interface không được chứa thuộc tính chuỗi", "nickname tự động biến thành any", "Hàm phải khai báo async"]
+answer = [0]
+explanation = "Dấu ? cho phép thiếu thuộc tính; khi đọc, giá trị có thể là undefined. Cần kiểm tra hoặc cung cấp giá trị mặc định trước khi gọi method."
+sources = ["typescript/docs/handbook/2/objects", "typescript/docs/handbook/interfaces"]
+
+[[questions]]
+id = "typescript-dv002"
+module = "typescript-dv-objects-functions"
+type = "single"
+difficulty = 2
+prompt = '''
+~~~ts
+interface User { id: number }
+const source = { id: 3, debug: true };
+const user: User = source;
+~~~
+Vì sao phép gán này thường hợp lệ dù source có thêm debug?
+'''
+options = ["TypeScript dùng tương thích cấu trúc và kiểm tra thuộc tính dư chặt hơn ở object literal trực tiếp", "Interface tự xóa mọi thuộc tính ngoài lúc runtime", "Mọi thuộc tính dư đều bị bỏ qua ở mọi ngữ cảnh", "debug được suy luận thành never"]
+answer = [0]
+explanation = "TypeScript chủ yếu kiểm tra cấu trúc cần thiết. Excess property check là kiểm tra bổ sung thường áp dụng khi object literal được gán hoặc truyền trực tiếp."
+sources = ["typescript/docs/handbook/2/objects"]
+
+[[questions]]
+id = "typescript-dv003"
+module = "typescript-dv-objects-functions"
+type = "single"
+difficulty = 2
+prompt = "Thuộc tính readonly trong một object type đảm bảo điều gì?"
+options = ["Không thể gán lại thuộc tính qua tham chiếu có kiểu đó trong lúc kiểm tra tĩnh", "Object luôn được Object.freeze tự động", "Không thể thay đổi thuộc tính qua bất kỳ alias nào", "Thuộc tính được serialize thành hằng số"]
+answer = [0]
+explanation = "readonly là ràng buộc tĩnh khi truy cập qua kiểu đã khai báo; nó không đóng băng object và không bảo vệ mọi alias lúc runtime."
+sources = ["typescript/docs/handbook/2/objects"]
+
+[[questions]]
+id = "typescript-dv004"
+module = "typescript-dv-objects-functions"
+type = "single"
+difficulty = 3
+prompt = '''
+Một hàm có hai dạng gọi: nhận một chuỗi thì trả về một số, nhận một số thì trả về chuỗi tương ứng. Kỹ thuật nào mô tả tốt nhất mối liên hệ chính xác giữa từng dạng gọi và kiểu kết quả?
+'''
+options = ["Một cặp overload signature cùng implementation tương thích", "Một tham số any và kiểu trả về any", "Một index signature trên Function", "Một interface rỗng"]
+answer = [0]
+explanation = "Overload signatures cho caller biết mỗi dạng input nào tương ứng với kiểu output nào; implementation phải tương thích với tất cả overload."
+sources = ["typescript/docs/handbook/2/functions"]
+
+[[questions]]
+id = "typescript-dv005"
+module = "typescript-dv-objects-functions"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các mô tả đúng về interface và type alias trong TypeScript."
+options = ["Cả hai có thể mô tả object shape", "Interface có thể mở rộng bằng extends", "Interface hỗ trợ declaration merging trong cùng phạm vi hợp lệ", "Type alias chỉ có thể đặt tên cho object", "Type alias và interface luôn có cùng quy tắc khai báo lặp"]
+answer = [0, 1, 2]
+explanation = "Cả hai mô tả được object; interface có thể mở rộng và declaration merging. Type alias còn đặt tên cho union hoặc kiểu khác, và khai báo alias trùng tên thường gây lỗi."
+sources = ["typescript/docs/handbook/2/objects", "typescript/docs/handbook/interfaces"]
+
+[[questions]]
+id = "typescript-dv006"
+module = "typescript-dv-objects-functions"
+type = "multiple"
+difficulty = 3
+prompt = "Chọn các phát biểu đúng về chữ ký hàm và callback."
+options = ["TypeScript có thể suy luận kiểu tham số callback từ ngữ cảnh", "Tham số optional có thể là undefined trong thân hàm", "Rest parameter nhận một mảng các giá trị cùng kiểu", "Union parameter luôn giữ được ánh xạ input-output như overload", "Chữ ký hàm tự xác thực dữ liệu ở runtime"]
+answer = [0, 1, 2]
+explanation = "Contextual typing thường suy ra callback; optional parameter có thể vắng mặt; rest parameter gom nhiều đối số. Union đơn thuần không luôn biểu diễn quan hệ overload và chữ ký chỉ kiểm tra tĩnh."
+sources = ["typescript/docs/handbook/2/functions"]
+
+[[questions]]
+id = "typescript-dv007"
+module = "typescript-dv-objects-functions"
+type = "fill"
+difficulty = 1
+prompt = '''
+Trong object type, viết dấu nào sau tên thuộc tính để cho phép thuộc tính đó vắng mặt?
+~~~ts
+type Options = { timeout{{blank}}: number };
+~~~
+'''
+blanks = [["?"]]
+explanation = "Dấu hỏi sau tên thuộc tính đánh dấu thuộc tính optional."
+sources = ["typescript/docs/handbook/2/objects"]
+
+[[questions]]
+id = "typescript-dv008"
+module = "typescript-dv-objects-functions"
+type = "essay"
+difficulty = 3
+prompt = "Trong phỏng vấn, hãy giải thích khi nào bạn chọn overload và khi nào chọn union parameter cho một API hàm."
+keywords = [["overload", "overloads"], ["union", "union parameter"], ["call site", "nơi gọi", "caller"], ["return type", "kiểu trả về"], ["implementation", "cách xử lý"]]
+min_keywords = 3
+model_answer = '''
+Chọn overload khi các dạng gọi khác nhau cần kiểu trả về khác nhau hoặc caller cần được kiểm tra chính xác theo từng dạng input. Chọn union parameter khi các input được xử lý theo cùng một quy tắc và có chung return type; cách này giữ API gọn hơn. Dù dùng overload, implementation vẫn phải xử lý mọi trường hợp đã công bố.
+'''
+explanation = "Quyết định nên dựa trên quan hệ giữa input và output mà caller cần thấy, không chỉ số lượng kiểu trong tham số."
+sources = ["typescript/docs/handbook/2/functions"]
+
+[[questions]]
+id = "typescript-dvc01"
+module = "typescript-dv-objects-functions"
+type = "code"
+lang = "javascript"
+difficulty = 2
+title = "Chọn thuộc tính own theo danh sách"
+prompt = '''
+Viết hàm pickOwnProperties(source, keys) trả về object mới chỉ gồm các key được yêu cầu mà source thật sự sở hữu trực tiếp.
+- Bỏ qua key không tồn tại hoặc chỉ được kế thừa từ prototype.
+- Giữ nguyên mọi giá trị hiện có, kể cả false, 0, null hoặc undefined.
+- Không sửa source và giữ đúng giá trị cho từng key được chọn.
+'''
+starter = '''
+function pickOwnProperties(source, keys) {
+  return {};
+}
+'''
+solution = '''
+function pickOwnProperties(source, keys) {
+  const result = {};
+  for (const key of keys) {
+    if (Object.prototype.hasOwnProperty.call(source, key)) {
+      result[key] = source[key];
+    }
+  }
+  return result;
+}
+'''
+tests = '''
+test('chỉ sao chép các key được yêu cầu', () => {
+  expect(pickOwnProperties({ id: 2, name: 'Ada', active: true }, ['name', 'active'])).toEqual({ name: 'Ada', active: true });
+});
+test('bỏ qua key không tồn tại', () => {
+  expect(pickOwnProperties({ id: 2 }, ['missing'])).toEqual({});
+});
+test('giữ các giá trị falsy và null', () => {
+  expect(pickOwnProperties({ enabled: false, count: 0, note: null }, ['enabled', 'count', 'note'])).toEqual({ enabled: false, count: 0, note: null });
+});
+test('không lấy thuộc tính kế thừa', () => {
+  const source = Object.create({ inherited: 4 });
+  source.own = 5;
+  expect(pickOwnProperties(source, ['inherited', 'own'])).toEqual({ own: 5 });
+});
+test('không sửa object nguồn và vẫn giữ undefined có mặt', () => {
+  const source = { value: undefined };
+  const result = pickOwnProperties(source, ['value']);
+  expect(Object.prototype.hasOwnProperty.call(result, 'value')).toBe(true);
+  expect(Object.prototype.hasOwnProperty.call(source, 'value')).toBe(true);
+});
+'''
+hints = ["Dùng hasOwnProperty.call để kiểm tra key trực tiếp trên object.", "Đừng dùng điều kiện truthy vì false, 0 và null vẫn là giá trị cần giữ."]
+explanation = "Bài tập kiểm tra thao tác object theo tập key và phân biệt thuộc tính tồn tại với giá trị truthy."
+sources = ["typescript/docs/handbook/2/objects"]
+
+[[modules]]
+id = "typescript-dv-classes"
+title = "Classes, kế thừa & đóng gói"
+description = "Thiết kế class TypeScript, hợp đồng interface, inheritance và phạm vi truy cập."
+sources = ["typescript/docs/handbook/2/classes", "typescript/docs/handbook/classes", "typescript/docs/handbook/2/objects"]
+lesson = '''
+### Class có cả kiểu instance và giá trị runtime
+Khai báo class tạo constructor dùng lúc runtime, đồng thời tạo kiểu mô tả instance. TypeScript kiểm tra thành viên, tham số và kiểu trả về của phương thức trước khi phát JavaScript. Một class có thể implements nhiều interface để kiểm tra hợp đồng cấu trúc; implements không tự thêm method, field hay kiểm tra object khi chương trình chạy. extends dùng kế thừa implementation và trạng thái từ class cha, nên constructor lớp con phải khởi tạo lớp cha theo quy tắc của JavaScript.
+
+| Thành viên / từ khóa | Ý nghĩa chính | Có bảo vệ lúc runtime? |
+|---|---|---|
+| public | Thành viên truy cập công khai; đây là mặc định | Không |
+| private của TypeScript | Hạn chế truy cập trong kiểm tra tĩnh | Không |
+| #field | Private field của JavaScript | Có |
+| protected | Dùng trong class và lớp con theo kiểm tra tĩnh | Không |
+| abstract | Đặt hợp đồng hoặc implementation cơ sở | Class abstract không thể khởi tạo trực tiếp |
+| override | Yêu cầu thành viên tương ứng tồn tại ở lớp cha | Chủ yếu là kiểm tra tĩnh |
+
+Class cũng có thể khai báo static member ở constructor thay vì instance, accessor để kiểm soát đọc/ghi, và parameter property để khai báo đồng thời tham số constructor với field. readonly chặn gán qua kiểu sau khi khởi tạo theo quy tắc TypeScript, nhưng không tạo bất biến runtime. Tùy chọn noImplicitOverride giúp phát hiện trường hợp lớp con vô tình lệch tên phương thức định ghi đè.
+
+Ví dụ:
+~~~ts
+interface Clock { now(): number }
+class SystemClock implements Clock {
+  now(): number { return Date.now(); }
+}
+~~~
+
+Lỗi thường gặp là nghĩ implements tạo code, coi private của TypeScript như private field của JavaScript, hoặc truy cập static member từ instance. Khi cần đóng gói thực sự trước JavaScript thuần, dùng #field; khi chỉ cần giới hạn API trong dự án TypeScript, private có thể đủ. Kế thừa sâu làm tăng liên kết, nên interface và composition thường dễ thay thế hơn nếu không cần chia sẻ implementation.
+'''
+
+[[questions]]
+id = "typescript-dv009"
+module = "typescript-dv-classes"
+type = "single"
+difficulty = 1
+prompt = '''
+~~~ts
+interface Serializable { serialize(): string }
+class Report implements Serializable {
+  serialize() { return "ok"; }
+}
+~~~
+Vai trò của implements trong ví dụ là gì?
+'''
+options = ["Kiểm tra tĩnh rằng Report đáp ứng hợp đồng Serializable", "Tự sinh serialize nếu class chưa có", "Tạo một Serializable object riêng lúc runtime", "Bắt buộc Report kế thừa implementation từ interface"]
+answer = [0]
+explanation = "implements yêu cầu class tương thích với interface khi kiểm tra kiểu; interface không cung cấp implementation runtime."
+sources = ["typescript/docs/handbook/2/classes"]
+
+[[questions]]
+id = "typescript-dv010"
+module = "typescript-dv-classes"
+type = "single"
+difficulty = 3
+prompt = "Khác biệt quan trọng giữa thuộc tính private của TypeScript và private field viết bằng # là gì?"
+options = ["private của TypeScript chủ yếu được kiểm tra tĩnh, còn # được JavaScript bảo vệ lúc runtime", "# chỉ dùng được trên interface", "private của TypeScript luôn tạo WeakMap khi phát JavaScript", "Hai cách có cùng mức bảo vệ runtime"]
+answer = [0]
+explanation = "private của TypeScript không tạo cơ chế private của JavaScript; #field là cú pháp runtime với quyền truy cập được engine giới hạn."
+sources = ["typescript/docs/handbook/2/classes"]
+
+[[questions]]
+id = "typescript-dv011"
+module = "typescript-dv-classes"
+type = "single"
+difficulty = 2
+prompt = "Phát biểu nào mô tả đúng abstract class?"
+options = ["Không thể tạo instance trực tiếp từ class abstract, nhưng lớp con có thể kế thừa implementation", "Luôn bị xóa hoàn toàn khỏi JavaScript và không thể có method", "Chỉ dùng để mô tả object literal", "Tự triển khai mọi method abstract trong runtime"]
+answer = [0]
+explanation = "Abstract class có thể chứa state và implementation dùng chung; nó không được khởi tạo trực tiếp và lớp cụ thể phải đáp ứng các thành viên abstract."
+sources = ["typescript/docs/handbook/2/classes"]
+
+[[questions]]
+id = "typescript-dv012"
+module = "typescript-dv-classes"
+type = "single"
+difficulty = 2
+prompt = "Khi nào dùng từ khóa override cho method của lớp con?"
+options = ["Khi method chủ ý ghi đè thành viên lớp cha để compiler kiểm tra tên và chữ ký", "Để chuyển method thành static", "Để tự gọi method lớp cha trước khi chạy thân hàm", "Để bỏ qua kiểm tra kiểu trả về"]
+answer = [0]
+explanation = "override làm rõ ý định và giúp phát hiện tên ghi đè không tồn tại ở lớp cha; nó không tự gọi super."
+sources = ["typescript/docs/handbook/2/classes"]
+
+[[questions]]
+id = "typescript-dv013"
+module = "typescript-dv-classes"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các mô tả đúng về thành viên class."
+options = ["Thành viên public là mặc định nếu không ghi modifier khác", "Thành viên static thuộc về constructor thay vì từng instance", "Parameter property có thể khai báo field từ tham số constructor", "implements tự thêm method còn thiếu vào class", "Class tạo ra kiểu instance và giá trị constructor lúc runtime"]
+answer = [0, 1, 2, 4]
+explanation = "Public là mặc định; static nằm trên class constructor; parameter property rút gọn khai báo field; class có cả mặt kiểu và giá trị. implements chỉ kiểm tra tương thích."
+sources = ["typescript/docs/handbook/2/classes"]
+
+[[questions]]
+id = "typescript-dv014"
+module = "typescript-dv-classes"
+type = "multiple"
+difficulty = 3
+prompt = "Chọn các phát biểu đúng về kiểm soát truy cập và kế thừa."
+options = ["private của TypeScript không cung cấp cùng bảo vệ runtime như #field", "protected cho phép lớp con truy cập theo kiểm tra tĩnh", "readonly tự gọi Object.freeze cho instance", "override giúp compiler kiểm tra thành viên ở lớp cha", "extends và implements đều cung cấp implementation từ loại cha"]
+answer = [0, 1, 3]
+explanation = "private và protected của TypeScript chủ yếu là giới hạn tĩnh; #field có bảo vệ runtime. readonly không đóng băng object, còn chỉ extends kế thừa implementation."
+sources = ["typescript/docs/handbook/2/classes"]
+
+[[questions]]
+id = "typescript-dv015"
+module = "typescript-dv-classes"
+type = "fill"
+difficulty = 2
+prompt = '''
+Từ khóa nào thể hiện rõ một thành viên lớp con chủ ý ghi đè thành viên của lớp cha?
+~~~ts
+class Child extends Parent {
+  {{blank}} save(): void {}
+}
+~~~
+'''
+blanks = [["override"]]
+explanation = "override vừa thể hiện ý định vừa cho phép compiler báo lỗi nếu lớp cha không có thành viên tương ứng."
+sources = ["typescript/docs/handbook/2/classes"]
+
+[[questions]]
+id = "typescript-dv016"
+module = "typescript-dv-classes"
+type = "essay"
+difficulty = 3
+prompt = "Trong phỏng vấn, hãy so sánh interface với abstract class khi thiết kế hợp đồng cho nhiều loại service."
+keywords = [["interface"], ["abstract class"], ["implementation", "triển khai"], ["state", "trạng thái"], ["multiple", "nhiều hợp đồng", "nhiều interface"]]
+min_keywords = 3
+model_answer = '''
+Interface mô tả hợp đồng cấu trúc mà nhiều class có thể implements; nó không mang implementation runtime hay state. Abstract class phù hợp khi các service cần chia sẻ state, constructor hoặc implementation chung, đồng thời vẫn để lớp con hoàn thiện phần abstract. Một class có thể implements nhiều interface, còn kế thừa implementation từ class chỉ nên dùng khi quan hệ đó có ý nghĩa rõ.
+'''
+explanation = "Hãy chọn theo nhu cầu chia sẻ hành vi và trạng thái, thay vì dùng inheritance chỉ để tái sử dụng vài dòng code."
+sources = ["typescript/docs/handbook/2/classes", "typescript/docs/handbook/classes"]
+
+[[questions]]
+id = "typescript-dvc02"
+module = "typescript-dv-classes"
+type = "code"
+lang = "javascript"
+difficulty = 2
+title = "Counter có trạng thái riêng"
+prompt = '''
+Viết class Counter bằng JavaScript với private field #value:
+- constructor(initial = 0) nhận số nguyên không âm, nếu sai thì ném RangeError có message Initial value must be a non-negative integer.
+- getter value trả trạng thái hiện tại.
+- increment(amount = 1) chỉ nhận số nguyên dương, nếu sai thì ném RangeError có message Increment must be a positive integer; nếu đúng thì cộng vào trạng thái.
+- reset() đưa trạng thái về 0.
+'''
+starter = '''
+class Counter {
+  constructor(initial = 0) {
+    this._value = initial;
+  }
+  get value() {
+    return this._value;
+  }
+  increment(amount = 1) {
+    this._value += amount;
+  }
+  reset() {
+    this._value = 0;
+  }
+}
+'''
+solution = '''
+class Counter {
+  #value;
+  constructor(initial = 0) {
+    if (!Number.isInteger(initial) || initial < 0) {
+      throw new RangeError('Initial value must be a non-negative integer');
+    }
+    this.#value = initial;
+  }
+  get value() {
+    return this.#value;
+  }
+  increment(amount = 1) {
+    if (!Number.isInteger(amount) || amount <= 0) {
+      throw new RangeError('Increment must be a positive integer');
+    }
+    this.#value += amount;
+  }
+  reset() {
+    this.#value = 0;
+  }
+}
+'''
+tests = '''
+test('mặc định bắt đầu từ 0', () => {
+  expect(new Counter().value).toBe(0);
+});
+test('nhận giá trị khởi tạo hợp lệ', () => {
+  expect(new Counter(4).value).toBe(4);
+});
+test('cộng số nguyên dương vào trạng thái', () => {
+  const counter = new Counter(2);
+  counter.increment(3);
+  expect(counter.value).toBe(5);
+});
+test('từ chối giá trị khởi tạo không hợp lệ', () => {
+  expect(() => new Counter(-1)).toThrow('Initial value must be a non-negative integer');
+  expect(() => new Counter(1.5)).toThrow('Initial value must be a non-negative integer');
+});
+test('từ chối increment không phải số nguyên dương', () => {
+  expect(() => new Counter().increment(0)).toThrow('Increment must be a positive integer');
+  expect(() => new Counter().increment(-2)).toThrow('Increment must be a positive integer');
+});
+test('reset đưa trạng thái về 0', () => {
+  const counter = new Counter(8);
+  counter.reset();
+  expect(counter.value).toBe(0);
+});
+'''
+hints = ["Lưu trạng thái trong #value và chỉ đọc qua getter.", "Kiểm tra Number.isInteger cùng cận dưới trước khi cập nhật."]
+explanation = "Private field của JavaScript giữ invariant ở runtime; class cũng gom trạng thái và hành vi liên quan."
+sources = ["typescript/docs/handbook/2/classes"]
+
+[[modules]]
+id = "typescript-dv-declarations"
+title = "Declaration Files & khai báo thư viện"
+description = "Đọc, viết và phát hành kiểu cho JavaScript hoặc package chưa có type."
+sources = ["typescript/docs/handbook/declaration-files/introduction", "typescript/docs/handbook/declaration-files/by-example", "typescript/docs/handbook/declaration-files/templates", "typescript/docs/handbook/declaration-files/do-s-and-don-ts", "typescript/docs/handbook/declaration-files/publishing", "typescript/docs/handbook/declaration-files/consumption"]
+lesson = '''
+### Mô tả API runtime mà không viết lại implementation
+Declaration file có đuôi .d.ts, cung cấp thông tin kiểu để compiler hiểu JavaScript sẵn có, package bên ngoài hoặc API được phát hành. Các khai báo như declare function, declare class và declare module không tạo implementation JavaScript. Vì thế một khai báo đúng cú pháp nhưng sai với API thật vẫn có thể làm người dùng viết code lỗi mà compiler không phát hiện.
+
+| Nhu cầu | Cách khai báo thường dùng | Phạm vi |
+|---|---|---|
+| Mô tả package có module | Export các hàm, class hoặc kiểu của module | Caller import từ module |
+| Mô tả package JS chưa có type | Ambient module với đúng module specifier | Import tên package đó |
+| Mô tả biến global | Khai báo trong script declaration phù hợp | Toàn cục của project |
+| Bổ sung API đã có | Module augmentation hoặc declare global | Mở rộng declaration hiện hữu |
+| Phát hành type cùng thư viện | Sinh hoặc đóng gói declaration khớp entry point | Người dùng package |
+
+File declaration không có import/export ở top level thường được xem như script và khai báo có thể nằm trong global scope. Khi file có import hoặc export, nó trở thành module; nếu cần bổ sung global từ module, dùng declare global. Module augmentation phải nhắm đúng module mà người dùng import, không tạo implementation mới và không thể thêm tùy ý mọi loại khai báo.
+
+Ví dụ mô tả một thư viện JavaScript không có type:
+~~~ts
+declare module "legacy-format" {
+  export function formatDate(value: Date): string;
+}
+~~~
+
+Khi phát hành package, declaration cần khớp chính xác tên export, tham số, overload và giá trị trả về trong JavaScript. Cấu hình package và module resolution cũng phải cho compiler tìm thấy declaration ở entry point thực tế. Với JavaScript của chính dự án, có thể dùng tsc declaration emit để sinh type thay vì duy trì bản viết tay.
+
+Lỗi thường gặp là khai báo any quá rộng để dập lỗi, trộn global declaration vào module sai phạm vi, hoặc copy một API tưởng tượng không tồn tại trong runtime. Nên kiểm tra mã nguồn hoặc tài liệu API thật, thử type declaration trong một consumer nhỏ, và cập nhật cùng lúc khi implementation đổi. Declaration không thay cho validation dữ liệu nhận từ mạng hay người dùng.
+'''
+
+[[questions]]
+id = "typescript-dv017"
+module = "typescript-dv-declarations"
+type = "single"
+difficulty = 1
+prompt = "Vai trò chính của file .d.ts trong một package JavaScript là gì?"
+options = ["Mô tả API và kiểu để compiler kiểm tra caller, không cung cấp implementation runtime", "Thay thế hoàn toàn file JavaScript lúc ứng dụng chạy", "Tự validate mọi input từ mạng", "Tạo một bản sao JavaScript cho mỗi kiểu"]
+answer = [0]
+explanation = "Declaration cung cấp hợp đồng kiểu tĩnh cho implementation có sẵn; nó không tự chạy hoặc kiểm tra dữ liệu lúc runtime."
+sources = ["typescript/docs/handbook/declaration-files/introduction"]
+
+[[questions]]
+id = "typescript-dv018"
+module = "typescript-dv-declarations"
+type = "single"
+difficulty = 2
+prompt = '''
+Một ứng dụng import package JavaScript legacy-format nhưng compiler không tìm thấy kiểu. Nếu package không thể sửa, cách khai báo nào mô tả module đó?
+'''
+options = ["Viết ambient module declaration cho đúng module specifier và export thật", "Thêm interface bất kỳ trong file .ts", "Đổi mọi import thành any", "Dùng declare global cho toàn bộ hàm của package"]
+answer = [0]
+explanation = "Ambient module gắn declaration với đúng module specifier để caller import được kiểu; nội dung phải phản ánh export runtime thật."
+sources = ["typescript/docs/handbook/declaration-files/templates", "typescript/docs/handbook/declaration-files/by-example"]
+
+[[questions]]
+id = "typescript-dv019"
+module = "typescript-dv-declarations"
+type = "single"
+difficulty = 2
+prompt = "Một file .d.ts có top-level export hoặc import thường được xử lý như thế nào?"
+options = ["Như một module với phạm vi module", "Như script global trong mọi trường hợp", "Như JavaScript có thể thực thi trực tiếp", "Bị bỏ qua khi compiler tìm kiểu"]
+answer = [0]
+explanation = "Top-level import hoặc export làm file trở thành module; muốn bổ sung global từ đó thì cần cơ chế declare global phù hợp."
+sources = ["typescript/docs/handbook/declaration-files/introduction", "typescript/docs/handbook/declaration-files/templates"]
+
+[[questions]]
+id = "typescript-dv020"
+module = "typescript-dv-declarations"
+type = "single"
+difficulty = 3
+prompt = "Khi phát hành declaration cùng thư viện, điều quan trọng nhất để giữ lời hứa kiểu an toàn là gì?"
+options = ["Declaration phải khớp export và hành vi API runtime thật", "Đặt mọi kết quả thành any để tương thích", "Khai báo thêm method tiện ích dù runtime chưa có", "Chỉ kiểm tra file .d.ts có cú pháp hợp lệ"]
+answer = [0]
+explanation = "Compiler tin declaration, nên sai lệch giữa kiểu công bố và implementation sẽ tạo lỗi mà kiểm tra tĩnh không bắt được."
+sources = ["typescript/docs/handbook/declaration-files/publishing", "typescript/docs/handbook/declaration-files/consumption"]
+
+[[questions]]
+id = "typescript-dv021"
+module = "typescript-dv-declarations"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các thực hành tốt khi viết declaration cho thư viện JavaScript."
+options = ["Đối chiếu chữ ký khai báo với implementation runtime", "Mô tả export mà consumer thật sự có thể import", "Dùng any rộng ở mọi vị trí để tránh phải đọc API", "Thử declaration từ project consumer hoặc mẫu nhỏ", "Giữ declaration đồng bộ khi API implementation thay đổi"]
+answer = [0, 1, 3, 4]
+explanation = "Declaration là hợp đồng được compiler tin cậy; phải khớp API thật và được kiểm tra từ góc nhìn consumer."
+sources = ["typescript/docs/handbook/declaration-files/do-s-and-don-ts", "typescript/docs/handbook/declaration-files/consumption"]
+
+[[questions]]
+id = "typescript-dv022"
+module = "typescript-dv-declarations"
+type = "multiple"
+difficulty = 3
+prompt = "Chọn các mô tả đúng về phạm vi declaration."
+options = ["Ambient module nên nhắm đúng module specifier mà caller import", "declare global có thể dùng trong module để bổ sung global theo cấu trúc hợp lệ", "Module augmentation tự thêm implementation vào JavaScript", "Declaration file có thể mô tả API mà không chứa code triển khai", "File có top-level export vẫn luôn là global script"]
+answer = [0, 1, 3]
+explanation = "Ambient module và declare global mô tả phạm vi type; declaration không tạo code runtime. Top-level export khiến file là module."
+sources = ["typescript/docs/handbook/declaration-files/templates", "typescript/docs/handbook/declaration-files/introduction"]
+
+[[questions]]
+id = "typescript-dv023"
+module = "typescript-dv-declarations"
+type = "fill"
+difficulty = 1
+prompt = '''
+Phần mở rộng phổ biến của TypeScript cho file chỉ chứa khai báo kiểu là {{blank}}.
+'''
+blanks = [[".d.ts", "d.ts"]]
+explanation = "Declaration file thường dùng phần mở rộng .d.ts."
+sources = ["typescript/docs/handbook/declaration-files/introduction"]
+
+[[questions]]
+id = "typescript-dv024"
+module = "typescript-dv-declarations"
+type = "essay"
+difficulty = 3
+prompt = "Một package JavaScript không có type khiến ứng dụng TypeScript không import được API. Trình bày cách bạn tìm nguyên nhân và tạo declaration đáng tin cậy."
+keywords = [["declaration file", ".d.ts", "file khai báo"], ["runtime api", "api runtime", "implementation"], ["ambient module", "declare module"], ["module specifier", "tên module"], ["consumer", "project sử dụng"]]
+min_keywords = 3
+model_answer = '''
+Trước hết kiểm tra module specifier, export và runtime API thật của package. Nếu package chưa cung cấp kiểu, tạo declaration file hoặc ambient module đúng tên module và mô tả các export thực tế thay vì dùng any rộng. Sau đó thử từ một consumer TypeScript nhỏ để xác nhận module resolution tìm được declaration và chữ ký khớp implementation; cập nhật declaration khi API runtime thay đổi.
+'''
+explanation = "Cần phân biệt lỗi tìm module với lỗi thiếu declaration, rồi bảo đảm hợp đồng type phản ánh đúng package thực tế."
+sources = ["typescript/docs/handbook/declaration-files/introduction", "typescript/docs/handbook/declaration-files/consumption"]
