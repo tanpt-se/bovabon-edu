@@ -1,0 +1,825 @@
+id = "nodejs"
+title = "Node.js & Express"
+icon = "🟩"
+color = "#16a34a"
+group = "Backend"
+docs = ["node", "express"]
+description = "Event loop của Node, module ESM/CJS, stream & buffer, Express middleware/routing/error handling, hiệu năng và vận hành."
+
+[[modules]]
+id = "node-core"
+title = "Runtime & Event loop"
+description = "libuv, các phase của event loop, nextTick vs microtask vs setImmediate, worker_threads, cluster."
+sources = ["node/process#processnexttickcallback-args", "node/globals#setimmediatecallback-args", "node/cluster", "node/worker_threads#worker_threadsgetenvironmentdatakey"]
+lesson = '''
+### Ý chính
+- Node chạy JS trên **một thread** (V8) + **libuv** (thread pool 4 luồng mặc định cho fs, dns.lookup, crypto, zlib).
+- Event loop phases: **timers** → pending callbacks → poll (I/O) → **check** (`setImmediate`) → close callbacks.
+- Sau **mỗi callback**: chạy hết queue `process.nextTick` rồi tới **Promise microtask**.
+- Trong callback I/O: `setImmediate` luôn chạy trước `setTimeout(fn, 0)`.
+- Việc nặng CPU chặn event loop → dùng **worker_threads**; tận dụng nhiều core cho server → **cluster** hoặc nhiều process (PM2, container).
+- **ESM** (`import`, `"type": "module"`, top-level await) vs **CommonJS** (`require`, `module.exports`).
+- Bản mới có sẵn: `fetch`, `node:test`, `--watch`, `--env-file`, `AbortSignal.timeout()`.
+'''
+
+[[modules]]
+id = "node-io"
+title = "Stream, Buffer & I/O"
+description = "Readable/Writable/Transform, backpressure, pipeline, Buffer, fs/promises, EventEmitter."
+sources = ["node/stream", "node/stream#streampipelinestreams-options", "node/buffer", "node/events"]
+lesson = '''
+### Ý chính
+- **Stream** xử lý dữ liệu theo từng chunk → bộ nhớ ổn định với file lớn.
+- 4 loại: Readable, Writable, Duplex, Transform.
+- **Backpressure**: `write()` trả `false` khi buffer đầy → đợi sự kiện `drain`. `stream.pipeline()` tự xử lý backpressure + lỗi + dọn dẹp (tốt hơn `.pipe()`).
+- **Buffer**: dữ liệu nhị phân ngoài heap V8 (`Buffer.from('hi')`, `buf.toString('base64')`).
+- `EventEmitter`: sự kiện `'error'` không có listener sẽ **ném lỗi làm crash process**.
+- Dùng `fs/promises` + `async/await`; tránh `fs.readFileSync` trong request handler.
+'''
+
+[[modules]]
+id = "node-express"
+title = "Express & kiến trúc API"
+description = "Middleware, router, error-handling middleware, async error, validation, cấu trúc project."
+sources = ["express/guide/using-middleware", "express/guide/error-handling", "express/guide/routing", "express/index#express.router"]
+lesson = '''
+### Ý chính
+- **Middleware** `(req, res, next)` chạy theo thứ tự đăng ký; phải gọi `next()` hoặc kết thúc response.
+- **Error-handling middleware** có **4 tham số** `(err, req, res, next)`, đăng ký **sau cùng**.
+- Express 5: lỗi/promise reject trong handler `async` được tự chuyển tới error middleware. Express 4 phải bọc `asyncHandler` hoặc gọi `next(err)`.
+- `express.json()` parse body JSON; `express.Router()` chia module.
+- Phân tầng: route → controller → service → repository; validate input (zod/joi) ở biên.
+- Bảo mật: `helmet`, rate limit, giới hạn kích thước body, không trả stack trace ở production.
+'''
+
+[[modules]]
+id = "node-ops"
+title = "Hiệu năng & Vận hành"
+description = "Cache, rate limit, retry/backoff, graceful shutdown, logging, biến môi trường."
+sources = ["node/errors", "node/process#processnexttickcallback-args"]
+lesson = '''
+### Ý chính
+- **Cache**: in-memory (LRU) cho dữ liệu nóng; Redis khi nhiều instance.
+- **Rate limiting**: token bucket / sliding window, lưu Redis khi scale ngang.
+- **Retry** với **exponential backoff + jitter** chỉ cho lỗi tạm thời và thao tác idempotent.
+- **Graceful shutdown**: bắt `SIGTERM` → `server.close()` → đóng DB pool → `process.exit`.
+- Lỗi chưa bắt: `process.on('unhandledRejection'|'uncaughtException')` → log rồi **thoát** (để process manager khởi động lại), không cố chạy tiếp.
+- Log có cấu trúc (pino), cấu hình qua biến môi trường (12-factor).
+'''
+
+# ------------------------------------------------------------ CORE
+[[questions]]
+id = "node-001"
+module = "node-core"
+type = "single"
+difficulty = 3
+prompt = '''
+Thứ tự in ra trong Node.js (file chạy trực tiếp, CommonJS)?
+
+```js
+setTimeout(() => console.log('timeout'), 0);
+setImmediate(() => console.log('immediate'));
+Promise.resolve().then(() => console.log('promise'));
+process.nextTick(() => console.log('nextTick'));
+console.log('sync');
+```
+'''
+options = [
+  "sync, nextTick, promise, rồi timeout/immediate (thứ tự 2 cái cuối không đảm bảo ở main module)",
+  "sync, promise, nextTick, timeout, immediate",
+  "nextTick, sync, promise, immediate, timeout",
+  "sync, timeout, immediate, nextTick, promise",
+]
+answer = [0]
+explanation = "nextTick queue chạy trước Promise microtask. Ở main module, `setTimeout 0` và `setImmediate` phụ thuộc thời điểm vào loop; trong callback I/O thì `setImmediate` luôn trước."
+sources = ["node/process#processnexttickcallback-args", "node/globals#setimmediatecallback-args"]
+
+[[questions]]
+id = "node-002"
+module = "node-core"
+type = "single"
+difficulty = 2
+prompt = "Một API Node tính hash bcrypt đồng bộ (`bcrypt.hashSync`) trong mỗi request. Vấn đề là gì?"
+options = [
+  "Không có vấn đề vì Node đa luồng",
+  "Chặn event loop — mọi request khác phải đợi; nên dùng bản async (chạy trên thread pool) hoặc worker_threads",
+  "Gây memory leak",
+  "Chỉ chậm trên Windows",
+]
+answer = [1]
+explanation = "Nguyên tắc vàng: \"Don't block the event loop\"."
+
+[[questions]]
+id = "node-003"
+module = "node-core"
+type = "single"
+difficulty = 2
+prompt = "Khác biệt giữa `worker_threads` và `cluster`?"
+options = [
+  "Giống nhau",
+  "`worker_threads`: nhiều thread trong 1 process, chia sẻ bộ nhớ được (SharedArrayBuffer) — cho tác vụ CPU; `cluster`: nhiều process chia sẻ cổng server — để scale HTTP trên nhiều core",
+  "`cluster` chỉ chạy trên Linux",
+  "`worker_threads` dùng để đọc file",
+]
+answer = [1]
+explanation = "Trong container/Kubernetes thường chạy 1 process/container và scale bằng số replica."
+sources = ["node/cluster", "node/worker_threads#worker_threadsgetenvironmentdatakey"]
+
+[[questions]]
+id = "node-004"
+module = "node-core"
+type = "multiple"
+difficulty = 2
+prompt = "Phát biểu nào đúng về ES Modules trong Node.js?"
+options = [
+  "Bật bằng đuôi `.mjs` hoặc `\"type\": \"module\"` trong package.json",
+  "Hỗ trợ top-level `await`",
+  "Có sẵn `__dirname` như CommonJS",
+  "Import đường dẫn tương đối phải ghi rõ đuôi file (`./db.js`)",
+  "`require()` luôn dùng được trong file ESM",
+]
+answer = [0, 1, 3]
+explanation = "Trong ESM dùng `import.meta.dirname` / `import.meta.url`. Gọi `require` trong ESM cần `createRequire`."
+sources = ["node/esm", "node/modules"]
+
+[[questions]]
+id = "node-005"
+module = "node-core"
+type = "fill"
+difficulty = 2
+prompt = '''
+Huỷ `fetch` nếu quá 3 giây (Node 18+):
+
+```js
+const res = await fetch(url, { signal: AbortSignal.{{blank}}(3000) });
+```
+'''
+blanks = [["timeout"]]
+explanation = "Lỗi ném ra có `name === 'TimeoutError'`."
+sources = ["node/globals#static-method-abortsignaltimeoutdelay", "node/globals#fetch"]
+
+[[questions]]
+id = "node-006"
+module = "node-core"
+type = "essay"
+difficulty = 3
+prompt = "Giải thích vì sao Node.js xử lý được nhiều kết nối đồng thời dù JavaScript chạy đơn luồng."
+keywords = [
+  ["event loop"],
+  ["non-blocking", "bất đồng bộ", "async", "không chặn"],
+  ["libuv", "thread pool", "epoll", "kqueue", "os"],
+  ["callback", "promise"],
+  ["i/o"],
+]
+min_keywords = 3
+model_answer = '''
+Node dùng mô hình **I/O không chặn (non-blocking)** điều phối bởi **event loop**. Khi gặp I/O (mạng, file), Node giao cho hệ điều hành (epoll/kqueue/IOCP) hoặc **thread pool của libuv**, rồi tiếp tục xử lý request khác. Khi I/O xong, **callback/promise** được đưa vào hàng đợi và event loop thực thi.
+
+Vì phần lớn thời gian của web server là chờ I/O, một thread JS phục vụ được hàng nghìn kết nối. Điểm yếu: tác vụ **CPU nặng** chặn event loop → cần worker_threads hoặc tách service.
+'''
+explanation = "Đây là câu hỏi phỏng vấn Node.js kinh điển."
+
+[[questions]]
+id = "node-007"
+module = "node-core"
+type = "code"
+difficulty = 2
+title = "promisify callback-style API"
+prompt = '''
+Viết `promisify(fn)` giống `util.promisify`: chuyển hàm dạng callback **error-first** `fn(...args, (err, value) => {})` thành hàm trả về Promise.
+- Giữ `this`
+- `err` truthy → reject; ngược lại resolve `value`
+- Nếu `fn` ném lỗi đồng bộ → reject
+'''
+starter = '''
+function promisify(fn) {
+  // TODO
+}
+'''
+solution = '''
+function promisify(fn) {
+  return function (...args) {
+    return new Promise((resolve, reject) => {
+      try {
+        fn.call(this, ...args, (err, value) => (err ? reject(err) : resolve(value)));
+      } catch (e) {
+        reject(e);
+      }
+    });
+  };
+}
+'''
+tests = '''
+function readUser(id, cb) {
+  if (id < 0) return cb(new Error('invalid id'));
+  cb(null, { id, name: 'An' });
+}
+test('resolve', async () => {
+  expect(await promisify(readUser)(1)).toEqual({ id: 1, name: 'An' });
+});
+test('reject error-first', async () => {
+  let err;
+  try { await promisify(readUser)(-1); } catch (e) { err = e; }
+  expect(err.message).toBe('invalid id');
+});
+test('giữ this', async () => {
+  const db = { prefix: 'u:', get(k, cb) { cb(null, this.prefix + k); } };
+  db.getAsync = promisify(db.get);
+  expect(await db.getAsync('7')).toBe('u:7');
+});
+test('lỗi đồng bộ → reject', async () => {
+  const bad = promisify(() => { throw new Error('sync boom'); });
+  let err;
+  try { await bad(); } catch (e) { err = e; }
+  expect(err.message).toBe('sync boom');
+});
+'''
+hints = ["Trả về `function (...args)` (không phải arrow) để giữ `this`.", "Thêm callback vào cuối danh sách tham số."]
+explanation = "Node hiện đại có sẵn bản promise cho hầu hết API (`fs/promises`, `timers/promises`)."
+sources = ["node/util#utilpromisifyoriginal"]
+
+# ------------------------------------------------------------ IO
+[[questions]]
+id = "node-020"
+module = "node-io"
+type = "single"
+difficulty = 2
+prompt = "Vì sao nên stream file 2GB thay vì `fs.readFile` rồi `res.end(data)`?"
+options = [
+  "readFile không đọc được file lớn hơn 1MB",
+  "readFile nạp toàn bộ vào RAM; stream xử lý từng chunk → bộ nhớ thấp, client nhận dữ liệu sớm",
+  "Stream luôn nén dữ liệu",
+  "Không có khác biệt",
+]
+answer = [1]
+explanation = "`pipeline(fs.createReadStream(path), res)` — tự xử lý backpressure và lỗi."
+sources = ["node/stream"]
+
+[[questions]]
+id = "node-021"
+module = "node-io"
+type = "single"
+difficulty = 3
+prompt = "\"Backpressure\" trong stream là gì?"
+options = [
+  "Lỗi khi stream bị đóng",
+  "Cơ chế báo cho nguồn dữ liệu **dừng ghi** khi bên nhận xử lý chậm hơn (write() trả false → đợi 'drain')",
+  "Nén dữ liệu",
+  "Ghi ngược dữ liệu",
+]
+answer = [1]
+explanation = "Bỏ qua backpressure khiến buffer phình to tới khi hết RAM."
+sources = ["node/stream", "node/stream#streampipelinestreams-options"]
+
+[[questions]]
+id = "node-022"
+module = "node-io"
+type = "single"
+difficulty = 2
+prompt = "EventEmitter phát sự kiện `'error'` mà không có listener nào. Điều gì xảy ra?"
+options = ["Bị bỏ qua", "Lỗi được ném ra — nếu không bắt sẽ làm crash process", "In warning", "Tự động retry"]
+answer = [1]
+explanation = "Luôn gắn `.on('error', ...)` cho stream/emitter, hoặc dùng `pipeline` / `events.once`."
+sources = ["node/events"]
+
+[[questions]]
+id = "node-023"
+module = "node-io"
+type = "fill"
+difficulty = 2
+prompt = '''
+Nối stream an toàn (tự huỷ các stream và trả lỗi khi một bước thất bại):
+
+```js
+import { {{blank}} } from 'node:stream/promises';
+await {{blank}}(fs.createReadStream('in.log'), zlib.createGzip(), fs.createWriteStream('in.log.gz'));
+```
+'''
+blanks = [["pipeline"], ["pipeline"]]
+explanation = "`stream/promises` cung cấp `pipeline` dạng promise."
+sources = ["node/stream#streampipelinestreams-options"]
+
+[[questions]]
+id = "node-024"
+module = "node-io"
+type = "code"
+difficulty = 2
+title = "Xử lý dữ liệu theo chunk (line splitter)"
+prompt = '''
+Mô phỏng Transform stream tách dòng. Viết `createLineSplitter(onLine)` trả về object:
+- `write(chunk: string)` — dữ liệu đến theo **chunk bất kỳ** (một dòng có thể bị cắt giữa 2 chunk); gọi `onLine(line)` cho mỗi dòng **hoàn chỉnh** (kết thúc bằng `\n`, bỏ `\r` cuối nếu có)
+- `end()` — nếu còn phần dư chưa có `\n` và khác rỗng → gọi `onLine` cho nó
+'''
+starter = '''
+function createLineSplitter(onLine) {
+  return {
+    write(chunk) {},
+    end() {},
+  };
+}
+'''
+solution = '''
+function createLineSplitter(onLine) {
+  let buf = '';
+  const emit = (line) => onLine(line.endsWith('\r') ? line.slice(0, -1) : line);
+  return {
+    write(chunk) {
+      buf += chunk;
+      let i;
+      while ((i = buf.indexOf('\n')) !== -1) {
+        emit(buf.slice(0, i));
+        buf = buf.slice(i + 1);
+      }
+    },
+    end() {
+      if (buf.length) emit(buf);
+      buf = '';
+    },
+  };
+}
+'''
+tests = '''
+function collect(chunks) {
+  const lines = [];
+  const s = createLineSplitter((l) => lines.push(l));
+  chunks.forEach((c) => s.write(c));
+  s.end();
+  return lines;
+}
+test('một chunk nhiều dòng', () => expect(collect(['a\nb\nc\n'])).toEqual(['a', 'b', 'c']));
+test('dòng bị cắt giữa chunk', () => expect(collect(['GET /us', 'ers 200\nPOST', ' /login 401\n'])).toEqual(['GET /users 200', 'POST /login 401']));
+test('phần dư khi end', () => expect(collect(['x\ny'])).toEqual(['x', 'y']));
+test('CRLF', () => expect(collect(['a\r\nb\r', '\n'])).toEqual(['a', 'b']));
+test('dòng rỗng giữa', () => expect(collect(['a\n\nb\n'])).toEqual(['a', '', 'b']));
+test('chỉ gọi khi đủ dòng', () => {
+  const lines = [];
+  const s = createLineSplitter((l) => lines.push(l));
+  s.write('abc');
+  expect(lines).toEqual([]);
+  s.write('\n');
+  expect(lines).toEqual(['abc']);
+});
+'''
+hints = ["Giữ buffer phần dư giữa các lần `write`.", "Chỉ cắt tại vị trí `\\n`, phần sau giữ lại."]
+explanation = "Đây là logic bên trong `readline` và các parser log/NDJSON chạy trên stream."
+sources = ["node/stream"]
+
+# ------------------------------------------------------------ EXPRESS
+[[questions]]
+id = "node-040"
+module = "node-express"
+type = "single"
+difficulty = 1
+prompt = "Express nhận diện middleware xử lý lỗi bằng cách nào?"
+options = ["Tên hàm bắt đầu bằng `error`", "Hàm có **4 tham số** `(err, req, res, next)`", "Đăng ký bằng `app.error()`", "Đặt trong thư mục errors"]
+answer = [1]
+explanation = "Và phải đăng ký **sau** các route khác."
+sources = ["express/guide/error-handling"]
+
+[[questions]]
+id = "node-041"
+module = "node-express"
+type = "single"
+difficulty = 2
+prompt = "Middleware không gọi `next()` và cũng không gửi response. Điều gì xảy ra?"
+options = ["Express tự gọi next", "Request bị treo cho tới khi client timeout", "Trả 404", "Trả 500"]
+answer = [1]
+explanation = "Mỗi middleware phải kết thúc chu trình (res.send/json/end) hoặc chuyển tiếp bằng `next()`."
+sources = ["express/guide/using-middleware"]
+
+[[questions]]
+id = "node-042"
+module = "node-express"
+type = "single"
+difficulty = 2
+prompt = "Trong **Express 4**, handler `async` ném lỗi (promise reject) thì sao?"
+options = [
+  "Tự chuyển tới error middleware",
+  "Không được bắt → unhandled rejection, request treo; phải `try/catch` + `next(err)` hoặc dùng wrapper",
+  "Trả 400",
+  "Express 4 không hỗ trợ async",
+]
+answer = [1]
+explanation = "Express 5 đã tự động chuyển promise bị reject tới `next(err)`."
+sources = ["express/guide/error-handling"]
+
+[[questions]]
+id = "node-043"
+module = "node-express"
+type = "multiple"
+difficulty = 2
+prompt = "Biện pháp nào giúp API Express an toàn hơn ở production?"
+options = [
+  "`helmet()` thiết lập security headers",
+  "Giới hạn kích thước body `express.json({ limit: '100kb' })`",
+  "Trả `err.stack` cho client để dễ debug",
+  "Rate limiting cho endpoint đăng nhập",
+  "Validate input bằng schema (zod/joi)",
+]
+answer = [0, 1, 3, 4]
+explanation = "Stack trace chỉ log phía server."
+sources = ["express/index#express.json"]
+
+[[questions]]
+id = "node-044"
+module = "node-express"
+type = "fill"
+difficulty = 1
+prompt = '''
+Đọc tham số route và trả 404:
+
+```js
+app.get('/users/:id', async (req, res) => {
+  const user = await repo.find(req.{{blank}}.id);
+  if (!user) return res.{{blank}}(404).json({ error: 'Not found' });
+  res.json(user);
+});
+```
+'''
+blanks = [["params"], ["status"]]
+explanation = "`req.query` cho query string, `req.body` cho body (cần `express.json()`)."
+sources = ["express/index#req.params", "express/index#res.status"]
+
+[[questions]]
+id = "node-045"
+module = "node-express"
+type = "code"
+difficulty = 3
+title = "compose middleware (mô hình onion)"
+prompt = '''
+Viết `compose(middlewares)` giống `koa-compose`: trả về hàm `(ctx) => Promise`.
+- Mỗi middleware có dạng `async (ctx, next) => {}`; gọi `await next()` để chạy middleware kế tiếp, code sau `await next()` chạy khi chiều về (mô hình **onion**)
+- Lỗi ở bất kỳ middleware nào → Promise bị reject (để middleware phía ngoài `try/catch` được)
+- Gọi `next()` **2 lần** trong một middleware → reject với `Error('next() called multiple times')`
+'''
+starter = '''
+function compose(middlewares) {
+  return async function (ctx) {
+    for (const mw of middlewares) await mw(ctx, async () => {});
+  };
+}
+'''
+solution = '''
+function compose(middlewares) {
+  return function (ctx) {
+    let index = -1;
+    function dispatch(i) {
+      if (i <= index) return Promise.reject(new Error('next() called multiple times'));
+      index = i;
+      const fn = middlewares[i];
+      if (!fn) return Promise.resolve();
+      try {
+        return Promise.resolve(fn(ctx, () => dispatch(i + 1)));
+      } catch (err) {
+        return Promise.reject(err);
+      }
+    }
+    return dispatch(0);
+  };
+}
+'''
+tests = '''
+test('thứ tự onion', async () => {
+  const log = [];
+  const app = compose([
+    async (ctx, next) => { log.push('a1'); await next(); log.push('a2'); },
+    async (ctx, next) => { log.push('b1'); await next(); log.push('b2'); },
+    async (ctx) => { log.push('handler'); },
+  ]);
+  await app({});
+  expect(log).toEqual(['a1', 'b1', 'handler', 'b2', 'a2']);
+});
+test('middleware ngoài bắt lỗi trong', async () => {
+  const ctx = {};
+  const app = compose([
+    async (ctx, next) => { try { await next(); } catch (e) { ctx.status = 500; ctx.body = e.message; } },
+    async () => { throw new Error('db down'); },
+  ]);
+  await app(ctx);
+  expect(ctx).toEqual({ status: 500, body: 'db down' });
+});
+test('đo thời gian kiểu logger', async () => {
+  const ctx = { t: [] };
+  await compose([
+    async (ctx, next) => { ctx.t.push('start'); await next(); ctx.t.push('end:' + ctx.body); },
+    async (ctx) => { ctx.body = 'ok'; },
+  ])(ctx);
+  expect(ctx.t).toEqual(['start', 'end:ok']);
+});
+test('không gọi next thì dừng chuỗi', async () => {
+  const hit = jest.fn();
+  await compose([async (ctx) => { ctx.x = 1; }, hit])({});
+  expect(hit).toHaveBeenCalledTimes(0);
+});
+test('next() hai lần → lỗi', async () => {
+  let err;
+  try { await compose([async (ctx, next) => { await next(); await next(); }])({}); } catch (e) { err = e; }
+  expect(err && err.message).toBe('next() called multiple times');
+});
+'''
+hints = ["Viết hàm đệ quy `dispatch(i)` gọi middleware thứ i với `next = () => dispatch(i + 1)`.", "Lưu `index` của middleware đã chạy gần nhất để phát hiện gọi next 2 lần."]
+explanation = "Koa dùng đúng mô hình này; Express dùng callback `next` tương tự nhưng không có chiều về bằng await."
+sources = ["express/guide/using-middleware", "express/guide/error-handling"]
+
+[[questions]]
+id = "node-046"
+module = "node-express"
+type = "code"
+difficulty = 2
+title = "Mini router Express với params"
+prompt = '''
+Viết `createRouter()` trả về `{ get(path, handler), post(path, handler), handle(method, url) }`:
+- path có thể chứa tham số `:name` (vd. `/users/:id/posts/:postId`)
+- `handle(method, url)`: bỏ query string, tìm route **đầu tiên** khớp method + path, gọi `handler(req)` với `req = { method, path, params, query }` và trả về kết quả handler
+- `query` parse từ query string (`a=1&b=x` → `{ a: '1', b: 'x' }`, giá trị là chuỗi, đã decode)
+- Không khớp path nào → `{ status: 404 }`; khớp path nhưng sai method → `{ status: 405 }`
+'''
+starter = '''
+function createRouter() {
+  return {
+    get(path, handler) {},
+    post(path, handler) {},
+    handle(method, url) { return { status: 404 }; },
+  };
+}
+'''
+solution = '''
+function createRouter() {
+  const routes = [];
+  const add = (method) => (path, handler) => {
+    const keys = [];
+    const re = new RegExp('^' + path.replace(/\/:([A-Za-z_]\w*)/g, (_, k) => { keys.push(k); return '/([^/]+)'; }) + '/?$');
+    routes.push({ method, re, keys, handler });
+  };
+  return {
+    get: add('GET'),
+    post: add('POST'),
+    handle(method, url) {
+      const [path, qs = ''] = url.split('?');
+      const query = {};
+      for (const part of qs.split('&')) {
+        if (!part) continue;
+        const [k, v = ''] = part.split('=');
+        query[decodeURIComponent(k)] = decodeURIComponent(v.replace(/\+/g, ' '));
+      }
+      let pathMatched = false;
+      for (const r of routes) {
+        const m = r.re.exec(path);
+        if (!m) continue;
+        pathMatched = true;
+        if (r.method !== method) continue;
+        const params = {};
+        r.keys.forEach((k, i) => { params[k] = decodeURIComponent(m[i + 1]); });
+        return r.handler({ method, path, params, query });
+      }
+      return { status: pathMatched ? 405 : 404 };
+    },
+  };
+}
+'''
+tests = '''
+const r = createRouter();
+r.get('/users', (req) => ({ status: 200, body: 'list', q: req.query }));
+r.get('/users/:id', (req) => ({ status: 200, body: 'user ' + req.params.id }));
+r.post('/users', () => ({ status: 201 }));
+r.get('/users/:id/posts/:postId', (req) => ({ status: 200, params: req.params }));
+
+test('route tĩnh', () => expect(r.handle('GET', '/users').body).toBe('list'));
+test('params', () => expect(r.handle('GET', '/users/42').body).toBe('user 42'));
+test('nhiều params', () => expect(r.handle('GET', '/users/7/posts/99').params).toEqual({ id: '7', postId: '99' }));
+test('query string', () => expect(r.handle('GET', '/users?page=2&q=an').q).toEqual({ page: '2', q: 'an' }));
+test('POST', () => expect(r.handle('POST', '/users')).toEqual({ status: 201 }));
+test('404', () => expect(r.handle('GET', '/nope')).toEqual({ status: 404 }));
+test('405 sai method', () => expect(r.handle('POST', '/users/1')).toEqual({ status: 405 }));
+test('param không ăn qua /', () => expect(r.handle('GET', '/users/1/2')).toEqual({ status: 404 }));
+'''
+hints = ["Chuyển `/users/:id` thành regex `^/users/([^/]+)/?$` và nhớ thứ tự tên tham số.", "Theo dõi biến `pathMatched` để phân biệt 404 và 405."]
+explanation = "Express dùng `path-to-regexp` để biên dịch route tương tự."
+sources = ["express/guide/routing"]
+
+# ------------------------------------------------------------ OPS
+[[questions]]
+id = "node-060"
+module = "node-ops"
+type = "single"
+difficulty = 2
+prompt = "Khi xảy ra `uncaughtException`, cách xử lý được khuyến nghị là:"
+options = [
+  "Bỏ qua và chạy tiếp",
+  "Log lỗi, dọn dẹp tối thiểu rồi **thoát process** để process manager (PM2/K8s) khởi động lại",
+  "Restart event loop",
+  "Gửi lỗi về client",
+]
+answer = [1]
+explanation = "Sau uncaught exception, trạng thái ứng dụng không còn đáng tin cậy."
+sources = ["node/errors"]
+
+[[questions]]
+id = "node-061"
+module = "node-ops"
+type = "single"
+difficulty = 2
+prompt = "Vì sao retry nên dùng **exponential backoff + jitter**?"
+options = [
+  "Để code ngắn hơn",
+  "Giãn dần thời gian chờ để service lỗi kịp hồi phục, jitter tránh nhiều client retry **cùng lúc** (thundering herd)",
+  "Để tăng số lần retry",
+  "Bắt buộc theo HTTP spec",
+]
+answer = [1]
+explanation = "Chỉ retry lỗi tạm thời (timeout, 503, 429) và thao tác idempotent."
+
+[[questions]]
+id = "node-062"
+module = "node-ops"
+type = "code"
+difficulty = 3
+title = "Rate limiter token bucket"
+prompt = '''
+Viết `createRateLimiter({ capacity, refillPerSec, now })`:
+- Mỗi **key** (vd. IP) có một bucket riêng, ban đầu đầy `capacity` token
+- Token hồi theo thời gian: `refillPerSec` token/giây (có thể là số thực), không vượt `capacity`
+- `take(key)` → `{ allowed, remaining, retryAfterMs }`:
+  - còn ≥ 1 token → trừ 1, `allowed: true`, `retryAfterMs: 0`
+  - hết → `allowed: false`, `retryAfterMs` = thời gian (ms, làm tròn lên) tới khi có đủ 1 token
+- `remaining` = số token nguyên còn lại (`Math.floor`)
+- `now()` trả về thời gian hiện tại (ms) — dùng để test
+'''
+starter = '''
+function createRateLimiter({ capacity, refillPerSec, now = Date.now }) {
+  return {
+    take(key) {
+      return { allowed: true, remaining: capacity, retryAfterMs: 0 };
+    },
+  };
+}
+'''
+solution = '''
+function createRateLimiter({ capacity, refillPerSec, now = Date.now }) {
+  const buckets = new Map();
+  return {
+    take(key) {
+      const t = now();
+      let b = buckets.get(key);
+      if (!b) { b = { tokens: capacity, last: t }; buckets.set(key, b); }
+      b.tokens = Math.min(capacity, b.tokens + ((t - b.last) / 1000) * refillPerSec);
+      b.last = t;
+      if (b.tokens >= 1) {
+        b.tokens -= 1;
+        return { allowed: true, remaining: Math.floor(b.tokens), retryAfterMs: 0 };
+      }
+      return { allowed: false, remaining: 0, retryAfterMs: Math.ceil(((1 - b.tokens) / refillPerSec) * 1000) };
+    },
+  };
+}
+'''
+tests = '''
+function setup(opts) {
+  let t = 0;
+  const lim = createRateLimiter({ ...opts, now: () => t });
+  return { lim, advance: (ms) => { t += ms; } };
+}
+test('cho phép tới capacity rồi chặn', () => {
+  const { lim } = setup({ capacity: 3, refillPerSec: 1 });
+  expect([1, 2, 3, 4].map(() => lim.take('ip').allowed)).toEqual([true, true, true, false]);
+});
+test('remaining giảm dần', () => {
+  const { lim } = setup({ capacity: 3, refillPerSec: 1 });
+  expect(lim.take('a').remaining).toBe(2);
+  expect(lim.take('a').remaining).toBe(1);
+});
+test('retryAfterMs', () => {
+  const { lim } = setup({ capacity: 1, refillPerSec: 2 });
+  lim.take('a');
+  expect(lim.take('a')).toEqual({ allowed: false, remaining: 0, retryAfterMs: 500 });
+});
+test('hồi token theo thời gian', () => {
+  const { lim, advance } = setup({ capacity: 2, refillPerSec: 1 });
+  lim.take('a'); lim.take('a');
+  expect(lim.take('a').allowed).toBe(false);
+  advance(1000);
+  expect(lim.take('a').allowed).toBe(true);
+  expect(lim.take('a').allowed).toBe(false);
+});
+test('không vượt capacity', () => {
+  const { lim, advance } = setup({ capacity: 2, refillPerSec: 10 });
+  advance(60000);
+  expect([1, 2, 3].map(() => lim.take('a').allowed)).toEqual([true, true, false]);
+});
+test('mỗi key độc lập', () => {
+  const { lim } = setup({ capacity: 1, refillPerSec: 1 });
+  expect(lim.take('ip1').allowed).toBe(true);
+  expect(lim.take('ip2').allowed).toBe(true);
+  expect(lim.take('ip1').allowed).toBe(false);
+});
+'''
+hints = ["Lưu `{ tokens, last }` cho mỗi key; mỗi lần take, cộng token theo thời gian trôi qua.", "Token có thể là số thực — chỉ floor khi trả `remaining`."]
+explanation = "Khi API trả 429, đặt header `Retry-After` từ `retryAfterMs`. Ở nhiều instance cần lưu bucket trong Redis (script Lua nguyên tử)."
+sources = ["express/guide/using-middleware"]
+
+[[questions]]
+id = "node-063"
+module = "node-ops"
+type = "code"
+difficulty = 3
+title = "LRU cache có TTL"
+prompt = '''
+Viết class `LRUCache` với `constructor(max, { ttlMs = Infinity, now = Date.now } = {})`:
+- `get(key)` → giá trị hoặc `undefined`; truy cập làm key thành **mới dùng gần nhất**; key hết hạn (`now() - setAt >= ttlMs`) bị xoá và trả `undefined`
+- `set(key, value)` → nếu vượt `max` thì xoá key **ít dùng gần đây nhất**
+- `has(key)` (không cập nhật thứ tự, nhưng tôn trọng TTL), `delete(key)`, thuộc tính `size`
+
+Gợi ý: `Map` giữ thứ tự chèn.
+'''
+starter = '''
+class LRUCache {
+  constructor(max, opts = {}) {
+    this.map = new Map();
+  }
+  get(key) { return this.map.get(key); }
+  set(key, value) { this.map.set(key, value); return this; }
+  has(key) { return this.map.has(key); }
+  delete(key) { return this.map.delete(key); }
+  get size() { return this.map.size; }
+}
+'''
+solution = '''
+class LRUCache {
+  constructor(max, { ttlMs = Infinity, now = Date.now } = {}) {
+    this.max = max;
+    this.ttlMs = ttlMs;
+    this.now = now;
+    this.map = new Map();
+  }
+  _fresh(key) {
+    const e = this.map.get(key);
+    if (!e) return null;
+    if (this.now() - e.at >= this.ttlMs) { this.map.delete(key); return null; }
+    return e;
+  }
+  get(key) {
+    const e = this._fresh(key);
+    if (!e) return undefined;
+    this.map.delete(key);
+    this.map.set(key, e);
+    return e.value;
+  }
+  set(key, value) {
+    this.map.delete(key);
+    this.map.set(key, { value, at: this.now() });
+    while (this.map.size > this.max) this.map.delete(this.map.keys().next().value);
+    return this;
+  }
+  has(key) { return !!this._fresh(key); }
+  delete(key) { return this.map.delete(key); }
+  get size() { return this.map.size; }
+}
+'''
+tests = '''
+test('get/set cơ bản', () => {
+  const c = new LRUCache(2);
+  c.set('a', 1);
+  expect(c.get('a')).toBe(1);
+  expect(c.get('x')).toBeUndefined();
+});
+test('xoá key ít dùng nhất', () => {
+  const c = new LRUCache(2);
+  c.set('a', 1); c.set('b', 2);
+  c.get('a');
+  c.set('c', 3);
+  expect(c.has('b')).toBe(false);
+  expect(c.has('a')).toBe(true);
+  expect(c.size).toBe(2);
+});
+test('set lại key cập nhật thứ tự', () => {
+  const c = new LRUCache(2);
+  c.set('a', 1); c.set('b', 2); c.set('a', 10); c.set('c', 3);
+  expect(c.get('a')).toBe(10);
+  expect(c.has('b')).toBe(false);
+});
+test('TTL hết hạn', () => {
+  let t = 0;
+  const c = new LRUCache(5, { ttlMs: 100, now: () => t });
+  c.set('k', 'v');
+  t = 99;
+  expect(c.get('k')).toBe('v');
+  t = 100;
+  expect(c.get('k')).toBeUndefined();
+  expect(c.size).toBe(0);
+});
+test('has không làm mới thứ tự', () => {
+  const c = new LRUCache(2);
+  c.set('a', 1); c.set('b', 2);
+  c.has('a');
+  c.set('c', 3);
+  expect(c.has('a')).toBe(false);
+});
+test('lưu được giá trị falsy', () => {
+  const c = new LRUCache(2);
+  c.set('z', 0);
+  expect(c.get('z')).toBe(0);
+  expect(c.has('z')).toBe(true);
+});
+'''
+hints = ["`map.delete(key); map.set(key, v)` đưa key lên cuối (mới nhất).", "Key cũ nhất là `map.keys().next().value`."]
+explanation = "Thư viện `lru-cache` được npm dùng rộng rãi cài đặt ý tưởng này (tối ưu hơn)."

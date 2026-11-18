@@ -1,0 +1,2975 @@
+id = "react-native"
+title = "React Native"
+icon = "📱"
+color = "#8b5cf6"
+description = "Core components, Flexbox trên mobile, StyleSheet, FlatList, điều hướng, New Architecture, Expo và tối ưu hiệu năng."
+group = "Frontend"
+docs = ["react_native"]
+
+# ============================================================ MODULES
+[[modules]]
+id = "rn-core"
+sources = ["react_native/pressable", "react_native/platform"]
+title = "Core Components & Layout"
+description = "View, Text, Image, Pressable, ScrollView; Flexbox mặc định trên React Native."
+lesson = '''
+### Core components
+| RN | Tương đương web |
+|---|---|
+| `View` | `div` |
+| `Text` | `span`/`p` — **mọi chuỗi phải nằm trong `<Text>`** |
+| `Image` | `img` (ảnh mạng cần `width`/`height`) |
+| `TextInput` | `input` |
+| `ScrollView` | div cuộn — render **toàn bộ** con |
+| `Pressable` | nút bấm hiện đại (thay `TouchableOpacity`) |
+| `SafeAreaView` | tránh tai thỏ / thanh điều hướng (dùng `react-native-safe-area-context`) |
+
+### Flexbox trong RN khác web
+- `flexDirection` mặc định là **`column`** (web: `row`).
+- `alignContent` mặc định `flex-start`, `flexShrink` mặc định `0`.
+- `flex: 1` = chiếm hết không gian còn lại (chỉ nhận **một số**).
+- Đơn vị là **density-independent pixels (dp)**, không có `px`, `em`, `rem`.
+- Không có cascade CSS: style **không kế thừa**, trừ text lồng trong `<Text>`.
+
+
+### Tương tác và vùng an toàn
+| Trường hợp | Cách làm |
+|---|---|
+| Chạm/nút | Dùng `Pressable`, hỗ trợ trạng thái pressed/disabled và vùng chạm phù hợp |
+| Nội dung bàn phím | Dùng `KeyboardAvoidingView` hoặc scroll container có xử lý bàn phím theo nền tảng |
+| Tai thỏ/thanh hệ thống | Dùng safe-area-context để tính vùng hiển thị an toàn |
+
+Ví dụ: `<Pressable onPress={save}><Text>Lưu</Text></Pressable>` — phần chữ vẫn nằm trong `Text`.
+
+Lỗi hay gặp: render chuỗi trực tiếp trong `View`, dùng `ScrollView` cho hàng nghìn item, hoặc quên kích thước ảnh URL. So với web, RN dùng `View`/`Text` native thay `div`/`span`, không nhận text node tự do và không có DOM event.
+'''
+
+[[modules]]
+id = "rn-styling"
+sources = ["react_native/flexbox", "react_native/stylesheet", "react_native/usewindowdimensions"]
+title = "Styling & Responsive"
+description = "StyleSheet, mảng style, Platform, Dimensions/useWindowDimensions, PixelRatio, dark mode."
+lesson = '''
+### Ý chính
+- `StyleSheet.create({...})` — khai báo style, validate trong dev. `style` nhận **mảng**: phần tử sau ghi đè phần tử trước, giá trị falsy bị bỏ qua.
+- `StyleSheet.flatten(style)` gộp mảng style thành 1 object.
+- `StyleSheet.hairlineWidth`, `StyleSheet.absoluteFill`.
+- **Platform**: `Platform.OS` (`'ios' | 'android' | 'web'…`), `Platform.select({ ios, android, native, default })`, file `Button.ios.tsx` / `Button.android.tsx`.
+- **Kích thước**: ưu tiên hook `useWindowDimensions()` (tự cập nhật khi xoay màn hình) thay vì `Dimensions.get('window')`.
+- `PixelRatio.get()`, `PixelRatio.roundToNearestPixel()`.
+- Dark mode: `useColorScheme()` trả về `'light' | 'dark' | null`.
+
+
+### Chọn style theo trạng thái và thiết bị
+| Nhu cầu | Mẫu dùng |
+|---|---|
+| Base + trạng thái | `style={[styles.button, pressed && styles.pressed]}` |
+| Kích thước đổi khi xoay | `useWindowDimensions()` trong component |
+| Khác biệt nền tảng nhỏ | `Platform.select({ ios: ..., android: ..., default: ... })` |
+
+Ví dụ: `const wide = width >= 600;` rồi chọn layout theo `wide`; hook sẽ cập nhật khi cửa sổ đổi.
+
+Lỗi hay gặp: mong style kế thừa từ `View` cha, dùng `px`/`rem`, hoặc tạo style object mới liên tục trong render mà không có lý do. Trên web CSS có cascade, selector và media query; RN ghép object style có thứ tự, dùng đơn vị dp và logic JavaScript cho responsive.
+'''
+
+[[modules]]
+id = "rn-lists"
+sources = ["react_native/flatlist", "react_native/optimizing-flatlist-configuration", "react_native/sectionlist"]
+title = "Danh sách & Hiệu năng"
+description = "FlatList, SectionList, virtualization, getItemLayout, pagination, re-render, Hermes."
+lesson = '''
+### FlatList
+- **Virtualized**: chỉ render các item gần viewport (`windowSize`, `initialNumToRender`, `maxToRenderPerBatch`).
+- `keyExtractor` trả về key duy nhất (mặc định dùng `item.key` rồi đến index).
+- `getItemLayout` (item có chiều cao cố định) → bỏ qua đo đạc, `scrollToIndex` chính xác.
+- `onEndReached` + `onEndReachedThreshold` để phân trang (infinite scroll).
+- `extraData` để FlatList (PureComponent) render lại khi dữ liệu ngoài `data` thay đổi.
+- Item nên được `React.memo`, `renderItem` ổn định (`useCallback`).
+- Danh sách rất lớn: cân nhắc **FlashList** (Shopify) tái sử dụng view (recycling).
+
+### Hiệu năng chung
+- Giữ JS thread rảnh: tránh tính toán nặng trong render; animation dùng **Reanimated** (chạy trên UI thread) hoặc `useNativeDriver: true`.
+- **Hermes**: JS engine tối ưu cho RN — bytecode biên dịch trước, khởi động nhanh, ít RAM.
+- Xoá `console.log` ở bản release.
+
+
+### Chọn component và cấu hình
+| Component | Dùng khi | Ghi chú |
+|---|---|---|
+| `ScrollView` | Nội dung nhỏ, số phần tử giới hạn | Render toàn bộ con |
+| `FlatList` | Danh sách dài, tải theo lô | Virtualization, key ổn định |
+| `SectionList` | Danh sách nhóm có header | `sections` giữ dữ liệu theo nhóm |
+| FlashList | Danh sách lớn cần recycling | Thư viện ngoài, kiểm tra yêu cầu phiên bản |
+
+Ví dụ: `keyExtractor={(item) => String(item.id)}`; nếu row phụ thuộc state ngoài `data`, truyền giá trị đó qua `extraData`.
+
+Lỗi hay gặp: key là index khi danh sách đổi thứ tự, `getItemLayout` không tính separator, hoặc `renderItem` tạo props mới khiến memo không hiệu quả. Web thường virtualize DOM node; FlatList quản lý native view và cần đo trên thiết bị thật.
+'''
+
+[[modules]]
+id = "rn-navigation"
+sources = ["react_native/linking"]
+title = "Điều hướng"
+description = "React Navigation: stack, tab, drawer, params, deep link; Expo Router."
+lesson = '''
+### React Navigation
+- `NavigationContainer` bọc toàn app (Expo Router tự làm việc này).
+- **Native Stack** (`@react-navigation/native-stack`) dùng `UINavigationController`/`Fragment` gốc → mượt hơn JS stack.
+- `navigation.navigate('Profile', { id })` — nếu màn hình đã có trong stack thì quay về nó; `push` luôn thêm mới; `goBack`, `popToTop`, `replace`.
+- Đọc params: `route.params` hoặc `useRoute()`; dùng `useNavigation()` trong component con.
+- Màn hình trong stack **không unmount** khi push màn khác → dùng `useFocusEffect` để chạy logic khi màn hình được focus.
+- **Deep linking**: cấu hình `linking` (prefix + map path → screen).
+- **Expo Router**: file-based routing (`app/(tabs)/index.tsx`, `app/user/[id].tsx`), xây trên React Navigation.
+
+
+### Stack và URL ngoài app
+| Thao tác | Ý nghĩa |
+|---|---|
+| `navigate(name)` | Đi tới route, có thể quay về route cùng tên đã có |
+| `push(name)` | Luôn thêm một instance mới vào stack |
+| `replace(name)` | Thay route hiện tại |
+| `reset(state)` | Thay toàn bộ navigation state |
+
+Ví dụ: route `app/user/[id].tsx` nhận `id` từ URL; chỉ truyền ID/giá trị tuần tự hóa qua params, rồi tải dữ liệu trong screen.
+
+Lỗi hay gặp: nghĩ màn hình dưới stack đã unmount, điều hướng bằng callback truyền trong params, hoặc chỉ xử lý URL lúc app đang mở. Web thường gắn route với browser history; RN cần cấu hình linking/prefix và xử lý cả URL khởi chạy lẫn URL đến sau đó.
+'''
+
+[[modules]]
+id = "rn-native"
+sources = ["react_native/appstate", "react_native/accessibility", "react_native/performance"]
+title = "Kiến trúc, Native & Dữ liệu"
+description = "New Architecture (JSI, Fabric, TurboModules), bridge, Expo, lưu trữ, quyền, build & phát hành."
+lesson = '''
+### Kiến trúc
+- **Old architecture**: JS ↔ Native qua **Bridge** bất đồng bộ, serialize JSON → nghẽn khi nhiều message.
+- **New Architecture** (mặc định từ RN 0.76):
+  - **JSI** (JavaScript Interface): C++ API cho JS giữ tham chiếu & gọi trực tiếp đối tượng native, đồng bộ được.
+  - **Fabric**: renderer mới, hỗ trợ concurrent React, đo layout đồng bộ.
+  - **TurboModules**: native module lazy-load, type-safe qua **Codegen**.
+- **Yoga**: engine layout Flexbox viết bằng C++.
+
+### Dữ liệu & bảo mật
+- `AsyncStorage`: key-value **không mã hoá**, bất đồng bộ. Token/secret → `expo-secure-store` / Keychain / Keystore.
+- **MMKV**: key-value đồng bộ, rất nhanh (dựa trên JSI).
+- Quyền (camera, vị trí): khai báo trong `Info.plist` / `AndroidManifest.xml`, xin lúc runtime.
+
+### Expo
+- Expo SDK + **EAS Build/Submit/Update**; **development build** thay cho Expo Go khi cần native module riêng; **config plugins** để chỉnh native mà không eject.
+- **OTA update** (EAS Update) chỉ cập nhật được JS & asset, không cập nhật native code.
+
+
+### Runtime, dữ liệu và phát hành
+| Nhu cầu | Lựa chọn |
+|---|---|
+| Cache không nhạy cảm | AsyncStorage hoặc MMKV theo yêu cầu đồng bộ/hiệu năng |
+| Token | SecureStore/Keychain/Keystore wrapper |
+| Trạng thái app | `AppState` để tạm dừng polling hoặc làm mới khi active |
+| Native module mới | Development build và config plugin/prebuild phù hợp |
+
+Ví dụ: khi app trở lại `active`, kiểm tra thời điểm sync cuối rồi làm mới dữ liệu; không phụ thuộc tác vụ JS chạy liên tục ở background.
+
+Lỗi hay gặp: lưu token trong AsyncStorage, giả định OTA thay được native code, hoặc xin permission mà không có nhánh từ chối. Trên web, localStorage và service worker có vòng đời/quyền khác; RN dùng secure storage và khả năng nền do iOS/Android quản lý.
+'''
+
+[[modules]]
+id = "rn-architecture"
+title = "New Architecture & Luồng thực thi"
+description = "JSI, Fabric, TurboModules, Codegen, Hermes, bridgeless và tương tác giữa JS thread với UI thread."
+sources = ["react_native/new-architecture-intro", "react_native/new-architecture-app-intro", "react_native/hermes"]
+lesson = '''
+### Các mảnh ghép
+| Thành phần | Vai trò |
+|---|---|
+| JSI | Giao diện C++ để JavaScript tương tác với đối tượng native mà không phải serialize mọi lời gọi qua Bridge cũ |
+| Fabric | Renderer mới, phối hợp React với cây giao diện native |
+| TurboModules | Nạp native module theo nhu cầu; Codegen tạo phần kết nối từ spec có kiểu |
+| Hermes | JavaScript engine thường được đóng gói mặc định với ứng dụng RN |
+| Bridgeless | Chạy New Architecture mà không phụ thuộc Bridge legacy |
+
+JS thread xử lý React, JavaScript và sự kiện; UI thread/native xử lý hiển thị, layout native và tương tác khung hình. JSI giảm chi phí qua lại nhưng không làm mọi JavaScript tự chạy trên UI thread. Hermes cũng không thay Metro: Metro vẫn đóng gói ứng dụng trong quá trình phát triển.
+
+Ví dụ: spec native module được Codegen xử lý ở bước build; ứng dụng gọi module khi cần thay vì khởi tạo mọi module lúc mở app.
+
+Lỗi hay gặp: suy ra JSI làm lời gọi đồng bộ luôn an toàn; chạy vòng lặp nặng trên JS thread; nhầm Fabric là JS engine; hoặc tin rằng bridgeless khiến mọi thư viện cũ tự tương thích. Trên web, JavaScript thường cập nhật DOM; RN gửi thay đổi qua renderer tới native view.
+'''
+
+[[modules]]
+id = "rn-expo"
+title = "Expo SDK & Quy trình phát triển"
+description = "Expo SDK, Expo Router, config plugin, prebuild, development build, EAS Build và EAS Update."
+sources = ["react_native/linking", "react_native/platform-specific-code"]
+lesson = '''
+### Chọn môi trường và quy trình
+| Công cụ | Dùng khi |
+|---|---|
+| Expo Go | Thử ứng dụng với tập native module đã đóng gói sẵn |
+| Development build | Cần native module hoặc cấu hình riêng trong app development |
+| Prebuild | Sinh thư mục native từ app config và config plugin |
+| EAS Build | Tạo artifact iOS/Android trên máy cục bộ hoặc hạ tầng EAS |
+| EAS Update | Phân phối thay đổi JavaScript và asset tương thích với runtime đã cài |
+
+Expo SDK ghép phiên bản Expo modules với một nền React Native tương thích; nâng cấp SDK theo hướng dẫn phiên bản thay vì tự nâng từng phần tùy ý. Expo Router ánh xạ file trong thư mục `app` thành route, route động dùng tên như `[id].tsx`, còn `_layout.tsx` định nghĩa layout/stack.
+
+Ví dụ: một thư viện native tùy biến cần development build; config plugin khai báo thay đổi native để `npx expo prebuild` có thể tạo lại project native nhất quán.
+
+Lỗi hay gặp: sửa trực tiếp thư mục native đã sinh rồi mất thay đổi khi prebuild; nghĩ Expo Go chứa mọi native module; hoặc phát OTA có native runtime không khớp. Trên web, router thường gắn với URL/history của trình duyệt; Expo Router vẫn điều hướng trong app native và cần cấu hình deep link cho liên kết ngoài.
+'''
+
+[[modules]]
+id = "rn-perf"
+title = "Tối ưu danh sách & Profiling"
+description = "Virtualization, cấu hình FlatList, FlashList, kiểm soát render lại và đo hiệu năng đúng môi trường."
+sources = ["react_native/flatlist", "react_native/optimizing-flatlist-configuration", "react_native/performance", "react_native/profile-hermes"]
+lesson = '''
+### Điều chỉnh theo phép đo
+| Cách làm | Tác dụng | Đánh đổi |
+|---|---|---|
+| `keyExtractor` ổn định | Giữ đúng danh tính item khi dữ liệu đổi | Không dùng index nếu danh sách có chèn/xóa/sắp xếp |
+| `getItemLayout` | Bỏ đo động khi chiều cao item cố định | Offset sai nếu item/header/separator không được tính đủ |
+| `windowSize` | Quy định vùng viewport được giữ render quanh vùng nhìn thấy | Lớn hơn dùng thêm bộ nhớ; nhỏ hơn có thể lộ vùng trống khi cuộn nhanh |
+| `removeClippedSubviews` | Gỡ view ngoài vùng hiển thị ở một số nền tảng | Có thể gây lỗi hiển thị với layout/transform nhất định |
+| FlashList | Thư viện bên thứ ba dùng tái sử dụng view | Cần kiểm tra yêu cầu phiên bản và New Architecture của phiên bản đang chọn |
+
+Ví dụ: row có chiều cao cố định 56 dp và separator 1 dp thì `getItemLayout` dùng `length: 56` và `offset: index * 57`. `React.memo` hữu ích khi props ổn định; `useCallback` chỉ giúp khi tham chiếu hàm là nguyên nhân khiến con render lại.
+
+Lỗi hay gặp: bật mọi prop tối ưu cùng lúc, tạo object/hàm mới cho từng item, dùng index làm key, hoặc đo trong development rồi kết luận hiệu năng release. Dùng React DevTools/Profiler và Hermes sampling profiler để tìm nguyên nhân trước khi đổi cấu hình. Khác với web list virtualization, RN tạo native views; không dựa vào DOM profiler hay API trình duyệt.
+'''
+
+[[modules]]
+id = "rn-animation-gesture"
+title = "Animation & Gesture"
+description = "Animated, native driver, Reanimated worklet/shared value và React Native Gesture Handler."
+sources = ["react_native/animated", "react_native/gesture-responder-system"]
+lesson = '''
+### Chọn công cụ theo chuyển động
+| Công cụ | Thích hợp cho |
+|---|---|
+| `Animated` | Chuyển động khai báo trong React Native; `useNativeDriver` phù hợp với opacity/transform |
+| Reanimated | Tính toán worklet và cập nhật shared value gần UI runtime |
+| Gesture Handler | Nhận biết pan, tap, pinch và phối hợp gesture bằng native handler |
+| Layout animation | Chuyển động gắn với thay đổi layout khi hỗ trợ trên cấu hình mục tiêu |
+
+Ví dụ Animated: `Animated.timing(progress, { toValue: 1, duration: 220, useNativeDriver: true })`. Native driver không áp dụng cho thuộc tính cần tính lại layout như `height` hay `padding`. Trong Reanimated, shared value lưu trạng thái chuyển động; worklet có thể tính frame mà không cần gọi JavaScript mỗi khung hình.
+
+Lỗi hay gặp: đọc/ghi state React liên tục trong mỗi frame; đánh dấu worklet nhưng gọi API chỉ có trên JS runtime; hoặc để gesture cạnh tranh mà không định nghĩa quan hệ ưu tiên. Trên web, animation thường gắn với CSS/WAAPI và pointer event; RN dùng native view/gesture handler nên không có DOM.
+'''
+
+[[modules]]
+id = "rn-data-offline"
+title = "Dữ liệu Offline & Liên kết"
+description = "Lưu trữ cục bộ, token an toàn, trạng thái mạng, đồng bộ hàng đợi, push notification và deep link."
+sources = ["react_native/appstate", "react_native/linking"]
+lesson = '''
+### Lưu trữ và đồng bộ
+| Nhu cầu | Lựa chọn | Lưu ý |
+|---|---|---|
+| Cache không nhạy cảm | AsyncStorage hoặc MMKV | AsyncStorage bất đồng bộ; AsyncStorage không mã hóa dữ liệu |
+| Token/secret | SecureStore hoặc Keychain/Keystore wrapper | Không ghi token vào log hay bundle; xử lý trường hợp không đọc được |
+| Trạng thái kết nối | NetInfo | `isConnected` và `isInternetReachable` có thể khác nhau hoặc chưa biết |
+| Thay đổi offline | Hàng đợi local có retry | Dùng idempotency key và quy tắc xử lý xung đột khi gửi lại |
+| Push/deep link | Handler notification và Linking | Payload đến từ bên ngoài, phải kiểm tra trước khi điều hướng |
+
+Ví dụ: khi offline, ghi thao tác cùng ID ổn định vào hàng đợi; khi mạng trở lại, gửi tuần tự, retry với exponential backoff và bỏ thao tác đã được server xác nhận. Push notification có thể bị trì hoãn hoặc không đến, vì vậy dữ liệu quan trọng phải đồng bộ lại từ server.
+
+Lỗi hay gặp: xem tín hiệu Wi-Fi là chắc chắn có Internet; retry vô hạn không giới hạn; lưu token trong AsyncStorage; hoặc chỉ xử lý URL khi app đang mở. Trên web, localStorage/service worker có vòng đời và quyền khác; không dùng các API đó trong ứng dụng RN.
+'''
+
+[[modules]]
+id = "rn-release"
+title = "Quyền, Bảo mật & Phát hành"
+description = "Permission, khác biệt nền tảng, ký ứng dụng, OTA update, crash reporting và quy trình store review."
+sources = ["react_native/platform-specific-code", "react_native/platform", "react_native/performance"]
+lesson = '''
+### Checklist phát hành
+| Hạng mục | Kiểm tra |
+|---|---|
+| Permission | Khai báo lý do đúng với tính năng; xin quyền đúng thời điểm; có nhánh từ chối |
+| Platform | Dùng `Platform.select` hoặc file theo nền tảng cho khác biệt thực sự |
+| Ký ứng dụng | Giữ keystore/certificate và thông tin ký ngoài repository, có sao lưu kiểm soát |
+| OTA | Chỉ phát JS/asset tới runtime tương thích; native change cần binary mới |
+| Crash reporting | Upload symbol phù hợp và loại token/PII khỏi breadcrumb, payload |
+| Store review | Khai báo quyền, privacy và hành vi ứng dụng khớp với bản phát hành |
+
+Ví dụ: thay đổi JavaScript có thể phát qua EAS Update nếu `runtimeVersion` khớp build; thêm native module hoặc đổi permission manifest cần build và phân phối binary mới. Phát theo channel/nhóm nhỏ để phát hiện lỗi trước khi mở rộng.
+
+Lỗi hay gặp: đưa signing secret vào app config được commit; xin quyền quá sớm; phát OTA vượt qua kiểm duyệt store hoặc vượt runtime; và coi crash log là dữ liệu vô hại. Trên web, TLS/certificate của máy chủ khác với ký binary iOS/Android; permission prompt cũng do nền tảng mobile quản lý.
+'''
+
+# ============================================================ CORE
+[[questions]]
+id = "rn-001"
+module = "rn-core"
+type = "single"
+difficulty = 1
+prompt = "Giá trị mặc định của `flexDirection` trong React Native là gì?"
+options = ["`row`", "`column`", "`row-reverse`", "Không có mặc định"]
+answer = [1]
+explanation = "Khác với web (`row`), RN mặc định `column` vì màn hình điện thoại dạng dọc."
+tags = ["flexbox"]
+
+[[questions]]
+id = "rn-002"
+module = "rn-core"
+type = "single"
+difficulty = 1
+prompt = "Đoạn code nào gây lỗi trong React Native?"
+options = [
+  "`<View><Text>Xin chào</Text></View>`",
+  "`<View>Xin chào</View>`",
+  "`<Text>Xin <Text style={{fontWeight:'bold'}}>bạn</Text></Text>`",
+  "`<View />`",
+]
+answer = [1]
+explanation = "Chuỗi văn bản phải nằm trong `<Text>`: \"Text strings must be rendered within a <Text> component\"."
+
+[[questions]]
+id = "rn-003"
+module = "rn-core"
+type = "single"
+difficulty = 2
+prompt = "Vì sao không nên dùng `ScrollView` để hiển thị danh sách 5.000 phần tử?"
+options = [
+  "ScrollView không cuộn được quá 1000 phần tử",
+  "ScrollView render **tất cả** con ngay lập tức → tốn bộ nhớ, chậm khởi tạo; nên dùng FlatList (virtualized)",
+  "ScrollView chỉ chạy trên iOS",
+  "ScrollView không hỗ trợ `key`",
+]
+answer = [1]
+explanation = "FlatList/SectionList/FlashList chỉ render phần tử trong vùng nhìn thấy (+ buffer)."
+
+[[questions]]
+id = "rn-004"
+module = "rn-core"
+type = "single"
+difficulty = 1
+prompt = "Ảnh từ URL mạng trong `<Image>` cần gì để hiển thị?"
+options = [
+  "Chỉ cần `source={{ uri }}`",
+  "`source={{ uri }}` và **kích thước** (width/height qua style) vì RN không biết trước kích thước ảnh mạng",
+  "Phải tải về bằng `fetch` trước",
+  "Phải dùng `require(url)`",
+]
+answer = [1]
+explanation = "Ảnh local (`require('./a.png')`) có kích thước sẵn; ảnh mạng thì không, nên phải chỉ định."
+
+[[questions]]
+id = "rn-005"
+module = "rn-core"
+type = "single"
+difficulty = 2
+prompt = "Đơn vị số trong style RN (`width: 100`) là gì?"
+options = ["pixel vật lý", "density-independent pixels (dp/pt)", "rem", "phần trăm"]
+answer = [1]
+explanation = "Đơn vị logic độc lập mật độ điểm ảnh; pixel vật lý = dp × `PixelRatio.get()`. Phần trăm phải viết dạng chuỗi `'50%'`."
+
+[[questions]]
+id = "rn-006"
+module = "rn-core"
+type = "multiple"
+difficulty = 2
+prompt = "Những phát biểu nào đúng về style trong React Native?"
+options = [
+  "Style **không kế thừa** từ View cha xuống con",
+  "Text lồng trong `<Text>` kế thừa style của Text cha",
+  "Có thể dùng selector CSS như `.btn:hover`",
+  "Thuộc tính viết camelCase (`backgroundColor`)",
+  "`flex` nhận chuỗi như `'1 1 auto'`",
+]
+answer = [0, 1, 3]
+explanation = "Không có selector/cascade; `flex` chỉ nhận một số."
+
+[[questions]]
+id = "rn-007"
+module = "rn-core"
+type = "single"
+difficulty = 2
+prompt = "`Pressable` có ưu điểm gì so với `TouchableOpacity`?"
+options = [
+  "Chỉ chạy trên Android",
+  "API linh hoạt: style/children nhận hàm `({ pressed }) => ...`, hỗ trợ `onLongPress`, `hitSlop`, `android_ripple`, mở rộng tốt hơn",
+  "Tự động có hiệu ứng mờ",
+  "Không cần `onPress`",
+]
+answer = [1]
+explanation = "Pressable là API khuyến nghị cho mọi tương tác chạm mới."
+
+[[questions]]
+id = "rn-008"
+module = "rn-core"
+type = "fill"
+difficulty = 1
+prompt = '''
+Cho phần tử con chiếm toàn bộ không gian còn lại của cha:
+
+```jsx
+<View style={{ {{blank}}: 1 }}>
+```
+'''
+blanks = [["flex"]]
+explanation = "`flex: 1` tương đương `flexGrow: 1, flexShrink: 1, flexBasis: 0` trong Yoga."
+
+[[questions]]
+id = "rn-009"
+module = "rn-core"
+type = "fill"
+difficulty = 2
+prompt = '''
+Xếp các phần tử con theo hàng ngang, căn giữa theo trục dọc (cross axis):
+
+```jsx
+const styles = StyleSheet.create({
+  row: { flexDirection: '{{blank}}', {{blank}}: 'center' },
+});
+```
+'''
+blanks = [["row"], ["alignItems"]]
+explanation = "Với `flexDirection: 'row'`, trục chính là ngang (`justifyContent`), trục phụ là dọc (`alignItems`)."
+
+[[questions]]
+id = "rn-010"
+module = "rn-core"
+type = "essay"
+difficulty = 2
+prompt = "Nêu ít nhất 3 điểm khác nhau giữa Flexbox trong React Native và CSS Flexbox trên web."
+keywords = [
+  ["column"],
+  ["flexShrink", "shrink", "co lại"],
+  ["flex: 1", "một số", "số duy nhất", "chỉ nhận số"],
+  ["alignContent", "align-content"],
+  ["mặc định display", "display: flex", "mọi view", "luôn là flex"],
+]
+min_keywords = 2
+model_answer = '''
+- `flexDirection` mặc định **column** (web: row).
+- Mọi `View` đều là flex container (không cần `display: flex`).
+- `flexShrink` mặc định **0** (web: 1); `alignContent` mặc định `flex-start` (web: `stretch`).
+- `flex` chỉ nhận **một số** (`flex: 1`), không phải shorthand nhiều giá trị.
+- Không có đơn vị CSS (`px`, `em`), không có cascade/selector.
+'''
+explanation = "Layout được tính bởi Yoga (C++)."
+
+# ============================================================ STYLING
+[[questions]]
+id = "rn-020"
+module = "rn-styling"
+type = "single"
+difficulty = 1
+prompt = '''
+Màu nền cuối cùng của View là gì?
+
+```jsx
+<View style={[styles.box, { backgroundColor: 'red' }, isActive && styles.active]} />
+// styles.box: { backgroundColor: 'gray' }, styles.active: { backgroundColor: 'green' }, isActive = false
+```
+'''
+options = ["gray", "red", "green", "Lỗi vì `false` trong mảng"]
+answer = [1]
+explanation = "Phần tử sau ghi đè phần tử trước; `false` bị bỏ qua."
+
+[[questions]]
+id = "rn-021"
+module = "rn-styling"
+type = "single"
+difficulty = 2
+prompt = "Vì sao nên dùng `useWindowDimensions()` thay vì `Dimensions.get('window')` trong component?"
+options = [
+  "Nhanh hơn 10 lần",
+  "Hook tự cập nhật & render lại khi kích thước thay đổi (xoay màn hình, split-screen, foldable)",
+  "Dimensions đã bị xoá",
+  "Hook trả về kích thước pixel vật lý",
+]
+answer = [1]
+explanation = "`Dimensions.get` chỉ là giá trị tại thời điểm gọi; muốn cập nhật phải tự subscribe sự kiện `change`."
+
+[[questions]]
+id = "rn-022"
+module = "rn-styling"
+type = "single"
+difficulty = 2
+prompt = "`Platform.select({ ios: 'A', android: 'B', default: 'C' })` trả về gì khi chạy trên **web**?"
+options = ["'A'", "'B'", "'C'", "undefined"]
+answer = [2]
+explanation = "Thứ tự ưu tiên: khoá đúng `Platform.OS` → `native` (nếu là iOS/Android) → `default`."
+
+[[questions]]
+id = "rn-023"
+module = "rn-styling"
+type = "single"
+difficulty = 2
+prompt = "Cách tạo code riêng cho từng nền tảng **theo file**?"
+options = [
+  "`Button.ios.js` và `Button.android.js`, import bằng `./Button`",
+  "`Button.native.ios.js`",
+  "`ios/Button.js`",
+  "Chỉ có thể dùng `if (Platform.OS)`",
+]
+answer = [0]
+explanation = "Metro bundler tự chọn file theo đuôi `.ios`/`.android`/`.native`/`.web`."
+
+[[questions]]
+id = "rn-024"
+module = "rn-styling"
+type = "multiple"
+difficulty = 2
+prompt = "Những thuộc tính shadow nào chỉ có hiệu lực trên **iOS** (trước New Architecture `boxShadow`)?"
+options = ["`shadowColor`", "`shadowOffset`", "`elevation`", "`shadowOpacity`", "`shadowRadius`"]
+answer = [0, 1, 3, 4]
+explanation = "Android dùng `elevation`. Từ RN 0.76 (New Architecture) có `boxShadow` đa nền tảng."
+
+[[questions]]
+id = "rn-025"
+module = "rn-styling"
+type = "fill"
+difficulty = 1
+prompt = '''
+Phát hiện dark mode của hệ thống:
+
+```jsx
+const scheme = {{blank}}(); // 'light' | 'dark' | null
+```
+'''
+blanks = [["useColorScheme"]]
+explanation = "`useColorScheme` lấy từ `react-native`, render lại khi người dùng đổi theme hệ thống."
+
+[[questions]]
+id = "rn-026"
+module = "rn-styling"
+type = "code"
+difficulty = 2
+title = "Cài đặt StyleSheet.flatten"
+prompt = '''
+Viết `flattenStyle(style)` mô phỏng `StyleSheet.flatten`:
+- `style` có thể là object, mảng (lồng nhiều cấp), hoặc falsy (`null`, `undefined`, `false`)
+- Gộp theo thứ tự, phần tử sau ghi đè phần tử trước
+- Luôn trả về **object mới** (không mutate input); input falsy → `{}`
+'''
+starter = '''
+function flattenStyle(style) {
+  // TODO
+}
+'''
+solution = '''
+function flattenStyle(style) {
+  if (!style) return {};
+  if (!Array.isArray(style)) return { ...style };
+  return style.reduce((acc, s) => Object.assign(acc, flattenStyle(s)), {});
+}
+'''
+tests = '''
+test('object đơn', () => {
+  const s = { color: 'red' };
+  const r = flattenStyle(s);
+  expect(r).toEqual({ color: 'red' });
+  expect(r).not.toBe(s);
+});
+test('mảng ghi đè theo thứ tự', () => {
+  expect(flattenStyle([{ color: 'red', margin: 4 }, { color: 'blue' }])).toEqual({ color: 'blue', margin: 4 });
+});
+test('bỏ qua falsy', () => {
+  expect(flattenStyle([{ a: 1 }, false, null, undefined, { b: 2 }])).toEqual({ a: 1, b: 2 });
+});
+test('mảng lồng nhau', () => {
+  expect(flattenStyle([{ a: 1 }, [{ a: 2 }, [{ b: 3 }]], { c: 4 }])).toEqual({ a: 2, b: 3, c: 4 });
+});
+test('input falsy', () => {
+  expect(flattenStyle(null)).toEqual({});
+});
+test('không mutate', () => {
+  const first = { a: 1 };
+  flattenStyle([first, { a: 2 }]);
+  expect(first.a).toBe(1);
+});
+'''
+hints = ["Đệ quy: flatten từng phần tử rồi `Object.assign` vào accumulator mới."]
+explanation = "Hiểu cơ chế merge giúp bạn chủ động khi viết component nhận prop `style` từ ngoài: `style={[styles.base, props.style]}`."
+
+[[questions]]
+id = "rn-027"
+module = "rn-styling"
+type = "code"
+difficulty = 2
+title = "Platform.select"
+prompt = '''
+Viết `createPlatform(os)` trả về object `{ OS, select(spec) }` mô phỏng `Platform` của RN.
+
+`select(spec)` trả về:
+1. `spec[os]` nếu khoá đó tồn tại (dù giá trị là falsy)
+2. nếu `os` là `'ios'` hoặc `'android'` và có khoá `native` → `spec.native`
+3. ngược lại `spec.default` (có thể là `undefined`)
+'''
+starter = '''
+function createPlatform(os) {
+  return {
+    OS: os,
+    select(spec) {
+      // TODO
+    },
+  };
+}
+'''
+solution = '''
+function createPlatform(os) {
+  return {
+    OS: os,
+    select(spec) {
+      if (Object.prototype.hasOwnProperty.call(spec, os)) return spec[os];
+      if ((os === 'ios' || os === 'android') && Object.prototype.hasOwnProperty.call(spec, 'native')) return spec.native;
+      return spec.default;
+    },
+  };
+}
+'''
+tests = '''
+test('chọn đúng OS', () => {
+  expect(createPlatform('ios').select({ ios: 1, android: 2 })).toBe(1);
+  expect(createPlatform('android').select({ ios: 1, android: 2 })).toBe(2);
+});
+test('fallback native', () => {
+  expect(createPlatform('android').select({ ios: 1, native: 'n', default: 'd' })).toBe('n');
+});
+test('web không dùng native', () => {
+  expect(createPlatform('web').select({ native: 'n', default: 'd' })).toBe('d');
+});
+test('giá trị falsy vẫn được chọn', () => {
+  expect(createPlatform('ios').select({ ios: 0, default: 5 })).toBe(0);
+});
+test('không có gì → undefined', () => {
+  expect(createPlatform('windows').select({ ios: 1 })).toBeUndefined();
+});
+test('dùng với style', () => {
+  const P = createPlatform('android');
+  expect(P.select({ ios: { shadowOpacity: 0.2 }, android: { elevation: 4 } })).toEqual({ elevation: 4 });
+});
+'''
+hints = ["Dùng `hasOwnProperty` thay vì kiểm tra truthy để không bỏ sót giá trị `0`/`false`."]
+explanation = "Platform.select giúp viết code đa nền tảng gọn gàng ngay trong StyleSheet."
+
+[[questions]]
+id = "rn-028"
+module = "rn-styling"
+type = "code"
+difficulty = 2
+title = "Responsive scale"
+prompt = '''
+Thiết kế Figma dựa trên màn hình chuẩn **375 × 812**. Viết hàm `createScaler(width, height)` trả về:
+- `scale(size)` = `size * width / 375`
+- `verticalScale(size)` = `size * height / 812`
+- `moderateScale(size, factor = 0.5)` = `size + (scale(size) - size) * factor`
+
+Kết quả làm tròn tới **2 chữ số thập phân** (`Math.round(x * 100) / 100`).
+'''
+starter = '''
+function createScaler(width, height) {
+  // TODO
+}
+'''
+solution = '''
+function createScaler(width, height) {
+  const r = (x) => Math.round(x * 100) / 100;
+  const raw = (size) => (size * width) / 375;
+  return {
+    scale: (size) => r(raw(size)),
+    verticalScale: (size) => r((size * height) / 812),
+    moderateScale: (size, factor = 0.5) => r(size + (raw(size) - size) * factor),
+  };
+}
+'''
+tests = '''
+const s = createScaler(750, 1624);
+test('scale', () => expect(s.scale(10)).toBe(20));
+test('verticalScale', () => expect(s.verticalScale(10)).toBe(20));
+test('moderateScale mặc định 0.5', () => expect(s.moderateScale(10)).toBe(15));
+test('moderateScale factor tuỳ chỉnh', () => expect(s.moderateScale(10, 0.25)).toBe(12.5));
+test('màn hình chuẩn giữ nguyên', () => {
+  const b = createScaler(375, 812);
+  expect(b.scale(14)).toBe(14);
+  expect(b.moderateScale(14)).toBe(14);
+});
+test('làm tròn 2 chữ số', () => expect(createScaler(390, 844).scale(13)).toBe(13.52));
+'''
+hints = ["`moderateScale` dùng giá trị scale **chưa làm tròn** rồi mới làm tròn kết quả cuối."]
+explanation = "moderateScale giúp font/padding không phình quá to trên tablet."
+
+# ============================================================ LISTS
+[[questions]]
+id = "rn-040"
+module = "rn-lists"
+type = "single"
+difficulty = 2
+prompt = "`getItemLayout` trong FlatList giúp gì?"
+options = [
+  "Đổi layout từ dọc sang ngang",
+  "Cho FlatList biết trước kích thước/vị trí từng item (khi cố định) → bỏ qua đo động, cuộn tới index nhanh & chính xác",
+  "Tự động đo chiều cao item",
+  "Bật virtualization",
+]
+answer = [1]
+explanation = "Trả về `{ length, offset, index }`. Rất hữu ích cho `scrollToIndex` và initialScrollIndex."
+
+[[questions]]
+id = "rn-041"
+module = "rn-lists"
+type = "single"
+difficulty = 2
+prompt = "FlatList không render lại khi `selectedId` (state ngoài `data`) thay đổi. Cách sửa?"
+options = [
+  "Thêm `key={Math.random()}` cho FlatList",
+  "Truyền `extraData={selectedId}`",
+  "Dùng ScrollView",
+  "Gọi `forceUpdate`",
+]
+answer = [1]
+explanation = "FlatList là PureComponent — chỉ render lại khi props nông đổi; `extraData` báo cho nó dữ liệu phụ thuộc thêm."
+
+[[questions]]
+id = "rn-042"
+module = "rn-lists"
+type = "single"
+difficulty = 2
+prompt = "`onEndReachedThreshold={0.5}` có nghĩa là:"
+options = [
+  "Gọi `onEndReached` khi còn 50 item",
+  "Gọi `onEndReached` khi phần nội dung còn lại chưa hiển thị bằng 0.5 lần chiều cao vùng nhìn thấy",
+  "Gọi sau 0.5 giây",
+  "Gọi khi cuộn được 50%",
+]
+answer = [1]
+explanation = "Đơn vị là số lần chiều dài viewport tính từ cuối danh sách."
+
+[[questions]]
+id = "rn-043"
+module = "rn-lists"
+type = "single"
+difficulty = 2
+prompt = "Hermes mang lại lợi ích chính nào?"
+options = [
+  "Hỗ trợ CSS",
+  "Biên dịch JS thành bytecode lúc build (AOT) → khởi động nhanh hơn, ít RAM, APK nhỏ hơn",
+  "Chạy JS trên UI thread",
+  "Thay thế Metro bundler",
+]
+answer = [1]
+explanation = "Hermes là engine mặc định của RN từ 0.70."
+
+[[questions]]
+id = "rn-044"
+module = "rn-lists"
+type = "single"
+difficulty = 3
+prompt = "Vì sao animation dùng `Animated` với `useNativeDriver: true` (hoặc Reanimated worklet) mượt hơn khi JS thread bận?"
+options = [
+  "Vì dùng GPU để chạy JS",
+  "Vì giá trị animation được tính & áp dụng trên UI/native thread, không cần JS thread gửi từng frame",
+  "Vì giảm FPS xuống 30",
+  "Vì tắt virtualization",
+]
+answer = [1]
+explanation = "Native driver chỉ hỗ trợ thuộc tính không ảnh hưởng layout (`transform`, `opacity`)."
+
+[[questions]]
+id = "rn-045"
+module = "rn-lists"
+type = "multiple"
+difficulty = 3
+prompt = "Kỹ thuật nào giúp FlatList dài cuộn mượt hơn?"
+options = [
+  "Bọc item component bằng `React.memo`",
+  "Khai báo `renderItem` bằng `useCallback` / ngoài component",
+  "Dùng ảnh full-resolution trong mỗi item",
+  "`getItemLayout` khi item cố định chiều cao",
+  "Hàm ẩn danh nặng trong `renderItem` tính toán lại mỗi lần",
+  "Tinh chỉnh `windowSize`, `maxToRenderPerBatch`, `removeClippedSubviews`",
+]
+answer = [0, 1, 3, 5]
+explanation = "Ảnh nên được resize/cache (expo-image, FastImage); tránh tính toán nặng trong renderItem."
+
+[[questions]]
+id = "rn-046"
+module = "rn-lists"
+type = "fill"
+difficulty = 1
+prompt = '''
+Hoàn thành FlatList:
+
+```jsx
+<FlatList
+  data={products}
+  {{blank}}={(item) => String(item.id)}
+  renderItem={({ {{blank}} }) => <ProductRow product={item} />}
+/>
+```
+'''
+blanks = [["keyExtractor"], ["item"]]
+explanation = "`renderItem` nhận `{ item, index, separators }`."
+
+[[questions]]
+id = "rn-047"
+module = "rn-lists"
+type = "essay"
+difficulty = 3
+prompt = "Mô tả cách triển khai **infinite scroll** (phân trang) với FlatList và các lỗi cần tránh."
+keywords = [
+  ["onEndReached"],
+  ["loading", "đang tải", "isLoading", "cờ"],
+  ["trùng", "duplicate", "nhiều lần", "gọi lặp"],
+  ["hasMore", "hết dữ liệu", "trang cuối", "cursor"],
+  ["ListFooterComponent", "footer", "spinner"],
+]
+min_keywords = 3
+model_answer = '''
+- Dùng `onEndReached` + `onEndReachedThreshold` để tải trang tiếp theo; nối dữ liệu mới vào `data`.
+- Giữ cờ **loading** để **không gọi trùng nhiều lần** (onEndReached có thể bắn nhiều lần liên tiếp), và cờ **hasMore**/cursor để dừng khi hết dữ liệu.
+- Hiển thị spinner bằng `ListFooterComponent`; hỗ trợ pull-to-refresh bằng `refreshing` + `onRefresh` (reset về trang 1).
+- **Khử trùng lặp theo id** khi merge trang, `keyExtractor` ổn định; xử lý lỗi mạng và retry.
+'''
+explanation = "Thực tế thường dùng `useInfiniteQuery` của TanStack Query."
+
+[[questions]]
+id = "rn-048"
+module = "rn-lists"
+type = "code"
+difficulty = 2
+title = "getItemLayout cho item cố định"
+prompt = '''
+Viết `makeGetItemLayout(itemHeight, separatorHeight = 0, headerHeight = 0)` trả về hàm
+`(data, index) => ({ length, offset, index })` dùng cho FlatList:
+- `length` = `itemHeight`
+- `offset` = `headerHeight + index * (itemHeight + separatorHeight)`
+'''
+starter = '''
+function makeGetItemLayout(itemHeight, separatorHeight = 0, headerHeight = 0) {
+  // TODO
+}
+'''
+solution = '''
+function makeGetItemLayout(itemHeight, separatorHeight = 0, headerHeight = 0) {
+  return (data, index) => ({
+    length: itemHeight,
+    offset: headerHeight + index * (itemHeight + separatorHeight),
+    index,
+  });
+}
+'''
+tests = '''
+test('item đầu tiên', () => {
+  expect(makeGetItemLayout(60)(null, 0)).toEqual({ length: 60, offset: 0, index: 0 });
+});
+test('có separator', () => {
+  expect(makeGetItemLayout(60, 1)(null, 3)).toEqual({ length: 60, offset: 183, index: 3 });
+});
+test('có header', () => {
+  expect(makeGetItemLayout(50, 2, 100)(null, 2)).toEqual({ length: 50, offset: 204, index: 2 });
+});
+test('trả về hàm', () => {
+  expect(typeof makeGetItemLayout(10)).toBe('function');
+});
+'''
+hints = ["Mỗi item trước index đóng góp `itemHeight + separatorHeight`."]
+explanation = "Chỉ dùng khi chiều cao item thật sự cố định, nếu sai sẽ cuộn lệch."
+
+[[questions]]
+id = "rn-049"
+module = "rn-lists"
+type = "code"
+difficulty = 3
+title = "Paginator chống gọi trùng"
+prompt = '''
+Viết `createPaginator(fetchPage)` cho infinite scroll. `fetchPage(page)` trả về Promise `{ items, hasMore }` (page bắt đầu từ **1**).
+
+Trả về object:
+- `items` — mảng tất cả item đã tải (khử trùng lặp theo `id`, giữ bản xuất hiện **đầu tiên**)
+- `loading`, `hasMore` (ban đầu `false`, `true`)
+- `loadMore()` → Promise: nếu đang `loading` hoặc `!hasMore` thì **không gọi** `fetchPage` (trả về Promise resolve ngay). Ngược lại tải trang kế tiếp.
+- Nếu `fetchPage` lỗi: `loading = false`, `error = lỗi`, **không tăng trang** (lần sau gọi lại đúng trang đó).
+- `refresh()` → reset về trang 1, xoá items rồi tải lại.
+'''
+starter = '''
+function createPaginator(fetchPage) {
+  const p = {
+    items: [],
+    loading: false,
+    hasMore: true,
+    error: null,
+    loadMore() {
+      // TODO
+    },
+    refresh() {
+      // TODO
+    },
+  };
+  return p;
+}
+'''
+solution = '''
+function createPaginator(fetchPage) {
+  let page = 0;
+  const p = {
+    items: [],
+    loading: false,
+    hasMore: true,
+    error: null,
+    loadMore() {
+      if (p.loading || !p.hasMore) return Promise.resolve();
+      p.loading = true;
+      p.error = null;
+      const next = page + 1;
+      return fetchPage(next).then(
+        (res) => {
+          const seen = new Set(p.items.map((i) => i.id));
+          p.items = p.items.concat(res.items.filter((i) => !seen.has(i.id) && seen.add(i.id)));
+          p.hasMore = res.hasMore;
+          page = next;
+          p.loading = false;
+        },
+        (err) => {
+          p.error = err;
+          p.loading = false;
+        }
+      );
+    },
+    refresh() {
+      page = 0;
+      p.items = [];
+      p.hasMore = true;
+      p.loading = false;
+      return p.loadMore();
+    },
+  };
+  return p;
+}
+'''
+tests = '''
+function fakeApi(pages) {
+  const fn = jest.fn((page) => Promise.resolve(pages[page - 1]));
+  return fn;
+}
+test('tải trang đầu', async () => {
+  const api = fakeApi([{ items: [{ id: 1 }, { id: 2 }], hasMore: true }]);
+  const p = createPaginator(api);
+  await p.loadMore();
+  expect(p.items).toEqual([{ id: 1 }, { id: 2 }]);
+  expect(api).toHaveBeenCalledWith(1);
+});
+test('không gọi trùng khi đang loading', async () => {
+  const api = fakeApi([{ items: [{ id: 1 }], hasMore: true }, { items: [{ id: 2 }], hasMore: false }]);
+  const p = createPaginator(api);
+  const a = p.loadMore();
+  p.loadMore();
+  p.loadMore();
+  expect(p.loading).toBe(true);
+  await a;
+  expect(api).toHaveBeenCalledTimes(1);
+});
+test('dừng khi hết dữ liệu + khử trùng id', async () => {
+  const api = fakeApi([{ items: [{ id: 1 }, { id: 2 }], hasMore: true }, { items: [{ id: 2, dup: true }, { id: 3 }], hasMore: false }]);
+  const p = createPaginator(api);
+  await p.loadMore();
+  await p.loadMore();
+  await p.loadMore();
+  expect(api).toHaveBeenCalledTimes(2);
+  expect(p.items).toEqual([{ id: 1 }, { id: 2 }, { id: 3 }]);
+  expect(p.hasMore).toBe(false);
+});
+test('lỗi không tăng trang', async () => {
+  let fail = true;
+  const api = jest.fn((page) => fail ? Promise.reject(new Error('net')) : Promise.resolve({ items: [{ id: page }], hasMore: true }));
+  const p = createPaginator(api);
+  await p.loadMore();
+  expect(p.error.message).toBe('net');
+  expect(p.loading).toBe(false);
+  fail = false;
+  await p.loadMore();
+  expect(api.mock.calls[1]).toEqual([1]);
+  expect(p.items).toEqual([{ id: 1 }]);
+});
+test('refresh', async () => {
+  const api = fakeApi([{ items: [{ id: 1 }], hasMore: true }, { items: [{ id: 2 }], hasMore: true }]);
+  const p = createPaginator(api);
+  await p.loadMore();
+  await p.loadMore();
+  await p.refresh();
+  expect(p.items).toEqual([{ id: 1 }]);
+  expect(api.mock.calls[2]).toEqual([1]);
+});
+'''
+hints = ["Giữ biến `page` trong closure, chỉ tăng khi fetch thành công.", "Dùng `Set` các id đã có để lọc trùng."]
+explanation = "Đây là logic cốt lõi bên dưới `onEndReached` mà phỏng vấn RN rất hay hỏi."
+
+# ============================================================ NAVIGATION
+[[questions]]
+id = "rn-060"
+module = "rn-navigation"
+type = "single"
+difficulty = 2
+prompt = "Khác nhau giữa `navigation.navigate('Detail')` và `navigation.push('Detail')` trong Stack?"
+options = [
+  "Không khác",
+  "`navigate` quay về màn hình `Detail` nếu đã có trong stack; `push` luôn thêm một instance mới",
+  "`push` chỉ dùng cho tab",
+  "`navigate` xoá stack",
+]
+answer = [1]
+explanation = "Dùng `push` khi muốn mở nhiều màn hình cùng loại chồng nhau (ví dụ Detail → Detail liên quan)."
+
+[[questions]]
+id = "rn-061"
+module = "rn-navigation"
+type = "single"
+difficulty = 2
+prompt = "Màn hình A trong stack đã push sang B. Khi quay lại A, `useEffect(() => {...}, [])` của A có chạy lại không?"
+options = [
+  "Có, vì A mount lại",
+  "Không — A không bị unmount khi push B; dùng `useFocusEffect` để chạy logic mỗi khi A được focus",
+  "Chỉ trên Android",
+  "Có nếu dùng native-stack",
+]
+answer = [1]
+explanation = "`useFocusEffect(useCallback(() => { ...; return cleanup }, []))`."
+
+[[questions]]
+id = "rn-062"
+module = "rn-navigation"
+type = "single"
+difficulty = 1
+prompt = "Hook nào để truy cập `navigation` trong một component **không phải** screen?"
+options = ["`useRoute`", "`useNavigation`", "`useNavigationState`", "`useLinking`"]
+answer = [1]
+explanation = "`useRoute()` để đọc params của màn hình hiện tại."
+
+[[questions]]
+id = "rn-063"
+module = "rn-navigation"
+type = "single"
+difficulty = 2
+prompt = "Trong Expo Router, file `app/user/[id].tsx` tương ứng với:"
+options = ["Route tĩnh `/user/[id]`", "Route động `/user/:id`, đọc bằng `useLocalSearchParams()`", "Layout cho thư mục user", "Route bị bỏ qua"]
+answer = [1]
+explanation = "`_layout.tsx` định nghĩa layout; `(group)` là nhóm không ảnh hưởng URL."
+
+[[questions]]
+id = "rn-064"
+module = "rn-navigation"
+type = "fill"
+difficulty = 2
+prompt = '''
+Truyền và đọc params:
+
+```jsx
+navigation.navigate('Profile', { userId: 42 });
+
+function Profile({ route }) {
+  const { userId } = route.{{blank}};
+}
+```
+'''
+blanks = [["params"]]
+explanation = "Params nên là dữ liệu tuần tự hoá được (id), không truyền object lớn hay hàm."
+
+[[questions]]
+id = "rn-065"
+module = "rn-navigation"
+type = "code"
+difficulty = 3
+title = "Stack navigation reducer"
+prompt = '''
+Mô phỏng state của Stack Navigator. State: `{ routes: [{ name, params }], index }` (index = màn hình đang hiển thị = phần tử cuối).
+
+Viết `stackReducer(state, action)` (bất biến) hỗ trợ:
+- `{ type: 'PUSH', name, params }` → thêm route mới
+- `{ type: 'NAVIGATE', name, params }` → nếu đã có route cùng `name` trong stack thì **pop về** route đó (và cập nhật params nếu có truyền), ngược lại giống PUSH
+- `{ type: 'POP', count = 1 }` → bỏ `count` route trên cùng, nhưng **luôn giữ ít nhất 1**
+- `{ type: 'POP_TO_TOP' }` → chỉ giữ route đầu
+- `{ type: 'REPLACE', name, params }` → thay route trên cùng
+- `{ type: 'RESET', name, params }` → thay stack bằng một route duy nhất
+- action khác → trả về state cũ
+'''
+starter = '''
+function stackReducer(state, action) {
+  // TODO
+  return state;
+}
+'''
+solution = '''
+function stackReducer(state, action) {
+  const make = (routes) => ({ routes, index: routes.length - 1 });
+  switch (action.type) {
+    case 'PUSH':
+      return make([...state.routes, { name: action.name, params: action.params }]);
+    case 'NAVIGATE': {
+      let i = -1;
+      for (let k = state.routes.length - 1; k >= 0; k--) if (state.routes[k].name === action.name) { i = k; break; }
+      if (i === -1) return make([...state.routes, { name: action.name, params: action.params }]);
+      const routes = state.routes.slice(0, i + 1);
+      if (action.params !== undefined) routes[i] = { ...routes[i], params: action.params };
+      return make(routes);
+    }
+    case 'POP': {
+      const count = action.count === undefined ? 1 : action.count;
+      return make(state.routes.slice(0, Math.max(1, state.routes.length - count)));
+    }
+    case 'POP_TO_TOP':
+      return make(state.routes.slice(0, 1));
+    case 'REPLACE':
+      return make([...state.routes.slice(0, -1), { name: action.name, params: action.params }]);
+    case 'RESET':
+      return make([{ name: action.name, params: action.params }]);
+    default:
+      return state;
+  }
+}
+'''
+tests = '''
+const home = { routes: [{ name: 'Home', params: undefined }], index: 0 };
+test('PUSH', () => {
+  const s = stackReducer(home, { type: 'PUSH', name: 'Detail', params: { id: 1 } });
+  expect(s.routes.map(r => r.name)).toEqual(['Home', 'Detail']);
+  expect(s.index).toBe(1);
+  expect(home.routes).toHaveLength(1);
+});
+test('NAVIGATE tới route đã có thì pop về', () => {
+  let s = stackReducer(home, { type: 'PUSH', name: 'List' });
+  s = stackReducer(s, { type: 'PUSH', name: 'Detail' });
+  s = stackReducer(s, { type: 'NAVIGATE', name: 'List', params: { page: 2 } });
+  expect(s.routes.map(r => r.name)).toEqual(['Home', 'List']);
+  expect(s.routes[1].params).toEqual({ page: 2 });
+  expect(s.index).toBe(1);
+});
+test('NAVIGATE tới route mới thì push', () => {
+  const s = stackReducer(home, { type: 'NAVIGATE', name: 'Settings' });
+  expect(s.routes.map(r => r.name)).toEqual(['Home', 'Settings']);
+});
+test('POP giữ ít nhất 1', () => {
+  let s = stackReducer(home, { type: 'PUSH', name: 'A' });
+  s = stackReducer(s, { type: 'POP', count: 5 });
+  expect(s.routes.map(r => r.name)).toEqual(['Home']);
+  expect(s.index).toBe(0);
+});
+test('POP mặc định 1', () => {
+  let s = stackReducer(home, { type: 'PUSH', name: 'A' });
+  s = stackReducer(s, { type: 'PUSH', name: 'B' });
+  expect(stackReducer(s, { type: 'POP' }).routes.map(r => r.name)).toEqual(['Home', 'A']);
+});
+test('POP_TO_TOP', () => {
+  let s = stackReducer(home, { type: 'PUSH', name: 'A' });
+  s = stackReducer(s, { type: 'PUSH', name: 'B' });
+  expect(stackReducer(s, { type: 'POP_TO_TOP' })).toEqual(home);
+});
+test('REPLACE', () => {
+  let s = stackReducer(home, { type: 'PUSH', name: 'Login' });
+  s = stackReducer(s, { type: 'REPLACE', name: 'Main' });
+  expect(s.routes.map(r => r.name)).toEqual(['Home', 'Main']);
+});
+test('RESET thay stack bằng route mới', () => {
+  const state = stackReducer({ routes: [{ name: 'Home' }, { name: 'Detail' }], index: 1 }, { type: 'RESET', name: 'Login' });
+  expect(state.routes).toEqual([{ name: 'Login', params: undefined }]);
+  expect(state.index).toBe(0);
+});
+test('action lạ trả về state cũ', () => {
+  expect(stackReducer(home, { type: 'X' })).toBe(home);
+});
+'''
+hints = ["Viết helper `make(routes)` tính `index = routes.length - 1`.", "NAVIGATE: tìm từ cuối stack lên."]
+explanation = "React Navigation thực sự dùng router dạng reducer như vậy (`StackRouter.getStateForAction`)."
+
+# ============================================================ NATIVE
+[[questions]]
+id = "rn-080"
+module = "rn-native"
+type = "single"
+difficulty = 2
+prompt = "JSI (JavaScript Interface) trong New Architecture giải quyết vấn đề gì của Bridge cũ?"
+options = [
+  "Cho phép viết UI bằng C++",
+  "Cho JS gọi trực tiếp (kể cả đồng bộ) đối tượng native qua C++ mà không cần serialize JSON qua bridge bất đồng bộ",
+  "Thay thế JavaScript bằng TypeScript",
+  "Cho phép chạy React Native trên web",
+]
+answer = [1]
+explanation = "JSI là nền tảng cho TurboModules, Fabric, Reanimated, MMKV, VisionCamera…"
+
+[[questions]]
+id = "rn-081"
+module = "rn-native"
+type = "single"
+difficulty = 2
+prompt = "Fabric là gì?"
+options = ["Thư viện UI", "Hệ thống render mới của React Native (New Architecture)", "Công cụ build iOS", "Một JS engine"]
+answer = [1]
+explanation = "Fabric hỗ trợ concurrent rendering, đo layout đồng bộ, chia sẻ cây shadow bằng C++."
+
+[[questions]]
+id = "rn-082"
+module = "rn-native"
+type = "single"
+difficulty = 1
+prompt = "Nên lưu **access token** của người dùng ở đâu trong app RN?"
+options = [
+  "AsyncStorage",
+  "Biến global",
+  "Keychain (iOS) / Keystore (Android) qua `expo-secure-store` hoặc `react-native-keychain`",
+  "File JSON trong bundle",
+]
+answer = [2]
+explanation = "AsyncStorage không mã hoá — trên thiết bị root/jailbreak có thể đọc được."
+
+[[questions]]
+id = "rn-083"
+module = "rn-native"
+type = "single"
+difficulty = 2
+prompt = "OTA update (EAS Update) **không thể** cập nhật được thứ gì?"
+options = ["Code JavaScript", "Ảnh/asset trong bundle", "Native code (thêm native module mới, đổi Info.plist)", "Text hiển thị"]
+answer = [2]
+explanation = "Thay đổi native cần build mới và phát hành qua store. Cần tương thích `runtimeVersion`."
+
+[[questions]]
+id = "rn-084"
+module = "rn-native"
+type = "single"
+difficulty = 2
+prompt = "Khi nào cần **development build** thay vì Expo Go?"
+options = [
+  "Khi dùng `useState`",
+  "Khi dự án cần native module/config không có sẵn trong Expo Go (vd. thư viện native bên thứ ba, config plugin tuỳ biến)",
+  "Khi chạy trên Android",
+  "Không bao giờ",
+]
+answer = [1]
+explanation = "Development build = app debug của riêng bạn có `expo-dev-client`."
+
+[[questions]]
+id = "rn-085"
+module = "rn-native"
+type = "multiple"
+difficulty = 3
+prompt = "Thành phần nào thuộc **New Architecture** của React Native?"
+options = ["JSI", "Fabric", "TurboModules", "Codegen", "Bridge (MessageQueue)", "Bridgeless mode"]
+answer = [0, 1, 2, 3, 5]
+explanation = "Bridge là kiến trúc cũ; New Architecture hướng tới chế độ bridgeless."
+
+[[questions]]
+id = "rn-086"
+module = "rn-native"
+type = "fill"
+difficulty = 2
+prompt = '''
+Lưu và đọc dữ liệu với AsyncStorage (chỉ lưu được **chuỗi**):
+
+```js
+await AsyncStorage.setItem('user', JSON.{{blank}}(user));
+const user = JSON.{{blank}}(await AsyncStorage.getItem('user'));
+```
+'''
+blanks = [["stringify"], ["parse"]]
+explanation = "AsyncStorage chỉ lưu string, cần serialize/deserialize."
+
+[[questions]]
+id = "rn-087"
+module = "rn-native"
+type = "essay"
+difficulty = 3
+prompt = "So sánh kiến trúc cũ (Bridge) và New Architecture của React Native."
+keywords = [
+  ["bridge", "cầu nối"],
+  ["bất đồng bộ", "async", "asynchronous"],
+  ["json", "serialize", "tuần tự hoá"],
+  ["jsi"],
+  ["fabric"],
+  ["turbomodule", "turbo module", "lazy"],
+  ["đồng bộ", "synchronous", "sync"],
+]
+min_keywords = 4
+model_answer = '''
+**Kiến trúc cũ**: JS và native giao tiếp qua **Bridge** — mọi lời gọi được **serialize thành JSON**, gửi **bất đồng bộ** theo lô. Gây nghẽn khi lưu lượng lớn (cuộn, animation, gesture), không gọi đồng bộ được, mọi native module khởi tạo ngay khi khởi động.
+
+**New Architecture**:
+- **JSI**: JS giữ tham chiếu trực tiếp tới đối tượng C++/native → gọi **đồng bộ** hoặc bất đồng bộ, không serialize.
+- **Fabric**: renderer mới, hỗ trợ concurrent React (Suspense, transitions), đo layout đồng bộ.
+- **TurboModules**: native module **lazy load**, type-safe nhờ **Codegen** từ spec TypeScript/Flow.
+- Kết quả: khởi động nhanh hơn, tương tác mượt hơn, tiến tới bridgeless.
+'''
+explanation = "New Architecture bật mặc định từ RN 0.76."
+
+[[questions]]
+id = "rn-088"
+module = "rn-native"
+type = "code"
+difficulty = 3
+title = "Cache có hạn dùng trên AsyncStorage"
+prompt = '''
+Viết `createCache(storage, ttlMs)` — `storage` có API giống AsyncStorage: `getItem(key)`, `setItem(key, value)`, `removeItem(key)` đều trả về **Promise**, chỉ lưu **chuỗi**.
+
+Trả về:
+- `set(key, value)` → lưu `JSON.stringify({ value, expires: Date.now() + ttlMs })`
+- `get(key)` → Promise trả về `value` nếu còn hạn; nếu không có / hết hạn (`Date.now() >= expires`) thì trả về `null` (và xoá key khi hết hạn); JSON hỏng → `null`
+
+`Date.now()` được điều khiển bằng fake timers (`jest.advanceTimersByTime`).
+'''
+starter = '''
+function createCache(storage, ttlMs) {
+  return {
+    async set(key, value) {
+      // TODO
+    },
+    async get(key) {
+      // TODO
+    },
+  };
+}
+'''
+solution = '''
+function createCache(storage, ttlMs) {
+  return {
+    async set(key, value) {
+      await storage.setItem(key, JSON.stringify({ value, expires: Date.now() + ttlMs }));
+    },
+    async get(key) {
+      const raw = await storage.getItem(key);
+      if (raw == null) return null;
+      let entry;
+      try { entry = JSON.parse(raw); } catch (e) { return null; }
+      if (!entry || typeof entry.expires !== 'number') return null;
+      if (Date.now() >= entry.expires) {
+        await storage.removeItem(key);
+        return null;
+      }
+      return entry.value;
+    },
+  };
+}
+'''
+tests = '''
+function memoryStorage() {
+  const m = new Map();
+  return {
+    m,
+    getItem: jest.fn(async (k) => (m.has(k) ? m.get(k) : null)),
+    setItem: jest.fn(async (k, v) => { if (typeof v !== 'string') throw new Error('chỉ lưu chuỗi'); m.set(k, v); }),
+    removeItem: jest.fn(async (k) => { m.delete(k); }),
+  };
+}
+test('set rồi get', async () => {
+  const st = memoryStorage();
+  const c = createCache(st, 1000);
+  await c.set('user', { id: 1 });
+  expect(await c.get('user')).toEqual({ id: 1 });
+});
+test('không có key → null', async () => {
+  const c = createCache(memoryStorage(), 1000);
+  expect(await c.get('nope')).toBeNull();
+});
+test('hết hạn → null và xoá key', async () => {
+  const st = memoryStorage();
+  const c = createCache(st, 1000);
+  await c.set('k', 'v');
+  jest.advanceTimersByTime(999);
+  expect(await c.get('k')).toBe('v');
+  jest.advanceTimersByTime(1);
+  expect(await c.get('k')).toBeNull();
+  expect(st.removeItem).toHaveBeenCalledWith('k');
+  expect(st.m.has('k')).toBe(false);
+});
+test('JSON hỏng → null', async () => {
+  const st = memoryStorage();
+  st.m.set('bad', '{oops');
+  expect(await createCache(st, 10).get('bad')).toBeNull();
+});
+test('lưu được giá trị falsy', async () => {
+  const c = createCache(memoryStorage(), 100);
+  await c.set('zero', 0);
+  expect(await c.get('zero')).toBe(0);
+});
+'''
+hints = ["`JSON.parse` có thể ném lỗi — bọc try/catch.", "Phân biệt 'không có key' (`null`) với giá trị `0`/`false` đã lưu."]
+explanation = "Pattern cache-with-TTL hay dùng để lưu response API offline-first."
+
+# ============================================================ BỔ SUNG (nguồn DevDocs)
+[[questions]]
+id = "rn-dd01"
+module = "rn-core"
+type = "single"
+difficulty = 2
+prompt = "Form đăng nhập nằm cuối màn hình bị bàn phím che mất ô mật khẩu trên iOS. Component dựng sẵn nào giải quyết việc này?"
+options = ["`SafeAreaView`", "`KeyboardAvoidingView` với `behavior=\"padding\"` (iOS)", "`Modal`", "`StatusBar`"]
+answer = [1]
+explanation = "`KeyboardAvoidingView` tự đổi chiều cao/padding/vị trí theo bàn phím. Thường dùng `behavior=\"padding\"` trên iOS và `\"height\"` hoặc không đặt trên Android; kết hợp `keyboardVerticalOffset` nếu có header."
+sources = ["react_native/keyboardavoidingview"]
+
+[[questions]]
+id = "rn-dd02"
+module = "rn-native"
+type = "multiple"
+difficulty = 2
+prompt = "Dùng `AppState` để làm gì là hợp lý?"
+options = [
+  "Tạm dừng polling / video khi app chuyển sang `background`",
+  "Làm mới dữ liệu khi app quay lại `active`",
+  "Khoá màn hình bằng mã PIN khi người dùng quay lại app",
+  "Chạy tác vụ nặng vô thời hạn khi app ở background (iOS)",
+]
+answer = [0, 1, 2]
+explanation = "`AppState.addEventListener('change', cb)` báo `active` / `background` / `inactive`. JS không được đảm bảo chạy lâu ở background — cần API background task riêng."
+sources = ["react_native/appstate"]
+
+[[questions]]
+id = "rn-dd03"
+module = "rn-styling"
+type = "fill"
+difficulty = 1
+prompt = '''
+Hook trả về kích thước màn hình và **tự cập nhật** khi xoay máy:
+
+```js
+const { width, height } = {{blank}}();
+```
+
+Chạy hiệu ứng tự động cho lần thay đổi layout kế tiếp (thêm/xoá phần tử):
+
+```js
+{{blank}}.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+setItems(next);
+```
+'''
+blanks = [["useWindowDimensions"], ["LayoutAnimation"]]
+explanation = "`Dimensions.get` không tự cập nhật; `useWindowDimensions` thì có. `LayoutAnimation` áp dụng cho lần render layout ngay sau đó (Android cần bật experimental trên kiến trúc cũ)."
+sources = ["react_native/usewindowdimensions", "react_native/layoutanimation"]
+
+[[questions]]
+id = "rn-dd04"
+module = "rn-native"
+type = "essay"
+difficulty = 2
+prompt = "Làm thế nào để một nút tuỳ biến (`Pressable` chứa icon) dùng tốt với VoiceOver/TalkBack?"
+keywords = [
+  ["accessible"],
+  ["accessibilitylabel", "label", "nhãn"],
+  ["accessibilityrole", "role", "button"],
+  ["accessibilityhint", "hint"],
+  ["accessibilitystate", "disabled", "selected", "trạng thái"],
+  ["hitslop", "vùng chạm", "44", "48"],
+]
+min_keywords = 3
+model_answer = '''
+- Đặt `accessible` (Pressable mặc định đã gom con thành một phần tử) và **`accessibilityLabel`** mô tả hành động ("Thêm vào giỏ") vì icon không có chữ.
+- **`accessibilityRole="button"`** để trình đọc màn hình đọc "nút".
+- **`accessibilityHint`** khi kết quả không hiển nhiên ("Mở trang thanh toán").
+- **`accessibilityState={{ disabled, selected }}`** phản ánh trạng thái.
+- Vùng chạm đủ lớn (≥ 44pt iOS / 48dp Android) — dùng **`hitSlop`** nếu icon nhỏ.
+- Kiểm tra bằng VoiceOver/TalkBack thật và `AccessibilityInfo.isScreenReaderEnabled()` khi cần.
+'''
+explanation = "Khả năng tiếp cận nên được tính từ đầu, không phải sửa sau cùng."
+sources = ["react_native/accessibility", "react_native/pressable"]
+
+[[questions]]
+id = "rn-dd05"
+module = "rn-navigation"
+type = "code"
+difficulty = 2
+title = "Phân tích deep link"
+prompt = '''
+Ứng dụng nhận deep link qua `Linking`. Viết `parseDeepLink(url, routes)`:
+
+- `url` dạng `scheme://path?query` (vd. `bovabon://course/react/lesson/3?ref=mail`); **bỏ qua** scheme, dấu `/` thừa ở đầu/cuối
+- `routes` là object `{ "<pattern>": "<ScreenName>" }`, pattern dùng `:param` (vd. `"course/:courseId/lesson/:lessonId"`)
+- Trả về `{ screen, params }` của route **đầu tiên** khớp (số đoạn phải bằng nhau); `params` gồm tham số path và query (giá trị đã `decodeURIComponent`, `+` → khoảng trắng)
+- Không khớp route nào → `null`
+- (Không dùng `URL`/`URLSearchParams` — môi trường chạy test không có)
+'''
+starter = '''
+function parseDeepLink(url, routes) {
+  return null;
+}
+'''
+solution = '''
+function parseDeepLink(url, routes) {
+  const noScheme = url.replace(/^[a-z][a-z0-9+.-]*:\/\//i, '');
+  const [pathPart, query = ''] = noScheme.split('?');
+  const segs = pathPart.split('/').filter(Boolean);
+  const params = {};
+  for (const kv of query.split('&')) {
+    if (!kv) continue;
+    const [k, v = ''] = kv.split('=');
+    params[decodeURIComponent(k)] = decodeURIComponent(v.replace(/\+/g, ' '));
+  }
+  for (const pattern of Object.keys(routes)) {
+    const ps = pattern.split('/').filter(Boolean);
+    if (ps.length !== segs.length) continue;
+    const found = {};
+    let ok = true;
+    for (let i = 0; i < ps.length; i++) {
+      if (ps[i].startsWith(':')) found[ps[i].slice(1)] = decodeURIComponent(segs[i]);
+      else if (ps[i] !== segs[i]) { ok = false; break; }
+    }
+    if (ok) return { screen: routes[pattern], params: { ...params, ...found } };
+  }
+  return null;
+}
+'''
+tests = '''
+const routes = {
+  'home': 'Home',
+  'course/:courseId': 'Course',
+  'course/:courseId/lesson/:lessonId': 'Lesson',
+};
+test('route có tham số + query', () => {
+  expect(parseDeepLink('bovabon://course/react/lesson/3?ref=mail', routes)).toEqual({
+    screen: 'Lesson', params: { courseId: 'react', lessonId: '3', ref: 'mail' },
+  });
+});
+test('route tĩnh, có / thừa', () => {
+  expect(parseDeepLink('bovabon:///home/', routes)).toEqual({ screen: 'Home', params: {} });
+});
+test('giải mã giá trị', () => {
+  const r = parseDeepLink('bovabon://course/react%20native?q=hello+world', routes);
+  expect(r.params).toEqual({ courseId: 'react native', q: 'hello world' });
+});
+test('không khớp', () => {
+  expect(parseDeepLink('bovabon://settings', routes)).toBeNull();
+  expect(parseDeepLink('bovabon://course/a/b', routes)).toBeNull();
+});
+test('https universal link', () => {
+  expect(parseDeepLink('https://course/go', routes).screen).toBe('Course');
+});
+'''
+hints = ["Tách scheme bằng regex `^[a-z][a-z0-9+.-]*://`.", "So sánh từng đoạn: đoạn bắt đầu bằng `:` là tham số."]
+explanation = "React Navigation làm việc này qua cấu hình `linking`; hiểu cơ chế giúp debug deep link nhanh hơn. Luôn kiểm tra/validate tham số nhận từ link."
+sources = ["react_native/linking"]
+
+[[questions]]
+id = "rn-x001"
+module = "rn-core"
+type = "single"
+difficulty = 1
+prompt = "Khi một `View` cần hiển thị chuỗi có một đoạn in đậm, cách nào đúng trong React Native?"
+options = ["Đặt chuỗi trực tiếp trong `View`", "Bọc chuỗi và đoạn lồng bên trong `Text`", "Dùng `span` bên trong `View`", "Đặt `innerHTML` cho `View`"]
+answer = [1]
+explanation = "React Native yêu cầu nội dung văn bản nằm trong `Text`; `View` không nhận text node như phần tử DOM trên web."
+sources = ["react_native/text", "react_native/view"]
+
+[[questions]]
+id = "rn-x002"
+module = "rn-core"
+type = "single"
+difficulty = 1
+prompt = "Một màn hình chỉ có 4 lựa chọn cố định, luôn hiển thị cùng lúc. Khi nào `ScrollView` là lựa chọn hợp lý?"
+options = ["Luôn dùng cho danh sách dài", "Khi nội dung nhỏ, giới hạn và cần render toàn bộ", "Chỉ khi có hơn 1.000 item", "Khi cần tự động tái sử dụng native view"]
+answer = [1]
+explanation = "ScrollView phù hợp với nội dung nhỏ; danh sách dài nên dùng FlatList/SectionList để virtualization giới hạn số item đang render."
+sources = ["react_native/flatlist"]
+
+[[questions]]
+id = "rn-x003"
+module = "rn-styling"
+type = "single"
+difficulty = 2
+prompt = "Trong `style={[base, selected && active]}`, nếu `selected` là `false` thì điều gì xảy ra?"
+options = ["Mảng style báo lỗi", "`false` bị bỏ qua và `base` vẫn có hiệu lực", "`base` bị xoá", "`false` chuyển thành `{ display: 'none' }`"]
+answer = [1]
+explanation = "React Native bỏ qua giá trị falsy trong mảng style; các style hợp lệ được gộp theo thứ tự, phần tử sau ghi đè thuộc tính trùng."
+sources = ["react_native/stylesheet"]
+
+[[questions]]
+id = "rn-x004"
+module = "rn-styling"
+type = "single"
+difficulty = 2
+prompt = "Layout chọn breakpoint từ `width` lấy một lần bằng `Dimensions.get('window')` bị sai sau khi xoay/fold màn hình. Cách sửa phù hợp nhất?"
+options = ["Tăng `flexShrink`", "Dùng `useWindowDimensions()` trong component", "Đọc `window.innerWidth`", "Gọi `StyleSheet.create` lại trong render"]
+answer = [1]
+explanation = "`useWindowDimensions` cập nhật khi kích thước cửa sổ đổi. `window.innerWidth` là API trình duyệt và không phải cách lấy kích thước trong RN native."
+sources = ["react_native/usewindowdimensions"]
+
+[[questions]]
+id = "rn-x005"
+module = "rn-lists"
+type = "single"
+difficulty = 1
+prompt = "Danh sách có thể được sắp xếp lại. `keyExtractor` nên trả về giá trị nào?"
+options = ["`String(index)`", "ID ổn định duy nhất của item", "`Math.random()` mỗi lần render", "Vị trí pixel của item"]
+answer = [1]
+explanation = "Key ổn định giúp React giữ đúng identity khi chèn, xoá hoặc sắp xếp; index/random có thể làm state của row gắn nhầm item."
+sources = ["react_native/flatlist#keyextractor"]
+
+[[questions]]
+id = "rn-x006"
+module = "rn-lists"
+type = "single"
+difficulty = 2
+prompt = "Tăng `windowSize` của FlatList thường tạo ra đánh đổi nào?"
+options = ["Ít view render hơn và dùng ít RAM hơn", "Nhiều vùng viewport được giữ sẵn, giảm vùng trống khi cuộn nhanh nhưng dùng thêm bộ nhớ", "Tắt `keyExtractor`", "Làm item có chiều cao cố định"]
+answer = [1]
+explanation = "`windowSize` điều chỉnh vùng được giữ quanh viewport; cần đo trên thiết bị mục tiêu để cân bằng bộ nhớ và độ mượt."
+sources = ["react_native/optimizing-flatlist-configuration"]
+
+[[questions]]
+id = "rn-x007"
+module = "rn-lists"
+type = "single"
+difficulty = 2
+prompt = "Một số hàng biến mất hoặc bị vẽ sai khi bật `removeClippedSubviews`. Cách xử lý đầu tiên hợp lý nhất?"
+options = ["Tăng `initialNumToRender` vô hạn", "Tắt tùy chọn để xác nhận nguyên nhân, rồi kiểm tra layout/transform và nền tảng", "Đổi key thành index", "Chuyển mọi row sang `ScrollView`"]
+answer = [1]
+explanation = "Tùy chọn này có thể gây vấn đề hiển thị trong một số layout; không nên bật mặc định mà không kiểm tra trên iOS/Android mục tiêu."
+sources = ["react_native/flatlist#removeclippedsubviews"]
+
+[[questions]]
+id = "rn-x008"
+module = "rn-lists"
+type = "single"
+difficulty = 2
+prompt = "FlashList khác FlatList chủ yếu ở ý tưởng nào?"
+options = ["FlashList thay React Native bằng DOM", "FlashList tái sử dụng view qua cơ chế recycling để giảm tạo/hủy view trong danh sách dài", "FlashList luôn tải dữ liệu từ mạng", "FlashList loại bỏ yêu cầu key"]
+answer = [1]
+explanation = "FlashList là thư viện bên thứ ba tập trung vào recycling; vẫn cần key/identity đúng và phải kiểm tra yêu cầu phiên bản, kiến trúc."
+sources = ["react_native/optimizing-flatlist-configuration"]
+
+[[questions]]
+id = "rn-x009"
+module = "rn-navigation"
+type = "single"
+difficulty = 2
+prompt = "Screen A vẫn nằm trong stack khi screen B được push lên. Muốn làm mới dữ liệu mỗi khi A được focus, nên dùng gì?"
+options = ["Chỉ `useEffect(..., [])`", "`useFocusEffect` với callback được giữ ổn định", "`setTimeout` trong render", "Xoá `NavigationContainer`"]
+answer = [1]
+explanation = "Screen phía dưới thường vẫn mounted. Focus lifecycle khác mount lifecycle; `useFocusEffect` chạy khi screen được focus."
+sources = ["react_native/linking"]
+
+[[questions]]
+id = "rn-x010"
+module = "rn-navigation"
+type = "single"
+difficulty = 2
+prompt = "Ứng dụng cần xử lý liên kết khi đang mở và khi được khởi chạy từ một URL. Mô hình nào cần được cấu hình?"
+options = ["Chỉ đọc `route.params` một lần", "Xử lý initial URL và đăng ký sự kiện URL đến khi app đang chạy", "Chỉ bật `onEndReached`", "Lưu URL vào `StyleSheet`"]
+answer = [1]
+explanation = "Deep link có thể khởi động app hoặc đến khi app đang hoạt động; cấu hình linking phải bao phủ cả hai trường hợp."
+sources = ["react_native/linking"]
+
+[[questions]]
+id = "rn-x011"
+module = "rn-native"
+type = "single"
+difficulty = 2
+prompt = "Chọn nơi lưu access token lâu dài cho ứng dụng RN."
+options = ["AsyncStorage không mã hóa", "SecureStore/Keychain/Keystore wrapper", "Hằng số trong bundle", "`console.log` rồi đọc lại"]
+answer = [1]
+explanation = "AsyncStorage phù hợp dữ liệu không nhạy cảm; token cần cơ chế lưu trữ được bảo vệ của nền tảng và không nên xuất hiện trong log."
+sources = ["react_native/appstate"]
+
+[[questions]]
+id = "rn-x012"
+module = "rn-native"
+type = "single"
+difficulty = 2
+prompt = "Ứng dụng chuyển sang `background`. Giả định nào an toàn nhất về JavaScript?"
+options = ["JS chắc chắn tiếp tục chạy vô hạn", "Hệ điều hành có thể tạm dừng app; không dựa vào JS để hoàn tất tác vụ nền dài", "JS tự chạy trên server", "Hermes bỏ qua giới hạn pin"]
+answer = [1]
+explanation = "AppState báo trạng thái nhưng không cấp quyền chạy vô hạn; tác vụ nền cần API và quyền nền tảng phù hợp."
+sources = ["react_native/appstate"]
+
+[[questions]]
+id = "rn-x013"
+module = "rn-architecture"
+type = "single"
+difficulty = 2
+prompt = "JSI khác cách gọi qua Bridge legacy ở điểm cốt lõi nào?"
+options = ["JSI bắt buộc serialize mọi lời gọi thành JSON", "JSI cho phép tương tác với host object qua giao diện C++ mà không cần tuyến message JSON legacy", "JSI là một CSS engine", "JSI thay Metro bundler"]
+answer = [1]
+explanation = "JSI là lớp giao tiếp giữa JavaScript runtime và mã native/C++; nó không thay bundler và không tự chạy mọi JS trên UI thread."
+sources = ["react_native/new-architecture-intro"]
+
+[[questions]]
+id = "rn-x014"
+module = "rn-architecture"
+type = "single"
+difficulty = 2
+prompt = "Fabric đảm nhiệm phần nào trong New Architecture?"
+options = ["JavaScript engine", "Renderer của React Native, phối hợp React với native view", "Dịch vụ OTA", "Công cụ ký ứng dụng"]
+answer = [1]
+explanation = "Fabric là renderer; Hermes là JS engine, còn EAS Update là dịch vụ phân phối update."
+sources = ["react_native/new-architecture-app-renderer-ios", "react_native/new-architecture-app-renderer-android"]
+
+[[questions]]
+id = "rn-x015"
+module = "rn-architecture"
+type = "single"
+difficulty = 2
+prompt = "Codegen hỗ trợ TurboModules chủ yếu bằng cách nào?"
+options = ["Tạo ảnh cho app", "Sinh phần kết nối native từ spec có kiểu để JS và native dùng hợp đồng nhất quán", "Thay thế Hermes", "Tự viết toàn bộ UI bằng C++"]
+answer = [1]
+explanation = "Spec có kiểu là đầu vào cho Codegen; phần native module vẫn cần được triển khai và build."
+sources = ["react_native/new-architecture-app-modules-ios", "react_native/new-architecture-app-modules-android"]
+
+[[questions]]
+id = "rn-x016"
+module = "rn-architecture"
+type = "single"
+difficulty = 3
+prompt = "Bridgeless mode có nghĩa gì?"
+options = ["Ứng dụng không còn native module", "Ứng dụng New Architecture không phụ thuộc Bridge legacy; vẫn có luồng JS/native và module", "JS chạy hoàn toàn trên GPU", "Không cần build native binary"]
+answer = [1]
+explanation = "Bridgeless loại bỏ phụ thuộc vào Bridge legacy, không loại bỏ native code hay yêu cầu build ứng dụng."
+sources = ["react_native/new-architecture-intro"]
+
+[[questions]]
+id = "rn-x017"
+module = "rn-expo"
+type = "single"
+difficulty = 2
+prompt = "Ứng dụng dùng một native module không có trong Expo Go. Lựa chọn phát triển phù hợp là gì?"
+options = ["Dùng Expo Go và hy vọng module xuất hiện", "Tạo development build chứa module cần dùng", "Chuyển module vào CSS", "Tắt Metro"]
+answer = [1]
+explanation = "Development build là app development riêng với tập native module của dự án; Expo Go chỉ chứa tập module được đóng gói sẵn."
+sources = ["react_native/platform-specific-code"]
+
+[[questions]]
+id = "rn-x018"
+module = "rn-expo"
+type = "single"
+difficulty = 2
+prompt = "Vai trò của `_layout.tsx` trong Expo Router là gì?"
+options = ["File ảnh mặc định", "Định nghĩa layout và navigator chung cho route trong nhánh thư mục", "Tạo native module", "Chỉ xử lý request HTTP"]
+answer = [1]
+explanation = "Expo Router ánh xạ cây file thành route; `_layout` dùng để thiết lập layout/stack hoặc nhóm route."
+sources = ["react_native/linking"]
+
+[[questions]]
+id = "rn-x019"
+module = "rn-perf"
+type = "single"
+difficulty = 2
+prompt = "`getItemLayout` đem lại lợi ích lớn nhất khi nào?"
+options = ["Item có chiều cao thay đổi theo nội dung", "Kích thước item và separator đã biết trước", "Danh sách chưa có dữ liệu", "Cần nạp ảnh từ mạng"]
+answer = [1]
+explanation = "Kích thước/vị trí biết trước giúp bỏ đo động và hỗ trợ cuộn tới index; sai số layout sẽ làm offset sai."
+sources = ["react_native/flatlist#getitemlayout"]
+
+[[questions]]
+id = "rn-x020"
+module = "rn-perf"
+type = "single"
+difficulty = 2
+prompt = "`React.memo(Row)` không giảm render. Props `item` là object mới được tạo lại cho mọi row trong mỗi render. Nguyên nhân gần nhất?"
+options = ["`memo` so sánh props nông nên tham chiếu mới vẫn được xem là thay đổi", "`memo` chỉ chạy trên web", "FlatList cấm object", "Hermes xoá memo"]
+answer = [0]
+explanation = "Memoization thường so sánh nông; cần giữ tham chiếu ổn định hoặc truyền các giá trị cần thiết, sau khi profiler xác nhận đây là bottleneck."
+sources = ["react_native/performance"]
+
+[[questions]]
+id = "rn-x021"
+module = "rn-perf"
+type = "single"
+difficulty = 2
+prompt = "Vì sao `getItemLayout` sai có thể làm `scrollToIndex` lệch?"
+options = ["FlatList dùng số index làm màu", "Offset phải tính đủ header, item và separator thực tế", "`scrollToIndex` chỉ hoạt động với ScrollView", "Nó vô hiệu hóa `keyExtractor`"]
+answer = [1]
+explanation = "FlatList dùng offset cung cấp để nhảy tới vị trí; bỏ sót header/separator hoặc khai báo sai chiều cao sẽ lệch."
+sources = ["react_native/flatlist#getitemlayout"]
+
+[[questions]]
+id = "rn-x022"
+module = "rn-perf"
+type = "single"
+difficulty = 3
+prompt = "Muốn tìm nguyên nhân khựng trong release build, quy trình nào đáng tin hơn?"
+options = ["Đo duy nhất trong development rồi suy ra release", "Profile trên build/cấu hình gần production, tìm thời gian JS/UI và thay đổi một yếu tố mỗi lần", "Bật mọi tối ưu cùng lúc", "Đếm số component trong source"]
+answer = [1]
+explanation = "Development có overhead khác release; đo trên build đại diện và thay đổi từng yếu tố để biết nguyên nhân."
+sources = ["react_native/performance", "react_native/profile-hermes"]
+
+[[questions]]
+id = "rn-x023"
+module = "rn-animation-gesture"
+type = "single"
+difficulty = 2
+prompt = "`useNativeDriver: true` phù hợp với nhóm thuộc tính nào của Animated?"
+options = ["`opacity` và `transform`", "`height` và `padding`", "Mọi style tùy ý", "Nội dung text và state React"]
+answer = [0]
+explanation = "Native driver hỗ trợ các thuộc tính không cần tính lại layout như opacity/transform; không áp dụng cho mọi thuộc tính."
+sources = ["react_native/animated"]
+
+[[questions]]
+id = "rn-x024"
+module = "rn-animation-gesture"
+type = "single"
+difficulty = 2
+prompt = "Worklet trong Reanimated có ích gì khi chạy animation?"
+options = ["Đưa toàn app sang web", "Cho phép tính logic animation trên UI runtime mà không cần JS gửi từng frame", "Thay `StyleSheet`", "Tự cấp quyền gesture"]
+answer = [1]
+explanation = "Worklet có thể chạy trong UI runtime; tác vụ cần JS phải qua cơ chế giao tiếp phù hợp, không nên gọi JS mỗi frame."
+sources = ["react_native/animated"]
+
+[[questions]]
+id = "rn-x025"
+module = "rn-animation-gesture"
+type = "single"
+difficulty = 2
+prompt = "Vì sao Gesture Handler thường phù hợp hơn tự cập nhật React state trong từng sự kiện pan?"
+options = ["Nó dùng DOM", "Gesture được nhận biết bằng native handler, giảm phụ thuộc vào render JS cho từng chuyển động", "Nó thay thế navigation", "Nó tự lưu gesture vào AsyncStorage"]
+answer = [1]
+explanation = "Gesture Handler xử lý nhận biết gesture theo native integration; cập nhật state React dày đặc vẫn có thể gây render nhiều."
+sources = ["react_native/gesture-responder-system"]
+
+[[questions]]
+id = "rn-x026"
+module = "rn-data-offline"
+type = "single"
+difficulty = 2
+prompt = "NetInfo báo `isConnected: true` nhưng `isInternetReachable` là `false`. Kết luận nào phù hợp?"
+options = ["Chắc chắn API server truy cập được", "Có kết nối mạng cục bộ nhưng chưa xác nhận Internet reachable", "App đang ở background", "Token đã hết hạn"]
+answer = [1]
+explanation = "Kết nối Wi-Fi/mobile không đảm bảo đường truyền Internet hoặc server hoạt động; xử lý trạng thái chưa biết và lỗi request thực tế."
+sources = ["react_native/appstate"]
+
+[[questions]]
+id = "rn-x027"
+module = "rn-data-offline"
+type = "single"
+difficulty = 2
+prompt = "Một thao tác tạo đơn được gửi lại sau khi mạng chập chờn. Cần gì để tránh tạo hai đơn?"
+options = ["Gửi lại vô hạn với ID mới", "ID/idempotency key ổn định và xử lý kết quả đã áp dụng", "Lưu request trong biến component", "Tắt retry"]
+answer = [1]
+explanation = "Retry có thể gửi lại thao tác server đã xử lý; idempotency key giúp server nhận diện lần lặp và trả kết quả ổn định."
+sources = ["react_native/appstate"]
+
+[[questions]]
+id = "rn-x028"
+module = "rn-data-offline"
+type = "single"
+difficulty = 2
+prompt = "Push notification nên được xem như thế nào trong thiết kế đồng bộ dữ liệu?"
+options = ["Nguồn dữ liệu duy nhất, luôn đến đúng thứ tự", "Tín hiệu có thể trễ/mất; khi mở app cần tải lại trạng thái quan trọng từ server", "Thay thế deep link", "Bảo đảm app chạy vô hạn nền"]
+answer = [1]
+explanation = "Push không đảm bảo đến đúng lúc hoặc đúng thứ tự; dùng nó để báo có thay đổi rồi đồng bộ dữ liệu có thẩm quyền từ server."
+sources = ["react_native/linking", "react_native/appstate"]
+
+[[questions]]
+id = "rn-x029"
+module = "rn-release"
+type = "single"
+difficulty = 3
+prompt = "Bản OTA thêm native module mới nhưng giữ cùng `runtimeVersion` với binary cũ. Rủi ro chính là gì?"
+options = ["Không có rủi ro vì OTA cập nhật native binary", "JS mới có thể gọi native API không tồn tại trong binary đã cài", "OTA tự ký lại app", "Store review tự cài module"]
+answer = [1]
+explanation = "OTA chỉ thay JS/asset; native module và cấu hình native cần binary tương thích mới."
+sources = ["react_native/platform-specific-code"]
+
+[[questions]]
+id = "rn-x030"
+module = "rn-core"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các phát biểu đúng về nội dung văn bản và style trong RN."
+options = ["Chuỗi hiển thị cần nằm trong `Text`", "`Text` lồng trong `Text` có thể kế thừa style văn bản", "`View` tự áp dụng CSS cascade", "Thuộc tính style thường viết camelCase", "Có thể dùng `innerHTML` trên View"]
+answer = [0, 1, 3]
+explanation = "RN dùng native component thay DOM; chuỗi nằm trong Text và không có CSS cascade/`innerHTML`."
+sources = ["react_native/text", "react_native/view"]
+
+[[questions]]
+id = "rn-x031"
+module = "rn-styling"
+type = "multiple"
+difficulty = 2
+prompt = "Với style mảng trong RN, những hành vi nào đúng?"
+options = ["Style sau ghi đè thuộc tính trùng", "`false`/`null` có thể dùng trong mảng điều kiện và bị bỏ qua", "Style đầu luôn có ưu tiên cao nhất", "`StyleSheet.flatten` trả object gộp", "Selector CSS được áp dụng sau cùng"]
+answer = [0, 1, 3]
+explanation = "Style được gộp theo thứ tự; falsy bị bỏ qua. RN không có selector/cascade CSS."
+sources = ["react_native/stylesheet#flatten"]
+
+[[questions]]
+id = "rn-x032"
+module = "rn-lists"
+type = "multiple"
+difficulty = 2
+prompt = "Những thay đổi nào thường giúp FlatList dài ổn định hơn khi có bằng chứng bottleneck?"
+options = ["Dùng key ổn định theo ID", "Dùng `getItemLayout` khi kích thước cố định", "Đưa object/hàm mới vào mọi row mỗi render", "Dùng `extraData` cho dữ liệu phụ thuộc ngoài `data`", "Tăng ảnh lên độ phân giải tối đa"]
+answer = [0, 1, 3]
+explanation = "Identity ổn định, layout biết trước và khai báo dependency giúp FlatList cập nhật đúng; props mới và ảnh nặng có thể tăng chi phí."
+sources = ["react_native/flatlist", "react_native/optimizing-flatlist-configuration"]
+
+[[questions]]
+id = "rn-x033"
+module = "rn-navigation"
+type = "multiple"
+difficulty = 2
+prompt = "Khi cấu hình deep link, những việc nào nên làm?"
+options = ["Xử lý URL mở app và URL đến khi app đang chạy", "Kiểm tra/chuẩn hóa tham số trước khi dùng", "Truyền callback tùy ý trong URL", "Ánh xạ path tới route rõ ràng", "Coi mọi URL ngoài là đáng tin"]
+answer = [0, 1, 3]
+explanation = "URL là đầu vào bên ngoài; cần map route và validate params, đồng thời hỗ trợ cả initial URL và event khi app hoạt động."
+sources = ["react_native/linking"]
+
+[[questions]]
+id = "rn-x034"
+module = "rn-native"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các thực hành phù hợp cho quyền và dữ liệu nhạy cảm."
+options = ["Giải thích lý do xin quyền gần thời điểm cần tính năng", "Lưu refresh token trong AsyncStorage vì API bất đồng bộ", "Dùng secure storage cho token", "Có nhánh xử lý khi người dùng từ chối quyền", "Ghi token vào crash log để tiện debug"]
+answer = [0, 2, 3]
+explanation = "Quyền cần có ngữ cảnh và nhánh từ chối; token phải được bảo vệ và không ghi vào log."
+sources = ["react_native/appstate", "react_native/accessibility"]
+
+[[questions]]
+id = "rn-x035"
+module = "rn-architecture"
+type = "multiple"
+difficulty = 3
+prompt = "Những thành phần nào thuộc New Architecture hoặc chế độ chạy liên quan của RN?"
+options = ["JSI", "Fabric", "TurboModules", "Codegen", "Hermes", "Bridge legacy là renderer mới"]
+answer = [0, 1, 2, 3, 4]
+explanation = "JSI/Fabric/TurboModules/Codegen là các phần của kiến trúc mới; Hermes là JS engine có thể dùng cùng kiến trúc. Bridge legacy không phải renderer mới."
+sources = ["react_native/new-architecture-intro", "react_native/hermes"]
+
+[[questions]]
+id = "rn-x036"
+module = "rn-expo"
+type = "multiple"
+difficulty = 2
+prompt = "Những phát biểu nào đúng về config plugin và prebuild?"
+options = ["Config plugin mô tả thay đổi native có thể tái tạo", "Prebuild có thể sinh lại thư mục native từ app config/plugin", "Sửa file native sinh ra luôn được giữ qua mọi lần prebuild", "Cần development build nếu thay đổi native không có trong Expo Go", "Config plugin là CSS selector"]
+answer = [0, 1, 3]
+explanation = "Plugin giúp thể hiện cấu hình native có thể tái tạo; sửa trực tiếp artifact sinh ra có thể mất khi chạy prebuild."
+sources = ["react_native/platform-specific-code"]
+
+[[questions]]
+id = "rn-x037"
+module = "rn-perf"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các bước profiling danh sách hợp lý."
+options = ["Tái hiện trên build và thiết bị đại diện", "Dùng React Profiler/Hermes profiler để xác định thời gian", "Đo trên web rồi suy ra chính xác native", "Thay một cấu hình mỗi lần và đo lại", "Bật đồng thời mọi prop tối ưu mà không ghi số liệu"]
+answer = [0, 1, 3]
+explanation = "Profiling cần môi trường đại diện và phép đo có thể so sánh; thay đổi từng yếu tố để quy nguyên nhân."
+sources = ["react_native/performance", "react_native/profile-hermes"]
+
+[[questions]]
+id = "rn-x038"
+module = "rn-animation-gesture"
+type = "multiple"
+difficulty = 3
+prompt = "Chọn các phát biểu đúng về animation và gesture trong RN."
+options = ["Native driver phù hợp với opacity/transform", "Mọi thuộc tính layout đều được `useNativeDriver` hỗ trợ", "Reanimated shared value có thể đổi mà không render lại toàn cây React mỗi frame", "Gesture Handler cung cấp native gesture recognition", "Gọi JS nặng mỗi frame sẽ luôn mượt"]
+answer = [0, 2, 3]
+explanation = "Native driver có giới hạn thuộc tính; shared value/worklet và native gesture giảm việc đi qua JS mỗi frame."
+sources = ["react_native/animated", "react_native/gesture-responder-system"]
+
+[[questions]]
+id = "rn-x039"
+module = "rn-data-offline"
+type = "multiple"
+difficulty = 2
+prompt = "Một hàng đợi offline an toàn nên có đặc điểm nào?"
+options = ["Thao tác có ID ổn định/idempotency key", "Retry có giới hạn và backoff", "Xóa thao tác ngay khi request vừa bắt đầu", "Xử lý lỗi/xung đột khi đồng bộ", "Lưu token trong bản ghi queue không mã hóa"]
+answer = [0, 1, 3]
+explanation = "Queue cần retry có kiểm soát, nhận biết thao tác lặp và xử lý lỗi; secret không nên nằm trong dữ liệu queue không được bảo vệ."
+sources = ["react_native/appstate"]
+
+[[questions]]
+id = "rn-x040"
+module = "rn-release"
+type = "multiple"
+difficulty = 3
+prompt = "Chọn các bước phù hợp trước khi phát hành ứng dụng mobile."
+options = ["Kiểm tra permission và privacy disclosure khớp với tính năng", "Giữ khóa ký ngoài repository và quản lý sao lưu", "Xác nhận OTA tương thích runtime của binary", "Xóa source map/symbol trước khi upload crash symbols", "Xem crash reporting là nơi an toàn để gửi token"]
+answer = [0, 1, 2]
+explanation = "Permission, khóa ký và runtime phải được kiểm soát; crash reporting cần symbol phù hợp nhưng phải loại dữ liệu nhạy cảm."
+sources = ["react_native/platform-specific-code", "react_native/performance"]
+
+[[questions]]
+id = "rn-x041"
+module = "rn-core"
+type = "fill"
+difficulty = 1
+prompt = '''
+Trong TextInput có kiểm soát, prop callback nhận chuỗi mới khi người dùng nhập là `{{blank}}`.
+'''
+blanks = [["onChangeText"]]
+explanation = "`onChangeText` nhận trực tiếp giá trị text mới; controlled input cũng truyền giá trị hiện tại qua `value`."
+sources = ["react_native/text"]
+
+[[questions]]
+id = "rn-x042"
+module = "rn-styling"
+type = "fill"
+difficulty = 1
+prompt = '''
+Gộp một mảng style lồng nhau thành object thường bằng API `StyleSheet.{{blank}}`.
+'''
+blanks = [["flatten"]]
+explanation = "`StyleSheet.flatten` gộp các style theo thứ tự ưu tiên."
+sources = ["react_native/stylesheet#flatten"]
+
+[[questions]]
+id = "rn-x043"
+module = "rn-lists"
+type = "fill"
+difficulty = 2
+prompt = '''
+Trong FlatList, hàm đổi item thành React key ổn định được truyền qua prop `{{blank}}`.
+'''
+blanks = [["keyExtractor"]]
+explanation = "Key ổn định giúp React giữ identity row khi data thay đổi."
+sources = ["react_native/flatlist#keyextractor"]
+
+[[questions]]
+id = "rn-x044"
+module = "rn-navigation"
+type = "fill"
+difficulty = 1
+prompt = '''
+React Native API nhận URL ban đầu khi app được mở từ deep link là `Linking.{{blank}}()`.
+'''
+blanks = [["getInitialURL"]]
+explanation = "`getInitialURL()` xử lý lần khởi chạy; URL đến khi app đang chạy cần listener sự kiện."
+sources = ["react_native/linking#getinitialurl"]
+
+[[questions]]
+id = "rn-x045"
+module = "rn-native"
+type = "fill"
+difficulty = 2
+prompt = '''
+Lưu access token bằng thư viện Expo chuyên dùng cho dữ liệu nhạy cảm: `expo-{{blank}}-store`.
+'''
+blanks = [["secure"]]
+explanation = "`expo-secure-store` dùng cơ chế secure storage của nền tảng; AsyncStorage không mã hóa."
+sources = ["react_native/appstate"]
+
+[[questions]]
+id = "rn-x046"
+module = "rn-architecture"
+type = "fill"
+difficulty = 2
+prompt = '''
+Trong New Architecture, native module mới nạp theo nhu cầu dùng cơ chế `{{blank}}`; spec có kiểu được xử lý bởi `{{blank}}`.
+'''
+blanks = [["TurboModules", "TurboModule"], ["Codegen"]]
+explanation = "TurboModules hỗ trợ lazy loading; Codegen sinh phần kết nối từ spec có kiểu."
+sources = ["react_native/new-architecture-app-modules-ios"]
+
+[[questions]]
+id = "rn-x047"
+module = "rn-expo"
+type = "fill"
+difficulty = 2
+prompt = '''
+App cần native module riêng ngoài tập có sẵn trong Expo Go, vì vậy hãy tạo một `{{blank}}`.
+'''
+blanks = [["development build", "dev client", "development client"]]
+explanation = "Development build chứa native module và cấu hình của chính dự án."
+sources = ["react_native/platform-specific-code"]
+
+[[questions]]
+id = "rn-x048"
+module = "rn-perf"
+type = "fill"
+difficulty = 2
+prompt = '''
+FlatList nhận hàm cung cấp `{ length, offset, index }` cho item qua prop `{{blank}}`.
+'''
+blanks = [["getItemLayout"]]
+explanation = "Dùng khi kích thước item có thể xác định trước."
+sources = ["react_native/flatlist#getitemlayout"]
+
+[[questions]]
+id = "rn-x049"
+module = "rn-animation-gesture"
+type = "fill"
+difficulty = 2
+prompt = '''
+Trong Reanimated, giá trị có thể cập nhật trên UI runtime mà không cần state React mỗi frame thường gọi là `{{blank}}`; hàm chạy trên UI runtime là `{{blank}}`.
+'''
+blanks = [["shared value"], ["worklet"]]
+explanation = "Shared value giữ trạng thái chuyển động; worklet là đoạn logic có thể chạy trong UI runtime."
+sources = ["react_native/animated"]
+
+[[questions]]
+id = "rn-x050"
+module = "rn-data-offline"
+type = "fill"
+difficulty = 2
+prompt = '''
+Thư viện cộng đồng phổ biến để quan sát trạng thái kết nối trong React Native là `@react-native-{{blank}}/netinfo`.
+'''
+blanks = [["community"]]
+explanation = "NetInfo cung cấp trạng thái kết nối; trạng thái mạng không thay thế việc xử lý lỗi request."
+sources = ["react_native/appstate"]
+
+[[questions]]
+id = "rn-x051"
+module = "rn-release"
+type = "fill"
+difficulty = 2
+prompt = '''
+EAS Update dùng trường phiên bản runtime để giới hạn update tương thích với binary: `{{blank}}`.
+'''
+blanks = [["runtimeVersion"]]
+explanation = "Runtime version giúp update JS/asset chỉ tới binary có native runtime tương thích."
+sources = ["react_native/platform-specific-code"]
+
+[[questions]]
+id = "rn-x052"
+module = "rn-lists"
+type = "essay"
+difficulty = 3
+prompt = "Mô tả cách điều tra danh sách bị khựng và giải thích vì sao cần đo trên build gần production."
+keywords = [["profiling", "profile"], ["release", "bản phát hành"], ["hermes"], ["js thread", "javascript thread"], ["đo", "measure"], ["render lại", "re-render"]]
+min_keywords = 4
+model_answer = '''
+Tái hiện trên thiết bị đại diện, dùng React Profiler/Hermes profiling để đo thời gian JS thread, số lần render và công việc của UI. So sánh một thay đổi mỗi lần như giữ props ổn định, `getItemLayout` hoặc chỉnh `windowSize`. Development có overhead và hành vi khác release, vì vậy cần xác nhận trên build gần production trước khi kết luận.
+'''
+explanation = "Profiling giúp phân biệt bottleneck JS, native, ảnh và cấu hình virtualization thay vì tối ưu theo cảm giác."
+sources = ["react_native/performance", "react_native/profile-hermes"]
+
+[[questions]]
+id = "rn-x053"
+module = "rn-native"
+type = "essay"
+difficulty = 3
+prompt = "Nêu cách kết hợp quyền nền tảng và lưu trữ an toàn khi ứng dụng dùng camera và access token."
+keywords = [["quyền", "permission"], ["từ chối", "denied"], ["securestore", "keychain", "keystore"], ["asyncstorage"], ["không log", "log"], ["giải thích", "just in time"]]
+min_keywords = 4
+model_answer = '''
+Giải thích quyền camera ngay trước tính năng cần dùng, xử lý cả granted và denied, đồng thời cho người dùng đường đi tiếp nếu từ chối. Access token lưu trong SecureStore/Keychain/Keystore; AsyncStorage không mã hóa nên chỉ dùng cho dữ liệu không nhạy cảm. Không ghi token vào log hoặc crash report.
+'''
+explanation = "Quyền và dữ liệu nhạy cảm cần được xử lý riêng theo mục đích và nền tảng."
+sources = ["react_native/appstate", "react_native/accessibility"]
+
+[[questions]]
+id = "rn-x054"
+module = "rn-architecture"
+type = "essay"
+difficulty = 3
+prompt = "Giải thích vai trò của JSI, Fabric, TurboModules/Codegen và JS/UI thread trong New Architecture."
+keywords = [["jsi"], ["fabric"], ["turbomodule", "turbo module"], ["codegen"], ["js thread"], ["ui thread"], ["bridge", "bridgeless"]]
+min_keywords = 4
+model_answer = '''
+JSI tạo giao diện C++ để JavaScript tương tác với host object mà không cần mọi lời gọi qua Bridge legacy. Fabric là renderer; TurboModules nạp native module theo nhu cầu và Codegen sinh phần kết nối từ spec. JS thread xử lý JavaScript/React, UI thread xử lý hiển thị native; JSI không tự chuyển toàn bộ JS sang UI thread. Bridgeless bỏ phụ thuộc Bridge legacy nhưng app vẫn cần native runtime.
+'''
+explanation = "Phân biệt renderer, JS engine, giao tiếp native và thread giúp tìm đúng nguyên nhân hiệu năng."
+sources = ["react_native/new-architecture-intro", "react_native/new-architecture-app-intro"]
+
+[[questions]]
+id = "rn-x055"
+module = "rn-expo"
+type = "essay"
+difficulty = 2
+prompt = "So sánh Expo Go, development build, prebuild, EAS Build và EAS Update trong vòng đời phát triển."
+keywords = [["expo go"], ["development build", "dev client"], ["prebuild"], ["config plugin"], ["eas build"], ["eas update"], ["runtimeversion"]]
+min_keywords = 4
+model_answer = '''
+Expo Go thử nhanh với native module có sẵn. Khi cần native module/config riêng, tạo development build; config plugin mô tả thay đổi để prebuild sinh project native nhất quán. EAS Build tạo binary. EAS Update phân phối JS/asset khi runtimeVersion khớp binary đã cài; native change cần binary mới.
+'''
+explanation = "Các bước phục vụ nhu cầu khác nhau: thử nhanh, sinh native project, build binary và phát JS/asset tương thích."
+sources = ["react_native/platform-specific-code", "react_native/linking"]
+
+[[questions]]
+id = "rn-x056"
+module = "rn-animation-gesture"
+type = "essay"
+difficulty = 3
+prompt = "Khi nào chọn Animated native driver, Reanimated và Gesture Handler cho một tương tác kéo-thả?"
+keywords = [["animated"], ["useNativeDriver"], ["reanimated"], ["worklet"], ["shared value"], ["gesture handler"], ["ui thread"]]
+min_keywords = 4
+model_answer = '''
+Animated với `useNativeDriver` phù hợp cho opacity/transform không cần layout. Reanimated dùng shared value và worklet để tính chuyển động trên UI runtime. Gesture Handler nhận pan/tap qua native handler; kết hợp chúng để tránh cập nhật React state cho từng frame. Thuộc tính layout hoặc việc cần JS phải được thiết kế theo giới hạn cụ thể của API.
+'''
+explanation = "Chọn theo thuộc tính, luồng thực thi và độ phức tạp gesture thay vì coi một thư viện thay thế mọi trường hợp."
+sources = ["react_native/animated", "react_native/gesture-responder-system"]
+
+[[questions]]
+id = "rn-x057"
+module = "rn-data-offline"
+type = "essay"
+difficulty = 3
+prompt = "Thiết kế đồng bộ offline cho thao tác tạo dữ liệu khi mạng chập chờn, có retry và xử lý xung đột."
+keywords = [["offline"], ["queue", "hàng đợi"], ["retry"], ["exponential backoff"], ["idempotency"], ["xung đột", "conflict"], ["netinfo"]]
+min_keywords = 4
+model_answer = '''
+Lưu thao tác vào hàng đợi local với ID/idempotency key ổn định. NetInfo giúp biết khi nào nên thử gửi nhưng request vẫn phải bắt lỗi. Gửi tuần tự, retry có giới hạn với exponential backoff và chỉ bỏ bản ghi sau khi server xác nhận. Khi server trả xung đột, áp dụng quy tắc merge hoặc yêu cầu người dùng xử lý; không giả định push luôn đến.
+'''
+explanation = "Offline-first cần chống gửi trùng, retry có giới hạn và quy tắc giải quyết dữ liệu cùng sửa."
+sources = ["react_native/appstate"]
+
+[[questions]]
+id = "rn-x058"
+module = "rn-release"
+type = "essay"
+difficulty = 3
+prompt = "Nêu các cổng kiểm tra trước khi phát hành binary và OTA update cho ứng dụng RN."
+keywords = [["ký", "signing"], ["permission", "quyền"], ["runtimeversion"], ["ota"], ["crash", "symbol"], ["store review", "review"], ["privacy"]]
+min_keywords = 4
+model_answer = '''
+Kiểm tra build và signing bằng credential được quản lý an toàn; xác nhận permission/privacy disclosure phản ánh đúng tính năng. OTA chỉ phát JS/asset tới runtimeVersion tương thích, còn native change cần binary mới. Upload symbol cho crash report nhưng loại token/PII, chạy rollout theo nhóm và bảo đảm nội dung store review khớp hành vi app.
+'''
+explanation = "Phát hành an toàn cần tương thích native, khóa ký được bảo vệ, dữ liệu crash phù hợp và khai báo store chính xác."
+sources = ["react_native/platform-specific-code", "react_native/performance"]
+
+[[questions]]
+id = "rn-xc01"
+module = "rn-styling"
+type = "code"
+difficulty = 2
+lang = "javascript"
+title = "Gộp mảng StyleSheet lồng nhau"
+prompt = '''
+Viết `flattenStyle(style)` để mô phỏng `StyleSheet.flatten` cho object style:
+- Nhận object, mảng lồng nhau hoặc giá trị falsy (`null`, `undefined`, `false`).
+- Gộp theo thứ tự duyệt; thuộc tính ở style sau ghi đè style trước.
+- Trả object mới và không mutate bất kỳ input nào; đầu vào falsy trả `{}`.
+'''
+starter = '''
+function flattenStyle(style) {
+  return {};
+}
+'''
+solution = '''
+function flattenStyle(style) {
+  const result = {};
+  const apply = (value) => {
+    if (!value) return;
+    if (Array.isArray(value)) {
+      for (const item of value) apply(item);
+    } else if (typeof value === 'object') {
+      Object.assign(result, value);
+    }
+  };
+  apply(style);
+  return result;
+}
+'''
+tests = '''
+test('object đơn và object kết quả mới', () => {
+  const style = { color: 'red' };
+  const result = flattenStyle(style);
+  expect(result).toEqual({ color: 'red' });
+  expect(result).not.toBe(style);
+});
+test('style sau ghi đè', () => {
+  expect(flattenStyle([{ color: 'red', padding: 4 }, { color: 'blue' }])).toEqual({ color: 'blue', padding: 4 });
+});
+test('mảng lồng sâu và falsy', () => {
+  expect(flattenStyle([{ a: 1 }, [false, [{ a: 2 }, null]], undefined, { b: 3 }])).toEqual({ a: 2, b: 3 });
+});
+test('đầu vào falsy', () => {
+  expect(flattenStyle(false)).toEqual({});
+  expect(flattenStyle(null)).toEqual({});
+});
+test('không mutate object lồng', () => {
+  const base = { a: 1 };
+  flattenStyle([base, [{ a: 2 }]]);
+  expect(base).toEqual({ a: 1 });
+});
+'''
+hints = ["Duyệt đệ quy từng phần tử mảng.", "Dùng một accumulator mới và bỏ qua giá trị falsy."]
+explanation = "Mảng style cho phép ghép base style với override theo điều kiện mà không sửa object dùng chung."
+sources = ["react_native/stylesheet#flatten"]
+
+[[questions]]
+id = "rn-xc02"
+module = "rn-styling"
+type = "code"
+difficulty = 2
+lang = "javascript"
+title = "Mô phỏng Platform.select"
+prompt = '''
+Viết `createPlatform(os)` trả về `{ OS, select(spec) }`:
+1. Trả `spec[os]` nếu khóa OS tồn tại, kể cả giá trị `false`, `0` hoặc `undefined`.
+2. Nếu `os` là `ios` hoặc `android`, dùng `spec.native` khi có khóa đó.
+3. Nếu không, trả `spec.default` (có thể là `undefined`).
+'''
+starter = '''
+function createPlatform(os) {
+  return { OS: os, select: (spec) => spec.default };
+}
+'''
+solution = '''
+function createPlatform(os) {
+  return {
+    OS: os,
+    select(spec) {
+      if (Object.prototype.hasOwnProperty.call(spec, os)) return spec[os];
+      if ((os === 'ios' || os === 'android') && Object.prototype.hasOwnProperty.call(spec, 'native')) return spec.native;
+      return spec.default;
+    },
+  };
+}
+'''
+tests = '''
+test('ưu tiên key đúng nền tảng', () => {
+  expect(createPlatform('ios').select({ ios: 'i', android: 'a', default: 'd' })).toBe('i');
+  expect(createPlatform('android').select({ ios: 'i', android: 'a', default: 'd' })).toBe('a');
+});
+test('native chỉ là fallback cho mobile native', () => {
+  expect(createPlatform('ios').select({ native: 'n', default: 'd' })).toBe('n');
+  expect(createPlatform('web').select({ native: 'n', default: 'd' })).toBe('d');
+});
+test('giá trị falsy vẫn là giá trị có chủ đích', () => {
+  expect(createPlatform('ios').select({ ios: false, native: true })).toBe(false);
+  expect(createPlatform('android').select({ android: 0, default: 2 })).toBe(0);
+});
+test('fallback default hoặc undefined', () => {
+  expect(createPlatform('web').select({ default: 'web' })).toBe('web');
+  expect(createPlatform('other').select({ ios: 'i' })).toBeUndefined();
+});
+'''
+hints = ["Kiểm tra khóa bằng `hasOwnProperty`, không kiểm tra truthy.", "Thứ tự ưu tiên là OS cụ thể, native trên iOS/Android, rồi default."]
+explanation = "Mô phỏng này giúp kiểm tra fallback đa nền tảng mà không cần runtime native."
+sources = ["react_native/platform#select"]
+
+[[questions]]
+id = "rn-xc03"
+module = "rn-lists"
+type = "code"
+difficulty = 3
+lang = "javascript"
+title = "Ước lượng vùng FlatList đang giữ"
+prompt = '''
+Viết `getRenderRange(itemCount, itemHeight, viewportHeight, scrollOffset, windowSize)` trả `{ start, end }` với `end` inclusive:
+- Các item hiển thị bắt đầu tại `floor(scrollOffset / itemHeight)` và kết thúc tại `ceil((scrollOffset + viewportHeight) / itemHeight) - 1`.
+- `windowSize` là số viewport được giữ tổng cộng, phân bố phần dư đều hai phía; mỗi phía thêm `floor(((windowSize - 1) * viewportHeight) / (2 * itemHeight))` item.
+- Kẹp offset trong khoảng cuộn hợp lệ và index trong `[0, itemCount - 1]`.
+- Danh sách rỗng trả `{ start: 0, end: -1 }`.
+'''
+starter = '''
+function getRenderRange(itemCount, itemHeight, viewportHeight, scrollOffset, windowSize) {
+  return { start: 0, end: -1 };
+}
+'''
+solution = '''
+function getRenderRange(itemCount, itemHeight, viewportHeight, scrollOffset, windowSize) {
+  if (itemCount <= 0) return { start: 0, end: -1 };
+  const maxOffset = Math.max(0, itemCount * itemHeight - viewportHeight);
+  const offset = Math.max(0, Math.min(scrollOffset, maxOffset));
+  const firstVisible = Math.floor(offset / itemHeight);
+  const lastVisible = Math.min(itemCount - 1, Math.ceil((offset + viewportHeight) / itemHeight) - 1);
+  const extra = Math.floor(((Math.max(1, windowSize) - 1) * viewportHeight) / (2 * itemHeight));
+  return {
+    start: Math.max(0, firstVisible - extra),
+    end: Math.min(itemCount - 1, lastVisible + extra),
+  };
+}
+'''
+tests = '''
+test('windowSize một chỉ giữ phần đang thấy', () => {
+  expect(getRenderRange(20, 50, 200, 0, 1)).toEqual({ start: 0, end: 3 });
+});
+test('mở rộng hai phía theo viewport', () => {
+  expect(getRenderRange(100, 50, 200, 400, 3)).toEqual({ start: 4, end: 15 });
+});
+test('cuối danh sách không vượt item cuối', () => {
+  expect(getRenderRange(10, 50, 200, 10000, 3)).toEqual({ start: 2, end: 9 });
+});
+test('danh sách rỗng', () => {
+  expect(getRenderRange(0, 50, 200, 0, 5)).toEqual({ start: 0, end: -1 });
+});
+test('offset âm được kẹp về đầu', () => {
+  expect(getRenderRange(10, 50, 100, -50, 1)).toEqual({ start: 0, end: 1 });
+});
+'''
+hints = ["Tính visible range trước, sau đó cộng overscan mỗi phía.", "Kẹp scroll offset theo tổng chiều cao trừ viewport."]
+explanation = "Đây là mô hình toán học đơn giản của vùng render; FlatList thực còn chịu ảnh hưởng batching và đo layout."
+sources = ["react_native/optimizing-flatlist-configuration"]
+
+[[questions]]
+id = "rn-xc04"
+module = "rn-expo"
+type = "code"
+difficulty = 2
+lang = "javascript"
+title = "Chọn Expo Go hay development build"
+prompt = '''
+Viết `chooseExpoClient(needsCustomNative, hasDevClient)` trả về một trong ba chuỗi:
+- `development-build` nếu đã cài dev client.
+- `development-build-required` nếu cần native module riêng nhưng chưa cài dev client.
+- `expo-go` nếu không cần native module riêng và chưa cài dev client.
+'''
+starter = '''
+function chooseExpoClient(needsCustomNative, hasDevClient) {
+  return 'expo-go';
+}
+'''
+solution = '''
+function chooseExpoClient(needsCustomNative, hasDevClient) {
+  if (hasDevClient) return 'development-build';
+  if (needsCustomNative) return 'development-build-required';
+  return 'expo-go';
+}
+'''
+tests = '''
+test('Expo Go đủ cho native modules có sẵn', () => {
+  expect(chooseExpoClient(false, false)).toBe('expo-go');
+});
+test('cần native riêng thì yêu cầu dev build', () => {
+  expect(chooseExpoClient(true, false)).toBe('development-build-required');
+});
+test('đã cài dev client thì dùng nó', () => {
+  expect(chooseExpoClient(false, true)).toBe('development-build');
+  expect(chooseExpoClient(true, true)).toBe('development-build');
+});
+test('không đổi input', () => {
+  const values = [true, false];
+  chooseExpoClient(values[0], values[1]);
+  expect(values).toEqual([true, false]);
+});
+'''
+hints = ["Kiểm tra dev client đã có trước.", "Native module riêng không chạy trong Expo Go nếu chưa được đóng gói."]
+explanation = "Phân biệt hai môi trường giúp chọn đúng cách chạy ứng dụng khi phát triển."
+sources = ["react_native/platform-specific-code"]
+
+[[questions]]
+id = "rn-xc05"
+module = "rn-expo"
+type = "code"
+difficulty = 3
+lang = "javascript"
+title = "Kiểm tra EAS Update tương thích"
+prompt = '''
+Viết `canApplyUpdate(build, update)` trả boolean. Chỉ cho phép update khi cả `platform` và `runtimeVersion` giống hệt build đã cài. Không so sánh các trường khác.
+'''
+starter = '''
+function canApplyUpdate(build, update) {
+  return true;
+}
+'''
+solution = '''
+function canApplyUpdate(build, update) {
+  return build.platform === update.platform && build.runtimeVersion === update.runtimeVersion;
+}
+'''
+tests = '''
+test('cùng platform và runtime', () => {
+  expect(canApplyUpdate({ platform: 'ios', runtimeVersion: '1' }, { platform: 'ios', runtimeVersion: '1' })).toBe(true);
+});
+test('khác platform thì từ chối', () => {
+  expect(canApplyUpdate({ platform: 'ios', runtimeVersion: '1' }, { platform: 'android', runtimeVersion: '1' })).toBe(false);
+});
+test('khác runtime thì từ chối', () => {
+  expect(canApplyUpdate({ platform: 'ios', runtimeVersion: '1' }, { platform: 'ios', runtimeVersion: '2' })).toBe(false);
+});
+test('phân biệt runtime dạng chuỗi', () => {
+  expect(canApplyUpdate({ platform: 'ios', runtimeVersion: '01' }, { platform: 'ios', runtimeVersion: '1' })).toBe(false);
+});
+'''
+hints = ["So sánh cả hai điều kiện bằng phép so sánh chính xác.", "OTA không thể thêm native module vào binary đã cài."]
+explanation = "Runtime compatibility là điều kiện cần để JS/asset tương thích với native binary."
+sources = ["react_native/platform-specific-code"]
+
+[[questions]]
+id = "rn-xc06"
+module = "rn-perf"
+type = "code"
+difficulty = 2
+lang = "javascript"
+title = "So sánh props của row đã memo"
+prompt = '''
+Viết `shouldRenderRow(previous, next)` cho row chỉ nhận ba prop `item`, `selected`, `onPress`:
+- Trả `true` nếu ít nhất một prop thay đổi theo so sánh tham chiếu/giá trị JavaScript `!==`.
+- Trả `false` nếu cả ba prop giữ nguyên.
+'''
+starter = '''
+function shouldRenderRow(previous, next) {
+  return true;
+}
+'''
+solution = '''
+function shouldRenderRow(previous, next) {
+  return previous.item !== next.item || previous.selected !== next.selected || previous.onPress !== next.onPress;
+}
+'''
+tests = '''
+const handler = () => {};
+test('mọi prop giữ nguyên thì không render lại', () => {
+  const props = { item: { id: 1 }, selected: false, onPress: handler };
+  expect(shouldRenderRow(props, { ...props })).toBe(false);
+});
+test('item đổi tham chiếu thì render', () => {
+  expect(shouldRenderRow({ item: {}, selected: false, onPress: handler }, { item: {}, selected: false, onPress: handler })).toBe(true);
+});
+test('selected đổi thì render', () => {
+  expect(shouldRenderRow({ item: 1, selected: false, onPress: handler }, { item: 1, selected: true, onPress: handler })).toBe(true);
+});
+test('callback đổi thì render', () => {
+  expect(shouldRenderRow({ item: 1, selected: false, onPress: handler }, { item: 1, selected: false, onPress: () => {} })).toBe(true);
+});
+'''
+hints = ["So sánh từng prop được nêu.", "Đây là shallow comparison; object mới có thể khiến row render lại."]
+explanation = "Memoization chỉ hữu ích khi props ổn định và phép đo cho thấy row render là chi phí đáng kể."
+sources = ["react_native/performance"]
+
+[[questions]]
+id = "rn-xc07"
+module = "rn-perf"
+type = "code"
+difficulty = 2
+lang = "javascript"
+title = "Gộp các trang danh sách không trùng ID"
+prompt = '''
+Viết `mergeById(existing, incoming)` trả mảng mới gồm item cũ rồi item mới chưa có `id`.
+- Nếu ID xuất hiện nhiều lần, giữ lần xuất hiện đầu tiên.
+- Hỗ trợ ID là `0` hoặc chuỗi rỗng.
+- Không mutate hai mảng đầu vào.
+'''
+starter = '''
+function mergeById(existing, incoming) {
+  return existing.concat(incoming);
+}
+'''
+solution = '''
+function mergeById(existing, incoming) {
+  const seen = new Set();
+  const result = [];
+  for (const item of existing.concat(incoming)) {
+    if (seen.has(item.id)) continue;
+    seen.add(item.id);
+    result.push(item);
+  }
+  return result;
+}
+'''
+tests = '''
+test('giữ thứ tự và loại ID trùng', () => {
+  expect(mergeById([{ id: 1 }, { id: 2 }], [{ id: 2, newer: true }, { id: 3 }])).toEqual([{ id: 1 }, { id: 2 }, { id: 3 }]);
+});
+test('hỗ trợ id falsy', () => {
+  expect(mergeById([{ id: 0 }], [{ id: 0, duplicate: true }, { id: '' }])).toEqual([{ id: 0 }, { id: '' }]);
+});
+test('mảng kết quả mới', () => {
+  const oldItems = [{ id: 1 }];
+  const result = mergeById(oldItems, []);
+  expect(result).not.toBe(oldItems);
+  expect(oldItems).toEqual([{ id: 1 }]);
+});
+test('hai mảng rỗng', () => {
+  expect(mergeById([], [])).toEqual([]);
+});
+'''
+hints = ["Dùng Set để lưu các ID đã gặp.", "Không dùng điều kiện truthy cho ID vì 0 vẫn hợp lệ."]
+explanation = "Khử trùng theo ID giúp pagination/offline sync không tạo row lặp."
+sources = ["react_native/flatlist"]
+
+[[questions]]
+id = "rn-xc08"
+module = "rn-animation-gesture"
+type = "code"
+difficulty = 3
+lang = "javascript"
+title = "Mô phỏng Animated.interpolate"
+prompt = '''
+Viết `interpolate(value, inputRange, outputRange, extrapolate = 'extend')` cho các range tăng nghiêm ngặt có cùng độ dài từ 2 trở lên.
+- Nội suy tuyến tính giữa hai điểm liền kề.
+- `clamp` kẹp value về hai đầu input range; `extend` kéo dài tuyến tính bằng đoạn đầu/cuối.
+- Giữ được output range tăng hoặc giảm.
+'''
+starter = '''
+function interpolate(value, inputRange, outputRange, extrapolate = 'extend') {
+  return outputRange[0];
+}
+'''
+solution = '''
+function interpolate(value, inputRange, outputRange, extrapolate = 'extend') {
+  if (inputRange.length < 2 || inputRange.length !== outputRange.length) throw new RangeError('invalid range');
+  for (let i = 1; i < inputRange.length; i++) {
+    if (inputRange[i] <= inputRange[i - 1]) throw new RangeError('input range must increase');
+  }
+  if (extrapolate !== 'clamp' && extrapolate !== 'extend') throw new RangeError('invalid extrapolation');
+  const first = inputRange[0];
+  const last = inputRange[inputRange.length - 1];
+  const x = extrapolate === 'clamp' ? Math.max(first, Math.min(last, value)) : value;
+  let index = inputRange.length - 2;
+  if (x <= first) index = 0;
+  else {
+    for (let i = 0; i < inputRange.length - 1; i++) {
+      if (x <= inputRange[i + 1]) { index = i; break; }
+    }
+  }
+  const progress = (x - inputRange[index]) / (inputRange[index + 1] - inputRange[index]);
+  return outputRange[index] + progress * (outputRange[index + 1] - outputRange[index]);
+}
+'''
+tests = '''
+test('nội suy giữa hai mốc', () => {
+  expect(interpolate(5, [0, 10], [0, 100])).toBe(50);
+});
+test('nội suy từng đoạn', () => {
+  expect(interpolate(15, [0, 10, 20], [0, 100, 150])).toBe(125);
+});
+test('clamp ngoài hai đầu', () => {
+  expect(interpolate(-5, [0, 10], [20, 40], 'clamp')).toBe(20);
+  expect(interpolate(15, [0, 10], [20, 40], 'clamp')).toBe(40);
+});
+test('extend tuyến tính ngoài range', () => {
+  expect(interpolate(15, [0, 10], [0, 20], 'extend')).toBe(30);
+  expect(interpolate(-5, [0, 10], [20, 0], 'extend')).toBe(30);
+});
+test('output range giảm vẫn nội suy đúng', () => {
+  expect(interpolate(5, [0, 10], [1, 0])).toBe(0.5);
+});
+'''
+hints = ["Tìm đoạn input chứa value; giá trị ngoài range dùng đoạn đầu hoặc cuối.", "Clamp input trước khi tìm đoạn nếu extrapolate là `clamp`."]
+explanation = "Đây là mô phỏng số học của phép nội suy, không tạo animation hay truy cập UI thread."
+sources = ["react_native/animated#interpolation-1"]
+
+[[questions]]
+id = "rn-xc09"
+module = "rn-animation-gesture"
+type = "code"
+difficulty = 2
+lang = "javascript"
+title = "Throttle sự kiện cuộn"
+prompt = '''
+Viết `throttleLeading(fn, wait, now = () => Date.now())`:
+- Gọi `fn` ngay ở lần gọi đầu tiên.
+- Các lần gọi tiếp theo trong khoảng nhỏ hơn `wait` bị bỏ qua.
+- Khi đủ `wait`, gọi lại với đối số mới nhất của lần được chấp nhận.
+- Không có trailing call tự chạy bằng timer.
+'''
+starter = '''
+function throttleLeading(fn, wait, now = () => Date.now()) {
+  return (...args) => fn(...args);
+}
+'''
+solution = '''
+function throttleLeading(fn, wait, now = () => Date.now()) {
+  let lastCall = null;
+  return (...args) => {
+    const time = now();
+    if (lastCall !== null && time - lastCall < wait) return undefined;
+    lastCall = time;
+    return fn(...args);
+  };
+}
+'''
+tests = '''
+test('gọi ngay lần đầu', () => {
+  const fn = jest.fn();
+  throttleLeading(fn, 100, () => 0)('first');
+  expect(fn).toHaveBeenCalledWith('first');
+});
+test('bỏ lần gọi trong khoảng wait', () => {
+  let time = 0;
+  const fn = jest.fn();
+  const throttled = throttleLeading(fn, 100, () => time);
+  throttled(1);
+  time = 99;
+  throttled(2);
+  expect(fn).toHaveBeenCalledTimes(1);
+});
+test('gọi lại khi đủ wait', () => {
+  let time = 10;
+  const fn = jest.fn();
+  const throttled = throttleLeading(fn, 100, () => time);
+  throttled('a');
+  time = 110;
+  throttled('b');
+  expect(fn).toHaveBeenCalledTimes(2);
+  expect(fn).toHaveBeenCalledWith('b');
+});
+test('không tạo trailing call', () => {
+  const fn = jest.fn();
+  const throttled = throttleLeading(fn, 100, () => 0);
+  throttled(1);
+  throttled(2);
+  expect(fn).toHaveBeenCalledTimes(1);
+});
+'''
+hints = ["Lưu timestamp của lần được chấp nhận gần nhất.", "Đề bài không yêu cầu trailing timer."]
+explanation = "Throttle hữu ích cho callback cuộn; chọn chu kỳ dựa trên công việc thực tế và giữ UI cập nhật đủ mượt."
+sources = ["react_native/flatlist", "react_native/performance"]
+
+[[questions]]
+id = "rn-xc10"
+module = "rn-data-offline"
+type = "code"
+difficulty = 3
+lang = "javascript"
+title = "Hàng đợi offline có retry"
+prompt = '''
+Viết `createOfflineQueue(send, baseDelay = 100, maxRetries = 2)` trả object có `enqueue(value)`, `setOnline(value)` và getter `pending`.
+- Mỗi job được gửi tuần tự; mặc định online.
+- Khi offline, giữ job cho tới khi online trở lại.
+- Khi `send` lỗi, retry tối đa `maxRetries` lần với delay `baseDelay * 2 ** retryIndex`.
+- Sau lần thử cuối cùng, reject Promise của job và bỏ job khỏi queue.
+- `pending` trả danh sách value hiện có; dùng timer giả để kiểm thử backoff.
+'''
+starter = '''
+function createOfflineQueue(send, baseDelay = 100, maxRetries = 2) {
+  return {
+    enqueue(value) { return send(value); },
+    setOnline(value) {},
+    get pending() { return []; },
+  };
+}
+'''
+solution = '''
+function createOfflineQueue(send, baseDelay = 100, maxRetries = 2) {
+  const jobs = [];
+  let online = true;
+  let processing = false;
+  const process = async () => {
+    if (processing || !online) return;
+    processing = true;
+    while (jobs.length && online) {
+      const job = jobs[0];
+      try {
+        await send(job.value);
+        jobs.shift();
+        job.resolve();
+      } catch (error) {
+        if (job.retries >= maxRetries) {
+          jobs.shift();
+          job.reject(error);
+        } else {
+          const delay = baseDelay * (2 ** job.retries);
+          job.retries += 1;
+          await new Promise((resolve) => setTimeout(resolve, delay));
+        }
+      }
+    }
+    processing = false;
+  };
+  return {
+    enqueue(value) {
+      const promise = new Promise((resolve, reject) => jobs.push({ value, retries: 0, resolve, reject }));
+      process();
+      return promise;
+    },
+    setOnline(value) {
+      online = Boolean(value);
+      if (online) process();
+    },
+    get pending() { return jobs.map((job) => job.value); },
+  };
+}
+'''
+tests = '''
+test('offline giữ job tới khi có mạng', async () => {
+  const send = jest.fn(async (value) => value);
+  const queue = createOfflineQueue(send);
+  queue.setOnline(false);
+  const done = queue.enqueue('a');
+  await Promise.resolve();
+  expect(send).toHaveBeenCalledTimes(0);
+  expect(queue.pending).toEqual(['a']);
+  queue.setOnline(true);
+  await done;
+  expect(send).toHaveBeenCalledWith('a');
+  expect(queue.pending).toEqual([]);
+});
+test('retry sau backoff và resolve khi thành công', async () => {
+  let attempts = 0;
+  const send = jest.fn(() => {
+    attempts += 1;
+    return attempts === 1 ? Promise.reject(new Error('offline')) : Promise.resolve();
+  });
+  const queue = createOfflineQueue(send, 100, 1);
+  const done = queue.enqueue('job');
+  await Promise.resolve();
+  await Promise.resolve();
+  expect(send).toHaveBeenCalledTimes(1);
+  jest.advanceTimersByTime(99);
+  await Promise.resolve();
+  expect(send).toHaveBeenCalledTimes(1);
+  jest.advanceTimersByTime(1);
+  await Promise.resolve();
+  await Promise.resolve();
+  await done;
+  expect(send).toHaveBeenCalledTimes(2);
+  expect(queue.pending).toEqual([]);
+});
+test('xử lý tuần tự theo thứ tự enqueue', async () => {
+  const order = [];
+  const queue = createOfflineQueue(async (value) => { order.push(value); });
+  await Promise.all([queue.enqueue(1), queue.enqueue(2)]);
+  expect(order).toEqual([1, 2]);
+});
+test('hết retry thì reject và bỏ job', async () => {
+  const queue = createOfflineQueue(async () => { throw new Error('failed'); }, 10, 0);
+  let message = '';
+  await queue.enqueue('bad').catch((error) => { message = error.message; });
+  expect(message).toBe('failed');
+  expect(queue.pending).toEqual([]);
+});
+'''
+hints = ["Giữ một cờ `processing` để chỉ có một worker xử lý queue.", "Tăng retryIndex sau khi tính delay; Promise timer phải được advance trong test."]
+explanation = "Queue mô phỏng gửi tuần tự và backoff; ứng dụng thật còn cần persistence, idempotency key và chính sách merge."
+sources = ["react_native/appstate"]
+
+[[questions]]
+id = "rn-xc11"
+module = "rn-data-offline"
+type = "code"
+difficulty = 3
+lang = "javascript"
+title = "Phân tích deep link"
+prompt = '''
+Viết `parseDeepLink(url, routes)` cho URL dạng `scheme://path?query` và `routes` dạng `{ 'course/:id': 'Course' }`.
+- Bỏ scheme và dấu `/` thừa đầu/cuối; số đoạn path phải khớp.
+- `:param` là tham số path; query decode percent-encoding và đổi `+` thành khoảng trắng.
+- Trả `{ screen, params }`; path param ghi đè query param cùng tên; query key lặp lấy giá trị cuối.
+- Route tĩnh khớp chính xác; route đầu tiên khớp được chọn; không khớp trả `null`.
+- Không dùng `URL` hoặc `URLSearchParams`.
+'''
+starter = '''
+function parseDeepLink(url, routes) {
+  return null;
+}
+'''
+solution = '''
+function parseDeepLink(url, routes) {
+  const rest = url.replace(/^[a-z][a-z0-9+.-]*:\/\//i, '');
+  const queryIndex = rest.indexOf('?');
+  const pathText = queryIndex < 0 ? rest : rest.slice(0, queryIndex);
+  const queryText = queryIndex < 0 ? '' : rest.slice(queryIndex + 1);
+  const path = pathText.split('/').filter(Boolean).map(decodeURIComponent);
+  const query = {};
+  for (const pair of queryText.split('&')) {
+    if (!pair) continue;
+    const parts = pair.split('=');
+    const key = decodeURIComponent(parts[0].replace(/\+/g, ' '));
+    const value = decodeURIComponent((parts[1] || '').replace(/\+/g, ' '));
+    query[key] = value;
+  }
+  for (const pattern of Object.keys(routes)) {
+    const pieces = pattern.split('/').filter(Boolean);
+    if (pieces.length !== path.length) continue;
+    const params = {};
+    let matches = true;
+    for (let i = 0; i < pieces.length; i++) {
+      if (pieces[i].startsWith(':')) params[pieces[i].slice(1)] = path[i];
+      else if (pieces[i] !== path[i]) { matches = false; break; }
+    }
+    if (matches) return { screen: routes[pattern], params: { ...query, ...params } };
+  }
+  return null;
+}
+'''
+tests = '''
+const routes = { 'home': 'Home', 'course/:id': 'Course', 'course/:id/lesson/:lessonId': 'Lesson' };
+test('path parameters and query', () => {
+  expect(parseDeepLink('bovabon://course/rn?ref=mail', routes)).toEqual({ screen: 'Course', params: { id: 'rn', ref: 'mail' } });
+});
+test('decodes plus and percent encoding', () => {
+  expect(parseDeepLink('bovabon://course/react%20native?q=hello+world', routes).params).toEqual({ id: 'react native', q: 'hello world' });
+});
+test('path parameter overrides query and repeated key keeps last', () => {
+  expect(parseDeepLink('bovabon://course/path?id=query&tag=a&tag=b', routes).params).toEqual({ id: 'path', tag: 'b' });
+});
+test('exact route length and static segments', () => {
+  expect(parseDeepLink('bovabon:///home/', routes)).toEqual({ screen: 'Home', params: {} });
+  expect(parseDeepLink('bovabon://home/extra', routes)).toBeNull();
+  expect(parseDeepLink('bovabon://settings', routes)).toBeNull();
+});
+test('universal link uses remaining path', () => {
+  expect(parseDeepLink('https://course/rn', routes).screen).toBe('Course');
+});
+'''
+hints = ["Tách path/query bằng vị trí dấu `?`.", "So sánh segment tĩnh; segment bắt đầu bằng `:` được lưu vào params."]
+explanation = "Link ngoài là đầu vào không tin cậy; sau khi parse vẫn cần kiểm tra quyền và giá trị route params."
+sources = ["react_native/linking"]
+
+[[questions]]
+id = "rn-xc12"
+module = "rn-release"
+type = "code"
+difficulty = 2
+lang = "javascript"
+title = "Liệt kê điều kiện còn thiếu trước release"
+prompt = '''
+Viết `releaseBlockers(checks)` nhận object boolean. Kiểm tra theo đúng thứ tự:
+`buildPassed`, `signingReady`, `permissionsReviewed`, `privacyDisclosureReady`, `crashSymbolsUploaded`, `storeNotesReady`.
+Trả mảng tên các khóa có giá trị khác `true`; không sửa object đầu vào.
+'''
+starter = '''
+function releaseBlockers(checks) {
+  return [];
+}
+'''
+solution = '''
+function releaseBlockers(checks) {
+  const required = ['buildPassed', 'signingReady', 'permissionsReviewed', 'privacyDisclosureReady', 'crashSymbolsUploaded', 'storeNotesReady'];
+  return required.filter((key) => checks[key] !== true);
+}
+'''
+tests = '''
+test('không có blocker khi đủ điều kiện', () => {
+  const all = { buildPassed: true, signingReady: true, permissionsReviewed: true, privacyDisclosureReady: true, crashSymbolsUploaded: true, storeNotesReady: true };
+  expect(releaseBlockers(all)).toEqual([]);
+});
+test('trả đúng khóa thiếu theo thứ tự quy định', () => {
+  expect(releaseBlockers({ buildPassed: true, signingReady: false, permissionsReviewed: true })).toEqual(['signingReady', 'privacyDisclosureReady', 'crashSymbolsUploaded', 'storeNotesReady']);
+});
+test('chỉ true mới đạt', () => {
+  expect(releaseBlockers({ buildPassed: 1, signingReady: null })).toEqual(['buildPassed', 'signingReady', 'permissionsReviewed', 'privacyDisclosureReady', 'crashSymbolsUploaded', 'storeNotesReady']);
+});
+test('không mutate input', () => {
+  const checks = { buildPassed: true };
+  releaseBlockers(checks);
+  expect(checks).toEqual({ buildPassed: true });
+});
+'''
+hints = ["Giữ danh sách khóa bắt buộc theo thứ tự prompt.", "Dùng điều kiện `!== true` để xử lý cả thiếu key và giá trị sai kiểu."]
+explanation = "Danh sách blocker giúp checklist release có thứ tự ổn định; nhóm vẫn cần review kết quả và chịu trách nhiệm phát hành."
+sources = ["react_native/platform-specific-code"]
+
+[[questions]]
+id = "rn-xc13"
+module = "rn-release"
+type = "code"
+difficulty = 3
+lang = "javascript"
+title = "Ẩn dữ liệu nhạy cảm khỏi crash payload"
+prompt = '''
+Viết `redactCrashPayload(value)` cho dữ liệu JSON-like gồm object, array và primitive:
+- Đệ quy tạo cấu trúc mới, không mutate input.
+- Với key không phân biệt hoa thường `token`, `accessToken`, `refreshToken`, `password`, `email`, thay value bằng chuỗi `[REDACTED]`.
+- Các key khác giữ nguyên và tiếp tục xử lý lồng nhau.
+- Input là dữ liệu không có vòng tham chiếu.
+'''
+starter = '''
+function redactCrashPayload(value) {
+  return value;
+}
+'''
+solution = '''
+function redactCrashPayload(value) {
+  const sensitive = new Set(['token', 'accesstoken', 'refreshtoken', 'password', 'email']);
+  if (Array.isArray(value)) return value.map(redactCrashPayload);
+  if (value && typeof value === 'object') {
+    const result = {};
+    for (const [key, item] of Object.entries(value)) {
+      result[key] = sensitive.has(key.toLowerCase()) ? '[REDACTED]' : redactCrashPayload(item);
+    }
+    return result;
+  }
+  return value;
+}
+'''
+tests = '''
+test('ẩn key nhạy cảm không phân biệt hoa thường', () => {
+  expect(redactCrashPayload({ token: 'a', accessToken: 'b', PASSWORD: 'c', email: 'd' })).toEqual({ token: '[REDACTED]', accessToken: '[REDACTED]', PASSWORD: '[REDACTED]', email: '[REDACTED]' });
+});
+test('đệ quy qua object và array', () => {
+  expect(redactCrashPayload({ user: [{ email: 'a@b', name: 'An' }] })).toEqual({ user: [{ email: '[REDACTED]', name: 'An' }] });
+});
+test('giữ nguyên primitive và key thường', () => {
+  expect(redactCrashPayload({ message: 'failed', count: 2, enabled: false })).toEqual({ message: 'failed', count: 2, enabled: false });
+});
+test('không mutate object đầu vào', () => {
+  const input = { nested: { token: 'secret' } };
+  const result = redactCrashPayload(input);
+  expect(result).not.toBe(input);
+  expect(result.nested).not.toBe(input.nested);
+  expect(input.nested.token).toBe('secret');
+});
+test('array kết quả là array mới', () => {
+  const input = [{ refreshToken: 'secret' }];
+  const result = redactCrashPayload(input);
+  expect(result).not.toBe(input);
+  expect(result[0].refreshToken).toBe('[REDACTED]');
+});
+'''
+hints = ["Phân nhánh array trước object.", "Khi tạo object mới, chỉ thay value của key nhạy cảm; đệ quy các key còn lại."]
+explanation = "Redaction giảm nguy cơ lộ bí mật trong crash report; hệ thống thực tế cần danh sách dữ liệu nhạy cảm theo schema."
+sources = ["react_native/performance"]

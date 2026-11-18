@@ -1,0 +1,918 @@
+id = "python-backend"
+title = "Python: Flask & FastAPI"
+icon = "🐍"
+color = "#22c55e"
+group = "Backend"
+docs = ["flask", "fastapi", "python~3.14"]
+description = "Flask (app/request context, blueprint, factory), FastAPI (path/query/body, Pydantic, Depends, async), async Python và bảo mật API."
+
+[[modules]]
+id = "py-flask"
+title = "Flask"
+description = "Route, request/app context, g, session, blueprint, application factory, testing."
+sources = ["flask/quickstart/index", "flask/appcontext/index", "flask/reqcontext/index", "flask/patterns/appfactories/index"]
+lesson = '''
+### Ý chính
+- `@app.route("/users/<int:user_id>", methods=["GET", "POST"])` — converter `int`, `float`, `path`, `uuid`.
+- **Request context**: `request`, `session` chỉ dùng được trong lúc xử lý request.
+- **Application context**: `current_app`, `g` (lưu tạm theo request, vd. kết nối DB). Ngoài request (CLI, test) cần `with app.app_context():`.
+- `session` là **signed cookie** (cần `SECRET_KEY`) — người dùng đọc được nội dung nhưng không sửa được.
+- **Blueprint** chia app theo module; **application factory** `create_app(config)` giúp test & nhiều cấu hình.
+- Trả về dict → Flask tự `jsonify`. `abort(404)`, `@app.errorhandler(404)`.
+- Hook: `before_request`, `after_request`, `teardown_appcontext`.
+- Test: `app.test_client()`.
+- Production: chạy bằng WSGI server (gunicorn, waitress), không dùng `app.run()`.
+'''
+
+[[modules]]
+id = "py-fastapi"
+title = "FastAPI"
+description = "Path/query/body params, Pydantic model, response_model, Depends, HTTPException, middleware, BackgroundTasks."
+sources = ["fastapi/tutorial/path-params/index", "fastapi/tutorial/query-params/index", "fastapi/tutorial/body/index", "fastapi/tutorial/response-model/index", "fastapi/tutorial/handling-errors/index"]
+lesson = '''
+### Ý chính
+- FastAPI dựa trên **Starlette** (ASGI) + **Pydantic** (validate dữ liệu) và **type hints**.
+- Tham số hàm: có trong path → **path param**; kiểu đơn (`int`, `str`) không có trong path → **query param**; kiểu Pydantic model → **request body**.
+- Dữ liệu sai kiểu → tự trả **422 Unprocessable Entity** kèm chi tiết.
+- `response_model=UserOut` lọc field trả về (không lộ `password`).
+- `Depends(get_db)` — **dependency injection**: tái sử dụng logic (DB session, auth, phân trang); dependency có `yield` để dọn dẹp.
+- `raise HTTPException(status_code=404, detail="...")`.
+- Tự sinh tài liệu OpenAPI tại `/docs` (Swagger UI) và `/redoc`.
+- `BackgroundTasks` chạy việc nhẹ sau khi trả response; việc nặng dùng queue (Celery, RQ, Arq).
+- Test: `TestClient(app)` (dựa trên httpx).
+'''
+
+[[modules]]
+id = "py-async"
+title = "Async Python & hiệu năng"
+description = "async/await, event loop, def vs async def trong FastAPI, asyncio.gather, Semaphore, WSGI vs ASGI."
+sources = ["fastapi/async/index", "flask/async-await/index"]
+lesson = '''
+### Ý chính
+- **WSGI** (Flask, Django cổ điển): đồng bộ, mỗi request một worker/thread. **ASGI** (FastAPI, Starlette): bất đồng bộ, hỗ trợ WebSocket.
+- `async def` endpoint chạy **trên event loop** — tuyệt đối không gọi I/O blocking (`requests`, `time.sleep`, driver DB đồng bộ) trong đó.
+- Endpoint `def` thường → FastAPI chạy trong **threadpool**, nên dùng được thư viện blocking.
+- `await asyncio.gather(*coros)` chạy đồng thời; `asyncio.Semaphore(n)` giới hạn số tác vụ cùng lúc; `asyncio.wait_for(coro, timeout)`.
+- CPU-bound (xử lý ảnh, ML) → process pool / worker riêng vì **GIL** (trừ bản free-threaded 3.13+).
+- Uvicorn/Gunicorn với nhiều worker process để tận dụng nhiều CPU.
+'''
+
+[[modules]]
+id = "py-security"
+title = "Auth & Bảo mật API"
+description = "Hash mật khẩu, JWT, OAuth2 password flow, CORS, rate limit, secret."
+sources = ["fastapi/tutorial/security/index", "fastapi/tutorial/cors/index", "flask/web-security/index"]
+lesson = '''
+### Ý chính
+- Mật khẩu: **hash có salt & chậm** (`bcrypt`, `argon2`) — không MD5/SHA1, không lưu plaintext.
+- **JWT** = `base64url(header).base64url(payload).signature`. Payload **không mã hoá**, chỉ được **ký** (HMAC/RSA) → không đặt dữ liệu nhạy cảm. Kiểm tra `exp`, thuật toán, chữ ký.
+- So sánh chữ ký/token bằng `hmac.compare_digest` (chống timing attack).
+- FastAPI: `OAuth2PasswordBearer(tokenUrl="token")` + `Depends(get_current_user)`.
+- **CORS**: `CORSMiddleware(allow_origins=[...])` — không dùng `*` khi `allow_credentials=True`.
+- Secret lấy từ biến môi trường, không commit vào git.
+'''
+
+# ------------------------------------------------------------ FLASK
+[[questions]]
+id = "py-001"
+module = "py-flask"
+type = "single"
+difficulty = 1
+prompt = "Route Flask nào khớp với URL `/users/42` và truyền `42` dạng **int** vào hàm?"
+options = ["`@app.route('/users/:id')`", "`@app.route('/users/<int:user_id>')`", "`@app.route('/users/{user_id}')`", "`@app.get('/users/*')`"]
+answer = [1]
+explanation = "Flask dùng cú pháp `<converter:name>`. `{name}` là cú pháp của FastAPI."
+sources = ["flask/quickstart/index"]
+
+[[questions]]
+id = "py-002"
+module = "py-flask"
+type = "single"
+difficulty = 2
+prompt = "Đối tượng `flask.g` dùng để làm gì?"
+options = [
+  "Lưu dữ liệu toàn cục vĩnh viễn giữa các request",
+  "Lưu dữ liệu tạm trong phạm vi **application context của một request** (vd. kết nối DB, user hiện tại)",
+  "Lưu cookie phiên",
+  "Cấu hình ứng dụng",
+]
+answer = [1]
+explanation = "`g` được tạo mới cho mỗi request; dọn dẹp tài nguyên trong `teardown_appcontext`."
+sources = ["flask/appcontext/index"]
+
+[[questions]]
+id = "py-003"
+module = "py-flask"
+type = "single"
+difficulty = 2
+prompt = "Gọi `current_app.config` trong một script CLI (ngoài request) báo lỗi \"Working outside of application context\". Cách sửa?"
+options = [
+  "Dùng biến global",
+  "Bọc trong `with app.app_context():`",
+  "Gọi `app.run()` trước",
+  "Import lại Flask",
+]
+answer = [1]
+explanation = "Context được đẩy tự động khi xử lý request; ngoài request phải tự đẩy."
+sources = ["flask/appcontext/index"]
+
+[[questions]]
+id = "py-004"
+module = "py-flask"
+type = "single"
+difficulty = 2
+prompt = "Dữ liệu trong `flask.session` (mặc định) được lưu ở đâu?"
+options = [
+  "Trong RAM của server",
+  "Trong cookie phía client, được **ký** bằng `SECRET_KEY` (đọc được nhưng không sửa được)",
+  "Trong database",
+  "Trong localStorage",
+]
+answer = [1]
+explanation = "Không đặt thông tin bí mật vào session mặc định. Cần server-side session thì dùng extension (Flask-Session, Redis)."
+
+[[questions]]
+id = "py-005"
+module = "py-flask"
+type = "multiple"
+difficulty = 2
+prompt = "Lợi ích của **application factory** `create_app()`?"
+options = [
+  "Tạo nhiều instance app với cấu hình khác nhau (test, dev, prod)",
+  "Tránh import vòng (circular import) khi đăng ký blueprint/extension",
+  "Tăng tốc độ xử lý request gấp đôi",
+  "Dễ viết test với cấu hình riêng",
+  "Không cần SECRET_KEY",
+]
+answer = [0, 1, 3]
+explanation = "Extensions khởi tạo dạng `db.init_app(app)` bên trong factory."
+sources = ["flask/patterns/appfactories/index"]
+
+[[questions]]
+id = "py-006"
+module = "py-flask"
+type = "fill"
+difficulty = 1
+prompt = '''
+Hoàn thành route nhận JSON và trả về 201:
+
+```python
+@app.post("/todos")
+def create_todo():
+    data = request.{{blank}}()
+    todo = {"id": 1, "title": data["title"]}
+    return todo, {{blank}}
+```
+'''
+blanks = [["get_json"], ["201"]]
+explanation = "Trả `(body, status)` — dict được tự động chuyển thành JSON."
+sources = ["flask/quickstart/index"]
+
+[[questions]]
+id = "py-007"
+module = "py-flask"
+type = "code"
+lang = "python"
+difficulty = 3
+title = "Route matcher kiểu Flask"
+prompt = '''
+Viết `match_route(rule, path)` mô phỏng cách Flask khớp URL:
+
+- `rule` gồm đoạn tĩnh và biến `<name>` hoặc `<converter:name>` với converter `string` (mặc định, không chứa `/`), `int` (chữ số), `path` (cho phép `/`, chỉ ở cuối)
+- Khớp → trả về `dict` các biến (int đã chuyển sang `int`); không khớp → `None`
+- Khớp toàn bộ path (không thừa/thiếu)
+
+```python
+match_route("/users/<int:id>", "/users/42")  # {"id": 42}
+match_route("/files/<path:p>", "/files/a/b.txt")  # {"p": "a/b.txt"}
+```
+'''
+starter = '''
+def match_route(rule, path):
+    # TODO
+    return None
+'''
+solution = '''
+import re
+
+_CONV = {"string": r"[^/]+", "int": r"\d+", "path": r".+"}
+_VAR = re.compile(r"<(?:(\w+):)?(\w+)>")
+
+
+def match_route(rule, path):
+    pattern, types, pos = "", {}, 0
+    for m in _VAR.finditer(rule):
+        pattern += re.escape(rule[pos:m.start()])
+        conv, name = m.group(1) or "string", m.group(2)
+        types[name] = conv
+        pattern += f"(?P<{name}>{_CONV[conv]})"
+        pos = m.end()
+    pattern += re.escape(rule[pos:])
+    found = re.fullmatch(pattern, path)
+    if not found:
+        return None
+    return {k: int(v) if types[k] == "int" else v for k, v in found.groupdict().items()}
+'''
+tests = '''
+@test("biến string mặc định")
+def _():
+    expect(match_route("/hello/<name>", "/hello/an")).to_equal({"name": "an"})
+
+@test("int converter chuyển kiểu")
+def _():
+    r = match_route("/users/<int:id>", "/users/42")
+    expect(r).to_equal({"id": 42})
+    expect(type(r["id"])).to_be(int)
+
+@test("int không khớp chữ")
+def _():
+    expect(match_route("/users/<int:id>", "/users/abc")).to_be_none()
+
+@test("string không chứa /")
+def _():
+    expect(match_route("/hello/<name>", "/hello/a/b")).to_be_none()
+
+@test("path converter")
+def _():
+    expect(match_route("/files/<path:p>", "/files/a/b.txt")).to_equal({"p": "a/b.txt"})
+
+@test("nhiều biến")
+def _():
+    expect(match_route("/posts/<int:pid>/comments/<cid>", "/posts/7/comments/x9")).to_equal({"pid": 7, "cid": "x9"})
+
+@test("đoạn tĩnh phải khớp toàn bộ")
+def _():
+    expect(match_route("/about", "/about")).to_equal({})
+    expect(match_route("/about", "/about/team")).to_be_none()
+    expect(match_route("/a.b", "/axb")).to_be_none()
+'''
+hints = ["Chuyển rule thành regex với named group `(?P<name>...)` rồi dùng `re.fullmatch`.", "Nhớ `re.escape` cho phần tĩnh (dấu `.` trong `/a.b`)."]
+explanation = "Werkzeug (nền của Flask) biên dịch rule thành regex tương tự và cache lại."
+sources = ["flask/quickstart/index"]
+
+# ------------------------------------------------------------ FASTAPI
+[[questions]]
+id = "py-020"
+module = "py-fastapi"
+type = "single"
+difficulty = 2
+prompt = '''
+Với endpoint sau, `skip` được lấy từ đâu?
+
+```python
+@app.get("/items/{item_id}")
+async def read(item_id: int, skip: int = 0, item: Item | None = None): ...
+```
+'''
+options = ["Path", "Query string (`?skip=10`)", "Request body", "Header"]
+answer = [1]
+explanation = "`item_id` có trong path → path param; `skip` kiểu đơn → query; `item` là Pydantic model → body."
+sources = ["fastapi/tutorial/query-params/index", "fastapi/tutorial/path-params/index"]
+
+[[questions]]
+id = "py-021"
+module = "py-fastapi"
+type = "single"
+difficulty = 1
+prompt = "Gửi `GET /items/abc` tới endpoint có `item_id: int`. FastAPI trả về status nào?"
+options = ["200", "400", "404", "422"]
+answer = [3]
+explanation = "Lỗi validate dữ liệu đầu vào → **422 Unprocessable Entity** với JSON mô tả field lỗi."
+sources = ["fastapi/tutorial/path-params/index", "fastapi/tutorial/handling-errors/index"]
+
+[[questions]]
+id = "py-022"
+module = "py-fastapi"
+type = "single"
+difficulty = 2
+prompt = "Tác dụng của `response_model=UserOut` trong `@app.post('/users', response_model=UserOut)`?"
+options = [
+  "Validate request body",
+  "Chuyển đổi & **lọc** dữ liệu trả về theo `UserOut` (vd. bỏ field `password`) và mô tả schema trong OpenAPI",
+  "Tăng tốc serialize",
+  "Bắt buộc client gửi header",
+]
+answer = [1]
+explanation = "Pattern: `UserIn` (có password) cho input, `UserOut` (không password) cho output."
+sources = ["fastapi/tutorial/response-model/index"]
+
+[[questions]]
+id = "py-023"
+module = "py-fastapi"
+type = "single"
+difficulty = 2
+prompt = "Dependency viết dạng generator có `yield` (vd. `get_db`) dùng để:"
+options = [
+  "Trả nhiều giá trị",
+  "Cung cấp tài nguyên cho endpoint rồi **dọn dẹp sau khi request xong** (đóng session DB) — code sau `yield` chạy sau response",
+  "Chạy song song",
+  "Cache kết quả vĩnh viễn",
+]
+answer = [1]
+explanation = "Tương tự context manager. Trong một request, cùng dependency được cache (gọi 1 lần) theo mặc định."
+
+[[questions]]
+id = "py-024"
+module = "py-fastapi"
+type = "multiple"
+difficulty = 2
+prompt = "Những điều nào đúng về FastAPI?"
+options = [
+  "Tự sinh tài liệu OpenAPI/Swagger tại `/docs`",
+  "Dựa trên Starlette (ASGI) và Pydantic",
+  "Chỉ hỗ trợ endpoint `async def`",
+  "`raise HTTPException(status_code=404, detail=...)` để trả lỗi",
+  "`BackgroundTasks` phù hợp cho job nặng hàng giờ",
+]
+answer = [0, 1, 3]
+explanation = "Endpoint `def` thường chạy trong threadpool. Job nặng nên dùng task queue riêng."
+sources = ["fastapi/tutorial/background-tasks/index", "fastapi/tutorial/handling-errors/index"]
+
+[[questions]]
+id = "py-025"
+module = "py-fastapi"
+type = "fill"
+difficulty = 2
+prompt = '''
+Inject dependency xác thực vào endpoint:
+
+```python
+@app.get("/me")
+async def me(user: User = {{blank}}(get_current_user)):
+    return user
+```
+'''
+blanks = [["Depends"]]
+explanation = "`Depends` có thể lồng nhau: `get_current_user` lại phụ thuộc `oauth2_scheme`."
+sources = ["fastapi/tutorial/security/index"]
+
+[[questions]]
+id = "py-026"
+module = "py-fastapi"
+type = "fill"
+difficulty = 2
+prompt = '''
+Khai báo model Pydantic cho request body:
+
+```python
+from pydantic import {{blank}}
+
+class Item({{blank}}):
+    name: str
+    price: float
+    tags: list[str] = []
+```
+'''
+blanks = [["BaseModel"], ["BaseModel"]]
+explanation = "Pydantic v2 dùng `model_dump()`, `model_validate()` (thay cho `.dict()`, `parse_obj`)."
+sources = ["fastapi/tutorial/body/index"]
+
+[[questions]]
+id = "py-027"
+module = "py-fastapi"
+type = "code"
+lang = "python"
+difficulty = 2
+title = "Validate dữ liệu kiểu Pydantic"
+prompt = '''
+Không dùng thư viện, viết `validate(schema, data)` trả về `(clean, errors)`:
+
+- `schema`: dict `field -> (type, required, default)`; `type` là `int`, `float`, `str` hoặc `bool`
+- Thiếu field bắt buộc → lỗi `{"loc": field, "msg": "field required"}`
+- Thiếu field không bắt buộc → dùng `default`
+- Ép kiểu "lax" giống Pydantic: `"42"` → `int` 42, `"3.5"` → float; `int` nhận số nguyên hoặc chuỗi số; `bool` nhận `True/False` hoặc chuỗi `"true"/"false"`; ép thất bại → `{"loc": field, "msg": "invalid <tên kiểu>"}` (vd. `invalid int`)
+- Field thừa trong `data` bị bỏ qua
+- Có lỗi thì `clean` là `None`; `errors` là list theo thứ tự field trong schema
+'''
+starter = '''
+def validate(schema, data):
+    # TODO
+    return data, []
+'''
+solution = '''
+def _coerce(tp, v):
+    if tp is bool:
+        if isinstance(v, bool):
+            return v
+        if isinstance(v, str) and v.lower() in ("true", "false"):
+            return v.lower() == "true"
+        raise ValueError
+    if tp is int:
+        if isinstance(v, bool):
+            raise ValueError
+        if isinstance(v, int):
+            return v
+        if isinstance(v, float) and v.is_integer():
+            return int(v)
+        if isinstance(v, str) and v.strip().lstrip("-").isdigit():
+            return int(v)
+        raise ValueError
+    if tp is float:
+        if isinstance(v, bool):
+            raise ValueError
+        return float(v)
+    if tp is str:
+        if isinstance(v, str):
+            return v
+        raise ValueError
+    raise ValueError
+
+
+def validate(schema, data):
+    clean, errors = {}, []
+    for field, (tp, required, default) in schema.items():
+        if field not in data:
+            if required:
+                errors.append({"loc": field, "msg": "field required"})
+            else:
+                clean[field] = default
+            continue
+        try:
+            clean[field] = _coerce(tp, data[field])
+        except (ValueError, TypeError):
+            errors.append({"loc": field, "msg": "invalid " + tp.__name__})
+    return (None, errors) if errors else (clean, [])
+'''
+tests = '''
+SCHEMA = {
+    "name": (str, True, None),
+    "age": (int, True, None),
+    "score": (float, False, 0.0),
+    "active": (bool, False, True),
+}
+
+@test("dữ liệu hợp lệ + default")
+def _():
+    clean, errs = validate(SCHEMA, {"name": "An", "age": 20})
+    expect(errs).to_equal([])
+    expect(clean).to_equal({"name": "An", "age": 20, "score": 0.0, "active": True})
+
+@test("ép kiểu lax từ chuỗi")
+def _():
+    clean, errs = validate(SCHEMA, {"name": "B", "age": "42", "score": "3.5", "active": "false"})
+    expect(errs).to_equal([])
+    expect(clean["age"]).to_be(42)
+    expect(clean["score"]).to_be(3.5)
+    expect(clean["active"]).to_be(False)
+
+@test("thiếu field bắt buộc")
+def _():
+    clean, errs = validate(SCHEMA, {"name": "C"})
+    expect(clean).to_be_none()
+    expect(errs).to_equal([{"loc": "age", "msg": "field required"}])
+
+@test("sai kiểu")
+def _():
+    clean, errs = validate(SCHEMA, {"name": 5, "age": "abc"})
+    expect(clean).to_be_none()
+    expect(errs).to_equal([{"loc": "name", "msg": "invalid str"}, {"loc": "age", "msg": "invalid int"}])
+
+@test("bỏ field thừa")
+def _():
+    clean, _e = validate(SCHEMA, {"name": "D", "age": 1, "is_admin": True})
+    expect("is_admin" in clean).to_be_false()
+'''
+hints = ["Tách hàm `_coerce(tp, value)` ném `ValueError` khi không ép được.", "Cẩn thận: `bool` là subclass của `int` trong Python."]
+explanation = "Pydantic v2 làm điều này (nhanh hơn nhiều, bằng Rust core) và FastAPI chuyển `errors` thành response 422."
+sources = ["fastapi/tutorial/body/index"]
+
+[[questions]]
+id = "py-028"
+module = "py-fastapi"
+type = "code"
+lang = "python"
+difficulty = 3
+title = "Mini Dependency Injection (Depends)"
+prompt = '''
+Mô phỏng hệ thống `Depends` của FastAPI:
+
+- Lớp `Depends(dependency)` lưu hàm phụ thuộc
+- `solve(func, overrides=None)` gọi `func`, với mỗi tham số có default là `Depends(dep)`:
+  - giải quyết **đệ quy** `dep` (dep cũng có thể có `Depends`)
+  - nếu `dep` có trong `overrides` (dict) → dùng hàm thay thế (giống `app.dependency_overrides` khi test)
+  - **cache trong một lần solve**: cùng một dependency chỉ được gọi 1 lần
+- Tham số không phải Depends dùng giá trị default bình thường
+- Trả về kết quả của `func`
+
+Gợi ý: `inspect.signature(func).parameters`.
+'''
+starter = '''
+class Depends:
+    def __init__(self, dependency):
+        self.dependency = dependency
+
+
+def solve(func, overrides=None):
+    return func()
+'''
+solution = '''
+import inspect
+
+
+class Depends:
+    def __init__(self, dependency):
+        self.dependency = dependency
+
+
+def solve(func, overrides=None, _cache=None):
+    overrides = overrides or {}
+    cache = {} if _cache is None else _cache
+    kwargs = {}
+    for name, p in inspect.signature(func).parameters.items():
+        d = p.default
+        if isinstance(d, Depends):
+            dep = overrides.get(d.dependency, d.dependency)
+            if dep not in cache:
+                cache[dep] = solve(dep, overrides, cache)
+            kwargs[name] = cache[dep]
+    return func(**kwargs)
+'''
+tests = '''
+calls = []
+
+def get_settings():
+    calls.append("settings")
+    return {"db_url": "sqlite://"}
+
+def get_db(settings=Depends(get_settings)):
+    calls.append("db")
+    return "DB(" + settings["db_url"] + ")"
+
+def get_user(db=Depends(get_db), settings=Depends(get_settings)):
+    return {"name": "an", "db": db}
+
+def endpoint(user=Depends(get_user), limit=10):
+    return {"user": user["name"], "db": user["db"], "limit": limit}
+
+@test("giải quyết đệ quy")
+def _():
+    calls.clear()
+    expect(solve(endpoint)).to_equal({"user": "an", "db": "DB(sqlite://)", "limit": 10})
+
+@test("cache trong một lần solve")
+def _():
+    calls.clear()
+    solve(endpoint)
+    expect(calls.count("settings")).to_be(1)
+    expect(calls.count("db")).to_be(1)
+
+@test("mỗi lần solve là request mới")
+def _():
+    calls.clear()
+    solve(endpoint)
+    solve(endpoint)
+    expect(calls.count("settings")).to_be(2)
+
+@test("dependency_overrides khi test")
+def _():
+    fake = lambda: "FAKE_DB"
+    expect(solve(endpoint, overrides={get_db: fake})["db"]).to_be("FAKE_DB")
+
+@test("override dependency lồng sâu")
+def _():
+    r = solve(endpoint, overrides={get_settings: lambda: {"db_url": "pg://test"}})
+    expect(r["db"]).to_be("DB(pg://test)")
+'''
+hints = ["Duyệt `inspect.signature(func).parameters.items()` và kiểm tra `isinstance(p.default, Depends)`.", "Truyền chung một dict cache cho các lần gọi đệ quy."]
+explanation = "Đây chính là cách FastAPI xây \"dependency graph\" cho mỗi request; `app.dependency_overrides` cực hữu ích khi test."
+sources = ["fastapi/tutorial/security/index", "fastapi/tutorial/testing/index"]
+
+# ------------------------------------------------------------ ASYNC
+[[questions]]
+id = "py-040"
+module = "py-async"
+type = "single"
+difficulty = 2
+prompt = "Trong FastAPI, gọi `time.sleep(5)` bên trong endpoint `async def` sẽ gây ra gì?"
+options = [
+  "Chỉ request đó chờ 5 giây",
+  "**Chặn event loop** — mọi request khác trên worker đó cũng bị đứng 5 giây",
+  "FastAPI tự chuyển sang thread",
+  "Lỗi cú pháp",
+]
+answer = [1]
+explanation = "Dùng `await asyncio.sleep(5)`, hoặc khai báo endpoint là `def` để chạy trong threadpool."
+sources = ["fastapi/async/index"]
+
+[[questions]]
+id = "py-041"
+module = "py-async"
+type = "single"
+difficulty = 2
+prompt = "Khác biệt chính giữa WSGI và ASGI?"
+options = [
+  "ASGI chỉ dành cho Django",
+  "WSGI đồng bộ (một request/worker), ASGI hỗ trợ bất đồng bộ, WebSocket, long-lived connection",
+  "WSGI nhanh hơn trong mọi trường hợp",
+  "Không khác",
+]
+answer = [1]
+explanation = "Flask: WSGI (có hỗ trợ `async def` view nhưng mỗi request vẫn chiếm một worker). FastAPI: ASGI."
+sources = ["flask/async-await/index"]
+
+[[questions]]
+id = "py-042"
+module = "py-async"
+type = "fill"
+difficulty = 2
+prompt = '''
+Gọi 3 API đồng thời và đợi tất cả:
+
+```python
+users, posts, tags = await asyncio.{{blank}}(fetch_users(), fetch_posts(), fetch_tags())
+```
+'''
+blanks = [["gather"]]
+explanation = "Python 3.11+ còn có `asyncio.TaskGroup` — huỷ các task còn lại khi một task lỗi."
+
+[[questions]]
+id = "py-043"
+module = "py-async"
+type = "code"
+lang = "python"
+difficulty = 3
+title = "gather có giới hạn đồng thời"
+prompt = '''
+Viết `async def gather_limited(funcs, limit)`:
+- `funcs`: list các hàm **không tham số trả về coroutine** (vd. `lambda: fetch(i)`)
+- Chạy đồng thời nhưng **tối đa `limit`** coroutine cùng lúc (dùng `asyncio.Semaphore`)
+- Trả về list kết quả **đúng thứ tự** đầu vào
+- Nếu có lỗi → ném lỗi đó ra (giống `asyncio.gather` mặc định)
+'''
+starter = '''
+import asyncio
+
+
+async def gather_limited(funcs, limit):
+    return [await f() for f in funcs]
+'''
+solution = '''
+import asyncio
+
+
+async def gather_limited(funcs, limit):
+    sem = asyncio.Semaphore(max(1, limit))
+
+    async def run(f):
+        async with sem:
+            return await f()
+
+    return await asyncio.gather(*(run(f) for f in funcs))
+'''
+tests = '''
+import asyncio
+import time
+
+def make_tracker():
+    state = {"cur": 0, "peak": 0}
+    def job(i, delay=0.02):
+        async def _():
+            state["cur"] += 1
+            state["peak"] = max(state["peak"], state["cur"])
+            await asyncio.sleep(delay)
+            state["cur"] -= 1
+            return i * 10
+        return _
+    return state, job
+
+@test("kết quả đúng thứ tự")
+async def _():
+    state, job = make_tracker()
+    res = await gather_limited([job(i, 0.03 - i * 0.005) for i in range(5)], 5)
+    expect(res).to_equal([0, 10, 20, 30, 40])
+
+@test("không vượt quá limit")
+async def _():
+    state, job = make_tracker()
+    await gather_limited([job(i) for i in range(10)], 3)
+    expect(state["peak"]).to_be(3)
+
+@test("chạy đồng thời thật (nhanh hơn tuần tự)")
+async def _():
+    state, job = make_tracker()
+    t = time.perf_counter()
+    await gather_limited([job(i, 0.05) for i in range(6)], 6)
+    expect(time.perf_counter() - t < 0.2).to_be_true()
+
+@test("lỗi được ném ra")
+async def _():
+    async def boom():
+        raise ValueError("boom")
+    try:
+        await gather_limited([boom], 2)
+    except ValueError as e:
+        expect(str(e)).to_be("boom")
+        return
+    raise AssertionError("phải ném ValueError")
+'''
+hints = ["Bọc mỗi coroutine trong `async with sem:`.", "`asyncio.gather` giữ thứ tự kết quả theo thứ tự đầu vào."]
+explanation = "Giới hạn đồng thời tránh làm quá tải API bên ngoài hoặc connection pool DB."
+sources = ["fastapi/async/index"]
+
+[[questions]]
+id = "py-044"
+module = "py-async"
+type = "essay"
+difficulty = 3
+prompt = "Khi nào nên khai báo endpoint FastAPI là `async def` và khi nào là `def`?"
+keywords = [
+  ["await", "thư viện async", "httpx", "asyncpg", "async driver"],
+  ["blocking", "chặn", "đồng bộ", "requests", "time.sleep"],
+  ["threadpool", "thread"],
+  ["event loop"],
+]
+min_keywords = 3
+model_answer = '''
+- Dùng **`async def`** khi bên trong chỉ gọi thư viện **hỗ trợ async** và `await` chúng (httpx.AsyncClient, asyncpg, motor…). Các request chia sẻ **event loop** nên phục vụ được rất nhiều kết nối I/O.
+- Dùng **`def`** khi phải gọi thư viện **blocking/đồng bộ** (requests, driver DB đồng bộ, SDK cũ): FastAPI tự chạy hàm `def` trong **threadpool** để không chặn event loop.
+- Tuyệt đối không gọi code blocking trong `async def`. Code nặng CPU nên đưa sang process/worker riêng.
+'''
+explanation = "Nếu không chắc, dùng `def` an toàn hơn."
+sources = ["fastapi/async/index"]
+
+# ------------------------------------------------------------ SECURITY
+[[questions]]
+id = "py-060"
+module = "py-security"
+type = "single"
+difficulty = 2
+prompt = "Phát biểu nào đúng về JWT (JWS, HS256)?"
+options = [
+  "Payload được mã hoá nên an toàn để chứa mật khẩu",
+  "Payload chỉ được base64url-encode và **ký**; ai cũng đọc được nhưng không sửa được nếu không có secret",
+  "JWT không thể hết hạn",
+  "Server phải lưu mọi JWT trong DB để kiểm tra",
+]
+answer = [1]
+explanation = "Muốn mã hoá nội dung dùng JWE. Luôn kiểm tra `exp` và cố định thuật toán (chống `alg: none`)."
+sources = ["fastapi/tutorial/security/index"]
+
+[[questions]]
+id = "py-061"
+module = "py-security"
+type = "single"
+difficulty = 2
+prompt = "Cách lưu mật khẩu người dùng đúng?"
+options = ["Plaintext", "`hashlib.md5(password)`", "Hash chậm có salt như **bcrypt/argon2** (passlib, pwdlib)", "Mã hoá AES và lưu key cạnh DB"]
+answer = [2]
+explanation = "Hash nhanh (MD5, SHA-256 thuần) dễ bị brute-force bằng GPU."
+
+[[questions]]
+id = "py-062"
+module = "py-security"
+type = "multiple"
+difficulty = 2
+prompt = "Cấu hình CORS nào **không an toàn / không hợp lệ**?"
+options = [
+  "`allow_origins=[\"https://app.bovabon.edu\"]`",
+  "`allow_origins=[\"*\"]` cùng `allow_credentials=True`",
+  "Phản chiếu mọi `Origin` gửi lên vào `Access-Control-Allow-Origin` kèm credentials",
+  "Chỉ cho phép các method cần thiết",
+]
+answer = [1, 2]
+explanation = "Trình duyệt từ chối `*` khi có credentials; phản chiếu Origin tuỳ ý thì bất kỳ trang nào cũng đọc được dữ liệu người dùng."
+sources = ["fastapi/tutorial/cors/index"]
+
+[[questions]]
+id = "py-063"
+module = "py-security"
+type = "fill"
+difficulty = 2
+prompt = '''
+So sánh chữ ký an toàn trước timing attack:
+
+```python
+import hmac
+if not hmac.{{blank}}(expected_sig, given_sig):
+    raise HTTPException(status_code={{blank}})
+```
+'''
+blanks = [["compare_digest"], ["401"]]
+explanation = "So sánh `==` dừng ở byte khác đầu tiên → rò rỉ thông tin qua thời gian phản hồi."
+
+[[questions]]
+id = "py-064"
+module = "py-security"
+type = "code"
+lang = "python"
+difficulty = 3
+title = "Ký & xác minh JWT HS256"
+prompt = '''
+Chỉ dùng thư viện chuẩn (`hmac`, `hashlib`, `base64`, `json`), viết:
+
+- `b64url(data: bytes) -> str` — base64url **bỏ dấu `=`**
+- `sign(payload: dict, secret: str) -> str` — header `{"alg":"HS256","typ":"JWT"}`, JSON compact (`separators=(",", ":")`), chữ ký HMAC-SHA256 của `"<header>.<payload>"`
+- `verify(token: str, secret: str, now: int) -> dict` — trả payload nếu hợp lệ; ngược lại `raise ValueError` với message:
+  - `"malformed"` nếu không đủ 3 phần
+  - `"bad algorithm"` nếu header `alg` khác `HS256`
+  - `"bad signature"` nếu sai chữ ký (dùng `hmac.compare_digest`)
+  - `"expired"` nếu có `exp` và `now >= exp`
+'''
+starter = '''
+def b64url(data):
+    pass
+
+
+def sign(payload, secret):
+    pass
+
+
+def verify(token, secret, now):
+    pass
+'''
+solution = '''
+import base64
+import hashlib
+import hmac
+import json
+
+
+def b64url(data):
+    return base64.urlsafe_b64encode(data).rstrip(b"=").decode()
+
+
+def _b64decode(s):
+    return base64.urlsafe_b64decode(s + "=" * (-len(s) % 4))
+
+
+def _json(obj):
+    return json.dumps(obj, separators=(",", ":")).encode()
+
+
+def _sig(msg, secret):
+    return b64url(hmac.new(secret.encode(), msg.encode(), hashlib.sha256).digest())
+
+
+def sign(payload, secret):
+    head = b64url(_json({"alg": "HS256", "typ": "JWT"}))
+    body = b64url(_json(payload))
+    return f"{head}.{body}.{_sig(head + '.' + body, secret)}"
+
+
+def verify(token, secret, now):
+    parts = token.split(".")
+    if len(parts) != 3:
+        raise ValueError("malformed")
+    head, body, sig = parts
+    try:
+        header = json.loads(_b64decode(head))
+        payload = json.loads(_b64decode(body))
+    except Exception:
+        raise ValueError("malformed")
+    if header.get("alg") != "HS256":
+        raise ValueError("bad algorithm")
+    if not hmac.compare_digest(_sig(head + "." + body, secret), sig):
+        raise ValueError("bad signature")
+    if "exp" in payload and now >= payload["exp"]:
+        raise ValueError("expired")
+    return payload
+'''
+tests = '''
+import base64, json
+
+SECRET = "bovabon-secret"
+
+@test("b64url bỏ padding")
+def _():
+    expect(b64url(b"hi")).to_be("aGk")
+    expect(b64url(bytes([251, 255]))).to_be("-_8")
+
+@test("token chuẩn JWT (khớp vector tham chiếu)")
+def _():
+    tok = sign({"sub": "1", "name": "An"}, "k")
+    expect(tok).to_be("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwibmFtZSI6IkFuIn0.oNgyD6to0RzgTJdbn4JMlL1vC7R61JJM2XO1r4Htrlk")
+
+@test("sign rồi verify")
+def _():
+    tok = sign({"sub": "42", "exp": 2000}, SECRET)
+    expect(verify(tok, SECRET, now=1000)).to_equal({"sub": "42", "exp": 2000})
+
+@test("sai secret → bad signature")
+def _():
+    tok = sign({"sub": "1"}, SECRET)
+    expect(lambda: verify(tok, "other", now=0)).to_raise(ValueError, "bad signature")
+
+@test("sửa payload → bad signature")
+def _():
+    h, p, s = sign({"role": "user"}, SECRET).split(".")
+    forged = base64.urlsafe_b64encode(b'{"role":"admin"}').rstrip(b"=").decode()
+    expect(lambda: verify(f"{h}.{forged}.{s}", SECRET, now=0)).to_raise(ValueError, "bad signature")
+
+@test("hết hạn")
+def _():
+    tok = sign({"exp": 100}, SECRET)
+    expect(lambda: verify(tok, SECRET, now=100)).to_raise(ValueError, "expired")
+
+@test("alg none bị từ chối")
+def _():
+    h = base64.urlsafe_b64encode(b'{"alg":"none"}').rstrip(b"=").decode()
+    p = base64.urlsafe_b64encode(b'{"sub":"1"}').rstrip(b"=").decode()
+    expect(lambda: verify(f"{h}.{p}.", SECRET, now=0)).to_raise(ValueError, "bad algorithm")
+
+@test("malformed")
+def _():
+    expect(lambda: verify("abc", SECRET, now=0)).to_raise(ValueError, "malformed")
+'''
+hints = ["Khi decode cần thêm lại padding: `s + '=' * (-len(s) % 4)`.", "Kiểm tra thuật toán **trước** khi kiểm tra chữ ký."]
+explanation = "Thực tế dùng PyJWT/python-jose, nhưng tự cài giúp hiểu vì sao phải cố định thuật toán và so sánh hằng thời gian."
+sources = ["fastapi/tutorial/security/index"]

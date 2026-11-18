@@ -1,0 +1,2178 @@
+id = "english"
+title = "Tiếng Anh cho Developer"
+icon = "🇬🇧"
+color = "#14b8a6"
+group = "Ngoại ngữ"
+description = "Từ vựng kỹ thuật, ngữ pháp dùng trong công việc, đọc tài liệu & thông báo lỗi, viết commit/PR/email, họp standup và phỏng vấn bằng tiếng Anh."
+
+# ============================================================ MODULES
+[[modules]]
+id = "en-vocab"
+title = "Từ vựng kỹ thuật"
+description = "Những từ developer gặp mỗi ngày: deploy, deprecate, bottleneck, edge case, trade-off…"
+lesson = '''
+### Nhóm từ hay gặp
+| Từ | Nghĩa | Ví dụ |
+|---|---|---|
+| **deploy** (v) / deployment (n) | triển khai | *We deploy to production every Friday.* |
+| **deprecate** (v) | đánh dấu sắp bỏ | *This method is **deprecated** and will be removed in v3.* |
+| **backward compatible** | tương thích ngược | *The change is backward compatible.* |
+| **edge case** | trường hợp biên | *Empty input is an edge case.* |
+| **bottleneck** | nút thắt cổ chai | *The database is the bottleneck.* |
+| **trade-off** | sự đánh đổi | *Caching is a trade-off between speed and freshness.* |
+| **workaround** | cách lách tạm | *Here is a workaround until the fix is released.* |
+| **regression** | lỗi tái phát / làm hỏng cái đang chạy | *This PR introduced a regression.* |
+| **out of scope** | ngoài phạm vi | *Dark mode is out of scope for this sprint.* |
+| **roll back** (v) / rollback (n) | quay lại bản cũ | *Let's roll back the release.* |
+
+### Từ kỹ thuật, IPA và collocation
+IPA dưới đây theo cách đọc Anh–Mỹ phổ biến; trọng âm chính đặt trước âm tiết có dấu /ˈ/.
+| Từ | IPA | Nghĩa | Ví dụ trong IT |
+|---|---|---|---|
+| **deploy** | /dɪˈplɔɪ/ | triển khai | *We deploy the patch after the tests pass.* |
+| **repository** | /rɪˈpɑːzəˌtɔːri/ | kho mã nguồn | *The repository contains the API and its tests.* |
+| **throughput** | /ˈθruːˌpʊt/ | thông lượng | *The new connection pool improves throughput.* |
+| **query** | /ˈkwɪri/ | truy vấn | *This query returns duplicate rows.* |
+| **cache** | /kæʃ/ | bộ nhớ đệm | *The cache expires after ten minutes.* |
+| **queue** | /kjuː/ | hàng đợi | *The worker reads jobs from the queue.* |
+| **reliable** | /rɪˈlaɪəbəl/ | đáng tin cậy | *We need a reliable retry strategy.* |
+| **failure** | /ˈfeɪljər/ | sự cố, thất bại | *The dashboard records each failure.* |
+
+Collocation giúp câu tự nhiên hơn: **deploy a service**, **run a query**, **raise an issue**, **meet a deadline**, **break backward compatibility**, **handle an edge case**, **reach an agreement**, **provide feedback**. Nói *raise an issue* thay vì dịch từng chữ kiểu *open a problem*; nói *make a decision* thay vì *do a decision*.
+
+Người Việt thường bỏ âm cuối: *tests* cần /s/ sau /t/, *deploys* cần âm /z/, còn *fixed* đọc tận cùng /t/ và *merged* tận cùng /d/. Đuôi **-ed** đọc /ɪd/ sau /t/ hoặc /d/ (*tested*), /t/ sau âm vô thanh (*fixed*), /d/ sau âm hữu thanh (*merged*). Đừng thêm nguyên âm thành *fix-tờ* hay *test-ịt*.
+
+Trọng âm có thể phân biệt từ và giúp người nghe nhận ra từ: danh từ **REcord** thường nhấn âm đầu, động từ **reCORD** thường nhấn âm sau. Một số từ dễ dịch nhầm: **actually** = thật ra (không phải *hiện tại*), **currently** = hiện tại, **eventually** = cuối cùng, **sensible** = hợp lý, **sensitive** = nhạy cảm. Tránh dịch word-by-word; *The app is running slowly* tự nhiên hơn *The app runs slow* trong văn phong chuyên nghiệp.
+
+### Lưu ý
+- Danh từ **không đếm được**: *data* (thường dùng như số ít trong IT), *information*, *feedback*, *software*, *code*, *equipment* → **không** thêm *s*: ~~feedbacks~~, ~~informations~~.
+- *setup* (n) vs *set up* (v): *The **setup** is easy. — Please **set up** the project.* Tương tự *login / log in*, *backup / back up*, *rollback / roll back*.
+'''
+
+[[modules]]
+id = "en-grammar"
+title = "Ngữ pháp trong công việc"
+description = "Hiện tại hoàn thành, bị động trong tài liệu, câu điều kiện, mạo từ, phrasal verb."
+lesson = '''
+### Hiện tại hoàn thành (present perfect)
+Việc vừa xong, kết quả còn liên quan tới hiện tại: *I **have fixed** the bug.* — *The build **has failed** three times today.*
+Dùng **quá khứ đơn** khi có thời điểm cụ thể: *I **fixed** it **yesterday**.*
+
+### Bị động (passive) — rất phổ biến trong tài liệu
+*The request **is sent** over HTTPS.* · *The token **will be refreshed** automatically.* · *This API **was deprecated** in v2.*
+
+### Câu điều kiện
+- Loại 0 (sự thật/hành vi hệ thống): *If the cache **is** empty, the app **fetches** fresh data.*
+- Loại 1 (khả năng thật): *If the tests **pass**, I **will merge** the PR.*
+- Loại 2 (giả định): *If we **had** more time, we **would refactor** this module.*
+
+### Mạo từ a / an / the
+*an* trước **âm** nguyên âm: *an API* (/eɪ/), *an HTTP request* (/eɪtʃ/), *an hour*; nhưng *a URL* (/juː/), *a user*, *a unique id*.
+
+### Phrasal verb hay dùng
+*look into* (điều tra), *figure out* (tìm ra), *set up*, *roll out* (triển khai dần), *clean up*, *break down* (chia nhỏ), *follow up* (theo dõi tiếp), *come up with* (nghĩ ra).
+
+### Lỗi hay gặp khi viết câu
+- Chủ ngữ số ít ở hiện tại đơn cần **-s**: *The worker retries the request*, nhưng *The workers retry the request*. Đừng bỏ âm cuối khi nói.
+- Dùng quá khứ đơn với thời điểm đã kết thúc: *We deployed it yesterday*; dùng present perfect khi không nêu mốc và kết quả còn liên quan: *We have deployed the fix*.
+- Mạo từ theo âm đầu: *an hour*, *a user*, *an API*, *a URL*. Chữ viết không quyết định a/an.
+- Trật tự câu tiếng Anh thường là chủ ngữ + động từ + tân ngữ: *The service returns an error*, không dịch từng chữ theo trật tự tiếng Việt.
+- Dùng giới từ trong collocation: *depend on*, *responsible for*, *discuss the design* (không có *about* sau *discuss*), *explain the issue to me*.
+'''
+
+[[modules]]
+id = "en-reading"
+title = "Đọc tài liệu & thông báo lỗi"
+description = "Từ khoá RFC (MUST/SHOULD/MAY), thuật ngữ trong docs, hiểu nhanh error message."
+lesson = '''
+### Từ khoá chuẩn (RFC 2119)
+- **MUST / REQUIRED / SHALL**: bắt buộc.
+- **MUST NOT**: cấm tuyệt đối.
+- **SHOULD / RECOMMENDED**: nên làm, chỉ bỏ qua khi có lý do chính đáng.
+- **MAY / OPTIONAL**: tuỳ chọn.
+
+### Cụm từ hay gặp trong docs
+*out of the box* (có sẵn, không cần cấu hình) · *under the hood* (bên dưới, cơ chế bên trong) · *opt in / opt out* · *by default* · *as of v2.0* (kể từ v2.0) · *e.g.* (ví dụ) vs *i.e.* (tức là) · *caveat* (lưu ý/hạn chế) · *TL;DR* (tóm tắt) · *WIP* (đang làm) · *LGTM* (looks good to me) · *nit* (góp ý nhỏ).
+
+### Đọc error message
+*Cannot read properties of **undefined** (reading 'map')* → biến đang là `undefined` khi gọi `.map`.
+*Unexpected token '<' … is not valid JSON* → server trả HTML (thường là trang lỗi) thay vì JSON.
+*Permission denied*, *Connection refused*, *Address already in use*, *Request timed out*, *Too many open files*.
+
+Khi diễn giải, phân biệt **cause** (nguyên nhân) với **symptom** (biểu hiện): *The request timed out* mô tả biểu hiện, chưa chứng minh server bị hỏng. **Expected behavior** là điều nên xảy ra; **actual behavior** là điều quan sát được. Những từ nối như *therefore*, *however*, *for example* giúp nêu quan hệ rõ ràng; **e.g.** đưa ví dụ, **i.e.** nói cách diễn đạt tương đương.
+
+Một false friend đáng nhớ là **actually** (thật ra), khác **currently** (hiện tại). **Eventually** có nghĩa cuối cùng sau một khoảng thời gian; nó không có nghĩa là “có thể”. Đọc cả câu và kiểm tra quan hệ nguyên nhân–kết quả, đừng dịch từng từ rời rạc.
+'''
+
+[[modules]]
+id = "en-writing"
+title = "Viết commit, PR, issue & email"
+description = "Imperative mood, Conventional Commits, mô tả PR, báo bug, email lịch sự."
+lesson = '''
+### Commit message
+- Dòng tiêu đề ở **thể mệnh lệnh** (imperative): *Fix*, *Add*, *Remove* — không phải *Fixed/Adds/Fixing*. Mẹo: câu phải đọc được sau "*If applied, this commit will …*".
+- ≤ 72 ký tự, không chấm cuối; dòng trống rồi mới tới phần thân giải thích **why**.
+- **Conventional Commits**: `feat(auth): add password reset`, `fix: handle empty cart`, `docs: …`, `refactor: …`; `!` hoặc `BREAKING CHANGE:` cho thay đổi phá vỡ.
+
+### Pull request
+**What** (thay đổi gì) · **Why** (vì sao) · **How to test** · ảnh chụp/video nếu là UI · ticket liên quan (*Closes #123*).
+
+### Báo bug (issue)
+*Steps to reproduce* · *Expected behavior* · *Actual behavior* · *Environment* (OS, version) · log/screenshot.
+
+### Email / chat lịch sự
+*Could you please take a look at…?* · *Would it be possible to…?* · *Just a friendly reminder…* · *Sorry for the late reply.* · *Let me know if you have any questions.* · Tránh *Please do the needful*, *Revert back*, *Kindly revert*.
+
+Collocation công việc: **send an update**, **share a link**, **request a review**, **address a comment**, **follow up on an issue**, **schedule a meeting**. Dùng động từ cụ thể thay cho câu dài: *I fixed the validation error* rõ hơn *A fix was made to the validation error*. Giọng lịch sự không cần quá nhiều *please*; nêu yêu cầu, lý do và thời hạn nếu có.
+'''
+
+[[modules]]
+id = "en-speaking"
+title = "Họp, standup & phỏng vấn"
+description = "Cập nhật standup, hỏi lại khi chưa hiểu, phát âm từ kỹ thuật, trả lời phỏng vấn theo STAR."
+lesson = '''
+### Standup
+*Yesterday I finished… · Today I'm going to… · I'm blocked by… / No blockers.*
+
+### Khi chưa nghe rõ / chưa hiểu
+*Sorry, could you say that again?* · *Could you elaborate on…?* · *Just to make sure I understand, you mean…?* · *Let me get back to you on that.*
+
+### Đề xuất & phản biện nhẹ nhàng
+*What if we…?* · *Have we considered…?* · *I see your point, but…* · *I'd suggest…*
+
+### Phát âm hay sai
+**cache** /kæʃ/ (như *cash*) · **Linux** /ˈlɪnəks/ · **SQL** /ˌes.kjuːˈel/ hoặc /ˈsiːkwəl/ · **height** /haɪt/ · **width** /wɪdθ/ · **suite** /swiːt/ · **queue** /kjuː/ · **GUI** /ˈɡuːi/ · **char** /tʃɑːr/ · **null** /nʌl/ · **daemon** /ˈdiːmən/.
+
+### Phỏng vấn — phương pháp STAR
+**S**ituation → **T**ask → **A**ction (tập trung vào *I*, không phải *we*) → **R**esult (có số liệu càng tốt).
+
+### Phát âm để đồng nghiệp nghe rõ
+Đừng bỏ âm cuối khi nói *tests*, *builds*, *fixed*, *deployed*. Đuôi số nhiều **-s** đọc /s/ sau âm vô thanh (*tests*), /z/ sau âm hữu thanh (*builds*), và /ɪz/ sau âm xì (*releases*). Đuôi quá khứ **-ed** có ba cách đọc: /t/ trong *fixed*, /d/ trong *deployed*, /ɪd/ trong *tested*. Đây là quy tắc phát âm, không phải ba cách viết.
+
+Đặt trọng âm đúng giúp người nghe nhận từ nhanh hơn: *develop* nhấn âm tiết thứ hai (*de-VEL-op*), *component* cũng nhấn âm tiết thứ hai (*com-PO-nent*), còn *database* thường nhấn phần đầu (*DA-ta-base*). Khi không chắc, tra từ điển phát âm và luyện cả cụm thay vì đọc từng chữ cái.
+
+Khi nối âm, phụ âm cuối có thể nối vào nguyên âm đầu kế tiếp: *send it* thường liền mạch, nhưng vẫn giữ đủ âm để phân biệt từ. Mục tiêu là dễ hiểu, không phải bắt chước một giọng địa phương cụ thể.
+'''
+
+[[modules]]
+id = "en-email-chat"
+title = "Email và Slack"
+description = "Hỏi thông tin, báo lỗi, xin review, từ chối lịch sự và follow-up theo đúng mức độ trang trọng."
+lesson = '''
+### Chọn giọng theo kênh và người nhận
+Email với khách hàng hoặc người chưa quen thường đầy đủ câu và có lời chào; Slack nội bộ có thể ngắn hơn nhưng vẫn nêu ngữ cảnh và hành động cần thiết.
+| Mục đích | Formal email | Slack thân mật vừa phải |
+|---|---|---|
+| Hỏi | *Could you clarify the deadline for this change?* | *Do we have a deadline for this?* |
+| Báo lỗi | *I found an issue with the export flow.* | *The export is failing for archived orders.* |
+| Xin review | *Would you be able to review PR #42 by Thursday?* | *Could someone review PR #42 when they have a moment?* |
+| Từ chối | *I’m afraid I can’t take this on before Friday.* | *I can’t pick this up today, but I can look tomorrow.* |
+| Follow-up | *I’m following up on my request below.* | *Quick follow-up: do you have an update?* |
+
+Một email hữu ích có subject cụ thể, bối cảnh ngắn, yêu cầu rõ và deadline nếu cần. Slack thường bỏ lời chào dài; tránh gửi *Any update?* liên tục. Thay bằng *Could you share an update by 3 p.m. so I can unblock the release?* Nếu từ chối, nói rõ giới hạn và đề xuất phương án khả thi. **Could you…?**, **Would you mind…?**, **I’m afraid…** làm câu mềm hơn; đừng lạm dụng *kindly* hoặc dịch nguyên cụm tiếng Việt sang tiếng Anh.
+'''
+
+[[modules]]
+id = "en-meetings"
+title = "Họp và cộng tác"
+description = "Stand-up, sprint planning, retrospective, nêu ý kiến, phản biện lịch sự và xác nhận thông tin."
+lesson = '''
+### Ngôn ngữ theo từng cuộc họp
+| Tình huống | Câu tự nhiên |
+|---|---|
+| Stand-up: hôm qua | *Yesterday, I finished the retry logic.* |
+| Stand-up: hôm nay | *Today, I’m going to add integration tests.* |
+| Blocker | *I’m blocked by the staging credentials.* |
+| Planning: ước lượng | *This looks like a two-point task, assuming the API stays unchanged.* |
+| Nêu ý kiến | *I’d suggest keeping the endpoint backward compatible.* |
+| Phản đối nhẹ | *I see the benefit, but I’m concerned about the migration cost.* |
+| Hỏi lại | *Sorry, could you repeat the last part?* |
+
+Trong retrospective, nêu sự kiện cụ thể thay vì quy lỗi: *The deploy took 40 minutes because the migration ran synchronously.* Sau đó đề xuất bước tiếp theo: *Could we test the migration on a copy of production data?* Để đồng ý có sắc thái, dùng *That makes sense because…*; để bất đồng, giải thích rủi ro và nêu lựa chọn. Nếu chưa nghe, xin nhắc lại hoặc diễn đạt điều mình hiểu: *So the new limit applies to each user, correct?* Đừng chỉ nói *yes* khi còn mơ hồ.
+'''
+
+[[modules]]
+id = "en-code-review"
+title = "Code review và báo lỗi"
+description = "Viết comment có mức độ rõ ràng, PR description, commit message và bug report tái hiện được."
+lesson = '''
+### Comment review tập trung vào mã
+| Mức độ | Cách viết | Ý nghĩa |
+|---|---|---|
+| Nit | *Nit: could we rename this to `userCount` for consistency?* | góp ý nhỏ, không chặn merge |
+| Suggestion | *Could we move this validation into the service so both callers use it?* | đề xuất cải thiện |
+| Blocking | *This can expose another user’s data. Please check ownership before merging.* | vấn đề cần sửa trước khi merge |
+
+Giải thích **why** và nêu hướng sửa khi có thể. Viết *This branch misses the empty-list case* thay vì *You forgot…*; phê bình thay đổi, không phê bình người viết. PR description thường gồm **What**, **Why**, **How to test**, và ảnh/changelog nếu cần. Bug report có title, môi trường, bước tái hiện đánh số, expected behavior và actual behavior. Bước phải đủ cụ thể để người khác làm lại; tách quan sát khỏi suy đoán nguyên nhân. Commit header theo Conventional Commits như *fix(auth): reject expired sessions*; dùng động từ nguyên mẫu và không thêm dấu chấm cuối.
+'''
+
+[[modules]]
+id = "en-docs-writing"
+title = "README và tài liệu kỹ thuật"
+description = "Viết README, ADR và giải thích kỹ thuật bằng plain English, câu chủ động và cấu trúc dễ quét."
+lesson = '''
+### Viết để người đọc làm được việc
+README thường trả lời: project làm gì, yêu cầu gì, cách cài, cách chạy, cách test và nơi tìm trợ giúp. ADR ghi **Context**, **Decision**, **Consequences**; nêu quyết định đã chọn và đánh đổi, không chỉ liệt kê phương án.
+
+| Dài / mơ hồ | Plain English |
+|---|---|
+| *The cache is invalidated by the service.* | *The service clears the cache.* |
+| *In order to run the tests, execute…* | *To run the tests, execute…* |
+| *It should be noted that the token expires…* | *The token expires…* |
+
+Ưu tiên câu chủ động khi tác nhân quan trọng: *The worker retries the job twice.* Dùng bị động khi tác nhân không rõ hoặc không đáng kể: *The token is stored securely.* Một đoạn nên có một ý; đặt tên section theo câu hỏi người đọc cần trả lời. Giải thích thuật ngữ một lần, dùng ví dụ ngắn có dữ liệu thực tế, và phân biệt requirement với recommendation. Không cần dùng từ trang trọng dài nếu động từ quen thuộc diễn đạt đúng ý.
+'''
+
+[[modules]]
+id = "en-interview"
+title = "Phỏng vấn kỹ thuật"
+description = "STAR, kể dự án, trình bày system design, đặt câu hỏi ngược và trao đổi offer bằng tiếng Anh."
+lesson = '''
+### Trả lời có cấu trúc
+Với câu hỏi behavioral, dùng **STAR**: Situation (bối cảnh), Task (trách nhiệm), Action (việc chính bạn làm), Result (kết quả). Nói cụ thể phần **I** để làm rõ đóng góp cá nhân; dùng số liệu chỉ khi có thật. Khi mô tả dự án, bắt đầu bằng người dùng/vấn đề, rồi nêu kiến trúc, lựa chọn, đánh đổi và kết quả.
+
+Trong system design, xác nhận yêu cầu trước: *How many daily active users should we support?* Sau đó tóm tắt giả định, API, data model, luồng chính, bottleneck và cách xử lý lỗi. Nếu cần suy nghĩ, nói *Let me think through the trade-offs* thay vì im lặng. Nếu chưa rõ câu hỏi, xác nhận phạm vi.
+
+Hỏi interviewer về tiêu chí thành công, quy trình review, vận hành on-call và cách team ra quyết định. Khi đàm phán offer, cảm ơn, thể hiện quan tâm, nêu cơ sở mong muốn và hỏi về tổng gói: *Based on the role and my experience, is there flexibility in the base salary?* Không bịa số liệu hoặc lời mời cạnh tranh; xin thời gian xem xét nếu cần.
+'''
+
+[[modules]]
+id = "en-pronunciation"
+title = "Phát âm tiếng Anh kỹ thuật"
+description = "Luyện trọng âm từ công nghệ, âm cuối -s/-ed, cách đọc acronym và nối âm dễ hiểu."
+lesson = '''
+### Từ kỹ thuật và trọng âm Anh–Mỹ
+| Từ | IPA tham khảo | Ghi chú |
+|---|---|---|
+| develop | /dɪˈvɛləp/ | nhấn âm 2 |
+| component | /kəmˈpoʊnənt/ | nhấn âm 2 |
+| database | /ˈdeɪtəˌbeɪs/ | thường nhấn phần đầu; *data* cũng có biến thể /ˈdætə/ |
+| cache | /kæʃ/ | vần giống *cash* |
+| queue | /kjuː/ | một âm tiết |
+| GUI | /ˌdʒiː juː ˈaɪ/ hoặc /ˈɡuːi/ | đọc từng chữ hoặc “goo-ee” |
+| SQL | /ˌɛs kjuː ˈɛl/ hoặc /ˈsiːkwəl/ | cả “ess-cue-ell” và “sequel” đều dùng |
+| Linux | /ˈlɪnəks/ | thường nhấn âm đầu ở Mỹ |
+| algorithm | /ˈælɡəˌrɪðəm/ | nhấn âm đầu |
+| architecture | /ˈɑːrkɪˌtɛktʃər/ | nhấn âm đầu |
+
+Đuôi **-s** đọc /s/ sau âm vô thanh (*tests*), /z/ sau âm hữu thanh (*builds*) và /ɪz/ sau âm xì (*branches*). Đuôi **-ed** đọc /t/ (*fixed*), /d/ (*merged*) hoặc /ɪd/ (*tested*) theo âm cuối của động từ gốc. Đừng bỏ âm cuối hoặc thêm âm tiết không cần thiết. Khi nối âm, *check it* có thể liền tiếng nhưng hai từ vẫn cần nghe được. Một số IPA có biến thể vùng miền; mục tiêu là phát âm nhất quán và dễ hiểu, không bắt buộc một accent duy nhất.
+'''
+
+# ============================================================ VOCAB
+[[questions]]
+id = "en-001"
+module = "en-vocab"
+type = "single"
+difficulty = 1
+prompt = "*\"This function is **deprecated** and will be removed in the next major version.\"* — **deprecated** nghĩa là:"
+options = ["bị lỗi, không chạy được", "không còn được khuyến khích dùng, sắp bị loại bỏ", "đã bị xoá", "chỉ chạy trên môi trường dev"]
+answer = [1]
+explanation = "Deprecated = vẫn còn chạy nhưng không nên dùng nữa vì sẽ bị gỡ. Thường đi kèm gợi ý thay thế: *Use `X` instead.*"
+
+[[questions]]
+id = "en-002"
+module = "en-vocab"
+type = "single"
+difficulty = 1
+prompt = "Từ nào chỉ **\"trường hợp biên\"** (input rỗng, số âm, danh sách 1 phần tử…) cần test kỹ?"
+options = ["bottleneck", "edge case", "workaround", "milestone"]
+answer = [1]
+explanation = "*bottleneck* = nút thắt hiệu năng; *workaround* = cách lách tạm; *milestone* = cột mốc dự án."
+
+[[questions]]
+id = "en-003"
+module = "en-vocab"
+type = "multiple"
+difficulty = 2
+prompt = "Câu nào **đúng ngữ pháp** (chú ý danh từ không đếm được)?"
+options = [
+  "Thanks for your feedback.",
+  "Thanks for your feedbacks.",
+  "We need more information about the bug.",
+  "We need more informations about the bug.",
+  "The software is installed on every machine.",
+  "I wrote some codes today.",
+]
+answer = [0, 2, 4]
+explanation = "*feedback, information, software, code* là danh từ không đếm được. Muốn đếm: *a piece of feedback*, *a few lines of code*, *two code snippets*."
+
+[[questions]]
+id = "en-004"
+module = "en-vocab"
+type = "fill"
+difficulty = 2
+prompt = '''
+Điền **một từ** phù hợp (setup/set up, login/log in, rollback/roll back):
+
+1. Please {{blank}} {{blank}} your local environment before the workshop. *(2 từ – động từ)*
+2. The new release broke checkout, so we decided to {{blank}} {{blank}} to v1.4. *(2 từ – động từ)*
+3. The {{blank}} page shows an error when the password is empty. *(1 từ – danh từ/tính từ)*
+'''
+blanks = [["set"], ["up"], ["roll"], ["back"], ["login"]]
+explanation = "Động từ viết **tách** (*set up, roll back, log in*), danh từ/tính từ viết **liền** (*setup, rollback, login page*)."
+
+[[questions]]
+id = "en-005"
+module = "en-vocab"
+type = "single"
+difficulty = 2
+prompt = "*\"Adding an index speeds up reads but slows down writes — it's a ______.\"*"
+options = ["trade-off", "regression", "deadline", "rollback"]
+answer = [0]
+explanation = "*trade-off* = đánh đổi: được cái này, mất cái kia."
+
+# ============================================================ GRAMMAR
+[[questions]]
+id = "en-020"
+module = "en-grammar"
+type = "single"
+difficulty = 1
+prompt = "Chọn câu đúng khi báo cáo việc **vừa xong**, không nêu thời điểm:"
+options = ["I fix the bug.", "I have fixed the bug.", "I have fixed the bug yesterday.", "I am fixed the bug."]
+answer = [1]
+explanation = "Present perfect cho việc vừa hoàn thành còn ảnh hưởng tới hiện tại. Khi có *yesterday* phải dùng quá khứ đơn: *I fixed the bug yesterday.*"
+
+[[questions]]
+id = "en-021"
+module = "en-grammar"
+type = "single"
+difficulty = 2
+prompt = "Mạo từ nào đúng: *\"Send ___ HTTP request to ___ URL returned by ___ API.\"*"
+options = ["a / a / an", "an / a / the", "an / an / the", "a / an / a"]
+answer = [1]
+explanation = "*HTTP* đọc /eɪtʃ/ → **an**; *URL* đọc /juː/ → **a**; API đã xác định (cái API nói trên) → **the**. Quy tắc theo **âm**, không theo chữ cái."
+
+[[questions]]
+id = "en-022"
+module = "en-grammar"
+type = "fill"
+difficulty = 2
+prompt = '''
+Chia động từ trong ngoặc (thể **bị động**, đúng thì):
+
+1. The access token {{blank}} {{blank}} automatically every hour. *(refresh – hiện tại, mô tả hệ thống)*
+2. This endpoint {{blank}} {{blank}} in version 2.0. *(deprecate – quá khứ)*
+3. Your data {{blank}} {{blank}} {{blank}} after 30 days. *(delete – tương lai)*
+'''
+blanks = [["is"], ["refreshed"], ["was"], ["deprecated"], ["will"], ["be"], ["deleted"]]
+explanation = "Bị động = *be + V3*. Tài liệu kỹ thuật dùng bị động rất nhiều vì quan tâm tới **hành động** hơn là ai làm."
+
+[[questions]]
+id = "en-023"
+module = "en-grammar"
+type = "multiple"
+difficulty = 2
+prompt = "Câu điều kiện nào **đúng ngữ pháp**?"
+options = [
+  "If the tests pass, I will merge the PR.",
+  "If the tests will pass, I merge the PR.",
+  "If we had more time, we would refactor this module.",
+  "If the cache is empty, the app fetches fresh data.",
+  "If I would know the answer, I would tell you.",
+]
+answer = [0, 2, 3]
+explanation = "Không dùng *will/would* trong mệnh đề *if* (loại 1, 2): *If I **knew** the answer, I would tell you.*"
+
+[[questions]]
+id = "en-024"
+module = "en-grammar"
+type = "single"
+difficulty = 2
+prompt = "*\"I'll ______ the issue and get back to you this afternoon.\"* — phrasal verb nghĩa là **điều tra, xem xét**:"
+options = ["look into", "look after", "look up to", "look forward to"]
+answer = [0]
+explanation = "*look after* = chăm sóc; *look up to* = ngưỡng mộ; *look forward to* = mong chờ (*I look forward to hearing from you*)."
+
+# ============================================================ READING
+[[questions]]
+id = "en-040"
+module = "en-reading"
+type = "single"
+difficulty = 2
+prompt = "Trong một đặc tả: *\"Clients **SHOULD** retry the request with exponential backoff.\"* nghĩa là:"
+options = ["Bắt buộc phải retry", "Cấm retry", "Nên retry, chỉ bỏ qua khi có lý do chính đáng", "Hoàn toàn tuỳ ý, không có khuyến nghị"]
+answer = [2]
+explanation = "RFC 2119: MUST = bắt buộc, SHOULD = khuyến nghị mạnh, MAY = tuỳ chọn."
+
+[[questions]]
+id = "en-041"
+module = "en-reading"
+type = "single"
+difficulty = 2
+prompt = "*\"Uncaught SyntaxError: Unexpected token '<', \"<!DOCTYPE \"... is not valid JSON\"* — nguyên nhân khả dĩ nhất?"
+options = [
+  "File JavaScript thiếu dấu `<`",
+  "Gọi `res.json()` nhưng server trả về **trang HTML** (vd. trang 404/500 hoặc index.html) thay vì JSON",
+  "Trình duyệt không hỗ trợ JSON",
+  "Thiếu dấu chấm phẩy",
+]
+answer = [1]
+explanation = "Ký tự `<` đầu tiên là của `<!DOCTYPE html>`. Kiểm tra URL, status code và header `Content-Type` trước khi parse."
+
+[[questions]]
+id = "en-042"
+module = "en-reading"
+type = "multiple"
+difficulty = 2
+prompt = "Ghép nghĩa đúng:"
+options = [
+  "*out of the box* = có sẵn, dùng được ngay không cần cấu hình",
+  "*under the hood* = cơ chế bên trong",
+  "*e.g.* = tức là (giải thích lại)",
+  "*as of v3* = kể từ phiên bản 3",
+  "*caveat* = lưu ý / hạn chế cần biết",
+]
+answer = [0, 1, 3, 4]
+explanation = "*e.g.* = ví dụ (for example); *i.e.* = tức là (that is)."
+
+[[questions]]
+id = "en-043"
+module = "en-reading"
+type = "fill"
+difficulty = 1
+prompt = '''
+Viết tắt hay gặp trong code review / chat:
+
+- "Looks good to me" → {{blank}}
+- "Work in progress" → {{blank}}
+- "Too long; didn't read" (phần tóm tắt) → {{blank}}
+- "In my opinion" → {{blank}}
+'''
+blanks = [["LGTM"], ["WIP"], ["TL;DR", "TLDR"], ["IMO", "IMHO"]]
+explanation = "Thêm: *PTAL* (please take a look), *nit* (góp ý nhỏ, không bắt buộc), *AFAIK* (as far as I know), *FYI*, *ETA*."
+
+[[questions]]
+id = "en-044"
+module = "en-reading"
+type = "single"
+difficulty = 2
+prompt = "Server báo *\"Error: listen EADDRINUSE: **address already in use** :::3000\"*. Bạn nên:"
+options = [
+  "Cài lại Node.js",
+  "Tìm và dừng tiến trình đang chiếm cổng 3000, hoặc chạy app trên cổng khác",
+  "Xoá thư mục node_modules",
+  "Tăng RAM",
+]
+answer = [1]
+explanation = "*already in use* = đang được dùng. Trên macOS/Linux: `lsof -i :3000` để tìm PID."
+
+# ============================================================ WRITING
+[[questions]]
+id = "en-060"
+module = "en-writing"
+type = "single"
+difficulty = 1
+prompt = "Commit message nào đúng phong cách (imperative mood)?"
+options = ["Fixed login bug.", "Fixing login bug", "Fix login redirect when session expires", "fixes: login"]
+answer = [2]
+explanation = "Đọc thử: *If applied, this commit will **fix login redirect when session expires*** ✓."
+
+[[questions]]
+id = "en-061"
+module = "en-writing"
+type = "multiple"
+difficulty = 2
+prompt = "Cụm nào **lịch sự, tự nhiên** khi nhờ đồng nghiệp review?"
+options = [
+  "Could you please take a look at my PR when you have a moment?",
+  "Review my PR now.",
+  "Would you mind reviewing PR #42? No rush.",
+  "Please do the needful.",
+  "PTAL when you get a chance 🙏",
+]
+answer = [0, 2, 4]
+explanation = "*Please do the needful* nghe cứng và khó hiểu với người bản xứ; câu mệnh lệnh trống không dễ gây khó chịu."
+
+[[questions]]
+id = "en-062"
+module = "en-writing"
+type = "fill"
+difficulty = 2
+prompt = '''
+Hoàn thành mẫu báo bug:
+
+**Steps to {{blank}}:**
+1. Open the cart page
+2. Remove the last item
+
+**{{blank}} behavior:** An empty-cart message is shown.
+**{{blank}} behavior:** The page crashes with a white screen.
+'''
+blanks = [["reproduce"], ["Expected"], ["Actual"]]
+explanation = "Bug report tốt = người khác **tái hiện** được. Kèm môi trường (OS, trình duyệt, version) và log."
+
+[[questions]]
+id = "en-063"
+module = "en-writing"
+type = "essay"
+difficulty = 3
+prompt = '''
+Viết **mô tả Pull Request bằng tiếng Anh** (4–8 câu) cho thay đổi: *thêm phân trang dạng cursor cho API `GET /orders` vì offset bị chậm khi dữ liệu lớn; đã viết unit test; client cũ vẫn dùng được.*
+'''
+keywords = [
+  ["add", "adds", "introduce", "implement"],
+  ["cursor"],
+  ["because", "since", "slow", "performance", "why"],
+  ["test", "tests", "tested"],
+  ["backward", "compatible", "existing clients", "breaking"],
+  ["how to test", "to test", "steps", "run"],
+]
+min_keywords = 4
+model_answer = '''
+**What**
+This PR adds cursor-based pagination to `GET /orders` (`?limit=20&cursor=...`). The response now includes a `nextCursor` field.
+
+**Why**
+Offset pagination becomes slow on large tables because the database has to skip many rows, and pages can shift when new orders are inserted.
+
+**Compatibility**
+The change is backward compatible: existing clients that send `page`/`limit` keep working; offset support will be deprecated later.
+
+**How to test**
+Run `npm test` — new unit tests cover the first page, the last page and invalid cursors. You can also call `/orders?limit=2` and follow `nextCursor`.
+'''
+explanation = "Cấu trúc What / Why / Compatibility / How to test giúp reviewer đọc nhanh."
+
+# ============================================================ SPEAKING
+[[questions]]
+id = "en-080"
+module = "en-speaking"
+type = "single"
+difficulty = 1
+prompt = "Từ **cache** được phát âm giống từ nào?"
+options = ["catch", "cash", "cake", "cashe /kəˈʃeɪ/"]
+answer = [1]
+explanation = "/kæʃ/ — giống *cash*. Cách đọc \"ca-shây\" là lỗi rất phổ biến."
+
+[[questions]]
+id = "en-081"
+module = "en-speaking"
+type = "single"
+difficulty = 2
+prompt = "Trong cuộc họp bạn chưa chắc đã hiểu đúng yêu cầu. Câu nào phù hợp nhất?"
+options = [
+  "What?",
+  "Just to make sure I understand — you'd like the export to include archived orders too, right?",
+  "I don't understand anything.",
+  "OK OK.",
+]
+answer = [1]
+explanation = "Nhắc lại ý bằng lời của mình (paraphrase) vừa xác nhận vừa thể hiện bạn đang lắng nghe."
+
+[[questions]]
+id = "en-082"
+module = "en-speaking"
+type = "fill"
+difficulty = 1
+prompt = '''
+Cập nhật daily standup:
+
+"{{blank}} I finished the login form. Today I'm going to write tests for it. I'm {{blank}} by the missing API docs, so I'll follow {{blank}} with the backend team."
+'''
+blanks = [["Yesterday"], ["blocked"], ["up"]]
+explanation = "*be blocked by* = bị chặn bởi; *follow up with someone* = liên hệ lại/thúc tiến độ."
+
+[[questions]]
+id = "en-083"
+module = "en-speaking"
+type = "essay"
+difficulty = 3
+prompt = '''
+Câu phỏng vấn: ***"Tell me about a challenging bug you fixed."*** — trả lời bằng tiếng Anh theo phương pháp **STAR** (Situation, Task, Action, Result).
+'''
+keywords = [
+  ["situation", "we had", "there was", "in my previous", "at my last"],
+  ["task", "my job", "i was responsible", "i needed to", "goal"],
+  ["i investigated", "i found", "i added", "i used", "i reproduced", "i debugged", "action"],
+  ["result", "reduced", "improved", "fixed", "%", "percent"],
+  ["learned", "lesson", "since then", "now we"],
+]
+min_keywords = 3
+model_answer = '''
+**Situation:** At my previous company, our checkout page randomly showed the wrong total for about 2% of orders.
+
+**Task:** I was responsible for finding the root cause before a big sale campaign the following week.
+
+**Action:** I first reproduced the bug by replaying production logs, and I found that two requests updating the cart could finish in a different order. I added a version number to the cart and rejected stale updates, then wrote integration tests for concurrent updates.
+
+**Result:** The wrong totals dropped to zero, and support tickets about checkout fell by 30%. I learned to always consider race conditions, and since then our team adds concurrency tests for critical flows.
+'''
+explanation = "Dùng *I* cho phần Action, đưa số liệu vào Result, và kết thúc bằng bài học rút ra."
+
+# ============================================================ CODE (xử lý tiếng Anh bằng JS)
+[[questions]]
+id = "en-c01"
+module = "en-vocab"
+type = "code"
+difficulty = 2
+title = "Số nhiều tiếng Anh (pluralize)"
+prompt = '''
+Viết `pluralize(word)` trả về dạng số nhiều theo các quy tắc (theo thứ tự ưu tiên):
+
+1. **Bất quy tắc**: child→children, person→people, man→men, woman→women, mouse→mice, foot→feet, tooth→teeth, criterion→criteria
+2. **Không đếm được** → giữ nguyên: data, information, feedback, software, code, equipment, news
+3. Tận cùng **-is** → **-es** (analysis → analyses)
+4. Tận cùng **s, x, z, ch, sh** → thêm **es** (class → classes, box → boxes, branch → branches)
+5. **Phụ âm + y** → **ies** (query → queries); nguyên âm + y chỉ thêm s (key → keys)
+6. **-f / -fe** trong danh sách leaf, life, knife, wife, half, shelf, wolf → **ves**
+7. **-o** trong danh sách hero, potato, tomato, echo → thêm **es**
+8. Còn lại thêm **s**
+
+Giữ **chữ hoa đầu**: `pluralize('Person') === 'People'`. So khớp danh sách không phân biệt hoa thường.
+'''
+starter = '''
+function pluralize(word) {
+  return word + 's';
+}
+'''
+solution = '''
+const IRREGULAR = {
+  child: 'children', person: 'people', man: 'men', woman: 'women',
+  mouse: 'mice', foot: 'feet', tooth: 'teeth', criterion: 'criteria',
+};
+const UNCOUNTABLE = new Set(['data', 'information', 'feedback', 'software', 'code', 'equipment', 'news']);
+const F_TO_VES = new Set(['leaf', 'life', 'knife', 'wife', 'half', 'shelf', 'wolf']);
+const O_ES = new Set(['hero', 'potato', 'tomato', 'echo']);
+
+function pluralize(word) {
+  const w = word.toLowerCase();
+  let out;
+  if (IRREGULAR[w]) out = IRREGULAR[w];
+  else if (UNCOUNTABLE.has(w)) out = w;
+  else if (w.endsWith('is')) out = w.slice(0, -2) + 'es';
+  else if (/(s|x|z|ch|sh)$/.test(w)) out = w + 'es';
+  else if (/[^aeiou]y$/.test(w)) out = w.slice(0, -1) + 'ies';
+  else if (F_TO_VES.has(w)) out = w.replace(/fe?$/, 'ves');
+  else if (O_ES.has(w)) out = w + 'es';
+  else out = w + 's';
+  const upper = word[0] !== word[0].toLowerCase();
+  return upper ? out[0].toUpperCase() + out.slice(1) : out;
+}
+'''
+tests = '''
+test('quy tắc thường', () => {
+  expect(['bug', 'key', 'commit', 'photo'].map(pluralize)).toEqual(['bugs', 'keys', 'commits', 'photos']);
+});
+test('s, x, z, ch, sh → es', () => {
+  expect(['class', 'box', 'branch', 'hash', 'bus'].map(pluralize)).toEqual(['classes', 'boxes', 'branches', 'hashes', 'buses']);
+});
+test('phụ âm + y → ies', () => {
+  expect(['query', 'dependency', 'day'].map(pluralize)).toEqual(['queries', 'dependencies', 'days']);
+});
+test('bất quy tắc & không đếm được', () => {
+  expect(['child', 'person', 'mouse', 'criterion'].map(pluralize)).toEqual(['children', 'people', 'mice', 'criteria']);
+  expect(['feedback', 'information', 'software'].map(pluralize)).toEqual(['feedback', 'information', 'software']);
+});
+test('-is, -f/-fe, -o', () => {
+  expect(['analysis', 'leaf', 'knife', 'hero', 'video'].map(pluralize)).toEqual(['analyses', 'leaves', 'knives', 'heroes', 'videos']);
+});
+test('giữ chữ hoa đầu', () => {
+  expect(pluralize('Person')).toBe('People');
+  expect(pluralize('Branch')).toBe('Branches');
+});
+'''
+hints = ["Kiểm tra theo đúng thứ tự ưu tiên; bất quy tắc và không đếm được trước tiên.", "Regex `/[^aeiou]y$/` bắt phụ âm + y."]
+explanation = "Thư viện như `pluralize` (npm) hay Rails ActiveSupport dùng đúng cách này: danh sách ngoại lệ + quy tắc regex."
+
+[[questions]]
+id = "en-c02"
+module = "en-grammar"
+type = "code"
+difficulty = 1
+title = "Số thứ tự (1st, 2nd, 3rd…)"
+prompt = '''
+Viết `ordinal(n)` cho số nguyên `n ≥ 0`, trả về chuỗi số thứ tự tiếng Anh:
+`1 → "1st"`, `2 → "2nd"`, `3 → "3rd"`, `4 → "4th"`, `11 → "11th"`, `12 → "12th"`, `13 → "13th"`, `21 → "21st"`, `112 → "112th"`.
+
+(Quy tắc: nếu hai chữ số cuối là 11, 12, 13 → *th*; ngược lại xét chữ số cuối 1/2/3 → *st/nd/rd*, còn lại *th*.)
+'''
+starter = '''
+function ordinal(n) {
+  return n + 'th';
+}
+'''
+solution = '''
+function ordinal(n) {
+  const last2 = n % 100;
+  if (last2 >= 11 && last2 <= 13) return n + 'th';
+  const suffix = { 1: 'st', 2: 'nd', 3: 'rd' }[n % 10] || 'th';
+  return n + suffix;
+}
+'''
+tests = '''
+test('1–4', () => {
+  expect([1, 2, 3, 4].map(ordinal)).toEqual(['1st', '2nd', '3rd', '4th']);
+});
+test('11, 12, 13 là ngoại lệ', () => {
+  expect([11, 12, 13].map(ordinal)).toEqual(['11th', '12th', '13th']);
+});
+test('21, 22, 23, 101, 111, 112', () => {
+  expect([21, 22, 23, 101, 111, 112].map(ordinal)).toEqual(['21st', '22nd', '23rd', '101st', '111th', '112th']);
+});
+test('0 và số tròn', () => {
+  expect([0, 10, 100, 1000].map(ordinal)).toEqual(['0th', '10th', '100th', '1000th']);
+});
+'''
+hints = ["Xét `n % 100` trước, rồi mới tới `n % 10`."]
+explanation = "Khi hiển thị ngày/xếp hạng, có thể dùng `Intl.PluralRules(\"en\", { type: \"ordinal\" })` để lấy loại one/two/few/other."
+
+[[questions]]
+id = "en-c03"
+module = "en-speaking"
+type = "code"
+difficulty = 3
+title = "Đọc số thành chữ (number to words)"
+prompt = '''
+Viết `toWords(n)` cho số nguyên `0 ≤ n < 1 000 000 000`, trả về cách đọc tiếng Anh kiểu Mỹ, chữ thường:
+
+- `0 → "zero"`, `7 → "seven"`, `15 → "fifteen"`
+- Từ 21–99 có **gạch nối**: `42 → "forty-two"`
+- **Không** dùng "and": `105 → "one hundred five"`
+- Nhóm nghìn/triệu: `1200 → "one thousand two hundred"`, `2000005 → "two million five"`, `999999999 → "nine hundred ninety-nine million nine hundred ninety-nine thousand nine hundred ninety-nine"`
+- Các từ cách nhau đúng **một** khoảng trắng.
+'''
+starter = '''
+function toWords(n) {
+  return String(n);
+}
+'''
+solution = '''
+const ONES = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten',
+  'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen'];
+const TENS = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'];
+
+function under1000(n) {
+  const parts = [];
+  if (n >= 100) { parts.push(ONES[Math.floor(n / 100)] + ' hundred'); n %= 100; }
+  if (n >= 20) parts.push(TENS[Math.floor(n / 10)] + (n % 10 ? '-' + ONES[n % 10] : ''));
+  else if (n > 0) parts.push(ONES[n]);
+  return parts.join(' ');
+}
+
+function toWords(n) {
+  if (n === 0) return 'zero';
+  const scales = [[1000000, 'million'], [1000, 'thousand'], [1, '']];
+  const parts = [];
+  for (const [size, name] of scales) {
+    const chunk = Math.floor(n / size) % 1000;
+    if (chunk) parts.push(under1000(chunk) + (name ? ' ' + name : ''));
+  }
+  return parts.join(' ');
+}
+'''
+tests = '''
+test('0–20', () => {
+  expect([0, 7, 13, 15, 20].map(toWords)).toEqual(['zero', 'seven', 'thirteen', 'fifteen', 'twenty']);
+});
+test('gạch nối 21–99', () => {
+  expect([21, 42, 99, 30].map(toWords)).toEqual(['twenty-one', 'forty-two', 'ninety-nine', 'thirty']);
+});
+test('hàng trăm, không dùng and', () => {
+  expect(toWords(105)).toBe('one hundred five');
+  expect(toWords(310)).toBe('three hundred ten');
+  expect(toWords(999)).toBe('nine hundred ninety-nine');
+});
+test('nghìn & triệu', () => {
+  expect(toWords(1200)).toBe('one thousand two hundred');
+  expect(toWords(2000005)).toBe('two million five');
+  expect(toWords(1000000)).toBe('one million');
+  expect(toWords(40017)).toBe('forty thousand seventeen');
+});
+test('số lớn nhất', () => {
+  expect(toWords(999999999)).toBe('nine hundred ninety-nine million nine hundred ninety-nine thousand nine hundred ninety-nine');
+});
+'''
+hints = ["Tách số thành các nhóm 3 chữ số (triệu, nghìn, đơn vị) và viết hàm đọc số < 1000.", "Bỏ qua nhóm bằng 0 để không sinh ra \"zero thousand\"."]
+explanation = "Đây cũng là cách luyện đọc số khi thuyết trình: chia nhóm ba chữ số và đọc từng nhóm kèm *thousand/million*."
+
+[[questions]]
+id = "en-c04"
+module = "en-writing"
+type = "code"
+difficulty = 3
+title = "Linter cho commit message"
+prompt = '''
+Viết `lintCommit(message)` trả về **mảng mã lỗi** (rỗng nếu hợp lệ). Dòng đầu là *header*:
+
+1. Header phải khớp `type(scope)!: subject` — `(scope)` và `!` tuỳ chọn, sau `:` đúng **một** khoảng trắng, subject không rỗng. Sai → trả ngay `['format']`
+2. `type` thuộc: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert — ngược lại thêm `'type'`
+3. Subject bắt đầu bằng chữ **in hoa** (A–Z) → `'lowercase'` (subject phải viết thường đầu câu)
+4. Subject kết thúc bằng dấu `.` → `'period'`
+5. Từ đầu tiên của subject (viết thường) kết thúc bằng `ed` hoặc `ing`, hoặc kết thúc bằng `s` nhưng không phải `ss`/`us` → `'imperative'`
+6. Header dài hơn **72** ký tự → `'length'`
+7. Có nhiều hơn một dòng mà dòng thứ hai **không rỗng** → `'blank-line'`
+
+Mã lỗi theo đúng thứ tự trên.
+'''
+starter = '''
+function lintCommit(message) {
+  return [];
+}
+'''
+solution = '''
+const TYPES = ['feat', 'fix', 'docs', 'style', 'refactor', 'perf', 'test', 'build', 'ci', 'chore', 'revert'];
+
+function lintCommit(message) {
+  const lines = message.split('\n');
+  const header = lines[0];
+  const m = header.match(/^([a-z]+)(\([^()\s]+\))?(!)?: (\S.*)$/i);
+  if (!m) return ['format'];
+  const errors = [];
+  const [, type, , , subject] = m;
+  if (!TYPES.includes(type)) errors.push('type');
+  if (/^[A-Z]/.test(subject)) errors.push('lowercase');
+  if (subject.endsWith('.')) errors.push('period');
+  const first = subject.split(/\s+/)[0].toLowerCase();
+  if (/(ed|ing)$/.test(first) || (/s$/.test(first) && !/(ss|us)$/.test(first))) errors.push('imperative');
+  if (header.length > 72) errors.push('length');
+  if (lines.length > 1 && lines[1] !== '') errors.push('blank-line');
+  return errors;
+}
+'''
+tests = '''
+test('hợp lệ', () => {
+  expect(lintCommit('feat(auth): add password reset')).toEqual([]);
+  expect(lintCommit('fix!: handle empty cart\n\nThe app crashed when the cart was empty.')).toEqual([]);
+  expect(lintCommit('docs: focus on setup steps')).toEqual([]);
+});
+test('sai định dạng', () => {
+  expect(lintCommit('add login page')).toEqual(['format']);
+  expect(lintCommit('feat:add login')).toEqual(['format']);
+  expect(lintCommit('feat: ')).toEqual(['format']);
+});
+test('type không hợp lệ', () => {
+  expect(lintCommit('feature: add login')).toEqual(['type']);
+});
+test('viết hoa, dấu chấm, thể mệnh lệnh', () => {
+  expect(lintCommit('fix: Fixed the login bug.')).toEqual(['lowercase', 'period', 'imperative']);
+  expect(lintCommit('feat: adding dark mode')).toEqual(['imperative']);
+  expect(lintCommit('fix: handles null user')).toEqual(['imperative']);
+  expect(lintCommit('chore: process images in parallel')).toEqual([]);
+});
+test('độ dài & dòng trống', () => {
+  expect(lintCommit('refactor: ' + 'x'.repeat(70))).toEqual(['length']);
+  expect(lintCommit('fix: update deps\nmore details')).toEqual(['blank-line']);
+});
+'''
+hints = ["Regex header: `/^([a-z]+)(\\([^()\\s]+\\))?(!)?: (\\S.*)$/i`.", "Kiểm tra từng quy tắc độc lập và đẩy mã lỗi theo thứ tự."]
+explanation = "Công cụ thật: **commitlint** + husky. Viết commit message tốt bằng tiếng Anh là kỹ năng được đánh giá cao khi làm việc với team quốc tế."
+
+[[questions]]
+id = "en-x001"
+module = "en-vocab"
+type = "single"
+difficulty = 1
+prompt = "Câu nào dùng collocation tự nhiên để nói rằng bạn cần nêu một vấn đề trong sprint review?"
+options = ["raise an issue", "do an issue", "open a problem", "make an issue"]
+answer = [0]
+explanation = "Raise an issue là collocation tự nhiên. Tránh dịch từng chữ từ tiếng Việt."
+
+[[questions]]
+id = "en-x002"
+module = "en-grammar"
+type = "single"
+difficulty = 1
+prompt = "Bạn vừa triển khai bản sửa và không nêu thời điểm cụ thể. Câu nào phù hợp?"
+options = ["We deploy the fix.", "We have deployed the fix.", "We have deployed the fix yesterday.", "We are deploy the fix."]
+answer = [1]
+explanation = "Present perfect phù hợp khi việc vừa hoàn tất và kết quả còn liên quan; yesterday cần quá khứ đơn."
+
+[[questions]]
+id = "en-x003"
+module = "en-reading"
+type = "single"
+difficulty = 2
+prompt = "Trong tài liệu giao thức, câu “Clients SHOULD retry after a temporary network failure” có nghĩa là gì?"
+options = ["Client bắt buộc phải retry trong mọi trường hợp.", "Client bị cấm retry.", "Client nên retry; chỉ nên bỏ qua khuyến nghị khi có lý do chính đáng.", "Retry hoàn toàn không được khuyến nghị."]
+answer = [2]
+explanation = "SHOULD biểu thị khuyến nghị mạnh, không phải yêu cầu tuyệt đối như MUST."
+
+[[questions]]
+id = "en-x004"
+module = "en-writing"
+type = "single"
+difficulty = 1
+prompt = "Chọn commit subject đúng thể mệnh lệnh và không có dấu chấm cuối."
+options = ["Fixed timeout handling.", "Fix timeout handling", "Fixing timeout handling", "Fixes timeout handling"]
+answer = [1]
+explanation = "Fix là động từ nguyên mẫu; đọc được như “If applied, this commit will fix timeout handling”."
+
+[[questions]]
+id = "en-x005"
+module = "en-speaking"
+type = "single"
+difficulty = 1
+prompt = "Trong họp online, bạn bỏ lỡ một ý. Câu nào lịch sự và cụ thể nhất?"
+options = ["What?", "Could you repeat the last point, please?", "Speak louder.", "I heard nothing."]
+answer = [1]
+explanation = "Câu này yêu cầu nhắc lại rõ ràng mà vẫn lịch sự."
+
+[[questions]]
+id = "en-x006"
+module = "en-email-chat"
+type = "single"
+difficulty = 1
+prompt = "Bạn viết email cho đồng nghiệp lần đầu để hỏi hạn chót của một thay đổi. Subject nào hữu ích nhất?"
+options = ["Question", "Urgent!!!", "Deadline for the export change", "Hello"]
+answer = [2]
+explanation = "Subject mô tả ngay chủ đề để người nhận dễ tìm và ưu tiên email."
+
+[[questions]]
+id = "en-x007"
+module = "en-email-chat"
+type = "single"
+difficulty = 2
+prompt = "Bạn cần follow-up một lần về quyền staging đang chặn việc test. Câu nào vừa rõ vừa lịch sự?"
+options = ["Any update?", "You still haven't replied.", "Could you share an update on the staging access by 2 p.m.? It is blocking the release test.", "Reply immediately."]
+answer = [2]
+explanation = "Nêu chủ đề, thời hạn và lý do giúp người nhận biết cần làm gì; tránh giọng trách móc."
+
+[[questions]]
+id = "en-x008"
+module = "en-email-chat"
+type = "single"
+difficulty = 2
+prompt = "Bạn không thể nhận thêm ticket hôm nay nhưng có thể xem vào sáng mai. Cách trả lời nào phù hợp?"
+options = ["No. Don't ask again.", "I'm afraid I can't pick this up today, but I can take a look tomorrow morning.", "This is not my problem.", "Maybe, whatever."]
+answer = [1]
+explanation = "Từ chối rõ giới hạn và đề xuất thời điểm khả thi."
+
+[[questions]]
+id = "en-x009"
+module = "en-meetings"
+type = "single"
+difficulty = 1
+prompt = "Câu stand-up nào diễn đạt blocker tự nhiên?"
+options = ["I am blocked by the missing API credentials.", "I have blocked by the missing API credentials.", "I block from the API credentials.", "I am blocking of the missing API credentials."]
+answer = [0]
+explanation = "Cấu trúc là be blocked by + nguyên nhân."
+
+[[questions]]
+id = "en-x010"
+module = "en-meetings"
+type = "single"
+difficulty = 2
+prompt = "Bạn không đồng ý với đề xuất lưu log đầy đủ vì có thể lộ dữ liệu nhạy cảm. Câu mở đầu nào mang tính xây dựng?"
+options = ["That's a terrible idea.", "I see the benefit, but I'm concerned that full logs could expose sensitive data.", "You don't understand logging.", "No, because I said so."]
+answer = [1]
+explanation = "Công nhận mục tiêu rồi nêu rủi ro cụ thể giúp cuộc trao đổi tập trung vào giải pháp."
+
+[[questions]]
+id = "en-x011"
+module = "en-meetings"
+type = "single"
+difficulty = 2
+prompt = "Bạn muốn xác nhận rằng giới hạn 100 request áp dụng cho mỗi user. Câu nào phù hợp?"
+options = ["So the limit is 100 requests per user, correct?", "You mean one hundred, yes?", "I don't get it.", "Why is it 100?"]
+answer = [0]
+explanation = "Paraphrase lại giả định rồi hỏi xác nhận giúp tránh hiểu sai."
+
+[[questions]]
+id = "en-x012"
+module = "en-code-review"
+type = "single"
+difficulty = 3
+prompt = "Bạn phát hiện thay đổi có thể cho user đọc dữ liệu của người khác. Comment nào thể hiện đúng mức blocking?"
+options = ["Nit: maybe rename this variable.", "This could expose another user's data. Please verify resource ownership before merging.", "Looks fine to me.", "I personally don't like this style."]
+answer = [1]
+explanation = "Rủi ro bảo mật cần được nêu cụ thể và xử lý trước khi merge; comment không công kích người viết."
+
+[[questions]]
+id = "en-x013"
+module = "en-code-review"
+type = "single"
+difficulty = 1
+prompt = "Một lỗi nhỏ về cách đặt tên, không ảnh hưởng hành vi và không chặn merge, nên mở comment bằng từ nào?"
+options = ["Blocking:", "Nit:", "Incident:", "Required:"]
+answer = [1]
+explanation = "Nit báo hiệu góp ý nhỏ, thường không bắt buộc sửa trước khi merge."
+
+[[questions]]
+id = "en-x014"
+module = "en-code-review"
+type = "single"
+difficulty = 2
+prompt = "Bug report nào giúp teammate tái hiện lỗi tốt nhất?"
+options = ["Checkout is broken. Please fix.", "It fails sometimes on my machine.", "On Chrome 130, sign in, add one item, then remove it; the page shows a blank screen instead of the empty-cart message.", "The cart code is bad."]
+answer = [2]
+explanation = "Bản mô tả tốt có môi trường, bước tái hiện và expected/actual behavior."
+
+[[questions]]
+id = "en-x015"
+module = "en-docs-writing"
+type = "single"
+difficulty = 1
+prompt = "Chọn câu chủ động, ngắn gọn để mô tả worker thử lại job."
+options = ["The job is retried by the worker.", "The worker retries the job.", "A retry of the job is performed.", "It should be noted that the worker does a retry."]
+answer = [1]
+explanation = "Câu chủ động gọi rõ tác nhân và hành động."
+
+[[questions]]
+id = "en-x016"
+module = "en-docs-writing"
+type = "single"
+difficulty = 2
+prompt = "Trong ADR, mục Consequences nên mô tả điều gì?"
+options = ["Chỉ tên người viết.", "Lợi ích và đánh đổi phát sinh từ quyết định.", "Toàn bộ source code.", "Một bản dịch của tiêu đề."]
+answer = [1]
+explanation = "ADR ghi lại hệ quả tích cực và tiêu cực để người đọc hiểu cái giá của quyết định."
+
+[[questions]]
+id = "en-x017"
+module = "en-docs-writing"
+type = "single"
+difficulty = 1
+prompt = "Câu nào dùng plain English rõ nhất?"
+options = ["In order to facilitate the commencement of the service, execute the initialization procedure.", "To start the service, run the setup command.", "It should be noted that you may perhaps start the service.", "The service commencement is effectuated by the user."]
+answer = [1]
+explanation = "Từ quen thuộc và động từ cụ thể thường dễ đọc hơn câu dài, danh từ hoá."
+
+[[questions]]
+id = "en-x018"
+module = "en-interview"
+type = "single"
+difficulty = 1
+prompt = "Trong câu trả lời STAR, phần Action nên nhấn mạnh điều gì?"
+options = ["Những việc cụ thể chính bạn đã làm.", "Toàn bộ lịch sử công ty.", "Chỉ điều nhóm dự định làm.", "Một danh sách công nghệ không có bối cảnh."]
+answer = [0]
+explanation = "STAR giúp nêu rõ hành động cá nhân và kết quả, không chỉ mô tả chung về nhóm."
+
+[[questions]]
+id = "en-x019"
+module = "en-interview"
+type = "single"
+difficulty = 2
+prompt = "Khi bắt đầu system design interview, bước nào giúp tránh thiết kế sai phạm vi?"
+options = ["Chọn database ngay lập tức.", "Hỏi số người dùng, tải dự kiến và yêu cầu chức năng.", "Vẽ mọi service bạn từng dùng.", "Chờ interviewer tự nói hết mọi giả định."]
+answer = [1]
+explanation = "Làm rõ yêu cầu và giả định trước rồi mới chọn kiến trúc."
+
+[[questions]]
+id = "en-x020"
+module = "en-interview"
+type = "single"
+difficulty = 2
+prompt = "Bạn nhận offer và muốn hỏi liệu base salary có thể thương lượng. Câu nào chuyên nghiệp?"
+options = ["Pay me more.", "Based on the role and my experience, is there flexibility in the base salary?", "This offer is bad.", "I need an answer now."]
+answer = [1]
+explanation = "Nêu cơ sở và hỏi mở giúp bắt đầu đàm phán tôn trọng, rõ ràng."
+
+[[questions]]
+id = "en-x021"
+module = "en-pronunciation"
+type = "single"
+difficulty = 1
+prompt = "Từ cache được phát âm thế nào trong tiếng Anh thông dụng?"
+options = ["/kæʃ/ (giống cash)", "/keɪtʃ/ (giống catch)", "/kəˈʃeɪ/", "/keɪk/"]
+answer = [0]
+explanation = "Cache đọc /kæʃ/, vần với cash."
+
+[[questions]]
+id = "en-x022"
+module = "en-pronunciation"
+type = "single"
+difficulty = 2
+prompt = "Trong cách đọc Anh–Mỹ phổ biến, component nhấn trọng âm ở đâu?"
+options = ["Âm tiết thứ nhất: COM-ponent.", "Âm tiết thứ hai: com-PO-nent.", "Âm tiết thứ ba: compo-NENT.", "Cả ba âm tiết đều nhấn như nhau."]
+answer = [1]
+explanation = "Component thường có trọng âm chính ở âm tiết thứ hai."
+
+[[questions]]
+id = "en-x023"
+module = "en-pronunciation"
+type = "single"
+difficulty = 2
+prompt = "Cách nhấn trọng âm nào đúng với develop?"
+options = ["DE-velop", "de-VEL-op", "devel-OP", "Nhấn đều cả ba âm tiết"]
+answer = [1]
+explanation = "Develop nhấn âm tiết thứ hai: /dɪˈvɛləp/."
+
+[[questions]]
+id = "en-x024"
+module = "en-pronunciation"
+type = "single"
+difficulty = 2
+prompt = "Cách đọc nào được chấp nhận cho acronym SQL?"
+options = ["Chỉ đọc là “sequel”.", "Chỉ đọc từng chữ “ess-cue-ell”.", "Cả “ess-cue-ell” và “sequel” đều được dùng.", "Đọc như từ “school”."]
+answer = [2]
+explanation = "SQL có hai cách đọc thông dụng; team có thể nhất quán theo cách riêng."
+
+[[questions]]
+id = "en-x025"
+module = "en-vocab"
+type = "single"
+difficulty = 1
+prompt = "Chọn collocation tự nhiên: “We need to ___ a decision before the release.”"
+options = ["make", "do", "take", "put"]
+answer = [0]
+explanation = "Tiếng Anh dùng make a decision."
+
+[[questions]]
+id = "en-x026"
+module = "en-vocab"
+type = "single"
+difficulty = 2
+prompt = "Một developer viết “Actually, the deployment is running now” để nói “Hiện tại bản deploy đang chạy”. Từ nào phù hợp hơn?"
+options = ["Eventually", "Currently", "Actually", "Sensible"]
+answer = [1]
+explanation = "Currently nghĩa là hiện tại; actually nghĩa là thật ra."
+
+[[questions]]
+id = "en-x027"
+module = "en-grammar"
+type = "single"
+difficulty = 2
+prompt = "Chọn chuỗi mạo từ đúng nếu đọc HTTP, URL và SQL lần lượt bằng tên chữ cái."
+options = ["a HTTP request, an URL, a SQL query", "an HTTP request, a URL, an SQL query", "an HTTP request, an URL, a SQL query", "a HTTP request, a URL, an SQL query"]
+answer = [1]
+explanation = "HTTP bắt đầu bằng âm /eɪtʃ/, URL bằng /juː/, SQL khi đọc từng chữ bắt đầu bằng /ɛs/; chọn theo âm."
+
+[[questions]]
+id = "en-x028"
+module = "en-grammar"
+type = "single"
+difficulty = 1
+prompt = "Câu hiện tại đơn nào đúng?"
+options = ["The worker retry the request.", "The worker retries the request.", "The worker is retry the request.", "The worker retrying the request."]
+answer = [1]
+explanation = "Chủ ngữ số ít ngôi thứ ba cần động từ thêm -s/-es ở hiện tại đơn."
+
+[[questions]]
+id = "en-x029"
+module = "en-reading"
+type = "single"
+difficulty = 1
+prompt = "Trong câu “For example (e.g.), the client may retry twice”, e.g. có nghĩa là gì?"
+options = ["Nói cách khác / tức là.", "Ví dụ.", "Cuối cùng.", "Ngoài phạm vi."]
+answer = [1]
+explanation = "E.g. viết tắt của exempli gratia, nghĩa là for example; i.e. mới có nghĩa là that is."
+
+[[questions]]
+id = "en-x030"
+module = "en-email-chat"
+type = "single"
+difficulty = 2
+prompt = "Bạn xin review trên Slack và muốn thể hiện không cần phản hồi ngay lập tức. Câu nào phù hợp?"
+options = ["Review this right now.", "Could someone take a look at PR #42 when they have a moment? No rush.", "You need to review my code.", "Kindly revert on my PR."]
+answer = [1]
+explanation = "Câu nêu rõ yêu cầu, phạm vi và mức độ khẩn cấp."
+
+[[questions]]
+id = "en-x031"
+module = "en-meetings"
+type = "single"
+difficulty = 2
+prompt = "Trong retrospective, cách nào mô tả vấn đề tập trung vào quy trình thay vì đổ lỗi?"
+options = ["The deploy took 40 minutes because the migration ran synchronously; could we test it earlier next time?", "The release manager is careless.", "Everything was bad.", "Someone should have known better."]
+answer = [0]
+explanation = "Nêu quan sát cụ thể và đề xuất cải tiến giúp nhóm học từ sự cố mà không công kích cá nhân."
+
+[[questions]]
+id = "en-x032"
+module = "en-code-review"
+type = "single"
+difficulty = 2
+prompt = "Chọn suggestion review có nêu lý do và hướng cải thiện."
+options = ["Bad code.", "Could we move this validation into the shared service so both callers enforce the same rule?", "You always put logic in the wrong place.", "I don't like this."]
+answer = [1]
+explanation = "Comment tập trung vào mã, nêu đề xuất và lý do cụ thể."
+
+[[questions]]
+id = "en-x033"
+module = "en-docs-writing"
+type = "single"
+difficulty = 1
+prompt = "README dành cho người mới nên đặt phần nào gần đầu để họ bắt đầu nhanh?"
+options = ["Cài đặt và lệnh chạy/test tối thiểu.", "Lịch sử mọi commit.", "Danh sách tất cả lỗi đã từng gặp.", "Tiểu sử dài của tác giả."]
+answer = [0]
+explanation = "Người đọc cần biết yêu cầu, cách cài và cách chạy trước khi xem chi tiết khác."
+
+[[questions]]
+id = "en-x034"
+module = "en-interview"
+type = "single"
+difficulty = 2
+prompt = "Câu hỏi ngược nào giúp bạn hiểu cách team vận hành?"
+options = ["Can you guarantee that nothing will ever break?", "How does the team handle code review and on-call incidents?", "How quickly can I get promoted?", "Do you think I am the best candidate?"]
+answer = [1]
+explanation = "Câu hỏi cụ thể về review và on-call giúp hiểu quy trình làm việc thực tế."
+
+[[questions]]
+id = "en-x035"
+module = "en-vocab"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các collocation tiếng Anh tự nhiên."
+options = ["run a test", "provide feedback", "meet a deadline", "do a decision", "discuss about the design", "open an agreement"]
+answer = [0, 1, 2]
+explanation = "Dùng run a test, provide feedback và meet a deadline. Nói make a decision, discuss the design, reach an agreement."
+
+[[questions]]
+id = "en-x036"
+module = "en-grammar"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các câu đúng ngữ pháp và phù hợp với ngữ cảnh."
+options = ["The worker retries the request when the connection drops.", "The workers retries the request.", "We deployed the patch yesterday.", "We have deployed the patch yesterday.", "If the tests pass, we will merge the PR.", "If the tests will pass, we merge the PR."]
+answer = [0, 2, 4]
+explanation = "Chủ ngữ số ít mới thêm -s; yesterday đi với quá khứ đơn; mệnh đề if loại 1 dùng hiện tại đơn."
+
+[[questions]]
+id = "en-x037"
+module = "en-reading"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các diễn giải đúng."
+options = ["As of version 3 = kể từ phiên bản 3.", "Opt out = chủ động không tham gia.", "A caveat = một hạn chế hoặc lưu ý cần biết.", "Eventually = có thể.", "Actually = hiện tại."]
+answer = [0, 1, 2]
+explanation = "Eventually nghĩa là cuối cùng; actually là thật ra. Currently mới có nghĩa là hiện tại."
+
+[[questions]]
+id = "en-x038"
+module = "en-writing"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các commit header hợp quy ước Conventional Commits và dùng subject dạng mệnh lệnh."
+options = ["fix(auth): handle expired sessions", "Fix: handles expired sessions", "feat: Added export filters", "docs: explain local setup", "feature(ui): fixing button spacing"]
+answer = [0, 3]
+explanation = "Type viết thường; subject dùng động từ nguyên mẫu, viết ngắn gọn và không kết thúc bằng dấu chấm."
+
+[[questions]]
+id = "en-x039"
+module = "en-email-chat"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các câu phù hợp trong giao tiếp công việc."
+options = ["Email: Could you clarify the deadline for this change?", "Slack: Quick update — the staging test is blocked by missing credentials.", "Please do the needful and revert back.", "I need you to fix this immediately, no explanation.", "Email: Would you be able to review the attached proposal by Thursday?"]
+answer = [0, 1, 4]
+explanation = "Câu phù hợp điều chỉnh độ dài theo kênh, nêu yêu cầu rõ; tránh các cụm cứng hoặc trùng nghĩa như revert back."
+
+[[questions]]
+id = "en-x040"
+module = "en-email-chat"
+type = "multiple"
+difficulty = 2
+prompt = "Bạn muốn follow-up lịch sự và giảm blocker. Chọn các câu phù hợp."
+options = ["I'm following up on the staging access request below.", "Any update? You are delaying us.", "Could you share an update by 2 p.m. so I can finish the release test?", "Reply ASAP.", "Just checking whether you had a chance to review the request; no rush if you are still investigating."]
+answer = [0, 2, 4]
+explanation = "Các câu đúng nêu chủ đề hoặc thời hạn cùng lý do, giữ giọng tôn trọng."
+
+[[questions]]
+id = "en-x041"
+module = "en-meetings"
+type = "multiple"
+difficulty = 2
+prompt = "Trong sprint planning, chọn các cách nêu ước lượng có điều kiện hoặc giả định rõ."
+options = ["This looks like a two-point task, assuming the API stays unchanged.", "It will take exactly one hour; no need to discuss it.", "I estimate three days because the migration needs a rehearsal.", "That is impossible.", "Could we split this into a small API change and a separate migration task?"]
+answer = [0, 2, 4]
+explanation = "Nêu giả định và chia nhỏ công việc giúp cả nhóm kiểm tra ước lượng."
+
+[[questions]]
+id = "en-x042"
+module = "en-meetings"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các câu hữu ích trong stand-up hoặc retrospective."
+options = ["Yesterday I finished the retry logic.", "Today I'm going to add integration tests.", "I'm blocked by the missing staging credentials.", "The team is useless.", "The migration ran during peak traffic; could we schedule it earlier next time?"]
+answer = [0, 1, 2, 4]
+explanation = "Các câu đúng nêu tiến độ, blocker hoặc cải tiến có căn cứ; câu công kích không giúp giải quyết vấn đề."
+
+[[questions]]
+id = "en-x043"
+module = "en-code-review"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các code review comment mang tính xây dựng."
+options = ["Nit: could we use the same name as the API field here?", "This is careless.", "Could we add a test for an empty result? The caller relies on this list being non-empty.", "This can expose another user's record; please check ownership before merging.", "I would never write it this way."]
+answer = [0, 2, 3]
+explanation = "Comment tốt nêu độ nghiêm trọng, tác động và lý do; không công kích tác giả."
+
+[[questions]]
+id = "en-x044"
+module = "en-code-review"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các mục hữu ích trong một PR description."
+options = ["What changed and why.", "How to run the relevant tests.", "A claim that the code is perfect.", "A migration or compatibility note when applicable.", "Only “please approve”."]
+answer = [0, 1, 3]
+explanation = "What, Why, How to test và ghi chú tương thích giúp reviewer đánh giá thay đổi."
+
+[[questions]]
+id = "en-x045"
+module = "en-docs-writing"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các cách giúp tài liệu kỹ thuật dễ quét và dễ hiểu."
+options = ["Use headings that answer reader questions.", "Prefer short active sentences when the actor matters.", "Replace common verbs with longer formal nouns.", "Show a small example with realistic values.", "Put several unrelated ideas in one paragraph."]
+answer = [0, 1, 3]
+explanation = "Heading rõ, câu gọn và ví dụ cụ thể giúp người đọc thực hiện công việc."
+
+[[questions]]
+id = "en-x046"
+module = "en-interview"
+type = "multiple"
+difficulty = 3
+prompt = "Trong system design interview, chọn các bước có ích trước khi chốt kiến trúc."
+options = ["Clarify user volume and availability requirements.", "State assumptions when exact numbers are unknown.", "Choose a database based only on familiarity.", "Explain trade-offs between consistency, latency, and complexity.", "Ignore failure modes to save time."]
+answer = [0, 1, 3]
+explanation = "Làm rõ quy mô, nói rõ giả định và giải thích đánh đổi giúp thiết kế có căn cứ."
+
+[[questions]]
+id = "en-x047"
+module = "en-grammar"
+type = "fill"
+difficulty = 2
+prompt = '''
+Điền mạo từ theo âm đầu khi đọc HTTP, user và SQL từng chữ cái:
+
+- {{blank}} HTTP request
+- {{blank}} user account
+- {{blank}} SQL query
+'''
+blanks = [["an"], ["a"], ["an"]]
+explanation = "HTTP bắt đầu bằng âm nguyên âm /eɪtʃ/, user bằng âm phụ âm /j/, SQL đọc từng chữ bắt đầu /ɛs/."
+
+[[questions]]
+id = "en-x048"
+module = "en-vocab"
+type = "fill"
+difficulty = 2
+prompt = '''
+Chọn từ đúng trong false friends:
+
+“The service is {{blank}} processing requests; the monitoring alert is current.”
+'''
+blanks = [["currently"]]
+explanation = "Currently nghĩa là đang/hiện tại; actually nghĩa là thật ra."
+
+[[questions]]
+id = "en-x049"
+module = "en-email-chat"
+type = "fill"
+difficulty = 1
+prompt = '''
+Hoàn thành câu follow-up lịch sự:
+
+“I'm following {{blank}} {{blank}} the staging access request below.”
+'''
+blanks = [["up"], ["on"]]
+explanation = "Cụm là follow up on a request."
+
+[[questions]]
+id = "en-x050"
+module = "en-email-chat"
+type = "fill"
+difficulty = 2
+prompt = '''
+Hoàn thành lời nhờ review tự nhiên:
+
+“Could you take a look {{blank}} my PR {{blank}}?”
+'''
+blanks = [["at"], ["when you have a moment", "when you get a chance"]]
+explanation = "Take a look at something; thêm when you have a moment để thể hiện không cần xử lý ngay."
+
+[[questions]]
+id = "en-x051"
+module = "en-meetings"
+type = "fill"
+difficulty = 1
+prompt = '''
+Hoàn thành cập nhật stand-up:
+
+“Yesterday I {{blank}} the retry logic. Today I'm going to {{blank}} integration tests. I'm {{blank}} by the staging credentials.”
+'''
+blanks = [["finished", "completed"], ["add", "write"], ["blocked"]]
+explanation = "Dùng quá khứ cho việc hôm qua, be going to cho kế hoạch hôm nay và be blocked by cho trở ngại."
+
+[[questions]]
+id = "en-x052"
+module = "en-meetings"
+type = "fill"
+difficulty = 1
+prompt = '''
+Xin nhắc lại một ý trong cuộc họp:
+
+“Sorry, could you repeat the last {{blank}}?”
+'''
+blanks = [["point", "part"]]
+explanation = "Câu xin nhắc lại ngắn, lịch sự và cho biết phần nào bạn bỏ lỡ."
+
+[[questions]]
+id = "en-x053"
+module = "en-code-review"
+type = "fill"
+difficulty = 1
+prompt = '''
+Gắn nhãn cho góp ý nhỏ, không chặn merge:
+
+“{{blank}}: could we rename this variable for consistency?”
+'''
+blanks = [["nit"]]
+explanation = "Nit báo hiệu góp ý nhỏ; không dùng nhãn này cho lỗi blocking."
+
+[[questions]]
+id = "en-x054"
+module = "en-code-review"
+type = "fill"
+difficulty = 1
+prompt = '''
+Điền tên hai phần của bug report:
+
+- {{blank}} behavior: what should happen
+- {{blank}} behavior: what actually happens
+'''
+blanks = [["expected"], ["actual"]]
+explanation = "Expected behavior là điều mong đợi; actual behavior là điều quan sát được."
+
+[[questions]]
+id = "en-x055"
+module = "en-docs-writing"
+type = "fill"
+difficulty = 1
+prompt = '''
+Hoàn thành các heading README giúp người mới bắt đầu:
+
+- {{blank}}: required tools and versions
+- {{blank}}: commands to verify the change
+'''
+blanks = [["requirements", "prerequisites"], ["testing", "tests"]]
+explanation = "README nên chỉ rõ yêu cầu môi trường và cách chạy test."
+
+[[questions]]
+id = "en-x056"
+module = "en-docs-writing"
+type = "fill"
+difficulty = 2
+prompt = '''
+Viết lại câu bị động thành chủ động:
+
+“The service {{blank}} the token {{blank}}.”
+'''
+blanks = [["stores"], ["securely"]]
+explanation = "Câu chủ động gọi rõ tác nhân là service; securely mô tả cách lưu."
+
+[[questions]]
+id = "en-x057"
+module = "en-interview"
+type = "fill"
+difficulty = 1
+prompt = '''
+Hoàn thành thứ tự STAR:
+
+Situation → Task → {{blank}} → Result
+'''
+blanks = [["Action"]]
+explanation = "Action mô tả điều ứng viên đã làm để xử lý nhiệm vụ."
+
+[[questions]]
+id = "en-x058"
+module = "en-interview"
+type = "fill"
+difficulty = 2
+prompt = '''
+Hoàn thành câu hỏi về quy trình on-call:
+
+“Could you tell me how the team {{blank}} on-call incidents?”
+'''
+blanks = [["handles", "responds to"]]
+explanation = "Handles incidents hoặc responds to incidents đều là cách diễn đạt tự nhiên."
+
+[[questions]]
+id = "en-x059"
+module = "en-pronunciation"
+type = "fill"
+difficulty = 2
+prompt = '''
+Điền cách đọc đuôi -ed theo IPA:
+
+- fixed: /{{blank}}/
+- merged: /{{blank}}/
+- tested: /{{blank}}/
+'''
+blanks = [["t"], ["d"], ["ɪd", "id"]]
+explanation = "-ed đọc /t/ sau âm vô thanh, /d/ sau âm hữu thanh, và /ɪd/ sau /t/ hoặc /d/."
+
+[[questions]]
+id = "en-x060"
+module = "en-pronunciation"
+type = "fill"
+difficulty = 2
+prompt = '''
+Điền âm cuối của đuôi số nhiều -s:
+
+- tests: /{{blank}}/
+- builds: /{{blank}}/
+- releases: /{{blank}}/
+'''
+blanks = [["s"], ["z"], ["ɪz", "iz"]]
+explanation = "Âm cuối phụ thuộc âm cuối của từ gốc: vô thanh /s/, hữu thanh /z/, âm xì thêm âm tiết /ɪz/."
+
+[[questions]]
+id = "en-x061"
+module = "en-writing"
+type = "fill"
+difficulty = 2
+prompt = '''
+Hoàn thành Conventional Commit header:
+
+“fix(auth): {{blank}} expired sessions”
+'''
+blanks = [["handle"]]
+explanation = "Subject dùng động từ nguyên mẫu; handle phù hợp với ý xử lý session đã hết hạn."
+
+[[questions]]
+id = "en-x062"
+module = "en-reading"
+type = "fill"
+difficulty = 1
+prompt = '''
+Điền cụm chỉ một mặc định:
+
+“{{blank}}, the access token expires after 15 minutes.”
+'''
+blanks = [["by default"]]
+explanation = "By default nghĩa là theo mặc định."
+
+[[questions]]
+id = "en-x063"
+module = "en-email-chat"
+type = "essay"
+difficulty = 2
+prompt = '''
+Viết email ngắn bằng tiếng Anh xin Maya review PR thêm cursor pagination trước thứ Năm. Nêu bối cảnh bạn đang kiểm thử API, cảm ơn người nhận và giữ giọng lịch sự.
+'''
+keywords = [
+  ["hi", "hello", "dear"],
+  ["i'm testing", "context", "the api"],
+  ["could you", "would you"],
+  ["review", "take a look"],
+  ["by thursday", "deadline"],
+  ["thanks", "appreciate"],
+]
+min_keywords = 4
+model_answer = '''
+Hi Maya,
+
+I'm testing the new pagination API before the release. Could you review PR #52 by Thursday? The deadline is Friday, and your feedback will help me finish the integration test.
+
+Thanks,
+Alex
+'''
+explanation = "Email có lời chào, bối cảnh, yêu cầu và thời hạn cụ thể."
+
+[[questions]]
+id = "en-x064"
+module = "en-email-chat"
+type = "essay"
+difficulty = 2
+prompt = '''
+Trả lời bằng tiếng Anh để lịch sự từ chối nhận một ticket hôm nay vì đang hoàn tất release. Đề xuất xem ticket vào ngày mai và xác nhận lại deadline nếu cần.
+'''
+keywords = [
+  ["thanks", "appreciate"],
+  ["can't take this on", "cannot take"],
+  ["today", "capacity", "release"],
+  ["could", "tomorrow", "alternative"],
+  ["deadline", "by friday"],
+]
+min_keywords = 4
+model_answer = '''
+Thanks for reaching out. I can't take this on today because I need to finish the release work. Could I review it tomorrow instead? If Friday is still the deadline, I can help after the deploy.
+'''
+explanation = "Câu trả lời nêu giới hạn rõ ràng, cảm ơn người hỏi và đưa ra phương án thay thế."
+
+[[questions]]
+id = "en-x065"
+module = "en-meetings"
+type = "essay"
+difficulty = 2
+prompt = '''
+Trong sprint planning, viết 3–5 câu tiếng Anh để đồng ý rằng caching có thể tăng tốc, nêu lo ngại về dữ liệu stale, hỏi lại yêu cầu freshness và đề xuất một bước tiếp theo.
+'''
+keywords = [
+  ["i see your point", "makes sense", "agree"],
+  ["concern", "risk", "stale"],
+  ["freshness", "how often", "requirement"],
+  ["could we", "what if", "i'd suggest"],
+  ["next step", "measure", "test"],
+]
+min_keywords = 4
+model_answer = '''
+I see your point that caching could reduce database load. My concern is stale data for order status, so could we clarify the freshness requirement first? I'd suggest testing a short cache duration and measuring the response time. Then we can review the results before rollout.
+'''
+explanation = "Nêu lợi ích, rủi ro, câu hỏi làm rõ và hành động đề xuất để bất đồng vẫn mang tính hợp tác."
+
+[[questions]]
+id = "en-x066"
+module = "en-meetings"
+type = "essay"
+difficulty = 2
+prompt = '''
+Viết 3–5 câu cho retrospective về một lần migration làm deploy kéo dài. Mô tả sự kiện và tác động, tránh đổ lỗi cá nhân, rồi đề xuất một cải tiến có người phụ trách.
+'''
+keywords = [
+  ["during the deploy", "the migration", "what happened"],
+  ["took", "delay", "impact"],
+  ["because", "root cause"],
+  ["could we", "improve", "prevent"],
+  ["owner", "next sprint", "action item"],
+]
+min_keywords = 4
+model_answer = '''
+During the deploy, the database migration took 40 minutes and delayed the release. This happened because we had not tested it against production-sized data. Could we add a migration rehearsal to the release checklist? I'll own the rehearsal task next sprint.
+'''
+explanation = "Nêu tác động và nguyên nhân quan sát được, sau đó chuyển thành action item có owner."
+
+[[questions]]
+id = "en-x067"
+module = "en-code-review"
+type = "essay"
+difficulty = 3
+prompt = '''
+Viết PR description bằng tiếng Anh cho thay đổi sửa lỗi: hai request cập nhật cart đồng thời có thể ghi đè nhau. Nêu What, Why, cách test và kết quả mong đợi.
+'''
+keywords = [
+  ["this pr", "what", "adds"],
+  ["because", "why", "race condition"],
+  ["cart", "concurrent", "stale update"],
+  ["how to test", "run the tests", "test"],
+  ["result", "prevent", "correct"],
+]
+min_keywords = 4
+model_answer = '''
+This PR fixes a race condition in cart updates. Two concurrent requests could overwrite a newer value with a stale update, so the service now checks the cart version before saving. To test the change, run the concurrency tests and verify that stale requests are rejected. This prevents incorrect totals while preserving valid updates.
+'''
+explanation = "Mô tả nguyên nhân, giải pháp, test và kết quả giúp reviewer hiểu cả thay đổi lẫn lý do."
+
+[[questions]]
+id = "en-x068"
+module = "en-docs-writing"
+type = "essay"
+difficulty = 2
+prompt = '''
+Viết phần Quick start bằng tiếng Anh cho một CLI tool giả định. Nêu mục đích, prerequisite Node.js, lệnh cài, lệnh chạy và cách chạy test; dùng câu ngắn, chủ động.
+'''
+keywords = [
+  ["cli", "command-line"],
+  ["node.js", "prerequisite", "requirements"],
+  ["install", "npm install", "setup"],
+  ["run", "start"],
+  ["test", "tests"],
+]
+min_keywords = 4
+model_answer = '''
+## Quick start
+This CLI tool checks project configuration files. You need Node.js 20 or later. Run npm install to install the dependencies, then run npm start to check the current project. Run npm test to verify the command before submitting a change.
+'''
+explanation = "Hướng dẫn bắt đầu tốt có prerequisite và lệnh cụ thể; câu chủ động giúp người đọc biết cần làm gì."
+
+[[questions]]
+id = "en-x069"
+module = "en-interview"
+type = "essay"
+difficulty = 3
+prompt = '''
+Trả lời bằng tiếng Anh theo STAR cho câu hỏi “Tell me about a challenging bug you fixed.” Hãy nêu bối cảnh, nhiệm vụ, hành động chính bạn làm, kết quả có số liệu và điều đã học.
+'''
+keywords = [
+  ["situation", "at my previous", "we had"],
+  ["task", "i was responsible", "i needed to"],
+  ["action", "i investigated", "i reproduced", "i added"],
+  ["result", "reduced", "improved", "fixed"],
+  ["learned", "since then", "lesson"],
+]
+min_keywords = 4
+model_answer = '''
+Situation: At my previous company, checkout showed the wrong total for some concurrent cart updates. Task: I was responsible for finding the cause before the next release. Action: I reproduced the race condition, added a cart version check, and wrote concurrency tests. Result: Incorrect totals fell to zero, and support tickets dropped by 25%. I learned to include concurrency cases in critical-flow testing.
+'''
+explanation = "STAR giữ câu trả lời cụ thể và giúp interviewer thấy rõ đóng góp cá nhân cùng kết quả."
+
+[[questions]]
+id = "en-x070"
+module = "en-interview"
+type = "essay"
+difficulty = 3
+prompt = '''
+Mô tả một dự án kỹ thuật bằng tiếng Anh trong 4–6 câu: vấn đề người dùng, vai trò của bạn, kiến trúc/API, một trade-off và kết quả.
+'''
+keywords = [
+  ["user problem", "users needed", "problem"],
+  ["my role", "i was responsible", "i built"],
+  ["architecture", "api", "service"],
+  ["trade-off", "chose", "because"],
+  ["result", "reduced", "improved"],
+]
+min_keywords = 4
+model_answer = '''
+Users needed a faster way to search large order histories. I was responsible for the API and query path. The architecture uses a search service backed by an indexed database table. We chose eventual indexing because it reduced read latency, with a small delay before new orders appear. The result was a 40% reduction in median search time.
+'''
+explanation = "Một câu chuyện dự án rõ ràng liên kết nhu cầu, phần việc cá nhân, lựa chọn kỹ thuật và kết quả."
+
+[[questions]]
+id = "en-x071"
+module = "en-interview"
+type = "essay"
+difficulty = 3
+prompt = '''
+Hãy trình bày bằng tiếng Anh cách bạn bắt đầu thiết kế service xử lý webhook quy mô lớn. Nêu câu hỏi làm rõ, giả định/tải, API hoặc data model, bottleneck và failure handling.
+'''
+keywords = [
+  ["clarify", "requirements", "how many"],
+  ["assume", "assumptions", "events per second"],
+  ["api", "endpoint", "payload"],
+  ["data model", "database", "store"],
+  ["bottleneck", "trade-off", "throughput"],
+  ["failure", "retry", "idempotent"],
+]
+min_keywords = 4
+model_answer = '''
+First, I would clarify the delivery guarantee and expected events per second. I will state an assumption of 5,000 events per second if the traffic target is unknown. The API endpoint would validate the signature and store each event with an idempotency key. The database write path may become the bottleneck, so I would measure throughput before adding a queue. For failure handling, workers can retry transient errors while keeping processing idempotent.
+'''
+explanation = "Nói rõ giả định, đường đi dữ liệu và cách xử lý lỗi giúp interviewer theo dõi lập luận thiết kế."
+
+[[questions]]
+id = "en-x072"
+module = "en-interview"
+type = "essay"
+difficulty = 2
+prompt = '''
+Viết 4–6 câu tiếng Anh kết thúc buổi phỏng vấn: cảm ơn, hỏi một câu về code review/on-call, rồi hỏi lịch sự liệu base salary có linh hoạt dựa trên kinh nghiệm và phạm vi vai trò không.
+'''
+keywords = [
+  ["thank", "appreciate"],
+  ["code review", "on-call", "team"],
+  ["based on", "experience", "role"],
+  ["base salary", "compensation", "offer"],
+  ["flexibility", "flexible", "negotiable"],
+  ["time", "review the offer"],
+]
+min_keywords = 4
+model_answer = '''
+Thank you for walking me through the role; I appreciate the conversation. Could you tell me how the team handles code review and on-call incidents? Based on the scope of the role and my experience, is there flexibility in the base salary? I would also appreciate a little time to review the full offer.
+'''
+explanation = "Hỏi về cách làm việc của team và thương lượng bằng cơ sở cụ thể, giọng tôn trọng."
+
+[[questions]]
+id = "en-xc01"
+module = "en-docs-writing"
+type = "code"
+difficulty = 2
+lang = "javascript"
+title = "Tách câu cho tài liệu"
+prompt = '''
+Viết splitSentences(text) trả về mảng câu theo quy tắc đơn giản: dấu ., ? hoặc ! kết thúc câu nếu ngay sau nó là khoảng trắng hoặc hết chuỗi. Giữ dấu kết câu, bỏ khoảng trắng thừa quanh mỗi câu, bỏ phần tử rỗng. Nếu đoạn cuối không có dấu câu, vẫn trả nó như một câu. Chuỗi chỉ có khoảng trắng trả về mảng rỗng. Không cần nhận diện chữ viết tắt như e.g. hoặc số thập phân.
+Ví dụ: splitSentences("Ship it. Is CI green? Yes!") trả về ["Ship it.", "Is CI green?", "Yes!"].
+'''
+starter = '''
+function splitSentences(text) {
+  return text.trim() ? [text.trim()] : [];
+}
+'''
+solution = '''
+function splitSentences(text) {
+  const sentences = [];
+  let start = 0;
+  for (let i = 0; i < text.length; i++) {
+    if ('.!?'.includes(text[i]) && (i + 1 === text.length || /\s/.test(text[i + 1]))) {
+      const sentence = text.slice(start, i + 1).trim();
+      if (sentence) sentences.push(sentence);
+      start = i + 1;
+    }
+  }
+  const tail = text.slice(start).trim();
+  if (tail) sentences.push(tail);
+  return sentences;
+}
+'''
+tests = '''
+test('tách theo ba dấu kết câu', () => {
+  expect(splitSentences('Ship it. Is CI green? Yes!')).toEqual(['Ship it.', 'Is CI green?', 'Yes!']);
+});
+test('bỏ khoảng trắng thừa và bỏ phần rỗng', () => {
+  expect(splitSentences('  First.   Second!  ')).toEqual(['First.', 'Second!']);
+});
+test('giữ câu cuối không có dấu câu', () => {
+  expect(splitSentences('One sentence. Final sentence')).toEqual(['One sentence.', 'Final sentence']);
+});
+test('chuỗi rỗng hoặc chỉ có whitespace', () => {
+  expect(splitSentences('')).toEqual([]);
+  expect(splitSentences(' \n  ')).toEqual([]);
+});
+test('dấu chấm lặp kết thúc một câu', () => {
+  expect(splitSentences('Wait... Really?')).toEqual(['Wait...', 'Really?']);
+});
+'''
+hints = ["Duyệt từng ký tự và ghi nhận vị trí bắt đầu câu.", "Sau khi gặp dấu kết thúc, trim đoạn vừa lấy rồi bỏ nếu rỗng."]
+explanation = "Cách tách có quy tắc rõ phù hợp cho đoạn văn đơn giản; nhận diện viết tắt cần một bộ quy tắc từ vựng riêng."
+
+[[questions]]
+id = "en-xc02"
+module = "en-docs-writing"
+type = "code"
+difficulty = 2
+lang = "javascript"
+title = "Đếm từ và ước lượng thời gian đọc"
+prompt = '''
+Viết wordCount(text) và readingMinutes(text, wordsPerMinute = 200). Từ là chuỗi chữ cái hoặc chữ số; dấu nháy đơn bên trong từ và từ ghép nối bằng dấu gạch ngang vẫn tính là một từ, ví dụ don't và end-to-end. Dấu câu không tính. Thời gian đọc trả về số phút làm tròn lên; văn bản không có từ trả về 0. Giả sử wordsPerMinute là số nguyên dương.
+Ví dụ: wordCount("Fix the end-to-end test.") trả về 4; readingMinutes("one two three", 2) trả về 2.
+'''
+starter = '''
+function wordCount(text) {
+  return 0;
+}
+
+function readingMinutes(text, wordsPerMinute = 200) {
+  return 0;
+}
+'''
+solution = '''
+function wordCount(text) {
+  const words = text.match(/[A-Za-z0-9]+(?:['-][A-Za-z0-9]+)*/g);
+  return words ? words.length : 0;
+}
+
+function readingMinutes(text, wordsPerMinute = 200) {
+  const count = wordCount(text);
+  return count === 0 ? 0 : Math.ceil(count / wordsPerMinute);
+}
+'''
+tests = '''
+test('đếm từ và bỏ dấu câu', () => {
+  expect(wordCount('Fix the end-to-end test.')).toBe(4);
+});
+test('contraction và từ ghép tính là một từ', () => {
+  expect(wordCount("Don't break the build")).toBe(4);
+});
+test('không có từ', () => {
+  expect(wordCount('... -- !!!')).toBe(0);
+  expect(readingMinutes('   ')).toBe(0);
+});
+test('làm tròn phút và dùng tốc độ mặc định', () => {
+  expect(readingMinutes('one two three', 2)).toBe(2);
+  expect(readingMinutes(Array(201).fill('word').join(' '))).toBe(2);
+});
+test('một phút tối thiểu nếu có từ', () => {
+  expect(readingMinutes('hello')).toBe(1);
+});
+'''
+hints = ["Dùng match với regex lấy token, thay vì đếm khoảng trắng.", "Số phút là Math.ceil(số từ / tốc độ); xử lý văn bản rỗng trước."]
+explanation = "Ước lượng đọc hữu ích để viết README và PR vừa đủ ngắn; đây là ước lượng theo tốc độ cố định."
+
+[[questions]]
+id = "en-xc03"
+module = "en-docs-writing"
+type = "code"
+difficulty = 2
+lang = "javascript"
+title = "Title case cho tiêu đề kỹ thuật"
+prompt = '''
+Viết titleCase(title). Chuẩn hóa nhiều khoảng trắng thành một; viết hoa chữ đầu và chữ cuối; các từ nhỏ a, an, the, and, but, or, for, nor, on, at, to, from, by, of, in, with viết thường nếu không ở đầu/cuối. Các từ khác viết hoa chữ đầu và viết thường phần còn lại. Giữ dấu câu gắn với từ; chuẩn hóa token API, HTTP, SQL, GUI, UI, URL và ID thành chữ hoa. Một từ ghép có dấu gạch nối được xử lý như một token. Chuỗi rỗng trả về chuỗi rỗng.
+Ví dụ: "the api and the ui" → "The API and the UI".
+'''
+starter = '''
+function titleCase(title) {
+  return title;
+}
+'''
+solution = '''
+const SMALL_WORDS = new Set(['a', 'an', 'the', 'and', 'but', 'or', 'for', 'nor', 'on', 'at', 'to', 'from', 'by', 'of', 'in', 'with']);
+const ACRONYMS = new Set(['api', 'http', 'sql', 'gui', 'ui', 'url', 'id']);
+
+function titleCase(title) {
+  const words = title.trim().split(/\s+/).filter(Boolean);
+  return words.map((word, index) => {
+    const match = word.match(/[A-Za-z0-9]+(?:[.'’_-][A-Za-z0-9]+)*/);
+    if (!match) return word;
+    const start = match.index;
+    const core = match[0];
+    const before = word.slice(0, start);
+    const after = word.slice(start + core.length);
+    const lower = core.toLowerCase();
+    if (index > 0 && index < words.length - 1 && SMALL_WORDS.has(lower)) return before + lower + after;
+    if (ACRONYMS.has(lower)) return before + core.toUpperCase() + after;
+    return before + core[0].toUpperCase() + core.slice(1).toLowerCase() + after;
+  }).join(' ');
+}
+'''
+tests = '''
+test('viết hoa từ đầu, cuối và từ chính', () => {
+  expect(titleCase('the rise and fall of api')).toBe('The Rise and Fall of API');
+});
+test('giữ từ nhỏ ở giữa câu', () => {
+  expect(titleCase('a guide to the service')).toBe('A Guide to the Service');
+});
+test('giữ dấu câu và acronym kỹ thuật', () => {
+  expect(titleCase('the http api, for ui teams')).toBe('The HTTP API, for UI Teams');
+});
+test('chuẩn hóa whitespace và chữ hoa lẫn lộn', () => {
+  expect(titleCase('  a GUIDE   to sql  ')).toBe('A Guide to SQL');
+});
+test('chuỗi rỗng', () => {
+  expect(titleCase('   ')).toBe('');
+});
+'''
+hints = ["Tách token theo whitespace, nhưng giữ riêng phần dấu câu trước và sau từ.", "Kiểm tra từ nhỏ trước khi viết hoa; từ đầu và cuối luôn được viết hoa."]
+explanation = "Title case của nhiều style guide khác nhau; bài này định nghĩa một quy tắc nhỏ, ổn định cho tiêu đề."
+
+[[questions]]
+id = "en-xc04"
+module = "en-grammar"
+type = "code"
+difficulty = 2
+lang = "javascript"
+title = "Chọn a hay an theo âm đầu"
+prompt = '''
+Viết articleBefore(phrase) trả về "a" hoặc "an" theo cách phát âm của từ đầu tiên. Nếu phrase rỗng hoặc chỉ có dấu câu thì trả về chuỗi rỗng. Dùng ngoại lệ đã biết: an hour, honest, honor, heir, API, HTTP, SQL (đọc từng chữ), FBI, MRI, XML; a user, URL, USB, university, unique, unit, European, one, once. Với từ khác, dùng chữ cái đầu: a trước phụ âm, an trước a/e/i/o/u. Không cần xử lý acronym ngoài danh sách.
+Ví dụ: "hour" → "an", "user account" → "a", "SQL query" → "an".
+'''
+starter = '''
+function articleBefore(phrase) {
+  return /^[aeiou]/i.test(phrase.trim()) ? 'an' : 'a';
+}
+'''
+solution = '''
+const AN_WORDS = new Set(['hour', 'honest', 'honor', 'heir', 'api', 'http', 'sql', 'fbi', 'mri', 'xml']);
+const A_WORDS = new Set(['user', 'url', 'usb', 'university', 'unique', 'unit', 'european', 'one', 'once']);
+
+function articleBefore(phrase) {
+  const first = phrase.trim().split(/\s+/)[0].replace(/^[^A-Za-z]+/, '').toLowerCase();
+  if (!first) return '';
+  if (AN_WORDS.has(first)) return 'an';
+  if (A_WORDS.has(first)) return 'a';
+  return /^[aeiou]/.test(first) ? 'an' : 'a';
+}
+'''
+tests = '''
+test('ngoại lệ bắt đầu bằng âm nguyên âm', () => {
+  expect(articleBefore('hour')).toBe('an');
+  expect(articleBefore('an honest error')).toBe('an');
+});
+test('ngoại lệ bắt đầu bằng âm phụ âm', () => {
+  expect(articleBefore('user account')).toBe('a');
+  expect(articleBefore('university server')).toBe('a');
+  expect(articleBefore('URL')).toBe('a');
+});
+test('acronym đọc theo tên chữ cái', () => {
+  expect(articleBefore('SQL query')).toBe('an');
+  expect(articleBefore('API client')).toBe('an');
+  expect(articleBefore('USB drive')).toBe('a');
+});
+test('fallback theo nguyên âm và phụ âm', () => {
+  expect(articleBefore('umbrella')).toBe('an');
+  expect(articleBefore('database')).toBe('a');
+});
+test('input rỗng', () => {
+  expect(articleBefore('')).toBe('');
+  expect(articleBefore('...')).toBe('');
+});
+'''
+hints = ["Chuẩn hóa từ đầu tiên về chữ thường rồi kiểm tra tập ngoại lệ.", "Fallback theo chữ cái chỉ là quy ước cho từ chưa có trong danh sách."]
+explanation = "A/an phụ thuộc âm đầu; các acronym được chọn theo cách đọc đã ghi rõ trong đề."
+
+[[questions]]
+id = "en-xc05"
+module = "en-writing"
+type = "code"
+difficulty = 2
+lang = "javascript"
+title = "Chuẩn hóa Conventional Commit"
+prompt = '''
+Viết normalizeCommit(type, subject, scope = ''). Trả về header Conventional Commits dạng type(scope): subject; bỏ phần scope nếu rỗng. Chuẩn hóa type và scope thành chữ thường; gom whitespace trong subject thành một dấu cách, bỏ khoảng trắng và dấu chấm cuối, rồi chuyển subject thành chữ thường. Chỉ chấp nhận type feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert. Scope nếu có chỉ gồm chữ cái, chữ số và dấu gạch ngang. Trả null nếu type không hợp lệ, subject rỗng hoặc scope sai.
+Ví dụ: normalizeCommit("FIX", " Add Password Reset. ", "Auth") → "fix(auth): add password reset".
+'''
+starter = '''
+function normalizeCommit(type, subject, scope = '') {
+  return type + ': ' + subject;
+}
+'''
+solution = '''
+const COMMIT_TYPES = new Set(['feat', 'fix', 'docs', 'style', 'refactor', 'perf', 'test', 'build', 'ci', 'chore', 'revert']);
+
+function normalizeCommit(type, subject, scope = '') {
+  const normalizedType = type.trim().toLowerCase();
+  const normalizedScope = scope.trim().toLowerCase();
+  const normalizedSubject = subject.trim().replace(/\s+/g, ' ').replace(/\.+$/, '').toLowerCase();
+  if (!COMMIT_TYPES.has(normalizedType) || !normalizedSubject) return null;
+  if (normalizedScope && !/^[a-z0-9-]+$/.test(normalizedScope)) return null;
+  return normalizedType + (normalizedScope ? '(' + normalizedScope + ')' : '') + ': ' + normalizedSubject;
+}
+'''
+tests = '''
+test('chuẩn hóa type, scope và subject', () => {
+  expect(normalizeCommit('FIX', ' Add Password Reset. ', 'Auth')).toBe('fix(auth): add password reset');
+});
+test('không có scope', () => {
+  expect(normalizeCommit('Docs', '  Explain   local setup  ')).toBe('docs: explain local setup');
+});
+test('reject type hoặc subject không hợp lệ', () => {
+  expect(normalizeCommit('feature', 'add export')).toBeNull();
+  expect(normalizeCommit('fix', '   ')).toBeNull();
+});
+test('scope chỉ nhận chữ, số và dấu gạch ngang', () => {
+  expect(normalizeCommit('fix', 'handle timeout', 'API-v2')).toBe('fix(api-v2): handle timeout');
+  expect(normalizeCommit('fix', 'handle timeout', 'api v2')).toBeNull();
+});
+'''
+hints = ["Dùng Set cho danh sách type hợp lệ.", "Chuẩn hóa và kiểm tra đầu vào trước khi ghép header."]
+explanation = "Chuẩn hóa header giúp commit history nhất quán và dễ lọc theo type/scope."
+
+[[questions]]
+id = "en-xc06"
+module = "en-email-chat"
+type = "code"
+difficulty = 2
+lang = "javascript"
+title = "Làm mềm câu chat thiếu lịch sự"
+prompt = '''
+Viết softenPhrase(text). Với các câu sau, trả về cách nói lịch sự tương ứng, không phân biệt hoa thường, khoảng trắng thừa hoặc dấu .?! cuối:
+- "review my pr now" → "Could you review my PR when you have a moment?"
+- "you are wrong" → "I see it differently; could we check the requirement?"
+- "this makes no sense" → "Could you clarify the reasoning behind this?"
+- "fix this asap" → "Could you take a look at this when you can? It is time-sensitive."
+- "do this today" → "Would it be possible to finish this today?"
+Câu không nằm trong danh sách phải được trả về nguyên văn, gồm cả whitespace.
+'''
+starter = '''
+function softenPhrase(text) {
+  return text;
+}
+'''
+solution = '''
+const POLITE_PHRASES = {
+  'review my pr now': 'Could you review my PR when you have a moment?',
+  'you are wrong': 'I see it differently; could we check the requirement?',
+  'this makes no sense': 'Could you clarify the reasoning behind this?',
+  'fix this asap': 'Could you take a look at this when you can? It is time-sensitive.',
+  'do this today': 'Would it be possible to finish this today?',
+};
+
+function softenPhrase(text) {
+  const key = text.trim().replace(/[.!?]+$/, '').toLowerCase().replace(/\s+/g, ' ');
+  return Object.prototype.hasOwnProperty.call(POLITE_PHRASES, key) ? POLITE_PHRASES[key] : text;
+}
+'''
+tests = '''
+test('thay câu mệnh lệnh bằng lời nhờ lịch sự', () => {
+  expect(softenPhrase('review my pr now')).toBe('Could you review my PR when you have a moment?');
+  expect(softenPhrase('do this today')).toBe('Would it be possible to finish this today?');
+});
+test('nhận diện không phân biệt hoa thường và dấu câu cuối', () => {
+  expect(softenPhrase('  FIX THIS ASAP!  ')).toBe('Could you take a look at this when you can? It is time-sensitive.');
+});
+test('các câu khác nhau có cách diễn đạt phù hợp', () => {
+  expect(softenPhrase('you are wrong.')).toBe('I see it differently; could we check the requirement?');
+  expect(softenPhrase('this makes no sense?')).toBe('Could you clarify the reasoning behind this?');
+});
+test('giữ nguyên câu không nằm trong danh sách', () => {
+  expect(softenPhrase('  Thanks for checking.  ')).toBe('  Thanks for checking.  ');
+});
+'''
+hints = ["Chuẩn hóa bản dùng để tra cứu nhưng giữ nguyên text gốc nếu không tìm thấy.", "So khớp cả cụm để không thay một từ nằm bên trong câu khác."]
+explanation = "Một danh sách câu mẫu nhỏ phù hợp cho bài tập; trong sản phẩm thật, cách nói cần xét thêm ngữ cảnh."
+
+[[questions]]
+id = "en-xc07"
+module = "en-code-review"
+type = "code"
+difficulty = 2
+lang = "javascript"
+title = "Định dạng bug report"
+prompt = '''
+Viết formatBugReport(report), nhận object có title, environment, steps (mảng chuỗi), expected và actual. Trim các trường text, đánh số bước bắt đầu từ 1, rồi trả về đúng cấu trúc sau, mỗi mục một dòng:
+Title: <title>
+Environment: <environment>
+Steps to reproduce:
+1. <step>
+Expected behavior: <expected>
+Actual behavior: <actual>
+Có thể có nhiều bước; đề bài giả sử các trường đều là chuỗi không rỗng và steps có ít nhất một phần tử.
+'''
+starter = '''
+function formatBugReport(report) {
+  return report.title;
+}
+'''
+solution = '''
+function formatBugReport(report) {
+  const lines = [
+    'Title: ' + report.title.trim(),
+    'Environment: ' + report.environment.trim(),
+    'Steps to reproduce:',
+  ];
+  for (let i = 0; i < report.steps.length; i++) {
+    lines.push((i + 1) + '. ' + report.steps[i].trim());
+  }
+  lines.push('Expected behavior: ' + report.expected.trim());
+  lines.push('Actual behavior: ' + report.actual.trim());
+  return lines.join('\n');
+}
+'''
+tests = '''
+test('tạo bug report với một bước', () => {
+  expect(formatBugReport({ title: 'Crash', environment: 'macOS', steps: ['Open app'], expected: 'Home appears', actual: 'App closes' })).toBe('Title: Crash\nEnvironment: macOS\nSteps to reproduce:\n1. Open app\nExpected behavior: Home appears\nActual behavior: App closes');
+});
+test('đánh số nhiều bước', () => {
+  const report = formatBugReport({ title: 'Export fails', environment: 'Chrome 130', steps: ['Sign in', 'Open exports', 'Click Run'], expected: 'A file downloads', actual: 'A 500 error appears' });
+  expect(report).toContain('2. Open exports');
+  expect(report).toContain('3. Click Run');
+});
+test('trim các trường và bước', () => {
+  const report = formatBugReport({ title: '  Timeout  ', environment: ' staging ', steps: [' retry request '], expected: ' success ', actual: ' error ' });
+  expect(report).toContain('Title: Timeout');
+  expect(report).toContain('1. retry request');
+  expect(report).toContain('Expected behavior: success');
+});
+test('có đủ expected và actual behavior', () => {
+  const report = formatBugReport({ title: 'Wrong total', environment: 'Linux', steps: ['Add item'], expected: 'Total is 10', actual: 'Total is 0' });
+  expect(report).toContain('Expected behavior: Total is 10');
+  expect(report).toContain('Actual behavior: Total is 0');
+});
+'''
+hints = ["Tạo mảng dòng bắt đầu bằng title, environment và heading của steps.", "Duyệt steps với chỉ số để đánh số từ 1, sau đó join bằng newline."]
+explanation = "Template nhất quán giúp bug report có thể tái hiện và phân biệt điều mong đợi với điều quan sát được."
+
+[[questions]]
+id = "en-xc08"
+module = "en-interview"
+type = "code"
+difficulty = 2
+lang = "javascript"
+title = "Định dạng câu trả lời STAR"
+prompt = '''
+Viết formatSTAR(answer) với object có bốn chuỗi situation, task, action, result. Trim mỗi giá trị và trả về bốn dòng theo đúng thứ tự, gắn nhãn "Situation: ", "Task: ", "Action: ", "Result: ". Ví dụ object có situation="Cart totals were wrong" phải bắt đầu bằng "Situation: Cart totals were wrong".
+'''
+starter = '''
+function formatSTAR(answer) {
+  return answer.situation + ' ' + answer.task + ' ' + answer.action + ' ' + answer.result;
+}
+'''
+solution = '''
+function formatSTAR(answer) {
+  return [
+    'Situation: ' + answer.situation.trim(),
+    'Task: ' + answer.task.trim(),
+    'Action: ' + answer.action.trim(),
+    'Result: ' + answer.result.trim(),
+  ].join('\n');
+}
+'''
+tests = '''
+test('giữ thứ tự và nhãn STAR', () => {
+  expect(formatSTAR({ situation: 'Cart totals were wrong', task: 'Find the cause', action: 'Added a version check', result: 'Errors fell to zero' })).toBe('Situation: Cart totals were wrong\nTask: Find the cause\nAction: Added a version check\nResult: Errors fell to zero');
+});
+test('trim nội dung từng phần', () => {
+  expect(formatSTAR({ situation: ' issue ', task: ' task ', action: ' fix ', result: ' done ' })).toBe('Situation: issue\nTask: task\nAction: fix\nResult: done');
+});
+test('có đủ bốn phần', () => {
+  const answer = formatSTAR({ situation: 'S', task: 'T', action: 'A', result: 'R' });
+  expect(answer).toContain('Situation: S');
+  expect(answer).toContain('Task: T');
+  expect(answer).toContain('Action: A');
+  expect(answer).toContain('Result: R');
+});
+test('mỗi thành phần nằm trên một dòng', () => {
+  expect(formatSTAR({ situation: 'one', task: 'two', action: 'three', result: 'four' }).split('\n')).toHaveLength(4);
+});
+'''
+hints = ["Tạo bốn dòng riêng theo thứ tự Situation, Task, Action, Result.", "Trim trước khi ghép để không mang khoảng trắng thừa vào câu trả lời."]
+explanation = "Khung STAR giúp người học trình bày có cấu trúc; nội dung và số liệu vẫn cần do ứng viên cung cấp."

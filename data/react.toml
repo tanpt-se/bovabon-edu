@@ -1,0 +1,3537 @@
+id = "react"
+title = "React"
+icon = "⚛️"
+color = "#0ea5e9"
+description = "JSX, component, state, hooks, hiệu năng render và các pattern hiện đại của React 18/19."
+group = "Frontend"
+docs = ["react"]
+
+# ============================================================ MODULES
+[[modules]]
+id = "react-basics"
+sources = ["react/learn/rendering-lists", "react/learn/keeping-components-pure"]
+title = "JSX & Component"
+description = "JSX biên dịch thành gì, component function, props, children, render có điều kiện, list & key."
+lesson = '''
+### JSX, component và danh sách
+JSX mô tả React element; runtime mới chuyển JSX thành lời gọi `jsx(...)`, còn runtime classic dùng `React.createElement(...)`. Component là hàm viết hoa nhận props và trả về element. Props chỉ đọc; dùng Fragment khi cần nhiều node mà không thêm DOM.
+
+| Tình huống | Cách làm | Vì sao |
+|---|---|---|
+| Danh sách có thể đổi thứ tự | `key={item.id}` | React giữ đúng identity và state của từng hàng |
+| Điều kiện theo số lượng | `items.length > 0 && <List />` | `0 && ...` hiển thị số 0 |
+| Thuộc tính DOM | `className`, `htmlFor`, `onClick` | Tên theo API React DOM |
+
+```jsx
+function TodoList({ items }) {
+  return <ul>{items.map(item => <li key={item.id}>{item.text}</li>)}</ul>;
+}
+```
+
+### Lỗi hay gặp
+- Dùng `key={index}` cho danh sách có chèn, xoá hoặc sắp xếp, làm state của hàng gắn nhầm item.
+- Viết component chữ thường hoặc sửa trực tiếp props.
+- Dùng `condition && node` khi condition có thể là `0`.
+
+### Checklist phỏng vấn
+- JSX tạo DOM node ngay lập tức hay mô tả element?
+- `key` duy nhất trong phạm vi nào, và vì sao không phải prop thông thường?
+- Khi nào Fragment dạng `<>` không đủ vì cần `key`?
+'''
+
+[[modules]]
+id = "react-state"
+sources = ["react/learn/preserving-and-resetting-state", "react/reference/react/usereducer"]
+title = "State, Props & Event"
+description = "useState, cập nhật bất biến, batching, lifting state up, controlled vs uncontrolled."
+lesson = '''
+### State là snapshot
+`useState` trả giá trị của lần render hiện tại. Gọi setter xếp lịch render mới, không sửa biến đang nằm trong closure. Nếu giá trị mới phụ thuộc giá trị trước, dùng updater function; state object và array cần được thay bằng giá trị mới.
+
+| Cập nhật | Ví dụ | Lưu ý |
+|---|---|---|
+| Giá trị độc lập | `setOpen(true)` | Có thể truyền giá trị trực tiếp |
+| Dựa trên state cũ | `setCount(c => c + 1)` | An toàn khi có nhiều cập nhật trong cùng event |
+| Object/array | `setUser(u => ({ ...u, name }))` | Không mutate object cũ |
+| Nhiều nơi dùng chung | Đưa state lên cha chung | Giữ một nguồn dữ liệu chuẩn |
+
+```jsx
+function addItem(item) {
+  setItems(current => [...current, item]);
+}
+```
+
+React 18+ tự động batching nhiều cập nhật trong cùng lượt xử lý. `useState(() => expensive())` dùng lazy initializer, tránh gọi phép tính khởi tạo lại ở mỗi render.
+
+### Lỗi hay gặp
+- Gọi `setCount(count + 1)` nhiều lần trong một handler và nghĩ mỗi lần đọc snapshot mới.
+- Sửa `items.push(item)` rồi truyền lại cùng mảng.
+- Lưu cùng một dữ liệu ở cả cha và con khiến hai bản có thể lệch nhau.
+- Dùng controlled input (`value`) mà quên cập nhật state trong `onChange`.
+
+### Checklist phỏng vấn
+- Vì sao setter không đổi biến state ngay trong handler hiện tại?
+- Khi nào chọn state cục bộ, lifting state up, controlled hay uncontrolled?
+- Làm sao cập nhật một phần tử trong array mà không mutate?
+'''
+
+[[modules]]
+id = "react-hooks"
+sources = ["react/reference/react/useeffect", "react/learn/you-might-not-need-an-effect", "react/reference/react/useref"]
+title = "Hooks"
+description = "useEffect, useRef, useMemo, useCallback, useReducer, useContext, custom hooks và Rules of Hooks."
+lesson = '''
+### Rules of Hooks
+1. Chỉ gọi hook **ở top-level** (không trong if/for/hàm lồng).
+2. Chỉ gọi hook trong **function component** hoặc **custom hook** (tên bắt đầu bằng `use`).
+
+### Chọn hook theo mục đích
+| Hook | Dùng khi | Không dùng để |
+|---|---|---|
+| `useEffect` | Đồng bộ subscription, timer hoặc hệ thống bên ngoài | Tính dữ liệu có thể suy ra trong render |
+| `useRef` | Giữ mutable value không cần render lại | Lưu dữ liệu UI cần hiển thị |
+| `useMemo` / `useCallback` | Cache giá trị / hàm khi có lý do đo được | Thay thế tính đúng đắn của code |
+| `useReducer` | Nhiều action cập nhật cùng state | Gom mọi state vào một object |
+| `useContext` | Đọc dữ liệu chung qua cây component | Thay mọi dạng state management |
+
+```jsx
+useEffect(() => {
+  const connection = connect(roomId);
+  return () => connection.disconnect();
+}, [roomId]);
+```
+
+Effect không truyền deps chạy sau mỗi render; `[]` mô tả không có reactive dependency. Cleanup chạy trước lần setup tiếp theo và khi unmount. Strict Mode thêm một chu kỳ setup-cleanup trong development để làm lộ cleanup thiếu.
+
+### Lỗi hay gặp
+- Gọi hook trong nhánh điều kiện khiến thứ tự hook thay đổi.
+- Bỏ dependency khiến callback đọc state cũ.
+- Dùng effect để đồng bộ hai state có thể được tính trực tiếp từ nhau.
+- Thêm memoization trước khi đo vấn đề render.
+
+### Checklist phỏng vấn
+- Mỗi dependency của effect đến từ đâu?
+- Cleanup cần đảo ngược tài nguyên nào mà setup đã tạo?
+- Có thể tính giá trị trong render hoặc xử lý trong event handler thay vì effect không?
+
+Các bài code trong module dùng MiniReact có `useState`, `useEffect`, `useRef`, `useMemo`, `useCallback`, `useReducer`, `renderHook` và `act`.
+'''
+
+[[modules]]
+id = "react-perf"
+sources = ["react/reference/react/usememo", "react/reference/react/usetransition", "react/reference/react/usedeferredvalue"]
+title = "Rendering & Hiệu năng"
+description = "Reconciliation, key, React.memo, tránh render thừa, code splitting, concurrent features."
+lesson = '''
+### Render và tối ưu
+Component có thể render lại khi state hoặc context nó đọc đổi, hoặc khi cha render. Render lại không đồng nghĩa DOM bị thay toàn bộ; React so sánh cây element rồi commit khác biệt cần thiết.
+
+| Công cụ | Tác dụng | Cân nhắc |
+|---|---|---|
+| `React.memo` | Bỏ qua render khi props so sánh nông không đổi | Object/function mới vẫn làm props khác |
+| `useMemo` | Cache kết quả tính toán | Chỉ thêm khi phép tính hoặc identity có ý nghĩa |
+| `useCallback` | Giữ identity của function | Thường đi cùng component đã memo |
+| `useTransition` | Đánh dấu cập nhật không khẩn cấp | Không làm tác vụ CPU nặng tự chạy nền |
+| `lazy` + `Suspense` | Tải component khi cần | Chọn boundary và fallback phù hợp |
+
+```jsx
+const visible = useMemo(
+  () => todos.filter(todo => todo.title.includes(query)),
+  [todos, query]
+);
+```
+
+Key ổn định giúp reconciliation giữ đúng identity sau reorder. Dùng Profiler và đo luồng người dùng trước khi tối ưu; React Compiler có thể tự memo hóa trong cấu hình tương thích.
+
+### Lỗi hay gặp
+- Kỳ vọng `React.memo` chặn cập nhật từ context hoặc state nội bộ.
+- Tạo dependency object mới mỗi render làm cache vô hiệu.
+- Dùng index làm key trong danh sách có thể đổi thứ tự.
+- Bọc mọi callback bằng `useCallback` mà không có lợi ích đo được.
+
+### Checklist phỏng vấn
+- Render nào thực sự tốn thời gian theo Profiler?
+- Identity nào thay đổi và có khiến component con render không cần thiết?
+- Có thể chia nhỏ component/state hoặc tải code trễ trước khi memo hóa không?
+'''
+
+[[modules]]
+id = "react-patterns"
+sources = ["react/reference/react/suspense", "react/reference/react/usecontext", "react/reference/react-dom/createportal"]
+title = "Pattern & Hệ sinh thái"
+description = "Context, composition, error boundary, Suspense, Server Components, form, testing."
+lesson = '''
+### Pattern và ranh giới
+| Pattern | Dùng khi | Điểm cần nhớ |
+|---|---|---|
+| Composition với `children` | Tách khung giao diện khỏi nội dung | Thường linh hoạt hơn nhiều prop boolean |
+| Context | Theme, locale hoặc dữ liệu chia sẻ theo cây | Consumer đọc context render lại khi value đổi |
+| Error Boundary | Khôi phục UI khi render con ném lỗi | Không bắt lỗi event handler thông thường |
+| Portal | Modal hoặc tooltip cần thoát vùng overflow | Event React vẫn nổi bọt theo cây React |
+| Suspense / `lazy` | Tải code hoặc dữ liệu có hỗ trợ Suspense | Đặt boundary theo vùng có fallback hữu ích |
+
+```jsx
+function Panel({ title, children }) {
+  return <section><h2>{title}</h2>{children}</section>;
+}
+```
+
+React 19 bổ sung Actions, `useActionState`, `useOptimistic`, `use(promise)`, và cho phép `ref` là prop. Server Components và Client Components có ranh giới module; `'use client'` tạo client boundary, còn `'use server'` đánh dấu Server Function.
+
+### Lỗi hay gặp
+- Dùng context cho mọi dữ liệu khiến nhiều consumer render lại cùng lúc.
+- Mong Error Boundary bắt lỗi trong callback click hoặc promise bất kỳ.
+- Giả định portal tách event khỏi cây React.
+- Viết kiểm thử chi tiết cấu trúc DOM thay vì truy vấn theo role và tên truy cập được.
+
+### Checklist phỏng vấn
+- Vì sao composition thường thay cho prop flag hoặc kế thừa?
+- Error Boundary bao phủ loại lỗi nào, và lỗi nào cần xử lý riêng?
+- Modal portal cần quản lý focus, đóng bằng Escape và trạng thái truy cập ra sao?
+'''
+
+[[modules]]
+id = "react-19"
+title = "React 19: Actions & Compiler"
+description = "Actions, các hook mới, ref prop, document metadata, use() và React Compiler."
+sources = ["react/reference/react/useactionstate", "react/reference/react/useoptimistic", "react/reference/react-dom/hooks/useformstatus", "react/reference/react/use", "react/reference/react-compiler/configuration", "react/reference/react-dom/components/title", "react/reference/react-dom/components/meta"]
+lesson = '''
+### API React 19
+| API | Vai trò | Ghi nhớ |
+|---|---|---|
+| `useActionState` | Gắn action với state kết quả và trạng thái pending | Action nhận state trước đó cùng input |
+| `useOptimistic` | Hiển thị kết quả tạm khi action đang xử lý | UI cuối cùng vẫn cần phản ánh kết quả chuẩn |
+| `useFormStatus` | Đọc trạng thái form cha trong component con | Hook phải nằm dưới `<form>` |
+| `use(value)` | Đọc Promise hoặc Context trong render | Promise pending có thể kích hoạt Suspense |
+
+```jsx
+function SubmitButton() {
+  const { pending } = useFormStatus();
+  return <button disabled={pending}>{pending ? 'Saving' : 'Save'}</button>;
+}
+```
+
+React 19 cho phép truyền `ref` như prop cho function component; `forwardRef` vẫn gặp trong code cũ. React DOM có thể hoist `<title>` và một số `<meta>` từ component lên document. React Compiler có thể tự memo hóa code phù hợp, nhưng cần bật và cấu hình compiler trong build.
+
+### Lỗi hay gặp
+- Gọi `useFormStatus` ngay trong component sở hữu `<form>` thay vì component con.
+- Tạo Promise mới mỗi lần render rồi truyền vào `use()`.
+- Nghĩ `useOptimistic` thay thế việc lưu kết quả server thành công.
+- Mặc định mọi project đều bật React Compiler.
+
+### Checklist phỏng vấn
+- Action nhận những đối số nào và pending state đến từ đâu?
+- Khi nào optimistic state cần rollback?
+- Khác biệt giữa `use()` và một hook thông thường là gì?
+'''
+
+[[modules]]
+id = "react-server"
+title = "Server Components & Streaming"
+description = "Ranh giới server/client, directives, Suspense, streaming và hydration."
+sources = ["react/reference/rsc/server-components", "react/reference/rsc/use-client", "react/reference/rsc/use-server", "react/reference/react/suspense", "react/reference/react-dom/client/hydrateroot", "react/reference/react-dom/server/rendertopipeablestream"]
+lesson = '''
+### Chọn nơi chạy component
+| Loại | Có thể dùng state/effect? | JavaScript gửi xuống browser? |
+|---|---|---|
+| Server Component | Không dùng client hooks | Không gửi implementation component |
+| Client Component | Có, qua `'use client'` boundary | Có |
+| Server Function | Thực thi ở server khi được gọi | Client nhận tham chiếu để gọi |
+
+`'use client'` đặt ở đầu module và tạo ranh giới cho các import phía client. Props đi qua ranh giới cần tuần tự hóa được. `'use server'` đánh dấu Server Function; nó không biến component thành Server Component.
+
+```jsx
+// Server Component
+export default async function Page() {
+  const user = await loadUser();
+  return <Profile name={user.name} />;
+}
+```
+
+Suspense cho phép framework stream phần đã sẵn sàng trong khi phần chậm hiển thị fallback. Hydration gắn event và state client vào HTML đã render; output ban đầu của server và client cần khớp.
+
+### Lỗi hay gặp
+- Import API browser hoặc gọi `useState` trong Server Component.
+- Đưa callback/function thông thường qua props server-client.
+- Dùng `'use server'` như thể nó tương đương `'use client'`.
+- Render `Date.now()`, random hoặc dữ liệu browser khác nhau ngay lần render đầu.
+
+### Checklist phỏng vấn
+- Ranh giới `'use client'` lan qua những module import nào?
+- Suspense giúp streaming ở điểm nào trong cây?
+- Hydration mismatch xuất phát từ đâu và kiểm tra theo thứ tự nào?
+'''
+
+[[modules]]
+id = "react-effects"
+title = "Effects & Synchronization"
+description = "Tránh effect thừa, cleanup, fetch an toàn, Strict Mode, layout effect và Effect Event."
+sources = ["react/reference/react/useeffect", "react/learn/you-might-not-need-an-effect", "react/reference/react/strictmode", "react/reference/react/uselayouteffect", "react/reference/react/useeffectevent"]
+lesson = '''
+### Có thật sự cần Effect?
+| Nhu cầu | Cách ưu tiên |
+|---|---|
+| Tính giá trị từ props/state | Tính trực tiếp trong render, memo nếu cần |
+| Phản hồi thao tác người dùng | Xử lý trong event handler |
+| Đồng bộ với hệ thống ngoài React | `useEffect` và cleanup |
+| Đo layout trước paint | `useLayoutEffect`, dùng tiết kiệm |
+
+```jsx
+useEffect(() => {
+  const controller = new AbortController();
+  loadUser(userId, { signal: controller.signal });
+  return () => controller.abort();
+}, [userId]);
+```
+
+Cleanup chạy trước khi effect đồng bộ lại với dependency mới và khi component rời cây. Strict Mode trong development chạy thêm setup-cleanup để phát hiện vòng đời không đối xứng. `useEffectEvent` cho phép effect gọi logic cần đọc giá trị mới nhất mà không đăng ký lại tài nguyên chỉ vì giá trị đó đổi.
+
+### Lỗi hay gặp
+- Dùng effect để copy props vào state rồi phải đồng bộ hai nguồn dữ liệu.
+- Bỏ cleanup khiến timer hoặc subscription cũ tiếp tục hoạt động.
+- Chỉ bỏ qua kết quả fetch cũ nhưng không hủy request khi có thể hủy.
+- Dùng `useLayoutEffect` cho công việc không cần hoàn tất trước paint.
+
+### Checklist phỏng vấn
+- Effect đang đồng bộ với hệ thống bên ngoài nào?
+- Cleanup có hủy đúng tài nguyên của lần setup tương ứng không?
+- Có thể đưa logic vào render hoặc event handler không?
+'''
+
+[[modules]]
+id = "react-forms-a11y"
+title = "Forms & Accessibility"
+description = "Controlled forms, validation, focus, ARIA và modal qua portal."
+sources = ["react/reference/react-dom/components/form", "react/reference/react-dom/components/input", "react/reference/react-dom/createportal"]
+lesson = '''
+### Form có thể sử dụng được
+| Kiểu input | Giá trị ban đầu | Ai giữ giá trị? |
+|---|---|---|
+| Controlled | `value` / `checked` | React state qua `onChange` |
+| Uncontrolled | `defaultValue` / `defaultChecked` | DOM, đọc khi cần qua ref/FormData |
+
+```jsx
+<label htmlFor="email">Email</label>
+<input id="email" value={email} onChange={event => setEmail(event.target.value)} aria-invalid={Boolean(error)} aria-describedby="email-error" />
+<p id="email-error">{error}</p>
+```
+
+Validation cần gắn thông báo với field; sau submit thất bại, đưa focus tới field đầu tiên có lỗi. Dùng label thật, giữ thao tác bàn phím và trạng thái lỗi có thể nhận biết bằng công nghệ hỗ trợ. Portal phù hợp cho modal, nhưng modal vẫn phải quản lý focus vào/ra, Escape, tên accessible và khóa tương tác nền.
+
+### Lỗi hay gặp
+- Dùng placeholder thay label hoặc chỉ đổi màu để biểu thị lỗi.
+- Đặt `aria-invalid` nhưng không liên kết thông báo bằng `aria-describedby`.
+- Hiển thị lỗi sau submit nhưng giữ focus ở nút gửi.
+- Tạo modal portal nhưng không giữ và trả focus cho nút mở modal.
+
+### Checklist phỏng vấn
+- Field có accessible name và trạng thái lỗi như thế nào?
+- Controlled và uncontrolled khác nhau ở nơi giữ dữ liệu nào?
+- Sau submit lỗi, người dùng bàn phím sẽ được đưa tới đâu?
+'''
+
+[[modules]]
+id = "react-testing-arch"
+title = "Testing & Component Architecture"
+description = "Truy vấn theo role, tổ chức module, state colocation, context/store, error boundary và lazy loading."
+sources = ["react/reference/react/act", "react/reference/react/createcontext", "react/reference/react/lazy", "react/reference/react/suspense"]
+lesson = '''
+### Tổ chức và kiểm thử
+| Bài toán | Hướng chọn | Trade-off |
+|---|---|---|
+| Kiểm thử giao diện | Query theo role và accessible name | Gần với cách người dùng tìm điều khiển |
+| State chỉ dùng trong một vùng | Đặt gần component sở hữu vùng đó | Giảm phụ thuộc và render lan rộng |
+| Dữ liệu chia sẻ trong một cây | Context | Provider value đổi làm consumer cập nhật |
+| Subscription lớn, cập nhật chọn lọc | Store có selector | Thêm khái niệm và cơ chế subscription |
+
+```jsx
+const Page = lazy(() => import('./Page'));
+<Suspense fallback={<p>Loading</p>}><Page /></Suspense>
+```
+
+Testing Library thường ưu tiên `getByRole('button', { name: 'Save' })`; dùng `findByRole` cho xuất hiện bất đồng bộ. Error Boundary phục hồi vùng render lỗi; `lazy` tách chunk và cần Suspense boundary. Đặt state gần nơi dùng giúp giới hạn số component phụ thuộc, rồi chỉ nâng lên khi nhiều vùng thật sự cần cùng dữ liệu.
+
+### Lỗi hay gặp
+- Query theo class hoặc cấu trúc DOM dễ vỡ thay vì role/name.
+- Đẩy mọi state lên root hoặc đưa mọi thứ vào context từ đầu.
+- Nghĩ context tự cung cấp subscription theo từng field.
+- Thiếu fallback khi component lazy đang tải.
+
+### Checklist phỏng vấn
+- State này có thể đặt thấp hơn mà vẫn phục vụ mọi consumer không?
+- Test kiểm tra hành vi người dùng hay chi tiết implementation?
+- Khi nào context đủ dùng và khi nào cần external store có selector?
+'''
+
+# ============================================================ BASICS
+[[questions]]
+id = "react-001"
+module = "react-basics"
+type = "single"
+difficulty = 1
+prompt = "Với **automatic JSX runtime** (React 17+), đoạn `<h1 className=\"t\">Hi</h1>` được biên dịch thành gì?"
+options = [
+  "`document.createElement('h1')`",
+  "`jsx('h1', { className: 't', children: 'Hi' })`",
+  "`new HTMLElement('h1')`",
+  "Một chuỗi HTML `'<h1 class=\"t\">Hi</h1>'`",
+]
+answer = [1]
+explanation = "JSX được Babel/TS/SWC chuyển thành lời gọi hàm `jsx()` (từ `react/jsx-runtime`) trả về **React element** — một object mô tả UI, không phải DOM node."
+tags = ["jsx"]
+
+[[questions]]
+id = "react-002"
+module = "react-basics"
+type = "single"
+difficulty = 1
+prompt = "Vì sao tên component trong JSX phải **viết hoa chữ cái đầu** (`<MyButton />`)?"
+options = [
+  "Đó chỉ là quy ước, viết thường vẫn chạy như nhau",
+  "Vì JSX coi tên viết thường là thẻ HTML/intrinsic element (chuỗi), tên viết hoa là biến tham chiếu component",
+  "Vì ESLint bắt buộc",
+  "Vì React chỉ export các component viết hoa",
+]
+answer = [1]
+explanation = "`<button/>` → `jsx('button')` (chuỗi), còn `<Button/>` → `jsx(Button)` (tham chiếu biến). Viết thường sẽ khiến React tạo thẻ DOM lạ `<mybutton>`."
+
+[[questions]]
+id = "react-003"
+module = "react-basics"
+type = "single"
+difficulty = 2
+prompt = '''
+Đoạn code sau hiển thị gì khi `messages = []`?
+
+```jsx
+<div>{messages.length && <Badge count={messages.length} />}</div>
+```
+'''
+options = ["Không hiển thị gì", "Hiển thị số `0`", "Hiển thị `false`", "Lỗi runtime"]
+answer = [1]
+explanation = "`0 && X` trả về `0`, và React **render số 0** (chỉ bỏ qua `false`, `null`, `undefined`, `true`). Sửa: `messages.length > 0 && ...`."
+tags = ["conditional-rendering"]
+
+[[questions]]
+id = "react-004"
+module = "react-basics"
+type = "single"
+difficulty = 1
+prompt = "`key` trong danh sách cần thoả điều kiện nào?"
+options = [
+  "Duy nhất trên toàn ứng dụng",
+  "Duy nhất giữa các phần tử anh em (sibling) và ổn định giữa các lần render",
+  "Phải là số nguyên tăng dần",
+  "Phải là `Math.random()` để chắc chắn không trùng",
+]
+answer = [1]
+explanation = "Key chỉ cần duy nhất trong cùng mảng anh em. `Math.random()` khiến key đổi mỗi render → React unmount/mount lại toàn bộ, mất state và chậm."
+
+[[questions]]
+id = "react-005"
+module = "react-basics"
+type = "single"
+difficulty = 1
+prompt = "Thuộc tính nào là cách đúng để gán class CSS trong JSX?"
+options = ["`class`", "`className`", "`cssClass`", "`styleName`"]
+answer = [1]
+explanation = "`class` là từ khoá trong JS nên React dùng `className` (tương ứng thuộc tính DOM `element.className`). Tương tự `for` → `htmlFor`."
+
+[[questions]]
+id = "react-006"
+module = "react-basics"
+type = "multiple"
+difficulty = 2
+prompt = "Những giá trị nào **không render ra gì** khi đặt trong JSX `{value}`? (chọn nhiều)"
+options = ["`null`", "`false`", "`0`", "`undefined`", "`''` (chuỗi rỗng)", "`true`"]
+answer = [0, 1, 3, 4, 5]
+explanation = "`null`, `undefined`, `true`, `false` bị bỏ qua; chuỗi rỗng render ra text node rỗng (không thấy gì). Riêng `0` (và `NaN`) **được render**."
+
+[[questions]]
+id = "react-007"
+module = "react-basics"
+type = "fill"
+difficulty = 1
+prompt = '''
+Hoàn thành code trả về nhiều phần tử mà **không** thêm thẻ DOM bao ngoài:
+
+```jsx
+function Row() {
+  return (
+    {{blank}}
+      <td>A</td>
+      <td>B</td>
+    {{blank}}
+  );
+}
+```
+'''
+blanks = [["<>", "<Fragment>", "<React.Fragment>"], ["</>", "</Fragment>", "</React.Fragment>"]]
+explanation = "Fragment `<>...</>` gom nhiều phần tử mà không sinh thêm node DOM — quan trọng trong `<tr>` vì không được chèn `<div>`."
+
+[[questions]]
+id = "react-008"
+module = "react-basics"
+type = "fill"
+difficulty = 1
+prompt = '''
+Render danh sách với key đúng:
+
+```jsx
+<ul>
+  {todos.map(todo => <li {{blank}}={todo.id}>{todo.text}</li>)}
+</ul>
+```
+'''
+blanks = [["key"]]
+explanation = "`key` giúp React đối chiếu phần tử giữa các lần render (reconciliation)."
+
+[[questions]]
+id = "react-009"
+module = "react-basics"
+type = "single"
+difficulty = 2
+prompt = "Điều gì đúng về `props.children`?"
+options = [
+  "Luôn là một mảng",
+  "Là nội dung đặt giữa thẻ mở và thẻ đóng của component, có thể là bất kỳ kiểu node nào (chuỗi, element, mảng, hàm...)",
+  "Chỉ dùng được với class component",
+  "Không thể truyền function làm children",
+]
+answer = [1]
+explanation = "`children` có thể là 1 element, chuỗi, mảng, hay hàm (render props). Dùng `React.Children` utilities nếu cần duyệt an toàn."
+
+[[questions]]
+id = "react-010"
+module = "react-basics"
+type = "single"
+difficulty = 2
+prompt = "Inline style nào hợp lệ trong React DOM?"
+options = [
+  "`style=\"color: red; font-size: 14px\"`",
+  "`style={{ color: 'red', fontSize: 14 }}`",
+  "`style={{ color: red, font-size: 14 }}`",
+  "`style={['color: red']}`",
+]
+answer = [1]
+explanation = "`style` nhận **object**, key dạng camelCase; số không có đơn vị được hiểu là `px` cho phần lớn thuộc tính."
+
+[[questions]]
+id = "react-011"
+module = "react-basics"
+type = "essay"
+difficulty = 2
+prompt = "Giải thích ngắn gọn **vì sao không nên dùng index của mảng làm `key`** khi danh sách có thể thêm/xoá/sắp xếp."
+keywords = [
+  ["state", "trạng thái"],
+  ["thứ tự", "order", "sắp xếp", "reorder", "vị trí"],
+  ["tái sử dụng", "reuse", "nhầm", "sai phần tử", "gắn sai", "mismatch", "lẫn"],
+]
+min_keywords = 2
+model_answer = '''
+Key dùng để React nhận diện phần tử giữa các lần render. Nếu dùng **index**, khi chèn/xoá/sắp xếp thì **vị trí thay đổi** nhưng key (index) vẫn giữ nguyên, khiến React **tái sử dụng nhầm** component/DOM cũ cho dữ liệu mới → **state nội bộ** (input đang gõ, checkbox, animation) bị gắn sai phần tử, đồng thời làm render kém hiệu quả. Nên dùng id ổn định từ dữ liệu.
+'''
+explanation = "Index chỉ an toàn khi danh sách tĩnh, không đổi thứ tự và phần tử không có state."
+
+[[questions]]
+id = "react-012"
+module = "react-basics"
+type = "code"
+difficulty = 3
+title = "Mini createElement & renderToString"
+prompt = '''
+Hiểu JSX bằng cách tự viết nó! Hãy cài đặt:
+
+1. `h(type, props, ...children)` — trả về object `{ type, props }` trong đó `props.children` là **mảng đã được làm phẳng**, bỏ các giá trị `null`, `undefined`, `false`, `true`.
+   `props` có thể là `null`.
+2. `renderToString(node)`:
+   - chuỗi/số → text (escape `&`, `<`, `>`)
+   - `type` là chuỗi → `<type attr="v">children</type>`; prop `className` xuất ra `class`; bỏ qua `children` và các prop có giá trị là hàm
+   - `type` là hàm → gọi `type(props)` rồi render kết quả (function component)
+'''
+starter = '''
+function h(type, props, ...children) {
+  // TODO
+}
+
+function renderToString(node) {
+  // TODO
+}
+'''
+solution = '''
+function h(type, props, ...children) {
+  const flat = children.flat(Infinity).filter(c => c !== null && c !== undefined && c !== false && c !== true);
+  return { type, props: { ...(props || {}), children: flat } };
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function renderToString(node) {
+  if (typeof node === 'string' || typeof node === 'number') return escapeHtml(node);
+  if (Array.isArray(node)) return node.map(renderToString).join('');
+  if (node === null || node === undefined || typeof node === 'boolean') return '';
+  if (typeof node.type === 'function') return renderToString(node.type(node.props));
+  const attrs = Object.entries(node.props)
+    .filter(([k, v]) => k !== 'children' && typeof v !== 'function' && v !== undefined)
+    .map(([k, v]) => ` ${k === 'className' ? 'class' : k}="${v}"`)
+    .join('');
+  const inner = (node.props.children || []).map(renderToString).join('');
+  return `<${node.type}${attrs}>${inner}</${node.type}>`;
+}
+'''
+tests = '''
+describe('h()', () => {
+  test('tạo element cơ bản', () => {
+    expect(h('div', { id: 'a' }, 'hi')).toEqual({ type: 'div', props: { id: 'a', children: ['hi'] } });
+  });
+  test('props null', () => {
+    expect(h('p', null)).toEqual({ type: 'p', props: { children: [] } });
+  });
+  test('làm phẳng children và bỏ giá trị rỗng', () => {
+    const el = h('ul', null, [h('li', null, 'a'), [h('li', null, 'b')]], null, false, true, 0);
+    expect(el.props.children.length).toBe(3);
+    expect(el.props.children[2]).toBe(0);
+  });
+});
+describe('renderToString()', () => {
+  test('render thẻ lồng nhau + className', () => {
+    expect(renderToString(h('div', { className: 'box' }, h('b', null, 'x'), 'y'))).toBe('<div class="box"><b>x</b>y</div>');
+  });
+  test('escape text', () => {
+    expect(renderToString(h('p', null, '<a> & b'))).toBe('<p>&lt;a&gt; &amp; b</p>');
+  });
+  test('bỏ qua event handler', () => {
+    expect(renderToString(h('button', { onClick: () => {} }, 'Go'))).toBe('<button>Go</button>');
+  });
+  test('function component nhận props + children', () => {
+    const Card = (props) => h('section', { className: 'card' }, h('h2', null, props.title), props.children);
+    expect(renderToString(h(Card, { title: 'T' }, 'body'))).toBe('<section class="card"><h2>T</h2>body</section>');
+  });
+  test('render số', () => {
+    expect(renderToString(h('span', null, 0))).toBe('<span>0</span>');
+  });
+});
+'''
+hints = [
+  "`children.flat(Infinity)` làm phẳng mọi cấp mảng.",
+  "Trong renderToString, xử lý theo thứ tự: primitive → mảng → function component → thẻ chuỗi.",
+]
+explanation = "Đây chính là bản chất của JSX: chỉ là lời gọi hàm tạo object mô tả cây UI; renderer (react-dom, react-native) mới biến object đó thành giao diện thật."
+
+# ============================================================ STATE
+[[questions]]
+id = "react-020"
+module = "react-state"
+type = "single"
+difficulty = 2
+prompt = '''
+Sau khi click 1 lần, `count` hiển thị bao nhiêu? (ban đầu 0)
+
+```jsx
+function Counter() {
+  const [count, setCount] = useState(0);
+  const onClick = () => {
+    setCount(count + 1);
+    setCount(count + 1);
+    setCount(count + 1);
+  };
+  return <button onClick={onClick}>{count}</button>;
+}
+```
+'''
+options = ["1", "3", "0", "Lỗi vòng lặp vô hạn"]
+answer = [0]
+explanation = "Trong lần render đó `count` là snapshot = 0, nên cả 3 lần đều đặt state = 1. Muốn ra 3 dùng updater `setCount(c => c + 1)`."
+tags = ["state", "snapshot"]
+
+[[questions]]
+id = "react-021"
+module = "react-state"
+type = "single"
+difficulty = 2
+prompt = "Cách nào cập nhật state mảng `items` một cách **đúng** (bất biến) khi thêm phần tử?"
+options = [
+  "`items.push(x); setItems(items)`",
+  "`setItems([...items, x])`",
+  "`items[items.length] = x`",
+  "`setItems(items.concat).push(x)`",
+]
+answer = [1]
+explanation = "`push` mutate mảng cũ — tham chiếu không đổi nên React (so sánh bằng `Object.is`) có thể bỏ qua render. Luôn tạo mảng mới."
+
+[[questions]]
+id = "react-022"
+module = "react-state"
+type = "single"
+difficulty = 2
+prompt = "Trong React 18, hai lời gọi `setA(1); setB(2);` bên trong một `setTimeout` sẽ gây ra bao nhiêu lần render?"
+options = ["2 lần", "1 lần (automatic batching)", "0 lần", "Tuỳ trình duyệt"]
+answer = [1]
+explanation = "React 18 với `createRoot` tự động batching cả trong timeout, promise, native event. React 17 chỉ batching trong event handler của React."
+
+[[questions]]
+id = "react-023"
+module = "react-state"
+type = "single"
+difficulty = 1
+prompt = "Một input là **controlled component** khi:"
+options = [
+  "Có thuộc tính `ref`",
+  "Giá trị của nó do state React quyết định qua `value` và được cập nhật qua `onChange`",
+  "Dùng `defaultValue`",
+  "Nằm trong thẻ `<form>`",
+]
+answer = [1]
+explanation = "Controlled: React là nguồn sự thật duy nhất (`value` + `onChange`). Uncontrolled: DOM giữ giá trị, đọc qua `ref`, khởi tạo bằng `defaultValue`."
+
+[[questions]]
+id = "react-024"
+module = "react-state"
+type = "single"
+difficulty = 2
+prompt = "`useState(expensiveCompute())` và `useState(() => expensiveCompute())` khác nhau thế nào?"
+options = [
+  "Không khác nhau",
+  "Dạng thứ hai chỉ gọi `expensiveCompute` ở lần render đầu; dạng thứ nhất gọi ở **mọi** lần render (dù kết quả bị bỏ qua)",
+  "Dạng thứ hai lưu hàm vào state",
+  "Dạng thứ nhất nhanh hơn vì không tạo closure",
+]
+answer = [1]
+explanation = "Đây là **lazy initial state**. Truyền hàm khởi tạo để tránh tính toán thừa mỗi lần render."
+
+[[questions]]
+id = "react-025"
+module = "react-state"
+type = "multiple"
+difficulty = 2
+prompt = "Những thao tác nào **mutate** state (nên tránh) khi state là mảng/object?"
+options = [
+  "`arr.sort()`",
+  "`[...arr].sort()`",
+  "`arr.splice(i, 1)`",
+  "`arr.filter(x => x.id !== id)`",
+  "`obj.name = 'x'`",
+  "`arr.toSorted()` (ES2023)",
+]
+answer = [0, 2, 4]
+explanation = "`sort`, `splice`, `reverse`, `push`, gán thuộc tính… sửa trực tiếp. `filter`, `map`, `slice`, spread, `toSorted`, `toSpliced`, `with` trả về bản mới."
+
+[[questions]]
+id = "react-026"
+module = "react-state"
+type = "fill"
+difficulty = 1
+prompt = '''
+Tăng bộ đếm an toàn dựa trên giá trị trước đó:
+
+```jsx
+setCount({{blank}} => prev + 1);
+```
+'''
+blanks = [["prev"]]
+explanation = "Updater function nhận state mới nhất (đã xếp hàng), đảm bảo nhiều cập nhật liên tiếp đều được áp dụng."
+
+[[questions]]
+id = "react-027"
+module = "react-state"
+type = "fill"
+difficulty = 2
+prompt = '''
+Cập nhật bất biến thuộc tính lồng nhau `user.address.city`:
+
+```js
+setUser({
+  ...user,
+  address: { {{blank}}, city: 'Hà Nội' },
+});
+```
+'''
+blanks = [["...user.address"]]
+explanation = "Phải spread từng cấp bị thay đổi; nếu không `address` sẽ mất các field khác."
+
+[[questions]]
+id = "react-028"
+module = "react-state"
+type = "essay"
+difficulty = 2
+prompt = "\"Lifting state up\" là gì và khi nào nên dùng?"
+keywords = [
+  ["cha", "parent", "tổ tiên", "ancestor"],
+  ["props"],
+  ["chia sẻ", "dùng chung", "share", "đồng bộ", "nhiều component"],
+]
+min_keywords = 2
+model_answer = "Khi **nhiều component con cần dùng chung/đồng bộ** một dữ liệu, ta chuyển state lên **component cha chung gần nhất**, rồi truyền giá trị xuống qua **props** và truyền hàm cập nhật (callback) để con báo thay đổi lên. Nhờ đó chỉ có một nguồn sự thật (single source of truth)."
+explanation = "Nếu prop drilling quá sâu, cân nhắc Context hoặc state manager."
+
+[[questions]]
+id = "react-029"
+module = "react-state"
+type = "code"
+difficulty = 2
+title = "todoReducer bất biến"
+prompt = '''
+Viết reducer `todoReducer(state, action)` quản lý danh sách todo **không mutate** state cũ.
+
+State: mảng `{ id, text, done }`. Các action:
+- `{ type: 'added', id, text }` → thêm todo `done: false` vào **cuối**
+- `{ type: 'toggled', id }` → đảo `done`
+- `{ type: 'deleted', id }` → xoá
+- `{ type: 'cleared' }` → xoá các todo đã `done`
+- action lạ → `throw new Error('Unknown action: ' + type)`
+'''
+starter = '''
+function todoReducer(state, action) {
+  switch (action.type) {
+    // TODO
+  }
+}
+'''
+solution = '''
+function todoReducer(state, action) {
+  switch (action.type) {
+    case 'added':
+      return [...state, { id: action.id, text: action.text, done: false }];
+    case 'toggled':
+      return state.map(t => (t.id === action.id ? { ...t, done: !t.done } : t));
+    case 'deleted':
+      return state.filter(t => t.id !== action.id);
+    case 'cleared':
+      return state.filter(t => !t.done);
+    default:
+      throw new Error('Unknown action: ' + action.type);
+  }
+}
+'''
+tests = '''
+const s0 = Object.freeze([Object.freeze({ id: 1, text: 'Học hooks', done: false })]);
+test('added thêm vào cuối', () => {
+  const s = todoReducer(s0, { type: 'added', id: 2, text: 'Ôn RN' });
+  expect(s).toEqual([{ id: 1, text: 'Học hooks', done: false }, { id: 2, text: 'Ôn RN', done: false }]);
+});
+test('toggled tạo object mới, không mutate', () => {
+  const s = todoReducer(s0, { type: 'toggled', id: 1 });
+  expect(s[0].done).toBe(true);
+  expect(s0[0].done).toBe(false);
+  expect(s).not.toBe(s0);
+});
+test('deleted', () => {
+  expect(todoReducer(s0, { type: 'deleted', id: 1 })).toEqual([]);
+});
+test('cleared bỏ todo đã xong', () => {
+  const s = [{ id: 1, text: 'a', done: true }, { id: 2, text: 'b', done: false }];
+  expect(todoReducer(s, { type: 'cleared' })).toEqual([{ id: 2, text: 'b', done: false }]);
+});
+test('action lạ ném lỗi', () => {
+  expect(() => todoReducer(s0, { type: 'xyz' })).toThrow('Unknown action: xyz');
+});
+test('dùng được với useReducer', () => {
+  const { result } = renderHook(() => useReducer(todoReducer, []));
+  act(() => result.current[1]({ type: 'added', id: 7, text: 'x' }));
+  expect(result.current[0]).toHaveLength(1);
+});
+'''
+hints = ["`map` để đổi một phần tử, `filter` để xoá, spread để thêm.", "State được `Object.freeze` — mutate sẽ không có tác dụng hoặc lỗi."]
+explanation = "Reducer phải là hàm thuần (pure): cùng input → cùng output, không side effect, không mutate."
+
+# ============================================================ HOOKS
+[[questions]]
+id = "react-040"
+module = "react-hooks"
+type = "single"
+difficulty = 1
+prompt = "Câu nào vi phạm **Rules of Hooks**?"
+options = [
+  "Gọi `useState` ở đầu function component",
+  "Gọi `useEffect` bên trong `if (isOpen) { ... }`",
+  "Gọi custom hook `useFetch` trong component",
+  "Gọi nhiều `useState` liên tiếp",
+]
+answer = [1]
+explanation = "React xác định hook theo **thứ tự gọi**. Gọi có điều kiện làm lệch thứ tự giữa các lần render → state bị gán sai."
+
+[[questions]]
+id = "react-041"
+module = "react-hooks"
+type = "single"
+difficulty = 2
+prompt = "Khi nào hàm cleanup của `useEffect` chạy?"
+options = [
+  "Chỉ khi component unmount",
+  "Trước mỗi lần effect chạy lại (khi deps đổi) và khi unmount",
+  "Ngay sau khi effect chạy xong",
+  "Không bao giờ nếu deps là `[]`",
+]
+answer = [1]
+explanation = "Với deps `[]`, cleanup chạy khi unmount (và trong Strict Mode dev còn chạy thêm 1 lần sau mount đầu để kiểm tra)."
+
+[[questions]]
+id = "react-042"
+module = "react-hooks"
+type = "single"
+difficulty = 2
+prompt = "Thay đổi `ref.current` của `useRef` có gây render lại không?"
+options = [
+  "Có, giống setState",
+  "Không — ref là hộp chứa mutable, thay đổi không kích hoạt render",
+  "Chỉ khi ref gắn với DOM",
+  "Chỉ trong Strict Mode",
+]
+answer = [1]
+explanation = "Dùng ref cho giá trị không ảnh hưởng UI: id timer, giá trị trước đó, DOM node, cờ `isMounted`…"
+
+[[questions]]
+id = "react-043"
+module = "react-hooks"
+type = "single"
+difficulty = 2
+prompt = "Khác biệt chính giữa `useMemo(fn, deps)` và `useCallback(fn, deps)`?"
+options = [
+  "`useMemo` cache **kết quả** của `fn()`, `useCallback` cache **chính hàm** `fn`",
+  "`useCallback` chỉ dùng cho event handler",
+  "`useMemo` chạy bất đồng bộ",
+  "Không có khác biệt",
+]
+answer = [0]
+explanation = "`useCallback(fn, deps)` tương đương `useMemo(() => fn, deps)`."
+
+[[questions]]
+id = "react-044"
+module = "react-hooks"
+type = "single"
+difficulty = 3
+prompt = '''
+Vấn đề của đoạn code sau là gì?
+
+```jsx
+useEffect(() => {
+  const id = setInterval(() => setCount(count + 1), 1000);
+  return () => clearInterval(id);
+}, []);
+```
+'''
+options = [
+  "Rò rỉ bộ nhớ vì không clear interval",
+  "Stale closure: `count` luôn là 0 nên số đếm dừng ở 1",
+  "Interval chạy 2 lần mỗi giây",
+  "Không có vấn đề",
+]
+answer = [1]
+explanation = "Closure bắt `count` của lần render đầu. Sửa: `setCount(c => c + 1)` hoặc thêm `count` vào deps."
+tags = ["stale-closure"]
+
+[[questions]]
+id = "react-045"
+module = "react-hooks"
+type = "single"
+difficulty = 2
+prompt = "Khi nào nên dùng `useLayoutEffect` thay cho `useEffect`?"
+options = [
+  "Khi fetch dữ liệu",
+  "Khi cần đo layout DOM và cập nhật đồng bộ trước khi trình duyệt paint để tránh nhấp nháy",
+  "Khi muốn effect chạy trên server",
+  "Luôn luôn, vì nhanh hơn",
+]
+answer = [1]
+explanation = "`useLayoutEffect` chạy đồng bộ sau khi DOM mutate nhưng trước paint — chặn paint nên chỉ dùng khi thật cần."
+
+[[questions]]
+id = "react-046"
+module = "react-hooks"
+type = "multiple"
+difficulty = 2
+prompt = "Những trường hợp nào **không cần** `useEffect` (theo tài liệu \"You Might Not Need an Effect\")?"
+options = [
+  "Tính giá trị dẫn xuất từ props/state (ví dụ `fullName = first + ' ' + last`)",
+  "Đăng ký WebSocket khi component mount",
+  "Xử lý logic khi người dùng click nút (gửi form)",
+  "Reset toàn bộ state khi prop `userId` đổi (dùng `key={userId}` thay thế)",
+  "Đồng bộ với một widget jQuery bên ngoài",
+]
+answer = [0, 2, 3]
+explanation = "Effect dành cho đồng bộ với **hệ thống bên ngoài**. Dữ liệu dẫn xuất tính ngay khi render, logic sự kiện đặt trong handler, reset state dùng `key`."
+
+[[questions]]
+id = "react-047"
+module = "react-hooks"
+type = "fill"
+difficulty = 2
+prompt = '''
+Hoàn thành effect đăng ký sự kiện resize kèm cleanup, chỉ chạy 1 lần sau mount:
+
+```jsx
+useEffect(() => {
+  const onResize = () => setWidth(window.innerWidth);
+  window.addEventListener('resize', onResize);
+  return () => window.{{blank}}('resize', onResize);
+}, {{blank}});
+```
+'''
+blanks = [["removeEventListener"], ["[]"]]
+explanation = "Cleanup gỡ đúng tham chiếu handler; deps `[]` → chạy sau mount và cleanup khi unmount."
+
+[[questions]]
+id = "react-048"
+module = "react-hooks"
+type = "fill"
+difficulty = 2
+prompt = '''
+Tạo context và đọc nó:
+
+```jsx
+const ThemeContext = {{blank}}('light');
+
+function Button() {
+  const theme = {{blank}}(ThemeContext);
+  return <button className={theme}>OK</button>;
+}
+```
+'''
+blanks = [["createContext", "React.createContext"], ["useContext", "React.useContext", "use"]]
+explanation = "`createContext(defaultValue)` + `<ThemeContext.Provider value=...>` (React 19 cho phép `<ThemeContext value=...>`) + `useContext` (hoặc `use` trong React 19)."
+
+[[questions]]
+id = "react-049"
+module = "react-hooks"
+type = "essay"
+difficulty = 3
+prompt = "Giải thích **stale closure** trong React hooks và nêu cách khắc phục."
+keywords = [
+  ["closure"],
+  ["giá trị cũ", "cũ", "stale", "lần render trước", "snapshot"],
+  ["updater", "prev =>", "c =>", "hàm cập nhật", "functional update"],
+  ["deps", "dependency", "phụ thuộc"],
+  ["ref", "useRef"],
+]
+min_keywords = 3
+model_answer = '''
+Mỗi lần render tạo ra các hàm mới "đóng" (closure) trên **giá trị props/state của lần render đó**. Nếu một callback được tạo ở lần render cũ (ví dụ trong `setInterval` với deps `[]`, hoặc `useCallback` thiếu deps) thì nó sẽ mãi đọc **giá trị cũ** → stale closure.
+
+Cách khắc phục:
+- Dùng **functional updater** `setX(prev => ...)` để không phụ thuộc giá trị trong closure.
+- Khai báo đầy đủ **dependencies** (eslint `react-hooks/exhaustive-deps`).
+- Lưu giá trị mới nhất vào **useRef** và đọc `ref.current` trong callback.
+'''
+explanation = "Đây là lỗi phổ biến nhất khi dùng timer, subscription, event listener trong hooks."
+
+[[questions]]
+id = "react-050"
+module = "react-hooks"
+type = "code"
+difficulty = 1
+title = "Custom hook useToggle"
+prompt = '''
+Viết custom hook `useToggle(initial = false)` trả về mảng `[value, toggle, setValue]`:
+- `toggle()` đảo giá trị
+- `setValue(v)` đặt giá trị trực tiếp
+- `toggle` phải **giữ nguyên tham chiếu** giữa các lần render (dùng `useCallback`)
+
+> Môi trường có sẵn `useState`, `useCallback`… (MiniReact) và `renderHook`, `act` để test.
+'''
+starter = '''
+function useToggle(initial = false) {
+  // TODO
+}
+'''
+solution = '''
+function useToggle(initial = false) {
+  const [value, setValue] = useState(initial);
+  const toggle = useCallback(() => setValue(v => !v), []);
+  return [value, toggle, setValue];
+}
+'''
+tests = '''
+test('giá trị mặc định là false', () => {
+  const { result } = renderHook(() => useToggle());
+  expect(result.current[0]).toBe(false);
+});
+test('nhận giá trị khởi tạo', () => {
+  const { result } = renderHook(() => useToggle(true));
+  expect(result.current[0]).toBe(true);
+});
+test('toggle đảo giá trị', () => {
+  const { result } = renderHook(() => useToggle());
+  act(() => result.current[1]());
+  expect(result.current[0]).toBe(true);
+  act(() => result.current[1]());
+  expect(result.current[0]).toBe(false);
+});
+test('toggle 2 lần trong cùng act', () => {
+  const { result } = renderHook(() => useToggle());
+  act(() => { result.current[1](); result.current[1](); });
+  expect(result.current[0]).toBe(false);
+});
+test('setValue đặt trực tiếp', () => {
+  const { result } = renderHook(() => useToggle());
+  act(() => result.current[2](true));
+  expect(result.current[0]).toBe(true);
+});
+test('toggle giữ nguyên tham chiếu', () => {
+  const { result } = renderHook(() => useToggle());
+  const first = result.current[1];
+  act(() => result.current[1]());
+  expect(result.current[1]).toBe(first);
+});
+'''
+hints = ["Dùng functional update `setValue(v => !v)` để toggle 2 lần liên tiếp vẫn đúng.", "`useCallback(fn, [])` giữ tham chiếu ổn định."]
+explanation = "Functional update giúp toggle không phụ thuộc closure, và vì vậy deps của `useCallback` có thể rỗng."
+
+[[questions]]
+id = "react-051"
+module = "react-hooks"
+type = "code"
+difficulty = 2
+title = "useCounter có min/max"
+prompt = '''
+Viết `useCounter(initial = 0, { min = -Infinity, max = Infinity, step = 1 } = {})` trả về object:
+`{ count, increment, decrement, reset, set }`
+- `increment/decrement` thay đổi theo `step` nhưng **kẹp (clamp)** trong `[min, max]`
+- `set(n)` cũng phải clamp
+- `reset()` về giá trị `initial` (đã clamp)
+'''
+starter = '''
+function useCounter(initial = 0, options = {}) {
+  // TODO
+}
+'''
+solution = '''
+function useCounter(initial = 0, { min = -Infinity, max = Infinity, step = 1 } = {}) {
+  const clamp = (n) => Math.min(max, Math.max(min, n));
+  const [count, setCount] = useState(() => clamp(initial));
+  return {
+    count,
+    increment: () => setCount(c => clamp(c + step)),
+    decrement: () => setCount(c => clamp(c - step)),
+    reset: () => setCount(clamp(initial)),
+    set: (n) => setCount(clamp(n)),
+  };
+}
+'''
+tests = '''
+test('tăng/giảm cơ bản', () => {
+  const { result } = renderHook(() => useCounter(5));
+  act(() => result.current.increment());
+  expect(result.current.count).toBe(6);
+  act(() => { result.current.decrement(); result.current.decrement(); });
+  expect(result.current.count).toBe(4);
+});
+test('step', () => {
+  const { result } = renderHook(() => useCounter(0, { step: 5 }));
+  act(() => result.current.increment());
+  expect(result.current.count).toBe(5);
+});
+test('không vượt max', () => {
+  const { result } = renderHook(() => useCounter(9, { max: 10 }));
+  act(() => { result.current.increment(); result.current.increment(); });
+  expect(result.current.count).toBe(10);
+});
+test('không thấp hơn min', () => {
+  const { result } = renderHook(() => useCounter(1, { min: 0 }));
+  act(() => { result.current.decrement(); result.current.decrement(); });
+  expect(result.current.count).toBe(0);
+});
+test('set có clamp', () => {
+  const { result } = renderHook(() => useCounter(0, { min: 0, max: 100 }));
+  act(() => result.current.set(500));
+  expect(result.current.count).toBe(100);
+});
+test('reset', () => {
+  const { result } = renderHook(() => useCounter(3));
+  act(() => result.current.increment());
+  act(() => result.current.reset());
+  expect(result.current.count).toBe(3);
+});
+test('initial nằm ngoài khoảng sẽ bị clamp', () => {
+  const { result } = renderHook(() => useCounter(50, { max: 10 }));
+  expect(result.current.count).toBe(10);
+});
+'''
+hints = ["Viết hàm `clamp(n) = Math.min(max, Math.max(min, n))`."]
+explanation = "Custom hook đóng gói logic có state để tái sử dụng — mỗi component dùng hook có state riêng."
+
+[[questions]]
+id = "react-052"
+module = "react-hooks"
+type = "code"
+difficulty = 2
+title = "usePrevious"
+prompt = '''
+Viết hook `usePrevious(value)` trả về giá trị của `value` ở **lần render trước** (lần đầu trả về `undefined`).
+
+Gợi ý kinh điển: `useRef` + `useEffect`.
+'''
+starter = '''
+function usePrevious(value) {
+  // TODO
+}
+'''
+solution = '''
+function usePrevious(value) {
+  const ref = useRef(undefined);
+  useEffect(() => {
+    ref.current = value;
+  }, [value]);
+  return ref.current;
+}
+'''
+tests = '''
+test('lần đầu là undefined', () => {
+  const { result } = renderHook((p) => usePrevious(p), { initialProps: 1 });
+  expect(result.current).toBeUndefined();
+});
+test('trả về giá trị trước', () => {
+  const h = renderHook((p) => usePrevious(p), { initialProps: 1 });
+  h.rerender(2);
+  expect(h.result.current).toBe(1);
+  h.rerender(3);
+  expect(h.result.current).toBe(2);
+});
+test('hoạt động với object', () => {
+  const a = { x: 1 }, b = { x: 2 };
+  const h = renderHook((p) => usePrevious(p), { initialProps: a });
+  h.rerender(b);
+  expect(h.result.current).toBe(a);
+});
+test('giữ giá trị falsy ở lần render trước', () => {
+  const h = renderHook((p) => usePrevious(p), { initialProps: 0 });
+  h.rerender(false);
+  expect(h.result.current).toBe(0);
+});
+'''
+hints = ["Effect chạy **sau** render, nên lúc render `ref.current` vẫn là giá trị cũ."]
+explanation = "Lưu ý: với deps `[value]`, nếu render lại mà value không đổi thì previous vẫn là giá trị trước lần thay đổi gần nhất."
+
+[[questions]]
+id = "react-053"
+module = "react-hooks"
+type = "code"
+difficulty = 3
+title = "useDebouncedValue"
+prompt = '''
+Viết hook `useDebouncedValue(value, delay)` trả về giá trị chỉ cập nhật sau khi `value` **ngừng thay đổi** `delay` ms (dùng cho ô tìm kiếm).
+
+- Lần render đầu trả về `value` ban đầu.
+- Mỗi khi `value` đổi: huỷ timer cũ (cleanup) và đặt timer mới.
+
+Môi trường dùng **fake timers**: test gọi `jest.advanceTimersByTime(ms)`.
+'''
+starter = '''
+function useDebouncedValue(value, delay) {
+  // TODO
+}
+'''
+solution = '''
+function useDebouncedValue(value, delay) {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const id = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(id);
+  }, [value, delay]);
+  return debounced;
+}
+'''
+tests = '''
+test('giá trị ban đầu', () => {
+  const { result } = renderHook((v) => useDebouncedValue(v, 300), { initialProps: 'a' });
+  expect(result.current).toBe('a');
+});
+test('chỉ cập nhật sau delay', () => {
+  const h = renderHook((v) => useDebouncedValue(v, 300), { initialProps: 'a' });
+  h.rerender('ab');
+  jest.advanceTimersByTime(299);
+  expect(h.result.current).toBe('a');
+  jest.advanceTimersByTime(1);
+  expect(h.result.current).toBe('ab');
+});
+test('gõ liên tục thì reset timer', () => {
+  const h = renderHook((v) => useDebouncedValue(v, 300), { initialProps: 'r' });
+  h.rerender('re');
+  jest.advanceTimersByTime(200);
+  h.rerender('rea');
+  jest.advanceTimersByTime(200);
+  h.rerender('reac');
+  jest.advanceTimersByTime(200);
+  expect(h.result.current).toBe('r');
+  jest.advanceTimersByTime(100);
+  expect(h.result.current).toBe('reac');
+});
+test('unmount huỷ timer', () => {
+  const h = renderHook((v) => useDebouncedValue(v, 100), { initialProps: 1 });
+  h.rerender(2);
+  h.unmount();
+  jest.advanceTimersByTime(500);
+  expect(h.result.current).toBe(1);
+});
+'''
+hints = ["Cleanup của effect là nơi gọi `clearTimeout`.", "Deps của effect: `[value, delay]`."]
+explanation = "Pattern debounce bằng effect + cleanup: mỗi lần value đổi, cleanup huỷ timer cũ trước khi effect mới đặt timer mới."
+
+[[questions]]
+id = "react-054"
+module = "react-hooks"
+type = "code"
+difficulty = 3
+title = "useAsync — trạng thái tải dữ liệu"
+prompt = '''
+Viết hook `useAsync(asyncFn, deps)` gọi `asyncFn()` trong effect và trả về `{ status, data, error }`:
+- ban đầu: `status: 'pending'`, `data: undefined`, `error: undefined`
+- thành công: `status: 'success'`, `data: kết quả`
+- thất bại: `status: 'error'`, `error: lỗi`
+- Nếu deps đổi / unmount trước khi promise xong thì **bỏ qua** kết quả cũ (tránh race condition) — dùng cờ `ignore` trong cleanup.
+'''
+starter = '''
+function useAsync(asyncFn, deps) {
+  // TODO
+}
+'''
+solution = '''
+function useAsync(asyncFn, deps) {
+  const [state, setState] = useState({ status: 'pending', data: undefined, error: undefined });
+  useEffect(() => {
+    let ignore = false;
+    setState({ status: 'pending', data: undefined, error: undefined });
+    asyncFn().then(
+      data => { if (!ignore) setState({ status: 'success', data, error: undefined }); },
+      error => { if (!ignore) setState({ status: 'error', data: undefined, error }); }
+    );
+    return () => { ignore = true; };
+  }, deps);
+  return state;
+}
+'''
+tests = '''
+test('pending rồi success', async () => {
+  const { result } = renderHook(() => useAsync(() => Promise.resolve(42), []));
+  expect(result.current.status).toBe('pending');
+  await Promise.resolve(); await Promise.resolve();
+  expect(result.current.status).toBe('success');
+  expect(result.current.data).toBe(42);
+});
+test('error', async () => {
+  const err = new Error('boom');
+  const { result } = renderHook(() => useAsync(() => Promise.reject(err), []));
+  await Promise.resolve(); await Promise.resolve();
+  expect(result.current.status).toBe('error');
+  expect(result.current.error).toBe(err);
+});
+test('bỏ qua kết quả cũ khi deps đổi (race condition)', async () => {
+  let resolvers = [];
+  const fetcher = (id) => () => new Promise(r => resolvers.push(() => r('user-' + id)));
+  const h = renderHook((id) => useAsync(fetcher(id), [id]), { initialProps: 1 });
+  h.rerender(2);
+  resolvers[1]();
+  await Promise.resolve(); await Promise.resolve();
+  resolvers[0]();
+  await Promise.resolve(); await Promise.resolve();
+  expect(h.result.current.data).toBe('user-2');
+});
+test('success giữ đủ trường trạng thái', async () => {
+  const { result } = renderHook(() => useAsync(() => Promise.resolve('ready'), []));
+  await Promise.resolve(); await Promise.resolve();
+  expect(result.current).toEqual({ status: 'success', data: 'ready', error: undefined });
+});
+'''
+hints = ["`let ignore = false;` trong effect, cleanup đặt `ignore = true`.", "Kiểm tra `if (!ignore)` trước khi setState."]
+explanation = "Đây là pattern chính thức trong tài liệu React để fetch trong effect mà không bị race condition. Thực tế nên dùng TanStack Query / SWR / framework data loader."
+
+# ============================================================ PERF
+[[questions]]
+id = "react-060"
+module = "react-perf"
+type = "single"
+difficulty = 2
+prompt = "Mặc định, khi component cha render lại thì component con (không dùng `memo`) sẽ:"
+options = [
+  "Chỉ render lại nếu props đổi",
+  "Luôn render lại",
+  "Không bao giờ render lại",
+  "Render lại nếu có state",
+]
+answer = [1]
+explanation = "React render lại toàn bộ cây con theo mặc định. `React.memo` mới so sánh props để bỏ qua."
+
+[[questions]]
+id = "react-061"
+module = "react-perf"
+type = "single"
+difficulty = 3
+prompt = '''
+`Child` được bọc `React.memo`. Vì sao nó vẫn render lại mỗi khi `Parent` render?
+
+```jsx
+function Parent() {
+  const [n, setN] = useState(0);
+  const options = { sort: 'asc' };
+  return <Child options={options} onSelect={() => setN(n + 1)} />;
+}
+```
+'''
+options = [
+  "Vì `memo` chỉ hoạt động với class component",
+  "Vì `options` và `onSelect` là object/hàm mới mỗi lần render → so sánh nông thấy khác",
+  "Vì `Child` không có key",
+  "Vì `useState` luôn làm mọi component render",
+]
+answer = [1]
+explanation = "Dùng `useMemo` cho `options` (hoặc đưa ra ngoài component nếu là hằng) và `useCallback` cho `onSelect`."
+
+[[questions]]
+id = "react-062"
+module = "react-perf"
+type = "single"
+difficulty = 2
+prompt = "\"Reconciliation\" trong React là gì?"
+options = [
+  "Quá trình đồng bộ state với server",
+  "Thuật toán so sánh cây element mới với cây cũ để tìm ra thay đổi tối thiểu cần áp dụng lên UI",
+  "Quá trình biên dịch JSX",
+  "Cơ chế garbage collection của React",
+]
+answer = [1]
+explanation = "Heuristic O(n): khác `type` → thay cả cây con; cùng type → cập nhật props; danh sách dựa vào `key`."
+
+[[questions]]
+id = "react-063"
+module = "react-perf"
+type = "single"
+difficulty = 2
+prompt = "`useTransition` dùng để làm gì?"
+options = [
+  "Tạo hiệu ứng CSS transition",
+  "Đánh dấu một cập nhật state là không khẩn cấp để UI vẫn phản hồi (input không bị giật) trong khi render nặng",
+  "Chuyển trang trong React Router",
+  "Trì hoãn effect",
+]
+answer = [1]
+explanation = "`const [isPending, startTransition] = useTransition();` — cập nhật trong `startTransition` có thể bị ngắt quãng bởi cập nhật khẩn cấp."
+
+[[questions]]
+id = "react-064"
+module = "react-perf"
+type = "single"
+difficulty = 1
+prompt = "Cách đúng để lazy-load một trang bằng React?"
+options = [
+  "`const Page = require('./Page')`",
+  "`const Page = lazy(() => import('./Page'))` kết hợp `<Suspense fallback={...}>`",
+  "`const Page = await import('./Page')` ở top-level component",
+  "`<Page lazy />`",
+]
+answer = [1]
+explanation = "`React.lazy` + dynamic `import()` tạo chunk riêng; `Suspense` hiển thị fallback trong lúc tải."
+
+[[questions]]
+id = "react-065"
+module = "react-perf"
+type = "multiple"
+difficulty = 3
+prompt = "Những kỹ thuật nào giúp giảm render thừa hoặc chi phí render?"
+options = [
+  "Đặt state ở gần nơi dùng nhất (state colocation)",
+  "Truyền component nặng qua `children` để không bị render lại khi state ở wrapper đổi",
+  "Dùng `key={Math.random()}`",
+  "Virtualize danh sách dài (react-window, FlashList)",
+  "Tách Context lớn thành nhiều Context nhỏ / memo hoá `value`",
+  "Bọc mọi thứ trong `useMemo` không cần đo",
+]
+answer = [0, 1, 3, 4]
+explanation = "`Math.random()` làm key đổi → remount. Memo hoá bừa bãi tốn bộ nhớ và chi phí so sánh — hãy đo bằng Profiler trước."
+
+[[questions]]
+id = "react-066"
+module = "react-perf"
+type = "fill"
+difficulty = 2
+prompt = '''
+Bọc component để bỏ qua render khi props không đổi:
+
+```jsx
+const Row = {{blank}}(function Row({ item }) {
+  return <li>{item.name}</li>;
+});
+```
+'''
+blanks = [["memo", "React.memo"]]
+explanation = "`React.memo(Component, arePropsEqual?)` — tham số thứ 2 cho phép tuỳ biến so sánh."
+
+[[questions]]
+id = "react-067"
+module = "react-perf"
+type = "essay"
+difficulty = 3
+prompt = "Khi nào **không nên** dùng `useMemo`/`useCallback`? Giải thích ngắn."
+keywords = [
+  ["rẻ", "đơn giản", "cheap", "nhẹ", "không tốn"],
+  ["chi phí", "overhead", "bộ nhớ", "so sánh deps"],
+  ["memo", "React.memo", "không được memo", "referential", "tham chiếu"],
+  ["đo", "profiler", "measure"],
+]
+min_keywords = 2
+model_answer = "Không nên dùng khi phép tính **rẻ** hoặc giá trị/hàm không được truyền cho component **đã memo** hay dùng làm deps của hook khác — vì bản thân memo hoá có **chi phí** (bộ nhớ, so sánh deps, code khó đọc) mà không mang lại lợi ích về **tham chiếu ổn định**. Hãy **đo bằng Profiler** trước khi tối ưu. (React Compiler cũng tự động memo hoá ở nhiều trường hợp.)"
+explanation = "Tối ưu sớm là gốc rễ của nhiều sự phức tạp không cần thiết."
+
+[[questions]]
+id = "react-068"
+module = "react-perf"
+type = "code"
+difficulty = 2
+title = "shallowEqual cho React.memo"
+prompt = '''
+`React.memo` mặc định so sánh props bằng **shallow equal**. Hãy tự cài đặt `shallowEqual(a, b)`:
+- Trả `true` nếu `Object.is(a, b)`
+- Nếu một trong hai không phải object (hoặc là null) → `false`
+- Cùng số key và với mọi key: `Object.is(a[key], b[key])`
+'''
+starter = '''
+function shallowEqual(a, b) {
+  // TODO
+}
+'''
+solution = '''
+function shallowEqual(a, b) {
+  if (Object.is(a, b)) return true;
+  if (typeof a !== 'object' || a === null || typeof b !== 'object' || b === null) return false;
+  const ka = Object.keys(a), kb = Object.keys(b);
+  if (ka.length !== kb.length) return false;
+  return ka.every(k => Object.prototype.hasOwnProperty.call(b, k) && Object.is(a[k], b[k]));
+}
+'''
+tests = '''
+test('cùng tham chiếu', () => { const o = {}; expect(shallowEqual(o, o)).toBe(true); });
+test('props bằng nhau ở mức nông', () => {
+  const fn = () => {};
+  expect(shallowEqual({ a: 1, b: 'x', fn }, { a: 1, b: 'x', fn })).toBe(true);
+});
+test('object lồng nhau khác tham chiếu → false', () => {
+  expect(shallowEqual({ style: { color: 'red' } }, { style: { color: 'red' } })).toBe(false);
+});
+test('số lượng key khác', () => {
+  expect(shallowEqual({ a: 1 }, { a: 1, b: 2 })).toBe(false);
+});
+test('key khác tên cùng số lượng', () => {
+  expect(shallowEqual({ a: undefined }, { b: undefined })).toBe(false);
+});
+test('NaN và primitive', () => {
+  expect(shallowEqual({ n: NaN }, { n: NaN })).toBe(true);
+  expect(shallowEqual(1, 1)).toBe(true);
+  expect(shallowEqual(null, {})).toBe(false);
+});
+'''
+hints = ["`Object.is` khác `===` ở `NaN` và `+0/-0`.", "Nhớ kiểm tra key có thật sự tồn tại trong `b` (`hasOwnProperty`)."]
+explanation = "Hiểu shallowEqual giúp biết vì sao object/hàm inline phá vỡ `React.memo`."
+
+# ============================================================ PATTERNS
+[[questions]]
+id = "react-080"
+module = "react-patterns"
+type = "single"
+difficulty = 2
+prompt = "Error Boundary **không** bắt được lỗi nào sau đây?"
+options = [
+  "Lỗi khi render component con",
+  "Lỗi trong lifecycle/constructor của component con",
+  "Lỗi ném ra trong event handler `onClick`",
+  "Lỗi trong hàm render của cháu (grandchild)",
+]
+answer = [2]
+explanation = "Error boundary không bắt lỗi trong event handler, code bất đồng bộ (setTimeout, promise), SSR, và lỗi trong chính nó. Dùng try/catch cho event handler."
+
+[[questions]]
+id = "react-081"
+module = "react-patterns"
+type = "single"
+difficulty = 2
+prompt = "Khi `value` của một Context Provider thay đổi, điều gì xảy ra?"
+options = [
+  "Chỉ Provider render lại",
+  "Mọi component gọi `useContext` của context đó (bên dưới Provider) đều render lại, kể cả khi được bọc `memo`",
+  "Không component nào render lại",
+  "Chỉ component con trực tiếp render lại",
+]
+answer = [1]
+explanation = "Context bỏ qua `memo`. Nên memo hoá `value` (`useMemo`) và tách context theo tần suất thay đổi."
+
+[[questions]]
+id = "react-082"
+module = "react-patterns"
+type = "single"
+difficulty = 3
+prompt = "Điều nào đúng về **React Server Components**?"
+options = [
+  "Có thể dùng `useState` và `useEffect`",
+  "Chạy trên server, có thể `async/await` truy cập DB trực tiếp, không gửi code của chính nó xuống bundle client",
+  "Thay thế hoàn toàn SSR",
+  "Phải đánh dấu `'use server'` ở đầu file",
+]
+answer = [1]
+explanation = "`'use client'` đánh dấu ranh giới Client Component. `'use server'` là cho **Server Functions/Actions**, không phải Server Component."
+
+[[questions]]
+id = "react-083"
+module = "react-patterns"
+type = "single"
+difficulty = 2
+prompt = "`createPortal` thường được dùng để:"
+options = [
+  "Gọi API",
+  "Render modal/tooltip ra một node DOM khác (vd. `document.body`) trong khi vẫn giữ context và event bubbling theo cây React",
+  "Chia sẻ state giữa tab",
+  "Tạo Web Worker",
+]
+answer = [1]
+explanation = "Event vẫn bubble theo cây **React** chứ không theo cây DOM."
+
+[[questions]]
+id = "react-084"
+module = "react-patterns"
+type = "single"
+difficulty = 2
+prompt = "Theo triết lý của React Testing Library, query nào **ưu tiên** nhất?"
+options = ["`getByTestId`", "`container.querySelector('.btn')`", "`getByRole('button', { name: /lưu/i })`", "`getByClassName`"]
+answer = [2]
+explanation = "Ưu tiên query phản ánh cách người dùng & công nghệ hỗ trợ (screen reader) tiếp cận UI: `getByRole`, `getByLabelText`, `getByText`… `getByTestId` là phương án cuối."
+
+[[questions]]
+id = "react-085"
+module = "react-patterns"
+type = "multiple"
+difficulty = 3
+prompt = "Những API nào **mới** trong React 19?"
+options = ["`useActionState`", "`useOptimistic`", "`use()`", "`useEffect`", "`useFormStatus` (react-dom)", "`componentWillMount`"]
+answer = [0, 1, 2, 4]
+explanation = "React 19 thêm Actions (`useActionState`, `useFormStatus`, `useOptimistic`), `use()` đọc promise/context, `ref` như prop… `componentWillMount` đã bị loại bỏ từ lâu."
+
+[[questions]]
+id = "react-086"
+module = "react-patterns"
+type = "fill"
+difficulty = 2
+prompt = '''
+Đánh dấu file là Client Component trong Next.js App Router (dòng đầu file):
+
+```jsx
+{{blank}}
+import { useState } from 'react';
+```
+'''
+blanks = [["'use client'", "\"use client\"", "use client", "'use client';", "\"use client\";"]]
+explanation = "Directive `'use client'` khai báo ranh giới: file này và các module nó import được đóng gói cho client."
+
+[[questions]]
+id = "react-087"
+module = "react-patterns"
+type = "essay"
+difficulty = 2
+prompt = "So sánh **Context API** và một thư viện state management (Redux Toolkit / Zustand). Khi nào dùng cái nào?"
+keywords = [
+  ["render lại", "re-render", "rerender"],
+  ["selector", "chọn", "subscribe", "đăng ký một phần"],
+  ["devtools", "middleware", "debug"],
+  ["ít thay đổi", "theme", "locale", "auth", "hiếm khi"],
+  ["phức tạp", "lớn", "thường xuyên", "complex"],
+]
+min_keywords = 2
+model_answer = '''
+- **Context** là cơ chế *truyền* dữ liệu qua cây (dependency injection), không tối ưu cho cập nhật thường xuyên: mọi consumer **render lại** khi value đổi. Hợp với dữ liệu **ít thay đổi**: theme, locale, auth user.
+- **Redux Toolkit / Zustand** cung cấp store bên ngoài với **selector** — component chỉ render lại khi phần state nó chọn thay đổi; có **devtools, middleware**, pattern rõ ràng cho state **lớn, phức tạp, cập nhật thường xuyên**.
+- Dữ liệu server nên dùng TanStack Query/SWR thay vì nhét vào global store.
+'''
+explanation = "Không có câu trả lời duy nhất — điều quan trọng là hiểu đánh đổi về render và độ phức tạp."
+
+[[questions]]
+id = "react-088"
+module = "react-patterns"
+type = "code"
+difficulty = 2
+title = "classNames (cx) utility"
+prompt = '''
+Viết hàm `cx(...args)` giống thư viện `clsx` dùng để ghép className có điều kiện:
+- chuỗi/số khác rỗng được giữ lại
+- object: lấy các key có giá trị truthy
+- mảng: xử lý đệ quy
+- bỏ qua falsy (`false`, `null`, `undefined`, `0`, `''`)
+- Kết quả nối bằng một khoảng trắng
+'''
+starter = '''
+function cx(...args) {
+  // TODO
+}
+'''
+solution = '''
+function cx(...args) {
+  const out = [];
+  for (const a of args) {
+    if (!a) continue;
+    if (typeof a === 'string' || typeof a === 'number') out.push(String(a));
+    else if (Array.isArray(a)) { const s = cx(...a); if (s) out.push(s); }
+    else if (typeof a === 'object') for (const k of Object.keys(a)) if (a[k]) out.push(k);
+  }
+  return out.join(' ');
+}
+'''
+tests = '''
+test('chuỗi', () => expect(cx('btn', 'primary')).toBe('btn primary'));
+test('object điều kiện', () => expect(cx('btn', { active: true, disabled: false })).toBe('btn active'));
+test('bỏ falsy', () => expect(cx(null, undefined, false, 0, '', 'a')).toBe('a'));
+test('mảng lồng nhau', () => expect(cx(['a', ['b', { c: 1 }]], 'd')).toBe('a b c d'));
+test('rỗng', () => expect(cx()).toBe(''));
+test('số', () => expect(cx(1, 'x')).toBe('1 x'));
+'''
+hints = ["Đệ quy cho mảng: `cx(...a)`."]
+explanation = "Utility nhỏ nhưng rất phổ biến trong React + Tailwind."
+
+# ============================================================ BỔ SUNG (nguồn DevDocs)
+[[questions]]
+id = "rx-dd01"
+module = "react-perf"
+type = "single"
+difficulty = 2
+prompt = "Ô tìm kiếm lọc một danh sách 10.000 phần tử khiến việc gõ phím bị giật. Cách nào giữ input phản hồi tức thì mà không cần debounce thủ công?"
+options = [
+  "Bọc phần cập nhật danh sách bằng `startTransition` (từ `useTransition`) để React coi đó là cập nhật không khẩn cấp, có thể bị ngắt",
+  "Đặt `useEffect` không có dependency",
+  "Dùng `useLayoutEffect` để render đồng bộ",
+  "Gọi `forceUpdate` sau mỗi phím",
+]
+answer = [0]
+explanation = "Cập nhật trong transition có độ ưu tiên thấp: React render lại input ngay, còn danh sách được render khi rảnh và có thể bị bỏ dở nếu người dùng gõ tiếp. `isPending` cho biết transition đang chạy."
+sources = ["react/reference/react/usetransition"]
+
+[[questions]]
+id = "rx-dd02"
+module = "react-perf"
+type = "multiple"
+difficulty = 3
+prompt = "Phát biểu nào **đúng** về `useDeferredValue(value)`?"
+options = [
+  "Trả về một bản \"trễ\" của giá trị; trong lần render khẩn cấp nó vẫn giữ giá trị cũ",
+  "Thường kết hợp với `memo` cho component con nặng để việc bỏ qua render có hiệu quả",
+  "Thay thế hoàn toàn cho việc gọi API có debounce (giảm số request mạng)",
+  "Có thể so sánh `value !== deferred` để hiển thị trạng thái \"đang cũ\" (làm mờ kết quả)",
+]
+answer = [0, 1, 3]
+explanation = "`useDeferredValue` chỉ hoãn **render**, không giảm số request mạng — nếu cần giới hạn gọi API vẫn phải debounce/throttle."
+sources = ["react/reference/react/usedeferredvalue"]
+
+[[questions]]
+id = "rx-dd03"
+module = "react-hooks"
+type = "fill"
+difficulty = 2
+prompt = '''
+Tạo id ổn định giữa server và client để nối `<label>` với `<input>`:
+
+```jsx
+function EmailField() {
+  const id = {{blank}}();
+  return (<>
+    <label htmlFor={id}>Email</label>
+    <input id={id} type="email" />
+  </>);
+}
+```
+
+Đăng ký vào một nguồn dữ liệu bên ngoài React (vd. `navigator.onLine`) an toàn với concurrent rendering:
+
+```js
+const online = {{blank}}(subscribe, () => navigator.onLine);
+```
+'''
+blanks = [["useId"], ["useSyncExternalStore", "React.useSyncExternalStore"]]
+explanation = "`useId` sinh id khớp nhau khi hydrate (không dùng `Math.random`). `useSyncExternalStore(subscribe, getSnapshot)` tránh hiện tượng \"tearing\" khi đọc store bên ngoài."
+sources = ["react/reference/react/useid", "react/reference/react/usesyncexternalstore"]
+
+[[questions]]
+id = "rx-dd04"
+module = "react-patterns"
+type = "single"
+difficulty = 3
+prompt = "Trong React 19, form gửi bình luận muốn hiển thị bình luận mới **ngay lập tức** trước khi server phản hồi, và tự quay về trạng thái thật khi request xong. Hook phù hợp nhất là:"
+options = ["`useOptimistic`", "`useMemo`", "`useImperativeHandle`", "`useDebugValue`"]
+answer = [0]
+explanation = "`useOptimistic(state, updateFn)` trả về trạng thái lạc quan chỉ tồn tại trong lúc action đang chạy. Kết hợp `useActionState` để nhận kết quả/lỗi của action."
+sources = ["react/reference/react/useoptimistic", "react/reference/react/useactionstate"]
+
+[[questions]]
+id = "rx-dd05"
+module = "react-hooks"
+type = "essay"
+difficulty = 3
+prompt = "Khi nào **không cần** `useEffect`? Nêu ít nhất 3 tình huống hay bị lạm dụng và cách làm đúng."
+keywords = [
+  ["tính toán trong render", "derived", "suy ra", "tính trực tiếp", "biến thường"],
+  ["usememo", "memo"],
+  ["event handler", "sự kiện", "onclick", "onsubmit", "handler"],
+  ["key", "reset state"],
+  ["lặp", "chuỗi", "render thừa", "hai lần render", "vòng lặp"],
+]
+min_keywords = 3
+model_answer = '''
+Effect dùng để **đồng bộ với hệ thống bên ngoài** (DOM API, network, subscription). Những trường hợp không cần:
+
+1. **Dữ liệu suy ra từ props/state** (lọc, tổng, ghép chuỗi): tính trực tiếp khi render; nếu nặng thì `useMemo`. Dùng effect + `setState` gây **render thừa** và dễ lệch dữ liệu.
+2. **Phản hồi hành động người dùng** (gửi form, mua hàng, hiện toast): đặt trong **event handler**, vì ta biết chính xác sự kiện nào xảy ra.
+3. **Reset state khi prop đổi** (vd. đổi `userId`): truyền `key={userId}` để React tạo lại component thay vì effect gọi `setState`.
+4. **Chuỗi effect cập nhật state dây chuyền**: gom logic vào một handler hoặc reducer.
+5. **Thông báo cho component cha**: gọi callback của cha ngay trong handler thay vì effect theo dõi state.
+'''
+explanation = "Mỗi effect không cần thiết là một lần render thừa và một nguồn bug đồng bộ."
+sources = ["react/learn/you-might-not-need-an-effect", "react/learn/synchronizing-with-effects"]
+
+[[questions]]
+id = "rx-dd06"
+module = "react-hooks"
+type = "code"
+difficulty = 3
+title = "Store ngoài cho useSyncExternalStore"
+prompt = '''
+`useSyncExternalStore(subscribe, getSnapshot)` cần một store có 2 hàm ổn định. Viết `createStore(initial)` trả về:
+
+- `getSnapshot()` → state hiện tại (**cùng tham chiếu** nếu state không đổi)
+- `setState(next)` — `next` là object **hoặc** hàm `(prev) => object`; **gộp nông** vào state cũ thành object mới. Nếu mọi key mới đều `Object.is` bằng giá trị cũ → **không** đổi tham chiếu & **không** thông báo
+- `subscribe(listener)` → trả về hàm huỷ đăng ký; mỗi lần state đổi gọi mọi listener (không tham số)
+- `select(selector)` → hàm `() => selector(getSnapshot())`
+'''
+starter = '''
+function createStore(initial) {
+  let state = initial;
+  return {
+    getSnapshot: () => state,
+    setState: (next) => { state = next; },
+    subscribe: () => () => {},
+    select: (selector) => () => selector(state),
+  };
+}
+'''
+solution = '''
+function createStore(initial) {
+  let state = initial;
+  const listeners = new Set();
+  return {
+    getSnapshot: () => state,
+    setState(next) {
+      const patch = typeof next === 'function' ? next(state) : next;
+      const changed = Object.keys(patch).some((k) => !Object.is(patch[k], state[k]));
+      if (!changed) return;
+      state = { ...state, ...patch };
+      listeners.forEach((l) => l());
+    },
+    subscribe(listener) {
+      listeners.add(listener);
+      return () => listeners.delete(listener);
+    },
+    select: (selector) => () => selector(state),
+  };
+}
+'''
+tests = '''
+test('gộp nông & đổi tham chiếu', () => {
+  const s = createStore({ count: 0, name: 'An' });
+  const before = s.getSnapshot();
+  s.setState({ count: 1 });
+  expect(s.getSnapshot()).toEqual({ count: 1, name: 'An' });
+  expect(s.getSnapshot()).not.toBe(before);
+  expect(before).toEqual({ count: 0, name: 'An' });
+});
+test('setState nhận hàm updater', () => {
+  const s = createStore({ count: 1 });
+  s.setState((p) => ({ count: p.count + 10 }));
+  expect(s.getSnapshot().count).toBe(11);
+});
+test('subscribe / unsubscribe', () => {
+  const s = createStore({ n: 0 });
+  const l = jest.fn();
+  const off = s.subscribe(l);
+  s.setState({ n: 1 });
+  s.setState({ n: 2 });
+  off();
+  s.setState({ n: 3 });
+  expect(l).toHaveBeenCalledTimes(2);
+});
+test('không đổi → giữ snapshot & không thông báo', () => {
+  const s = createStore({ n: 1, tags: [] });
+  const l = jest.fn();
+  s.subscribe(l);
+  const snap = s.getSnapshot();
+  s.setState({ n: 1 });
+  s.setState((p) => ({ tags: p.tags }));
+  expect(s.getSnapshot()).toBe(snap);
+  expect(l).not.toHaveBeenCalled();
+});
+test('select đọc state mới nhất', () => {
+  const s = createStore({ items: [1, 2] });
+  const count = s.select((st) => st.items.length);
+  s.setState((p) => ({ items: p.items.concat(3) }));
+  expect(count()).toBe(3);
+});
+'''
+hints = ["Dùng `Set` để lưu listener; hàm huỷ chỉ cần `delete`.", "So sánh từng key bằng `Object.is` trước khi tạo object mới."]
+explanation = "Snapshot phải **bất biến và ổn định**: nếu `getSnapshot` trả object mới mỗi lần gọi, `useSyncExternalStore` sẽ render vô hạn."
+sources = ["react/reference/react/usesyncexternalstore"]
+
+[[questions]]
+id = "react-x001"
+module = "react-basics"
+type = "single"
+difficulty = 2
+prompt = '''
+Danh sách `users` được sắp xếp theo tên. Khi dùng `key={index}`, người dùng mở rộng hàng thứ hai rồi đổi thứ tự danh sách. Rủi ro chính là gì?
+'''
+options = ["React sẽ không render lại danh sách", "State cục bộ của hàng có thể đi theo vị trí thay vì theo user", "React tự chuyển index thành user.id", "Chỉ xuất hiện cảnh báo nhưng không ảnh hưởng UI"]
+answer = [1]
+explanation = "Key xác định identity của phần tử giữa các lần render. Với reorder, index giữ nguyên theo vị trí nên state hoặc input có thể gắn sang user khác; dùng id ổn định của user."
+sources = ["react/learn/rendering-lists"]
+
+[[questions]]
+id = "react-x002"
+module = "react-state"
+type = "single"
+difficulty = 2
+prompt = '''
+Trong một event handler, `count` đang là `4`:
+
+```js
+setCount(count + 1);
+setCount(count + 1);
+```
+
+Giá trị sau render kế tiếp là bao nhiêu?
+'''
+options = ["4", "5", "6", "Không xác định"]
+answer = [1]
+explanation = "Cả hai biểu thức đều đọc snapshot `count === 4`, nên cùng xếp giá trị 5. Nếu muốn cộng hai lần, dùng `setCount(c => c + 1)` cho mỗi lần cập nhật."
+sources = ["react/reference/react/usestate"]
+
+[[questions]]
+id = "react-x003"
+module = "react-hooks"
+type = "single"
+difficulty = 1
+prompt = "Một component chỉ gọi `useEffect` khi `if (enabled)`. Vì sao đây là lỗi thiết kế?"
+options = ["Effect chỉ được gọi trong class component", "Số thứ tự hook có thể thay đổi giữa các render", "Deps bắt buộc phải là object", "Hook phải được gọi sau return"]
+answer = [1]
+explanation = "React ghép state của hook theo thứ tự gọi. Gọi hook có điều kiện làm thứ tự thay đổi; hãy gọi hook ở top level rồi điều kiện hóa phần logic bên trong effect."
+sources = ["react/reference/rules/rules-of-hooks"]
+
+[[questions]]
+id = "react-x004"
+module = "react-perf"
+type = "single"
+difficulty = 2
+prompt = "`React.memo(Row)` thường bỏ qua render nào?"
+options = ["Mọi render kể cả khi state của Row đổi", "Render do props so sánh nông bằng nhau, khi cha render lại", "Render do context mà Row đọc đổi", "Render do Row tự gọi setter"]
+answer = [1]
+explanation = "`memo` mặc định so sánh props nông. Nó không chặn cập nhật state nội bộ hoặc context mà component đọc."
+sources = ["react/reference/react/memo"]
+
+[[questions]]
+id = "react-x005"
+module = "react-patterns"
+type = "single"
+difficulty = 2
+prompt = "Một lỗi ném ra trong `onClick` của nút. Kết luận nào đúng về Error Boundary?"
+options = ["Boundary cha luôn bắt lỗi event handler", "Boundary chỉ bắt lỗi nếu có `componentDidCatch` ở function component", "Boundary không tự bắt lỗi event handler thông thường; handler cần tự xử lý lỗi", "React tự retry handler đến khi không lỗi"]
+answer = [2]
+explanation = "Error Boundary xử lý lỗi trong quá trình render cây con. Lỗi từ event handler hoặc callback bất đồng bộ cần được xử lý tại nơi thực thi."
+sources = ["react/reference/react/component"]
+
+[[questions]]
+id = "react-x006"
+module = "react-19"
+type = "single"
+difficulty = 1
+prompt = "Trong React 19, function component muốn chuyển tiếp `ref` tới input DOM thì cách nào phù hợp?"
+options = ["Nhận `ref` như prop thông thường rồi gắn lên input", "Chỉ có thể dùng `createRef` trong class", "Đổi tên prop thành `key`", "Bọc component bằng `React.memo` để ref tự truyền"]
+answer = [0]
+explanation = "React 19 cho phép `ref` là prop của function component, nên component mới không cần `forwardRef` chỉ để chuyển tiếp ref."
+sources = ["react/reference/react/forwardref", "react/reference/react/useref"]
+
+[[questions]]
+id = "react-x007"
+module = "react-19"
+type = "single"
+difficulty = 2
+prompt = "Một component React DOM render `<title>Account</title>`. Hành vi nào React 19 hỗ trợ?"
+options = ["`title` luôn nằm trong body như một thẻ thường", "React có thể hoist metadata phù hợp lên document head", "React đổi title thành aria-label", "Chỉ Server Component mới render được title"]
+answer = [1]
+explanation = "React DOM hỗ trợ document metadata như `title` và `meta`; có thể khai báo gần component dùng nội dung đó và React xử lý vị trí trong document."
+sources = ["react/reference/react-dom/components/title", "react/reference/react-dom/components/meta"]
+
+[[questions]]
+id = "react-x008"
+module = "react-19"
+type = "single"
+difficulty = 2
+prompt = "Nhóm bật React Compiler trong build. Kỳ vọng nào hợp lý?"
+options = ["Compiler tự tối ưu mọi thư viện bên thứ ba", "Compiler có thể tự memo hóa code tương thích; cần cấu hình và kiểm tra build", "Tất cả hook trở thành đồng bộ", "Không còn cần đo hiệu năng hoặc kiểm thử"]
+answer = [1]
+explanation = "React Compiler tự động memo hóa phần code có thể phân tích khi được tích hợp đúng. Nó không loại bỏ nhu cầu đo hiệu năng, kiểm thử hay bảo đảm mọi code đều được biên dịch."
+sources = ["react/reference/react-compiler/configuration"]
+
+[[questions]]
+id = "react-x009"
+module = "react-19"
+type = "single"
+difficulty = 2
+prompt = "`const [state, dispatchAction, isPending] = useActionState(action, initialState)` — giá trị thứ ba biểu thị điều gì?"
+options = ["Action đã bị hủy", "Action đang được xử lý", "Có lỗi validation", "Component đang unmount"]
+answer = [1]
+explanation = "`isPending` cho biết action hiện đang xử lý, hữu ích để khóa nút gửi hoặc hiển thị trạng thái chờ."
+sources = ["react/reference/react/useactionstate"]
+
+[[questions]]
+id = "react-x010"
+module = "react-19"
+type = "single"
+difficulty = 2
+prompt = "`useFormStatus()` trả `pending: true` không như mong đợi. Hook đang được gọi ngay trong component sở hữu thẻ `<form>`. Cách sửa phù hợp là gì?"
+options = ["Chuyển hook vào component con được render bên trong form", "Gọi hook sau khi submit", "Thêm `useMemo` quanh form", "Chuyển `<form>` thành `<div>`"]
+answer = [0]
+explanation = "`useFormStatus` đọc trạng thái form cha gần nhất, vì vậy component gọi hook phải nằm bên trong cây con của form đó."
+sources = ["react/reference/react-dom/hooks/useformstatus"]
+
+[[questions]]
+id = "react-x011"
+module = "react-19"
+type = "single"
+difficulty = 2
+prompt = "Một component gọi `use(userPromise)` khi Promise còn pending. Điều gì có thể xảy ra?"
+options = ["React hiển thị Promise thành chuỗi", "Render có thể suspend tới khi Promise hoàn tất; cần boundary phù hợp", "React tự chuyển Promise thành state local", "Promise bị hủy ngay lập tức"]
+answer = [1]
+explanation = "`use` có thể đọc Promise trong render; Promise pending làm component suspend, còn rejection cần được xử lý qua Error Boundary."
+sources = ["react/reference/react/use", "react/reference/react/suspense"]
+
+[[questions]]
+id = "react-x012"
+module = "react-server"
+type = "single"
+difficulty = 1
+prompt = "Server Component cần đọc dữ liệu server trước khi trả JSX. Nhận định nào đúng?"
+options = ["Có thể dùng async/await, nhưng không dùng state/effect client như `useState`", "Bắt buộc phải thêm `'use client'`", "Mọi component server đều được gửi JavaScript source xuống browser", "Chỉ class component chạy được trên server"]
+answer = [0]
+explanation = "Server Components chạy trên server và có thể đọc dữ liệu tại đó. Các hook tương tác client như state/effect thuộc Client Component."
+sources = ["react/reference/rsc/server-components"]
+
+[[questions]]
+id = "react-x013"
+module = "react-server"
+type = "single"
+difficulty = 2
+prompt = "Một file có `'use client'` ở đầu module rồi import `SearchBox`. Ý nghĩa chính của directive là gì?"
+options = ["Chỉ component đầu tiên trong file trở thành client", "Module trở thành client boundary và các dependency được đưa vào phía client", "Component chạy độc quyền trên server", "Directive bật hydration cho toàn site"]
+answer = [1]
+explanation = "`'use client'` đánh dấu ranh giới module. Các module được import phía dưới boundary thuộc graph client; không cần lặp directive trong mọi file con."
+sources = ["react/reference/rsc/use-client"]
+
+[[questions]]
+id = "react-x014"
+module = "react-server"
+type = "single"
+difficulty = 2
+prompt = "Một file có `'use server'` trên hàm lưu đơn hàng. Cách hiểu nào đúng?"
+options = ["Mọi component trong file trở thành Server Component", "Hàm được đánh dấu là Server Function có thể được gọi từ client qua tích hợp framework", "File chuyển thành Client Component", "React bỏ qua kiểm tra đầu vào hàm"]
+answer = [1]
+explanation = "`'use server'` đánh dấu Server Function, thường dùng làm server action. Nó khác `'use client'` và không thay đổi phân loại mọi component trong module."
+sources = ["react/reference/rsc/use-server"]
+
+[[questions]]
+id = "react-x015"
+module = "react-server"
+type = "single"
+difficulty = 2
+prompt = "Trong SSR streaming, một vùng con còn chờ dữ liệu bên trong `<Suspense>`. Hành vi nào boundary cho phép?"
+options = ["Chặn toàn bộ response tới khi mọi vùng sẵn sàng", "Gửi fallback trước rồi stream nội dung khi vùng đó sẵn sàng", "Bỏ qua hydration cho toàn trang", "Tự retry vô hạn nếu dữ liệu lỗi"]
+answer = [1]
+explanation = "Suspense boundaries cho phép server gửi phần đã sẵn sàng cùng fallback, rồi stream nội dung của vùng chậm khi có thể."
+sources = ["react/reference/react/suspense", "react/reference/react-dom/server/rendertopipeablestream"]
+
+[[questions]]
+id = "react-x016"
+module = "react-server"
+type = "single"
+difficulty = 2
+prompt = "Trang SSR hiển thị thời gian khác nhau ở server và lần render client đầu, gây hydration mismatch. Hướng sửa nào tốt nhất?"
+options = ["Làm output ban đầu deterministic rồi đọc thời gian client sau hydration", "Tắt toàn bộ React Strict Mode", "Thêm `key={Date.now()}` cho root", "Bọc mọi component bằng `React.memo`"]
+answer = [0]
+explanation = "HTML server và render client ban đầu cần khớp. Dùng dữ liệu ổn định đã truyền vào, hoặc render phần phụ thuộc browser sau hydration trong effect."
+sources = ["react/reference/react-dom/client/hydrateroot"]
+
+[[questions]]
+id = "react-x017"
+module = "react-effects"
+type = "single"
+difficulty = 1
+prompt = "`fullName` chỉ là nối `firstName` và `lastName`. Component đang lưu thêm `fullName` bằng state rồi cập nhật trong effect. Cách đơn giản và đúng hơn là gì?"
+options = ["Tính `fullName` trực tiếp trong render", "Thêm effect thứ hai để đồng bộ", "Dùng ref thay state", "Dùng `useLayoutEffect` để chạy nhanh hơn"]
+answer = [0]
+explanation = "Giá trị dẫn xuất nên được tính từ props/state trong render. Lưu bản sao bằng effect tạo thêm render và nguy cơ state lệch."
+sources = ["react/learn/you-might-not-need-an-effect"]
+
+[[questions]]
+id = "react-x018"
+module = "react-effects"
+type = "single"
+difficulty = 2
+prompt = "Trong development với Strict Mode, effect có `connect()` và cleanup `disconnect()` có thể log theo thứ tự nào ở lần mount đầu?"
+options = ["connect", "connect rồi disconnect", "connect, disconnect, connect", "disconnect rồi connect rồi disconnect"]
+answer = [2]
+explanation = "Strict Mode chạy thêm chu kỳ setup-cleanup trong development để phát hiện tài nguyên không được dọn đúng; setup cuối cùng vẫn giữ kết nối đang hoạt động."
+sources = ["react/reference/react/strictmode", "react/reference/react/useeffect"]
+
+[[questions]]
+id = "react-x019"
+module = "react-forms-a11y"
+type = "single"
+difficulty = 1
+prompt = "Input có `value={email}` nhưng không có `onChange`; người dùng không sửa được. Vì sao?"
+options = ["`value` tạo controlled input nên React giữ giá trị cố định nếu không cập nhật state", "React chỉ cho nhập bằng `defaultValue`", "Input phải nằm trong portal", "`value` chỉ dùng cho checkbox"]
+answer = [0]
+explanation = "Controlled input lấy giá trị từ React state. Cần `onChange` cập nhật state; nếu muốn DOM giữ giá trị, dùng `defaultValue` cho uncontrolled input."
+sources = ["react/reference/react-dom/components/input"]
+
+[[questions]]
+id = "react-x020"
+module = "react-testing-arch"
+type = "single"
+difficulty = 1
+prompt = "Bạn cần kiểm tra nút lưu có tên truy cập được là “Save” và gọi handler khi nhấn. Truy vấn nào ưu tiên trong Testing Library?"
+options = ["`container.querySelector('.blue')`", "`getByRole('button', { name: 'Save' })`", "`getByTestId('save-1')`", "Tìm node thứ ba trong body"]
+answer = [1]
+explanation = "Query theo role và accessible name phản ánh cách người dùng tìm điều khiển, đồng thời phát hiện thiếu ngữ nghĩa truy cập."
+
+[[questions]]
+id = "react-x021"
+module = "react-effects"
+type = "single"
+difficulty = 2
+prompt = "Popover cần đo kích thước DOM rồi đặt vị trí đúng trước khi người dùng nhìn thấy frame đầu. Hook nào phù hợp hơn?"
+options = ["`useEffect`, vì luôn chạy trước paint", "`useLayoutEffect`, vì chạy sau commit nhưng trước paint", "`useMemo`, vì đọc DOM", "`useDeferredValue`, vì chặn layout"]
+answer = [1]
+explanation = "`useLayoutEffect` chạy sau khi DOM được commit và trước khi browser paint, phù hợp với phép đo layout cần tránh nháy. Nó có thể chặn paint nên không dùng cho tác vụ thông thường."
+sources = ["react/reference/react/uselayouteffect"]
+
+[[questions]]
+id = "react-x022"
+module = "react-effects"
+type = "single"
+difficulty = 2
+prompt = "Effect tạo connection theo `roomId`, còn callback ghi log cần đọc `theme` mới nhất nhưng đổi theme không nên reconnect. React 19 nên cân nhắc gì?"
+options = ["Đưa `theme` vào dependency và chấp nhận reconnect", "Dùng `useEffectEvent` cho logic log được gọi từ effect", "Đọc theme từ biến global", "Bỏ dependency `roomId`"]
+answer = [1]
+explanation = "Effect Event đọc giá trị props/state mới nhất mà không khiến effect đăng ký lại chỉ vì giá trị đó đổi. Nó được gọi từ effect hoặc callback của effect, không dùng thay event handler UI."
+sources = ["react/reference/react/useeffectevent"]
+
+[[questions]]
+id = "react-x023"
+module = "react-patterns"
+type = "single"
+difficulty = 2
+prompt = "Provider truyền `value={{ theme, setTheme }}`. Parent render vì state không liên quan, khiến consumer đọc context cập nhật. Nguyên nhân gần nhất là gì?"
+options = ["Context luôn cập nhật ở mọi lần render dù value giữ nguyên", "Object value mới có identity khác; có thể ổn định hoặc tách context nếu đo thấy vấn đề", "React.memo tự chặn mọi context update", "Context chỉ nhận primitive"]
+answer = [1]
+explanation = "Object literal tạo identity mới mỗi render, vì thế context value được xem là đã đổi. Có thể memo hóa value hoặc tách context theo dữ liệu; đo tác động trước khi tối ưu."
+sources = ["react/reference/react/usecontext"]
+
+[[questions]]
+id = "react-x024"
+module = "react-forms-a11y"
+type = "single"
+difficulty = 2
+prompt = "Thông báo “Email không hợp lệ” nên gắn với input bằng thuộc tính nào để người dùng công nghệ hỗ trợ nhận ra mô tả lỗi?"
+options = ["`aria-describedby` trỏ tới id của thông báo", "`data-error` trỏ tới class CSS", "`tabIndex=-1` trên input", "`aria-hidden=true` trên thông báo"]
+answer = [0]
+explanation = "`aria-describedby` liên kết mô tả, gồm thông báo lỗi, với input. Có thể bổ sung `aria-invalid` khi field đang lỗi."
+
+[[questions]]
+id = "react-x025"
+module = "react-testing-arch"
+type = "single"
+difficulty = 2
+prompt = "Bộ lọc được dùng bởi `FilterPanel` và `Results`, hai component là anh em. Nơi hợp lý đầu tiên để đặt state là đâu?"
+options = ["Một biến global ngoài React", "Cha chung gần nhất cần phối hợp hai component", "Mỗi component giữ state riêng rồi đồng bộ bằng effect", "Một store toàn ứng dụng bất kể phạm vi"]
+answer = [1]
+explanation = "Lifting state up đến cha chung gần nhất tạo một nguồn sự thật cho hai consumer mà không mở rộng phạm vi state quá mức."
+
+[[questions]]
+id = "react-x026"
+module = "react-testing-arch"
+type = "single"
+difficulty = 2
+prompt = "Module `Chart` chỉ export named export. Cách dùng `lazy` nào tạo đúng shape mà React mong đợi?"
+options = ["`lazy(() => import('./Chart'))` dù module không có default", "`lazy(() => import('./Chart').then(m => ({ default: m.Chart })))`", "`lazy(Chart)`", "`lazy(() => Promise.resolve(Chart))`"]
+answer = [1]
+explanation = "`lazy` nhận Promise resolve thành object có thuộc tính `default` là component. Named export có thể ánh xạ sang shape đó."
+sources = ["react/reference/react/lazy"]
+
+[[questions]]
+id = "react-x027"
+module = "react-perf"
+type = "single"
+difficulty = 2
+prompt = "`useTransition` giúp cập nhật bộ lọc lớn phản hồi tốt hơn. Điều gì nó không đảm bảo?"
+options = ["Cập nhật được đánh dấu không khẩn cấp", "Có thể đọc trạng thái pending", "Một vòng lặp JavaScript đồng bộ nặng tự chạy nhanh hơn", "React có thể ưu tiên cập nhật khẩn cấp"]
+answer = [2]
+explanation = "Transition cho phép React ưu tiên render khác và có thể trì hoãn UI không khẩn cấp; nó không giảm độ phức tạp CPU của một vòng lặp đồng bộ nặng."
+sources = ["react/reference/react/usetransition"]
+
+[[questions]]
+id = "react-x028"
+module = "react-19"
+type = "single"
+difficulty = 3
+prompt = "Khác với hook thông thường, `use(promise)` có thể được gọi trong trường hợp nào?"
+options = ["Trong component hoặc hook, kể cả nhánh điều kiện/loop; Promise vẫn cần identity ổn định", "Trong bất kỳ hàm JavaScript nào ngoài React", "Sau khi component đã unmount", "Chỉ bên trong `useEffect`"]
+answer = [0]
+explanation = "`use` là API đặc biệt có thể dùng trong điều kiện hoặc loop khi đang render component/hook. Không tạo Promise mới mỗi render vì có thể gây suspend lặp."
+sources = ["react/reference/react/use"]
+
+[[questions]]
+id = "react-x029"
+module = "react-19"
+type = "multiple"
+difficulty = 2
+prompt = "Những vai trò nào phù hợp với `useActionState`? (chọn nhiều)"
+options = ["Giữ state kết quả trả về từ action", "Cung cấp trạng thái pending của action", "Tự động biến mọi handler click thành Server Function", "Có thể dùng action làm form action", "Thay thế hoàn toàn validation phía server"]
+answer = [0, 1, 3]
+explanation = "`useActionState` quản lý state được action trả về và trạng thái pending; action cũng có thể gắn với form. Nó không tự biến hàm thành server action và không thay validation phía server."
+sources = ["react/reference/react/useactionstate"]
+
+[[questions]]
+id = "react-x030"
+module = "react-19"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các nhận định đúng về `useOptimistic`. (chọn nhiều)"
+options = ["Có thể hiển thị state dự đoán trong lúc action đang xử lý", "State chuẩn vẫn cần cập nhật khi server trả kết quả", "Nếu action thất bại, UI có thể quay về state chuẩn", "Optimistic state bảo đảm request server thành công", "Nên tạo key tạm ổn định cho item mới"]
+answer = [0, 1, 2, 4]
+explanation = "Optimistic UI cải thiện phản hồi nhưng không đảm bảo thành công. Kết quả chuẩn và xử lý lỗi vẫn thuộc action/server; item tạm cần identity ổn định để đối chiếu."
+sources = ["react/reference/react/useoptimistic"]
+
+[[questions]]
+id = "react-x041"
+module = "react-19"
+type = "fill"
+difficulty = 2
+prompt = "Hook React DOM cho phép component con đọc `pending`, `data`, `method` và `action` của form cha là `{{blank}}`."
+blanks = [["useFormStatus"]]
+explanation = "`useFormStatus` được export từ React DOM và phải gọi trong component con nằm dưới form cần theo dõi."
+sources = ["react/reference/react-dom/hooks/useformstatus"]
+
+[[questions]]
+id = "react-x042"
+module = "react-19"
+type = "fill"
+difficulty = 2
+prompt = "API React 19 đọc Promise hoặc Context trong lúc render, có thể suspend khi Promise pending, là `{{blank}}`."
+blanks = [["use"]]
+explanation = "`use(value)` đọc Promise hoặc Context; Promise pending có thể kích hoạt Suspense."
+sources = ["react/reference/react/use"]
+
+[[questions]]
+id = "react-x043"
+module = "react-effects"
+type = "fill"
+difficulty = 1
+prompt = "Hàm được trả về từ `useEffect` để dọn subscription hoặc timer được gọi là hàm `{{blank}}`."
+blanks = [["cleanup", "clean-up"]]
+explanation = "Cleanup dọn tài nguyên của setup trước lần đồng bộ tiếp theo và khi component unmount."
+sources = ["react/reference/react/useeffect"]
+
+[[questions]]
+id = "react-x044"
+module = "react-effects"
+type = "fill"
+difficulty = 3
+prompt = "React 19 API giúp effect gọi logic cần đọc state/props mới nhất mà không thêm chúng thành dependency của subscription là `{{blank}}`."
+blanks = [["useEffectEvent"]]
+explanation = "`useEffectEvent` tách logic effect event khỏi việc thiết lập lại subscription; chỉ gọi nó trong effect hoặc callback do effect tạo."
+sources = ["react/reference/react/useeffectevent"]
+
+[[questions]]
+id = "react-x045"
+module = "react-effects"
+type = "fill"
+difficulty = 2
+prompt = "Hook effect chạy sau commit nhưng trước khi browser paint, phù hợp với phép đo layout cần tránh nháy, là `{{blank}}`."
+blanks = [["useLayoutEffect"]]
+explanation = "`useLayoutEffect` chạy trước paint và có thể chặn paint; ưu tiên `useEffect` nếu không cần đo layout đồng bộ."
+sources = ["react/reference/react/uselayouteffect"]
+
+[[questions]]
+id = "react-x046"
+module = "react-forms-a11y"
+type = "fill"
+difficulty = 1
+prompt = "Thuộc tính ARIA liên kết mô tả hoặc thông báo lỗi với input thông qua id là `{{blank}}`."
+blanks = [["aria-describedby"]]
+explanation = "`aria-describedby` trỏ tới id của phần tử mô tả input, thường gồm hướng dẫn hoặc lỗi validation."
+
+[[questions]]
+id = "react-x047"
+module = "react-testing-arch"
+type = "fill"
+difficulty = 1
+prompt = "Trong Testing Library, truy vấn đồng bộ ưu tiên để tìm một nút theo semantics và accessible name thường là `{{blank}}`."
+blanks = [["getByRole"]]
+explanation = "`getByRole` truy vấn theo role và có thể nhận accessible name để phân biệt điều khiển."
+
+[[questions]]
+id = "react-x048"
+module = "react-perf"
+type = "fill"
+difficulty = 2
+prompt = "API tạo component được tải bất đồng bộ từ một module khi cần là `{{blank}}`; thường đặt trong `Suspense`."
+blanks = [["lazy"]]
+explanation = "`lazy` tải component từ Promise; `Suspense` hiển thị fallback trong thời gian tải."
+sources = ["react/reference/react/lazy", "react/reference/react/suspense"]
+
+[[questions]]
+id = "react-x049"
+module = "react-effects"
+type = "essay"
+difficulty = 2
+prompt = "Giải thích cách quyết định có cần `useEffect` không. Nêu ít nhất một trường hợp nên tính trong render hoặc xử lý trong event handler, và một trường hợp effect phù hợp."
+keywords = [["derived state", "giá trị dẫn xuất", "tính trực tiếp"], ["event handler", "trình xử lý sự kiện"], ["external system", "hệ thống bên ngoài", "subscription", "timer"]]
+min_keywords = 2
+model_answer = '''
+Không cần effect để tạo derived state như fullName từ firstName và lastName; tính trực tiếp trong render. Hành động do người dùng khởi phát nên xử lý trong event handler. Dùng useEffect để đồng bộ với external system như subscription hoặc timer và trả cleanup tương ứng.
+'''
+explanation = "Effect nên phục vụ đồng bộ với hệ thống ngoài React, không phải cơ chế mặc định để nối các state với nhau."
+sources = ["react/learn/you-might-not-need-an-effect", "react/reference/react/useeffect"]
+
+[[questions]]
+id = "react-x050"
+module = "react-effects"
+type = "essay"
+difficulty = 3
+prompt = "Mô tả cách tránh race condition khi fetch theo `userId` đổi nhanh. Phân biệt hủy request với bỏ qua kết quả cũ."
+keywords = [["AbortController", "abort", "hủy request"], ["cleanup", "dọn dẹp"], ["ignore flag", "cờ ignore", "stale result", "kết quả cũ"], ["race condition", "điều kiện tranh chấp"]]
+min_keywords = 3
+model_answer = '''
+Trong effect theo userId, tạo AbortController và hủy request trong cleanup khi id đổi hoặc component unmount. Nếu client không hủy được thao tác, dùng cờ ignore để không commit stale result. Cleanup và guard cùng ngăn race condition làm dữ liệu user cũ ghi đè dữ liệu mới.
+'''
+explanation = "Hủy request tiết kiệm tài nguyên khi API hỗ trợ; guard kết quả vẫn bảo vệ state khỏi kết quả cũ tới muộn."
+sources = ["react/reference/react/useeffect"]
+
+[[questions]]
+id = "react-x051"
+module = "react-server"
+type = "essay"
+difficulty = 3
+prompt = "Giải thích khác nhau giữa `'use client'`, `'use server'`, Server Component và Server Function; nêu ràng buộc props qua ranh giới."
+keywords = [["use client", "client boundary"], ["use server", "Server Function", "server function"], ["Server Component", "server component"], ["serializable", "tuần tự hóa"]]
+min_keywords = 3
+model_answer = '''
+Server Component chạy trên server và không dùng state/effect client. 'use client' tạo client boundary cho module và dependencies của nó. 'use server' đánh dấu Server Function có thể được gọi từ client qua cơ chế framework; nó không biến component thành Client Component. Props thông thường qua boundary cần serializable.
+'''
+explanation = "Hai directive chỉ hai ranh giới khác nhau; nhầm chúng dẫn tới sai nơi thực thi và truyền dữ liệu không hợp lệ."
+sources = ["react/reference/rsc/server-components", "react/reference/rsc/use-client", "react/reference/rsc/use-server"]
+
+[[questions]]
+id = "react-x052"
+module = "react-19"
+type = "essay"
+difficulty = 2
+prompt = "Mô tả cách phối hợp `useActionState`, `useOptimistic` và `useFormStatus` khi gửi form cập nhật hồ sơ."
+keywords = [["useActionState"], ["useOptimistic"], ["useFormStatus"], ["pending", "đang xử lý"], ["rollback", "quay lại", "state chuẩn"]]
+min_keywords = 4
+model_answer = '''
+useActionState giữ state kết quả action và pending state. useFormStatus trong component con của form giúp nút submit hiển thị pending hoặc disabled. useOptimistic có thể hiện dữ liệu hồ sơ dự đoán ngay khi action chạy; sau đó dùng kết quả chuẩn khi action thành công hoặc rollback về state chuẩn nếu thất bại.
+'''
+explanation = "Ba API phục vụ các phần khác nhau của luồng gửi form; optimistic UI không thay kết quả có thẩm quyền từ server."
+sources = ["react/reference/react/useactionstate", "react/reference/react/useoptimistic", "react/reference/react-dom/hooks/useformstatus"]
+
+[[questions]]
+id = "react-x053"
+module = "react-server"
+type = "essay"
+difficulty = 2
+prompt = "Nêu nguyên nhân phổ biến của hydration mismatch và cách chẩn đoán/sửa trường hợp UI phụ thuộc thời gian hoặc browser API."
+keywords = [["hydration mismatch", "lệch hydration"], ["deterministic", "xác định", "ổn định"], ["initial render", "render đầu", "lần render đầu"], ["browser-only", "window", "browser api"]]
+min_keywords = 3
+model_answer = '''
+Hydration mismatch xảy ra khi HTML server và initial render client không deterministic, chẳng hạn mỗi bên đọc thời gian khác nhau hoặc client dùng browser-only API. Truyền dữ liệu ổn định để render đầu khớp; nếu thật sự cần giá trị browser, đọc sau hydration trong effect và kiểm tra boundary liên quan.
+'''
+explanation = "React cần gắn hydration lên markup tương ứng; sửa nguyên nhân khác nhau giữa hai lần render thay vì che cảnh báo."
+sources = ["react/reference/react-dom/client/hydrateroot"]
+
+[[questions]]
+id = "react-x054"
+module = "react-forms-a11y"
+type = "essay"
+difficulty = 3
+prompt = "Thiết kế phản hồi validation accessible cho form nhiều field: label, liên kết lỗi, trạng thái invalid, focus sau submit và yêu cầu cho modal portal."
+keywords = [["label", "nhãn"], ["aria-describedby", "describedby"], ["aria-invalid", "invalid"], ["focus", "focus field", "đưa focus"], ["portal", "modal"]]
+min_keywords = 4
+model_answer = '''
+Mỗi input có label gắn đúng id. Khi lỗi, đặt aria-invalid và liên kết nội dung lỗi bằng aria-describedby; sau submit thất bại đưa focus tới field lỗi đầu tiên. Nếu form nằm trong modal portal, cung cấp tên dialog, quản lý focus trong modal, hỗ trợ đóng phù hợp và trả focus về nút mở.
+'''
+explanation = "Validation cần truyền được cả trạng thái lẫn cách sửa tới người dùng bàn phím và công nghệ hỗ trợ."
+
+[[questions]]
+id = "react-x055"
+module = "react-testing-arch"
+type = "essay"
+difficulty = 3
+prompt = "Giải thích cách tổ chức test và state cho một trang có filter, kết quả tải lazy và vùng có thể lỗi. Nêu query Testing Library phù hợp."
+keywords = [["getByRole", "role"], ["state colocation", "colocation", "state gần nơi dùng"], ["Context", "context"], ["Error Boundary", "error boundary"], ["lazy", "code splitting"], ["Suspense", "fallback"]]
+min_keywords = 4
+model_answer = '''
+Đặt filter state gần FilterPanel và Results, nâng lên cha chung khi cả hai cần nó; dùng Context chỉ khi dữ liệu thật sự đi qua nhiều tầng. Test hành vi bằng getByRole với accessible name. Tải phần kết quả lớn bằng lazy trong Suspense có fallback, và đặt Error Boundary quanh vùng cần phục hồi lỗi.
+'''
+explanation = "Phạm vi state, boundary lỗi và fallback tải nên theo vùng sản phẩm; test kiểm tra semantics mà người dùng nhìn thấy."
+
+[[questions]]
+id = "react-xc01"
+module = "react-basics"
+type = "code"
+difficulty = 2
+lang = "javascript"
+title = "useSelection"
+prompt = '''
+Implement `useSelection(initialIds = [])`, returning `{ selected, isSelected, toggle, clear }`.
+- Start with a copy of `initialIds`.
+- `toggle(id)` adds an unselected id or removes a selected id without mutating the previous array.
+- `isSelected(id)` returns a boolean, and `clear()` empties the selection.
+'''
+starter = '''
+function useSelection(initialIds = []) {
+  const [selected, setSelected] = useState([]);
+  return { selected, isSelected: () => false, toggle: () => {}, clear: () => setSelected([]) };
+}
+'''
+solution = '''
+function useSelection(initialIds = []) {
+  const [selected, setSelected] = useState(() => [...initialIds]);
+  const isSelected = (id) => selected.includes(id);
+  const toggle = (id) => setSelected(current => current.includes(id)
+    ? current.filter(value => value !== id)
+    : [...current, id]);
+  const clear = () => setSelected([]);
+  return { selected, isSelected, toggle, clear };
+}
+'''
+tests = '''
+test('copies initial ids', () => {
+  const ids = ['a', 'b'];
+  const { result } = renderHook(() => useSelection(ids));
+  expect(result.current.selected).toEqual(['a', 'b']);
+  expect(result.current.selected).not.toBe(ids);
+});
+test('adds an unselected id', () => {
+  const { result } = renderHook(() => useSelection(['a']));
+  act(() => result.current.toggle('b'));
+  expect(result.current.selected).toEqual(['a', 'b']);
+});
+test('removes a selected id', () => {
+  const { result } = renderHook(() => useSelection(['a', 'b']));
+  act(() => result.current.toggle('a'));
+  expect(result.current.selected).toEqual(['b']);
+});
+test('reports selection and clears it', () => {
+  const { result } = renderHook(() => useSelection(['a']));
+  expect(result.current.isSelected('a')).toBe(true);
+  expect(result.current.isSelected('b')).toBe(false);
+  act(() => result.current.clear());
+  expect(result.current.selected).toEqual([]);
+});
+'''
+hints = ["Use a functional state update to avoid reading a stale selection.", "Return a new array from both toggle branches."]
+explanation = "State cục bộ có identity riêng cho từng component. Cập nhật bất biến giúp React nhận ra thay đổi và giữ logic selection dễ kiểm thử."
+
+[[questions]]
+id = "react-xc02"
+module = "react-state"
+type = "code"
+difficulty = 3
+lang = "javascript"
+title = "Task reducer"
+prompt = '''
+Implement `taskReducer(state, action)` and `useTaskList(initialTodos = [])`. State has `{ todos, filter }`; each todo has `{ id, text, done }`.
+Support actions `{type:'add', todo}`, `{type:'toggle', id}`, `{type:'remove', id}`, `{type:'clearDone'}`, and `{type:'setFilter', filter}`. Never mutate the existing state or array. The hook returns the `[state, dispatch]` tuple from `useReducer`.
+'''
+starter = '''
+function taskReducer(state, action) {
+  return state;
+}
+function useTaskList(initialTodos = []) {
+  return useReducer(taskReducer, { todos: initialTodos, filter: 'all' });
+}
+'''
+solution = '''
+function taskReducer(state, action) {
+  switch (action.type) {
+    case 'add':
+      return { ...state, todos: [...state.todos, { ...action.todo }] };
+    case 'toggle':
+      return { ...state, todos: state.todos.map(todo => todo.id === action.id ? { ...todo, done: !todo.done } : todo) };
+    case 'remove':
+      return { ...state, todos: state.todos.filter(todo => todo.id !== action.id) };
+    case 'clearDone':
+      return { ...state, todos: state.todos.filter(todo => !todo.done) };
+    case 'setFilter':
+      return { ...state, filter: action.filter };
+    default:
+      return state;
+  }
+}
+function useTaskList(initialTodos = []) {
+  const initialState = { todos: initialTodos.map(todo => ({ ...todo })), filter: 'all' };
+  return useReducer(taskReducer, initialState);
+}
+'''
+tests = '''
+test('adds without mutating the old state', () => {
+  const initial = { todos: [], filter: 'all' };
+  const next = taskReducer(initial, { type: 'add', todo: { id: 1, text: 'Read', done: false } });
+  expect(next.todos).toHaveLength(1);
+  expect(initial.todos).toHaveLength(0);
+});
+test('toggles only the matching todo', () => {
+  const state = { todos: [{ id: 1, text: 'A', done: false }, { id: 2, text: 'B', done: false }], filter: 'all' };
+  const next = taskReducer(state, { type: 'toggle', id: 2 });
+  expect(next.todos[0].done).toBe(false);
+  expect(next.todos[1].done).toBe(true);
+});
+test('removes by id', () => {
+  const state = { todos: [{ id: 1 }, { id: 2 }], filter: 'all' };
+  expect(taskReducer(state, { type: 'remove', id: 1 }).todos).toEqual([{ id: 2 }]);
+});
+test('clears only completed todos', () => {
+  const state = { todos: [{ id: 1, done: true }, { id: 2, done: false }], filter: 'all' };
+  expect(taskReducer(state, { type: 'clearDone' }).todos).toEqual([{ id: 2, done: false }]);
+});
+test('updates filter and preserves it for todo actions', () => {
+  const state = { todos: [], filter: 'all' };
+  const filtered = taskReducer(state, { type: 'setFilter', filter: 'active' });
+  expect(filtered.filter).toBe('active');
+  expect(taskReducer(filtered, { type: 'add', todo: { id: 3 } }).filter).toBe('active');
+});
+test('hook initializes a copied list', () => {
+  const todos = [{ id: 1, text: 'A', done: false }];
+  const { result } = renderHook(() => useTaskList(todos));
+  expect(result.current[0].todos).toEqual(todos);
+  expect(result.current[0].todos).not.toBe(todos);
+});
+'''
+hints = ["Handle each action in a switch and return a new outer state object.", "Use `map` for an id update and `filter` for removal."]
+explanation = "Reducer gom các chuyển trạng thái liên quan thành một nơi, còn action diễn tả ý định. Mọi nhánh giữ state cũ bất biến."
+
+[[questions]]
+id = "react-xc03"
+module = "react-hooks"
+type = "code"
+difficulty = 2
+lang = "javascript"
+title = "useDebouncedValue"
+prompt = '''
+Implement `useDebouncedValue(value, delay)`. It returns the initial value immediately, then updates to the latest value only after it has stayed unchanged for `delay` milliseconds. Clear an earlier timer when value or delay changes, and clean it up on unmount.
+'''
+starter = '''
+function useDebouncedValue(value, delay) {
+  return value;
+}
+'''
+solution = '''
+function useDebouncedValue(value, delay) {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const timer = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(timer);
+  }, [value, delay]);
+  return debounced;
+}
+'''
+tests = '''
+test('returns the initial value immediately', () => {
+  const { result } = renderHook(props => useDebouncedValue(props.value, props.delay), { initialProps: { value: 'a', delay: 100 } });
+  expect(result.current).toBe('a');
+});
+test('updates after the delay', () => {
+  const { result, rerender } = renderHook(props => useDebouncedValue(props.value, props.delay), { initialProps: { value: 'a', delay: 100 } });
+  rerender({ value: 'b', delay: 100 });
+  act(() => jest.advanceTimersByTime(99));
+  expect(result.current).toBe('a');
+  act(() => jest.advanceTimersByTime(1));
+  expect(result.current).toBe('b');
+});
+test('a newer value restarts the timer', () => {
+  const { result, rerender } = renderHook(props => useDebouncedValue(props.value, props.delay), { initialProps: { value: 1, delay: 100 } });
+  rerender({ value: 2, delay: 100 });
+  act(() => jest.advanceTimersByTime(50));
+  rerender({ value: 3, delay: 100 });
+  act(() => jest.advanceTimersByTime(50));
+  expect(result.current).toBe(1);
+  act(() => jest.advanceTimersByTime(50));
+  expect(result.current).toBe(3);
+});
+test('unmount clears the pending timer', () => {
+  const { result, rerender, unmount } = renderHook(props => useDebouncedValue(props.value, props.delay), { initialProps: { value: 'old', delay: 50 } });
+  rerender({ value: 'new', delay: 50 });
+  unmount();
+  act(() => jest.advanceTimersByTime(100));
+  expect(result.current).toBe('old');
+});
+'''
+hints = ["Schedule one timeout in the effect and return `clearTimeout` as cleanup.", "Both `value` and `delay` are reactive dependencies."]
+explanation = "Cleanup hủy timer cũ trước khi effect chạy lại, bảo đảm chỉ giá trị mới nhất được công bố sau khoảng chờ."
+
+[[questions]]
+id = "react-xc04"
+module = "react-perf"
+type = "code"
+difficulty = 2
+lang = "javascript"
+title = "Memoized todo selector"
+prompt = '''
+Implement `useVisibleTodos(todos, filter)` for filters `all`, `active`, and `completed`. Return the matching array and memoize it so the same `todos` reference and `filter` reuse the same result reference.
+'''
+starter = '''
+function useVisibleTodos(todos, filter) {
+  return todos;
+}
+'''
+solution = '''
+function useVisibleTodos(todos, filter) {
+  return useMemo(() => {
+    if (filter === 'active') return todos.filter(todo => !todo.completed);
+    if (filter === 'completed') return todos.filter(todo => todo.completed);
+    return todos;
+  }, [todos, filter]);
+}
+'''
+tests = '''
+test('all returns every todo', () => {
+  const todos = [{ completed: false }, { completed: true }];
+  const { result } = renderHook(() => useVisibleTodos(todos, 'all'));
+  expect(result.current).toBe(todos);
+});
+test('active filters completed todos out', () => {
+  const todos = [{ id: 1, completed: false }, { id: 2, completed: true }];
+  const { result } = renderHook(() => useVisibleTodos(todos, 'active'));
+  expect(result.current).toEqual([{ id: 1, completed: false }]);
+});
+test('completed keeps completed todos', () => {
+  const todos = [{ id: 1, completed: false }, { id: 2, completed: true }];
+  const { result } = renderHook(() => useVisibleTodos(todos, 'completed'));
+  expect(result.current).toEqual([{ id: 2, completed: true }]);
+});
+test('same dependencies reuse the result', () => {
+  const todos = [{ completed: false }];
+  const { result, rerender } = renderHook(() => useVisibleTodos(todos, 'active'));
+  const first = result.current;
+  rerender();
+  expect(result.current).toBe(first);
+});
+test('new filter recalculates the result', () => {
+  const todos = [{ completed: false }, { completed: true }];
+  const { result, rerender } = renderHook(filter => useVisibleTodos(todos, filter), { initialProps: 'active' });
+  const first = result.current;
+  rerender('completed');
+  expect(result.current).not.toBe(first);
+  expect(result.current).toEqual([{ completed: true }]);
+});
+'''
+hints = ["Use `useMemo` with both input references in the dependency list.", "Do not use memoization as the source of truth for todo state."]
+explanation = "Selector memoization avoids repeating a derived calculation when its actual inputs are unchanged; it is a performance aid, not state storage."
+
+[[questions]]
+id = "react-xc05"
+module = "react-patterns"
+type = "code"
+difficulty = 3
+lang = "javascript"
+title = "Memoized context selector"
+prompt = '''
+Implement `createContextSelector(selector)`, returning a function that accepts a context value and caches the selected result. If the same context object is passed again, do not call `selector` again. If a new context object produces the identical selected value by `Object.is`, preserve the selected value reference. Each created selector must keep its own cache.
+'''
+starter = '''
+function createContextSelector(selector) {
+  return value => selector(value);
+}
+'''
+solution = '''
+function createContextSelector(selector) {
+  let initialized = false;
+  let previousContext;
+  let previousSelection;
+  return (contextValue) => {
+    if (initialized && Object.is(contextValue, previousContext)) return previousSelection;
+    const selection = selector(contextValue);
+    if (initialized && Object.is(selection, previousSelection)) {
+      previousContext = contextValue;
+      return previousSelection;
+    }
+    initialized = true;
+    previousContext = contextValue;
+    previousSelection = selection;
+    return selection;
+  };
+}
+'''
+tests = '''
+test('selects the requested value', () => {
+  const selectUser = createContextSelector(value => value.user);
+  const user = { id: 1 };
+  expect(selectUser({ user })).toBe(user);
+});
+test('same context reference reuses selection without recomputing', () => {
+  const selector = jest.fn(value => value.count);
+  const selectCount = createContextSelector(selector);
+  const context = { count: 2 };
+  const first = selectCount(context);
+  expect(selectCount(context)).toBe(first);
+  expect(selector).toHaveBeenCalledTimes(1);
+});
+test('changed context with same selected value preserves result', () => {
+  const user = { id: 7 };
+  const selectUser = createContextSelector(value => value.user);
+  const first = selectUser({ user, theme: 'light' });
+  const next = selectUser({ user, theme: 'dark' });
+  expect(next).toBe(first);
+});
+test('changed selected value returns new selection', () => {
+  const selectCount = createContextSelector(value => value.count);
+  expect(selectCount({ count: 1 })).toBe(1);
+  expect(selectCount({ count: 2 })).toBe(2);
+});
+test('each selector owns a separate cache', () => {
+  const first = createContextSelector(value => value.a);
+  const second = createContextSelector(value => value.b);
+  const context = { a: 1, b: 2 };
+  expect(first(context)).toBe(1);
+  expect(second(context)).toBe(2);
+});
+'''
+hints = ["Keep one previous input and selected result in the returned closure.", "This cache stabilizes a value; by itself it does not prevent a `useContext` consumer from rendering."]
+explanation = "Selector này giữ referential stability cho kết quả được chọn. Để bỏ qua cập nhật subscription theo field, ứng dụng cần cơ chế subscription chọn lọc; memo selector đơn lẻ không chặn render do Context."
+
+[[questions]]
+id = "react-xc06"
+module = "react-perf"
+type = "code"
+difficulty = 2
+lang = "javascript"
+title = "Virtual list range"
+prompt = '''
+Implement `getVisibleRange(total, itemHeight, scrollTop, viewportHeight, overscan = 0)`. Return `{ start, end }`, where `end` is exclusive. Clamp the range to `[0, total]`, allow negative `scrollTop` by treating it as zero, and include `overscan` rows on each side. Assume numeric inputs are finite, `total` and `overscan` are nonnegative integers, and `itemHeight` is positive.
+'''
+starter = '''
+function getVisibleRange(total, itemHeight, scrollTop, viewportHeight, overscan = 0) {
+  return { start: 0, end: total };
+}
+'''
+solution = '''
+function getVisibleRange(total, itemHeight, scrollTop, viewportHeight, overscan = 0) {
+  const top = Math.max(0, scrollTop);
+  const start = Math.min(total, Math.max(0, Math.floor(top / itemHeight) - overscan));
+  const end = Math.min(total, Math.ceil((top + viewportHeight) / itemHeight) + overscan);
+  return { start, end: Math.max(start, end) };
+}
+'''
+tests = '''
+test('covers visible rows at the top', () => {
+  expect(getVisibleRange(100, 20, 0, 60)).toEqual({ start: 0, end: 3 });
+});
+test('adds overscan before and after', () => {
+  expect(getVisibleRange(100, 20, 100, 40, 2)).toEqual({ start: 3, end: 9 });
+});
+test('clamps a negative scroll position', () => {
+  expect(getVisibleRange(10, 10, -50, 20)).toEqual({ start: 0, end: 2 });
+});
+test('clamps the end at the item count', () => {
+  expect(getVisibleRange(8, 10, 70, 50, 2)).toEqual({ start: 5, end: 8 });
+});
+test('handles an empty list and zero viewport', () => {
+  expect(getVisibleRange(0, 10, 0, 20)).toEqual({ start: 0, end: 0 });
+  expect(getVisibleRange(10, 10, 30, 0)).toEqual({ start: 3, end: 3 });
+});
+'''
+hints = ["Use `floor` for the first row and `ceil` for the exclusive end.", "Clamp both values and keep `end` at least `start`."]
+explanation = "Virtualization chỉ render phần hàng giao với viewport cộng overscan. Dùng end exclusive giúp truyền range trực tiếp vào `slice(start, end)`."
+
+[[questions]]
+id = "react-xc07"
+module = "react-19"
+type = "code"
+difficulty = 3
+lang = "javascript"
+title = "Optimistic list state"
+prompt = '''
+Implement a small hook simulation `useOptimisticList(initialItems = [])`. It returns `{ items, addOptimistic, commit, rollback }`.
+- `addOptimistic(tempItem)` appends a temporary item to the visible list.
+- `commit(tempId, savedItem)` removes that temporary item and appends the server item to the canonical list.
+- `rollback(tempId)` removes that temporary item without changing canonical items.
+Use `useReducer`; do not mutate arrays. This exercise models the state transitions, not React's `useOptimistic` API itself.
+'''
+starter = '''
+function useOptimisticList(initialItems = []) {
+  return { items: initialItems, addOptimistic: () => {}, commit: () => {}, rollback: () => {} };
+}
+'''
+solution = '''
+function optimisticListReducer(state, action) {
+  switch (action.type) {
+    case 'add':
+      return { ...state, pending: [...state.pending, action.item] };
+    case 'commit':
+      return {
+        base: [...state.base, action.savedItem],
+        pending: state.pending.filter(item => item.id !== action.tempId),
+      };
+    case 'rollback':
+      return { ...state, pending: state.pending.filter(item => item.id !== action.tempId) };
+    default:
+      return state;
+  }
+}
+function useOptimisticList(initialItems = []) {
+  const [state, dispatch] = useReducer(optimisticListReducer, {
+    base: initialItems.map(item => ({ ...item })),
+    pending: [],
+  });
+  return {
+    items: [...state.base, ...state.pending],
+    addOptimistic: (item) => dispatch({ type: 'add', item }),
+    commit: (tempId, savedItem) => dispatch({ type: 'commit', tempId, savedItem }),
+    rollback: (tempId) => dispatch({ type: 'rollback', tempId }),
+  };
+}
+'''
+tests = '''
+test('starts with a copy of canonical items', () => {
+  const items = [{ id: 1, text: 'Saved' }];
+  const { result } = renderHook(() => useOptimisticList(items));
+  expect(result.current.items).toEqual(items);
+  expect(result.current.items).not.toBe(items);
+});
+test('shows an optimistic item immediately', () => {
+  const { result } = renderHook(() => useOptimisticList([{ id: 1 }]));
+  act(() => result.current.addOptimistic({ id: 'tmp-1', text: 'Sending' }));
+  expect(result.current.items).toEqual([{ id: 1 }, { id: 'tmp-1', text: 'Sending' }]);
+});
+test('commit replaces the temporary item with the saved item', () => {
+  const { result } = renderHook(() => useOptimisticList([{ id: 1 }]));
+  act(() => result.current.addOptimistic({ id: 'tmp-1', text: 'Draft' }));
+  act(() => result.current.commit('tmp-1', { id: 2, text: 'Saved' }));
+  expect(result.current.items).toEqual([{ id: 1 }, { id: 2, text: 'Saved' }]);
+});
+test('rollback removes the temporary item only', () => {
+  const { result } = renderHook(() => useOptimisticList([{ id: 1 }]));
+  act(() => result.current.addOptimistic({ id: 'tmp-1' }));
+  act(() => result.current.rollback('tmp-1'));
+  expect(result.current.items).toEqual([{ id: 1 }]);
+});
+test('rollback of an unknown id preserves visible items', () => {
+  const { result } = renderHook(() => useOptimisticList([{ id: 1 }]));
+  act(() => result.current.rollback('missing'));
+  expect(result.current.items).toEqual([{ id: 1 }]);
+});
+'''
+hints = ["Keep canonical items and temporary items in separate reducer fields.", "On commit, append the server value and remove the matching temporary id."]
+explanation = "Tách state chuẩn khỏi phần hiển thị tạm giúp commit và rollback rõ ràng; ứng dụng thật thường dùng trực tiếp `useOptimistic` trong action/transition."
+
+[[questions]]
+id = "react-xc08"
+module = "react-19"
+type = "code"
+difficulty = 2
+lang = "javascript"
+title = "Profile action reducer"
+prompt = '''
+Implement `saveProfile(previousState, fields)` as the state action passed to `useActionState`.
+- Trim `fields.name`.
+- If the name is missing or blank, preserve the previous name and return error `'Name is required'`.
+- Otherwise return the trimmed name and an empty error string.
+- Never mutate `previousState`.
+The state shape is `{ name, error }`.
+'''
+starter = '''
+function saveProfile(previousState, fields) {
+  return previousState;
+}
+'''
+solution = '''
+function saveProfile(previousState, fields) {
+  const name = typeof fields.name === 'string' ? fields.name.trim() : '';
+  if (!name) return { ...previousState, error: 'Name is required' };
+  return { ...previousState, name, error: '' };
+}
+'''
+tests = '''
+test('trims a valid name and clears an old error', () => {
+  expect(saveProfile({ name: 'Old', error: 'Previous' }, { name: '  Linh  ' })).toEqual({ name: 'Linh', error: '' });
+});
+test('blank name preserves previous name and returns error', () => {
+  expect(saveProfile({ name: 'Old', error: '' }, { name: '   ' })).toEqual({ name: 'Old', error: 'Name is required' });
+});
+test('missing name is invalid', () => {
+  expect(saveProfile({ name: 'Old', error: '' }, {})).toEqual({ name: 'Old', error: 'Name is required' });
+});
+test('does not mutate previous state', () => {
+  const previous = { name: 'Old', error: '' };
+  saveProfile(previous, { name: 'New' });
+  expect(previous).toEqual({ name: 'Old', error: '' });
+});
+test('keeps unrelated state fields', () => {
+  expect(saveProfile({ name: 'Old', error: '', version: 2 }, { name: 'New' }).version).toBe(2);
+});
+'''
+hints = ["Treat the action as a pure transition from previous state plus submitted fields.", "Spread previous state in both branches so extra fields survive."]
+explanation = "Action nhận state trước đó và dữ liệu submit, rồi trả state mới để `useActionState` công bố; validation server vẫn cần thiết trong ứng dụng thật."
+
+[[questions]]
+id = "react-xc09"
+module = "react-server"
+type = "code"
+difficulty = 3
+lang = "javascript"
+title = "Suspense resource reader"
+prompt = '''
+Implement `createResource(promise)` returning `{ read }` for a Suspense-style resource.
+- While pending, `read()` throws the same pending promise.
+- After fulfillment, `read()` returns the value.
+- After rejection, `read()` throws the rejection error.
+Do not create a new Promise from `read()`.
+'''
+starter = '''
+function createResource(promise) {
+  return { read: () => undefined };
+}
+'''
+solution = '''
+function createResource(promise) {
+  let status = 'pending';
+  let result;
+  const pending = Promise.resolve(promise).then(
+    value => { status = 'success'; result = value; },
+    error => { status = 'error'; result = error; }
+  );
+  return {
+    read() {
+      if (status === 'pending') throw pending;
+      if (status === 'error') throw result;
+      return result;
+    },
+  };
+}
+'''
+tests = '''
+test('throws the same pending promise while unresolved', () => {
+  const resource = createResource(new Promise(() => {}));
+  let first;
+  let second;
+  try { resource.read(); } catch (error) { first = error; }
+  try { resource.read(); } catch (error) { second = error; }
+  expect(first).toBeInstanceOf(Promise);
+  expect(second).toBe(first);
+});
+test('returns the resolved value', async () => {
+  let resolve;
+  const resource = createResource(new Promise(r => { resolve = r; }));
+  resolve(42);
+  await Promise.resolve();
+  await Promise.resolve();
+  expect(resource.read()).toBe(42);
+});
+test('throws a rejected error after settlement', async () => {
+  const error = new Error('failed');
+  const resource = createResource(Promise.reject(error));
+  await Promise.resolve();
+  await Promise.resolve();
+  expect(() => resource.read()).toThrow('failed');
+});
+test('keeps a fulfilled value stable across reads', async () => {
+  const value = { id: 1 };
+  const resource = createResource(Promise.resolve(value));
+  await Promise.resolve();
+  await Promise.resolve();
+  expect(resource.read()).toBe(value);
+  expect(resource.read()).toBe(value);
+});
+'''
+hints = ["Store status and result in the resource closure.", "Attach both fulfillment and rejection handlers so the resource can later return or throw the settled result."]
+explanation = "Suspense-compatible readers throw a stable thenable while pending and later either return data or throw the stored error. Framework data APIs usually manage this protocol for applications."
+
+[[questions]]
+id = "react-xc10"
+module = "react-effects"
+type = "code"
+difficulty = 3
+lang = "javascript"
+title = "useFetch with cancellation and race guard"
+prompt = '''
+Implement `useFetch(key, fetcher)` returning `{ status, data, error }` with initial pending state. Call `fetcher(key, signal)` in an effect; it returns a Promise. `signal` is a small test-harness token with writable `aborted` and `onabort` fields; call `onabort` during cleanup to cancel a timer-backed request. Ignore any completion from an old key or after unmount, even if the fetcher cannot cancel. Dependencies are `[key, fetcher]`; callers keep `fetcher` stable.
+'''
+starter = '''
+function useFetch(key, fetcher) {
+  const [state] = useState({ status: 'pending', data: undefined, error: undefined });
+  return state;
+}
+'''
+solution = '''
+function useFetch(key, fetcher) {
+  const [state, setState] = useState({ status: 'pending', data: undefined, error: undefined });
+  useEffect(() => {
+    let ignore = false;
+    const signal = { aborted: false, onabort: null };
+    setState({ status: 'pending', data: undefined, error: undefined });
+    let request;
+    try {
+      request = fetcher(key, signal);
+    } catch (error) {
+      request = Promise.reject(error);
+    }
+    Promise.resolve(request).then(
+      data => {
+        if (!ignore && !signal.aborted) setState({ status: 'success', data, error: undefined });
+      },
+      error => {
+        if (!ignore && !signal.aborted) setState({ status: 'error', data: undefined, error });
+      }
+    );
+    return () => {
+      ignore = true;
+      signal.aborted = true;
+      if (typeof signal.onabort === 'function') signal.onabort();
+    };
+  }, [key, fetcher]);
+  return state;
+}
+'''
+tests = '''
+test('starts pending and resolves a timer-backed request', async () => {
+  const fetcher = (key) => new Promise(resolve => setTimeout(() => resolve('data-' + key), 20));
+  const { result } = renderHook(props => useFetch(props.key, props.fetcher), { initialProps: { key: 'a', fetcher } });
+  expect(result.current.status).toBe('pending');
+  await Promise.resolve();
+  act(() => jest.advanceTimersByTime(20));
+  await Promise.resolve();
+  await Promise.resolve();
+  expect(result.current).toEqual({ status: 'success', data: 'data-a', error: undefined });
+});
+test('cleanup aborts the timer-backed request', async () => {
+  const signals = [];
+  const fetcher = (key, currentSignal) => new Promise(resolve => {
+    signals.push(currentSignal);
+    const timer = setTimeout(() => resolve(key), 100);
+    currentSignal.onabort = () => clearTimeout(timer);
+  });
+  const { rerender } = renderHook(props => useFetch(props.key, props.fetcher), { initialProps: { key: 'a', fetcher } });
+  rerender({ key: 'b', fetcher });
+  expect(signals[0].aborted).toBe(true);
+});
+test('a stale non-cancellable result cannot overwrite the latest key', async () => {
+  const resolvers = {};
+  const fetcher = key => new Promise(resolve => { resolvers[key] = resolve; });
+  const { result, rerender } = renderHook(props => useFetch(props.key, props.fetcher), { initialProps: { key: 'old', fetcher } });
+  await Promise.resolve();
+  rerender({ key: 'new', fetcher });
+  await Promise.resolve();
+  resolvers.new('new-data');
+  await Promise.resolve();
+  await Promise.resolve();
+  resolvers.old('old-data');
+  await Promise.resolve();
+  await Promise.resolve();
+  expect(result.current.data).toBe('new-data');
+});
+test('stores a request error', async () => {
+  const error = new Error('offline');
+  const fetcher = () => Promise.reject(error);
+  const { result } = renderHook(() => useFetch('a', fetcher));
+  await Promise.resolve();
+  await Promise.resolve();
+  expect(result.current.status).toBe('error');
+  expect(result.current.error).toBe(error);
+});
+test('cleanup on unmount marks the request aborted', async () => {
+  let signal;
+  const fetcher = (key, currentSignal) => {
+    signal = currentSignal;
+    return new Promise(() => {});
+  };
+  const { unmount } = renderHook(() => useFetch('a', fetcher));
+  await Promise.resolve();
+  unmount();
+  expect(signal.aborted).toBe(true);
+});
+'''
+hints = ["Create a fresh cancellation token per effect setup and mark it aborted in cleanup.", "Guard both resolve and reject paths with the cleanup flag.", "Resolve the newest request first in a race test, then resolve the stale one."]
+explanation = "Cleanup hủy thao tác có hỗ trợ token; cờ `ignore` vẫn chặn completion cũ nếu transport không hủy được. Trong ứng dụng thật dùng `AbortController`/signal chuẩn cùng kiểm tra ownership của request."
+
+[[questions]]
+id = "react-xc11"
+module = "react-effects"
+type = "code"
+difficulty = 3
+lang = "javascript"
+title = "useThrottledValue"
+prompt = '''
+Implement `useThrottledValue(value, delay)`. Return the first value immediately. For later value changes, publish immediately when at least `delay` milliseconds passed since the last publication; otherwise publish the latest value when the remaining interval expires. Clear a pending timer when inputs change or the hook unmounts.
+'''
+starter = '''
+function useThrottledValue(value, delay) {
+  return value;
+}
+'''
+solution = '''
+function useThrottledValue(value, delay) {
+  const [throttled, setThrottled] = useState(value);
+  const latest = useRef(value);
+  const previous = useRef({ value, delay });
+  const lastPublished = useRef(Date.now());
+  latest.current = value;
+  useEffect(() => {
+    if (Object.is(previous.current.value, value) && previous.current.delay === delay) return;
+    previous.current = { value, delay };
+    const remaining = delay - (Date.now() - lastPublished.current);
+    if (remaining <= 0) {
+      lastPublished.current = Date.now();
+      setThrottled(value);
+      return;
+    }
+    const timer = setTimeout(() => {
+      lastPublished.current = Date.now();
+      setThrottled(latest.current);
+    }, remaining);
+    return () => clearTimeout(timer);
+  }, [value, delay]);
+  return throttled;
+}
+'''
+tests = '''
+test('returns the first value immediately', () => {
+  const { result } = renderHook(() => useThrottledValue('first', 100));
+  expect(result.current).toBe('first');
+});
+test('publishes a later value after the remaining interval', () => {
+  const { result, rerender } = renderHook(value => useThrottledValue(value, 100), { initialProps: 0 });
+  rerender(1);
+  expect(result.current).toBe(0);
+  act(() => jest.advanceTimersByTime(100));
+  expect(result.current).toBe(1);
+});
+test('publishes the latest value after repeated changes', () => {
+  const { result, rerender } = renderHook(value => useThrottledValue(value, 100), { initialProps: 'a' });
+  rerender('b');
+  act(() => jest.advanceTimersByTime(40));
+  rerender('c');
+  act(() => jest.advanceTimersByTime(60));
+  expect(result.current).toBe('c');
+});
+test('publishes immediately after the throttle window has passed', () => {
+  const { result, rerender } = renderHook(value => useThrottledValue(value, 100), { initialProps: 0 });
+  act(() => jest.advanceTimersByTime(100));
+  rerender(2);
+  expect(result.current).toBe(2);
+});
+test('unmount cancels a trailing timer', () => {
+  const { result, rerender, unmount } = renderHook(value => useThrottledValue(value, 100), { initialProps: 'a' });
+  rerender('b');
+  unmount();
+  act(() => jest.advanceTimersByTime(100));
+  expect(result.current).toBe('a');
+});
+'''
+hints = ["Track the last publication time in a ref and the newest value in another ref.", "A cleanup should clear the timeout; the timeout callback should read the latest ref."]
+explanation = "Hook phát giá trị đầu ngay, sau đó giới hạn tần suất cập nhật nhưng vẫn giữ giá trị cuối cùng trong khoảng chờ."
+
+[[questions]]
+id = "react-xc12"
+module = "react-effects"
+type = "code"
+difficulty = 2
+lang = "javascript"
+title = "useIntervalCounter cleanup"
+prompt = '''
+Implement `useIntervalCounter(delay)`, returning a count that starts at zero and increases by one on each interval tick. Restart the interval when `delay` changes and clear it on unmount. Use a functional state update so ticks never use a stale count.
+'''
+starter = '''
+function useIntervalCounter(delay) {
+  const [count] = useState(0);
+  return count;
+}
+'''
+solution = '''
+function useIntervalCounter(delay) {
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    const timer = setInterval(() => setCount(value => value + 1), delay);
+    return () => clearInterval(timer);
+  }, [delay]);
+  return count;
+}
+'''
+tests = '''
+test('starts at zero', () => {
+  const { result } = renderHook(() => useIntervalCounter(100));
+  expect(result.current).toBe(0);
+});
+test('increments once per interval tick', () => {
+  const { result } = renderHook(() => useIntervalCounter(100));
+  act(() => jest.advanceTimersByTime(350));
+  expect(result.current).toBe(3);
+});
+test('uses functional updates for repeated ticks', () => {
+  const { result } = renderHook(() => useIntervalCounter(25));
+  act(() => jest.advanceTimersByTime(100));
+  expect(result.current).toBe(4);
+});
+test('restarts when delay changes', () => {
+  const { result, rerender } = renderHook(delay => useIntervalCounter(delay), { initialProps: 100 });
+  act(() => jest.advanceTimersByTime(100));
+  expect(result.current).toBe(1);
+  rerender(50);
+  act(() => jest.advanceTimersByTime(100));
+  expect(result.current).toBe(3);
+});
+test('unmount clears the interval', () => {
+  const { result, unmount } = renderHook(() => useIntervalCounter(50));
+  unmount();
+  act(() => jest.advanceTimersByTime(200));
+  expect(result.current).toBe(0);
+});
+'''
+hints = ["Return `clearInterval(timer)` from the effect.", "Use `setCount(current => current + 1)` inside the interval callback."]
+explanation = "Cleanup đối xứng với setup, còn functional updater đọc state mới nhất mà không phải đăng ký lại interval mỗi tick."
+
+[[questions]]
+id = "react-xc13"
+module = "react-forms-a11y"
+type = "code"
+difficulty = 3
+lang = "javascript"
+title = "useFormValidation"
+prompt = '''
+Implement `useFormValidation(initialValues, validateValues)`, returning `{ values, errors, setValue, validate, reset }`.
+- `validateValues(values)` returns an object whose keys map to nonempty error strings.
+- Before the first `validate()`, expose no errors.
+- `validate()` reveals current errors and returns `true` only when there are none.
+- `setValue(name, value)` updates one field immutably; visible errors must reflect the current values.
+- `reset()` restores a copy of the initial values and hides errors.
+'''
+starter = '''
+function useFormValidation(initialValues, validateValues) {
+  const [values] = useState(initialValues);
+  return { values, errors: {}, setValue: () => {}, validate: () => true, reset: () => {} };
+}
+'''
+solution = '''
+function useFormValidation(initialValues, validateValues) {
+  const [values, setValues] = useState(() => ({ ...initialValues }));
+  const [showErrors, setShowErrors] = useState(false);
+  const errors = showErrors ? validateValues(values) : {};
+  const setValue = (name, value) => setValues(current => ({ ...current, [name]: value }));
+  const validate = () => {
+    setShowErrors(true);
+    return Object.keys(validateValues(values)).length === 0;
+  };
+  const reset = () => {
+    setValues({ ...initialValues });
+    setShowErrors(false);
+  };
+  return { values, errors, setValue, validate, reset };
+}
+'''
+tests = '''
+const validateAccount = values => ({
+  ...(!values.email.includes('@') ? { email: 'Enter a valid email' } : {}),
+  ...(values.password.length < 8 ? { password: 'Use at least 8 characters' } : {}),
+});
+test('hides errors before validation', () => {
+  const { result } = renderHook(() => useFormValidation({ email: '', password: '' }, validateAccount));
+  expect(result.current.errors).toEqual({});
+});
+test('reveals all current errors and returns false', () => {
+  const { result } = renderHook(() => useFormValidation({ email: '', password: '' }, validateAccount));
+  let valid;
+  act(() => { valid = result.current.validate(); });
+  expect(valid).toBe(false);
+  expect(result.current.errors).toEqual({ email: 'Enter a valid email', password: 'Use at least 8 characters' });
+});
+test('updates a field immutably and recalculates visible errors', () => {
+  const { result } = renderHook(() => useFormValidation({ email: '', password: '' }, validateAccount));
+  act(() => result.current.validate());
+  act(() => result.current.setValue('email', 'a@example.test'));
+  expect(result.current.values.email).toBe('a@example.test');
+  expect(result.current.errors.email).toBeUndefined();
+  expect(result.current.errors.password).toBe('Use at least 8 characters');
+});
+test('returns true when every field is valid', () => {
+  const { result } = renderHook(() => useFormValidation({ email: 'a@example.test', password: '12345678' }, validateAccount));
+  let valid;
+  act(() => { valid = result.current.validate(); });
+  expect(valid).toBe(true);
+  expect(result.current.errors).toEqual({});
+});
+test('reset restores values and hides errors', () => {
+  const { result } = renderHook(() => useFormValidation({ email: 'a@example.test', password: '12345678' }, validateAccount));
+  act(() => result.current.setValue('email', 'bad'));
+  act(() => result.current.validate());
+  act(() => result.current.reset());
+  expect(result.current.values.email).toBe('a@example.test');
+  expect(result.current.errors).toEqual({});
+});
+'''
+hints = ["Keep a `showErrors` flag and derive the error object from the current values.", "Use a functional update when changing one field."]
+explanation = "Errors are derived from the current values instead of copied into separate state, preventing stale validation messages after edits."
+
+[[questions]]
+id = "react-xc14"
+module = "react-forms-a11y"
+type = "code"
+difficulty = 2
+lang = "javascript"
+title = "First invalid field"
+prompt = '''
+Implement `firstInvalidField(errors, fieldOrder)`. Return the first field in `fieldOrder` whose error is a nonblank string. Ignore errors for fields not in the order and return `null` when no ordered field has an error. The caller can use the result to focus the first invalid input after submit.
+'''
+starter = '''
+function firstInvalidField(errors, fieldOrder) {
+  return null;
+}
+'''
+solution = '''
+function firstInvalidField(errors, fieldOrder) {
+  for (const field of fieldOrder) {
+    if (typeof errors[field] === 'string' && errors[field].trim() !== '') return field;
+  }
+  return null;
+}
+'''
+tests = '''
+test('returns the first invalid field in visual order', () => {
+  expect(firstInvalidField({ password: 'Required', email: 'Invalid' }, ['email', 'password'])).toBe('email');
+});
+test('skips blank error strings', () => {
+  expect(firstInvalidField({ email: '  ', password: 'Required' }, ['email', 'password'])).toBe('password');
+});
+test('ignores errors outside the field order', () => {
+  expect(firstInvalidField({ hidden: 'Invalid' }, ['email', 'password'])).toBeNull();
+});
+test('returns null when there are no errors', () => {
+  expect(firstInvalidField({}, ['email', 'password'])).toBeNull();
+});
+test('preserves exact field key', () => {
+  expect(firstInvalidField({ 'account-name': 'Required' }, ['account-name'])).toBe('account-name');
+});
+'''
+hints = ["Walk `fieldOrder`, not the keys of the error object.", "Treat whitespace-only strings as empty."]
+explanation = "Thứ tự field thường theo thứ tự người dùng nhìn thấy. Kết quả có thể dùng để gọi focus sau submit; việc focus DOM cần thực hiện trong component."
+
+[[questions]]
+id = "react-xc15"
+module = "react-testing-arch"
+type = "code"
+difficulty = 3
+lang = "javascript"
+title = "Undo and redo history hook"
+prompt = '''
+Implement `useHistory(initialValue)`, returning `{ present, canUndo, canRedo, set, undo, redo, reset }`.
+- `set(next)` pushes the current value to history and clears the redo stack; setting the same value by `Object.is` does nothing.
+- `undo()` and `redo()` move one value between stacks and do nothing at their boundaries.
+- `reset(next)` clears both stacks and sets the current value.
+Use `useReducer` and do not mutate history arrays.
+'''
+starter = '''
+function useHistory(initialValue) {
+  return { present: initialValue, canUndo: false, canRedo: false, set: () => {}, undo: () => {}, redo: () => {}, reset: () => {} };
+}
+'''
+solution = '''
+function historyReducer(state, action) {
+  switch (action.type) {
+    case 'set':
+      if (Object.is(state.present, action.value)) return state;
+      return { past: [...state.past, state.present], present: action.value, future: [] };
+    case 'undo':
+      if (state.past.length === 0) return state;
+      return {
+        past: state.past.slice(0, -1),
+        present: state.past[state.past.length - 1],
+        future: [state.present, ...state.future],
+      };
+    case 'redo':
+      if (state.future.length === 0) return state;
+      return {
+        past: [...state.past, state.present],
+        present: state.future[0],
+        future: state.future.slice(1),
+      };
+    case 'reset':
+      return { past: [], present: action.value, future: [] };
+    default:
+      return state;
+  }
+}
+function useHistory(initialValue) {
+  const [state, dispatch] = useReducer(historyReducer, { past: [], present: initialValue, future: [] });
+  return {
+    present: state.present,
+    canUndo: state.past.length > 0,
+    canRedo: state.future.length > 0,
+    set: value => dispatch({ type: 'set', value }),
+    undo: () => dispatch({ type: 'undo' }),
+    redo: () => dispatch({ type: 'redo' }),
+    reset: value => dispatch({ type: 'reset', value }),
+  };
+}
+'''
+tests = '''
+test('set records the previous value', () => {
+  const { result } = renderHook(() => useHistory('a'));
+  act(() => result.current.set('b'));
+  expect(result.current.present).toBe('b');
+  expect(result.current.canUndo).toBe(true);
+  expect(result.current.canRedo).toBe(false);
+});
+test('undo moves the current value to redo history', () => {
+  const { result } = renderHook(() => useHistory(1));
+  act(() => result.current.set(2));
+  act(() => result.current.undo());
+  expect(result.current.present).toBe(1);
+  expect(result.current.canRedo).toBe(true);
+});
+test('redo restores the next value', () => {
+  const { result } = renderHook(() => useHistory(1));
+  act(() => result.current.set(2));
+  act(() => result.current.undo());
+  act(() => result.current.redo());
+  expect(result.current.present).toBe(2);
+  expect(result.current.canRedo).toBe(false);
+});
+test('new edit after undo clears redo history', () => {
+  const { result } = renderHook(() => useHistory(1));
+  act(() => result.current.set(2));
+  act(() => result.current.undo());
+  act(() => result.current.set(3));
+  expect(result.current.present).toBe(3);
+  expect(result.current.canRedo).toBe(false);
+});
+test('setting the identical value creates no history entry', () => {
+  const { result } = renderHook(() => useHistory(1));
+  act(() => result.current.set(1));
+  expect(result.current.canUndo).toBe(false);
+});
+test('undo and redo are safe at boundaries; reset clears both', () => {
+  const { result } = renderHook(() => useHistory('a'));
+  act(() => result.current.undo());
+  act(() => result.current.set('b'));
+  act(() => result.current.reset('fresh'));
+  act(() => result.current.redo());
+  expect(result.current.present).toBe('fresh');
+  expect(result.current.canUndo).toBe(false);
+  expect(result.current.canRedo).toBe(false);
+});
+'''
+hints = ["Store `past`, `present`, and `future` in one reducer state.", "A new edit after undo must discard the old future branch."]
+explanation = "History là state transition phù hợp với reducer. Test riêng hook bằng renderHook/act để xác nhận hành vi undo-redo và giới hạn lịch sử."
+
+[[questions]]
+id = "react-x031"
+module = "react-server"
+type = "multiple"
+difficulty = 2
+prompt = "Khi truyền dữ liệu từ Server Component sang Client Component, quy tắc nào cần nhớ? (chọn nhiều)"
+options = ["Props qua ranh giới cần tuần tự hóa được", "Có thể giữ tương tác trong một client subtree nhỏ", "Server Function là ngoại lệ có thể chuyển tham chiếu gọi được", "Truyền callback JavaScript thông thường luôn an toàn", "`'use client'` đặt ở đầu module tạo boundary"]
+answer = [0, 1, 2, 4]
+explanation = "Ranh giới client-server yêu cầu props hỗ trợ serialization. Server Functions có cơ chế tham chiếu riêng; callback thông thường không thể gửi trực tiếp qua boundary."
+sources = ["react/reference/rsc/server-components", "react/reference/rsc/use-client", "react/reference/rsc/use-server"]
+
+[[questions]]
+id = "react-x032"
+module = "react-server"
+type = "multiple"
+difficulty = 2
+prompt = "Lợi ích hoặc yêu cầu nào gắn với Suspense và streaming SSR? (chọn nhiều)"
+options = ["Boundary có thể gửi fallback trước nội dung chậm", "Các vùng độc lập có thể hoàn tất theo thời điểm khác nhau", "Hydration mismatch vẫn cần được xử lý riêng", "Suspense tự sửa mọi khác biệt giữa server và client", "Fallback nên mô tả trạng thái chờ có ích"]
+answer = [0, 1, 2, 4]
+explanation = "Streaming cho phép trả dần các vùng và fallback. Nó không tự sửa hydration mismatch; output server và render client đầu vẫn cần nhất quán."
+sources = ["react/reference/react/suspense", "react/reference/react-dom/server/rendertopipeablestream", "react/reference/react-dom/client/hydrateroot"]
+
+[[questions]]
+id = "react-x033"
+module = "react-effects"
+type = "multiple"
+difficulty = 2
+prompt = "Effect tạo subscription theo `roomId`. Chọn các thực hành đúng. (chọn nhiều)"
+options = ["Cleanup subscription cũ trước khi đồng bộ với room mới", "Đặt mọi dependency cần thiết để effect không đọc closure cũ", "Đảm bảo setup-cleanup-setup vẫn cho một subscription đang hoạt động", "Bỏ cleanup vì Strict Mode chỉ chạy development", "Dùng Effect Event cho logic callback cần giá trị mới nhất nhưng không đổi subscription"]
+answer = [0, 1, 2, 4]
+explanation = "Effect phải khai báo reactive dependencies và cleanup đối xứng. Strict Mode giúp phát hiện lỗi sớm; Effect Event tách logic đọc giá trị mới nhất khỏi dependency của subscription."
+sources = ["react/reference/react/useeffect", "react/reference/react/strictmode", "react/reference/react/useeffectevent"]
+
+[[questions]]
+id = "react-x034"
+module = "react-forms-a11y"
+type = "multiple"
+difficulty = 2
+prompt = "Một form có validation phía client. Những bước nào giúp field lỗi dễ nhận biết và sửa? (chọn nhiều)"
+options = ["Có label gắn với input", "Gắn thông báo qua `aria-describedby`", "Đặt `aria-invalid` khi field có lỗi", "Sau submit lỗi, focus field lỗi đầu tiên", "Dùng màu đỏ duy nhất để báo lỗi"]
+answer = [0, 1, 2, 3]
+explanation = "Label, mô tả liên kết, trạng thái lỗi và focus giúp người dùng nhận biết rồi tới đúng vị trí cần sửa. Màu sắc cần đi cùng tín hiệu khác."
+
+[[questions]]
+id = "react-x035"
+module = "react-forms-a11y"
+type = "multiple"
+difficulty = 3
+prompt = "Một modal được render bằng portal. Những điều nào vẫn cần xử lý? (chọn nhiều)"
+options = ["Accessible name cho dialog", "Đưa focus vào dialog và quản lý focus bên trong", "Trả focus về nút mở dialog khi đóng", "Cho phép đóng bằng Escape nếu phù hợp", "Cho rằng portal tự tạo focus trap"]
+answer = [0, 1, 2, 3]
+explanation = "Portal chỉ đổi vị trí DOM. Nó không tự cung cấp semantics, focus trap, Escape hay khôi phục focus; event vẫn đi theo cây React."
+sources = ["react/reference/react-dom/createportal"]
+
+[[questions]]
+id = "react-x036"
+module = "react-testing-arch"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn cách truy vấn Testing Library phù hợp. (chọn nhiều)"
+options = ["`getByRole` cho phần tử cần có ngay", "`findByRole` khi phần tử sẽ xuất hiện bất đồng bộ", "`queryByRole` khi muốn kiểm tra phần tử hiện chưa có", "`getByTestId` luôn ưu tiên hơn role", "Dùng accessible name để phân biệt các nút cùng role"]
+answer = [0, 1, 2, 4]
+explanation = "`getBy` thất bại ngay nếu không có kết quả, `findBy` chờ bất đồng bộ, còn `queryBy` trả null khi không có. Role và name ưu tiên phản ánh accessibility."
+
+[[questions]]
+id = "react-x037"
+module = "react-patterns"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các nhận định hợp lý về state colocation và Context. (chọn nhiều)"
+options = ["Đặt state gần nơi dùng thường giảm số consumer phụ thuộc", "Lifting state up phù hợp khi vài component cần cùng một state", "Context value đổi có thể render lại consumer đang đọc context", "Context tự chọn field và chỉ notify đúng consumer field đó", "External store có selector hữu ích khi cần subscription chọn lọc"]
+answer = [0, 1, 2, 4]
+explanation = "Colocation và lifting state up giải quyết phạm vi chia sẻ nhỏ. Context không mặc định subscription theo field; store selector có thể cung cấp cập nhật chọn lọc với trade-off bổ sung."
+sources = ["react/reference/react/usecontext", "react/reference/react/usesyncexternalstore"]
+
+[[questions]]
+id = "react-x038"
+module = "react-perf"
+type = "multiple"
+difficulty = 3
+prompt = "Bạn viết selector dùng `useMemo` để lọc 20.000 hàng. Những thực hành nào đúng? (chọn nhiều)"
+options = ["Liệt kê đủ `items` và `filter` trong dependency", "Đo bằng Profiler trước/sau để kiểm tra lợi ích", "Giữ `items` identity ổn định nếu nội dung không đổi", "Bỏ dependency `filter` để cache lâu hơn", "Nhớ rằng `useMemo` là tối ưu hiệu năng, không phải nơi giữ state chuẩn"]
+answer = [0, 1, 2, 4]
+explanation = "Memoization chỉ hợp lệ khi dependencies phản ánh mọi đầu vào. Nó có thể tránh tính lại khi identity ổn định nhưng không thay thế state chuẩn hoặc đo lường."
+sources = ["react/reference/react/usememo", "react/reference/react/profiler"]
+
+[[questions]]
+id = "react-x039"
+module = "react-19"
+type = "fill"
+difficulty = 1
+prompt = "Hook nhận action và initial state, trả về state, hàm dispatch cùng trạng thái pending là `{{blank}}`."
+blanks = [["useActionState"]]
+explanation = "`useActionState(action, initialState)` trả về `[state, dispatchAction, isPending]`."
+sources = ["react/reference/react/useactionstate"]
+
+[[questions]]
+id = "react-x040"
+module = "react-19"
+type = "fill"
+difficulty = 2
+prompt = "Trong React 19, hook dùng để hiện state tạm trong lúc action đang xử lý là `{{blank}}`."
+blanks = [["useOptimistic"]]
+explanation = "`useOptimistic` tạo optimistic state trong thời gian chờ kết quả action/server."
+sources = ["react/reference/react/useoptimistic"]

@@ -1,0 +1,1035 @@
+id = "php-laravel"
+title = "PHP & Laravel"
+icon = "🐘"
+color = "#777bb4"
+group = "Backend"
+docs = ["php", "laravel~11"]
+description = "PHP hiện đại và các nền tảng thực hành Laravel 11: từ kiểu dữ liệu, OOP, request lifecycle đến Eloquent, validation, queue, cache và testing."
+
+[[modules]]
+id = "php-modern"
+title = "PHP hiện đại"
+description = "Type declarations, enum, readonly, match, named arguments, nullsafe operator và first-class callable."
+sources = ["php/language.types.declarations", "php/language.enumerations.basics", "php/language.oop5.properties", "php/control-structures.match", "php/functions.arguments", "php/functions.first_class_callable_syntax", "php/language.operators"]
+lesson = '''
+### Kiểu và cú pháp hiện đại
+Type declaration trên tham số, property và giá trị trả về giúp hợp đồng hàm rõ hơn. PHP hỗ trợ union types; enum có thể là pure hoặc backed enum. Readonly property chỉ khởi tạo một lần; readonly class có từ PHP 8.2. Match so sánh nghiêm ngặt và phải khớp một nhánh, nếu không sẽ ném UnhandledMatchError.
+
+| Cú pháp | Dùng khi |
+|---|---|
+| int|string | chấp nhận một trong các kiểu |
+| Status::Paid | trạng thái hữu hạn, có tên |
+| match ($value) | ánh xạ một biểu thức thành kết quả |
+| send(to: $email) | lời gọi dễ đọc với nhiều tham số |
+
+Ví dụ:
+    $label = match ($status) {
+        'paid' => 'Complete',
+        'pending' => 'Waiting',
+        default => 'Unknown',
+    };
+    $handler = $service->handle(...);
+
+Nullsafe operator ?. trả null khi vế trái null; nó không thay thế kiểm tra quyền truy cập hay validation. Named arguments gắn theo tên tham số và có thể bỏ tham số tùy chọn. First-class callable dùng cú pháp ... để tạo Closure có thể truyền đi. Lỗi thường gặp: nhầm match với switch về so sánh lỏng, hoặc cho rằng readonly làm object bất biến sâu.
+'''
+
+[[modules]]
+id = "php-oop"
+title = "OOP, Composer và PSR"
+description = "Encapsulation, interface, trait, autoload và quy ước PSR-4 trong dự án PHP."
+sources = ["php/language.oop5.basic", "php/language.oop5.interfaces", "php/language.oop5.traits", "php/language.oop5.autoload"]
+lesson = '''
+### Tổ chức mã PHP
+Class gom trạng thái và hành vi; interface mô tả hợp đồng mà nhiều class có thể thực hiện. Trait chia sẻ implementation theo chiều ngang, nhưng lạm dụng nhiều trait có thể khiến nguồn gốc hành vi khó theo dõi. Composer quản lý dependency và tạo autoloader từ cấu hình composer.json.
+
+| Thành phần | Vai trò | Ví dụ |
+|---|---|---|
+| interface | hợp đồng phương thức | PaymentGateway |
+| trait | chia sẻ hành vi | LogsActivity |
+| PSR-4 | ánh xạ namespace sang thư mục | App\\Services\\ → app/Services/ |
+
+Composer thường được chạy bằng composer dump-autoload sau khi đổi cấu hình autoload. Namespace và tên file nên tuân theo ánh xạ PSR-4 để class được tìm tự động. Trong package, khai báo dependency và phiên bản có ràng buộc rõ ràng; không commit thư mục vendor như mã nguồn ứng dụng. Lỗi hay gặp là lệch chữ hoa thường giữa namespace, tên class và đường dẫn; vấn đề này có thể chỉ lộ ra trên filesystem phân biệt hoa thường.
+'''
+
+[[modules]]
+id = "laravel-core"
+title = "Laravel căn bản"
+description = "Routing, controller, request lifecycle, middleware onion và Blade."
+sources = ["laravel~11/docs/11.x/routing", "laravel~11/docs/11.x/controllers", "laravel~11/docs/11.x/lifecycle", "laravel~11/docs/11.x/middleware", "laravel~11/docs/11.x/blade", "laravel~11/docs/11.x/container"]
+lesson = '''
+### Từ request đến response
+Trong Laravel 11, public/index.php nạp ứng dụng qua bootstrap/app.php; ứng dụng xử lý request, chạy middleware, khớp route, gọi controller và gửi response. Middleware có thể kiểm tra hoặc biến đổi request trước next, rồi xử lý response khi lời gọi next trả về — đây là cấu trúc onion.
+
+| Thành phần | Trách nhiệm |
+|---|---|
+| Route | ghép method và URI với handler |
+| Controller | điều phối xử lý cho một nhóm endpoint |
+| Middleware | kiểm tra hoặc bổ sung xử lý quanh request |
+| Blade | render view phía server |
+
+Ví dụ route có thể trỏ tới [UserController::class, 'show']; tham số {user} có thể được route model binding phân giải. Blade dùng {{ $name }} để escape HTML; cú pháp {!! !!} xuất HTML thô và chỉ phù hợp với nội dung đã tin cậy. Trong Laravel 11, cấu hình middleware thường đặt trong bootstrap/app.php. Lỗi thường gặp: coi middleware chỉ chạy trước controller, hoặc xuất dữ liệu người dùng bằng cú pháp Blade không escape.
+'''
+
+[[modules]]
+id = "laravel-data"
+title = "Eloquent và database"
+description = "Model, relationship, eager loading, migrations, query builder và vấn đề N+1."
+sources = ["laravel~11/docs/11.x/eloquent", "laravel~11/docs/11.x/eloquent-relationships", "laravel~11/docs/11.x/migrations", "laravel~11/docs/11.x/queries", "laravel~11/docs/11.x/collections"]
+lesson = '''
+### Truy vấn và quan hệ dữ liệu
+Eloquent model ánh xạ bảng; relationship mô tả liên kết như hasMany và belongsTo. Khi lặp qua nhiều model rồi đọc relationship chưa tải, mỗi lần đọc có thể phát sinh thêm query — đó là N+1. Eager loading bằng with('posts') tải quan hệ theo lô và thường giảm số query đáng kể.
+
+| Nhu cầu | Công cụ |
+|---|---|
+| thay đổi schema có lịch sử | migration |
+| truy vấn kiểu model | Eloquent |
+| truy vấn linh hoạt không cần model | Query Builder |
+| đọc quan hệ cho danh sách | with / load |
+
+Ví dụ:
+    $users = User::with('posts')->get();
+    $recent = DB::table('orders')->where('status', 'paid')->get();
+
+Migration nên có thao tác up/down phù hợp để thay đổi schema có thể kiểm soát. Query Builder bind giá trị an toàn, nhưng tên cột động không thể bind như value; whitelist cột sort từ input. Collection của Eloquent có API xử lý dữ liệu sau truy vấn, khác với việc xây query SQL. Lỗi thường gặp: bật eager loading nhưng truy cập một relationship khác, hoặc tạo query trong vòng lặp.
+'''
+
+[[modules]]
+id = "laravel-services"
+title = "Validation, auth và vận hành"
+description = "Validation, authentication/authorization, queue, cache và kiểm thử ứng dụng."
+sources = ["laravel~11/docs/11.x/validation", "laravel~11/docs/11.x/authentication", "laravel~11/docs/11.x/authorization", "laravel~11/docs/11.x/queues", "laravel~11/docs/11.x/cache", "laravel~11/docs/11.x/testing", "laravel~11/docs/11.x/database-testing", "laravel~11/docs/11.x/mocking"]
+lesson = '''
+### Các dịch vụ ứng dụng
+Validation kiểm tra input ở ranh giới request; dữ liệu được validate mới nên chuyển vào nghiệp vụ. Authentication xác định danh tính, còn authorization quyết định người đó được làm gì. Queue phù hợp việc chậm như gửi email; job cần cân nhắc retry và tính idempotent. Cache giảm công việc lặp, nhưng phải xác định key, thời hạn và cách invalidation.
+
+| Tác vụ | Gợi ý |
+|---|---|
+| xác thực input | Form Request hoặc Validator |
+| kiểm soát quyền | policy hoặc gate |
+| công việc nền | queue job và retry |
+| giảm truy vấn lặp | cache có TTL rõ ràng |
+| kiểm chứng hành vi | feature test và database test |
+
+Ví dụ:
+    $validated = $request->validate(['email' => ['required', 'email']]);
+    SendReceipt::dispatch($order);
+
+Laravel testing có thể kiểm tra response HTTP, database và queue bằng assertion hoặc fake tương ứng. Unit test phù hợp logic thuần; feature test kiểm tra nhiều thành phần cùng hoạt động. Lỗi thường gặp: nhầm đăng nhập thành được phép truy cập, cache dữ liệu quyền quá lâu, hoặc retry job gây tác dụng phụ trùng lặp.
+'''
+
+[[questions]]
+id = "php-001"
+module = "php-modern"
+type = "single"
+difficulty = 1
+prompt = "Hàm nhận biết email và số điện thoại, nhưng không hỗ trợ kiểu nào khác. Khai báo nào mô tả hợp đồng trực tiếp nhất?"
+options = ["mixed", "string|int", "object", "callable"]
+answer = [1]
+explanation = "Union type string|int giới hạn đầu vào vào đúng hai kiểu được hỗ trợ."
+sources = ["php/language.types.declarations"]
+
+[[questions]]
+id = "php-002"
+module = "php-modern"
+type = "single"
+difficulty = 2
+prompt = "Backed enum có giá trị string hữu ích nhất trong trường hợp nào?"
+options = ["Cần cho phép giá trị tùy ý do người dùng nhập", "Cần tập trạng thái hữu hạn đồng thời lưu mã ổn định vào database hoặc API", "Cần thay mọi class bằng enum", "Cần tự động dịch mọi label"]
+answer = [1]
+explanation = "Backed enum gắn mỗi case với một scalar ổn định để lưu hoặc trao đổi, trong khi vẫn giữ tập giá trị hữu hạn."
+sources = ["php/language.enumerations.backed"]
+
+[[questions]]
+id = "php-003"
+module = "php-modern"
+type = "single"
+difficulty = 2
+prompt = "Điều gì xảy ra nếu biểu thức match không khớp arm nào và không có default?"
+options = ["Trả về null", "Chạy arm đầu tiên", "Ném UnhandledMatchError", "Ép sang false"]
+answer = [2]
+explanation = "match phải khớp một arm; nếu không có arm tương ứng và thiếu default, PHP ném UnhandledMatchError."
+sources = ["php/control-structures.match"]
+
+[[questions]]
+id = "php-004"
+module = "php-modern"
+type = "single"
+difficulty = 2
+prompt = "Giá trị nào dưới đây KHÔNG làm nullsafe operator dừng chuỗi truy cập?"
+options = ["Vế trái là null", "Vế trái là một object hợp lệ", "Một property không tồn tại trên object", "Vế trái là false"]
+answer = [1]
+explanation = "Nullsafe chỉ short-circuit khi vế trái là null; nó không xử lý property thiếu hoặc thay thế kiểm tra kiểu."
+sources = ["php/language.operators"]
+
+[[questions]]
+id = "php-005"
+module = "php-modern"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các nhận định đúng về cú pháp PHP hiện đại."
+options = ["Named arguments gọi tham số theo tên và cho phép bỏ tham số tùy chọn", "Readonly property chỉ có thể được khởi tạo một lần", "match dùng so sánh lỏng như switch", "First-class callable tạo một Closure có thể truyền như giá trị", "Pure enum bắt buộc có backing value dạng int"]
+answer = [0, 1, 3]
+explanation = "Named argument giúp lời gọi rõ nghĩa, readonly giới hạn tái gán và first-class callable đóng gói callable. match dùng so sánh nghiêm ngặt; pure enum không có backing value."
+sources = ["php/functions.arguments", "php/functions.first_class_callable_syntax", "php/language.oop5.properties", "php/language.enumerations.basics", "php/control-structures.match"]
+
+[[questions]]
+id = "php-006"
+module = "php-modern"
+type = "fill"
+difficulty = 1
+prompt = '''
+Hoàn thành cú pháp ánh xạ trạng thái bằng biểu thức match:
+
+$statusLabel = {{blank}} ($status) {
+    'paid' => 'Complete',
+    default => 'Unknown',
+};
+'''
+blanks = [["match"]]
+explanation = "match là biểu thức nên trả về giá trị của arm khớp."
+sources = ["php/control-structures.match"]
+
+[[questions]]
+id = "php-007"
+module = "php-modern"
+type = "essay"
+difficulty = 2
+prompt = "So sánh match với switch khi ánh xạ trạng thái nghiệp vụ; nêu một khác biệt về so sánh và một cách xử lý trường hợp không khớp."
+keywords = [["so sánh nghiêm ngặt", "strict comparison", "so sánh bằng ==="], ["default", "arm mặc định", "nhánh mặc định"], ["UnhandledMatchError", "lỗi khi không khớp"]]
+min_keywords = 2
+model_answer = "match dùng so sánh nghiêm ngặt, trả kết quả trực tiếp như một biểu thức. Có thể thêm default để xử lý trạng thái chưa biết; nếu không có arm khớp và không có default, PHP ném UnhandledMatchError."
+explanation = "Câu trả lời cần phân biệt semantics quan trọng của match và nêu cách xử lý exhaustiveness."
+sources = ["php/control-structures.match"]
+
+[[questions]]
+id = "php-008"
+module = "php-oop"
+type = "single"
+difficulty = 1
+prompt = "Nhiều gateway thanh toán khác nhau cần cùng cung cấp phương thức charge. Cấu trúc nào phù hợp để định nghĩa hợp đồng chung?"
+options = ["Trait", "Interface", "Global constant", "Composer script"]
+answer = [1]
+explanation = "Interface mô tả các phương thức mà mọi implementation phải cung cấp."
+sources = ["php/language.oop5.interfaces"]
+
+[[questions]]
+id = "php-009"
+module = "php-oop"
+type = "single"
+difficulty = 2
+prompt = "Trait phù hợp nhất với mục tiêu nào?"
+options = ["Tạo hợp đồng bắt buộc cho nhiều class", "Chia sẻ một nhóm implementation giữa các class không cùng cây kế thừa", "Quản lý phiên bản dependency", "Tạo bảng database"]
+answer = [1]
+explanation = "Trait tái sử dụng implementation; interface mới là hợp đồng kiểu."
+sources = ["php/language.oop5.traits"]
+
+[[questions]]
+id = "php-010"
+module = "php-oop"
+type = "single"
+difficulty = 2
+prompt = "Một class App\\Services\\Mailer nằm trong app/Services/Mailer.php. Cấu hình Composer PSR-4 ánh xạ App\\ sang app/. Vì sao class tự động được nạp?"
+options = ["Composer ánh xạ namespace prefix tới thư mục và chuyển phần namespace còn lại thành đường dẫn", "PHP quét mọi file trong dự án ở mỗi request", "PSR-4 yêu cầu khai báo class trong global scope", "Trait Mailer buộc PHP nạp file"]
+answer = [0]
+explanation = "Composer autoloader dùng ánh xạ PSR-4 để suy ra file từ namespace và tên class."
+sources = ["php/language.oop5.autoload"]
+
+[[questions]]
+id = "php-011"
+module = "php-oop"
+type = "multiple"
+difficulty = 2
+prompt = "Những lợi ích nào hợp lý khi dự án dùng Composer autoload theo PSR-4?"
+options = ["Có thể nạp class theo namespace mà không require từng file thủ công", "Namespace prefix được ánh xạ tới một hoặc nhiều thư mục", "Composer đảm bảo mọi class đều không có bug", "Tên class và đường dẫn cần tuân theo quy ước ánh xạ", "PSR-4 tự tạo schema database"]
+answer = [0, 1, 3]
+explanation = "PSR-4 quy định cách ánh xạ class sang đường dẫn; nó không kiểm tra chất lượng logic hay tạo database."
+sources = ["php/language.oop5.autoload"]
+
+[[questions]]
+id = "php-012"
+module = "php-oop"
+type = "fill"
+difficulty = 1
+prompt = "Từ khóa PHP dùng để khai báo một hợp đồng phương thức mà class có thể implement là {{blank}}."
+blanks = [["interface"]]
+explanation = "Interface khai báo hợp đồng; class cung cấp implementation."
+sources = ["php/language.oop5.interfaces"]
+
+[[questions]]
+id = "php-013"
+module = "laravel-core"
+type = "single"
+difficulty = 1
+prompt = "Trong route GET /users/{id}, giá trị nào mô tả phần động của URI?"
+options = ["{id}", "Controller", "Middleware", "View"]
+answer = [0]
+explanation = "Route parameter trong URI được đặt trong ngoặc nhọn và chuyển cho handler hoặc controller."
+sources = ["laravel~11/docs/11.x/routing"]
+
+[[questions]]
+id = "php-014"
+module = "laravel-core"
+type = "single"
+difficulty = 2
+prompt = "Một middleware cần kiểm tra request trước controller và thêm header sau khi controller tạo response. Cách tổ chức đúng là gì?"
+options = ["Gọi next(request), sau đó biến đổi response được trả về", "Chỉ chạy mã sau next và không gọi next", "Đặt kiểm tra trong migration", "Render Blade trước khi route khớp"]
+answer = [0]
+explanation = "Middleware bao quanh next: xử lý request trước, gọi downstream, rồi xử lý response."
+sources = ["laravel~11/docs/11.x/middleware"]
+
+[[questions]]
+id = "php-015"
+module = "laravel-core"
+type = "single"
+difficulty = 2
+prompt = "Template Blade hiển thị tên lấy từ input người dùng. Cú pháp nào mặc định escape nội dung HTML?"
+options = ["{!! $name !!}", "{{ $name }}", "{% $name %}", "@raw($name)"]
+answer = [1]
+explanation = "Cú pháp {{ }} của Blade escape HTML. Cú pháp {!! !!} xuất nội dung thô và cần dữ liệu tin cậy."
+sources = ["laravel~11/docs/11.x/blade"]
+
+[[questions]]
+id = "php-016"
+module = "laravel-core"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các bước hợp lý trong request lifecycle Laravel."
+options = ["Entry point nạp ứng dụng từ bootstrap/app.php", "Middleware có thể chạy trước và sau route handler qua next", "Controller luôn được gọi trước khi route được khớp", "Ứng dụng gửi response sau khi handler hoàn tất", "Blade quyết định mọi route"]
+answer = [0, 1, 3]
+explanation = "Ứng dụng được nạp trước khi request qua middleware và route; handler tạo response rồi response được gửi."
+sources = ["laravel~11/docs/11.x/lifecycle", "laravel~11/docs/11.x/middleware"]
+
+[[questions]]
+id = "php-017"
+module = "laravel-core"
+type = "fill"
+difficulty = 1
+prompt = "Trong Laravel 11, file cấu hình khởi động ứng dụng và thường cấu hình middleware là {{blank}}."
+blanks = [["bootstrap/app.php"]]
+explanation = "Laravel 11 dùng bootstrap/app.php để cấu hình và tạo ứng dụng."
+sources = ["laravel~11/docs/11.x/lifecycle", "laravel~11/docs/11.x/middleware"]
+
+[[questions]]
+id = "php-018"
+module = "laravel-core"
+type = "code"
+difficulty = 3
+lang = "php"
+title = "Service container tối giản"
+prompt = '''
+Viết class MiniContainer với bind(string $id, callable $factory), singleton(string $id, callable $factory) và resolve(string $id): mixed. Factory nhận container hiện tại làm tham số. bind tạo instance mới mỗi lần resolve; singleton chỉ gọi factory lần đầu rồi trả lại đúng instance đó. Đăng ký lại một id phải thay binding và xóa instance singleton cũ. Resolve id chưa đăng ký ném InvalidArgumentException.
+'''
+starter = '''
+class MiniContainer {
+    public function bind(string $id, callable $factory): void {}
+    public function singleton(string $id, callable $factory): void {}
+    public function resolve(string $id): mixed { return null; }
+}
+'''
+solution = '''
+class MiniContainer {
+    private array $bindings = [];
+    private array $instances = [];
+
+    private function register(string $id, callable $factory, bool $singleton): void {
+        $this->bindings[$id] = [
+            'factory' => Closure::fromCallable($factory),
+            'singleton' => $singleton,
+        ];
+        unset($this->instances[$id]);
+    }
+
+    public function bind(string $id, callable $factory): void {
+        $this->register($id, $factory, false);
+    }
+
+    public function singleton(string $id, callable $factory): void {
+        $this->register($id, $factory, true);
+    }
+
+    public function resolve(string $id): mixed {
+        if (!array_key_exists($id, $this->bindings)) {
+            throw new InvalidArgumentException('Unbound service: ' . $id);
+        }
+        $binding = $this->bindings[$id];
+        if (!$binding['singleton']) {
+            return ($binding['factory'])($this);
+        }
+        if (!array_key_exists($id, $this->instances)) {
+            $this->instances[$id] = ($binding['factory'])($this);
+        }
+        return $this->instances[$id];
+    }
+}
+'''
+tests = '''
+test('bind tao instance moi cho moi lan resolve', function () {
+    $container = new MiniContainer();
+    $container->bind('token', fn () => new stdClass());
+    expect($container->resolve('token') === $container->resolve('token'))->toBeFalse();
+});
+
+test('singleton giu cung instance', function () {
+    $container = new MiniContainer();
+    $container->singleton('token', fn () => new stdClass());
+    expect($container->resolve('token') === $container->resolve('token'))->toBeTrue();
+});
+
+test('factory nhan container de resolve dependency', function () {
+    $container = new MiniContainer();
+    $container->singleton('prefix', fn () => 'api');
+    $container->bind('service', fn ($c) => $c->resolve('prefix') . '-service');
+    expect($container->resolve('service'))->toBe('api-service');
+});
+
+test('dang ky lai xoa singleton cu', function () {
+    $container = new MiniContainer();
+    $container->singleton('value', fn () => 'old');
+    expect($container->resolve('value'))->toBe('old');
+    $container->singleton('value', fn () => 'new');
+    expect($container->resolve('value'))->toBe('new');
+});
+
+test('id chua dang ky nem exception', function () {
+    expect(fn () => (new MiniContainer())->resolve('missing'))->toThrow(InvalidArgumentException::class);
+});
+'''
+hints = ["Lưu mỗi binding cùng factory và cờ singleton.", "Dùng array_key_exists để phân biệt instance đã cache với giá trị null."]
+explanation = "Container giải quyết dependency qua factory; singleton là chính sách vòng đời của binding."
+sources = ["laravel~11/docs/11.x/container"]
+
+[[questions]]
+id = "php-019"
+module = "laravel-core"
+type = "code"
+difficulty = 3
+lang = "php"
+title = "Middleware onion pipeline"
+prompt = '''
+Viết runPipeline(array $middlewares, callable $destination, mixed $request): mixed. Mỗi middleware là callable nhận (request, next). Middleware đầu tiên trong mảng là lớp ngoài cùng; next chuyển request xuống lớp kế, response quay ngược qua các lớp. Middleware có thể short-circuit bằng cách không gọi next. Giữ thứ tự before/after đúng và trả response cuối cùng.
+'''
+starter = '''
+function runPipeline(array $middlewares, callable $destination, mixed $request): mixed {
+    return $destination($request);
+}
+'''
+solution = '''
+function runPipeline(array $middlewares, callable $destination, mixed $request): mixed {
+    $next = static fn (mixed $value): mixed => $destination($value);
+    foreach (array_reverse($middlewares) as $middleware) {
+        $downstream = $next;
+        $next = static fn (mixed $value): mixed => $middleware($value, $downstream);
+    }
+    return $next($request);
+}
+'''
+tests = '''
+test('middleware boc theo thu tu va response quay nguoc', function () {
+    $events = [];
+    $a = function ($request, $next) use (&$events) {
+        $events[] = 'A before';
+        $response = $next($request . 'A');
+        $events[] = 'A after';
+        return $response . 'a';
+    };
+    $b = function ($request, $next) use (&$events) {
+        $events[] = 'B before';
+        $response = $next($request . 'B');
+        $events[] = 'B after';
+        return $response . 'b';
+    };
+    $result = runPipeline([$a, $b], function ($request) use (&$events) {
+        $events[] = 'destination';
+        return 'done:' . $request;
+    }, 'x');
+    expect($result)->toBe('done:xABba');
+    expect($events)->toEqual(['A before', 'B before', 'destination', 'B after', 'A after']);
+});
+
+test('pipeline rong goi thang destination', function () {
+    expect(runPipeline([], fn ($request) => $request . '!', 'ok'))->toBe('ok!');
+});
+
+test('middleware co the short circuit', function () {
+    $called = false;
+    $stop = fn ($request, $next) => 'blocked';
+    $destination = function ($request) use (&$called) {
+        $called = true;
+        return $request;
+    };
+    expect(runPipeline([$stop], $destination, 'x'))->toBe('blocked');
+    expect($called)->toBeFalse();
+});
+
+test('request duoc truyen xuong va response duoc bien doi', function () {
+    $middleware = fn ($request, $next) => strtoupper($next($request));
+    expect(runPipeline([$middleware], fn ($request) => 'hello ' . $request, 'world'))->toBe('HELLO WORLD');
+});
+'''
+hints = ["Bắt đầu bằng destination rồi bọc middleware theo thứ tự ngược.", "Mỗi lớp gọi next để nhận response downstream rồi mới biến đổi response."]
+explanation = "Cấu trúc onion cho phép middleware xử lý cả request đi vào lẫn response đi ra."
+sources = ["laravel~11/docs/11.x/middleware"]
+
+[[questions]]
+id = "php-020"
+module = "laravel-core"
+type = "code"
+difficulty = 3
+lang = "php"
+title = "Khớp route động"
+prompt = '''
+Viết matchRoute(string $pattern, string $path): ?array cho route dạng /users/{id} và segment tùy chọn như /posts/{slug?}. Trả về mảng tên tham số sang giá trị chuỗi; trả null nếu không khớp. Segment tùy chọn chỉ được bỏ qua khi nó là toàn bộ segment cuối; bỏ segment thì không có key tương ứng. So khớp chính xác, chấp nhận slash cuối bằng cách bỏ slash biên. Input chỉ là path, không có query string.
+'''
+starter = '''
+function matchRoute(string $pattern, string $path): ?array {
+    return null;
+}
+'''
+solution = '''
+function matchRoute(string $pattern, string $path): ?array {
+    $patternParts = $pattern === '/' ? [] : explode('/', trim($pattern, '/'));
+    $pathParts = $path === '/' ? [] : explode('/', trim($path, '/'));
+    $params = [];
+    $pathIndex = 0;
+
+    foreach ($patternParts as $segment) {
+        if (preg_match('/^\\{([A-Za-z_][A-Za-z0-9_]*)(\\?)?\\}$/', $segment, $matches)) {
+            $name = $matches[1];
+            $optional = isset($matches[2]) && $matches[2] === '?';
+            if (!array_key_exists($pathIndex, $pathParts)) {
+                if ($optional) {
+                    continue;
+                }
+                return null;
+            }
+            $params[$name] = $pathParts[$pathIndex];
+            $pathIndex++;
+            continue;
+        }
+
+        if (!array_key_exists($pathIndex, $pathParts) || $pathParts[$pathIndex] !== $segment) {
+            return null;
+        }
+        $pathIndex++;
+    }
+
+    return $pathIndex === count($pathParts) ? $params : null;
+}
+'''
+tests = '''
+test('khop parameter bat buoc', function () {
+    expect(matchRoute('/users/{id}', '/users/42'))->toEqual(['id' => '42']);
+});
+
+test('segment tuy chon co gia tri', function () {
+    expect(matchRoute('/posts/{slug?}', '/posts/hello-world'))->toEqual(['slug' => 'hello-world']);
+});
+
+test('segment tuy chon co the vang mat', function () {
+    expect(matchRoute('/posts/{slug?}', '/posts'))->toEqual([]);
+});
+
+test('khong khop literal hoac con du segment', function () {
+    expect(matchRoute('/users/{id}', '/teams/42'))->toBeNull();
+    expect(matchRoute('/users/{id}', '/users/42/edit'))->toBeNull();
+});
+
+test('ho tro nhieu parameter va slash cuoi', function () {
+    expect(matchRoute('/users/{id}/posts/{slug?}', '/users/7/posts/intro/'))->toEqual(['id' => '7', 'slug' => 'intro']);
+});
+
+test('root route', function () {
+    expect(matchRoute('/', '/'))->toEqual([]);
+});
+'''
+hints = ["Tách pattern và path thành segment sau khi trim slash ở hai đầu.", "Dùng regex nhận diện segment {name} và {name?}; không ghép chuỗi regex cho cả route."]
+explanation = "Khớp segment riêng giúp giữ literal an toàn và xử lý tùy chọn rõ ràng."
+sources = ["laravel~11/docs/11.x/routing"]
+
+[[questions]]
+id = "php-021"
+module = "laravel-data"
+type = "single"
+difficulty = 1
+prompt = "Một danh sách user được lặp qua, mỗi vòng đọc user->posts nhưng chưa eager load. Triệu chứng có khả năng nhất là gì?"
+options = ["Một query cố định cho toàn bộ hệ thống", "N+1 query do mỗi user phát sinh thêm query quan hệ", "Migration chạy lại mỗi vòng", "Cache tự invalidation"]
+answer = [1]
+explanation = "Truy cập relationship chưa tải trong vòng lặp có thể phát sinh một query cho mỗi model."
+sources = ["laravel~11/docs/11.x/eloquent-relationships"]
+
+[[questions]]
+id = "php-022"
+module = "laravel-data"
+type = "single"
+difficulty = 2
+prompt = "Cần lấy danh sách user kèm posts và tránh lazy query theo từng user. Nên dùng gì?"
+options = ["User::with('posts')->get()", "User::all() rồi truy cập posts trong vòng lặp", "Chạy migration trước mỗi request", "Dùng cache forever cho mọi dữ liệu"]
+answer = [0]
+explanation = "with eager-load relationship theo lô trước khi duyệt collection."
+sources = ["laravel~11/docs/11.x/eloquent-relationships"]
+
+[[questions]]
+id = "php-023"
+module = "laravel-data"
+type = "single"
+difficulty = 2
+prompt = "Khi người dùng chọn cột sắp xếp, vì sao không nên đưa trực tiếp tên cột từ input vào raw SQL?"
+options = ["Tên cột luôn được tự động bind như value", "Giá trị bind không thay thế identifier; cần ánh xạ hoặc whitelist tên cột hợp lệ", "Query Builder không hỗ trợ orderBy", "Migration sẽ escape mọi input"]
+answer = [1]
+explanation = "Parameter binding bảo vệ giá trị, không biến một identifier tùy ý thành tên cột an toàn."
+sources = ["laravel~11/docs/11.x/queries"]
+
+[[questions]]
+id = "php-024"
+module = "laravel-data"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các phát biểu đúng về Eloquent và database."
+options = ["Migration lưu lịch sử thay đổi schema có thể áp dụng theo thứ tự", "Eager loading thường giảm query lặp khi đọc relationship cho nhiều model", "Query Builder tự động biến mọi tên cột từ input thành identifier an toàn", "Relationship mô tả liên kết giữa các model", "Collection luôn trì hoãn query tới database"]
+answer = [0, 1, 3]
+explanation = "Migration quản lý schema, relationship mô tả liên kết và eager loading giảm N+1. Collection xử lý kết quả; không phải lúc nào cũng là query builder lười."
+sources = ["laravel~11/docs/11.x/migrations", "laravel~11/docs/11.x/eloquent-relationships", "laravel~11/docs/11.x/queries"]
+
+[[questions]]
+id = "php-025"
+module = "laravel-data"
+type = "fill"
+difficulty = 1
+prompt = "Eloquent method thường dùng để eager load relationship ngay trong truy vấn là {{blank}}."
+blanks = [["with"]]
+explanation = "with('relationship') nạp quan hệ cùng truy vấn model."
+sources = ["laravel~11/docs/11.x/eloquent-relationships"]
+
+[[questions]]
+id = "php-026"
+module = "laravel-data"
+type = "code"
+difficulty = 3
+lang = "php"
+title = "Collection mini fluent"
+prompt = '''
+Viết MiniCollection nhận array và cung cấp map(callable), filter(?callable), pluck(string $key), groupBy(string|callable) và all(). Các thao tác trả MiniCollection mới và giữ key gốc khi phù hợp. map callback nhận (item, key); filter callback nhận (item, key), còn filter không callback giữ truthy item. pluck đọc field từ array hoặc public property của object; field thiếu thành null. groupBy nhận tên field hoặc callback (item, key), tạo nhóm theo giá trị scalar và giữ key gốc trong từng nhóm.
+'''
+starter = '''
+class MiniCollection {
+    public function __construct(array $items) {}
+    public function map(callable $callback): self { return $this; }
+    public function filter(?callable $callback = null): self { return $this; }
+    public function pluck(string $key): self { return $this; }
+    public function groupBy(string|callable $selector): self { return $this; }
+    public function all(): array { return []; }
+}
+'''
+solution = '''
+class MiniCollection {
+    private array $items;
+
+    public function __construct(array $items) {
+        $this->items = $items;
+    }
+
+    public function map(callable $callback): self {
+        $result = [];
+        foreach ($this->items as $key => $item) {
+            $result[$key] = $callback($item, $key);
+        }
+        return new self($result);
+    }
+
+    public function filter(?callable $callback = null): self {
+        $result = [];
+        foreach ($this->items as $key => $item) {
+            $keep = $callback === null ? (bool) $item : (bool) $callback($item, $key);
+            if ($keep) {
+                $result[$key] = $item;
+            }
+        }
+        return new self($result);
+    }
+
+    private function valueFrom(mixed $item, string $key): mixed {
+        if (is_array($item)) {
+            return $item[$key] ?? null;
+        }
+        if (is_object($item)) {
+            $values = get_object_vars($item);
+            return array_key_exists($key, $values) ? $values[$key] : null;
+        }
+        return null;
+    }
+
+    public function pluck(string $key): self {
+        $result = [];
+        foreach ($this->items as $itemKey => $item) {
+            $result[$itemKey] = $this->valueFrom($item, $key);
+        }
+        return new self($result);
+    }
+
+    public function groupBy(string|callable $selector): self {
+        $groups = [];
+        foreach ($this->items as $key => $item) {
+            $group = is_callable($selector)
+                ? $selector($item, $key)
+                : $this->valueFrom($item, $selector);
+            if ($group === null) {
+                $group = '';
+            } elseif (is_bool($group)) {
+                $group = (int) $group;
+            } elseif (!is_int($group) && !is_string($group)) {
+                $group = (string) $group;
+            }
+            $groups[$group][$key] = $item;
+        }
+        return new self($groups);
+    }
+
+    public function all(): array {
+        return $this->items;
+    }
+}
+'''
+tests = '''
+test('map giu key va nhan item va key', function () {
+    $result = (new MiniCollection([4 => 2, 7 => 3]))
+        ->map(fn ($item, $key) => $item * $key)
+        ->all();
+    expect($result)->toEqual([4 => 8, 7 => 21]);
+});
+
+test('filter voi callback va mac dinh', function () {
+    expect((new MiniCollection([1, 2, 3, 4]))->filter(fn ($n) => $n % 2 === 0)->all())->toEqual([1 => 2, 3 => 4]);
+    expect((new MiniCollection([0, 'x', '', 2]))->filter()->all())->toEqual([1 => 'x', 3 => 2]);
+});
+
+test('pluck doc array va object va giu key', function () {
+    $object = (object) ['name' => 'Bo'];
+    $items = new MiniCollection([3 => ['name' => 'An'], 8 => $object, 9 => []]);
+    expect($items->pluck('name')->all())->toEqual([3 => 'An', 8 => 'Bo', 9 => null]);
+});
+
+test('groupBy theo field giu key item', function () {
+    $items = new MiniCollection([
+        5 => ['role' => 'admin', 'name' => 'An'],
+        8 => ['role' => 'user', 'name' => 'Bo'],
+        9 => ['role' => 'admin', 'name' => 'Chi'],
+    ]);
+    expect($items->groupBy('role')->all())->toEqual([
+        'admin' => [5 => ['role' => 'admin', 'name' => 'An'], 9 => ['role' => 'admin', 'name' => 'Chi']],
+        'user' => [8 => ['role' => 'user', 'name' => 'Bo']],
+    ]);
+});
+
+test('cac phep bien doi chain duoc', function () {
+    $result = (new MiniCollection([
+        ['name' => 'An', 'active' => true],
+        ['name' => 'Bo', 'active' => false],
+        ['name' => 'Chi', 'active' => true],
+    ]))->filter(fn ($item) => $item['active'])->pluck('name')->map(fn ($name) => strtoupper($name))->all();
+    expect($result)->toEqual([0 => 'AN', 2 => 'CHI']);
+});
+
+test('groupBy chap nhan callback', function () {
+    $result = (new MiniCollection([1, 2, 3, 4]))->groupBy(fn ($n) => $n % 2 ? 'odd' : 'even')->all();
+    expect($result)->toEqual(['odd' => [0 => 1, 2 => 3], 'even' => [1 => 2, 3 => 4]]);
+});
+'''
+hints = ["Viết mỗi phép biến đổi bằng vòng lặp để chủ động giữ key.", "Dùng get_object_vars để chỉ đọc public property của object."]
+explanation = "Collection fluent đóng gói thao tác trên mảng và trả collection mới để chain."
+sources = ["laravel~11/docs/11.x/collections"]
+
+[[questions]]
+id = "php-027"
+module = "laravel-data"
+type = "code"
+difficulty = 3
+lang = "php"
+title = "Phát hiện query dạng N+1"
+prompt = '''
+Viết detectNPlusOne(array $queryLog, int $threshold = 3): array. Log là danh sách SQL query dạng string. Chuẩn hóa chữ thường, khoảng trắng, dấu chấm phẩy cuối và literal số hoặc chuỗi nháy đơn thành dấu ?. Chỉ xét câu SELECT; nhóm query theo SQL đã chuẩn hóa. Trả associative array normalized SQL => số lần xuất hiện cho những nhóm có count >= threshold, theo thứ tự nhóm xuất hiện đầu tiên. Đây là heuristic phát hiện cùng shape query lặp, không cần phân tích SQL đầy đủ.
+'''
+starter = '''
+function detectNPlusOne(array $queryLog, int $threshold = 3): array {
+    return [];
+}
+'''
+solution = '''
+function detectNPlusOne(array $queryLog, int $threshold = 3): array {
+    $counts = [];
+    foreach ($queryLog as $sql) {
+        if (!is_string($sql)) {
+            continue;
+        }
+        $normalized = strtolower(trim($sql));
+        $normalized = preg_replace('/;\\s*$/', '', $normalized);
+        $normalized = preg_replace('/\\s+/', ' ', $normalized);
+        $normalized = preg_replace("/'[^']*'/", '?', $normalized);
+        $normalized = preg_replace('/\\b[0-9]+(?:\\.[0-9]+)?\\b/', '?', $normalized);
+        $normalized = preg_replace('/\\s*=\\s*/', ' = ', $normalized);
+        if (!preg_match('/^select\\b/', $normalized)) {
+            continue;
+        }
+        $counts[$normalized] = ($counts[$normalized] ?? 0) + 1;
+    }
+
+    $repeated = [];
+    foreach ($counts as $query => $count) {
+        if ($count >= $threshold) {
+            $repeated[$query] = $count;
+        }
+    }
+    return $repeated;
+}
+'''
+tests = '''
+test('nhom select theo shape va thay literal bang dau hoi', function () {
+    $queries = [
+        "SELECT * FROM posts WHERE user_id = 1;",
+        "select *  from posts where user_id=2",
+        "SELECT * FROM posts WHERE user_id = 3",
+    ];
+    expect(detectNPlusOne($queries))->toEqual(['select * from posts where user_id = ?' => 3]);
+});
+
+test('mac dinh khong tra nhom it hon ba lan', function () {
+    $queries = [
+        'select * from posts where user_id = 1',
+        'select * from posts where user_id = 2',
+    ];
+    expect(detectNPlusOne($queries))->toEqual([]);
+});
+
+test('threshold tuy chinh', function () {
+    $queries = [
+        "select * from users where email = 'a@example.com'",
+        "select * from users where email = 'b@example.com'",
+    ];
+    expect(detectNPlusOne($queries, 2))->toEqual(['select * from users where email = ?' => 2]);
+});
+
+test('bo qua query khong phai select', function () {
+    $queries = [
+        'update posts set title = 1',
+        'insert into posts (title) values (2)',
+        'delete from posts where id = 3',
+    ];
+    expect(detectNPlusOne($queries, 1))->toEqual([]);
+});
+
+test('giu thu tu nhom theo lan xuat hien dau tien', function () {
+    $queries = [
+        'select * from comments where post_id = 1',
+        'select * from posts where user_id = 1',
+        'select * from comments where post_id = 2',
+        'select * from posts where user_id = 2',
+        'select * from posts where user_id = 3',
+        'select * from comments where post_id = 3',
+    ];
+    expect(array_keys(detectNPlusOne($queries)))->toEqual([
+        'select * from comments where post_id = ?',
+        'select * from posts where user_id = ?',
+    ]);
+});
+
+test('dau nhay don va chuoi nhieu khoang trang duoc chuan hoa', function () {
+    $queries = [
+        "SELECT name FROM users WHERE name = 'An Le'",
+        "select  name from users where name = 'Bo Tran'",
+        "SELECT name FROM users WHERE name = 'Chi'",
+    ];
+    expect(detectNPlusOne($queries))->toEqual(['select name from users where name = ?' => 3]);
+});
+'''
+hints = ["Chuẩn hóa query trước, rồi mới đếm theo chuỗi chuẩn hóa.", "Giữ mảng đếm có thứ tự và lọc theo threshold sau khi duyệt log."]
+explanation = "N+1 thường tạo nhiều query cùng cấu trúc nhưng khác literal khóa liên kết."
+sources = ["laravel~11/docs/11.x/eloquent-relationships"]
+
+[[questions]]
+id = "php-028"
+module = "laravel-services"
+type = "single"
+difficulty = 1
+prompt = "Laravel validation thất bại với request JSON thường được biểu diễn bằng status nào?"
+options = ["201", "302", "422", "503"]
+answer = [2]
+explanation = "Với request mong JSON, validation error thường được trả thành 422 Unprocessable Entity cùng danh sách lỗi."
+sources = ["laravel~11/docs/11.x/validation"]
+
+[[questions]]
+id = "php-029"
+module = "laravel-services"
+type = "single"
+difficulty = 2
+prompt = "Người dùng đã đăng nhập nhưng không được sửa đơn hàng của người khác. Khái niệm nào kiểm tra quyền đó?"
+options = ["Authentication", "Authorization qua policy hoặc gate", "Cache", "Queue retry"]
+answer = [1]
+explanation = "Authentication nhận diện người dùng; authorization quyết định hành động trên resource có được phép hay không."
+sources = ["laravel~11/docs/11.x/authentication", "laravel~11/docs/11.x/authorization"]
+
+[[questions]]
+id = "php-030"
+module = "laravel-services"
+type = "single"
+difficulty = 2
+prompt = "Một job gửi email thất bại tạm thời và được retry. Điều gì giúp tránh gửi email hoặc tạo tác dụng phụ trùng lặp?"
+options = ["Thiết kế job idempotent hoặc ghi nhận trạng thái xử lý theo khóa duy nhất", "Tăng số lần retry vô hạn", "Tắt queue và gửi email trong mọi request", "Lưu mọi response vào cache forever"]
+answer = [0]
+explanation = "Queue retry có thể chạy lại job; logic idempotent hoặc deduplication giúp kiểm soát tác dụng phụ."
+sources = ["laravel~11/docs/11.x/queues"]
+
+[[questions]]
+id = "php-031"
+module = "laravel-services"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các cách tiếp cận phù hợp khi xây dựng ứng dụng Laravel."
+options = ["Dùng policy hoặc gate để kiểm tra quyền trên hành động/resource", "Đặt TTL hoặc chiến lược invalidation rõ cho cache", "Giả định queue job chỉ chạy đúng một lần", "Dùng feature test để kiểm tra luồng HTTP và database", "Đưa input chưa validate trực tiếp vào nghiệp vụ"]
+answer = [0, 1, 3]
+explanation = "Authorization tách khỏi authentication; cache cần invalidation; queue có thể retry và feature test kiểm tra luồng tích hợp."
+sources = ["laravel~11/docs/11.x/authorization", "laravel~11/docs/11.x/cache", "laravel~11/docs/11.x/testing"]
+
+[[questions]]
+id = "php-032"
+module = "laravel-services"
+type = "multiple"
+difficulty = 3
+prompt = "Một feature test tạo dữ liệu database và xác minh request cập nhật resource. Chọn các ý đúng."
+options = ["Có thể dùng database testing để quản lý dữ liệu test cô lập", "Nên xác minh cả response và trạng thái database mong đợi", "Mock mọi thành phần luôn làm test đáng tin hơn", "Test có thể fake queue để xác nhận job được dispatch mà không chạy job thật", "Test nên phụ thuộc vào thứ tự chạy của các test khác"]
+answer = [0, 1, 3]
+explanation = "Test tích hợp kiểm tra hành vi quan sát được; database isolation và fake queue giúp test có phạm vi rõ mà không phụ thuộc side effect ngoài ý muốn."
+sources = ["laravel~11/docs/11.x/database-testing", "laravel~11/docs/11.x/testing", "laravel~11/docs/11.x/mocking"]
+
+[[questions]]
+id = "php-033"
+module = "laravel-services"
+type = "fill"
+difficulty = 1
+prompt = "Laravel facade hoặc helper dispatch job vào nền tảng queue thường kết thúc lời gọi bằng {{blank}}."
+blanks = [["dispatch"]]
+explanation = "dispatch đưa job vào queue theo connection/configuration hiện hành."
+sources = ["laravel~11/docs/11.x/queues"]
+
+[[questions]]
+id = "php-034"
+module = "laravel-services"
+type = "fill"
+difficulty = 2
+prompt = "Trong validation rule required|email|min:3, rule tối thiểu độ dài là {{blank}}."
+blanks = [["min:3"]]
+explanation = "min:3 đặt giới hạn thấp nhất 3 theo kiểu dữ liệu đang validate."
+sources = ["laravel~11/docs/11.x/validation"]
+
+[[questions]]
+id = "php-035"
+module = "laravel-services"
+type = "essay"
+difficulty = 2
+prompt = "Giải thích khác nhau giữa authentication và authorization trong một endpoint cập nhật đơn hàng; nêu Laravel abstraction phù hợp."
+keywords = [["authentication", "xác thực"], ["authorization", "phân quyền", "ủy quyền"], ["policy", "gate"]]
+min_keywords = 3
+model_answer = "Authentication xác thực người gọi là ai, chẳng hạn user đã đăng nhập. Authorization kiểm tra user đó có quyền cập nhật đơn hàng cụ thể không; Laravel có thể dùng policy hoặc gate để đặt quy tắc này."
+explanation = "Câu trả lời cần phân biệt danh tính và quyền trên hành động/resource."
+sources = ["laravel~11/docs/11.x/authentication", "laravel~11/docs/11.x/authorization"]
+
+[[questions]]
+id = "php-036"
+module = "laravel-services"
+type = "essay"
+difficulty = 3
+prompt = "Đề xuất cách kiểm thử một endpoint cập nhật hồ sơ có validate email, yêu cầu đăng nhập và ghi thay đổi database. Nêu loại test và ít nhất hai điều cần xác minh."
+keywords = [["feature test", "http test"], ["validation", "422", "lỗi validation"], ["authentication", "đăng nhập"], ["database", "trạng thái database", "assert database"]]
+min_keywords = 3
+model_answer = "Dùng feature test gửi HTTP request với user đã đăng nhập. Gửi email không hợp lệ để xác minh validation trả lỗi 422; gửi dữ liệu hợp lệ để xác minh response thành công và trạng thái database đã cập nhật đúng. Có thể thêm case chưa đăng nhập để kiểm tra authentication."
+explanation = "Feature test kiểm tra nhiều lớp ứng dụng qua hành vi endpoint thay vì chỉ gọi riêng hàm."
+sources = ["laravel~11/docs/11.x/testing", "laravel~11/docs/11.x/validation", "laravel~11/docs/11.x/database-testing"]
+
+[[questions]]
+id = "php-037"
+module = "laravel-services"
+type = "code"
+difficulty = 3
+lang = "php"
+title = "Validator rule cơ bản"
+prompt = '''
+Viết validateData(array $data, array $rules): array cho mỗi field có chuỗi rule phân tách bằng |. Hỗ trợ required, email và min:n. Trả mảng lỗi theo field; giá trị mỗi field là danh sách tên rule thất bại, theo thứ tự khai báo. required thất bại khi field thiếu, null hoặc chuỗi rỗng sau trim; nếu required thất bại thì bỏ qua rule còn lại của field. Field trống không required thì bỏ qua rule khác. email dùng filter_var với FILTER_VALIDATE_EMAIL. min:n chỉ chấp nhận string có strlen ít nhất n; kiểu khác thất bại. Rule không hỗ trợ được bỏ qua.
+'''
+starter = '''
+function validateData(array $data, array $rules): array {
+    return [];
+}
+'''
+solution = '''
+function validateData(array $data, array $rules): array {
+    $errors = [];
+    foreach ($rules as $field => $ruleString) {
+        $fieldRules = explode('|', $ruleString);
+        $present = array_key_exists($field, $data);
+        $value = $present ? $data[$field] : null;
+        $empty = !$present || $value === null || (is_string($value) && trim($value) === '');
+
+        if (in_array('required', $fieldRules, true) && $empty) {
+            $errors[$field] = ['required'];
+            continue;
+        }
+        if ($empty) {
+            continue;
+        }
+
+        foreach ($fieldRules as $rule) {
+            if ($rule === 'required') {
+                continue;
+            }
+            if ($rule === 'email') {
+                if (!is_string($value) || filter_var($value, FILTER_VALIDATE_EMAIL) === false) {
+                    $errors[$field][] = 'email';
+                }
+                continue;
+            }
+            if (str_starts_with($rule, 'min:')) {
+                $minimum = (int) substr($rule, 4);
+                if (!is_string($value) || strlen($value) < $minimum) {
+                    $errors[$field][] = $rule;
+                }
+            }
+        }
+    }
+    return $errors;
+}
+'''
+tests = '''
+test('du lieu hop le khong co loi', function () {
+    expect(validateData(['email' => 'a@example.com', 'name' => 'Ana'], [
+        'email' => 'required|email',
+        'name' => 'required|min:3',
+    ]))->toEqual([]);
+});
+
+test('required bat field thieu va chuoi trang', function () {
+    expect(validateData(['name' => '   '], [
+        'email' => 'required|email',
+        'name' => 'required|min:3',
+    ]))->toEqual(['email' => ['required'], 'name' => ['required']]);
+});
+
+test('email khong hop le duoc bao loi', function () {
+    expect(validateData(['email' => 'not-an-email'], ['email' => 'required|email']))
+        ->toEqual(['email' => ['email']]);
+});
+
+test('min dem do dai chuoi va giu rule name', function () {
+    expect(validateData(['name' => 'Al'], ['name' => 'required|min:3']))
+        ->toEqual(['name' => ['min:3']]);
+});
+
+test('field khong required va rong bo qua rule khac', function () {
+    expect(validateData(['email' => ''], ['email' => 'email|min:3']))->toEqual([]);
+});
+
+test('min khong chap nhan gia tri khong phai string', function () {
+    expect(validateData(['name' => 123], ['name' => 'min:3']))->toEqual(['name' => ['min:3']]);
+});
+'''
+hints = ["Tách rule bằng dấu | và xác định trường hợp rỗng trước.", "required thất bại thì ghi lỗi rồi bỏ qua các rule khác của field đó."]
+explanation = "Validator tách việc xác định trạng thái rỗng khỏi kiểm tra từng rule và trả lỗi có cấu trúc."
+sources = ["laravel~11/docs/11.x/validation"]
+

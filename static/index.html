@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bovabon Edu</title>
+  <meta name="description" content="Bovabon Edu: lộ trình lập trình và tiếng Anh IT, câu hỏi theo module và bài code chấm tự động.">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="/fonts/SourceSans3VF-Upright.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/app.css">
+  <script>
+    try { var t = localStorage.getItem('bovabon.theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+  </script>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar" aria-hidden="true" inert>
+      <a class="brand" href="#/">
+        <svg viewBox="0 0 32 32" width="30" height="30" aria-hidden="true"><rect width="32" height="32" rx="8" fill="var(--accent)"/><path d="M9 8h8.5a5 5 0 0 1 1.6 9.7A5.2 5.2 0 0 1 17.8 24H9z" fill="none" stroke="var(--on-accent)" stroke-width="2.6" stroke-linejoin="round"/><path d="M9 16h8" stroke="var(--on-accent)" stroke-width="2.6"/></svg>
+        <span><b>Bovabon</b> Edu</span>
+      </a>
+      <button class="btn ghost sm" id="menu-close" type="button" hidden style="display:none"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg><span>Đóng menu</span></button>
+      <nav class="nav" id="nav">
+        <a href="#/" data-route="home"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1"/><rect x="13.5" y="3.5" width="7" height="7" rx="1"/><rect x="3.5" y="13.5" width="7" height="7" rx="1"/><rect x="13.5" y="13.5" width="7" height="7" rx="1"/></svg>Tổng quan</a>
+        <div class="nav-label">Lộ trình</div>
+        <div id="nav-tracks"></div>
+        <div class="nav-label">Luyện tập</div>
+        <a href="#/code" data-route="code"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m8.5 7-5 5 5 5M15.5 7l5 5-5 5M14 4l-4 16"/></svg>Code Lab</a>
+        <a href="#/exam" data-route="exam"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="8.5"/><path d="M12 8v5l3 2M9 2.5h6"/></svg>Thi thử</a>
+        <a href="#/review" data-route="review"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11a8 8 0 1 1 2.1 5.4M4 5v6h6"/></svg>Ôn câu sai</a>
+        <a href="#/bank" data-route="bank"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16M4 12h16M4 19h16"/><circle cx="2.5" cy="5" r=".5"/><circle cx="2.5" cy="12" r=".5"/><circle cx="2.5" cy="19" r=".5"/></svg>Kho câu hỏi</a>
+        <div class="nav-label">Cá nhân</div>
+        <a href="#/progress" data-route="progress"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-8-8"/><path d="M12 4v8h8"/></svg>Tiến độ</a>
+      </nav>
+      <div class="sidebar-foot">
+        <button class="btn ghost sm theme-toggle" id="theme-toggle" type="button" aria-pressed="false"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 15.5A8.5 8.5 0 0 1 8.5 3.5a8.5 8.5 0 1 0 12 12Z"/></svg><span>Đổi tông nền</span></button>
+        <p class="muted tiny">Không cần đăng nhập; tiến độ lưu trên trình duyệt này.</p>
+      </div>
+    </aside>
+    <div class="main">
+      <header class="topbar">
+        <button class="btn ghost icon" id="menu-btn" type="button" aria-label="Mở menu" aria-expanded="false" aria-controls="sidebar"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+        <div class="crumbs" id="crumbs"></div>
+        <div class="top-stats" id="top-stats"></div>
+      </header>
+      <main id="view" class="view" tabindex="-1"><div class="loading">Đang tải kho dữ liệu…</div></main>
+    </div>
+  </div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="/app.js"></script>
+</body>
+</html>

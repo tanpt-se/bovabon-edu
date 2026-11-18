@@ -1,0 +1,951 @@
+id = "rust"
+title = "Rust"
+icon = "🦀"
+color = "#ce422b"
+group = "Backend"
+docs = ["rust"]
+description = "Nền tảng Rust từ ownership, kiểu dữ liệu và trait đến collection, xử lý lỗi, module, concurrency và async."
+
+[[modules]]
+id = "rs-ownership"
+title = "Ownership, borrowing & lifetime"
+description = "Quyền sở hữu, mượn bất biến/mutable, slice và quan hệ lifetime."
+sources = ["rust/book/ch04-00-understanding-ownership", "rust/book/ch04-02-references-and-borrowing", "rust/book/ch10-03-lifetime-syntax"]
+lesson = '''
+### Quyền sở hữu và mượn
+Mỗi giá trị có một owner; khi owner rời scope, giá trị được giải phóng. Gán một String thường chuyển quyền sở hữu, còn kiểu Copy như i32 được sao chép. Mượn cho phép dùng dữ liệu mà không chuyển ownership.
+
+| Cách dùng | Cú pháp | Quy tắc chính |
+|---|---|---|
+| Mượn chỉ đọc | &T | Có thể có nhiều immutable reference |
+| Mượn để sửa | &mut T | Tại một thời điểm chỉ có một mutable reference, không đồng thời với reference khác |
+| Slice | &str, &[T] | View không sở hữu trên một phần dữ liệu |
+
+~~~rust
+fn longest<'a>(left: &'a str, right: &'a str) -> &'a str {
+    if left.len() >= right.len() { left } else { right }
+}
+~~~
+
+Lifetime 'a diễn tả rằng kết quả không sống lâu hơn các tham chiếu đầu vào liên quan; nó không kéo dài thời gian sống của dữ liệu. Lỗi thường gặp là dùng giá trị sau khi đã move, giữ immutable borrow trong lúc sửa qua mutable borrow, hoặc trả về tham chiếu tới biến cục bộ.
+'''
+
+[[modules]]
+id = "rs-types"
+title = "Struct, enum, pattern matching & Result"
+description = "Tổ chức dữ liệu, xử lý mọi nhánh và lan truyền lỗi bằng Option, Result, và toán tử ?."
+sources = ["rust/book/ch05-00-structs", "rust/book/ch06-00-enums", "rust/book/ch09-02-recoverable-errors-with-result"]
+lesson = '''
+### Kiểu dữ liệu và luồng điều khiển
+Struct gom các field có tên; enum biểu diễn một trong nhiều biến thể. Rust dùng enum chuẩn để làm rõ trường hợp thiếu dữ liệu và lỗi thay vì dùng null hay exception ngầm.
+
+| Kiểu | Ý nghĩa | Ví dụ |
+|---|---|---|
+| Option<T> | Có hoặc không có giá trị | Some(value), None |
+| Result<T, E> | Thành công hoặc lỗi có kiểu | Ok(value), Err(error) |
+| enum tự định nghĩa | Một trong các trạng thái được liệt kê | Status::Ready |
+
+match phải bao phủ mọi nhánh; dùng _ khi các trường hợp còn lại có cùng cách xử lý. if let Some(x) = value phù hợp khi chỉ quan tâm một mẫu. Trong hàm trả Result, ? trả lỗi sớm và chuyển đổi lỗi nếu kiểu đích hỗ trợ From.
+
+~~~rust
+fn parse_count(text: &str) -> Result<usize, std::num::ParseIntError> {
+    let count = text.parse::<usize>()?;
+    Ok(count)
+}
+~~~
+
+Lỗi thường gặp là gọi unwrap() trên dữ liệu đầu vào không tin cậy, quên nhánh enum, hoặc dùng ? trong hàm có kiểu trả về không tương thích.
+'''
+
+[[modules]]
+id = "rs-traits"
+title = "Trait, generic & trait object"
+description = "Chia sẻ hành vi, giới hạn kiểu generic, dispatch tĩnh và trait object."
+sources = ["rust/book/ch10-00-generics", "rust/book/ch10-02-traits", "rust/book/ch18-02-trait-objects"]
+lesson = '''
+### Hành vi dùng lại
+Trait mô tả các hành vi mà kiểu có thể triển khai. Generic cho phép viết thuật toán cho nhiều kiểu; trait bound giới hạn những phép toán mà thuật toán được phép gọi.
+
+| Dạng | Ví dụ | Dispatch |
+|---|---|---|
+| Generic | fn print<T: Display>(x: T) | Thường được đơn hình hoá lúc biên dịch |
+| Opaque return | fn items() -> impl Iterator<Item = i32> | Kiểu cụ thể được giữ kín |
+| Trait object | Box<dyn Shape> | Dispatch động qua vtable |
+
+Một trait object hữu ích khi cần lưu nhiều kiểu triển khai chung một trait trong cùng collection. Trait dùng làm object cần object-safe; chẳng hạn method generic không thể gọi qua dyn Trait. Generic struct như Stack<T> có thể dùng với nhiều kiểu mà không cần viết lại cấu trúc.
+
+~~~rust
+trait Shape {
+    fn area(&self) -> f64;
+}
+~~~
+
+Lỗi thường gặp là thiếu trait bound, giả định dyn Trait biết kiểu cụ thể, hoặc quên rằng trait object có chi phí dispatch động và thường cần con trỏ như &dyn Trait hay Box<dyn Trait>.
+'''
+
+[[modules]]
+id = "rs-collections"
+title = "Collection, iterator & closure"
+description = "Dùng HashMap, VecDeque, iterator lazy và closure để xử lý dữ liệu."
+sources = ["rust/book/ch08-00-common-collections", "rust/book/ch13-01-closures", "rust/book/ch13-02-iterators"]
+lesson = '''
+### Xử lý tập dữ liệu
+Vec<T> lưu dãy có thứ tự; HashMap<K, V> tra cứu theo key; VecDeque<T> hỗ trợ thêm/xoá ở hai đầu. Khi đếm tần suất bằng HashMap, entry API gộp bước tìm key và cập nhật giá trị.
+
+| Công cụ | Khi phù hợp | Lưu ý |
+|---|---|---|
+| Vec<T> | Dãy phần tử, truy cập theo index | Thêm cuối thường hiệu quả |
+| HashMap<K, V> | Tra cứu theo key | Thứ tự duyệt không được đảm bảo |
+| VecDeque<T> | Hàng đợi hoặc thứ tự LRU | Thêm/xoá ở hai đầu |
+
+Iterator adapter như map, filter, take là lazy; chúng chỉ chạy khi có consumer như collect, sum, hoặc for_each. Closure có thể mượn biến, mượn mutable, hoặc lấy ownership; move yêu cầu capture theo giá trị.
+
+~~~rust
+let doubled: Vec<i32> = values.iter().map(|value| value * 2).collect();
+~~~
+
+Lỗi thường gặp là nghĩ map đã thực thi dù chưa consume iterator, giả định HashMap giữ thứ tự, hoặc dùng reference sau khi collection đã bị thay đổi.
+'''
+
+[[modules]]
+id = "rs-errors-modules"
+title = "Lỗi, module, crate & Cargo"
+description = "Thiết kế lỗi có kiểu, chia module, quản lý visibility và quy trình Cargo."
+sources = ["rust/book/ch07-00-managing-growing-projects-with-packages-crates-and-modules", "rust/book/ch07-02-defining-modules-to-control-scope-and-privacy", "rust/book/ch14-00-more-about-cargo", "rust/book/ch09-02-recoverable-errors-with-result"]
+lesson = '''
+### Tách code và biểu diễn lỗi
+Lỗi dự kiến trong nghiệp vụ nên được biểu diễn bằng Result<T, E> với enum lỗi cụ thể; ? giúp truyền lỗi lên caller, còn caller quyết định retry, báo lỗi hay dùng giá trị thay thế. panic! dành cho trạng thái không thể tiếp tục hoặc vi phạm invariant, không phải luồng điều khiển thông thường.
+
+| Khái niệm | Vai trò |
+|---|---|
+| Package | Đơn vị Cargo có manifest Cargo.toml |
+| Crate | Đơn vị biên dịch, binary hoặc library |
+| Module | Nhóm item và kiểm soát phạm vi |
+| pub | Công khai item theo cây module |
+
+Dùng mod để khai báo module, use để đưa path vào scope, và chỉ mở pub cho API cần thiết. Cargo quản lý dependency, build profile và lệnh như cargo check, cargo test, cargo build. Với ứng dụng, commit Cargo.lock để tái lập phiên bản dependency đã giải quyết.
+
+Lỗi thường gặp là làm mọi item thành public, nhầm package với crate, hoặc nuốt lỗi bằng unwrap() thay vì xử lý ở đúng tầng.
+'''
+
+[[modules]]
+id = "rs-concurrency"
+title = "Concurrency & async căn bản"
+description = "Thread, channel, Arc/Mutex, Send/Sync và mô hình Future."
+sources = ["rust/book/ch16-01-threads", "rust/book/ch16-02-message-passing", "rust/book/ch16-03-shared-state", "rust/book/ch16-04-extensible-concurrency-sync-and-send", "rust/book/ch17-00-async-await"]
+lesson = '''
+### Chia sẻ công việc an toàn
+thread::spawn chạy closure trên thread mới và thường yêu cầu dữ liệu được move vào thread. Channel truyền message giữa producer và consumer; shared state dùng Arc<T> cho ownership chung giữa thread và Mutex<T> để bảo vệ truy cập mutable.
+
+| Cơ chế | Dùng khi | Điều cần nhớ |
+|---|---|---|
+| Thread + channel | Gửi kết quả hoặc command | Gửi message thường giảm chia sẻ trạng thái |
+| Arc<Mutex<T>> | Nhiều thread cần cập nhật cùng dữ liệu | Lock ngắn, tránh deadlock |
+| Send | Chuyển giá trị an toàn qua thread | Compiler kiểm tra tự động |
+| Sync | Chia sẻ &T an toàn giữa thread | T: Sync cho phép reference được chia sẻ |
+
+async biểu diễn công việc dưới dạng Future; executor poll Future để tiến triển. Async không tự tạo một thread cho mỗi tác vụ, và thư viện chuẩn cung cấp trait Future nhưng không cung cấp executor tổng quát. Chọn thread cho tác vụ CPU/blocking phù hợp; chọn async khi có runtime và nhiều tác vụ I/O chờ đợi.
+
+Lỗi thường gặp là nghĩ Arc tự làm mọi dữ liệu thread-safe, giữ Mutex lock quá lâu, hoặc quên rằng thread cần ownership/lifetime phù hợp.
+'''
+
+[[questions]]
+id = "rs-001"
+module = "rs-ownership"
+type = "single"
+difficulty = 1
+prompt = "Sau phép gán `let alias = name;` với `name: String`, điều gì đúng nếu không dùng clone()?"
+options = ["Cả hai biến cùng sở hữu một String", "Ownership được move sang alias nên không thể dùng name tiếp", "String luôn được copy như i32", "Compiler tự tạo một bản sao sâu"]
+answer = [1]
+explanation = "String không Copy. Phép gán move quyền sở hữu sang alias; muốn hai giá trị độc lập thì cần clone tường minh."
+sources = ["rust/book/ch04-01-what-is-ownership"]
+
+[[questions]]
+id = "rs-002"
+module = "rs-ownership"
+type = "single"
+difficulty = 2
+prompt = "Một hàm đang giữ `&mut values`. Điều kiện nào đúng để vẫn đảm bảo an toàn bộ nhớ?"
+options = ["Có thể đồng thời đọc values qua bao nhiêu reference cũng được", "Không có reference nào khác được dùng để đọc hoặc sửa cùng dữ liệu trong khoảng mượn mutable đang hoạt động", "Mọi mutable reference đều có static lifetime", "Mượn mutable tự động chuyển ownership"]
+answer = [1]
+explanation = "Rust áp dụng quy tắc exclusive access: nhiều reference chỉ đọc hoặc một reference mutable đang hoạt động."
+sources = ["rust/book/ch04-02-references-and-borrowing"]
+
+[[questions]]
+id = "rs-003"
+module = "rs-ownership"
+type = "single"
+difficulty = 2
+prompt = "Hàm chỉ cần đọc chuỗi và không cần sở hữu nó. Kiểu tham số nào linh hoạt, idiomatic hơn `&String`?"
+options = ["String", "&str", "&mut String", "Box<String>"]
+answer = [1]
+explanation = "&str là borrowed string slice; nó nhận được cả string literal lẫn String qua deref coercion mà không yêu cầu hàm sở hữu dữ liệu."
+sources = ["rust/book/ch04-02-references-and-borrowing"]
+
+[[questions]]
+id = "rs-004"
+module = "rs-ownership"
+type = "single"
+difficulty = 3
+prompt = "Vì sao `fn longest<'a>(x: &'a str, y: &'a str) -> &'a str` cần lifetime parameter?"
+options = ["Để cấp phát hai chuỗi trên heap", "Để mô tả rằng reference trả về hợp lệ không lâu hơn các input reference liên quan", "Để compiler kéo dài lifetime của input", "Để bắt buộc hai chuỗi có cùng nội dung"]
+answer = [1]
+explanation = "Lifetime annotation mô tả quan hệ thời gian sống giữa reference, không thay đổi lifetime thực tế của giá trị."
+sources = ["rust/book/ch10-03-lifetime-syntax"]
+
+[[questions]]
+id = "rs-005"
+module = "rs-types"
+type = "single"
+difficulty = 1
+prompt = "Khi thêm một variant mới vào enum được xử lý bằng `match`, compiler buộc bạn làm gì?"
+options = ["Thêm nhánh cho variant mới hoặc nhánh bao phủ như _", "Thêm default sau match", "Đổi enum thành struct", "Bọc mọi nhánh trong Option"]
+answer = [0]
+explanation = "Match phải exhaustive để mọi variant đều có cách xử lý xác định."
+sources = ["rust/book/ch06-00-enums"]
+
+[[questions]]
+id = "rs-006"
+module = "rs-types"
+type = "single"
+difficulty = 1
+prompt = "Kiểu nào phù hợp để biểu diễn kết quả tìm kiếm có thể không tìm thấy mà không có lỗi?"
+options = ["Result<T, E>", "Option<T>", "Box<T>", "String"]
+answer = [1]
+explanation = "Option<T> biểu diễn Some(T) hoặc None; Result dành cho thành công hoặc lỗi có kiểu."
+sources = ["rust/book/ch06-00-enums"]
+
+[[questions]]
+id = "rs-007"
+module = "rs-types"
+type = "single"
+difficulty = 2
+prompt = "Trong hàm trả `Result<User, AppError>`, `load_user(id)?` trả Err thì điều gì xảy ra?"
+options = ["Hàm panic ngay lập tức", "Err được trả sớm, có thể chuyển đổi sang AppError nếu có From phù hợp", "Err bị bỏ qua và tạo User mặc định", "Toán tử ? chỉ hợp lệ với Option"]
+answer = [1]
+explanation = "Toán tử ? unwrap nhánh thành công hoặc trả lỗi sớm; kiểu lỗi nguồn phải chuyển được sang kiểu lỗi của hàm."
+sources = ["rust/book/ch09-02-recoverable-errors-with-result"]
+
+[[questions]]
+id = "rs-008"
+module = "rs-traits"
+type = "single"
+difficulty = 2
+prompt = "Một hàm generic gọi `item.area()`. Cần khai báo điều gì để compiler biết phép gọi hợp lệ?"
+options = ["Trait bound yêu cầu T triển khai trait có method area", "Thêm mut trước T", "Dùng Box<T> trong mọi trường hợp", "Bỏ generic và dùng Any"]
+answer = [0]
+explanation = "Trait bound như T: Shape giới hạn tập kiểu được chấp nhận và cho compiler biết các method có thể gọi."
+sources = ["rust/book/ch10-02-traits"]
+
+[[questions]]
+id = "rs-009"
+module = "rs-traits"
+type = "single"
+difficulty = 2
+prompt = "Một Vec<Box<dyn Shape>> chứa Circle và Rectangle. Cách gọi area qua `dyn Shape` thường dùng cơ chế nào?"
+options = ["Dispatch tĩnh bằng cách tạo một kiểu mới tại mỗi phần tử", "Dispatch động qua vtable", "Macro chạy lúc runtime", "Pattern matching tự sinh enum"]
+answer = [1]
+explanation = "Trait object lưu con trỏ dữ liệu cùng metadata cho dispatch động tới implementation cụ thể."
+sources = ["rust/book/ch18-02-trait-objects"]
+
+[[questions]]
+id = "rs-010"
+module = "rs-traits"
+type = "single"
+difficulty = 3
+prompt = "Đâu là lợi ích thường có của hàm generic với trait bound so với `&dyn Trait`?"
+options = ["Compiler thường đơn hình hoá từng kiểu cụ thể, cho phép dispatch tĩnh", "Generic luôn dùng ít bộ nhớ hơn", "Generic cho phép mọi kiểu kể cả không triển khai trait", "Generic loại bỏ kiểm tra kiểu"]
+answer = [0]
+explanation = "Generics thường được monomorphize khi biên dịch, đổi lại có thể tăng kích thước binary."
+sources = ["rust/book/ch10-00-generics"]
+
+[[questions]]
+id = "rs-011"
+module = "rs-collections"
+type = "single"
+difficulty = 2
+prompt = "Khi đếm tần suất từ trong HashMap, vì sao `*counts.entry(word).or_insert(0) += 1` hữu ích?"
+options = ["Tạo hoặc lấy giá trị cho key rồi cập nhật tại chỗ", "Giữ HashMap theo thứ tự chèn", "Tự chuẩn hoá chữ hoa thường", "Cho phép key trùng lặp"]
+answer = [0]
+explanation = "Entry API kết hợp kiểm tra key và cập nhật value; chuẩn hoá từ vẫn phải được thực hiện riêng."
+sources = ["rust/book/ch08-00-common-collections"]
+
+[[questions]]
+id = "rs-012"
+module = "rs-collections"
+type = "single"
+difficulty = 2
+prompt = "Đoạn `values.iter().map(|x| x * 2);` không dùng kết quả. Điều gì đúng?"
+options = ["map chạy ngay và thay đổi values", "Iterator adapter lazy nên chưa có phép biến đổi nào được consume", "values bị move khỏi scope", "Rust báo lỗi vì map chỉ dùng với Vec"]
+answer = [1]
+explanation = "Iterator adapter tạo iterator mới; cần consumer như collect hoặc sum để thực thi chuỗi phép biến đổi."
+sources = ["rust/book/ch13-02-iterators"]
+
+[[questions]]
+id = "rs-013"
+module = "rs-collections"
+type = "single"
+difficulty = 2
+prompt = "Closure tăng biến total bên ngoài mỗi lần được gọi. Trait nào thường được yêu cầu?"
+options = ["Fn", "FnMut", "FnOnce duy nhất", "Copy"]
+answer = [1]
+explanation = "FnMut cho phép closure mutate state đã capture qua mutable borrow; Fn chỉ gọi được nếu không cần mutate capture."
+sources = ["rust/book/ch13-01-closures"]
+
+[[questions]]
+id = "rs-014"
+module = "rs-errors-modules"
+type = "single"
+difficulty = 1
+prompt = "Trong cây module Rust, item thường private theo mặc định. Từ khoá nào mở item cho phần code bên ngoài scope được phép truy cập?"
+options = ["export", "public", "pub", "global"]
+answer = [2]
+explanation = "pub công khai item theo quy tắc visibility của cây module; chỉ nên mở API cần thiết."
+sources = ["rust/book/ch07-02-defining-modules-to-control-scope-and-privacy"]
+
+[[questions]]
+id = "rs-015"
+module = "rs-errors-modules"
+type = "single"
+difficulty = 2
+prompt = "Vai trò phù hợp của `cargo check` trong vòng lặp phát triển là gì?"
+options = ["Kiểm tra biên dịch nhanh mà thường không tạo binary cuối", "Chạy toàn bộ benchmark release", "Tự cập nhật mọi dependency lên phiên bản mới nhất", "Thay thế kiểm thử hành vi"]
+answer = [0]
+explanation = "cargo check bỏ qua một số bước tạo mã máy nên thường phản hồi nhanh để phát hiện lỗi biên dịch."
+sources = ["rust/book/ch14-00-more-about-cargo"]
+
+[[questions]]
+id = "rs-016"
+module = "rs-concurrency"
+type = "single"
+difficulty = 3
+prompt = "Ý nghĩa chính xác của Send và Sync là gì?"
+options = ["Send cho phép chia sẻ reference; Sync cho phép move ownership", "Send cho phép chuyển giá trị giữa thread; Sync cho phép chia sẻ `&T` giữa thread an toàn", "Cả hai đều tự khóa mọi dữ liệu", "Chúng chỉ áp dụng cho async function"]
+answer = [1]
+explanation = "Đây là marker trait biểu diễn điều kiện an toàn khi chuyển giá trị hoặc chia sẻ reference qua thread."
+sources = ["rust/book/ch16-04-extensible-concurrency-sync-and-send"]
+
+[[questions]]
+id = "rs-017"
+module = "rs-ownership"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các phát biểu đúng về borrowing."
+options = ["Có thể có nhiều immutable reference cùng lúc", "Không thể đồng thời dùng mutable reference và reference khác tới cùng dữ liệu", "Reference không được sống lâu hơn dữ liệu nó trỏ tới", "Mọi reference đều chuyển ownership"]
+answer = [0, 1, 2]
+explanation = "Borrowing mượn quyền truy cập nhưng không chuyển ownership; quy tắc aliasing giúp tránh data race và dangling reference."
+sources = ["rust/book/ch04-02-references-and-borrowing"]
+
+[[questions]]
+id = "rs-018"
+module = "rs-types"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các cách xử lý Option/Result tường minh mà không cần panic khi không có giá trị."
+options = ["Dùng match để xử lý các nhánh", "Dùng if let khi chỉ quan tâm một variant", "Dùng map để biến đổi giá trị bên trong khi có Some/Ok", "Gọi unwrap trên mọi dữ liệu bên ngoài"]
+answer = [0, 1, 2]
+explanation = "match, if let và map giữ nhánh vắng mặt hoặc lỗi trong kiểu dữ liệu; unwrap có thể panic."
+sources = ["rust/book/ch09-02-recoverable-errors-with-result", "rust/book/ch06-00-enums"]
+
+[[questions]]
+id = "rs-019"
+module = "rs-traits"
+type = "multiple"
+difficulty = 3
+prompt = "Chọn phát biểu đúng về generic, trait bound và trait object."
+options = ["Trait bound giới hạn kiểu generic theo hành vi", "Generic thường được monomorphize khi biên dịch", "Box<dyn Shape> có thể giữ giá trị của nhiều kiểu triển khai Shape", "Trait object luôn dispatch tĩnh"]
+answer = [0, 1, 2]
+explanation = "Trait object cho phép kiểu cụ thể khác nhau qua cùng interface và thường dùng dispatch động."
+sources = ["rust/book/ch10-00-generics", "rust/book/ch18-02-trait-objects"]
+
+[[questions]]
+id = "rs-020"
+module = "rs-collections"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các phát biểu đúng về iterator và closure."
+options = ["Iterator adapter như map thường lazy", "collect tiêu thụ iterator để tạo collection", "move closure buộc capture theo giá trị", "map luôn chạy song song"]
+answer = [0, 1, 2]
+explanation = "Iterator chuẩn không mặc định chạy song song; adapter chỉ thực thi khi có consumer."
+sources = ["rust/book/ch13-01-closures", "rust/book/ch13-02-iterators"]
+
+[[questions]]
+id = "rs-021"
+module = "rs-errors-modules"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các phát biểu đúng về lỗi và module."
+options = ["Result<T, E> biểu diễn thành công hoặc lỗi có kiểu", "? có thể chuyển lỗi qua From phù hợp", "pub điều khiển visibility theo cây module", "panic là cách phù hợp cho mọi lỗi input dự kiến"]
+answer = [0, 1, 2]
+explanation = "Lỗi dự kiến nên được trả về có kiểu; panic phù hợp hơn với invariant bị phá vỡ hoặc tình huống không thể tiếp tục."
+sources = ["rust/book/ch09-02-recoverable-errors-with-result", "rust/book/ch07-02-defining-modules-to-control-scope-and-privacy"]
+
+[[questions]]
+id = "rs-022"
+module = "rs-concurrency"
+type = "multiple"
+difficulty = 3
+prompt = "Chọn các phát biểu đúng về concurrency trong Rust."
+options = ["Channel hỗ trợ truyền message giữa thread", "Arc tự làm mọi kiểu bên trong thread-safe dù kiểu đó không có trait phù hợp", "Mutex bảo vệ truy cập mutable được đồng bộ", "async Future cần được executor poll để tiến triển"]
+answer = [0, 2, 3]
+explanation = "Arc chỉ cung cấp shared ownership atomic; Send/Sync của kiểu bên trong vẫn quyết định cách dùng an toàn."
+sources = ["rust/book/ch16-02-message-passing", "rust/book/ch16-03-shared-state", "rust/book/ch17-00-async-await"]
+
+[[questions]]
+id = "rs-023"
+module = "rs-ownership"
+type = "fill"
+difficulty = 1
+prompt = "Nếu cần mượn một giá trị để sửa qua reference, khai báo reference với cú pháp {{blank}}."
+blanks = [["&mut"]]
+explanation = "Mutable borrow dùng &mut T và phải tuân thủ quy tắc exclusive access."
+sources = ["rust/book/ch04-02-references-and-borrowing"]
+
+[[questions]]
+id = "rs-024"
+module = "rs-types"
+type = "fill"
+difficulty = 1
+prompt = "Kiểu enum chuẩn biểu diễn giá trị có thể vắng mặt là {{blank}}."
+blanks = [["Option<T>", "Option"]]
+explanation = "Option<T> có hai variant Some(T) và None."
+sources = ["rust/book/ch06-00-enums"]
+
+[[questions]]
+id = "rs-025"
+module = "rs-types"
+type = "fill"
+difficulty = 1
+prompt = "Trong Rust, kiểu trả về chuẩn để diễn tả thành công T hoặc lỗi E là {{blank}}."
+blanks = [["Result<T, E>", "Result"]]
+explanation = "Result<T, E> buộc caller xử lý nhánh Ok hoặc Err."
+sources = ["rust/book/ch09-02-recoverable-errors-with-result"]
+
+[[questions]]
+id = "rs-026"
+module = "rs-collections"
+type = "fill"
+difficulty = 2
+prompt = "Hoàn tất chuỗi iterator để thu các giá trị đã nhân đôi vào Vec: `values.iter().map(|x| x * 2).{{blank}}::<Vec<_>>()`."
+blanks = [["collect"]]
+explanation = "collect là consumer chuyển iterator thành collection được suy luận hoặc chỉ định kiểu."
+sources = ["rust/book/ch13-02-iterators"]
+
+[[questions]]
+id = "rs-027"
+module = "rs-collections"
+type = "fill"
+difficulty = 2
+prompt = "Trong `counts.entry(word).{{blank}}(0)`, method lấy value hiện có hoặc chèn giá trị mặc định là gì?"
+blanks = [["or_insert"]]
+explanation = "or_insert trả về mutable reference tới value hiện có hoặc value vừa được chèn."
+sources = ["rust/book/ch08-00-common-collections"]
+
+[[questions]]
+id = "rs-028"
+module = "rs-traits"
+type = "fill"
+difficulty = 2
+prompt = "Điền từ khoá để khai báo trait object: `Box<dyn {{blank}}>`."
+blanks = [["Shape"]]
+explanation = "dyn Shape biểu diễn một kiểu cụ thể chưa biết tại compile time nhưng triển khai trait Shape."
+sources = ["rust/book/ch18-02-trait-objects"]
+
+[[questions]]
+id = "rs-029"
+module = "rs-ownership"
+type = "essay"
+difficulty = 2
+prompt = "Giải thích ownership, borrowing và lifetime phối hợp thế nào để ngăn dangling reference khi một hàm trả về reference."
+keywords = [["ownership", "quyền sở hữu"], ["borrow", "mượn"], ["lifetime", "vòng đời"], ["dangling", "tham chiếu treo"]]
+min_keywords = 3
+model_answer = '''Ownership xác định giá trị được giữ và huỷ ở đâu. Borrow cho phép hàm đọc hoặc sửa dữ liệu mà không chuyển quyền sở hữu. Lifetime mô tả quan hệ giữa thời gian sống của các reference, nhờ đó compiler từ chối trả về dangling reference tới biến cục bộ đã bị huỷ. Annotation không kéo dài lifetime mà chỉ ràng buộc các reference liên quan.'''
+explanation = "Câu trả lời cần liên hệ quyền sở hữu, mượn, lifetime và việc ngăn reference treo."
+sources = ["rust/book/ch04-00-understanding-ownership", "rust/book/ch10-03-lifetime-syntax"]
+
+[[questions]]
+id = "rs-030"
+module = "rs-concurrency"
+type = "essay"
+difficulty = 3
+prompt = "So sánh thread dùng channel với chia sẻ trạng thái Arc<Mutex<T>>, rồi nêu quan hệ của hai cách này với async."
+keywords = [["channel", "message passing"], ["mutex", "lock"], ["send", "chuyển giá trị"], ["sync", "chia sẻ reference"], ["future", "async"]]
+min_keywords = 3
+model_answer = '''Channel dùng message passing để chuyển dữ liệu giữa thread; Send quyết định giá trị có thể chuyển an toàn. Arc<Mutex<T>> dùng shared ownership và lock để đồng bộ trạng thái; Sync liên quan đến chia sẻ reference. Async biểu diễn tác vụ thành Future được executor poll, hữu ích khi nhiều công việc I/O chờ đợi và không đồng nghĩa với một thread cho mỗi tác vụ.'''
+explanation = "Channel truyền message; Arc/Mutex chia sẻ state; async Future cần executor và là mô hình tiến triển khác với thread."
+sources = ["rust/book/ch16-02-message-passing", "rust/book/ch16-03-shared-state", "rust/book/ch17-00-async-await"]
+
+[[questions]]
+id = "rs-031"
+module = "rs-ownership"
+type = "code"
+difficulty = 2
+lang = "rust"
+title = "Chọn chuỗi dài hơn với lifetime"
+prompt = '''Viết hàm longest<'a>(left: &'a str, right: &'a str) -> &'a str. Trả về chuỗi có độ dài byte lớn hơn; nếu bằng nhau, trả về left. Không cấp phát chuỗi mới.'''
+starter = '''fn longest<'a>(left: &'a str, right: &'a str) -> &'a str {
+    if left.len() < right.len() {
+        left
+    } else {
+        right
+    }
+}'''
+solution = '''fn longest<'a>(left: &'a str, right: &'a str) -> &'a str {
+    if left.len() >= right.len() {
+        left
+    } else {
+        right
+    }
+}'''
+tests = '''bovabon_tests! {
+    "chọn left khi dài hơn" => { assert_eq!(longest("rustacean", "rust"), "rustacean"); },
+    "chọn right khi dài hơn" => { assert_eq!(longest("go", "rust"), "rust"); },
+    "chuỗi rỗng" => { assert_eq!(longest("", "a"), "a"); },
+    "bằng độ dài trả left" => {
+        let left = String::from("abcd");
+        let right = String::from("wxyz");
+        assert!(std::ptr::eq(longest(left.as_str(), right.as_str()), left.as_str()));
+    },
+}'''
+hints = ["Cả hai tham số và giá trị trả về dùng chung lifetime parameter 'a.", "So sánh độ dài bằng str::len; đừng trả về một String mới."]
+explanation = "Lifetime biểu diễn rằng kết quả mượn từ một trong hai tham số và không sống lâu hơn chúng."
+sources = ["rust/book/ch10-03-lifetime-syntax"]
+
+[[questions]]
+id = "rs-032"
+module = "rs-types"
+type = "code"
+difficulty = 2
+lang = "rust"
+title = "Parse và kiểm tra điểm"
+prompt = '''Định nghĩa enum InputError có các variant Missing, InvalidInteger, OutOfRange. Viết parse_score(input: Option<&str>) -> Result<u8, InputError>: None trả Missing; chuỗi số nguyên từ 0 đến 100 trả Ok; chuỗi không parse được trả InvalidInteger; số nguyên ngoài khoảng trả OutOfRange. Bỏ khoảng trắng đầu/cuối trước khi parse.'''
+starter = '''#[derive(Debug, PartialEq, Eq)]
+enum InputError {
+    Missing,
+    InvalidInteger,
+    OutOfRange,
+}
+
+fn parse_score(_input: Option<&str>) -> Result<u8, InputError> {
+    Ok(0)
+}'''
+solution = '''#[derive(Debug, PartialEq, Eq)]
+enum InputError {
+    Missing,
+    InvalidInteger,
+    OutOfRange,
+}
+
+fn parse_score(input: Option<&str>) -> Result<u8, InputError> {
+    let text = input.ok_or(InputError::Missing)?;
+    let value = text
+        .trim()
+        .parse::<i32>()
+        .map_err(|_| InputError::InvalidInteger)?;
+    if !(0..=100).contains(&value) {
+        return Err(InputError::OutOfRange);
+    }
+    Ok(value as u8)
+}'''
+tests = '''bovabon_tests! {
+    "điểm thường" => { assert_eq!(parse_score(Some(" 72 ")), Ok(72)); },
+    "biên dưới" => { assert_eq!(parse_score(Some("0")), Ok(0)); },
+    "biên trên" => { assert_eq!(parse_score(Some("100")), Ok(100)); },
+    "thiếu input" => { assert_eq!(parse_score(None), Err(InputError::Missing)); },
+    "không phải số" => { assert_eq!(parse_score(Some("abc")), Err(InputError::InvalidInteger)); },
+    "ngoài khoảng" => { assert_eq!(parse_score(Some("-1")), Err(InputError::OutOfRange)); },
+}'''
+hints = ["Dùng ok_or để chuyển Option thành Result rồi dùng ? để trả lỗi sớm.", "Parse thành i32 trước khi kiểm tra khoảng, sau đó mới ép sang u8."]
+explanation = "Result giữ riêng lỗi thiếu dữ liệu, lỗi cú pháp số và lỗi nghiệp vụ ngoài khoảng."
+sources = ["rust/book/ch09-02-recoverable-errors-with-result", "rust/book/ch06-00-enums"]
+
+[[questions]]
+id = "rs-033"
+module = "rs-traits"
+type = "code"
+difficulty = 3
+lang = "rust"
+title = "Shape trait object và Stack generic"
+prompt = '''Định nghĩa trait Shape với area(&self) -> f64, rồi triển khai cho Circle { radius: f64 } và Rectangle { width: f64, height: f64 }. Viết total_area(shapes: &[Box<dyn Shape>]) -> f64. Đồng thời định nghĩa Stack<T> có new, push, pop, len, is_empty; pop theo LIFO. Circle dùng πr².'''
+starter = '''trait Shape {
+    fn area(&self) -> f64;
+}
+
+struct Circle {
+    radius: f64,
+}
+
+struct Rectangle {
+    width: f64,
+    height: f64,
+}
+
+impl Shape for Circle {
+    fn area(&self) -> f64 {
+        0.0
+    }
+}
+
+impl Shape for Rectangle {
+    fn area(&self) -> f64 {
+        0.0
+    }
+}
+
+fn total_area(_shapes: &[Box<dyn Shape>]) -> f64 {
+    0.0
+}
+
+struct Stack<T> {
+    items: Vec<T>,
+}
+
+impl<T> Stack<T> {
+    fn new() -> Self {
+        Self { items: Vec::new() }
+    }
+
+    fn push(&mut self, value: T) {
+        self.items.push(value);
+    }
+
+    fn pop(&mut self) -> Option<T> {
+        None
+    }
+
+    fn len(&self) -> usize {
+        self.items.len()
+    }
+
+    fn is_empty(&self) -> bool {
+        self.items.is_empty()
+    }
+}'''
+solution = '''use std::f64::consts::PI;
+
+trait Shape {
+    fn area(&self) -> f64;
+}
+
+struct Circle {
+    radius: f64,
+}
+
+struct Rectangle {
+    width: f64,
+    height: f64,
+}
+
+impl Shape for Circle {
+    fn area(&self) -> f64 {
+        PI * self.radius * self.radius
+    }
+}
+
+impl Shape for Rectangle {
+    fn area(&self) -> f64 {
+        self.width * self.height
+    }
+}
+
+fn total_area(shapes: &[Box<dyn Shape>]) -> f64 {
+    shapes.iter().map(|shape| shape.area()).sum()
+}
+
+struct Stack<T> {
+    items: Vec<T>,
+}
+
+impl<T> Stack<T> {
+    fn new() -> Self {
+        Self { items: Vec::new() }
+    }
+
+    fn push(&mut self, value: T) {
+        self.items.push(value);
+    }
+
+    fn pop(&mut self) -> Option<T> {
+        self.items.pop()
+    }
+
+    fn len(&self) -> usize {
+        self.items.len()
+    }
+
+    fn is_empty(&self) -> bool {
+        self.items.is_empty()
+    }
+}'''
+tests = '''bovabon_tests! {
+    "diện tích hình tròn" => {
+        let circle = Circle { radius: 2.0 };
+        assert!((circle.area() - std::f64::consts::PI * 4.0).abs() < 1e-9);
+    },
+    "diện tích hình chữ nhật" => {
+        let rectangle = Rectangle { width: 3.0, height: 4.0 };
+        assert_eq!(rectangle.area(), 12.0);
+    },
+    "trait object cộng diện tích" => {
+        let shapes: Vec<Box<dyn Shape>> = vec![
+            Box::new(Circle { radius: 1.0 }),
+            Box::new(Rectangle { width: 2.0, height: 3.0 }),
+        ];
+        assert!((total_area(&shapes) - (std::f64::consts::PI + 6.0)).abs() < 1e-9);
+    },
+    "stack generic LIFO" => {
+        let mut stack = Stack::new();
+        stack.push(10);
+        stack.push(20);
+        assert_eq!(stack.pop(), Some(20));
+        assert_eq!(stack.pop(), Some(10));
+        assert_eq!(stack.pop(), None);
+    },
+    "stack hỗ trợ kiểu khác và trạng thái rỗng" => {
+        let mut stack = Stack::new();
+        assert!(stack.is_empty());
+        stack.push(String::from("rust"));
+        assert_eq!(stack.len(), 1);
+        assert_eq!(stack.pop().as_deref(), Some("rust"));
+        assert!(stack.is_empty());
+    },
+}'''
+hints = ["Tách trait object khỏi Stack<T>: Stack chỉ cần lưu Vec<T>.", "Dùng std::f64::consts::PI và Vec::pop để giữ đúng công thức, thứ tự LIFO."]
+explanation = "Bài này kết hợp dynamic dispatch qua Box<dyn Shape> với cấu trúc dữ liệu generic Stack<T>."
+sources = ["rust/book/ch10-00-generics", "rust/book/ch10-02-traits", "rust/book/ch18-02-trait-objects"]
+
+[[questions]]
+id = "rs-034"
+module = "rs-collections"
+type = "code"
+difficulty = 2
+lang = "rust"
+title = "Đếm tần suất từ"
+prompt = '''Viết word_frequency(text: &str) -> HashMap<String, usize>. Tách theo whitespace, bỏ dấu câu ở đầu/cuối mỗi token, chuyển thành chữ thường, bỏ token rỗng, rồi đếm số lần xuất hiện. Không dùng crate ngoài.'''
+starter = '''use std::collections::HashMap;
+
+fn word_frequency(_text: &str) -> HashMap<String, usize> {
+    HashMap::new()
+}'''
+solution = '''use std::collections::HashMap;
+
+fn word_frequency(text: &str) -> HashMap<String, usize> {
+    text.split_whitespace()
+        .map(|word| {
+            word.trim_matches(|character: char| !character.is_alphanumeric())
+                .to_lowercase()
+        })
+        .filter(|word| !word.is_empty())
+        .fold(HashMap::new(), |mut counts, word| {
+            *counts.entry(word).or_insert(0) += 1;
+            counts
+        })
+}'''
+tests = '''bovabon_tests! {
+    "đếm không phân biệt hoa thường" => {
+        let counts = word_frequency("Rust rust RUST");
+        assert_eq!(counts.get("rust"), Some(&3));
+    },
+    "bỏ dấu câu ở biên" => {
+        let counts = word_frequency("Rust, rust! (Rust).");
+        assert_eq!(counts.get("rust"), Some(&3));
+    },
+    "bỏ token chỉ có dấu câu" => {
+        let counts = word_frequency("!!! rust ...");
+        assert_eq!(counts.get("rust"), Some(&1));
+        assert_eq!(counts.len(), 1);
+    },
+    "input rỗng" => { assert!(word_frequency("").is_empty()); },
+    "từ Unicode" => {
+        let counts = word_frequency("café CAFÉ");
+        assert_eq!(counts.get("café"), Some(&2));
+    },
+}'''
+hints = ["Dùng split_whitespace, trim_matches với predicate trên char và to_lowercase.", "fold cùng entry(...).or_insert(0) để tích luỹ HashMap."]
+explanation = "Iterator kết hợp closure biến đổi token; HashMap lưu số đếm mà không cần vòng lặp tra cứu riêng."
+sources = ["rust/book/ch08-00-common-collections", "rust/book/ch13-02-iterators"]
+
+[[questions]]
+id = "rs-035"
+module = "rs-collections"
+type = "code"
+difficulty = 3
+lang = "rust"
+title = "LRU cache với HashMap và VecDeque"
+prompt = '''Cài LruCache<K, V> với new(capacity), put(key, value), get(&key) -> Option<V> và len(). Key yêu cầu Eq + Hash + Clone, value Clone. get thành công và put key đang có đều đưa key thành mới dùng nhất. Khi vượt capacity, loại key ít dùng nhất; capacity 0 luôn để cache rỗng.'''
+starter = '''use std::collections::{HashMap, VecDeque};
+use std::hash::Hash;
+
+struct LruCache<K, V> {
+    capacity: usize,
+    values: HashMap<K, V>,
+    order: VecDeque<K>,
+}
+
+impl<K: Eq + Hash + Clone, V: Clone> LruCache<K, V> {
+    fn new(capacity: usize) -> Self {
+        Self {
+            capacity,
+            values: HashMap::new(),
+            order: VecDeque::new(),
+        }
+    }
+
+    fn put(&mut self, _key: K, _value: V) {}
+
+    fn get(&mut self, _key: &K) -> Option<V> {
+        None
+    }
+
+    fn len(&self) -> usize {
+        self.values.len()
+    }
+}'''
+solution = '''use std::collections::{HashMap, VecDeque};
+use std::hash::Hash;
+
+struct LruCache<K, V> {
+    capacity: usize,
+    values: HashMap<K, V>,
+    order: VecDeque<K>,
+}
+
+impl<K: Eq + Hash + Clone, V: Clone> LruCache<K, V> {
+    fn new(capacity: usize) -> Self {
+        Self {
+            capacity,
+            values: HashMap::new(),
+            order: VecDeque::new(),
+        }
+    }
+
+    fn touch(&mut self, key: &K) {
+        if let Some(index) = self.order.iter().position(|existing| existing == key) {
+            self.order.remove(index);
+        }
+        self.order.push_back(key.clone());
+    }
+
+    fn put(&mut self, key: K, value: V) {
+        if self.capacity == 0 {
+            return;
+        }
+        if self.values.contains_key(&key) {
+            self.values.insert(key.clone(), value);
+            self.touch(&key);
+            return;
+        }
+        if self.values.len() == self.capacity {
+            if let Some(oldest) = self.order.pop_front() {
+                self.values.remove(&oldest);
+            }
+        }
+        self.values.insert(key.clone(), value);
+        self.order.push_back(key);
+    }
+
+    fn get(&mut self, key: &K) -> Option<V> {
+        if !self.values.contains_key(key) {
+            return None;
+        }
+        self.touch(key);
+        self.values.get(key).cloned()
+    }
+
+    fn len(&self) -> usize {
+        self.values.len()
+    }
+}'''
+tests = '''bovabon_tests! {
+    "đọc lại giá trị" => {
+        let mut cache = LruCache::new(2);
+        cache.put("a", 1);
+        assert_eq!(cache.get(&"a"), Some(1));
+    },
+    "key không tồn tại" => {
+        let mut cache: LruCache<&str, i32> = LruCache::new(2);
+        assert_eq!(cache.get(&"missing"), None);
+    },
+    "put loại key ít dùng nhất" => {
+        let mut cache = LruCache::new(2);
+        cache.put(1, "one");
+        cache.put(2, "two");
+        cache.put(3, "three");
+        assert_eq!(cache.get(&1), None);
+        assert_eq!(cache.get(&2), Some("two"));
+    },
+    "get làm key thành mới dùng nhất" => {
+        let mut cache = LruCache::new(2);
+        cache.put(1, "one");
+        cache.put(2, "two");
+        assert_eq!(cache.get(&1), Some("one"));
+        cache.put(3, "three");
+        assert_eq!(cache.get(&2), None);
+        assert_eq!(cache.get(&1), Some("one"));
+    },
+    "put key cũ cập nhật và làm mới thứ tự" => {
+        let mut cache = LruCache::new(2);
+        cache.put(1, "old");
+        cache.put(2, "two");
+        cache.put(1, "new");
+        cache.put(3, "three");
+        assert_eq!(cache.get(&1), Some("new"));
+        assert_eq!(cache.get(&2), None);
+    },
+    "capacity không dương" => {
+        let mut cache = LruCache::new(0);
+        cache.put(1, 10);
+        assert_eq!(cache.len(), 0);
+        assert_eq!(cache.get(&1), None);
+    },
+}'''
+hints = ["Dùng VecDeque giữ thứ tự từ ít dùng nhất ở front đến mới dùng nhất ở back.", "Khi truy cập key, tìm và xoá vị trí cũ rồi push_back; khi đầy, pop_front và xoá khỏi HashMap."]
+explanation = "LRU giữ metadata thứ tự riêng vì HashMap không đảm bảo thứ tự duyệt."
+sources = ["rust/book/ch08-00-common-collections"]
+
+[[questions]]
+id = "rs-036"
+module = "rs-concurrency"
+type = "code"
+difficulty = 3
+lang = "rust"
+title = "Gộp tổng từ các thread qua channel"
+prompt = '''Viết parallel_sums(chunks: Vec<Vec<i32>>) -> Vec<i32>. Chạy một thread cho mỗi chunk, tính tổng chunk đó, gửi (index, tổng) về qua std::sync::mpsc, rồi trả tổng theo thứ tự chunk ban đầu dù thread hoàn tất khác thứ tự. Chunk rỗng có tổng 0; input rỗng trả Vec rỗng.'''
+starter = '''fn parallel_sums(chunks: Vec<Vec<i32>>) -> Vec<i32> {
+    vec![0; chunks.len()]
+}'''
+solution = '''use std::sync::mpsc;
+use std::thread;
+
+fn parallel_sums(chunks: Vec<Vec<i32>>) -> Vec<i32> {
+    let count = chunks.len();
+    let (sender, receiver) = mpsc::channel();
+
+    for (index, chunk) in chunks.into_iter().enumerate() {
+        let sender = sender.clone();
+        thread::spawn(move || {
+            let sum = chunk.into_iter().sum::<i32>();
+            sender.send((index, sum)).unwrap();
+        });
+    }
+
+    drop(sender);
+    let mut results = vec![0; count];
+    for (index, sum) in receiver {
+        results[index] = sum;
+    }
+    results
+}'''
+tests = '''bovabon_tests! {
+    "input rỗng" => { assert_eq!(parallel_sums(vec![]), Vec::<i32>::new()); },
+    "giữ thứ tự chunk" => {
+        assert_eq!(parallel_sums(vec![vec![1, 2], vec![10], vec![3, 4, 5]]), vec![3, 10, 12]);
+    },
+    "số âm và chunk rỗng" => {
+        assert_eq!(parallel_sums(vec![vec![-2, 1], vec![], vec![8, -3]]), vec![-1, 0, 5]);
+    },
+    "một chunk" => { assert_eq!(parallel_sums(vec![vec![7, 8]]), vec![15]); },
+}'''
+hints = ["Clone sender cho mỗi thread; receiver chỉ kết thúc khi mọi sender đã drop.", "Gửi index cùng kết quả để khôi phục thứ tự ban đầu khi nhận message."]
+explanation = "Thread sở hữu chunk qua move; channel chuyển cặp index/kết quả về thread gọi và giữ thứ tự đầu ra."
+sources = ["rust/book/ch16-01-threads", "rust/book/ch16-02-message-passing"]

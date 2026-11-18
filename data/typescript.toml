@@ -1,0 +1,971 @@
+id = "typescript"
+title = "TypeScript chuyên sâu"
+icon = "🔷"
+color = "#3178c6"
+group = "Frontend"
+docs = ["typescript"]
+description = "Đọc hiểu hệ thống kiểu TypeScript, thiết kế kiểu an toàn và tích hợp TypeScript vào dự án JavaScript thực tế."
+
+[[modules]]
+id = "ts-types"
+title = "Hệ thống kiểu cơ bản & suy luận"
+description = "Kiểu nguyên thủy, literal, any, unknown, never, suy luận và tương thích cấu trúc."
+sources = ["typescript/docs/handbook/2/everyday-types", "typescript/docs/handbook/type-inference", "typescript/docs/handbook/type-compatibility"]
+lesson = '''
+### Kiểu được suy luận từ cách dùng
+TypeScript phân tích giá trị khởi tạo, biểu thức và ngữ cảnh để suy ra kiểu; không cần chú thích mọi biến. let status = "ready" thường được mở rộng thành string, còn const status = "ready" có thể giữ kiểu literal "ready". Chú thích kiểu hữu ích ở ranh giới dữ liệu và chữ ký hàm, còn suy luận tốt giúp tránh lặp lại thông tin.
+
+| Kiểu | Dùng khi |
+|---|---|
+| unknown | Nhận dữ liệu chưa tin cậy; phải thu hẹp trước khi dùng |
+| any | Tắt kiểm tra kiểu tại vị trí đó; lan truyền rủi ro sang nơi gọi |
+| never | Không có giá trị nào hợp lệ, hoặc nhánh không thể tới |
+| void | Hàm không cung cấp giá trị trả về hữu ích |
+
+Kiểu đối tượng theo cấu trúc: hai giá trị tương thích nếu chúng có các thành viên cần thiết với kiểu tương thích, không cần cùng tên khai báo. Ví dụ: type Point = { x: number; y: number }; một object có đủ x và y có thể gán cho Point. Lỗi hay gặp: ép kiểu bằng as để im lặng bỏ qua lỗi; assertion chỉ ảnh hưởng kiểm tra tĩnh, không xác thực dữ liệu lúc chạy.
+'''
+
+[[modules]]
+id = "ts-narrowing"
+title = "Narrowing & type guard"
+description = "Control-flow analysis, typeof, in, instanceof, predicate, assertion function và exhaustive switch."
+sources = ["typescript/docs/handbook/2/narrowing", "typescript/docs/handbook/2/functions#never"]
+lesson = '''
+### Thu hẹp kiểu theo luồng điều khiển
+Một biến khai báo là union chỉ dùng được các thao tác an toàn cho mọi thành viên. Câu lệnh if, switch, typeof, instanceof, phép kiểm tra in, so sánh literal và phép gán có thể thu hẹp tập kiểu ở từng nhánh. Type predicate dạng value is T mô tả một hàm boolean cho compiler; assertion function dạng asserts value is T báo rằng hàm ném lỗi nếu điều kiện không đúng.
+
+| Cách kiểm tra | Tín hiệu thu hẹp |
+|---|---|
+| typeof x === "string" | primitive |
+| "id" in x | thuộc tính của union object |
+| x instanceof Date | instance của class |
+| x.kind === "saved" | discriminant literal |
+
+Với discriminated union, dùng switch trên trường chung như kind. Gán biến ở nhánh cuối cho never giúp compiler báo khi union có thành viên mới chưa được xử lý. Lỗi thường gặp là chỉ kiểm tra if (x) rồi cho rằng đã loại mọi giá trị rỗng: chuỗi rỗng, số 0 và false vẫn cần được xử lý theo đúng miền dữ liệu.
+'''
+
+[[modules]]
+id = "ts-generics"
+title = "Generics & ràng buộc"
+description = "Tham số kiểu, suy luận đối số, extends, keyof, indexed access và quan hệ giữa input-output."
+sources = ["typescript/docs/handbook/2/generics", "typescript/docs/handbook/2/keyof-types", "typescript/docs/handbook/2/indexed-access-types"]
+lesson = '''
+### Giữ mối quan hệ giữa các kiểu
+Generic biểu diễn một kiểu chưa biết nhưng có quan hệ ổn định giữa đầu vào và đầu ra. Hàm identity<T>(value: T): T trả lại đúng kiểu đầu vào; compiler thường suy luận T từ đối số nên caller không phải chỉ định tường minh. Dùng extends để giới hạn những thao tác generic được phép thực hiện, chẳng hạn T extends { id: string }.
+
+| Cú pháp | Ý nghĩa |
+|---|---|
+| keyof T | union các key hợp lệ của T |
+| T[K] | kiểu giá trị ở key K |
+| K extends keyof T | đảm bảo key truy cập thuộc T |
+| T extends Constraint | giới hạn kiểu generic theo cấu trúc |
+
+Mẫu getProperty<T, K extends keyof T>(value: T, key: K): T[K] nối kiểu key với kiểu giá trị trả về. Lỗi hay gặp là ràng buộc generic quá rộng rồi bên trong dùng thuộc tính chưa được đảm bảo; cách sửa là ràng buộc tối thiểu đủ cho thao tác cần thiết, không thay generic bằng any.
+'''
+
+[[modules]]
+id = "ts-type-programming"
+title = "Utility, mapped, conditional & template literal types"
+description = "Biến đổi kiểu có hệ thống bằng utility types, mapped types, điều kiện và chuỗi literal."
+sources = ["typescript/docs/handbook/utility-types", "typescript/docs/handbook/2/mapped-types", "typescript/docs/handbook/2/conditional-types", "typescript/docs/handbook/2/template-literal-types"]
+lesson = '''
+### Biến đổi kiểu ở thời điểm biên dịch
+Utility types dựng sẵn như Partial<T>, Required<T>, Readonly<T>, Pick<T, K>, Omit<T, K>, Record<K, V> và ReturnType<F> giúp mô tả kiểu dẫn xuất mà không sao chép cấu trúc. Mapped type lặp qua các key, có thể thêm/bỏ modifier như readonly hoặc ?; conditional type chọn nhánh theo quan hệ T extends U.
+
+| Công cụ | Ví dụ công dụng |
+|---|---|
+| Pick với các key id và name | chỉ giữ vài thuộc tính |
+| Omit<User, "secret"> | loại thuộc tính khỏi kiểu |
+| T extends U ? A : B | chọn kiểu theo điều kiện |
+| Template literal type | tạo tên kiểu chuỗi từ union |
+
+Conditional type phân phối qua union khi kiểu bên trái extends là type parameter thuần; bọc hai phía trong tuple để kiểm tra cả union như một khối. Các kiểu trên bị xóa khi biên dịch thành JavaScript, vì vậy Readonly<T> không tự đóng băng object lúc chạy. Lỗi thường gặp là nhầm bảo đảm tĩnh với validation hay immutability runtime.
+'''
+
+[[modules]]
+id = "ts-project"
+title = "tsconfig, module, khai báo & tích hợp dự án"
+description = "Compiler options, strictness, module resolution, declaration files và ranh giới JS/TS."
+sources = ["typescript/tsconfig", "typescript/docs/handbook/tsconfig-json", "typescript/docs/handbook/modules/reference", "typescript/docs/handbook/declaration-files/introduction", "typescript/docs/handbook/integrating-with-build-tools"]
+lesson = '''
+### Đặt TypeScript trong dự án
+tsconfig.json xác định tập file, mục tiêu JavaScript, module, cách phân giải import và mức kiểm tra. strict: true bật nhóm kiểm tra nghiêm ngặt; thay đổi từng option cần cân nhắc môi trường chạy và bundler. module mô tả dạng module đầu ra, còn moduleResolution phải khớp môi trường như Node.js hoặc bundler. Một file có import/export được xử lý như module; file không có chúng có thể thuộc global script scope.
+
+| Tệp / option | Vai trò |
+|---|---|
+| tsconfig.json | cấu hình compiler và phạm vi dự án |
+| *.d.ts | mô tả kiểu cho JavaScript hoặc package không có kiểu |
+| declaration | phát sinh declaration cho thư viện |
+| import type | import chỉ dùng ở vị trí kiểu |
+
+.d.ts không chứa implementation runtime; khai báo phải phản ánh API thật để tránh lời hứa kiểu sai. TypeScript kiểm tra tĩnh nhưng không kiểm tra JSON, response mạng hay input người dùng lúc chạy. Lỗi hay gặp là nghĩ paths tự sửa đường dẫn runtime, hoặc nghĩ khai báo kiểu đã xác thực dữ liệu; bundler/runtime vẫn cần cấu hình tương ứng và dữ liệu ngoài cần validator.
+'''
+
+[[questions]]
+id = "ts-001"
+module = "ts-types"
+type = "single"
+difficulty = 1
+prompt = '''
+Đọc đoạn TypeScript:
+~~~ts
+const retries = 3;
+let label = "queued";
+~~~
+Kiểu nào thường được suy ra cho hai biến?
+'''
+options = ["retries: number; label: string", "retries: 3; label: string", "retries: 3; label: \"queued\"", "Cả hai đều là any"]
+answer = [1]
+explanation = "Biến const không thể gán lại nên giá trị literal 3 được giữ. let có thể gán chuỗi khác nên kiểu được mở rộng thành string."
+sources = ["typescript/docs/handbook/type-inference", "typescript/docs/handbook/2/everyday-types"]
+
+[[questions]]
+id = "ts-002"
+module = "ts-types"
+type = "single"
+difficulty = 2
+prompt = '''
+~~~ts
+type HasId = { id: number };
+const row = { id: 8, label: "draft" };
+const item: HasId = row;
+~~~
+Vì sao phép gán cuối hợp lệ?
+'''
+options = ["Mọi object đều tương thích với mọi interface", "TypeScript so sánh cấu trúc và row có thuộc tính id đúng kiểu", "Khai báo const bỏ qua kiểm tra kiểu", "Thuộc tính label làm HasId tự mở rộng"]
+answer = [1]
+explanation = "Tương thích kiểu đối tượng chủ yếu dựa vào các thành viên cần thiết. row có id là number; thuộc tính dư không làm biến đã có kiểu rộng hơn mất tương thích."
+sources = ["typescript/docs/handbook/type-compatibility"]
+
+[[questions]]
+id = "ts-003"
+module = "ts-types"
+type = "single"
+difficulty = 2
+prompt = '''
+Một hàm nhận JSON từ bên ngoài và chưa biết cấu trúc. Chọn kiểu giúp buộc mã kiểm tra dữ liệu trước khi truy cập thuộc tính.
+'''
+options = ["any", "unknown", "never", "void"]
+answer = [1]
+explanation = "unknown nhận mọi giá trị nhưng không cho phép thao tác tùy ý trước khi narrowing. any tắt phần lớn kiểm tra và có thể lan truyền."
+sources = ["typescript/docs/handbook/2/functions#unknown", "typescript/docs/handbook/2/everyday-types"]
+
+[[questions]]
+id = "ts-004"
+module = "ts-types"
+type = "multiple"
+difficulty = 2
+prompt = '''
+~~~ts
+function format(value: number, prefix = "id:") {
+  return prefix + value;
+}
+~~~
+Chọn các mô tả đúng về suy luận trong đoạn mã.
+'''
+options = ["Tham số value được suy ra là number", "Tham số prefix được suy ra là string", "Kiểu trả về được suy ra là string", "Tham số prefix tự động thành kiểu literal \"id:\""]
+answer = [0, 1, 2]
+explanation = "Chú thích ở value xác định number; giá trị mặc định suy ra string cho prefix; phép cộng chuỗi cho kiểu trả về string. Tham số thường không bị giữ ở literal type chỉ vì giá trị mặc định."
+sources = ["typescript/docs/handbook/type-inference", "typescript/docs/handbook/2/functions"]
+
+[[questions]]
+id = "ts-005"
+module = "ts-types"
+type = "fill"
+difficulty = 2
+prompt = '''
+Trong strict mode, kiểu {{blank}} biểu diễn giá trị chưa biết và bắt buộc narrowing trước khi gọi phương thức.
+'''
+blanks = [["unknown"]]
+explanation = "unknown an toàn hơn any vì compiler yêu cầu kiểm tra trước khi dùng."
+sources = ["typescript/docs/handbook/2/functions#unknown"]
+
+[[questions]]
+id = "ts-006"
+module = "ts-types"
+type = "fill"
+difficulty = 2
+prompt = '''
+Trong TypeScript, phép assertion bằng cú pháp value as User được kiểm tra ở compile time nhưng không chạy {{blank}} dữ liệu khi ứng dụng hoạt động.
+'''
+blanks = [["validation", "xác thực"]]
+explanation = "Assertion không biến đổi hay xác thực giá trị runtime; cần tự kiểm tra hoặc dùng validator."
+sources = ["typescript/docs/handbook/2/everyday-types"]
+
+[[questions]]
+id = "ts-007"
+module = "ts-types"
+type = "essay"
+difficulty = 3
+prompt = "Một ứng dụng ép JSON từ API sang kiểu User bằng assertion. Giải thích vì sao assertion chưa đủ an toàn và nêu cách xử lý phù hợp ở ranh giới dữ liệu."
+keywords = [["không kiểm tra runtime", "không xác thực", "không validation"], ["unknown"], ["kiểm tra kiểu", "type guard", "validator"], ["dữ liệu không tin cậy", "ranh giới dữ liệu"]]
+min_keywords = 3
+model_answer = '''
+Assertion chỉ hướng dẫn compiler và không kiểm tra runtime. Nên nhận JSON như unknown, sau đó xác thực cấu trúc bằng type guard hoặc validator trước khi dùng như User. Điều này ngăn dữ liệu không tin cậy làm sai giả định trong phần còn lại của ứng dụng.
+'''
+explanation = "Kiểu tĩnh không thay thế kiểm tra dữ liệu đến từ mạng, file hoặc người dùng."
+sources = ["typescript/docs/handbook/2/everyday-types", "typescript/docs/handbook/2/narrowing"]
+
+[[questions]]
+id = "ts-008"
+module = "ts-types"
+type = "code"
+lang = "javascript"
+difficulty = 1
+title = "Runtime guard & assertion"
+prompt = '''
+Viết hai hàm JavaScript:
+- isNonEmptyString(value) trả về true khi value là chuỗi có ít nhất một ký tự không phải khoảng trắng.
+- assertNonEmptyString(value) trả lại chính chuỗi ban đầu nếu hợp lệ; nếu không, ném TypeError có message là Expected non-empty string.
+Đây là phần runtime tương ứng với type guard và assertion function trong TypeScript; không dùng cú pháp TypeScript.
+'''
+starter = '''
+function isNonEmptyString(value) {
+  return typeof value === 'string';
+}
+
+function assertNonEmptyString(value) {
+  return value;
+}
+'''
+solution = '''
+function isNonEmptyString(value) {
+  return typeof value === 'string' && value.trim().length > 0;
+}
+
+function assertNonEmptyString(value) {
+  if (!isNonEmptyString(value)) throw new TypeError('Expected non-empty string');
+  return value;
+}
+'''
+tests = '''
+test('chấp nhận chuỗi có nội dung', () => {
+  expect(isNonEmptyString(' TypeScript ')).toBe(true);
+});
+test('từ chối chuỗi rỗng và chỉ có khoảng trắng', () => {
+  expect(isNonEmptyString('')).toBe(false);
+  expect(isNonEmptyString('   ')).toBe(false);
+});
+test('từ chối giá trị không phải chuỗi', () => {
+  expect(isNonEmptyString(12)).toBe(false);
+  expect(isNonEmptyString(null)).toBe(false);
+});
+test('assert trả lại nguyên chuỗi ban đầu', () => {
+  expect(assertNonEmptyString(' x ')).toBe(' x ');
+});
+test('assert ném TypeError với giá trị sai', () => {
+  expect(() => assertNonEmptyString('  ')).toThrow('Expected non-empty string');
+});
+'''
+hints = ["Kiểm tra typeof trước khi gọi trim.", "Assertion cần ném lỗi khi predicate trả false."]
+explanation = "Type guard thu hẹp kiểu sau kiểm tra; assertion function biến điều kiện sai thành lỗi runtime."
+
+[[questions]]
+id = "ts-009"
+module = "ts-narrowing"
+type = "single"
+difficulty = 1
+prompt = '''
+~~~ts
+function printId(id: string | number) {
+  if (typeof id === "string") return id.toUpperCase();
+  return id.toFixed(0);
+}
+~~~
+Trong nhánh else, kiểu của id là gì?
+'''
+options = ["string", "number", "string | number", "unknown"]
+answer = [1]
+explanation = "typeof trong nhánh if loại string khỏi union; nhánh còn lại vì thế là number."
+sources = ["typescript/docs/handbook/2/narrowing"]
+
+[[questions]]
+id = "ts-010"
+module = "ts-narrowing"
+type = "single"
+difficulty = 2
+prompt = '''
+~~~ts
+type Result = { ok: true; value: string } | { ok: false; error: Error };
+function show(result: Result) {
+  if (result.ok) return result.value;
+  return result.error.message;
+}
+~~~
+Điều gì cho phép TypeScript truy cập thuộc tính khác nhau ở mỗi nhánh?
+'''
+options = ["Kiểm tra truthy bất kỳ", "Trường discriminant ok có literal type khác nhau trong từng thành viên", "TypeScript bỏ kiểm tra thuộc tính union", "Tên hàm show"]
+answer = [1]
+explanation = "ok là discriminant có giá trị literal true hoặc false, nên control-flow analysis xác định đúng nhánh của union."
+sources = ["typescript/docs/handbook/2/narrowing"]
+
+[[questions]]
+id = "ts-011"
+module = "ts-narrowing"
+type = "single"
+difficulty = 3
+prompt = '''
+~~~ts
+type Shape = { kind: "circle"; radius: number } | { kind: "square"; side: number };
+function area(shape: Shape): number {
+  switch (shape.kind) {
+    case "circle": return Math.PI * shape.radius ** 2;
+    case "square": return shape.side ** 2;
+    default: return assertNever(shape);
+  }
+}
+function assertNever(value: never): never { throw new Error("unhandled"); }
+~~~
+Lợi ích chính của assertNever ở đây là gì?
+'''
+options = ["Tự chạy nhánh default khi chương trình khởi động", "Báo lỗi biên dịch nếu thêm một biến thể Shape mà switch chưa xử lý", "Chuyển object thành null", "Tự sinh thêm case cho union"]
+answer = [1]
+explanation = "Khi mọi thành viên đã được xử lý, shape ở default phải là never. Thêm thành viên mới khiến đối số không còn gán được cho never."
+sources = ["typescript/docs/handbook/2/narrowing", "typescript/docs/handbook/2/functions#never"]
+
+[[questions]]
+id = "ts-012"
+module = "ts-narrowing"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các phép kiểm tra có thể giúp TypeScript narrowing union trong ngữ cảnh phù hợp."
+options = ["typeof value === \"string\"", "\"id\" in value", "value instanceof Date", "JSON.stringify(value)", "value.kind === \"saved\""]
+answer = [0, 1, 2, 4]
+explanation = "typeof, in, instanceof và so sánh discriminant đều là guard được control-flow analysis nhận biết. JSON.stringify chỉ tạo chuỗi và không chứng minh kiểu cụ thể của value."
+sources = ["typescript/docs/handbook/2/narrowing"]
+
+[[questions]]
+id = "ts-013"
+module = "ts-narrowing"
+type = "fill"
+difficulty = 2
+prompt = '''
+Trong chữ ký type predicate, hàm kiểm tra có kiểu trả về dạng value {{blank}} User.
+'''
+blanks = [["is"]]
+explanation = "Cụm value is User cho compiler biết predicate thu hẹp value thành User khi kết quả là true."
+sources = ["typescript/docs/handbook/2/narrowing"]
+
+[[questions]]
+id = "ts-014"
+module = "ts-narrowing"
+type = "essay"
+difficulty = 3
+prompt = "Một discriminated union nhận thêm biến thể archived. Mô tả cách viết switch để compiler giúp phát hiện nhánh bị bỏ sót."
+keywords = [["discriminant", "trường phân biệt", "kind"], ["never"], ["assertnever", "assert never"], ["lỗi biên dịch", "compiler báo", "compile error"]]
+min_keywords = 3
+model_answer = '''
+Switch trên trường discriminant như kind và xử lý từng giá trị literal. Ở default, truyền biến còn lại vào hàm nhận never. Nếu union thêm archived mà không có case tương ứng, compiler báo lỗi tại nhánh never, giúp giữ xử lý exhaustive.
+'''
+explanation = "Exhaustiveness check biến thay đổi union thành lỗi biên dịch có vị trí rõ ràng."
+sources = ["typescript/docs/handbook/2/narrowing", "typescript/docs/handbook/2/functions#never"]
+
+[[questions]]
+id = "ts-015"
+module = "ts-narrowing"
+type = "code"
+lang = "javascript"
+difficulty = 2
+title = "Exhaustive switch cho event"
+prompt = '''
+Viết describeEvent(event) theo mô hình discriminated union:
+- { type: 'created', id: number } trả về Created #<id>
+- { type: 'renamed', oldName: string, newName: string } trả về Renamed <oldName> -> <newName>
+- { type: 'deleted', id: number } trả về Deleted #<id>
+- type lạ phải ném Error với message Unexpected event type: <type>
+Dùng switch và một helper assertNever để thể hiện nhánh exhaustive. JavaScript không có kiểm tra never lúc biên dịch, nên helper kiểm tra lỗi lúc chạy.
+'''
+starter = '''
+function describeEvent(event) {
+  return event.type;
+}
+'''
+solution = '''
+function assertNever(value) {
+  const kind = value && typeof value === 'object' ? value.type : value;
+  throw new Error('Unexpected event type: ' + String(kind));
+}
+
+function describeEvent(event) {
+  switch (event.type) {
+    case 'created':
+      return 'Created #' + event.id;
+    case 'renamed':
+      return 'Renamed ' + event.oldName + ' -> ' + event.newName;
+    case 'deleted':
+      return 'Deleted #' + event.id;
+    default:
+      return assertNever(event);
+  }
+}
+'''
+tests = '''
+test('định dạng event created', () => {
+  expect(describeEvent({ type: 'created', id: 4 })).toBe('Created #4');
+});
+test('định dạng event renamed', () => {
+  expect(describeEvent({ type: 'renamed', oldName: 'Ada', newName: 'Grace' })).toBe('Renamed Ada -> Grace');
+});
+test('định dạng event deleted', () => {
+  expect(describeEvent({ type: 'deleted', id: 9 })).toBe('Deleted #9');
+});
+test('từ chối biến thể không hỗ trợ', () => {
+  expect(() => describeEvent({ type: 'archived' })).toThrow('Unexpected event type: archived');
+});
+'''
+hints = ["Dựa vào event.type để chọn nhánh.", "Nhánh default gọi helper ném lỗi với loại không xử lý."]
+explanation = "Discriminated union giúp narrowing theo kind; nhánh never buộc rà soát khi union thay đổi."
+
+[[questions]]
+id = "ts-016"
+module = "ts-generics"
+type = "single"
+difficulty = 2
+prompt = '''
+~~~ts
+function identity<T>(value: T): T { return value; }
+const result = identity("ready");
+~~~
+Kiểu nào được suy ra cho result?
+'''
+options = ["any", "unknown", "\"ready\"", "string"]
+answer = [2]
+explanation = "T được suy ra là literal type \"ready\": vì T xuất hiện trực tiếp ở kiểu trả về nên TypeScript không mở rộng (widen) literal, và result khai báo bằng const giữ nguyên \"ready\". Nếu viết `let result = identity(\"ready\")` thì biến bị widen thành string; gọi `identity<string>(\"ready\")` cũng cho string."
+sources = ["typescript/docs/handbook/2/generics", "typescript/docs/handbook/type-inference"]
+
+[[questions]]
+id = "ts-017"
+module = "ts-generics"
+type = "single"
+difficulty = 2
+prompt = '''
+~~~ts
+function getId<T extends { id: string }>(value: T) {
+  return value.id;
+}
+~~~
+Ràng buộc extends đảm bảo điều gì?
+'''
+options = ["T chỉ có thể là object khai báo đúng tên Id", "Mọi T truyền vào có thuộc tính id kiểu string nên thân hàm được phép đọc id", "Kết quả luôn là literal string", "T không thể có thuộc tính khác"]
+answer = [1]
+explanation = "Constraint mô tả cấu trúc tối thiểu cần có. T vẫn có thể chứa nhiều thuộc tính bổ sung."
+sources = ["typescript/docs/handbook/2/generics"]
+
+[[questions]]
+id = "ts-018"
+module = "ts-generics"
+type = "single"
+difficulty = 2
+prompt = '''
+~~~ts
+function getProperty<T, K extends keyof T>(object: T, key: K): T[K] {
+  return object[key];
+}
+~~~
+Vai trò của K extends keyof T là gì?
+'''
+options = ["Cho phép mọi string làm key", "Giới hạn key vào các key hợp lệ của T và giữ kiểu giá trị trả về tương ứng", "Biến mọi thuộc tính thành optional", "Chỉ cho phép key là number"]
+answer = [1]
+explanation = "keyof T tạo union các key; K bị ràng buộc trong union đó và T[K] trả kiểu tại đúng key."
+sources = ["typescript/docs/handbook/2/keyof-types", "typescript/docs/handbook/2/indexed-access-types"]
+
+[[questions]]
+id = "ts-019"
+module = "ts-generics"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các mô tả đúng về generic function."
+options = ["Có thể suy luận type parameter từ đối số", "Constraint extends giới hạn thao tác hợp lệ với T", "Mỗi lần gọi có thể suy ra một T khác", "Generic luôn sinh một bản sao hàm cho từng kiểu lúc runtime"]
+answer = [0, 1, 2]
+explanation = "Generic là tham số kiểu được kiểm tra tĩnh và có thể được suy luận theo từng lần gọi. Các type parameter bị xóa khi phát ra JavaScript."
+sources = ["typescript/docs/handbook/2/generics"]
+
+[[questions]]
+id = "ts-020"
+module = "ts-generics"
+type = "fill"
+difficulty = 2
+prompt = '''
+Toán tử kiểu {{blank}} nào lấy union tên thuộc tính của một kiểu đối tượng T?
+'''
+blanks = [["keyof"]]
+explanation = "keyof T tạo kiểu union từ các key có thể truy cập của T."
+sources = ["typescript/docs/handbook/2/keyof-types"]
+
+[[questions]]
+id = "ts-021"
+module = "ts-generics"
+type = "code"
+lang = "javascript"
+difficulty = 2
+title = "Result<T, E> helpers"
+prompt = '''
+Triển khai các helper JavaScript cho kiểu Result:
+- ok(value) tạo { ok: true, value }
+- err(error) tạo { ok: false, error }
+- mapResult(result, fn) áp dụng fn chỉ khi thành công, giữ nguyên lỗi nếu thất bại
+- flatMapResult(result, fn) trả nguyên result lỗi hoặc trả trực tiếp kết quả Result do fn tạo
+- unwrapOr(result, fallback) trả value khi thành công, fallback khi lỗi
+'''
+starter = '''
+function ok(value) { return { ok: true, value }; }
+function err(error) { return { ok: false, error }; }
+function mapResult(result, fn) { return result; }
+function flatMapResult(result, fn) { return result; }
+function unwrapOr(result, fallback) { return fallback; }
+'''
+solution = '''
+function ok(value) {
+  return { ok: true, value };
+}
+
+function err(error) {
+  return { ok: false, error };
+}
+
+function mapResult(result, fn) {
+  return result.ok ? ok(fn(result.value)) : result;
+}
+
+function flatMapResult(result, fn) {
+  return result.ok ? fn(result.value) : result;
+}
+
+function unwrapOr(result, fallback) {
+  return result.ok ? result.value : fallback;
+}
+'''
+tests = '''
+test('tạo hai nhánh kết quả', () => {
+  expect(ok(3)).toEqual({ ok: true, value: 3 });
+  expect(err('bad')).toEqual({ ok: false, error: 'bad' });
+});
+test('map chỉ đổi value của nhánh thành công', () => {
+  expect(mapResult(ok(2), (x) => x * 3)).toEqual(ok(6));
+});
+test('map giữ nguyên nhánh lỗi', () => {
+  const failure = err('network');
+  expect(mapResult(failure, (x) => x * 2)).toBe(failure);
+});
+test('flatMap trả Result tiếp theo', () => {
+  expect(flatMapResult(ok(2), (x) => ok(String(x)))).toEqual(ok('2'));
+});
+test('unwrapOr chọn value hoặc fallback', () => {
+  expect(unwrapOr(ok('yes'), 'no')).toBe('yes');
+  expect(unwrapOr(err('x'), 'no')).toBe('no');
+});
+'''
+hints = ["Phân nhánh dựa trên result.ok.", "Khi lỗi, giữ nguyên object Result để giữ cả kiểu lỗi."]
+explanation = "Discriminated union Result<T, E> giúp biểu diễn thành công và lỗi mà không dùng giá trị giả."
+
+[[questions]]
+id = "ts-022"
+module = "ts-type-programming"
+type = "single"
+difficulty = 1
+prompt = "Utility type nào tạo kiểu có cùng thuộc tính với T nhưng mọi thuộc tính đều tùy chọn?"
+options = ["Required<T>", "Partial<T>", "Pick<T, K>", "Record<K, V>"]
+answer = [1]
+explanation = "Partial<T> biến từng thuộc tính thành optional; Required<T> làm điều ngược lại."
+sources = ["typescript/docs/handbook/utility-types"]
+
+[[questions]]
+id = "ts-023"
+module = "ts-type-programming"
+type = "single"
+difficulty = 2
+prompt = '''
+~~~ts
+type ElementType<T> = T extends readonly (infer Item)[] ? Item : T;
+type A = ElementType<readonly string[]>;
+~~~
+Kiểu A là gì?
+'''
+options = ["readonly string[]", "string", "unknown", "never"]
+answer = [1]
+explanation = "infer Item trích kiểu phần tử từ kiểu mảng ở nhánh true; với readonly string[] thì Item là string."
+sources = ["typescript/docs/handbook/2/conditional-types"]
+
+[[questions]]
+id = "ts-024"
+module = "ts-type-programming"
+type = "single"
+difficulty = 2
+prompt = "Với type User = { id: number; name: string; password: string }, kiểu Pick<User, \"id\" | \"name\"> giữ lại điều gì?"
+options = ["Chỉ id và name", "Chỉ password", "Tất cả thuộc tính nhưng đổi thành optional", "Không thuộc tính nào"]
+answer = [0]
+explanation = "Pick chọn một tập key từ kiểu gốc và giữ kiểu giá trị tương ứng."
+sources = ["typescript/docs/handbook/utility-types"]
+
+[[questions]]
+id = "ts-025"
+module = "ts-type-programming"
+type = "multiple"
+difficulty = 3
+prompt = "Chọn các mô tả đúng về type-level programming."
+options = ["Mapped type có thể lặp qua keyof T", "Conditional type có thể chọn kiểu theo quan hệ extends", "Readonly<T> tự gọi Object.freeze lúc runtime", "Template literal type kết hợp các kiểu chuỗi literal"]
+answer = [0, 1, 3]
+explanation = "Mapped, conditional và template literal types biến đổi kiểu tĩnh. Utility type Readonly không tự thay đổi object JavaScript lúc chạy."
+sources = ["typescript/docs/handbook/2/mapped-types", "typescript/docs/handbook/2/conditional-types", "typescript/docs/handbook/2/template-literal-types"]
+
+[[questions]]
+id = "ts-026"
+module = "ts-type-programming"
+type = "multiple"
+difficulty = 3
+prompt = '''
+~~~ts
+type ToArray<T> = T extends unknown ? T[] : never;
+type A = ToArray<string | number>;
+type B = [string | number] extends [unknown] ? (string | number)[] : never;
+~~~
+Chọn các mô tả đúng.
+'''
+options = ["A phân phối conditional type trên từng thành viên union", "A tương đương string[] | number[]", "B kiểm tra union như một khối nên cho (string | number)[]", "Conditional type luôn phân phối dù T không phải type parameter"]
+answer = [0, 1, 2]
+explanation = "Conditional type phân phối khi type parameter ở bên trái extends. Bọc trong tuple ngăn phân phối và kiểm tra nguyên union."
+sources = ["typescript/docs/handbook/2/conditional-types"]
+
+[[questions]]
+id = "ts-027"
+module = "ts-type-programming"
+type = "fill"
+difficulty = 2
+prompt = '''
+Utility type {{blank}} nào lấy kiểu trả về của một function type F?
+'''
+blanks = [["ReturnType<F>", "returntype<f>"]]
+explanation = "ReturnType<F> suy ra kiểu trả về từ function type F."
+sources = ["typescript/docs/handbook/utility-types"]
+
+[[questions]]
+id = "ts-028"
+module = "ts-type-programming"
+type = "code"
+lang = "javascript"
+difficulty = 2
+title = "Deep freeze runtime"
+prompt = '''
+Viết deepFreeze(value) để đệ quy Object.freeze mọi object và array nằm trong cây object, rồi trả lại chính value. Bỏ qua primitive và null. Hàm phải an toàn với tham chiếu vòng, không lặp vô hạn, và không thay đổi cấu trúc dữ liệu.
+'''
+starter = '''
+function deepFreeze(value) {
+  return Object.freeze(value);
+}
+'''
+solution = '''
+function deepFreeze(value, seen) {
+  if (value === null || (typeof value !== 'object' && typeof value !== 'function')) return value;
+  const visited = seen || new Set();
+  if (visited.has(value)) return value;
+  visited.add(value);
+  for (const key of Object.keys(value)) deepFreeze(value[key], visited);
+  return Object.freeze(value);
+}
+'''
+tests = '''
+test('đóng băng object lồng nhau và array', () => {
+  const value = { child: { items: [1, 2] } };
+  expect(deepFreeze(value)).toBe(value);
+  expect(Object.isFrozen(value)).toBe(true);
+  expect(Object.isFrozen(value.child)).toBe(true);
+  expect(Object.isFrozen(value.child.items)).toBe(true);
+});
+test('bỏ qua primitive và null', () => {
+  expect(deepFreeze(4)).toBe(4);
+  expect(deepFreeze(null)).toBeNull();
+});
+test('xử lý object có tham chiếu vòng', () => {
+  const value = {};
+  value.self = value;
+  expect(deepFreeze(value)).toBe(value);
+  expect(Object.isFrozen(value)).toBe(true);
+});
+test('không thay đổi nội dung object', () => {
+  const value = { a: 1, nested: { b: 2 } };
+  deepFreeze(value);
+  expect(value.nested.b).toBe(2);
+});
+'''
+hints = ["Theo dõi object đã thăm để dừng vòng lặp.", "Freeze các thuộc tính con trước khi freeze object cha."]
+explanation = "Readonly<T> chỉ tác động type checker; deep freeze là hành vi runtime riêng."
+
+[[questions]]
+id = "ts-029"
+module = "ts-type-programming"
+type = "code"
+lang = "javascript"
+difficulty = 2
+title = "Pick & omit runtime"
+prompt = '''
+Viết pick(object, keys) và omit(object, keys):
+- Chỉ xét thuộc tính own enumerable dạng string.
+- pick trả object mới chỉ có các key được yêu cầu và thật sự có trên object.
+- omit trả object mới giữ các key không nằm trong danh sách loại bỏ.
+- Không sửa object nguồn và không lấy thuộc tính kế thừa.
+'''
+starter = '''
+function pick(object, keys) { return {}; }
+function omit(object, keys) { return {}; }
+'''
+solution = '''
+function pick(object, keys) {
+  const result = {};
+  for (const key of keys) {
+    if (Object.prototype.hasOwnProperty.call(object, key) && Object.prototype.propertyIsEnumerable.call(object, key)) {
+      result[key] = object[key];
+    }
+  }
+  return result;
+}
+
+function omit(object, keys) {
+  const result = {};
+  const excluded = new Set(keys);
+  for (const key of Object.keys(object)) {
+    if (!excluded.has(key)) result[key] = object[key];
+  }
+  return result;
+}
+'''
+tests = '''
+test('pick chỉ chọn key tồn tại', () => {
+  expect(pick({ id: 1, name: 'Ada' }, ['name', 'missing'])).toEqual({ name: 'Ada' });
+});
+test('omit loại key được chỉ định', () => {
+  expect(omit({ id: 1, name: 'Ada', secret: 'x' }, ['secret'])).toEqual({ id: 1, name: 'Ada' });
+});
+test('bỏ qua thuộc tính kế thừa', () => {
+  const source = Object.create({ inherited: 2 });
+  source.own = 1;
+  expect(pick(source, ['inherited', 'own'])).toEqual({ own: 1 });
+  expect(omit(source, [])).toEqual({ own: 1 });
+});
+test('không sửa object nguồn', () => {
+  const source = { a: 1, b: 2 };
+  pick(source, ['a']);
+  omit(source, ['b']);
+  expect(source).toEqual({ a: 1, b: 2 });
+});
+'''
+hints = ["Object.keys chỉ liệt kê own enumerable string keys.", "Dùng Set để tra nhanh tập key cần loại trong omit."]
+explanation = "Pick<T, K> và Omit<T, K> chỉ biến đổi kiểu; hai helper này tạo object mới ở runtime."
+
+[[questions]]
+id = "ts-030"
+module = "ts-project"
+type = "single"
+difficulty = 2
+prompt = "Lợi ích thiết thực của tsconfig đặt strict: true là gì?"
+options = ["Tự kiểm tra JSON lúc runtime", "Bật nhóm kiểm tra nghiêm ngặt như strictNullChecks và noImplicitAny", "Tự cài dependency còn thiếu", "Bắt buộc phát JavaScript sang ES5"]
+answer = [1]
+explanation = "strict là nhóm bật nhiều kiểm tra tĩnh nghiêm ngặt; nó không thêm kiểm tra dữ liệu runtime hay quyết định target."
+sources = ["typescript/tsconfig", "typescript/tsconfig/index#strict-config"]
+
+[[questions]]
+id = "ts-031"
+module = "ts-project"
+type = "single"
+difficulty = 3
+prompt = "Ứng dụng được bundler hiện đại xử lý import và không chạy output CommonJS trực tiếp. Hướng cấu hình nào thường phù hợp hơn?"
+options = ["Chọn moduleResolution bundler và module tương thích bundler theo hướng dẫn toolchain", "Luôn ép moduleResolution classic", "Bỏ tsconfig để compiler tự đoán toàn bộ", "Đặt moduleResolution node10 cho mọi dự án mới"]
+answer = [0]
+explanation = "Chọn module và cách phân giải theo môi trường thực tế. bundler mode mô hình hóa nhiều hành vi phân giải của bundler; không có một cấu hình duy nhất cho mọi runtime."
+sources = ["typescript/docs/handbook/modules/reference#bundler", "typescript/tsconfig"]
+
+[[questions]]
+id = "ts-032"
+module = "ts-project"
+type = "single"
+difficulty = 2
+prompt = "Vai trò chính của file declaration .d.ts là gì?"
+options = ["Chứa JavaScript được runtime chạy thay implementation", "Mô tả kiểu của API để compiler và editor hiểu", "Tự kiểm tra giá trị đầu vào khi chạy", "Thay thế package.json"]
+answer = [1]
+explanation = "Declaration file mô tả shape của API cho hệ thống kiểu, không cung cấp phần cài đặt runtime."
+sources = ["typescript/docs/handbook/declaration-files/introduction", "typescript/docs/handbook/declaration-files/by-example"]
+
+[[questions]]
+id = "ts-033"
+module = "ts-project"
+type = "single"
+difficulty = 2
+prompt = '''
+~~~ts
+import type { User } from "./models";
+~~~
+Mục đích của import type là gì?
+'''
+options = ["Import giá trị User để gọi lúc runtime", "Đánh dấu import chỉ phục vụ vị trí kiểu để không cần binding runtime", "Tự tạo file models.d.ts", "Thay đổi đường dẫn module resolution"]
+answer = [1]
+explanation = "import type làm rõ import chỉ dùng trong type space; nó không tạo một giá trị runtime để gọi."
+sources = ["typescript/docs/handbook/modules/reference#import-types"]
+
+[[questions]]
+id = "ts-034"
+module = "ts-project"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các mô tả đúng về cấu hình và declaration trong dự án TypeScript."
+options = ["include giúp xác định file nguồn phù hợp với cấu hình", "declaration có thể yêu cầu compiler phát sinh file .d.ts", "paths thường tự cấu hình alias cho mọi runtime mà không cần bundler hoặc runtime hỗ trợ", "moduleResolution nên xét môi trường Node hoặc bundler đang dùng"]
+answer = [0, 1, 3]
+explanation = "include xác định phạm vi file; declaration phát sinh kiểu công khai. paths hỗ trợ compiler phân giải import nhưng cần toolchain runtime/bundler tương ứng."
+sources = ["typescript/tsconfig", "typescript/docs/handbook/modules/reference", "typescript/docs/handbook/declaration-files/introduction"]
+
+[[questions]]
+id = "ts-035"
+module = "ts-project"
+type = "fill"
+difficulty = 2
+prompt = '''
+Trong tsconfig, tùy chọn {{blank}} nào bật nhóm kiểm tra strict mode?
+'''
+blanks = [["strict"]]
+explanation = "strict bật các kiểm tra nghiêm ngặt như strictNullChecks và noImplicitAny."
+sources = ["typescript/tsconfig/index#strict-config"]
+
+[[questions]]
+id = "ts-036"
+module = "ts-project"
+type = "fill"
+difficulty = 2
+prompt = '''
+File khai báo chỉ mô tả kiểu, thường có phần mở rộng {{blank}}, không chứa implementation JavaScript.
+'''
+blanks = [[".d.ts"]]
+explanation = "Declaration file dùng phần mở rộng .d.ts để cung cấp mô tả kiểu."
+sources = ["typescript/docs/handbook/declaration-files/introduction"]
+
+[[questions]]
+id = "ts-037"
+module = "ts-project"
+type = "essay"
+difficulty = 3
+prompt = "Một nhóm thêm alias bằng compilerOptions.paths nhưng ứng dụng chạy gặp lỗi không tìm thấy module. Giải thích nguyên nhân có thể và cách kiểm tra."
+keywords = [["paths", "alias"], ["chỉ hỗ trợ compiler", "không đổi runtime", "không tự cấu hình runtime"], ["bundler", "module resolution", "runtime"], ["cấu hình đồng bộ", "đồng bộ cấu hình", "kiểm tra cấu hình"]]
+min_keywords = 3
+model_answer = '''
+paths chỉ hỗ trợ compiler phân giải kiểu, không đổi runtime và thường không viết lại import trong JavaScript đầu ra. Cần kiểm tra moduleResolution, môi trường chạy và cấu hình đồng bộ alias với bundler hoặc runtime để chúng phân giải cùng đường dẫn.
+'''
+explanation = "Compiler, bundler và runtime có thể dùng các quy tắc phân giải module khác nhau."
+sources = ["typescript/tsconfig", "typescript/docs/handbook/modules/reference"]
+
+[[questions]]
+id = "ts-038"
+module = "ts-project"
+type = "code"
+lang = "javascript"
+difficulty = 3
+title = "Validator schema tối giản"
+prompt = '''
+Triển khai API JavaScript sau để mô phỏng runtime validation:
+- schema.string(), schema.number(), schema.optional(inner), schema.array(inner), schema.object(shape)
+- parse(schema, value) trả { success: true, data } nếu hợp lệ; nếu sai trả { success: false, error: { issues } }
+- Mỗi issue có { path, message }; path là array key/index từ gốc. Message lần lượt là Expected string, Expected number, Expected array, hoặc Expected object.
+- number chỉ hợp lệ nếu typeof là number và Number.isFinite(value) đúng. Object từ chối null và array, chỉ trả các key khai báo trong shape. Thiếu field bắt buộc là lỗi tại path của field; optional cho phép undefined và key optional bị thiếu không xuất hiện trong data.
+- Array phải kiểm tra từng phần tử và tích lũy mọi lỗi.
+'''
+starter = '''
+const schema = {
+  string: () => ({ kind: 'string' }),
+  number: () => ({ kind: 'number' }),
+  optional: (inner) => ({ kind: 'optional', inner }),
+  array: (inner) => ({ kind: 'array', inner }),
+  object: (shape) => ({ kind: 'object', shape }),
+};
+
+function parse(schemaValue, value) {
+  return { success: true, data: value };
+}
+'''
+solution = '''
+const schema = {
+  string: () => ({ kind: 'string' }),
+  number: () => ({ kind: 'number' }),
+  optional: (inner) => ({ kind: 'optional', inner }),
+  array: (inner) => ({ kind: 'array', inner }),
+  object: (shape) => ({ kind: 'object', shape }),
+};
+
+function validate(schemaValue, value, path, issues) {
+  if (schemaValue.kind === 'optional' && value === undefined) return undefined;
+  if (schemaValue.kind === 'string') {
+    if (typeof value !== 'string') issues.push({ path: path.slice(), message: 'Expected string' });
+    return value;
+  }
+  if (schemaValue.kind === 'number') {
+    if (typeof value !== 'number' || !Number.isFinite(value)) issues.push({ path: path.slice(), message: 'Expected number' });
+    return value;
+  }
+  if (schemaValue.kind === 'array') {
+    if (!Array.isArray(value)) {
+      issues.push({ path: path.slice(), message: 'Expected array' });
+      return value;
+    }
+    return value.map((item, index) => validate(schemaValue.inner, item, path.concat(index), issues));
+  }
+  if (schemaValue.kind === 'object') {
+    if (value === null || typeof value !== 'object' || Array.isArray(value)) {
+      issues.push({ path: path.slice(), message: 'Expected object' });
+      return value;
+    }
+    const output = {};
+    for (const key of Object.keys(schemaValue.shape)) {
+      const fieldSchema = schemaValue.shape[key];
+      if (!Object.prototype.hasOwnProperty.call(value, key) && fieldSchema.kind === 'optional') continue;
+      output[key] = validate(fieldSchema, value[key], path.concat(key), issues);
+    }
+    return output;
+  }
+  throw new Error('Unknown schema kind');
+}
+
+function parse(schemaValue, value) {
+  const issues = [];
+  const data = validate(schemaValue, value, [], issues);
+  if (issues.length > 0) return { success: false, error: { issues } };
+  return { success: true, data };
+}
+'''
+tests = '''
+const profileSchema = schema.object({
+  name: schema.string(),
+  age: schema.number(),
+  nickname: schema.optional(schema.string()),
+  tags: schema.array(schema.string()),
+});
+
+test('parse object hợp lệ và bỏ qua field optional bị thiếu', () => {
+  expect(parse(profileSchema, { name: 'Ada', age: 36, tags: ['math'] })).toEqual({
+    success: true,
+    data: { name: 'Ada', age: 36, tags: ['math'] },
+  });
+});
+test('trả path cho lỗi field và phần tử array', () => {
+  const result = parse(profileSchema, { name: 8, age: 36, tags: ['ok', false] });
+  expect(result.success).toBe(false);
+  expect(result.error.issues).toEqual([
+    { path: ['name'], message: 'Expected string' },
+    { path: ['tags', 1], message: 'Expected string' },
+  ]);
+});
+test('tích lũy nhiều lỗi và báo field bắt buộc bị thiếu', () => {
+  const result = parse(profileSchema, { age: Infinity, tags: 'x' });
+  expect(result.error.issues).toEqual([
+    { path: ['name'], message: 'Expected string' },
+    { path: ['age'], message: 'Expected number' },
+    { path: ['tags'], message: 'Expected array' },
+  ]);
+});
+test('kiểm tra object lồng nhau và đường dẫn nhiều cấp', () => {
+  const nested = schema.object({ user: schema.object({ name: schema.string() }) });
+  const result = parse(nested, { user: { name: null } });
+  expect(result.error.issues[0]).toEqual({ path: ['user', 'name'], message: 'Expected string' });
+});
+test('từ chối null và array ở vị trí object', () => {
+  expect(parse(schema.object({}), null).error.issues[0]).toEqual({ path: [], message: 'Expected object' });
+  expect(parse(schema.object({}), []).error.issues[0].message).toBe('Expected object');
+});
+'''
+hints = ["Viết validate đệ quy nhận schema, value, path và danh sách issues.", "Optional thiếu key thì bỏ qua; lỗi của phần tử array nối index vào path."]
+explanation = "TypeScript mô tả kiểu ở compile time; validator tương tự schema library xác thực dữ liệu thực tế lúc runtime."
+sources = ["typescript/docs/handbook/2/narrowing", "typescript/docs/handbook/2/everyday-types"]

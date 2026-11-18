@@ -1,0 +1,1188 @@
+id = "english-vocab"
+title = "Từ vựng tiếng Anh IT theo chủ đề"
+icon = "📖"
+color = "#7c3aed"
+group = "Ngoại ngữ"
+description = "Học từ vựng tiếng Anh dùng trong phát triển phần mềm, vận hành, bảo mật và giao tiếp nơi công sở qua ngữ cảnh IT."
+
+[[modules]]
+id = "vocab-workflow"
+title = "Quy trình phát triển phần mềm"
+description = "Requirement, estimate, deadline, scope creep, backlog, deploy, rollback và hotfix."
+lesson = '''
+### Từ vựng trong một chu kỳ phát triển
+| Từ | IPA | Loại từ | Nghĩa tiếng Việt | Ví dụ IT |
+|---|---|---|---|---|
+| requirement | /rɪˈkwaɪərmənt/ | danh từ | yêu cầu | We clarified the login requirements before coding. |
+| estimate | /ˈestɪmeɪt/ | danh từ/động từ | ước tính; bản ước tính | The team estimated three days for the migration. |
+| deadline | /ˈdedlaɪn/ | danh từ | hạn chót | We must meet the release deadline. |
+| scope creep | /ˈskoʊp kriːp/ | danh từ | phạm vi công việc phình dần | New requests caused scope creep during the sprint. |
+| backlog | /ˈbæklɔːɡ/ | danh từ | danh sách việc chờ xử lý | Move the bug to the product backlog. |
+| deploy | /dɪˈplɔɪ/ | động từ | triển khai | We will deploy the patch after review. |
+| rollback | /ˈroʊlbæk/ | danh từ/động từ | hoàn tác phiên bản triển khai | Roll back the release if checkout errors increase. |
+| hotfix | /ˈhɑːtfɪks/ | danh từ | bản sửa khẩn cấp | A hotfix restored payment processing. |
+
+### Phân biệt nhanh
+Requirement mô tả điều cần đạt; estimate dự báo công sức hoặc thời gian; deadline là mốc phải hoàn tất. Deploy đưa thay đổi lên môi trường, còn rollback quay lại phiên bản trước. Hotfix thường xử lý lỗi nghiêm trọng đang ảnh hưởng người dùng.
+
+### Lỗi hay gặp
+- Dùng deadline để nói thời lượng: “The task takes two days” là thời lượng; “The deadline is Friday” là hạn chót.
+- Nhầm rollback với roll out: rollback là quay lui, roll out là phát hành dần.
+- Nhận mọi yêu cầu mới vào sprint mà không thương lượng; đó là một nguồn scope creep.
+'''
+
+[[modules]]
+id = "vocab-frontend"
+title = "Frontend và giao diện"
+description = "Layout, responsive, accessibility, render, state, component và breakpoint."
+lesson = '''
+### Từ vựng giao diện
+| Từ | IPA | Loại từ | Nghĩa tiếng Việt | Ví dụ IT |
+|---|---|---|---|---|
+| layout | /ˈleɪaʊt/ | danh từ | bố cục | The new layout keeps the form readable on small screens. |
+| responsive | /rɪˈspɑːnsɪv/ | tính từ | thích ứng với kích thước màn hình | Make the dashboard responsive before launch. |
+| accessibility | /əkˌsesəˈbɪləti/ | danh từ | khả năng tiếp cận | Accessibility includes keyboard and screen reader support. |
+| render | /ˈrendər/ | động từ | hiển thị, kết xuất | The component renders a loading message first. |
+| state | /steɪt/ | danh từ | trạng thái dữ liệu giao diện | Keep the selected tab in local state. |
+| component | /kəmˈpoʊnənt/ | danh từ | thành phần giao diện | Reuse the button component across settings pages. |
+| breakpoint | /ˈbreɪkpɔɪnt/ | danh từ | điểm ngắt bố cục theo màn hình | Add a breakpoint for the tablet layout. |
+
+### Dùng từ đúng ngữ cảnh
+Ta render một component, quản lý state, và thiết kế responsive layout. Accessibility không chỉ là màu sắc; điều hướng bàn phím, nhãn biểu mẫu và văn bản thay thế cũng quan trọng.
+
+### Lỗi hay gặp
+- Responsive mô tả giao diện thích ứng; không có nghĩa là trang tải nhanh.
+- State là dữ liệu có thể thay đổi theo tương tác, không phải toàn bộ HTML.
+- Accessible thường đứng trước danh từ: an accessible form. Accessibility là danh từ chỉ thuộc tính hoặc lĩnh vực.
+'''
+
+[[modules]]
+id = "vocab-backend-data"
+title = "Backend và dữ liệu"
+description = "Endpoint, payload, latency, throughput, query, index, migration và schema."
+lesson = '''
+### Từ vựng API và cơ sở dữ liệu
+| Từ | IPA | Loại từ | Nghĩa tiếng Việt | Ví dụ IT |
+|---|---|---|---|---|
+| endpoint | /ˈendpɔɪnt/ | danh từ | điểm cuối API | The endpoint returns the current user profile. |
+| payload | /ˈpeɪloʊd/ | danh từ | phần dữ liệu được gửi | Validate the request payload before saving it. |
+| latency | /ˈleɪtənsi/ | danh từ | độ trễ | Caching reduced the endpoint latency. |
+| throughput | /ˈθruːpʊt/ | danh từ | thông lượng, lượng xử lý mỗi đơn vị thời gian | The service handles higher throughput after scaling. |
+| query | /ˈkwɪri/ | danh từ/động từ | truy vấn; truy vấn dữ liệu | This query loads the latest invoices. |
+| index | /ˈɪndeks/ | danh từ/động từ | chỉ mục; lập chỉ mục | Add an index to speed up searches by email. |
+| migration | /maɪˈɡreɪʃən/ | danh từ | thay đổi schema có quản lý | Run the database migration before deploying the API. |
+| schema | /ˈskiːmə/ | danh từ | cấu trúc dữ liệu | The schema requires an account identifier. |
+
+### Latency và throughput
+Latency đo thời gian chờ của một thao tác; throughput đo số thao tác hoàn thành trong một khoảng thời gian. Một hệ thống có thể phục vụ nhiều request mỗi giây nhưng mỗi request riêng lẻ vẫn có latency cao.
+
+### Lỗi hay gặp
+- Payload là dữ liệu của request/response, không phải toàn bộ kết nối mạng.
+- Query là yêu cầu lấy hoặc thay đổi dữ liệu; index là cấu trúc giúp tìm kiếm, nhưng cũng làm tăng chi phí ghi.
+- Migration cần có thứ tự và kế hoạch tương thích khi nhiều phiên bản ứng dụng cùng chạy.
+'''
+
+[[modules]]
+id = "vocab-devops-cloud"
+title = "DevOps và cloud"
+description = "Pipeline, container, provision, scale out, outage, incident và postmortem."
+lesson = '''
+### Từ vựng vận hành
+| Từ | IPA | Loại từ | Nghĩa tiếng Việt | Ví dụ IT |
+|---|---|---|---|---|
+| pipeline | /ˈpaɪplaɪn/ | danh từ | chuỗi bước tự động | The pipeline runs tests before deployment. |
+| container | /kənˈteɪnər/ | danh từ | môi trường đóng gói ứng dụng | The worker runs in a container. |
+| provision | /prəˈvɪʒən/ | động từ | cấp phát tài nguyên | Provision a database for the staging environment. |
+| scale out | /skeɪl aʊt/ | cụm động từ | tăng số máy hoặc instance | We scaled out the API workers during the sale. |
+| outage | /ˈaʊtɪdʒ/ | danh từ | sự cố gián đoạn dịch vụ | The outage lasted twelve minutes. |
+| incident | /ˈɪnsɪdənt/ | danh từ | sự cố cần được xử lý | The on-call engineer declared an incident. |
+| postmortem | /ˌpoʊstˈmɔːrtəm/ | danh từ | buổi/báo cáo phân tích sau sự cố | The postmortem identified a missing alert. |
+| monitor | /ˈmɑːnɪtər/ | động từ/danh từ | giám sát; công cụ giám sát | Monitor error rates after the rollout. |
+
+### Quy mô và sự cố
+Scale out thêm instance để chia tải; scale up tăng tài nguyên của một máy. Incident là sự kiện cần phối hợp xử lý; outage là khoảng thời gian dịch vụ bị gián đoạn. Postmortem ghi lại nguyên nhân và việc cần làm để giảm khả năng tái diễn.
+
+### Lỗi hay gặp
+- Provision thường là cấp phát hoặc chuẩn bị tài nguyên; deploy là đưa phiên bản ứng dụng lên môi trường.
+- Container giúp đóng gói môi trường chạy, nhưng không tự động bảo đảm ứng dụng có khả năng chịu lỗi.
+- Postmortem hiệu quả tập trung vào hệ thống, quyết định và biện pháp cải thiện thay vì đổ lỗi cá nhân.
+'''
+
+[[modules]]
+id = "vocab-security"
+title = "Bảo mật phần mềm"
+description = "Vulnerability, exploit, credential, leak, patch, least privilege và các động từ ứng phó."
+lesson = '''
+### Từ vựng bảo mật
+| Từ | IPA | Loại từ | Nghĩa tiếng Việt | Ví dụ IT |
+|---|---|---|---|---|
+| vulnerability | /ˌvʌlnərəˈbɪləti/ | danh từ | lỗ hổng bảo mật | The scan found a vulnerability in an old dependency. |
+| exploit | /ˈeksplɔɪt/ | danh từ/động từ | mã hoặc cách khai thác lỗ hổng; khai thác | The team confirmed that the exploit was blocked. |
+| credential | /krəˈdenʃəl/ | danh từ | thông tin xác thực | Revoke the exposed credential immediately. |
+| leak | /liːk/ | danh từ/động từ | rò rỉ; làm rò rỉ | A debug log caused a token leak. |
+| patch | /pætʃ/ | danh từ/động từ | bản vá; vá lỗi | Install the security patch this afternoon. |
+| least privilege | /liːst ˈprɪvəlɪdʒ/ | cụm danh từ | quyền tối thiểu cần thiết | Apply least privilege to service accounts. |
+| revoke | /rɪˈvoʊk/ | động từ | thu hồi quyền hoặc thông tin xác thực | Revoke old keys after rotating the secret. |
+| encrypt | /ɪnˈkrɪpt/ | động từ | mã hóa | Encrypt backups before storing them off-site. |
+
+### Phản ứng an toàn
+Khi phát hiện leak, hãy xác định credential bị ảnh hưởng, revoke hoặc rotate nó, điều tra phạm vi, rồi patch vulnerability. Least privilege giới hạn tác động nếu một tài khoản bị lộ.
+
+### Lỗi hay gặp
+- Vulnerability là điểm yếu; exploit là cách tận dụng điểm yếu đó.
+- Credential là dữ liệu xác thực như token hoặc mật khẩu; không ghi chúng vào log hay mã nguồn.
+- Patch cần được kiểm thử và triển khai có thứ tự, nhưng trì hoãn xử lý một lỗ hổng đang bị khai thác cũng tạo rủi ro.
+'''
+
+[[modules]]
+id = "vocab-phrasal-verbs"
+title = "Phrasal verbs trong công việc"
+description = "Các cụm động từ thường gặp khi trao đổi, điều tra lỗi và phối hợp nhóm."
+lesson = '''
+### Cụm động từ thường dùng
+| Từ | IPA | Loại từ | Nghĩa tiếng Việt | Ví dụ IT |
+|---|---|---|---|---|
+| roll out | /roʊl aʊt/ | cụm động từ | phát hành theo đợt | We will roll out the new editor to ten percent of users. |
+| look into | /lʊk ˈɪntuː/ | cụm động từ | tìm hiểu, điều tra | I will look into the failed build. |
+| figure out | /ˈfɪɡjər aʊt/ | cụm động từ | tìm ra cách hoặc nguyên nhân | We figured out why the cache was stale. |
+| set up | /set ʌp/ | cụm động từ | thiết lập | Set up an alert for repeated login failures. |
+| back up | /bæk ʌp/ | cụm động từ | sao lưu | Back up the database before the migration. |
+| bring up | /brɪŋ ʌp/ | cụm động từ | nêu ra một vấn đề | She brought up a concern during review. |
+| follow up | /ˈfɑːloʊ ʌp/ | cụm động từ | liên hệ hoặc xử lý tiếp | Please follow up with the vendor tomorrow. |
+| run into | /rʌn ˈɪntuː/ | cụm động từ | gặp phải vấn đề | We ran into a permission issue in staging. |
+| wrap up | /ræp ʌp/ | cụm động từ | hoàn tất | Let’s wrap up the incident review. |
+
+### Dùng trong hội thoại
+Phrasal verb thường thân mật và tự nhiên trong trao đổi nhóm. Có thể nói “look into the error” khi nhận việc điều tra, rồi “follow up with the team” sau khi có kết quả.
+
+### Lỗi hay gặp
+- Một từ đổi giới từ có thể đổi nghĩa: bring up là nêu vấn đề, back up là sao lưu.
+- Roll out là phát hành; roll back là hoàn tác.
+- Trong lộ trình này, nhận diện dạng từ được cho trong bảng; bài tập không yêu cầu đoán biến thể chia thì.
+'''
+
+[[modules]]
+id = "vocab-workplace"
+title = "Collocation và idiom nơi công sở"
+description = "Kết hợp từ tự nhiên, thành ngữ công việc và một số cặp từ dễ nhầm."
+lesson = '''
+### Cụm từ thường đi cùng nhau
+| Từ | IPA | Loại từ | Nghĩa tiếng Việt | Ví dụ IT |
+|---|---|---|---|---|
+| make a decision | /meɪk ə dɪˈsɪʒən/ | collocation | đưa ra quyết định | We need to make a decision about the database. |
+| meet a deadline | /miːt ə ˈdedlaɪn/ | collocation | kịp hạn chót | The team met the deadline without skipping review. |
+| raise a concern | /reɪz ə kənˈsɜːrn/ | collocation | nêu mối lo ngại | Raise a concern if the migration can lose data. |
+| on the same page | /ɑːn ðə seɪm peɪdʒ/ | idiom | cùng hiểu/cùng thống nhất | Let’s confirm that product and engineering are on the same page. |
+| ballpark figure | /ˈbɔːlbɑːrk ˈfɪɡjər/ | idiom | con số ước lượng sơ bộ | Give us a ballpark figure for the storage cost. |
+| in the loop | /ɪn ðə luːp/ | idiom | được cập nhật thông tin | Keep support in the loop during the rollout. |
+
+### Cặp từ dễ nhầm
+| Cặp từ | Phân biệt | Ví dụ IT |
+|---|---|---|
+| affect / effect | affect thường là động từ “ảnh hưởng”; effect thường là danh từ “tác động” | The change may affect latency; the effect is visible in the chart. |
+| ensure / insure | ensure là bảo đảm; insure là mua bảo hiểm | Ensure the backup works; insure the laptop against damage. |
+| lose / loose | lose là làm mất; loose là lỏng hoặc không chặt | Users may lose data if a loose cable disconnects the drive. |
+| fix / repair | fix thường sửa lỗi/vấn đề; repair thường khôi phục vật hoặc thiết bị bị hỏng | Fix the parsing bug; repair the damaged server fan. |
+
+### Lỗi hay gặp
+- Trong tiếng Anh, ta “make a decision” nhưng “meet a deadline”.
+- Ballpark figure là ước lượng sơ bộ, không phải cam kết chính xác.
+- Fix và repair đôi khi giao nhau; chọn từ theo đối tượng và cách diễn đạt tự nhiên của câu.
+'''
+
+[[modules]]
+id = "vocab-word-formation"
+title = "Word formation trong IT"
+description = "Tiền tố re-, de-, un-; hậu tố -able, -ize, -ment và họ từ cùng gốc."
+lesson = '''
+### Tiền tố và hậu tố thường gặp
+| Từ | IPA | Loại từ | Nghĩa tiếng Việt | Ví dụ IT |
+|---|---|---|---|---|
+| redeploy | /ˌriːdɪˈplɔɪ/ | động từ | triển khai lại | Redeploy the service after updating its configuration. |
+| deprovision | /ˌdiːprəˈvɪʒən/ | động từ | thu hồi tài nguyên đã cấp | Deprovision the test account after the audit. |
+| unavailable | /ˌʌnəˈveɪləbəl/ | tính từ | không sẵn sàng | The endpoint is unavailable during maintenance. |
+| configurable | /kənˈfɪɡjərəbəl/ | tính từ | có thể cấu hình | The timeout is configurable per environment. |
+| normalize | /ˈnɔːrməlaɪz/ | động từ | chuẩn hóa | Normalize user input before comparison. |
+| deployment | /dɪˈplɔɪmənt/ | danh từ | việc triển khai | The deployment completed without errors. |
+| secure / security / securely | /sɪˈkjʊr/ /sɪˈkjʊrəti/ /sɪˈkjʊrli/ | tính từ/danh từ/trạng từ | an toàn / bảo mật / một cách an toàn | Store the credential securely and review its security settings. |
+
+### Nhận diện họ từ
+Re- thường diễn tả làm lại; de- thường diễn tả gỡ bỏ hoặc đảo ngược; un- tạo nghĩa phủ định. Hậu tố -able thường tạo tính từ chỉ khả năng, -ize tạo động từ, còn -ment thường tạo danh từ chỉ hành động hoặc kết quả.
+
+### Lỗi hay gặp
+- Không phải từ nào cũng ghép được với mọi tiền tố hoặc hậu tố; hãy học theo từ điển và ngữ cảnh.
+- Deployment là danh từ, deploy là động từ; configurable là tính từ, configure là động từ.
+- Đừng đoán nghĩa chỉ từ hình thức: kiểm tra loại từ và collocation trong câu.
+'''
+
+[[questions]]
+id = "voc-001"
+module = "vocab-workflow"
+type = "single"
+difficulty = 1
+prompt = '''Trong câu “The product owner clarified the requirements before the team estimated the work”, requirements gần nghĩa nhất với từ nào?'''
+options = ["Các yêu cầu cần đáp ứng", "Các lỗi đã triển khai", "Các mốc thanh toán", "Các bản sao lưu"]
+answer = [0]
+explanation = '''Requirement là yêu cầu hoặc điều kiện cần đáp ứng của sản phẩm.'''
+
+[[questions]]
+id = "voc-002"
+module = "vocab-workflow"
+type = "single"
+difficulty = 2
+prompt = '''Trong sprint, nhóm liên tục nhận thêm tính năng không đổi deadline hoặc nguồn lực. Tình trạng này thường được gọi là gì?'''
+options = ["scope creep", "rollback", "hotfix", "throughput"]
+answer = [0]
+explanation = '''Scope creep là phạm vi công việc tăng dần mà không được kiểm soát hoặc điều chỉnh kế hoạch tương ứng.'''
+
+[[questions]]
+id = "voc-003"
+module = "vocab-workflow"
+type = "single"
+difficulty = 1
+prompt = '''Câu nào dùng deadline đúng nghĩa?'''
+options = ["The deadline is Friday, so we need to finish the review by then.", "The deadline takes about two hours to compile.", "We deployed a deadline to staging.", "The database deadline stores every request."]
+answer = [0]
+explanation = '''Deadline là hạn chót phải hoàn tất; thời lượng thực hiện nên diễn đạt bằng duration hoặc takes two hours.'''
+
+[[questions]]
+id = "voc-004"
+module = "vocab-workflow"
+type = "single"
+difficulty = 2
+prompt = '''Một lỗi thanh toán nghiêm trọng đang ảnh hưởng người dùng production. Bản sửa nhỏ được phát hành khẩn cấp thường được gọi là gì?'''
+options = ["hotfix", "backlog", "estimate", "requirement"]
+answer = [0]
+explanation = '''Hotfix là bản sửa khẩn cấp cho vấn đề đang cần xử lý nhanh.'''
+
+[[questions]]
+id = "voc-005"
+module = "vocab-workflow"
+type = "multiple"
+difficulty = 2
+prompt = '''Chọn các cách kết hợp từ tự nhiên trong quy trình phát triển phần mềm.'''
+options = ["meet a deadline", "deploy a release", "roll back a deployment", "do a deadline", "estimate a requirement"]
+answer = [0, 1, 2]
+explanation = '''Meet a deadline, deploy a release và roll back a deployment là các kết hợp tự nhiên. “Do a deadline” không đúng collocation; estimate thường dùng cho effort, time hoặc cost.'''
+
+[[questions]]
+id = "voc-006"
+module = "vocab-workflow"
+type = "fill"
+difficulty = 1
+prompt = '''The team needs to {{blank}} the migration at about two engineer-days before committing to a date.'''
+blanks = [["estimate"]]
+explanation = '''Estimate là ước tính công sức hoặc thời gian trước khi cam kết kế hoạch.'''
+
+[[questions]]
+id = "voc-007"
+module = "vocab-workflow"
+type = "fill"
+difficulty = 1
+prompt = '''Move the low-priority bug to the product {{blank}} so the team can review it later.'''
+blanks = [["backlog"]]
+explanation = '''Backlog là danh sách công việc được ghi nhận để xem xét hoặc thực hiện sau.'''
+
+[[questions]]
+id = "voc-008"
+module = "vocab-workflow"
+type = "essay"
+difficulty = 3
+prompt = '''Viết 3–5 câu tiếng Anh mô tả một tính năng mới bị trễ. Dùng ít nhất bốn từ/cụm từ: requirement, estimate, deadline, scope creep, rollback.'''
+keywords = [["requirement"], ["estimate"], ["deadline"], ["scope creep"], ["rollback"]]
+min_keywords = 4
+model_answer = '''The new export requirement was larger than we expected. Our estimate did not include the extra audit work, and scope creep put the deadline at risk. We reduced the feature scope and kept a rollback plan ready before deployment.'''
+explanation = '''Một mô tả rõ ràng nêu yêu cầu, nguyên nhân ảnh hưởng kế hoạch và cách giảm rủi ro phát hành.'''
+
+[[questions]]
+id = "voc-c01"
+module = "vocab-workflow"
+type = "code"
+difficulty = 3
+lang = "javascript"
+title = "Lập lịch ôn thẻ từ vựng"
+prompt = '''
+Viết hàm reviewCard(card, grade) cho lịch ôn tập đơn giản. card có dạng { interval, repetitions, easeFactor }; grade là số nguyên từ 0 đến 5.
+- Nếu grade < 3: đặt repetitions = 0 và interval = 1.
+- Nếu grade >= 3: tăng repetitions lên 1. Khi repetitions cũ là 0, interval mới là 1; khi repetitions cũ là 1, interval mới là 6; các lần sau lấy Math.round(interval cũ * easeFactor).
+- Luôn cập nhật easeFactor theo công thức max(1.3, easeFactor + 0.1 - (5 - grade) * (0.08 + (5 - grade) * 0.02)).
+- Trả về object mới có đủ ba trường, không sửa object đầu vào.
+'''
+starter = '''
+function reviewCard(card, grade) {
+  return { interval: 1, repetitions: 0, easeFactor: card.easeFactor };
+}
+'''
+solution = '''
+function reviewCard(card, grade) {
+  const easeFactor = Math.max(1.3, card.easeFactor + 0.1 - (5 - grade) * (0.08 + (5 - grade) * 0.02));
+  if (grade < 3) return { interval: 1, repetitions: 0, easeFactor };
+  const interval = card.repetitions === 0 ? 1 : card.repetitions === 1 ? 6 : Math.round(card.interval * card.easeFactor);
+  return { interval, repetitions: card.repetitions + 1, easeFactor };
+}
+'''
+tests = '''
+test('lần nhớ đúng đầu tiên được ôn sau một ngày', () => {
+  expect(reviewCard({ interval: 0, repetitions: 0, easeFactor: 2.5 }, 4)).toEqual({ interval: 1, repetitions: 1, easeFactor: 2.5 });
+});
+test('lần nhớ đúng thứ hai dùng khoảng sáu ngày', () => {
+  expect(reviewCard({ interval: 1, repetitions: 1, easeFactor: 2.5 }, 5).interval).toBe(6);
+});
+test('các lần sau nhân interval cũ với easeFactor', () => {
+  expect(reviewCard({ interval: 6, repetitions: 2, easeFactor: 2.5 }, 5).interval).toBe(15);
+});
+test('trả lời sai đặt lại tiến độ và giảm easeFactor', () => {
+  expect(reviewCard({ interval: 12, repetitions: 4, easeFactor: 2.5 }, 2)).toEqual({ interval: 1, repetitions: 0, easeFactor: 2.18 });
+});
+test('easeFactor không thấp hơn 1.3 và input không bị sửa', () => {
+  const card = { interval: 4, repetitions: 2, easeFactor: 1.3 };
+  reviewCard(card, 0);
+  expect(card).toEqual({ interval: 4, repetitions: 2, easeFactor: 1.3 });
+  expect(reviewCard(card, 0).easeFactor).toBe(1.3);
+});
+'''
+hints = ["Tính easeFactor mới cho cả câu đúng và câu sai.", "Interval của lần đúng tiếp theo phụ thuộc repetitions cũ."]
+explanation = '''Lịch ôn khoảng cách dùng chất lượng câu trả lời để quyết định lúc xem lại thẻ; đây là phiên bản rút gọn để luyện logic.'''
+
+[[questions]]
+id = "voc-009"
+module = "vocab-frontend"
+type = "single"
+difficulty = 1
+prompt = '''Trong thiết kế giao diện, layout là gì?'''
+options = ["Cách sắp xếp các thành phần trên màn hình", "Thời gian phản hồi của máy chủ", "Dữ liệu gửi trong request", "Quyền của service account"]
+answer = [0]
+explanation = '''Layout mô tả cách bố trí các vùng và thành phần giao diện.'''
+
+[[questions]]
+id = "voc-010"
+module = "vocab-frontend"
+type = "single"
+difficulty = 1
+prompt = '''Một trang tự đổi bố cục để dễ dùng trên điện thoại và màn hình lớn được gọi là gì?'''
+options = ["responsive", "encrypted", "idempotent", "provisioned"]
+answer = [0]
+explanation = '''Responsive mô tả giao diện thích ứng với kích thước hoặc cách hiển thị của thiết bị.'''
+
+[[questions]]
+id = "voc-011"
+module = "vocab-frontend"
+type = "single"
+difficulty = 2
+prompt = '''Trong câu “The component renders a loading indicator while data is pending”, renders có nghĩa gì?'''
+options = ["Hiển thị hoặc kết xuất", "Mã hóa", "Sao lưu", "Thu hồi"]
+answer = [0]
+explanation = '''Render là hiển thị hoặc kết xuất giao diện từ component và dữ liệu hiện có.'''
+
+[[questions]]
+id = "voc-012"
+module = "vocab-frontend"
+type = "single"
+difficulty = 2
+prompt = '''Người dùng có thể thao tác form chỉ bằng bàn phím và trình đọc màn hình hiểu được nhãn. Đây là ví dụ về điều gì?'''
+options = ["accessibility", "throughput", "scope creep", "latency"]
+answer = [0]
+explanation = '''Accessibility là khả năng nhiều người, kể cả người dùng công nghệ hỗ trợ, tiếp cận và sử dụng sản phẩm.'''
+
+[[questions]]
+id = "voc-013"
+module = "vocab-frontend"
+type = "multiple"
+difficulty = 2
+prompt = '''Chọn các cụm từ tự nhiên khi nói về frontend.'''
+options = ["render a component", "manage state", "responsive layout", "repair an accessibility", "store a breakpoint"]
+answer = [0, 1, 2]
+explanation = '''Render a component, manage state và responsive layout là những cách kết hợp phổ biến. Ta thường improve accessibility và set a breakpoint.'''
+
+[[questions]]
+id = "voc-014"
+module = "vocab-frontend"
+type = "fill"
+difficulty = 2
+prompt = '''At this CSS {{blank}}, the navigation changes from a row to a menu button.'''
+blanks = [["breakpoint"]]
+explanation = '''Breakpoint là điểm tại đó bố cục hoặc kiểu hiển thị thay đổi theo kích thước màn hình.'''
+
+[[questions]]
+id = "voc-015"
+module = "vocab-frontend"
+type = "fill"
+difficulty = 1
+prompt = '''The selected tab is part of the page {{blank}} because it changes after a user click.'''
+blanks = [["state"]]
+explanation = '''State là dữ liệu biểu diễn tình trạng hiện tại của giao diện hoặc ứng dụng.'''
+
+[[questions]]
+id = "voc-016"
+module = "vocab-frontend"
+type = "fill"
+difficulty = 1
+prompt = '''Add descriptive labels so the form is more {{blank}} to screen reader users.'''
+blanks = [["accessible"]]
+explanation = '''Accessible là tính từ; accessibility là danh từ.'''
+
+[[questions]]
+id = "voc-c02"
+module = "vocab-frontend"
+type = "code"
+difficulty = 2
+lang = "javascript"
+title = "Tìm thẻ từ theo chủ đề"
+prompt = '''
+Viết searchTerms(terms, query, topic). Mỗi phần tử trong terms là object có word, meaning và topic.
+- Nếu topic khác null, chỉ giữ các mục có topic bằng topic; so sánh topic chính xác.
+- query được trim và so sánh không phân biệt hoa thường; nếu query rỗng thì không lọc theo từ khóa.
+- Nếu query không rỗng, giữ mục mà word hoặc meaning chứa query như một chuỗi con.
+- Giữ nguyên thứ tự và không sửa mảng đầu vào.
+'''
+starter = '''
+function searchTerms(terms, query, topic) {
+  return terms;
+}
+'''
+solution = '''
+function searchTerms(terms, query, topic) {
+  const q = query.trim().toLowerCase();
+  return terms.filter((item) => {
+    if (topic !== null && item.topic !== topic) return false;
+    if (!q) return true;
+    return item.word.toLowerCase().includes(q) || item.meaning.toLowerCase().includes(q);
+  });
+}
+'''
+tests = '''
+const terms = [
+  { word: 'Endpoint', meaning: 'điểm cuối API', topic: 'backend' },
+  { word: 'Responsive', meaning: 'thích ứng màn hình', topic: 'frontend' },
+  { word: 'Payload', meaning: 'dữ liệu gửi đi', topic: 'backend' },
+];
+test('tìm không phân biệt hoa thường trong từ', () => {
+  expect(searchTerms(terms, 'END', null).map((x) => x.word)).toEqual(['Endpoint']);
+});
+test('tìm trong nghĩa tiếng Việt', () => {
+  expect(searchTerms(terms, 'dữ liệu', null).map((x) => x.word)).toEqual(['Payload']);
+});
+test('lọc đồng thời theo topic và query', () => {
+  expect(searchTerms(terms, 'dữ liệu', 'frontend')).toEqual([]);
+  expect(searchTerms(terms, 'api', 'backend').map((x) => x.word)).toEqual(['Endpoint']);
+});
+test('query rỗng chỉ lọc theo topic', () => {
+  expect(searchTerms(terms, '  ', 'backend').map((x) => x.word)).toEqual(['Endpoint', 'Payload']);
+});
+test('không sửa mảng đầu vào và giữ thứ tự', () => {
+  expect(searchTerms(terms, '', null)).toEqual(terms);
+  expect(terms.map((x) => x.word)).toEqual(['Endpoint', 'Responsive', 'Payload']);
+});
+'''
+hints = ["Chuẩn hóa query một lần bằng trim và toLowerCase.", "Thực hiện các điều kiện lọc trong một filter để giữ thứ tự."]
+explanation = '''Tìm kiếm từ vựng theo chủ đề giúp giao diện flashcard hiển thị đúng nội dung mà không thay đổi dữ liệu gốc.'''
+
+[[questions]]
+id = "voc-017"
+module = "vocab-backend-data"
+type = "single"
+difficulty = 1
+prompt = '''Trong tài liệu API, endpoint thường chỉ điều gì?'''
+options = ["Một địa chỉ hoặc điểm truy cập API cho một chức năng", "Bản sao lưu định kỳ", "Một hạn chót phát hành", "Một loại giao diện responsive"]
+answer = [0]
+explanation = '''Endpoint là điểm truy cập API, thường được nhận diện bằng đường dẫn và phương thức HTTP.'''
+
+[[questions]]
+id = "voc-018"
+module = "vocab-backend-data"
+type = "single"
+difficulty = 2
+prompt = '''API xử lý 2.000 request mỗi giây nhưng mỗi request phản hồi chậm. Từ nào mô tả thời gian chờ của từng request?'''
+options = ["latency", "throughput", "schema", "payload"]
+answer = [0]
+explanation = '''Latency là độ trễ hoặc thời gian phản hồi; throughput là lượng công việc hoàn tất theo thời gian.'''
+
+[[questions]]
+id = "voc-019"
+module = "vocab-backend-data"
+type = "single"
+difficulty = 1
+prompt = '''Câu “The query selects unpaid invoices from the database” nói về điều gì?'''
+options = ["Một truy vấn dữ liệu", "Một bản vá bảo mật", "Một bản phát hành dần", "Một điểm ngắt CSS"]
+answer = [0]
+explanation = '''Query là truy vấn dùng để đọc hoặc thay đổi dữ liệu trong hệ thống.'''
+
+[[questions]]
+id = "voc-020"
+module = "vocab-backend-data"
+type = "single"
+difficulty = 2
+prompt = '''Tìm kiếm theo email thường xuyên và chậm. Thay đổi nào có thể giúp cơ sở dữ liệu tìm nhanh hơn?'''
+options = ["Add an index on the email column", "Increase the payload size", "Rename latency to throughput", "Roll out a breakpoint"]
+answer = [0]
+explanation = '''Index trên cột được truy vấn thường xuyên có thể tăng tốc tìm kiếm, dù có thêm chi phí khi ghi hoặc cập nhật dữ liệu.'''
+
+[[questions]]
+id = "voc-021"
+module = "vocab-backend-data"
+type = "multiple"
+difficulty = 2
+prompt = '''Chọn các câu dùng từ backend và dữ liệu đúng ngữ cảnh.'''
+options = ["Validate the request payload before processing it.", "A database index can speed up a lookup.", "Run the migration before code that depends on the new column.", "Latency means requests completed per second.", "The endpoint is a CSS breakpoint."]
+answer = [0, 1, 2]
+explanation = '''Payload là dữ liệu request; index hỗ trợ tra cứu; migration thay đổi schema có quản lý. Latency là thời gian chờ, không phải thông lượng.'''
+
+[[questions]]
+id = "voc-022"
+module = "vocab-backend-data"
+type = "fill"
+difficulty = 1
+prompt = '''The API request {{blank}} contains the account ID and the new display name.'''
+blanks = [["payload"]]
+explanation = '''Payload là phần dữ liệu được gửi trong request hoặc response.'''
+
+[[questions]]
+id = "voc-023"
+module = "vocab-backend-data"
+type = "fill"
+difficulty = 2
+prompt = '''Apply the database {{blank}} before deploying the application version that reads the new column.'''
+blanks = [["migration"]]
+explanation = '''Migration giúp áp dụng thay đổi schema theo thứ tự có thể theo dõi và kiểm soát.'''
+
+[[questions]]
+id = "voc-024"
+module = "vocab-backend-data"
+type = "essay"
+difficulty = 3
+prompt = '''Viết 3–5 câu tiếng Anh mô tả việc điều tra một API chậm. Dùng ít nhất bốn từ: endpoint, latency, throughput, query, index, migration.'''
+keywords = [["endpoint"], ["latency"], ["throughput"], ["query"], ["index"], ["migration"]]
+min_keywords = 4
+model_answer = '''The search endpoint had high latency even though overall throughput was normal. We inspected the query and found that it scanned every row. An index reduced the lookup time, and we planned a migration to add it safely.'''
+explanation = '''Câu trả lời phân biệt được độ trễ của một request và throughput toàn hệ thống.'''
+
+[[questions]]
+id = "voc-c03"
+module = "vocab-backend-data"
+type = "code"
+difficulty = 3
+lang = "javascript"
+title = "Tra từ điển IT có stemming đơn giản"
+prompt = '''
+Viết lookup(word, dictionary), trong đó dictionary là object ánh xạ từ gốc viết thường tới nghĩa tiếng Việt.
+- So khớp không phân biệt hoa thường; ưu tiên từ chính xác.
+- Nếu không có từ chính xác, lần lượt thử các dạng gốc: đổi đuôi ies thành y; bỏ ing (thử cả dạng bỏ phụ âm kép cuối nếu có); bỏ ed (cũng thử bỏ phụ âm kép); bỏ es; bỏ s; bỏ ly.
+- Chỉ trả nghĩa nếu dạng gốc có trong dictionary; nếu không tìm thấy, trả null.
+- Không cần xử lý nhiều hậu tố cùng lúc.
+'''
+starter = '''
+function lookup(word, dictionary) {
+  return dictionary[word] || null;
+}
+'''
+solution = '''
+function lookup(word, dictionary) {
+  const w = word.toLowerCase();
+  if (dictionary[w] !== undefined) return dictionary[w];
+  const candidates = [];
+  if (w.endsWith('ies')) candidates.push(w.slice(0, -3) + 'y');
+  if (w.endsWith('ing')) {
+    const stem = w.slice(0, -3);
+    candidates.push(stem);
+    if (stem.length > 1 && stem[stem.length - 1] === stem[stem.length - 2]) candidates.push(stem.slice(0, -1));
+  }
+  if (w.endsWith('ed')) {
+    const stem = w.slice(0, -2);
+    candidates.push(stem);
+    if (stem.length > 1 && stem[stem.length - 1] === stem[stem.length - 2]) candidates.push(stem.slice(0, -1));
+  }
+  if (w.endsWith('es')) candidates.push(w.slice(0, -2));
+  if (w.endsWith('s')) candidates.push(w.slice(0, -1));
+  if (w.endsWith('ly')) candidates.push(w.slice(0, -2));
+  for (const candidate of candidates) {
+    if (dictionary[candidate] !== undefined) return dictionary[candidate];
+  }
+  return null;
+}
+'''
+tests = '''
+const dictionary = { query: 'truy vấn', deploy: 'triển khai', run: 'chạy', fix: 'sửa', secure: 'bảo mật' };
+test('ưu tiên khớp chính xác và không phân biệt hoa thường', () => {
+  expect(lookup('QUERY', dictionary)).toBe('truy vấn');
+});
+test('ies trở về y và ing được bỏ', () => {
+  expect(lookup('queries', dictionary)).toBe('truy vấn');
+  expect(lookup('deploying', dictionary)).toBe('triển khai');
+});
+test('xử lý phụ âm kép trong running', () => {
+  expect(lookup('running', dictionary)).toBe('chạy');
+});
+test('bỏ ed và es', () => {
+  expect(lookup('fixed', dictionary)).toBe('sửa');
+  expect(lookup('fixes', dictionary)).toBe('sửa');
+});
+test('bỏ ly và từ lạ trả null', () => {
+  expect(lookup('securely', dictionary)).toBe('bảo mật');
+  expect(lookup('unknown', dictionary)).toBeNull();
+});
+'''
+hints = ["Tạo danh sách candidate theo đúng thứ tự đề bài rồi trả nghĩa của candidate đầu tiên có trong dictionary.", "Với running, sau khi bỏ ing cần thử cả runn và run."]
+explanation = '''Stemming ở đây chỉ mô phỏng tìm dạng gốc cho bài học; nó không thay thế bộ phân tích ngôn ngữ hoàn chỉnh.'''
+
+[[questions]]
+id = "voc-025"
+module = "vocab-devops-cloud"
+type = "single"
+difficulty = 1
+prompt = '''CI pipeline chạy unit test tự động sau mỗi pull request. Pipeline ở đây là gì?'''
+options = ["Chuỗi bước tự động được thực hiện theo thứ tự", "Một loại credential", "Một truy vấn SQL", "Một layout cho điện thoại"]
+answer = [0]
+explanation = '''Pipeline là chuỗi công việc hoặc bước tự động, ví dụ build, test và deploy.'''
+
+[[questions]]
+id = "voc-026"
+module = "vocab-devops-cloud"
+type = "single"
+difficulty = 1
+prompt = '''Trong DevOps, container chủ yếu giúp nhóm làm gì?'''
+options = ["Đóng gói ứng dụng cùng môi trường chạy cần thiết", "Đoán trước deadline", "Nêu mối lo trong cuộc họp", "Tạo chỉ mục trong bảng"]
+answer = [0]
+explanation = '''Container đóng gói ứng dụng và các thành phần cần để chạy nhất quán giữa các môi trường.'''
+
+[[questions]]
+id = "voc-027"
+module = "vocab-devops-cloud"
+type = "single"
+difficulty = 2
+prompt = '''Cloud team must provision a database for the new staging environment. Provision gần nghĩa nhất với gì?'''
+options = ["Cấp phát và chuẩn bị tài nguyên", "Thu hồi mọi credential", "Đo độ trễ", "Sửa chính tả"]
+answer = [0]
+explanation = '''Provision là cấp phát hoặc chuẩn bị tài nguyên như máy chủ, database hay tài khoản.'''
+
+[[questions]]
+id = "voc-028"
+module = "vocab-devops-cloud"
+type = "single"
+difficulty = 2
+prompt = '''Dịch vụ cần tăng số worker từ 4 lên 12 khi có chiến dịch bán hàng. Hành động đó là gì?'''
+options = ["scale out", "scale down", "deprovision", "wrap up"]
+answer = [0]
+explanation = '''Scale out là tăng số instance hoặc worker; scale up thường tăng tài nguyên trên từng instance.'''
+
+[[questions]]
+id = "voc-029"
+module = "vocab-devops-cloud"
+type = "multiple"
+difficulty = 2
+prompt = '''Chọn các nhận định đúng về vận hành hệ thống.'''
+options = ["Scale out usually adds more instances.", "An outage means a period when a service is unavailable.", "A postmortem can identify missing alerts and follow-up actions.", "Provision means roll back a release.", "An incident is always a planned deployment."]
+answer = [0, 1, 2]
+explanation = '''Scale out thêm instance; outage là khoảng gián đoạn dịch vụ; postmortem ghi nhận nguyên nhân và hành động tiếp theo.'''
+
+[[questions]]
+id = "voc-030"
+module = "vocab-devops-cloud"
+type = "multiple"
+difficulty = 3
+prompt = '''Sau một incident ảnh hưởng API, những bước nào hợp lý để cải thiện vận hành?'''
+options = ["Monitor error rates after recovery.", "Write a postmortem with concrete follow-up actions.", "Check whether the pipeline ran the relevant tests.", "Delete all incident records to avoid questions.", "Assume adding containers alone prevents future outages."]
+answer = [0, 1, 2]
+explanation = '''Theo dõi sau phục hồi, phân tích nguyên nhân và bổ sung kiểm thử là hành động cải thiện. Xóa hồ sơ hoặc cho rằng container tự ngăn outage đều không hợp lý.'''
+
+[[questions]]
+id = "voc-031"
+module = "vocab-devops-cloud"
+type = "fill"
+difficulty = 2
+prompt = '''We need to {{blank}} two test servers before the performance run begins.'''
+blanks = [["provision"]]
+explanation = '''Provision diễn tả việc cấp phát hoặc chuẩn bị tài nguyên trước khi sử dụng.'''
+
+[[questions]]
+id = "voc-032"
+module = "vocab-devops-cloud"
+type = "fill"
+difficulty = 1
+prompt = '''The status page reported a service {{blank}} while the database cluster was recovering.'''
+blanks = [["outage"]]
+explanation = '''Outage là sự gián đoạn khiến dịch vụ không sẵn sàng trong một khoảng thời gian.'''
+
+[[questions]]
+id = "voc-c04"
+module = "vocab-devops-cloud"
+type = "code"
+difficulty = 3
+lang = "javascript"
+title = "Trộn đáp án quiz có seed"
+prompt = '''
+Viết seededShuffle(items, seed) trả về bản sao đã xáo trộn theo thứ tự giả ngẫu nhiên xác định.
+- Cùng danh sách và seed phải luôn cho cùng thứ tự.
+- Không sửa mảng đầu vào, không thêm hoặc mất phần tử.
+- Hỗ trợ seed là số nguyên; seed 0 cũng phải hoạt động.
+- Không cần tạo thứ tự ngẫu nhiên mật mã.
+'''
+starter = '''
+function seededShuffle(items, seed) {
+  return items.slice();
+}
+'''
+solution = '''
+function seededShuffle(items, seed) {
+  const result = items.slice();
+  let state = seed >>> 0;
+  if (state === 0) state = 1831565813;
+  function random() {
+    state ^= state << 13;
+    state ^= state >>> 17;
+    state ^= state << 5;
+    return (state >>> 0) / 4294967296;
+  }
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(random() * (i + 1));
+    const value = result[i];
+    result[i] = result[j];
+    result[j] = value;
+  }
+  return result;
+}
+'''
+tests = '''
+test('cùng seed cho cùng kết quả', () => {
+  expect(seededShuffle(['a', 'b', 'c', 'd', 'e'], 42)).toEqual(seededShuffle(['a', 'b', 'c', 'd', 'e'], 42));
+});
+test('giữ đủ phần tử và không làm đổi input', () => {
+  const input = ['a', 'b', 'c', 'd', 'e'];
+  const result = seededShuffle(input, 7);
+  expect(result.slice().sort()).toEqual(['a', 'b', 'c', 'd', 'e']);
+  expect(input).toEqual(['a', 'b', 'c', 'd', 'e']);
+  expect(seededShuffle([1, 2, 3, 4, 5], 42)).not.toEqual([1, 2, 3, 4, 5]);
+});
+test('seed 0 vẫn xử lý ổn định', () => {
+  expect(seededShuffle([1, 2, 3, 4], 0)).toEqual(seededShuffle([1, 2, 3, 4], 0));
+});
+test('mảng rỗng và một phần tử', () => {
+  expect(seededShuffle([], 4)).toEqual([]);
+  expect(seededShuffle(['only'], 9)).toEqual(['only']);
+});
+test('trả về mảng mới', () => {
+  const input = [1, 2, 3];
+  expect(seededShuffle(input, 2) === input).toBe(false);
+});
+'''
+hints = ["Dùng generator giả ngẫu nhiên có state bắt đầu từ seed.", "Fisher–Yates chọn một vị trí trong đoạn chưa trộn rồi đổi chỗ."]
+explanation = '''Seed giúp quiz có thể tái tạo cùng thứ tự khi xem lại câu hỏi; thuật toán này không dùng cho bảo mật.'''
+
+[[questions]]
+id = "voc-033"
+module = "vocab-security"
+type = "single"
+difficulty = 2
+prompt = '''Scanner báo một thư viện cũ có lỗi cho phép đọc dữ liệu trái phép. Điểm yếu đó gọi là gì?'''
+options = ["vulnerability", "payload", "deadline", "breakpoint"]
+answer = [0]
+explanation = '''Vulnerability là điểm yếu có thể gây ảnh hưởng tới tính bảo mật hoặc độ tin cậy của hệ thống.'''
+
+[[questions]]
+id = "voc-034"
+module = "vocab-security"
+type = "single"
+difficulty = 2
+prompt = '''Trong báo cáo bảo mật, exploit thường chỉ điều gì?'''
+options = ["Cách hoặc mã tận dụng một lỗ hổng", "Danh sách việc cần làm", "Bố cục trang", "Lượng request mỗi giây"]
+answer = [0]
+explanation = '''Exploit là cách hoặc mã khai thác vulnerability; hai từ có liên quan nhưng không đồng nghĩa.'''
+
+[[questions]]
+id = "voc-035"
+module = "vocab-security"
+type = "single"
+difficulty = 1
+prompt = '''API token, password và private key đều có thể được gọi chung là gì?'''
+options = ["credentials", "layouts", "breakpoints", "migrations"]
+answer = [0]
+explanation = '''Credential là thông tin dùng để xác thực danh tính hoặc quyền truy cập.'''
+
+[[questions]]
+id = "voc-036"
+module = "vocab-security"
+type = "single"
+difficulty = 3
+prompt = '''Tài khoản dịch vụ chỉ được đọc một bucket cần thiết thay vì có quyền quản trị toàn cloud. Nguyên tắc nào đang được áp dụng?'''
+options = ["least privilege", "scope creep", "scale out", "responsive design"]
+answer = [0]
+explanation = '''Least privilege cấp đúng lượng quyền cần thiết cho nhiệm vụ, giảm tác động nếu tài khoản bị lộ.'''
+
+[[questions]]
+id = "voc-037"
+module = "vocab-security"
+type = "multiple"
+difficulty = 2
+prompt = '''Một credential bị lộ trong log. Chọn các hành động ứng phó phù hợp.'''
+options = ["Revoke or rotate the exposed credential.", "Investigate where the credential was used.", "Remove the secret from future logs and restrict access.", "Copy the credential into a public issue for visibility.", "Grant every service account administrator access."]
+answer = [0, 1, 2]
+explanation = '''Thu hồi hoặc xoay vòng credential, điều tra phạm vi và ngăn log tiếp tục lộ bí mật. Không công khai credential hoặc cấp quyền quá mức.'''
+
+[[questions]]
+id = "voc-038"
+module = "vocab-security"
+type = "fill"
+difficulty = 1
+prompt = '''Never commit a production {{blank}} such as an API token to the repository.'''
+blanks = [["credential"]]
+explanation = '''Credential bao gồm token, mật khẩu hoặc khóa dùng để xác thực.'''
+
+[[questions]]
+id = "voc-039"
+module = "vocab-security"
+type = "fill"
+difficulty = 2
+prompt = '''Install the security {{blank}} to remove the vulnerable version of the library.'''
+blanks = [["patch"]]
+explanation = '''Patch là bản cập nhật sửa lỗi hoặc lỗ hổng đã biết.'''
+
+[[questions]]
+id = "voc-040"
+module = "vocab-security"
+type = "essay"
+difficulty = 3
+prompt = '''Viết 3–5 câu tiếng Anh về phản ứng với một token bị lộ. Dùng ít nhất bốn từ: leak, credential, revoke, patch, least privilege.'''
+keywords = [["leak"], ["credential"], ["revoke"], ["patch"], ["least privilege"]]
+min_keywords = 4
+model_answer = '''A credential leak exposed a service token in an application log. We revoked the token, checked its access history, and applied a patch to stop the log from recording secrets. We also enforced least privilege for the replacement account.'''
+explanation = '''Bài viết nên mô tả sự cố, cách hạn chế quyền truy cập và biện pháp phòng ngừa tái diễn.'''
+
+[[questions]]
+id = "voc-041"
+module = "vocab-security"
+type = "single"
+difficulty = 2
+prompt = '''Điền từ đúng: “Please ___ the old API key before removing it from the deployment configuration.”'''
+options = ["revoke", "render", "estimate", "provision"]
+answer = [0]
+explanation = '''Revoke là thu hồi hiệu lực hoặc quyền truy cập của key.'''
+
+[[questions]]
+id = "voc-042"
+module = "vocab-phrasal-verbs"
+type = "single"
+difficulty = 1
+prompt = '''The team will roll out the new editor to five percent of users first. Roll out nghĩa là gì?'''
+options = ["Phát hành hoặc triển khai theo đợt", "Thu hồi credential", "Sao lưu database", "Gặp phải lỗi"]
+answer = [0]
+explanation = '''Roll out là phát hành hoặc đưa một thay đổi vào sử dụng, thường theo từng nhóm người dùng.'''
+
+[[questions]]
+id = "voc-043"
+module = "vocab-phrasal-verbs"
+type = "single"
+difficulty = 1
+prompt = '''“I will look into the failed build and share what I find.” Người nói sẽ làm gì?'''
+options = ["Điều tra build thất bại", "Xóa pipeline", "Phát hành build cho mọi người", "Kết thúc cuộc họp"]
+answer = [0]
+explanation = '''Look into có nghĩa là tìm hiểu hoặc điều tra một vấn đề.'''
+
+[[questions]]
+id = "voc-044"
+module = "vocab-phrasal-verbs"
+type = "single"
+difficulty = 2
+prompt = '''Câu “We ran into a permission issue in staging” có nghĩa là gì?'''
+options = ["Nhóm gặp phải vấn đề quyền ở staging", "Nhóm đã sửa xong quyền ở production", "Nhóm đã sao lưu quyền", "Nhóm đang kết thúc incident"]
+answer = [0]
+explanation = '''Run into diễn tả việc bất ngờ gặp phải vấn đề hoặc trở ngại.'''
+
+[[questions]]
+id = "voc-045"
+module = "vocab-phrasal-verbs"
+type = "multiple"
+difficulty = 2
+prompt = '''Ghép các nghĩa với phrasal verb phù hợp. Chọn tất cả đáp án đúng.'''
+options = ["look into a bug = investigate a bug", "set up an alert = configure an alert", "bring up a risk = mention a risk", "wrap up a task = begin a task", "back up a database = delete a database"]
+answer = [0, 1, 2]
+explanation = '''Look into là điều tra, set up là thiết lập, bring up là nêu ra. Wrap up là hoàn tất; back up là sao lưu.'''
+
+[[questions]]
+id = "voc-046"
+module = "vocab-phrasal-verbs"
+type = "multiple"
+difficulty = 2
+prompt = '''Chọn các câu dùng phrasal verb tự nhiên trong công việc IT.'''
+options = ["Please back up the database before the migration.", "I will follow up with the vendor tomorrow.", "Let’s wrap up the incident review.", "We set up the issue after the release.", "I figured out the server to a new region."]
+answer = [0, 1, 2]
+explanation = '''Back up a database, follow up with someone và wrap up a review là cách dùng tự nhiên. Set up thường là thiết lập; figure out cần một vấn đề hoặc câu trả lời làm tân ngữ.'''
+
+[[questions]]
+id = "voc-047"
+module = "vocab-phrasal-verbs"
+type = "fill"
+difficulty = 1
+prompt = '''Please {{blank}} with the vendor if the certificate has not arrived by noon.'''
+blanks = [["follow up"]]
+explanation = '''Follow up with someone là liên hệ hoặc xử lý tiếp với người đó.'''
+
+[[questions]]
+id = "voc-048"
+module = "vocab-phrasal-verbs"
+type = "fill"
+difficulty = 1
+prompt = '''We need to {{blank}} an alert for repeated failed login attempts.'''
+blanks = [["set up"]]
+explanation = '''Set up là thiết lập hoặc chuẩn bị một thứ để sử dụng.'''
+
+[[questions]]
+id = "voc-049"
+module = "vocab-phrasal-verbs"
+type = "essay"
+difficulty = 3
+prompt = '''Viết 3–5 câu tiếng Anh kể cách nhóm xử lý lỗi mới xuất hiện. Dùng ít nhất bốn cụm: run into, look into, figure out, set up, follow up, wrap up.'''
+keywords = [["run into", "ran into"], ["look into", "looked into"], ["figure out", "figured out"], ["set up"], ["follow up", "followed up"], ["wrap up", "wrapped up"]]
+min_keywords = 4
+model_answer = '''We ran into an authentication issue after the rollout. The on-call engineer looked into the logs and figured out that a certificate had expired. We set up an alert, followed up with the platform team, and wrapped up the incident review the next morning.'''
+explanation = '''Phrasal verb trong câu chuyện giúp mô tả tự nhiên chuỗi hành động từ phát hiện đến theo dõi sau sự cố.'''
+
+[[questions]]
+id = "voc-c05"
+module = "vocab-phrasal-verbs"
+type = "code"
+difficulty = 3
+lang = "javascript"
+title = "Phát hiện phrasal verb trong câu"
+prompt = '''
+Viết findPhrasalVerbs(sentence, verbs). Trả về các cụm có mặt trong câu, không phân biệt hoa thường.
+- verbs là mảng phrasal verb cần dò; kết quả chỉ chứa cụm khớp chính xác với dạng trong danh sách, không xử lý chia thì.
+- Cho phép một hoặc nhiều khoảng trắng giữa các từ trong cụm.
+- Chỉ khớp ranh giới từ để “set up” không khớp với “setup” hay một cụm nằm giữa từ dài hơn.
+- Mỗi cụm chỉ xuất hiện một lần trong kết quả, theo thứ tự của verbs.
+'''
+starter = '''
+function findPhrasalVerbs(sentence, verbs) {
+  return [];
+}
+'''
+solution = '''
+function findPhrasalVerbs(sentence, verbs) {
+  const found = [];
+  const text = ' ' + sentence.toLowerCase().replace(/[^a-z0-9]+/g, ' ').replace(/ +/g, ' ').trim() + ' ';
+  for (const verb of verbs) {
+    const phrase = verb.trim().toLowerCase().replace(/ +/g, ' ');
+    if (text.includes(' ' + phrase + ' ') && !found.includes(verb)) found.push(verb);
+  }
+  return found;
+}
+'''
+tests = '''
+const verbs = ['look into', 'set up', 'follow up', 'wrap up'];
+test('tìm cụm không phân biệt hoa thường', () => {
+  expect(findPhrasalVerbs('Please LOOK INTO the alert, then set up a dashboard.', verbs)).toEqual(['look into', 'set up']);
+});
+test('chấp nhận nhiều khoảng trắng', () => {
+  expect(findPhrasalVerbs('We will follow   up tomorrow.', verbs)).toEqual(['follow up']);
+});
+test('chỉ khớp ranh giới từ', () => {
+  expect(findPhrasalVerbs('The setup guide is ready.', ['set up'])).toEqual([]);
+});
+test('kết quả theo thứ tự danh sách và không lặp', () => {
+  expect(findPhrasalVerbs('Wrap up, then look into it; wrap up later.', verbs)).toEqual(['look into', 'wrap up']);
+});
+test('không có cụm phù hợp', () => {
+  expect(findPhrasalVerbs('The build is green.', verbs)).toEqual([]);
+});
+'''
+hints = ["Chuẩn hóa khoảng trắng trong mỗi cụm thành biểu thức cho phép nhiều whitespace.", "Dùng ranh giới từ ở hai đầu và duyệt verbs để giữ thứ tự danh sách."]
+explanation = '''Bộ dò nhỏ này hỗ trợ tra cụm trong ghi chú; nó không phân tích biến thể ngữ pháp hoặc ngữ cảnh nghĩa.'''
+
+[[questions]]
+id = "voc-050"
+module = "vocab-workplace"
+type = "single"
+difficulty = 2
+prompt = '''Chọn từ đúng: “A missing database index can ___ the response time of the search endpoint.”'''
+options = ["affect", "effect", "loose", "insure"]
+answer = [0]
+explanation = '''Affect thường là động từ “ảnh hưởng”. Effect thường là danh từ, ví dụ “the effect on response time”.'''
+
+[[questions]]
+id = "voc-051"
+module = "vocab-workplace"
+type = "single"
+difficulty = 2
+prompt = '''Chọn câu dùng ensure và insure đúng nghĩa.'''
+options = ["Ensure the backup is restorable; insure the laptop against accidental damage.", "Insure the backup is restorable; ensure the laptop against damage.", "Ensure means buy insurance; insure means guarantee a result.", "Both words only mean encrypt."]
+answer = [0]
+explanation = '''Ensure là bảo đảm một kết quả; insure là mua bảo hiểm cho người hoặc tài sản.'''
+
+[[questions]]
+id = "voc-052"
+module = "vocab-workplace"
+type = "single"
+difficulty = 1
+prompt = '''Chọn từ đúng: “Without an autosave, users may ___ their unsaved changes.”'''
+options = ["lose", "loose", "loss", "loosely"]
+answer = [0]
+explanation = '''Lose là động từ làm mất; loose là tính từ nghĩa là lỏng hoặc không chặt.'''
+
+[[questions]]
+id = "voc-053"
+module = "vocab-workplace"
+type = "single"
+difficulty = 2
+prompt = '''Câu nào phù hợp nhất khi nói về một lỗi logic trong production code?'''
+options = ["We need to fix the bug before release.", "We need to loose the bug before release.", "We need to insure the bug before release.", "We need to make the bug before release."]
+answer = [0]
+explanation = '''Fix a bug là kết hợp rất tự nhiên để nói sửa lỗi phần mềm. Repair thường dùng khi khôi phục thiết bị hoặc vật bị hỏng, dù hai động từ có thể giao nhau.'''
+
+[[questions]]
+id = "voc-054"
+module = "vocab-workplace"
+type = "single"
+difficulty = 2
+prompt = '''Trong câu “The fix had an unexpected effect on startup time”, effect là loại từ nào?'''
+options = ["Danh từ, nghĩa là tác động hoặc kết quả", "Động từ, nghĩa là ảnh hưởng", "Tính từ, nghĩa là lỏng", "Động từ, nghĩa là bảo đảm"]
+answer = [0]
+explanation = '''Effect trong cấu trúc “an effect on” là danh từ. Affect thường là động từ: “The fix may affect startup time.”'''
+
+[[questions]]
+id = "voc-055"
+module = "vocab-workplace"
+type = "multiple"
+difficulty = 2
+prompt = '''Chọn các collocation đúng trong môi trường công sở.'''
+options = ["make a decision", "meet a deadline", "raise a concern", "do a decision", "say a deadline"]
+answer = [0, 1, 2]
+explanation = '''Ta thường nói make a decision, meet a deadline và raise a concern.'''
+
+[[questions]]
+id = "voc-056"
+module = "vocab-workplace"
+type = "multiple"
+difficulty = 3
+prompt = '''Chọn các idiom thường dùng trong trao đổi công việc và nghĩa phù hợp.'''
+options = ["on the same page = cùng hiểu hoặc thống nhất", "ballpark figure = ước lượng sơ bộ", "keep someone in the loop = tiếp tục cập nhật cho ai", "wrap up = tăng số instance", "run into = thu hồi token"]
+answer = [0, 1, 2]
+explanation = '''Ba cụm đầu là idiom công sở thường gặp. Wrap up là hoàn tất; run into là gặp phải vấn đề.'''
+
+[[questions]]
+id = "voc-057"
+module = "vocab-workplace"
+type = "fill"
+difficulty = 2
+prompt = '''We only need a {{blank}} for the storage cost at this stage; finance will calculate the exact amount later.'''
+blanks = [["ballpark figure"]]
+explanation = '''Ballpark figure là con số ước lượng sơ bộ, chưa phải số chính xác hoặc cam kết.'''
+
+[[questions]]
+id = "voc-058"
+module = "vocab-workplace"
+type = "fill"
+difficulty = 1
+prompt = '''Keep the support team {{blank}} while we roll out the new login flow.'''
+blanks = [["in the loop"]]
+explanation = '''Keep someone in the loop nghĩa là tiếp tục cung cấp thông tin cập nhật cho họ.'''
+
+[[questions]]
+id = "voc-059"
+module = "vocab-word-formation"
+type = "single"
+difficulty = 1
+prompt = '''Chọn danh từ cùng họ từ với secure trong câu “Store the token securely.”'''
+options = ["security", "securely", "secured", "securing"]
+answer = [0]
+explanation = '''Secure là tính từ/động từ; security là danh từ; securely là trạng từ.'''
+
+[[questions]]
+id = "voc-060"
+module = "vocab-word-formation"
+type = "single"
+difficulty = 2
+prompt = '''Tiền tố re- trong redeploy thường bổ sung ý nghĩa nào?'''
+options = ["Thực hiện lại", "Không thể thực hiện", "Thu hồi hoàn toàn", "Người thực hiện"]
+answer = [0]
+explanation = '''Re- thường có nghĩa là làm lại hoặc một lần nữa; redeploy là triển khai lại.'''
+
+[[questions]]
+id = "voc-061"
+module = "vocab-word-formation"
+type = "single"
+difficulty = 2
+prompt = '''Chọn danh từ phù hợp để hoàn thành: “The deployment was delayed by a network outage.” Deployment được tạo từ động từ nào?'''
+options = ["deploy", "deployedly", "deployable", "deployerment"]
+answer = [0]
+explanation = '''Deploy là động từ triển khai; deployment là danh từ chỉ việc triển khai hoặc bản triển khai.'''
+
+[[questions]]
+id = "voc-062"
+module = "vocab-word-formation"
+type = "multiple"
+difficulty = 2
+prompt = '''Chọn các nhận định đúng về tiền tố trong word formation.'''
+options = ["re- often means doing something again.", "un- can make an adjective negative, as in unavailable.", "de- can indicate removal or reversal, as in deprovision.", "re- always means the opposite of a word.", "un- turns every noun into a verb."]
+answer = [0, 1, 2]
+explanation = '''Re-, un- và de- thường có các chức năng như lặp lại, phủ định, hoặc gỡ bỏ/đảo ngược; chúng không áp dụng máy móc cho mọi từ.'''
+
+[[questions]]
+id = "voc-063"
+module = "vocab-word-formation"
+type = "multiple"
+difficulty = 3
+prompt = '''Chọn các ghép từ và loại từ đúng.'''
+options = ["configure → configurable (adjective)", "normalize → normalize (verb)", "deploy → deployment (noun)", "secure → securely (noun)", "available → availability (verb)"]
+answer = [0, 1, 2]
+explanation = '''Configurable là tính từ, normalize là động từ, deployment là danh từ. Securely là trạng từ; availability là danh từ.'''
+
+[[questions]]
+id = "voc-064"
+module = "vocab-word-formation"
+type = "fill"
+difficulty = 2
+prompt = '''The service is {{blank}} through a configuration file, so each environment can use a different timeout.'''
+blanks = [["configurable"]]
+explanation = '''Configurable là tính từ có nghĩa là có thể cấu hình; hậu tố -able thường diễn tả khả năng.'''
+
+[[questions]]
+id = "voc-c06"
+module = "vocab-word-formation"
+type = "code"
+difficulty = 2
+lang = "javascript"
+title = "Kiểm tra từ cùng họ"
+prompt = '''
+Viết isFamilyMember(root, word, families). families là object ánh xạ từ gốc viết thường tới mảng các dạng từ cùng họ.
+- Trả true khi root tồn tại trong families và word, sau khi trim và chuyển chữ thường, nằm trong mảng của root.
+- So sánh không phân biệt hoa thường và bỏ khoảng trắng ở đầu/cuối của root, word.
+- Trả false nếu root không tồn tại, word không thuộc họ từ hoặc dữ liệu tương ứng không phải mảng.
+- Không tự suy diễn dạng từ; chỉ kiểm tra dữ liệu được cung cấp.
+'''
+starter = '''
+function isFamilyMember(root, word, families) {
+  return true;
+}
+'''
+solution = '''
+function isFamilyMember(root, word, families) {
+  const key = root.trim().toLowerCase();
+  const candidate = word.trim().toLowerCase();
+  const forms = families[key];
+  if (!Array.isArray(forms)) return false;
+  return forms.some((form) => form.trim().toLowerCase() === candidate);
+}
+'''
+tests = '''
+const families = {
+  secure: ['secure', 'security', 'securely'],
+  deploy: ['deploy', 'deployment', 'deployed', 'deployable'],
+  access: ['access', 'accessible', 'accessibility', 'inaccessible'],
+};
+test('tìm dạng từ cùng họ', () => {
+  expect(isFamilyMember('secure', 'security', families)).toBe(true);
+  expect(isFamilyMember('deploy', 'deployment', families)).toBe(true);
+});
+test('so sánh không phân biệt hoa thường', () => {
+  expect(isFamilyMember(' ACCESS ', ' Accessible ', families)).toBe(true);
+});
+test('từ không cùng họ trả false', () => {
+  expect(isFamilyMember('secure', 'security-related', families)).toBe(false);
+});
+test('root không có trong bảng trả false', () => {
+  expect(isFamilyMember('patch', 'patched', families)).toBe(false);
+});
+test('dữ liệu không phải mảng trả false', () => {
+  expect(isFamilyMember('query', 'queries', { query: 'query' })).toBe(false);
+});
+'''
+hints = ["Chuẩn hóa root và word bằng trim().toLowerCase().", "Dùng Array.isArray trước khi gọi some."]
+explanation = '''Bảng họ từ giúp quiz phân biệt danh từ, động từ và tính từ mà không đoán biến tố ngoài dữ liệu đã học.'''

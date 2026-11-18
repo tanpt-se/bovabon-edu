@@ -1,0 +1,903 @@
+id = "frontend-tooling"
+title = "Styling & Build: Tailwind, Sass, Vite"
+icon = "🛠️"
+color = "#06b6d4"
+group = "Frontend"
+docs = ["tailwindcss", "sass", "vite", "webpack~5", "eslint"]
+description = "Thiết kế giao diện với Tailwind và Sass, tổ chức quy trình build hiện đại, giữ chất lượng mã và tối ưu tài nguyên frontend."
+
+[[modules]]
+id = "tool-tailwind"
+title = "Tailwind CSS"
+description = "Utility-first, responsive/state variants, theme và arbitrary values."
+sources = ["tailwindcss/hover-focus-and-other-states", "tailwindcss/responsive-design", "tailwindcss/theme", "tailwindcss/detecting-classes-in-source-files"]
+lesson = '''
+### Utility-first và variants
+Tailwind ghép utility nhỏ ngay trên markup; `flex items-center gap-4` mô tả layout mà không cần tạo một selector riêng cho mỗi component. Variant thêm điều kiện cho utility: `hover:bg-sky-700`, `focus-visible:ring-2`, `md:grid-cols-2`. Breakpoint thường theo hướng mobile-first: lớp không có tiền tố áp dụng mặc định, còn `md:` ghi đè từ breakpoint đó trở lên.
+
+| Nhu cầu | Ví dụ | Ý nghĩa |
+|---|---|---|
+| Trạng thái | `disabled:opacity-50` | chỉ áp dụng khi disabled |
+| Kích thước màn hình | `lg:flex` | áp dụng từ breakpoint `lg` |
+| Giá trị tuỳ ý | `w-[37rem]` | giá trị không có trong thang theme |
+
+Trong Tailwind hiện đại, theme có thể khai báo trong CSS bằng `@theme`, ví dụ `@theme { --color-brand: #06b6d4; }`, rồi dùng utility tương ứng. Trình quét lớp cần nhìn thấy tên class hoàn chỉnh trong source; nối chuỗi như `bg-` + màu runtime có thể làm CSS không được sinh. Với giá trị động, ánh xạ dữ liệu sang các chuỗi class tĩnh hoặc khai báo nguồn đầy đủ. Lỗi hay gặp: dùng `sm:` như một chế độ riêng cho màn hình nhỏ, hoặc lạm dụng arbitrary values khiến hệ thống theme mất nhất quán.
+'''
+
+[[modules]]
+id = "tool-sass"
+title = "Sass và CSS modules"
+description = "Biến, nesting, mixin, module bằng @use/@forward và function."
+sources = ["sass/variables", "sass/style-rules/parent-selector", "sass/values/mixins", "sass/at-rules/use", "sass/at-rules/forward", "sass/at-rules/function"]
+lesson = '''
+### Sass có cấu trúc
+Sass bổ sung cú pháp và phép trừu tượng cho CSS. Biến `$space: 1rem` lưu giá trị dùng lại; nesting biểu đạt quan hệ selector, nhưng nên giữ nông để tránh selector dài và độ đặc hiệu khó kiểm soát. Mixin phù hợp với một nhóm khai báo có thể tái sử dụng hoặc nhận tham số; function tính và trả về một giá trị để dùng trong biểu thức.
+
+| Cơ chế | Dùng khi | Lưu ý |
+|---|---|---|
+| `$variable` | giá trị dùng lại | scope và thứ tự định nghĩa quan trọng |
+| `@mixin` / `@include` | chèn nhóm khai báo | có thể nhận tham số |
+| `@function` / `@return` | tính một giá trị | không thay thế selector |
+| `@use` / `@forward` | tổ chức module | namespace rõ, API được chủ động xuất |
+
+```scss
+@use "tokens" as t;
+.card { padding: t.$space; }
+```
+
+`@use` tải module với namespace để tránh biến toàn cục đụng nhau; `@forward` tạo điểm xuất chung cho API của một thư mục. Dự án mới nên dùng hệ module này thay vì `@import` Sass cũ. Lỗi thường gặp là nesting sâu theo cấu trúc HTML hoặc dùng mixin để sinh quá nhiều CSS giống nhau, làm stylesheet phình to.
+'''
+
+[[modules]]
+id = "tool-bundlers"
+title = "Vite, webpack và dependency graph"
+description = "ESM dev server, HMR, production build, env, code splitting, loader và plugin."
+sources = ["vite/guide/features", "vite/guide/env-and-mode", "vite/guide/build", "webpack~5/concepts/loaders", "webpack~5/concepts/plugins", "webpack~5/guides/code-splitting"]
+lesson = '''
+### Phát triển và đóng gói
+Vite tận dụng ESM của trình duyệt trong development để phục vụ module theo yêu cầu; dependency có thể được tối ưu trước để tương thích và giảm số request. HMR thay phần module có thể cập nhật mà không tải lại toàn trang trong nhiều trường hợp. Production build phân tích dependency graph, gom và chia output thành các asset phù hợp; chi tiết bundler nội bộ phụ thuộc phiên bản Vite.
+
+| Khái niệm | Vai trò | Ví dụ |
+|---|---|---|
+| HMR | cập nhật khi dev | sửa CSS không cần reload toàn trang |
+| Env | cấu hình theo mode | chỉ biến có tiền tố `VITE_` được đưa tới client |
+| Dynamic import | tạo ranh giới tải bất đồng bộ | `import('./editor.js')` |
+| webpack loader | biến đổi một loại module | xử lý CSS hoặc TypeScript |
+| webpack plugin | mở rộng vòng đời compiler | phân tích hoặc phát asset |
+
+Không đưa secret vào biến frontend: mọi giá trị client truy cập đều có thể bị người dùng xem. webpack thường dùng `module.rules` để gắn loader, còn plugin làm việc ở cấp compiler/compilation. Lỗi hay gặp là nhầm dev server với production server, hoặc thêm quá nhiều điểm chia chunk khiến ứng dụng phát sinh nhiều request nhỏ và chậm do overhead.
+'''
+
+[[modules]]
+id = "tool-quality"
+title = "ESLint, Prettier và TypeScript ESLint"
+description = "Flat config, rule, parser, plugin và phân biệt lint với format."
+sources = ["eslint/use/configure/configuration-files", "eslint/use/configure/rules", "eslint/extend/custom-rules", "eslint/extend/custom-rule-tutorial", "eslint/rules/no-unused-vars"]
+lesson = '''
+### Kiểm tra mã và định dạng
+ESLint flat config hiện dùng file như `eslint.config.js` hoặc `eslint.config.mjs`, thường xuất một mảng cấu hình. Mỗi phần tử có thể giới hạn bằng `files`, đặt `languageOptions`, khai báo `plugins` và bật `rules`; thứ tự cấu hình có ý nghĩa khi nhiều phần cùng khớp một file. Rule có mức `off`, `warn` hoặc `error`, và rule tự viết có thể báo lỗi từ AST.
+
+| Công cụ | Trọng tâm | Ví dụ |
+|---|---|---|
+| ESLint | vấn đề đúng/sai, quy ước | biến chưa dùng, API nguy hiểm |
+| Prettier | cách trình bày | khoảng trắng, dấu phẩy |
+| typescript-eslint | cú pháp/ngữ nghĩa TypeScript | parser và các rule TS |
+
+Có thể dùng cả ESLint và Prettier: tránh bật hai công cụ để tranh nhau định dạng cùng một quy tắc. Với TypeScript, cấu hình parser/plugin phù hợp để ESLint hiểu cú pháp và chọn rule tương thích. Khi viết rule, visitor nên nhắm đúng node cần kiểm tra và trả diagnostic ổn định. Lỗi hay gặp là áp dụng parser TypeScript cho mọi file hoặc đặt cấu hình bỏ qua ở sai cấp khiến file ngoài ý muốn không được lint.
+'''
+
+[[modules]]
+id = "tool-performance"
+title = "Hiệu năng và cache frontend"
+description = "Tree shaking, lazy loading, bundle analysis, chunk sizing và cache busting."
+sources = ["webpack~5/guides/tree-shaking", "webpack~5/guides/code-splitting", "webpack~5/guides/caching", "webpack~5/configuration/output", "vite/guide/build"]
+lesson = '''
+### Tối ưu theo bằng chứng
+Tree shaking loại bỏ export không được dùng khi bundler có thể phân tích dependency tĩnh; ESM và khai báo side effects chính xác giúp việc này hiệu quả hơn. Lazy loading bằng `import()` trì hoãn phần chỉ cần ở một route hoặc tương tác. Bundle analyzer cho thấy module nào chiếm dung lượng để ưu tiên xử lý nguyên nhân thay vì đoán.
+
+| Kỹ thuật | Tác dụng | Đánh đổi |
+|---|---|---|
+| Tree shaking | bỏ code không dùng | khó hiệu quả với side effect mơ hồ |
+| Lazy load | giảm tải ban đầu | có thể thêm độ trễ lúc mở tính năng |
+| Chunking | tách phần tải độc lập | chunk quá nhỏ tăng overhead |
+| Content hash | đổi tên khi nội dung đổi | URL mới cần được tham chiếu trong HTML/manifest |
+
+Tên asset có content hash cho phép đặt cache dài hạn vì nội dung đổi sẽ có tên mới; HTML thường cần cache ngắn hơn để trỏ tới manifest mới. Kích thước chunk nên cân đối với đường đi người dùng và khả năng cache, không chỉ tối ưu một con số tổng. Lỗi hay gặp là tách mỗi module thành một chunk, hoặc bật cache dài hạn cho HTML mà không có cơ chế cập nhật.
+'''
+
+[[questions]]
+id = "tool-001"
+module = "tool-tailwind"
+type = "single"
+difficulty = 1
+prompt = "Trong Tailwind theo hướng mobile-first, `md:grid-cols-2` có nghĩa gì?"
+options = ["Chỉ áp dụng ở màn hình nhỏ hơn md", "Áp dụng từ breakpoint md trở lên", "Luôn áp dụng cho mọi kích thước", "Chỉ áp dụng khi hover"]
+answer = [1]
+explanation = "Utility không có prefix là mặc định; prefix breakpoint áp dụng từ ngưỡng đó trở lên."
+sources = ["tailwindcss/responsive-design"]
+
+[[questions]]
+id = "tool-002"
+module = "tool-tailwind"
+type = "single"
+difficulty = 2
+prompt = "Một đoạn JS tạo class bằng `const c = 'bg-' + color + '-600'`. Trong production CSS thiếu các lớp này. Nguyên nhân có khả năng nhất là gì?"
+options = ["Tailwind chỉ đọc file CSS", "Tên class hoàn chỉnh không xuất hiện để trình quét phát hiện", "Các utility màu không thể dùng với JS", "Prefix `bg-` luôn bị loại khỏi output"]
+answer = [1]
+explanation = "Trình quét lớp dựa trên source tĩnh thường không suy luận mọi tổ hợp runtime; dùng ánh xạ các tên class đầy đủ hoặc khai báo nguồn tương ứng."
+sources = ["tailwindcss/detecting-classes-in-source-files"]
+
+[[questions]]
+id = "tool-003"
+module = "tool-tailwind"
+type = "single"
+difficulty = 2
+prompt = "Bạn cần đặt chiều rộng chính xác 37rem nhưng giá trị này không thuộc thang theme. Cú pháp Tailwind nào phù hợp?"
+options = ["`w(37rem)`", "`w-[37rem]`", "`width:37rem` trong class", "`w-37rem`"]
+answer = [1]
+explanation = "Arbitrary value dùng ngoặc vuông trong tên utility; nên dùng có chủ đích để không làm theme trở nên rời rạc."
+sources = ["tailwindcss/adding-custom-styles"]
+
+[[questions]]
+id = "tool-004"
+module = "tool-tailwind"
+type = "single"
+difficulty = 2
+prompt = "Trong Tailwind CSS hiện đại, nơi phù hợp để thêm token theme dạng CSS-first là gì?"
+options = ["`@theme` trong stylesheet", "Một selector `#theme` bất kỳ", "Thuộc tính HTML `theme`", "Chỉ có thể khai báo trong JavaScript"]
+answer = [0]
+explanation = "Tailwind hiện đại hỗ trợ khai báo theme trong CSS bằng `@theme`; các phiên bản và cấu hình cũ có thể dùng cách cấu hình khác."
+sources = ["tailwindcss/theme"]
+
+[[questions]]
+id = "tool-005"
+module = "tool-tailwind"
+type = "multiple"
+difficulty = 2
+prompt = "Những lớp nào minh hoạ đúng việc kết hợp utility với responsive hoặc state variant?"
+options = ["`hover:bg-sky-700`", "`md:grid-cols-2`", "`focus-visible:ring-2`", "`hover:md:` đứng riêng không có utility", "`@media:` như một class HTML"]
+answer = [0, 1, 2]
+explanation = "Variant tiền tố một utility để thêm điều kiện trạng thái hoặc breakpoint; variant đứng riêng không tạo style."
+sources = ["tailwindcss/hover-focus-and-other-states", "tailwindcss/responsive-design"]
+
+[[questions]]
+id = "tool-006"
+module = "tool-tailwind"
+type = "multiple"
+difficulty = 3
+prompt = "Một bảng màu runtime làm thiếu utility trong production. Cách xử lý nào giữ tên lớp có thể được phát hiện tĩnh?"
+options = ["Ánh xạ mỗi màu sang chuỗi class hoàn chỉnh", "Ghép `bg-` với hậu tố runtime rồi kỳ vọng scanner chạy JS", "Khai báo nguồn/lớp cần thiết theo cơ chế của phiên bản Tailwind", "Tạo sẵn một tập class hoàn chỉnh trong source"]
+answer = [0, 2, 3]
+explanation = "Tên utility hoàn chỉnh giúp scanner phát hiện được; cấu hình nguồn cũng có thể bổ sung lớp cần thiết. Ghép mảnh chuỗi không đảm bảo tạo được CSS."
+sources = ["tailwindcss/detecting-classes-in-source-files"]
+
+[[questions]]
+id = "tool-007"
+module = "tool-tailwind"
+type = "fill"
+difficulty = 1
+prompt = '''
+Điền variant trạng thái để utility chỉ áp dụng khi con trỏ hover:
+
+```html
+<button class="{{blank}}:bg-sky-700">Save</button>
+```
+'''
+blanks = [["hover"]]
+explanation = "`hover:` đặt điều kiện hover cho utility tiếp theo."
+sources = ["tailwindcss/hover-focus-and-other-states"]
+
+[[questions]]
+id = "tool-008"
+module = "tool-tailwind"
+type = "essay"
+difficulty = 3
+prompt = "Vì sao class Tailwind được ghép động từ nhiều mảnh có thể biến mất trong production, và bạn sẽ sửa theo hướng nào?"
+keywords = [["tên class hoàn chỉnh", "full class name"], ["quét tĩnh", "static scan", "source detection"], ["ánh xạ", "mapping"], ["safelist", "nguồn khai báo"]]
+min_keywords = 2
+model_answer = '''Trình quét tĩnh cần tên class hoàn chỉnh trong source, nên biểu thức ghép chuỗi runtime không tạo ra một tên utility đầy đủ để phát hiện. Hãy dùng ánh xạ dữ liệu sang các chuỗi class đầy đủ hoặc khai báo rõ nguồn/lớp cần thiết theo cấu hình phiên bản đang dùng.'''
+explanation = "Câu trả lời cần nêu nguyên nhân do phát hiện lớp tĩnh và một cách cung cấp tên utility đầy đủ."
+sources = ["tailwindcss/detecting-classes-in-source-files"]
+
+[[questions]]
+id = "tool-009"
+module = "tool-tailwind"
+type = "code"
+difficulty = 3
+title = "Gộp class utility đơn giản"
+prompt = '''
+Viết `cn(...values)` theo phạm vi sau:
+- Nhận chuỗi, số khác 0, mảng lồng nhau và object; object thêm key khi value truthy. Bỏ `null`, `undefined`, boolean và số 0.
+- Tách chuỗi theo khoảng trắng.
+- Gộp xung đột trong các nhóm `p`, `px`, `py`, `pt`, `pr`, `pb`, `pl`, `m`, `mx`, `my`, `mt`, `mr`, `mb`, `ml`. Hai utility cùng nhóm và cùng chuỗi variant trước dấu `:` xung đột; giữ utility xuất hiện sau. Ví dụ `p-2 p-4` thành `p-4`, còn `p-4 px-2` giữ cả hai.
+- Utility không thuộc các nhóm trên chỉ bị bỏ nếu trùng nguyên văn. Giữ thứ tự xuất hiện của các utility còn lại.
+'''
+starter = '''
+function cn(...values) {
+  return values.filter(Boolean).join(' ');
+}
+'''
+solution = '''
+function cn(...values) {
+  const tokens = [];
+  function collect(value) {
+    if (!value) return;
+    if (typeof value === 'string' || typeof value === 'number') {
+      String(value).trim().split(/\s+/).filter(Boolean).forEach((token) => tokens.push(token));
+      return;
+    }
+    if (Array.isArray(value)) {
+      value.forEach(collect);
+      return;
+    }
+    if (typeof value === 'object') {
+      Object.keys(value).forEach((key) => {
+        if (value[key]) collect(key);
+      });
+    }
+  }
+  values.forEach(collect);
+  const result = [];
+  const conflictIndexes = new Map();
+  const exactIndexes = new Map();
+  for (const token of tokens) {
+    const colon = token.lastIndexOf(':');
+    const variant = colon === -1 ? '' : token.slice(0, colon);
+    const utility = colon === -1 ? token : token.slice(colon + 1);
+    const match = utility.match(/^(!?)(p[xytrbl]?|m[xytrbl]?)-/);
+    if (match) {
+      const key = variant + '|' + match[1] + '|' + match[2];
+      if (conflictIndexes.has(key)) result[conflictIndexes.get(key)] = null;
+      conflictIndexes.set(key, result.length);
+      result.push(token);
+    } else {
+      if (exactIndexes.has(token)) result[exactIndexes.get(token)] = null;
+      exactIndexes.set(token, result.length);
+      result.push(token);
+    }
+  }
+  return result.filter((token) => token !== null).join(' ');
+}
+'''
+tests = '''
+test('giữ utility padding cuối cùng cùng nhóm', () => {
+  expect(cn('p-2 p-4')).toBe('p-4');
+});
+test('không gộp hai trục khác nhau', () => {
+  expect(cn('p-4', 'px-2')).toBe('p-4 px-2');
+});
+test('flatten mảng và object có điều kiện', () => {
+  expect(cn(['flex', ['p-2']], { hidden: false, block: true }, 'p-4')).toBe('flex block p-4');
+});
+test('variant có nhóm xung đột riêng', () => {
+  expect(cn('hover:p-2 p-1 hover:p-4')).toBe('p-1 hover:p-4');
+});
+test('bỏ giá trị rỗng và khử trùng lặp utility khác', () => {
+  expect(cn(null, undefined, false, 0, 'flex flex')).toBe('flex');
+});
+'''
+hints = ["Tách chuỗi thành token rồi duyệt cả mảng lồng nhau và object.", "Tạo khóa xung đột từ variant và nhóm utility; đánh dấu vị trí cũ trước khi thêm token mới."]
+explanation = "Đây là bộ gộp có phạm vi nhóm được nêu trong đề; bộ gộp Tailwind production cần hiểu nhiều nhóm và các quan hệ xung đột phức tạp hơn."
+sources = ["tailwindcss/hover-focus-and-other-states"]
+
+[[questions]]
+id = "tool-010"
+module = "tool-sass"
+type = "single"
+difficulty = 1
+prompt = "Trong Sass module system, cú pháp nào nạp API từ module với namespace?"
+options = ["`@use`", "`@forward`", "`@include`", "`@return`"]
+answer = [0]
+explanation = "`@use` nạp module và mặc định truy cập thành viên qua namespace, giúp tránh biến toàn cục."
+sources = ["sass/at-rules/use"]
+
+[[questions]]
+id = "tool-011"
+module = "tool-sass"
+type = "single"
+difficulty = 2
+prompt = "Một file Sass cần tổng hợp và công khai các token từ nhiều module cho client của thư mục. Directive nào phù hợp?"
+options = ["`@forward`", "`@extend`", "`@return`", "`@media`"]
+answer = [0]
+explanation = "`@forward` chuyển API của module qua một điểm tập trung; `@use` là cách tiêu thụ module."
+sources = ["sass/at-rules/forward"]
+
+[[questions]]
+id = "tool-012"
+module = "tool-sass"
+type = "single"
+difficulty = 2
+prompt = "Khi nào nên ưu tiên Sass function thay vì mixin?"
+options = ["Khi cần trả một giá trị tính toán để dùng trong biểu thức CSS", "Khi cần chèn nhiều selector vào stylesheet", "Khi muốn thay mọi biến bằng selector", "Khi cần nạp module"]
+answer = [0]
+explanation = "Function trả giá trị qua `@return`; mixin chèn nhóm khai báo vào nơi include."
+sources = ["sass/at-rules/function", "sass/values/mixins"]
+
+[[questions]]
+id = "tool-013"
+module = "tool-sass"
+type = "multiple"
+difficulty = 2
+prompt = "Những nhận định nào đúng về Sass module và nesting?"
+options = ["`@use` giúp truy cập thành viên qua namespace", "`@forward` có thể tạo API tổng hợp", "Nesting càng sâu luôn càng tốt", "`@import` là lựa chọn khuyến nghị cho dự án Sass mới"]
+answer = [0, 1]
+explanation = "Namespace và API tổng hợp là mục tiêu của `@use`/`@forward`; nesting sâu làm selector và độ đặc hiệu khó quản lý, còn Sass `@import` cũ đã được thay bằng module system."
+sources = ["sass/at-rules/use", "sass/at-rules/forward", "sass/style-rules"]
+
+[[questions]]
+id = "tool-014"
+module = "tool-sass"
+type = "fill"
+difficulty = 1
+prompt = '''
+Hoàn thành Sass variable:
+```scss
+{{blank}}brand-color: #06b6d4;
+```
+'''
+blanks = [["$brand-color"]]
+explanation = "Tên biến Sass bắt đầu bằng `$`."
+sources = ["sass/variables"]
+
+[[questions]]
+id = "tool-015"
+module = "tool-bundlers"
+type = "single"
+difficulty = 1
+prompt = "Trong development, lợi ích chính của việc Vite phục vụ ESM theo yêu cầu là gì?"
+options = ["Không cần trình duyệt hỗ trợ JavaScript", "Tránh phải bundle toàn bộ ứng dụng trước mỗi lần khởi động dev server", "Không cần dependency graph", "Production build không cần thiết"]
+answer = [1]
+explanation = "Vite tận dụng ESM của trình duyệt để phục vụ module theo yêu cầu khi phát triển; production vẫn cần build cho triển khai."
+sources = ["vite/guide/features"]
+
+[[questions]]
+id = "tool-016"
+module = "tool-bundlers"
+type = "single"
+difficulty = 2
+prompt = "Một biến môi trường cần được đọc từ mã client của Vite. Quy tắc nào đúng?"
+options = ["Đặt tên bắt đầu bằng `VITE_` và không lưu secret ở đó", "Mọi biến hệ điều hành tự động được an toàn đưa ra client", "Đặt tên bắt đầu bằng `SECRET_` để Vite mã hoá", "Chỉ biến trong `.env.production` mới được phép truy cập"]
+answer = [0]
+explanation = "Chỉ biến có tiền tố công khai như `VITE_` được phơi ra mã client; do đó không đặt credential hay secret trong chúng."
+sources = ["vite/guide/env-and-mode"]
+
+[[questions]]
+id = "tool-017"
+module = "tool-bundlers"
+type = "single"
+difficulty = 2
+prompt = "Trong webpack, công việc nào phù hợp nhất với loader?"
+options = ["Biến đổi nội dung một loại module trong quá trình build", "Quản lý toàn bộ quy trình release của nhóm", "Chỉ định quyền truy cập API runtime", "Thay thế trình duyệt bằng compiler"]
+answer = [0]
+explanation = "Loader chuyển đổi tài nguyên/module để webpack có thể xử lý; plugin mở rộng compiler ở phạm vi rộng hơn."
+sources = ["webpack~5/concepts/loaders"]
+
+[[questions]]
+id = "tool-018"
+module = "tool-bundlers"
+type = "single"
+difficulty = 3
+prompt = "Một route chỉ cần tải trình soạn thảo khi người dùng mở nó. Lựa chọn nào thường tạo ranh giới tải bất đồng bộ?"
+options = ["`import('./editor.js')`", "Thêm mọi file vào entry chính", "Đổi tên file thành `.async`", "Đặt một comment trước import tĩnh"]
+answer = [0]
+explanation = "Dynamic import biểu đạt tải bất đồng bộ và thường được bundler dùng làm điểm chia chunk."
+sources = ["webpack~5/guides/code-splitting", "vite/guide/build"]
+
+[[questions]]
+id = "tool-019"
+module = "tool-bundlers"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn nhận định đúng về Vite và webpack."
+options = ["HMR có thể cập nhật module trong dev mà không reload toàn trang", "Webpack loader và plugin là cùng một cơ chế với cùng phạm vi", "Dynamic import có thể đánh dấu mã tải bất đồng bộ", "Biến Vite đưa ra client nên được xem là công khai"]
+answer = [0, 2, 3]
+explanation = "HMR cập nhật module khi có thể; dynamic import tạo điểm tải bất đồng bộ. Loader biến đổi module còn plugin mở rộng vòng đời compiler. Giá trị client truy cập được không phải secret."
+sources = ["vite/guide/features", "vite/guide/env-and-mode", "webpack~5/concepts/loaders", "webpack~5/concepts/plugins"]
+
+[[questions]]
+id = "tool-020"
+module = "tool-bundlers"
+type = "fill"
+difficulty = 1
+prompt = '''
+Hoàn thành cú pháp JavaScript để tải module theo yêu cầu:
+```js
+const editor = await {{blank}}('./editor.js');
+```
+'''
+blanks = [["import"]]
+explanation = "`import()` là dynamic import và trả về Promise."
+sources = ["webpack~5/guides/code-splitting", "vite/guide/build"]
+
+[[questions]]
+id = "tool-021"
+module = "tool-bundlers"
+type = "fill"
+difficulty = 2
+prompt = '''
+Trong `vite.config.js`, cấu hình nào thường được dùng để nạp một plugin `myPlugin()`?
+```js
+export default { {{blank}}: [myPlugin()] }
+```
+'''
+blanks = [["plugins"]]
+explanation = "Plugin của Vite được khai báo trong thuộc tính `plugins` của cấu hình."
+sources = ["vite/guide/using-plugins"]
+
+[[questions]]
+id = "tool-022"
+module = "tool-bundlers"
+type = "essay"
+difficulty = 3
+prompt = "Giải thích vai trò khác nhau của webpack loader và plugin, kèm ví dụ một loại công việc phù hợp cho mỗi loại."
+keywords = [["loader", "loaders"], ["biến đổi module", "transform module", "module content"], ["plugin", "plugins"], ["compiler", "compilation", "vòng đời"]]
+min_keywords = 3
+model_answer = '''Loader biến đổi nội dung của một module theo rule, ví dụ xử lý CSS hoặc chuyển cú pháp TypeScript để webpack tiêu thụ. Plugin mở rộng compiler hoặc compilation qua các hook, ví dụ phát manifest hay phân tích output. Hai cơ chế khác phạm vi và mục đích.'''
+explanation = "Câu trả lời cần phân biệt biến đổi module với mở rộng compiler và có ví dụ."
+sources = ["webpack~5/concepts/loaders", "webpack~5/concepts/plugins"]
+
+[[questions]]
+id = "tool-023"
+module = "tool-bundlers"
+type = "code"
+difficulty = 3
+title = "So khớp phiên bản semver đơn giản"
+prompt = '''
+Viết `satisfies(version, range)` trả về boolean. Hỗ trợ version chuẩn `major.minor.patch` bằng số nguyên không âm, không có leading zero (ngoại trừ `0`), prerelease hoặc build metadata. Hỗ trợ đúng ba dạng range: `^x.y.z`, `~x.y.z`, `>=x.y.z`; đầu vào sai hoặc range không hỗ trợ trả `false`.
+- `^`: phiên bản từ mốc trở lên và nhỏ hơn phiên bản kế tiếp theo quy tắc caret: tăng major nếu major > 0; nếu major = 0 và minor > 0 thì tăng minor; nếu cả hai bằng 0 thì tăng patch.
+- `~`: từ mốc trở lên nhưng nhỏ hơn `x.(y+1).0`.
+- `>=`: từ mốc trở lên, không có cận trên.
+'''
+starter = '''
+function satisfies(version, range) {
+  return version === range;
+}
+'''
+solution = '''
+function satisfies(version, range) {
+  function parse(value) {
+    if (typeof value !== 'string' || !/^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$/.test(value)) return null;
+    return value.split('.').map(Number);
+  }
+  function compare(a, b) {
+    for (let i = 0; i < 3; i++) {
+      if (a[i] < b[i]) return -1;
+      if (a[i] > b[i]) return 1;
+    }
+    return 0;
+  }
+  if (typeof range !== 'string') return false;
+  const match = range.match(/^(\^|~|>=)(.+)$/);
+  if (!match) return false;
+  const current = parse(version);
+  const floor = parse(match[2]);
+  if (!current || !floor || compare(current, floor) < 0) return false;
+  if (match[1] === '>=') return true;
+  let ceiling;
+  if (match[1] === '~') {
+    ceiling = [floor[0], floor[1] + 1, 0];
+  } else if (floor[0] > 0) {
+    ceiling = [floor[0] + 1, 0, 0];
+  } else if (floor[1] > 0) {
+    ceiling = [0, floor[1] + 1, 0];
+  } else {
+    ceiling = [0, 0, floor[2] + 1];
+  }
+  return compare(current, ceiling) < 0;
+}
+'''
+tests = '''
+test('caret cho phép cập nhật minor trong major khác 0', () => {
+  expect(satisfies('1.9.0', '^1.2.3')).toBe(true);
+  expect(satisfies('2.0.0', '^1.2.3')).toBe(false);
+});
+test('caret theo quy tắc major zero', () => {
+  expect(satisfies('0.2.9', '^0.2.3')).toBe(true);
+  expect(satisfies('0.3.0', '^0.2.3')).toBe(false);
+});
+test('caret 0.0 chỉ cho phép thay patch', () => {
+  expect(satisfies('0.0.4', '^0.0.3')).toBe(false);
+  expect(satisfies('0.0.3', '^0.0.3')).toBe(true);
+});
+test('tilde giữ major và minor', () => {
+  expect(satisfies('1.2.9', '~1.2.3')).toBe(true);
+  expect(satisfies('1.3.0', '~1.2.3')).toBe(false);
+});
+test('>= không có cận trên', () => {
+  expect(satisfies('3.0.0', '>=1.2.3')).toBe(true);
+  expect(satisfies('1.2.2', '>=1.2.3')).toBe(false);
+});
+test('range và version lỗi trả false', () => {
+  expect(satisfies('01.2.3', '^1.2.3')).toBe(false);
+  expect(satisfies('1.2.3', '*')).toBe(false);
+});
+'''
+hints = ["Tách hàm parse, so sánh ba thành phần và chọn ceiling theo operator.", "Cận trên của caret phụ thuộc vào thành phần khác 0 đầu tiên."]
+explanation = "Đây là bộ so khớp con cho ba operator được nêu, không thay thế thư viện semver đầy đủ với prerelease, wildcard, union hoặc peer dependency."
+sources = ["vite/guide/env-and-mode"]
+
+[[questions]]
+id = "tool-024"
+module = "tool-bundlers"
+type = "code"
+difficulty = 3
+title = "Sắp xếp đồ thị import"
+prompt = '''
+Viết `topoSort(graph)` để sắp xếp module theo thứ tự dependency trước importer. `graph` là object ánh xạ tên module tới mảng tên module mà nó import. Module chỉ xuất hiện ở danh sách import được xem là node lá không có dependency. Không cần giữ thứ tự từ điển nhưng kết quả phải ổn định theo thứ tự duyệt input. Bỏ import trùng trong cùng một danh sách. Nếu có chu trình, ném `Error('cycle')`.
+Ví dụ `{ app: ['ui'], ui: ['tokens'], tokens: [] }` phải đặt `tokens` trước `ui`, và `ui` trước `app`.
+'''
+starter = '''
+function topoSort(graph) {
+  return Object.keys(graph);
+}
+'''
+solution = '''
+function topoSort(graph) {
+  const nodes = Object.keys(graph);
+  const known = new Set(nodes);
+  for (const node of nodes) {
+    const deps = Array.isArray(graph[node]) ? graph[node] : [];
+    for (const dep of deps) {
+      if (!known.has(dep)) {
+        known.add(dep);
+        nodes.push(dep);
+      }
+    }
+  }
+  const remaining = new Map();
+  const dependents = new Map();
+  for (const node of nodes) dependents.set(node, []);
+  for (const node of nodes) {
+    const deps = Array.isArray(graph[node]) ? Array.from(new Set(graph[node])) : [];
+    remaining.set(node, deps.length);
+    for (const dep of deps) dependents.get(dep).push(node);
+  }
+  const queue = nodes.filter((node) => remaining.get(node) === 0);
+  const result = [];
+  for (let i = 0; i < queue.length; i++) {
+    const node = queue[i];
+    result.push(node);
+    for (const parent of dependents.get(node)) {
+      const count = remaining.get(parent) - 1;
+      remaining.set(parent, count);
+      if (count === 0) queue.push(parent);
+    }
+  }
+  if (result.length !== nodes.length) throw new Error('cycle');
+  return result;
+}
+'''
+tests = '''
+test('dependency xuất hiện trước importer', () => {
+  const order = topoSort({ app: ['ui'], ui: ['tokens'], tokens: [] });
+  expect(order.indexOf('tokens') < order.indexOf('ui')).toBe(true);
+  expect(order.indexOf('ui') < order.indexOf('app')).toBe(true);
+});
+test('node chỉ xuất hiện ở danh sách import được thêm vào kết quả', () => {
+  const order = topoSort({ app: ['vendor'] });
+  expect(order).toHaveLength(2);
+  expect(order[0]).toBe('vendor');
+});
+test('import trùng chỉ tính một dependency', () => {
+  expect(topoSort({ app: ['lib', 'lib'], lib: [] })).toEqual(['lib', 'app']);
+});
+test('đồ thị rỗng cho mảng rỗng', () => {
+  expect(topoSort({})).toEqual([]);
+});
+test('phát hiện chu trình', () => {
+  expect(() => topoSort({ a: ['b'], b: ['a'] })).toThrow('cycle');
+});
+'''
+hints = ["Đếm dependency chưa được xử lý cho mỗi node.", "Xây danh sách importer của từng dependency rồi dùng queue các node không còn dependency."]
+explanation = "Kahn's algorithm chạy trong O(V + E); nếu số node đã xuất không bằng tổng node thì phần còn lại có chu trình."
+sources = ["webpack~5/concepts/dependency-graph"]
+
+[[questions]]
+id = "tool-025"
+module = "tool-quality"
+type = "single"
+difficulty = 1
+prompt = "Trong ESLint flat config, vì sao config thường xuất một mảng object?"
+options = ["Các object có thể áp dụng theo file và được ghép theo thứ tự", "Mỗi object là một tiến trình riêng", "ESLint chỉ hỗ trợ mảng để chạy Prettier", "Mảng làm mọi rule thành warning"]
+answer = [0]
+explanation = "Flat config là danh sách cấu hình; điều kiện file và thứ tự quyết định phần cấu hình áp dụng cho từng file."
+sources = ["eslint/use/configure/configuration-files"]
+
+[[questions]]
+id = "tool-026"
+module = "tool-quality"
+type = "single"
+difficulty = 2
+prompt = "Một rule ESLint được bật với mức `warn`. Điều đó biểu thị gì?"
+options = ["Lỗi sẽ hiện cảnh báo nhưng không mang mức error", "Rule bị tắt hoàn toàn", "ESLint tự sửa mọi trường hợp", "Chỉ chạy trong production"]
+answer = [0]
+explanation = "Mức rule có thể là off, warn hoặc error; warn báo vấn đề nhưng không cùng mức chặn như error."
+sources = ["eslint/use/configure/rules"]
+
+[[questions]]
+id = "tool-027"
+module = "tool-quality"
+type = "single"
+difficulty = 2
+prompt = "Vai trò chính của Prettier khác ESLint ở điểm nào?"
+options = ["Prettier định dạng nhất quán; ESLint phát hiện vấn đề và quy ước mã", "Prettier kiểm tra type còn ESLint biên dịch", "Hai công cụ đều chỉ phục vụ minify", "ESLint thay thế hoàn toàn formatter trong mọi dự án"]
+answer = [0]
+explanation = "Formatter quyết định cách trình bày; linter đánh giá cấu trúc và quy tắc mã. Một dự án có thể dùng cả hai với cấu hình tránh chồng lấn."
+sources = ["eslint/use/configure/rules"]
+
+[[questions]]
+id = "tool-028"
+module = "tool-quality"
+type = "multiple"
+difficulty = 3
+prompt = "Khi một rule ESLint tự viết cần báo lỗi với `console.log()`, phần nào là hướng triển khai hợp lý?"
+options = ["Nhận biết node CallExpression có callee là MemberExpression của console.log", "Duyệt AST theo cấu trúc node và báo diagnostic", "Tìm chuỗi `console.log` trong mọi comment như cách duy nhất", "Giới hạn rule theo file/parser phù hợp trong config"]
+answer = [0, 1, 3]
+explanation = "Rule nên dựa vào AST thay vì tìm chuỗi mù; config cần dùng parser thích hợp với cú pháp file được lint."
+sources = ["eslint/extend/custom-rule-tutorial", "eslint/use/configure/configuration-files"]
+
+[[questions]]
+id = "tool-029"
+module = "tool-quality"
+type = "fill"
+difficulty = 1
+prompt = '''
+Trong ESLint rule config, giá trị nào tắt rule?
+```js
+rules: { 'no-unused-vars': {{blank}} }
+```
+'''
+blanks = [["off", "0"]]
+explanation = "Rule có thể tắt bằng `off` hoặc mức số 0."
+sources = ["eslint/use/configure/rules"]
+
+[[questions]]
+id = "tool-030"
+module = "tool-quality"
+type = "essay"
+difficulty = 3
+prompt = "Mô tả cách phân tách cấu hình ESLint cho JavaScript và TypeScript, và giải thích vì sao Prettier không nên được xem như một bộ rule lint khác."
+keywords = [["flat config", "eslint.config"], ["files", "file pattern"], ["parser", "typescript parser"], ["plugin", "typescript-eslint"], ["định dạng", "formatting", "formatter"], ["lint", "rule"]]
+min_keywords = 4
+model_answer = '''Trong flat config, các phần tử mảng có thể giới hạn bằng `files` để áp dụng parser, plugin và rule phù hợp cho JavaScript hoặc TypeScript. Cấu hình TypeScript cần parser/plugin tương thích như typescript-eslint. ESLint kiểm tra rule lint về vấn đề và quy ước; Prettier là formatter tập trung vào định dạng, nên cần phối hợp để tránh hai công cụ tranh nhau cùng một quy tắc trình bày.'''
+explanation = "Câu trả lời cần nêu cấu hình theo file, parser/plugin TypeScript và khác biệt giữa lint với format."
+sources = ["eslint/use/configure/configuration-files", "eslint/use/configure/rules"]
+
+[[questions]]
+id = "tool-031"
+module = "tool-quality"
+type = "code"
+difficulty = 3
+title = "Rule AST không dùng console.log"
+prompt = '''
+Viết `findConsoleLog(ast)` cho một AST object đơn giản. Node có thể chứa object con hoặc mảng node. Phát hiện mỗi `CallExpression` có `callee` là `MemberExpression` dạng `console.log`, trong đó `object` và `property` là `Identifier`, và `computed` không phải `true`. Trả về một diagnostic cho mỗi lần gọi, theo thứ tự duyệt preorder:
+`{ ruleId: 'no-console-log', message: 'Avoid console.log', nodeType: 'CallExpression' }`.
+Bỏ qua `parent`, `loc` và `tokens` khi duyệt vì chúng không thuộc cây cú pháp cần xét. Không sửa AST.
+'''
+starter = '''
+function findConsoleLog(ast) {
+  return [];
+}
+'''
+solution = '''
+function findConsoleLog(ast) {
+  const diagnostics = [];
+  const seen = new Set();
+  function visit(value) {
+    if (!value || typeof value !== 'object' || seen.has(value)) return;
+    seen.add(value);
+    if (Array.isArray(value)) {
+      value.forEach(visit);
+      return;
+    }
+    const callee = value.callee;
+    if (
+      value.type === 'CallExpression' &&
+      callee && callee.type === 'MemberExpression' &&
+      callee.computed !== true &&
+      callee.object && callee.object.type === 'Identifier' && callee.object.name === 'console' &&
+      callee.property && callee.property.type === 'Identifier' && callee.property.name === 'log'
+    ) {
+      diagnostics.push({ ruleId: 'no-console-log', message: 'Avoid console.log', nodeType: 'CallExpression' });
+    }
+    for (const key of Object.keys(value)) {
+      if (key !== 'parent' && key !== 'loc' && key !== 'tokens') visit(value[key]);
+    }
+  }
+  visit(ast);
+  return diagnostics;
+}
+'''
+tests = '''
+const consoleCall = (name) => ({
+  type: 'CallExpression',
+  callee: {
+    type: 'MemberExpression',
+    computed: false,
+    object: { type: 'Identifier', name: 'console' },
+    property: { type: 'Identifier', name }
+  },
+  arguments: []
+});
+test('phát hiện console.log', () => {
+  expect(findConsoleLog(consoleCall('log'))).toEqual([
+    { ruleId: 'no-console-log', message: 'Avoid console.log', nodeType: 'CallExpression' }
+  ]);
+});
+test('bỏ qua console.error và lời gọi log trực tiếp', () => {
+  expect(findConsoleLog({ type: 'Program', body: [consoleCall('error'), { type: 'CallExpression', callee: { type: 'Identifier', name: 'log' } }] })).toEqual([]);
+});
+test('duyệt node lồng trong object và array', () => {
+  const ast = { type: 'Program', body: [{ type: 'ExpressionStatement', expression: consoleCall('log') }] };
+  expect(findConsoleLog(ast)).toHaveLength(1);
+});
+test('bỏ qua thuộc tính metadata', () => {
+  const ast = { type: 'Program', body: [], loc: consoleCall('log') };
+  expect(findConsoleLog(ast)).toEqual([]);
+});
+test('không lặp node được tham chiếu nhiều lần', () => {
+  const call = consoleCall('log');
+  expect(findConsoleLog({ type: 'Program', body: [call, call] })).toHaveLength(1);
+});
+'''
+hints = ["Duyệt đệ quy object và array nhưng dùng Set để tránh node lặp.", "Kiểm tra cấu trúc callee qua các type Identifier và MemberExpression."]
+explanation = "Rule thực tế của ESLint thường trả context.report trong visitor; bài này mô phỏng việc nhận diện AST và tạo diagnostic thuần để dễ kiểm thử."
+sources = ["eslint/extend/custom-rules", "eslint/extend/custom-rule-tutorial"]
+
+[[questions]]
+id = "tool-032"
+module = "tool-performance"
+type = "single"
+difficulty = 2
+prompt = "Điều kiện nào thường giúp tree shaking loại code không dùng hiệu quả hơn?"
+options = ["Dependency tĩnh theo ESM và side effects được khai báo chính xác", "Import mọi module qua chuỗi runtime không xác định", "Đưa toàn bộ mã vào một global script", "Tắt mọi metadata của package"]
+answer = [0]
+explanation = "Static ESM cho phép phân tích export; side effects khai báo sai có thể khiến bundler giữ hoặc loại code không phù hợp."
+sources = ["webpack~5/guides/tree-shaking"]
+
+[[questions]]
+id = "tool-033"
+module = "tool-performance"
+type = "single"
+difficulty = 2
+prompt = "Vì sao asset có content hash thường phù hợp với cache dài hạn?"
+options = ["URL đổi khi nội dung asset đổi", "Hash buộc trình duyệt tải lại ở mọi lần xem", "Hash chứa credential để xác thực file", "URL không còn cần được ghi vào HTML"]
+answer = [0]
+explanation = "Tên mới gắn với nội dung mới giúp cache lâu; HTML hoặc manifest vẫn phải tham chiếu đúng tên asset hiện hành."
+sources = ["webpack~5/guides/caching", "webpack~5/configuration/output"]
+
+[[questions]]
+id = "tool-034"
+module = "tool-performance"
+type = "multiple"
+difficulty = 3
+prompt = "Những cách nào giúp quyết định tối ưu bundle dựa trên bằng chứng?"
+options = ["Dùng bundle analyzer để tìm module chiếm dung lượng", "Xem route nào có thể lazy load bằng dynamic import", "Chia mọi module thành chunk nhỏ nhất có thể", "Đo tải ban đầu và trải nghiệm khi mở tính năng sau khi đổi"]
+answer = [0, 1, 3]
+explanation = "Phân tích output và đo đường đi người dùng giúp chọn chỗ tối ưu; chunk quá nhỏ có thể tăng overhead và số request."
+sources = ["vite/guide/build", "webpack~5/guides/code-splitting", "webpack~5/guides/tree-shaking"]
+
+[[questions]]
+id = "tool-035"
+module = "tool-performance"
+type = "fill"
+difficulty = 2
+prompt = '''
+Điền cú pháp để tải module bất đồng bộ và thường tạo split point:
+```js
+const chart = {{blank}}('./chart.js');
+```
+'''
+blanks = [["import"]]
+explanation = "Dynamic `import()` trả Promise và được bundler dùng làm ranh giới tải bất đồng bộ."
+sources = ["webpack~5/guides/code-splitting"]
+
+[[questions]]
+id = "tool-036"
+module = "tool-performance"
+type = "code"
+difficulty = 3
+title = "Tên file theo content hash"
+prompt = '''
+Viết `hashedFileName(fileName, content)` thay phần cuối tên file bằng một hash 8 ký tự hex, giữ nguyên thư mục và extension cuối. Với tên không có extension, nối hash vào cuối. Dùng FNV-1a 32-bit trên từng UTF-16 code unit: khởi đầu `2166136261`; mỗi ký tự cập nhật `Math.imul(hash ^ charCode, 16777619) >>> 0`; định dạng hex chữ thường và thêm số 0 bên trái đủ 8 ký tự.
+Ví dụ `hashedFileName('app.js', 'hello')` trả `app.4f9f2cab.js`. Đây là hash phục vụ bài học về tên asset, không phải hash mật mã.
+'''
+starter = '''
+function hashedFileName(fileName, content) {
+  return fileName;
+}
+'''
+solution = '''
+function hashedFileName(fileName, content) {
+  let hash = 2166136261;
+  for (let i = 0; i < content.length; i++) {
+    hash = Math.imul(hash ^ content.charCodeAt(i), 16777619) >>> 0;
+  }
+  const hex = hash.toString(16).padStart(8, '0');
+  const slash = fileName.lastIndexOf('/');
+  let dot = fileName.lastIndexOf('.');
+  if (dot <= slash + 1) dot = fileName.length;
+  return fileName.slice(0, dot) + '.' + hex + fileName.slice(dot);
+}
+'''
+tests = '''
+test('hash FNV-1a cho hello và giữ extension', () => {
+  expect(hashedFileName('app.js', 'hello')).toBe('app.4f9f2cab.js');
+});
+test('giữ đường dẫn thư mục và extension cuối', () => {
+  expect(hashedFileName('assets/site.min.css', 'hello')).toBe('assets/site.min.4f9f2cab.css');
+});
+test('tên không extension được nối hash', () => {
+  expect(hashedFileName('README', 'hello')).toBe('README.4f9f2cab');
+});
+test('cùng content cho tên ổn định', () => {
+  expect(hashedFileName('a.js', 'same')).toBe(hashedFileName('a.js', 'same'));
+});
+test('content khác tạo hash khác trong fixture', () => {
+  expect(hashedFileName('a.js', 'hello')).not.toBe(hashedFileName('a.js', 'world'));
+});
+'''
+hints = ["Duyệt code unit bằng `charCodeAt` và cập nhật số nguyên 32-bit với `Math.imul`.", "Tìm dấu chấm cuối chỉ trong basename để không coi dấu chấm của thư mục là extension."]
+explanation = "Trong production, bundler tạo content hash theo thuật toán và định dạng riêng; tên thay đổi khi nội dung đổi để hỗ trợ cache busting."
+sources = ["webpack~5/guides/caching", "webpack~5/configuration/output"]
+
+[[questions]]
+id = "tool-037"
+module = "tool-performance"
+type = "code"
+difficulty = 3
+title = "Chia chunk theo giới hạn kích thước"
+prompt = '''
+Viết `chunkBySize(items, maxSize)` với `items` là mảng `{ id, size }`. Duyệt theo thứ tự đầu vào và gom tuần tự vào chunk hiện tại nếu tổng size không vượt `maxSize`; nếu vượt thì bắt đầu chunk mới. Một item lớn hơn giới hạn phải đứng một mình trong chunk. Trả về mảng các chunk, mỗi chunk là mảng `id`. Không tạo chunk rỗng. `maxSize` phải là số hữu hạn dương; `size` từng item phải hữu hạn và không âm, nếu sai thì ném `Error('invalid size')`.
+'''
+starter = '''
+function chunkBySize(items, maxSize) {
+  return items.map((item) => [item.id]);
+}
+'''
+solution = '''
+function chunkBySize(items, maxSize) {
+  if (!Number.isFinite(maxSize) || maxSize <= 0) throw new Error('invalid size');
+  const chunks = [];
+  let current = [];
+  let total = 0;
+  for (const item of items) {
+    if (!item || !Number.isFinite(item.size) || item.size < 0) throw new Error('invalid size');
+    if (current.length > 0 && total + item.size > maxSize) {
+      chunks.push(current.map((entry) => entry.id));
+      current = [];
+      total = 0;
+    }
+    current.push(item);
+    total += item.size;
+    if (item.size > maxSize) {
+      chunks.push(current.map((entry) => entry.id));
+      current = [];
+      total = 0;
+    }
+  }
+  if (current.length > 0) chunks.push(current.map((entry) => entry.id));
+  return chunks;
+}
+'''
+tests = '''
+test('gom tuần tự cho tới giới hạn', () => {
+  expect(chunkBySize([{ id: 'a', size: 2 }, { id: 'b', size: 3 }, { id: 'c', size: 4 }], 5)).toEqual([['a', 'b'], ['c']]);
+});
+test('item lớn hơn giới hạn đứng một mình', () => {
+  expect(chunkBySize([{ id: 'large', size: 9 }, { id: 'small', size: 2 }], 5)).toEqual([['large'], ['small']]);
+});
+test('kích thước đúng giới hạn được giữ trong cùng chunk', () => {
+  expect(chunkBySize([{ id: 'a', size: 2 }, { id: 'b', size: 3 }], 5)).toEqual([['a', 'b']]);
+});
+test('mảng rỗng không tạo chunk', () => {
+  expect(chunkBySize([], 5)).toEqual([]);
+});
+test('giới hạn hoặc item sai thì báo lỗi', () => {
+  expect(() => chunkBySize([], 0)).toThrow('invalid size');
+  expect(() => chunkBySize([{ id: 'bad', size: -1 }], 5)).toThrow('invalid size');
+});
+'''
+hints = ["Theo dõi tổng size của chunk hiện tại; flush trước khi thêm item làm vượt ngưỡng.", "Xử lý riêng item quá lớn để nó không bị ghép với item kế tiếp."]
+explanation = "Đây là mô hình greedy giữ thứ tự input; bundler thực tế còn xét graph dependency, entry point, cache và request overhead."
+sources = ["vite/guide/build", "webpack~5/guides/code-splitting"]

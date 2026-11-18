@@ -1,0 +1,888 @@
+id = "databases"
+title = "SQL & Cơ sở dữ liệu"
+icon = "🗄️"
+color = "#336791"
+group = "Backend"
+docs = ["sqlite", "postgresql~18", "redis"]
+description = "Từ truy vấn SQL, thiết kế lược đồ và tối ưu truy vấn đến transaction, đồng thời và Redis cache."
+
+[[modules]]
+id = "db-sql-basics"
+title = "SQL căn bản"
+description = "SELECT, các loại JOIN, lọc và nhóm dữ liệu, subquery, NULL."
+sources = ["sqlite/lang_select", "sqlite/lang_aggfunc", "sqlite/lang_expr#isisnot", "postgresql~18/sql-select", "postgresql~18/queries-table-expressions#QUERIES-JOIN"]
+lesson = '''
+### Đọc và kết hợp dữ liệu
+Một truy vấn thường lọc dòng bằng WHERE, nhóm bằng GROUP BY, lọc nhóm bằng HAVING, rồi mới sắp xếp và giới hạn kết quả. JOIN kết hợp các bảng theo điều kiện; hãy xác định rõ mỗi phía có thể có bao nhiêu dòng khớp để tránh nhân đôi dữ liệu khi tính tổng.
+
+| Cấu trúc | Tác dụng |
+|---|---|
+| INNER JOIN | Chỉ lấy dòng có cặp khớp ở hai phía |
+| LEFT JOIN | Giữ mọi dòng bên trái; cột bên phải là NULL nếu không khớp |
+| FULL JOIN | Giữ dòng khớp và không khớp ở cả hai phía |
+| GROUP BY / HAVING | Gom dòng rồi lọc theo kết quả tổng hợp |
+
+Ví dụ: **SELECT department, COUNT(*) FROM employees WHERE active = 1 GROUP BY department HAVING COUNT(*) >= 3**. Subquery có thể trả một giá trị để so sánh hoặc một tập dòng để lọc bằng EXISTS. NULL biểu thị chưa biết/không có giá trị; so sánh bằng dấu bằng với NULL cho kết quả UNKNOWN, nên dùng IS NULL, IS NOT NULL hoặc COALESCE khi cần giá trị thay thế.
+
+Lỗi hay gặp: đặt điều kiện cột bảng phải ở WHERE sau LEFT JOIN làm mất các dòng không khớp; nối bảng có nhiều dòng con rồi SUM cột bảng cha gây cộng lặp; dùng COUNT(*) thay COUNT(column) khi muốn đếm giá trị khác NULL.
+'''
+
+[[modules]]
+id = "db-sql-advanced"
+title = "SQL nâng cao"
+description = "Window function, CTE đệ quy, UPSERT và dữ liệu JSON."
+sources = ["postgresql~18/functions-window", "postgresql~18/queries-with#QUERIES-WITH-RECURSIVE", "postgresql~18/sql-insert#SQL-ON-CONFLICT", "postgresql~18/datatype-json", "sqlite/lang_with#recursivecte", "sqlite/lang_upsert", "sqlite/json1"]
+lesson = '''
+### Window function, CTE và ghi dữ liệu
+Window function tính trên các dòng liên quan nhưng vẫn giữ từng dòng trong kết quả. PARTITION BY chia nhóm độc lập; ORDER BY xác định thứ tự bên trong nhóm. ROW_NUMBER đánh số duy nhất, còn RANK/DENSE_RANK xử lý điểm đồng hạng theo quy tắc riêng. Chọn hàm theo yêu cầu “đúng N dòng” hay “lấy tất cả dòng đồng hạng”.
+
+| Công cụ | Khi dùng |
+|---|---|
+| CTE với WITH | Đặt tên cho một phần truy vấn để dễ đọc/tái sử dụng |
+| WITH RECURSIVE | Đi từ tập gốc sang các dòng con, như cây danh mục |
+| UPSERT | INSERT và xử lý xung đột khoá bằng DO UPDATE hoặc DO NOTHING |
+| JSON / JSONB | Lưu và truy vấn cấu trúc linh hoạt; JSONB là kiểu riêng của PostgreSQL |
+
+Ví dụ top hai mỗi nhóm: tạo CTE có ROW_NUMBER() OVER (PARTITION BY category ORDER BY score DESC), rồi lọc số thứ tự không vượt quá hai. CTE đệ quy có phần gốc và phần đệ quy nối với kết quả trước; dữ liệu có chu trình cần giới hạn hoặc theo dõi đường đi để không lặp vô hạn. UPSERT cần khoá/unique constraint làm mục tiêu xung đột.
+
+Lỗi hay gặp: dùng GROUP BY khi muốn giữ chi tiết từng dòng; nhầm thứ hạng khi có điểm bằng nhau; viết CTE đệ quy mà thiếu điều kiện dừng; giả định JSON/JSONB giống nhau giữa các hệ quản trị.
+'''
+
+[[modules]]
+id = "db-data-model"
+title = "Thiết kế & chuẩn hoá"
+description = "Khoá chính, khoá ngoại, ràng buộc, 1NF–3NF và denormalization có chủ đích."
+sources = ["postgresql~18/ddl-basics", "postgresql~18/ddl-constraints", "sqlite/lang_createtable", "sqlite/foreignkeys"]
+lesson = '''
+### Lược đồ giữ dữ liệu nhất quán
+Chọn khoá chính ổn định cho mỗi thực thể; khoá ngoại biểu diễn quan hệ và giúp ngăn bản ghi mồ côi. UNIQUE, NOT NULL và CHECK biến quy tắc nghiệp vụ thành điều kiện mà cơ sở dữ liệu kiểm tra trên mọi đường ghi dữ liệu.
+
+| Dạng chuẩn | Ý chính |
+|---|---|
+| 1NF | Mỗi ô chứa một giá trị thuộc tính, không danh sách lặp trong một cột |
+| 2NF | Đạt 1NF và thuộc tính không khoá phụ thuộc toàn bộ khoá ghép |
+| 3NF | Đạt 2NF và thuộc tính không khoá không phụ thuộc bắc cầu vào khoá |
+
+Ví dụ: thay vì lưu tên khách hàng lặp trong từng đơn, lưu khách hàng ở bảng riêng rồi tham chiếu customer_id. Chuẩn hoá giảm bất nhất khi sửa/xoá và làm rõ quyền sở hữu dữ liệu. Denormalization có thể hợp lý cho báo cáo đọc nhiều hoặc dữ liệu tổng hợp, nhưng cần đo tải thực tế và xác định cách đồng bộ để tránh bản sao cũ.
+
+Lỗi hay gặp: dùng khoá ngoại nhưng quên bật kiểm tra foreign key ở SQLite; cho phép NULL dù nghiệp vụ yêu cầu giá trị; lưu nhiều số điện thoại phân cách bằng dấu phẩy; thêm cột tổng hợp mà không có quy trình cập nhật nhất quán.
+'''
+
+[[modules]]
+id = "db-index-performance"
+title = "Index & hiệu năng"
+description = "B-tree, composite index, EXPLAIN, covering index và chi phí ghi."
+sources = ["postgresql~18/indexes-intro", "postgresql~18/indexes-types#INDEXES-TYPES-BTREE", "postgresql~18/indexes-multicolumn", "postgresql~18/indexes-index-only-scans", "postgresql~18/sql-explain", "sqlite/lang_createindex", "sqlite/queryplanner", "sqlite/queryplanner#covidx", "sqlite/lang_explain"]
+lesson = '''
+### Tăng tốc đúng truy vấn
+Index là cấu trúc phụ giúp tìm hoặc sắp xếp dòng nhanh hơn; B-tree phù hợp với nhiều phép so sánh bằng, khoảng và thứ tự. Index không miễn phí: chiếm dung lượng và làm INSERT/UPDATE/DELETE tốn thêm công cập nhật.
+
+| Chỉ mục | Lưu ý |
+|---|---|
+| B-tree trên một cột | Hữu ích cho lọc, so sánh khoảng và ORDER BY phù hợp |
+| Composite (a, b) | Thường tận dụng tốt tiền tố a và điều kiện a cùng b |
+| Covering index | Chứa cả cột lọc/sắp xếp và cột cần trả về, có thể tránh đọc bảng |
+| EXPLAIN | Cho biết kế hoạch dự kiến; EXPLAIN ANALYZE còn chạy truy vấn trong PostgreSQL |
+
+Ví dụ, truy vấn theo tenant_id rồi created_at có thể hợp với index (tenant_id, created_at). Đổi thứ tự cột nếu workload chủ yếu lọc theo cột khác; không có thứ tự “selective nhất trước” đúng cho mọi truy vấn. Dùng EXPLAIN hoặc EXPLAIN QUERY PLAN trên dữ liệu đại diện, sau đó so sánh kế hoạch và thời gian.
+
+Lỗi hay gặp: tạo index cho mọi cột; cho rằng planner bắt buộc dùng index; chỉ nhìn truy vấn nhỏ; quên index có thể giảm tốc độ ghi và tăng dung lượng; dùng SELECT * khiến covering index khó bao phủ.
+'''
+
+[[modules]]
+id = "db-transactions"
+title = "Transaction & đồng thời"
+description = "ACID, isolation level, lock, deadlock, MVCC và rollback."
+sources = ["postgresql~18/transaction-iso", "postgresql~18/mvcc-intro", "postgresql~18/explicit-locking#LOCKING-DEADLOCKS", "sqlite/lang_transaction", "sqlite/isolation"]
+lesson = '''
+### Giao dịch nhiều bước
+Transaction gom nhiều thao tác thành một đơn vị. ACID lần lượt là atomicity (tất cả hoặc không), consistency (giữ ràng buộc), isolation (hạn chế ảnh hưởng qua lại) và durability (đã commit thì bền vững theo cấu hình lưu trữ).
+
+| Khái niệm | Ý nghĩa thực tế |
+|---|---|
+| Isolation level | Mức độ các transaction quan sát thay đổi của nhau |
+| Lock | Đồng bộ truy cập; có thể làm transaction phải chờ |
+| MVCC | Nhiều phiên bản giúp reader quan sát snapshot trong khi writer thay đổi dữ liệu |
+| Deadlock | Hai giao dịch chờ tài nguyên mà giao dịch kia đang giữ; hệ quản trị thường huỷ một bên |
+
+Ví dụ chuyển tiền: trừ số dư có điều kiện, kiểm tra đúng một dòng đã đổi, cộng vào tài khoản nhận rồi commit. Nếu thiếu tiền hoặc bước sau lỗi, rollback để không mất một nửa giao dịch. PostgreSQL mặc định READ COMMITTED; mức cao hơn có thể phát hiện xung đột và yêu cầu ứng dụng chạy lại transaction. SQLite có mô hình ghi khác PostgreSQL và chỉ cho một writer hoạt động tại một thời điểm.
+
+Lỗi hay gặp: commit giữa chừng; đọc số dư rồi cập nhật mà không kiểm tra điều kiện trong câu UPDATE; giữ lock lâu; sau deadlock không retry an toàn; nghĩ MVCC loại bỏ mọi xung đột.
+'''
+
+[[modules]]
+id = "db-redis"
+title = "Redis & NoSQL"
+description = "Data type, TTL, cache-aside, rate limit và pub/sub."
+sources = ["redis/type/index", "redis/set/index", "redis/hset/index", "redis/lpush/index", "redis/sadd/index", "redis/zadd/index", "redis/expire/index", "redis/ttl/index", "redis/incr/index", "redis/publish/index", "redis/subscribe/index", "redis/xadd/index"]
+lesson = '''
+### Chọn cấu trúc cho truy cập nhanh
+Redis lưu cặp key/value và cung cấp cấu trúc dữ liệu chuyên biệt: String cho giá trị/counter, Hash cho field của object, List cho chuỗi có thứ tự, Set cho phần tử duy nhất, Sorted Set cho xếp hạng theo score, Stream cho log sự kiện. Chọn theo thao tác cần thực hiện, không chỉ theo hình dạng JSON.
+
+| Mẫu | Cách hoạt động |
+|---|---|
+| TTL | Hạn dùng theo key; EXPIRE đặt thời hạn, TTL đọc thời gian còn lại |
+| Cache-aside | Đọc cache; miss thì tải nguồn chính, ghi cache; TTL/invalidation giới hạn dữ liệu cũ |
+| Rate limit | INCR đếm request theo cửa sổ; đặt TTL nguyên tử để counter tự hết hạn |
+| Pub/Sub | Gửi thông điệp tới subscriber đang lắng nghe, không phải hàng đợi lưu trữ bền vững |
+
+Ví dụ: cache hồ sơ theo user:id với TTL ngắn; sau khi cập nhật hồ sơ, xoá key hoặc phát sự kiện invalidation. Với counter rate limit, thao tác tăng và đặt TTL cần được phối hợp nguyên tử để tránh key tồn tại mãi khi có lỗi giữa hai bước. Dữ liệu cần đọc lại sau mất kết nối nên dùng Stream/queue phù hợp thay vì dựa vào Pub/Sub.
+
+Lỗi hay gặp: không có TTL cho cache; invalidation thiếu dẫn tới dữ liệu cũ; cache miss đồng loạt gây tải dồn lên database; nghĩ Pub/Sub giữ lại tin nhắn cho subscriber đến sau; dùng key quá lớn hoặc không có quy ước namespace.
+'''
+
+[[questions]]
+id = "db-001"
+module = "db-sql-basics"
+type = "single"
+difficulty = 1
+prompt = "Muốn chỉ giữ các phòng ban có ít nhất 4 nhân viên đang hoạt động, vị trí nào phù hợp để kiểm tra COUNT(*) sau GROUP BY?"
+options = ["WHERE", "HAVING", "ORDER BY", "ON"]
+answer = [1]
+explanation = "WHERE lọc dòng trước khi nhóm; HAVING lọc các nhóm dựa trên kết quả tổng hợp."
+sources = ["sqlite/lang_select", "postgresql~18/sql-select#SQL-GROUPBY"]
+
+[[questions]]
+id = "db-002"
+module = "db-sql-basics"
+type = "single"
+difficulty = 1
+prompt = "Truy vấn WHERE email = NULL không tìm thấy các dòng email chưa có giá trị. Cách kiểm tra đúng là gì?"
+options = ["email = NULL", "email IS NULL", "email == NULL", "email IN NULL"]
+answer = [1]
+explanation = "NULL không so sánh bằng toán tử bằng; IS NULL kiểm tra giá trị chưa xác định."
+sources = ["sqlite/lang_expr#isisnot", "postgresql~18/sql-select#SQL-WHERE"]
+
+[[questions]]
+id = "db-003"
+module = "db-sql-basics"
+type = "single"
+difficulty = 2
+prompt = "Cần liệt kê mọi khách hàng, kể cả người chưa có đơn hàng, nhưng chỉ nối đơn hàng trạng thái paid. Cách nào giữ được khách không có đơn?"
+options = ["LEFT JOIN orders o ON o.customer_id = c.id AND o.status = 'paid'", "LEFT JOIN orders o ON o.customer_id = c.id WHERE o.status = 'paid'", "INNER JOIN orders o ON o.customer_id = c.id", "CROSS JOIN orders o"]
+answer = [0]
+explanation = "Điều kiện phía bảng phải trong ON vẫn cho phép dòng bên trái không khớp; WHERE trên cột phải loại các dòng NULL và khiến kết quả gần như INNER JOIN."
+sources = ["postgresql~18/queries-table-expressions#QUERIES-JOIN", "sqlite/lang_select#fromclause"]
+
+[[questions]]
+id = "db-004"
+module = "db-sql-basics"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các nhận định đúng về JOIN."
+options = ["INNER JOIN chỉ giữ cặp dòng thoả điều kiện nối", "LEFT JOIN giữ mọi dòng bên trái dù không có dòng phải tương ứng", "FULL JOIN giữ cả dòng không khớp ở hai phía và điền NULL ở phía thiếu", "CROSS JOIN bắt buộc có điều kiện ON", "Trong LEFT JOIN, điều kiện ở ON và WHERE luôn tương đương"]
+answer = [0, 1, 2]
+explanation = "CROSS JOIN tạo tích Descartes và không cần ON. Với outer join, chuyển điều kiện giữa ON và WHERE có thể làm thay đổi việc giữ dòng không khớp."
+sources = ["postgresql~18/queries-table-expressions#QUERIES-JOIN", "sqlite/lang_select#fulljoin"]
+
+[[questions]]
+id = "db-005"
+module = "db-sql-basics"
+type = "fill"
+difficulty = 1
+prompt = '''
+Hoàn thành điều kiện tìm khách hàng chưa cung cấp email:
+
+    WHERE email {{blank}}
+'''
+blanks = [["IS NULL"]]
+explanation = "IS NULL kiểm tra giá trị NULL; email = NULL không cho kết quả TRUE."
+sources = ["sqlite/lang_expr#isisnot"]
+
+[[questions]]
+id = "db-006"
+module = "db-sql-basics"
+type = "code"
+lang = "python"
+difficulty = 2
+title = "Báo cáo doanh thu theo tháng"
+prompt = '''
+Viết monthly_revenue(orders, items), dùng sqlite3 và một database :memory:.
+orders là danh sách bộ (order_id, created_at, status), trong đó ngày là chuỗi ISO YYYY-MM-DD. items là danh sách bộ (order_id, quantity, unit_price_cents). Chỉ tính đơn có status là paid; doanh thu mỗi dòng là quantity nhân unit_price_cents.
+Trả về danh sách tuple (YYYY-MM, revenue_cents) được nhóm theo tháng và sắp xếp tăng dần theo tháng. Tháng không có đơn paid có item không xuất hiện. Không dùng số thực cho tiền.
+Ví dụ: đơn paid ngày 2026-03-02 có một dòng quantity 2, unit_price_cents 450 thì kết quả là [("2026-03", 900)].
+'''
+starter = '''
+import sqlite3
+
+def monthly_revenue(orders, items):
+    return []
+'''
+solution = '''
+import sqlite3
+
+def monthly_revenue(orders, items):
+    conn = sqlite3.connect(":memory:")
+    try:
+        conn.execute("CREATE TABLE orders (order_id INTEGER PRIMARY KEY, created_at TEXT NOT NULL, status TEXT NOT NULL)")
+        conn.execute("CREATE TABLE items (order_id INTEGER NOT NULL, quantity INTEGER NOT NULL, unit_price_cents INTEGER NOT NULL)")
+        conn.executemany("INSERT INTO orders VALUES (?, ?, ?)", orders)
+        conn.executemany("INSERT INTO items VALUES (?, ?, ?)", items)
+        return conn.execute(
+            "SELECT substr(o.created_at, 1, 7) AS month, "
+            "SUM(i.quantity * i.unit_price_cents) AS revenue_cents "
+            "FROM orders AS o JOIN items AS i ON i.order_id = o.order_id "
+            "WHERE o.status = ? GROUP BY substr(o.created_at, 1, 7) ORDER BY month",
+            ("paid",),
+        ).fetchall()
+    finally:
+        conn.close()
+'''
+tests = '''
+@test("nhóm nhiều dòng trong cùng tháng")
+def _():
+    result = monthly_revenue(
+        [(1, "2026-03-02", "paid"), (2, "2026-03-15", "paid")],
+        [(1, 2, 450), (2, 1, 300)],
+    )
+    expect(result).to_equal([("2026-03", 1200)])
+
+@test("sắp xếp tháng và loại đơn chưa thanh toán")
+def _():
+    result = monthly_revenue(
+        [(1, "2026-04-02", "paid"), (2, "2026-02-03", "paid"), (3, "2026-03-01", "cancelled")],
+        [(1, 1, 200), (2, 3, 100), (3, 5, 1000)],
+    )
+    expect(result).to_equal([("2026-02", 300), ("2026-04", 200)])
+
+@test("đơn không có item không tạo doanh thu")
+def _():
+    expect(monthly_revenue([(1, "2026-01-01", "paid")], [])).to_equal([])
+
+@test("dữ liệu rỗng")
+def _():
+    expect(monthly_revenue([], [])).to_equal([])
+'''
+hints = ["Tạo hai bảng trong SQLite memory và nối items với orders.", "Dùng substr(created_at, 1, 7), GROUP BY và SUM(quantity * unit_price_cents)."]
+explanation = "Giữ tiền ở đơn vị nhỏ nhất dạng số nguyên để tránh sai số dấu phẩy động."
+sources = ["sqlite/lang_select", "sqlite/lang_aggfunc"]
+
+[[questions]]
+id = "db-007"
+module = "db-sql-advanced"
+type = "single"
+difficulty = 2
+prompt = "Muốn lấy tối đa ba sản phẩm mỗi danh mục, đồng thời giữ từng sản phẩm và xử lý hoà điểm theo thứ tự tên. Nên dùng cấu trúc nào?"
+options = ["GROUP BY category rồi MAX(score)", "ROW_NUMBER() OVER (PARTITION BY category ORDER BY score DESC, name) rồi lọc số thứ tự <= 3", "HAVING score <= 3", "DISTINCT category"]
+answer = [1]
+explanation = "Window function đánh số dòng trong từng danh mục mà không gộp mất chi tiết sản phẩm; ROW_NUMBER tạo giới hạn số dòng xác định."
+sources = ["postgresql~18/functions-window", "postgresql~18/sql-select#SQL-WINDOW"]
+
+[[questions]]
+id = "db-008"
+module = "db-sql-advanced"
+type = "single"
+difficulty = 2
+prompt = "Một CTE đệ quy duyệt cây danh mục cần có thành phần nào để bắt đầu và tiếp tục đi xuống?"
+options = ["Chỉ một SELECT có GROUP BY", "Phần truy vấn gốc và phần truy vấn đệ quy nối với kết quả trước", "Chỉ một UPDATE", "ORDER BY trong mọi nhánh"]
+answer = [1]
+explanation = "Phần gốc tạo điểm bắt đầu; phần đệ quy tham chiếu kết quả trước để mở rộng, và điều kiện dừng giới hạn việc duyệt."
+sources = ["postgresql~18/queries-with#QUERIES-WITH-RECURSIVE", "sqlite/lang_with#recursivecte"]
+
+[[questions]]
+id = "db-009"
+module = "db-sql-advanced"
+type = "single"
+difficulty = 2
+prompt = "Trong bảng settings có UNIQUE(key), muốn chèn key mới hoặc cập nhật value khi key đã có, cách nào phù hợp?"
+options = ["INSERT ... ON CONFLICT(key) DO UPDATE SET value = excluded.value", "SELECT rồi INSERT bất kể kết quả", "DELETE cả bảng rồi INSERT", "UPDATE chỉ cập nhật được dòng chưa tồn tại"]
+answer = [0]
+explanation = "UPSERT gắn hành động cập nhật với xung đột unique/primary key trong một câu lệnh, tránh khoảng đua giữa SELECT và INSERT."
+sources = ["sqlite/lang_upsert", "postgresql~18/sql-insert#SQL-ON-CONFLICT"]
+
+[[questions]]
+id = "db-010"
+module = "db-sql-advanced"
+type = "multiple"
+difficulty = 3
+prompt = "Chọn các nhận định đúng."
+options = ["Window function có thể tính thứ hạng mà vẫn giữ từng dòng", "PARTITION BY bắt đầu lại phép tính cửa sổ cho mỗi nhóm", "ROW_NUMBER luôn gán cùng số thứ tự cho các dòng đồng hạng", "CTE đệ quy thường có phần gốc và phần đệ quy", "JSONB là kiểu dữ liệu riêng của PostgreSQL"]
+answer = [0, 1, 3, 4]
+explanation = "ROW_NUMBER luôn cấp số khác nhau; RANK và DENSE_RANK mới giữ quan hệ đồng hạng."
+sources = ["postgresql~18/functions-window", "postgresql~18/queries-with#QUERIES-WITH-RECURSIVE", "postgresql~18/datatype-json"]
+
+[[questions]]
+id = "db-011"
+module = "db-sql-advanced"
+type = "fill"
+difficulty = 2
+prompt = '''
+Từ khoá mở đầu CTE để duyệt cấu trúc đệ quy:
+
+    WITH {{blank}} tree AS (...)
+'''
+blanks = [["RECURSIVE"]]
+explanation = "WITH RECURSIVE cho phép CTE tham chiếu chính nó."
+sources = ["sqlite/lang_with#recursivecte", "postgresql~18/queries-with#QUERIES-WITH-RECURSIVE"]
+
+[[questions]]
+id = "db-012"
+module = "db-sql-advanced"
+type = "code"
+lang = "python"
+difficulty = 3
+title = "Top N mỗi nhóm bằng window function"
+prompt = '''
+Viết top_n_per_group(records, n), dùng sqlite3.connect(":memory:").
+records gồm các tuple (category, item, score), trong đó item là duy nhất trong mỗi category. Trả về tối đa n tuple cho mỗi category theo score giảm dần; khi điểm bằng nhau, item tăng dần. Kết quả cuối được nhóm theo category tăng dần và theo đúng thứ hạng trong nhóm. Nếu n <= 0 hoặc records rỗng, trả danh sách rỗng.
+Ví dụ: [("fruit", "pear", 5), ("fruit", "apple", 8)] với n=1 trả [("fruit", "apple", 8)].
+Phải xếp hạng bằng ROW_NUMBER() OVER (PARTITION BY ...), không xử lý nhóm bằng vòng lặp Python.
+'''
+starter = '''
+import sqlite3
+
+def top_n_per_group(records, n):
+    return []
+'''
+solution = '''
+import sqlite3
+
+def top_n_per_group(records, n):
+    conn = sqlite3.connect(":memory:")
+    try:
+        conn.execute("CREATE TABLE scores (category TEXT NOT NULL, item TEXT NOT NULL, score REAL NOT NULL)")
+        conn.executemany("INSERT INTO scores VALUES (?, ?, ?)", records)
+        return conn.execute(
+            "WITH ranked AS ("
+            "SELECT category, item, score, "
+            "ROW_NUMBER() OVER (PARTITION BY category ORDER BY score DESC, item ASC) AS position "
+            "FROM scores) "
+            "SELECT category, item, score FROM ranked "
+            "WHERE position <= ? ORDER BY category ASC, position ASC",
+            (max(0, n),),
+        ).fetchall()
+    finally:
+        conn.close()
+'''
+tests = '''
+@test("giữ tối đa n dòng của mỗi nhóm")
+def _():
+    rows = [("a", "x", 4), ("a", "y", 9), ("b", "z", 3), ("b", "w", 7)]
+    expect(top_n_per_group(rows, 1)).to_equal([("a", "y", 9.0), ("b", "w", 7.0)])
+
+@test("xếp điểm giảm dần và phá hoà theo item")
+def _():
+    rows = [("a", "pear", 5), ("a", "apple", 5), ("a", "plum", 7)]
+    expect(top_n_per_group(rows, 3)).to_equal([("a", "plum", 7.0), ("a", "apple", 5.0), ("a", "pear", 5.0)])
+
+@test("n bằng không")
+def _():
+    expect(top_n_per_group([("a", "x", 1)], 0)).to_equal([])
+
+@test("n lớn hơn số dòng và dữ liệu rỗng")
+def _():
+    expect(top_n_per_group([("a", "x", 1)], 10)).to_equal([("a", "x", 1.0)])
+    expect(top_n_per_group([], 3)).to_equal([])
+'''
+hints = ["Tính ROW_NUMBER trong CTE, phân vùng theo category.", "Lọc position <= n rồi ORDER BY category, position."]
+explanation = "Window function giữ chi tiết mỗi sản phẩm trong khi xếp hạng riêng bên trong nhóm."
+sources = ["sqlite/lang_select", "postgresql~18/functions-window"]
+
+[[questions]]
+id = "db-013"
+module = "db-sql-advanced"
+type = "code"
+lang = "python"
+difficulty = 3
+title = "Duyệt cây danh mục với CTE đệ quy"
+prompt = '''
+Viết category_tree(categories, root_id), dùng SQLite trong bộ nhớ.
+categories gồm tuple (id, parent_id, name); parent_id là None cho nút gốc. id là số nguyên duy nhất. Trả về danh sách (id, name, depth) bắt đầu từ root_id ở depth 0, sau đó gồm mọi con cháu. Sắp xếp theo depth rồi id tăng dần. Nếu root_id không tồn tại, trả [].
+Dữ liệu có thể chứa chu trình do lỗi; một id không được xuất hiện quá một lần trong kết quả. Hãy dùng WITH RECURSIVE và theo dõi đường đi để dừng chu trình.
+'''
+starter = '''
+import sqlite3
+
+def category_tree(categories, root_id):
+    return []
+'''
+solution = '''
+import sqlite3
+
+def category_tree(categories, root_id):
+    conn = sqlite3.connect(":memory:")
+    try:
+        conn.execute("CREATE TABLE categories (id INTEGER PRIMARY KEY, parent_id INTEGER, name TEXT NOT NULL)")
+        conn.executemany("INSERT INTO categories VALUES (?, ?, ?)", categories)
+        return conn.execute(
+            "WITH RECURSIVE tree(id, name, depth, path) AS ("
+            "SELECT id, name, 0, ',' || id || ',' FROM categories WHERE id = ? "
+            "UNION ALL "
+            "SELECT c.id, c.name, tree.depth + 1, tree.path || c.id || ',' "
+            "FROM categories AS c JOIN tree ON c.parent_id = tree.id "
+            "WHERE instr(tree.path, ',' || c.id || ',') = 0) "
+            "SELECT id, name, depth FROM tree ORDER BY depth, id",
+            (root_id,),
+        ).fetchall()
+    finally:
+        conn.close()
+'''
+tests = '''
+@test("trả gốc và mọi hậu duệ với độ sâu")
+def _():
+    rows = [(1, None, "root"), (2, 1, "left"), (3, 1, "right"), (4, 2, "leaf")]
+    expect(category_tree(rows, 1)).to_equal([(1, "root", 0), (2, "left", 1), (3, "right", 1), (4, "leaf", 2)])
+
+@test("nút lá chỉ có chính nó")
+def _():
+    expect(category_tree([(1, None, "root"), (2, 1, "leaf")], 2)).to_equal([(2, "leaf", 0)])
+
+@test("root không tồn tại")
+def _():
+    expect(category_tree([(1, None, "root")], 9)).to_equal([])
+
+@test("dừng khi dữ liệu có chu trình")
+def _():
+    rows = [(1, 3, "one"), (2, 1, "two"), (3, 2, "three")]
+    expect(category_tree(rows, 1)).to_equal([(1, "one", 0), (2, "two", 1), (3, "three", 2)])
+'''
+hints = ["Phần anchor chọn root_id và tạo depth 0.", "Lưu các id đã đi qua trong path; loại id sắp thêm nếu đã có trong chuỗi đường đi."]
+explanation = "CTE đệ quy phù hợp với cây phân cấp; đường đi giúp dừng an toàn khi dữ liệu lỗi có chu trình."
+sources = ["sqlite/lang_with#recursivecte", "postgresql~18/queries-with#QUERIES-WITH-RECURSIVE"]
+
+[[questions]]
+id = "db-014"
+module = "db-sql-advanced"
+type = "code"
+lang = "python"
+difficulty = 2
+title = "UPSERT cấu hình"
+prompt = '''
+Viết upsert_setting(existing, key, value), dùng một bảng SQLite trong database :memory:.
+existing là danh sách tuple (key, value) ban đầu; key là duy nhất. Chèn hoặc cập nhật cặp key/value mới bằng một câu lệnh UPSERT có ON CONFLICT(key) DO UPDATE. Trả về toàn bộ cấu hình dưới dạng danh sách tuple sắp xếp tăng dần theo key.
+Ví dụ: existing=[("theme", "light")], key="theme", value="dark" phải trả [("theme", "dark")].
+'''
+starter = '''
+import sqlite3
+
+def upsert_setting(existing, key, value):
+    return existing
+'''
+solution = '''
+import sqlite3
+
+def upsert_setting(existing, key, value):
+    conn = sqlite3.connect(":memory:")
+    try:
+        conn.execute("CREATE TABLE settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)")
+        conn.executemany("INSERT INTO settings VALUES (?, ?)", existing)
+        conn.execute(
+            "INSERT INTO settings(key, value) VALUES (?, ?) "
+            "ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+            (key, value),
+        )
+        return conn.execute("SELECT key, value FROM settings ORDER BY key").fetchall()
+    finally:
+        conn.close()
+'''
+tests = '''
+@test("chèn key mới")
+def _():
+    expect(upsert_setting([], "theme", "dark")).to_equal([("theme", "dark")])
+
+@test("cập nhật key trùng")
+def _():
+    expect(upsert_setting([("theme", "light")], "theme", "dark")).to_equal([("theme", "dark")])
+
+@test("giữ các key khác và sắp xếp kết quả")
+def _():
+    rows = [("z", "last"), ("a", "first")]
+    expect(upsert_setting(rows, "m", "middle")).to_equal([("a", "first"), ("m", "middle"), ("z", "last")])
+
+@test("cập nhật không tạo dòng trùng")
+def _():
+    expect(upsert_setting([("x", "one")], "x", "two")).to_have_length(1)
+'''
+hints = ["Tạo key thành PRIMARY KEY để SQLite phát hiện xung đột.", "Trong DO UPDATE, dùng excluded.value là giá trị vừa định chèn."]
+explanation = "ON CONFLICT xử lý cạnh tranh ghi ở cơ sở dữ liệu thay vì tách SELECT và INSERT thành hai bước."
+sources = ["sqlite/lang_upsert", "postgresql~18/sql-insert#SQL-ON-CONFLICT"]
+
+[[questions]]
+id = "db-015"
+module = "db-data-model"
+type = "single"
+difficulty = 1
+prompt = "Một bảng invoices có invoice_id và customer_id. Vai trò phù hợp của hai cột này là gì?"
+options = ["invoice_id là PRIMARY KEY; customer_id là FOREIGN KEY tham chiếu khách hàng", "Cả hai bắt buộc là UNIQUE", "customer_id là CHECK constraint", "invoice_id phải trùng customer_id"]
+answer = [0]
+explanation = "Khoá chính nhận diện duy nhất hoá đơn; khoá ngoại liên kết tới khách hàng và có thể lặp lại trên nhiều hoá đơn."
+sources = ["postgresql~18/ddl-constraints#DDL-CONSTRAINTS-PRIMARY-KEYS", "postgresql~18/ddl-constraints#DDL-CONSTRAINTS-FK"]
+
+[[questions]]
+id = "db-016"
+module = "db-data-model"
+type = "single"
+difficulty = 2
+prompt = "Trong bảng orders(order_id, customer_id, customer_name), customer_name chỉ phụ thuộc customer_id chứ không trực tiếp phụ thuộc order_id. Đây là dấu hiệu nào?"
+options = ["Dữ liệu phi chuẩn hoá có phụ thuộc bắc cầu; có thể tách bảng customers", "Bảng đã đạt 3NF chắc chắn", "Thiếu index B-tree", "Cần đổi customer_id thành NULL"]
+answer = [0]
+explanation = "Tên khách hàng phụ thuộc vào khách hàng, không phải thuộc tính đơn hàng; lưu lặp dễ tạo bất nhất khi đổi tên."
+sources = ["postgresql~18/ddl-basics", "postgresql~18/ddl-constraints"]
+
+[[questions]]
+id = "db-017"
+module = "db-data-model"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn những ràng buộc giúp thực thi quy tắc dữ liệu ngay trong database."
+options = ["CHECK (quantity > 0)", "FOREIGN KEY (customer_id) REFERENCES customers(id)", "UNIQUE (email)", "NOT NULL trên created_at", "ORDER BY created_at"]
+answer = [0, 1, 2, 3]
+explanation = "ORDER BY sắp xếp kết quả truy vấn, không phải ràng buộc dữ liệu."
+sources = ["postgresql~18/ddl-constraints", "sqlite/lang_createtable", "sqlite/foreignkeys"]
+
+[[questions]]
+id = "db-018"
+module = "db-data-model"
+type = "fill"
+difficulty = 1
+prompt = '''
+Loại ràng buộc định danh duy nhất một dòng và không cho phép NULL:
+
+    id INTEGER {{blank}}
+'''
+blanks = [["PRIMARY KEY"]]
+explanation = "PRIMARY KEY vừa yêu cầu duy nhất vừa không NULL."
+sources = ["postgresql~18/ddl-constraints#DDL-CONSTRAINTS-PRIMARY-KEYS"]
+
+[[questions]]
+id = "db-019"
+module = "db-data-model"
+type = "essay"
+difficulty = 3
+prompt = "Nêu khi nào nên chuẩn hoá dữ liệu và khi nào có thể denormalize một phần để tối ưu đọc. Hãy đề cập cách bảo đảm dữ liệu không bị lệch."
+keywords = [["1NF", "first normal form"], ["2NF", "second normal form"], ["3NF", "third normal form"], ["read workload", "đọc nhiều", "truy vấn đọc"], ["đồng bộ", "cập nhật nhất quán", "consistency"], ["đo tải", "đo hiệu năng"]]
+min_keywords = 4
+model_answer = '''Chuẩn hoá theo 1NF, 2NF và 3NF giúp loại nhóm giá trị lặp và phụ thuộc không đúng, nhờ đó giảm lỗi cập nhật. Nếu read workload chiếm ưu thế và phép JOIN đã được đo tải là nút thắt, có thể denormalize một phần. Khi đó phải có transaction, trigger hoặc quy trình cập nhật nhất quán cho bản sao, đồng thời theo dõi consistency và đo hiệu năng sau thay đổi.'''
+explanation = "Denormalization là đánh đổi có chủ đích giữa chi phí ghi/nhất quán và tốc độ đọc, cần dựa trên workload đo được."
+sources = ["postgresql~18/ddl-basics", "postgresql~18/ddl-constraints"]
+
+[[questions]]
+id = "db-020"
+module = "db-index-performance"
+type = "single"
+difficulty = 2
+prompt = "Có index composite (tenant_id, created_at). Truy vấn lọc tenant_id = ? và khoảng created_at thường tận dụng index này tốt vì lý do nào?"
+options = ["B-tree composite thường hỗ trợ tiền tố từ cột đầu và tiếp tục điều kiện ở cột sau", "Index tự sắp xếp mọi cột trong mọi thứ tự", "Chỉ cần có index thì database không đọc bảng", "Cột created_at luôn được tìm độc lập như index đơn"]
+answer = [0]
+explanation = "Thứ tự cột tạo khác biệt; index (a,b) thường hữu ích cho a hoặc a cùng b, nhưng không đảm bảo lọc riêng b hiệu quả."
+sources = ["postgresql~18/indexes-multicolumn", "sqlite/lang_createindex"]
+
+[[questions]]
+id = "db-021"
+module = "db-index-performance"
+type = "single"
+difficulty = 1
+prompt = "EXPLAIN QUERY PLAN trong SQLite hữu ích nhất cho việc gì?"
+options = ["Xem cách planner dự kiến tìm và kết hợp dòng", "Tự tạo index tối ưu mà không cần kiểm tra", "Bảo đảm truy vấn luôn nhanh trên mọi kích cỡ dữ liệu", "Thay đổi dữ liệu để tăng tốc"]
+answer = [0]
+explanation = "Kế hoạch cho biết table scan, index scan và cấu trúc thực thi; vẫn cần dữ liệu đại diện để đánh giá."
+sources = ["sqlite/lang_explain", "sqlite/queryplanner"]
+
+[[questions]]
+id = "db-022"
+module = "db-index-performance"
+type = "single"
+difficulty = 2
+prompt = "Khi nào covering index có thể tránh đọc thêm bảng chính?"
+options = ["Index chứa các cột cần lọc và trả về của truy vấn", "Index chỉ chứa khoá chính dù truy vấn cần nhiều cột khác", "Truy vấn dùng SELECT *", "Mọi truy vấn có ORDER BY"]
+answer = [0]
+explanation = "Nếu thông tin cần thiết đã có trong index, một số kế hoạch có thể trả kết quả trực tiếp từ index; điều đó phụ thuộc planner và hệ quản trị."
+sources = ["sqlite/queryplanner#covidx", "postgresql~18/indexes-index-only-scans"]
+
+[[questions]]
+id = "db-023"
+module = "db-index-performance"
+type = "multiple"
+difficulty = 3
+prompt = "Chọn các nhận định đúng về index."
+options = ["B-tree phù hợp với nhiều truy vấn bằng, khoảng và sắp xếp", "Index (a, b) thường có ích cho điều kiện chỉ lọc b ngang như index đơn trên b", "Index làm tăng dung lượng và chi phí ghi", "Planner có thể chọn quét bảng khi bảng nhỏ hoặc phần lớn dòng cần trả", "EXPLAIN ANALYZE trong PostgreSQL thực sự chạy câu lệnh được phân tích"]
+answer = [0, 2, 3, 4]
+explanation = "Composite index phụ thuộc tiền tố và điều kiện; index (a,b) không tương đương index đơn trên b."
+sources = ["postgresql~18/indexes-intro", "postgresql~18/indexes-types#INDEXES-TYPES-BTREE", "postgresql~18/indexes-multicolumn", "postgresql~18/sql-explain"]
+
+[[questions]]
+id = "db-024"
+module = "db-index-performance"
+type = "fill"
+difficulty = 1
+prompt = '''
+Kiểu index phổ biến hỗ trợ tìm bằng và khoảng:
+
+    CREATE INDEX idx ON events USING {{blank}} (created_at)
+'''
+blanks = [["BTREE"]]
+explanation = "B-tree là kiểu index mặc định trong PostgreSQL và phù hợp nhiều phép so sánh thông dụng."
+sources = ["postgresql~18/indexes-types#INDEXES-TYPES-BTREE"]
+
+[[questions]]
+id = "db-025"
+module = "db-transactions"
+type = "single"
+difficulty = 1
+prompt = "Trong chuyển tiền, hệ thống đã trừ tài khoản gửi nhưng lỗi trước khi cộng tài khoản nhận. Thuộc tính ACID nào yêu cầu cả hai bước cùng thành công hoặc cùng bị huỷ?"
+options = ["Atomicity", "Consistency", "Isolation", "Durability"]
+answer = [0]
+explanation = "Atomicity bảo đảm transaction nhiều bước được commit toàn bộ hoặc rollback toàn bộ."
+sources = ["sqlite/lang_transaction", "postgresql~18/transaction-iso"]
+
+[[questions]]
+id = "db-026"
+module = "db-transactions"
+type = "single"
+difficulty = 3
+prompt = "Với PostgreSQL ở READ COMMITTED, hai câu SELECT trong cùng transaction có thể thấy dữ liệu commit mới giữa hai câu vì sao?"
+options = ["Mỗi câu lệnh đọc snapshot tại thời điểm riêng", "READ COMMITTED giữ một snapshot cố định cho toàn transaction", "PostgreSQL tắt MVCC ở mức này", "SELECT luôn khoá mọi writer"]
+answer = [0]
+explanation = "READ COMMITTED tạo snapshot cho mỗi statement; REPEATABLE READ giữ snapshot ổn định hơn trong transaction."
+sources = ["postgresql~18/transaction-iso#XACT-READ-COMMITTED", "postgresql~18/mvcc-intro"]
+
+[[questions]]
+id = "db-027"
+module = "db-transactions"
+type = "single"
+difficulty = 2
+prompt = "Hai transaction mỗi bên giữ một row lock và chờ lock của bên kia. Cách giảm nguy cơ và xử lý đúng là gì?"
+options = ["Luôn lấy lock theo cùng thứ tự và retry transaction bị database huỷ khi deadlock", "Tắt mọi constraint", "Tăng timeout vô hạn", "Commit sau mỗi UPDATE dù thao tác chưa hoàn tất"]
+answer = [0]
+explanation = "Thứ tự lấy lock nhất quán giảm chu trình chờ; deadlock vẫn có thể xảy ra nên ứng dụng cần retry có giới hạn và an toàn."
+sources = ["postgresql~18/explicit-locking#LOCKING-DEADLOCKS"]
+
+[[questions]]
+id = "db-028"
+module = "db-transactions"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các nhận định đúng về transaction và đồng thời."
+options = ["Một transaction có thể rollback các thay đổi chưa commit khi lỗi", "MVCC giúp reader thấy phiên bản phù hợp với snapshot", "MVCC loại bỏ mọi lock và mọi xung đột ghi", "Deadlock có thể khiến database huỷ một transaction", "Ràng buộc số dư trong một câu UPDATE có thể giúp tránh ghi âm do race"]
+answer = [0, 1, 3, 4]
+explanation = "MVCC giảm một số xung đột đọc/ghi nhưng không xoá lock hay xung đột giữa writer."
+sources = ["postgresql~18/mvcc-intro", "postgresql~18/explicit-locking", "sqlite/lang_transaction"]
+
+[[questions]]
+id = "db-029"
+module = "db-transactions"
+type = "fill"
+difficulty = 2
+prompt = '''
+Kỹ thuật nhiều phiên bản cho phép reader quan sát snapshot dữ liệu trong khi dữ liệu mới được ghi:
+
+    {{blank}}
+'''
+blanks = [["MVCC", "multi-version concurrency control"]]
+explanation = "MVCC quản lý các phiên bản dòng để hỗ trợ tính nhất quán khi đọc đồng thời."
+sources = ["postgresql~18/mvcc-intro"]
+
+[[questions]]
+id = "db-030"
+module = "db-transactions"
+type = "essay"
+difficulty = 3
+prompt = "Mô tả cách chuyển tiền giữa hai tài khoản để không mất hoặc tạo tiền khi có yêu cầu đồng thời hay lỗi giữa chừng."
+keywords = [["transaction", "giao dịch"], ["atomicity", "nguyên tử"], ["conditional update", "update có điều kiện", "balance >= amount"], ["rollback"], ["deadlock", "retry"], ["constraint", "ràng buộc"]]
+min_keywords = 4
+model_answer = '''Đọc và cập nhật trong một transaction để có atomicity. Trừ tiền bằng conditional update với điều kiện balance >= amount rồi kiểm tra số dòng bị ảnh hưởng; cộng tiền nhận trong cùng transaction và commit khi mọi bước hợp lệ. Nếu thiếu tiền hoặc tài khoản không tồn tại thì rollback. Transaction có thể gặp deadlock hoặc serialization failure, nên ứng dụng retry có giới hạn và không lặp tác dụng ngoài database.'''
+explanation = "Điều kiện số dư nằm trong câu UPDATE tránh kiểm tra cũ rồi ghi đè; rollback giữ hai tài khoản nhất quán."
+sources = ["postgresql~18/transaction-iso", "postgresql~18/explicit-locking#LOCKING-DEADLOCKS", "sqlite/lang_transaction"]
+
+[[questions]]
+id = "db-031"
+module = "db-transactions"
+type = "code"
+lang = "python"
+difficulty = 3
+title = "Chuyển tiền có rollback"
+prompt = '''
+Viết transfer(conn, sender, receiver, amount_cents) trên connection SQLite đã có bảng accounts(id TEXT PRIMARY KEY, balance_cents INTEGER NOT NULL).
+Nếu amount_cents <= 0, hoặc thiếu một trong hai tài khoản, ném ValueError. Trừ tiền bằng UPDATE có điều kiện balance_cents >= amount_cents; nếu không đủ số dư thì ném ValueError có nội dung "insufficient funds". Sau đó cộng đúng số tiền vào tài khoản nhận. Cả hai thay đổi phải nằm trong một transaction; lỗi phải rollback để số dư không đổi.
+Khi thành công, trả danh sách tuple (id, balance_cents) theo id tăng dần. Hàm không đóng connection do caller sở hữu.
+'''
+starter = '''
+import sqlite3
+
+def transfer(conn, sender, receiver, amount_cents):
+    return []
+'''
+solution = '''
+import sqlite3
+
+def transfer(conn, sender, receiver, amount_cents):
+    if amount_cents <= 0:
+        raise ValueError("amount must be positive")
+    with conn:
+        sender_exists = conn.execute("SELECT 1 FROM accounts WHERE id = ?", (sender,)).fetchone()
+        receiver_exists = conn.execute("SELECT 1 FROM accounts WHERE id = ?", (receiver,)).fetchone()
+        if sender_exists is None or receiver_exists is None:
+            raise ValueError("account not found")
+        changed = conn.execute(
+            "UPDATE accounts SET balance_cents = balance_cents - ? "
+            "WHERE id = ? AND balance_cents >= ?",
+            (amount_cents, sender, amount_cents),
+        )
+        if changed.rowcount != 1:
+            raise ValueError("insufficient funds")
+        conn.execute(
+            "UPDATE accounts SET balance_cents = balance_cents + ? WHERE id = ?",
+            (amount_cents, receiver),
+        )
+        return conn.execute("SELECT id, balance_cents FROM accounts ORDER BY id").fetchall()
+'''
+tests = '''
+def make_accounts(rows):
+    conn = sqlite3.connect(":memory:")
+    conn.execute("CREATE TABLE accounts (id TEXT PRIMARY KEY, balance_cents INTEGER NOT NULL)")
+    conn.executemany("INSERT INTO accounts VALUES (?, ?)", rows)
+    conn.commit()
+    return conn
+
+@test("chuyển thành công và trả số dư mới")
+def _():
+    conn = make_accounts([("a", 100), ("b", 20)])
+    expect(transfer(conn, "a", "b", 35)).to_equal([("a", 65), ("b", 55)])
+    conn.close()
+
+@test("thiếu số dư thì rollback")
+def _():
+    conn = make_accounts([("a", 10), ("b", 20)])
+    expect(lambda: transfer(conn, "a", "b", 11)).to_raise(ValueError, match="insufficient funds")
+    expect(conn.execute("SELECT id, balance_cents FROM accounts ORDER BY id").fetchall()).to_equal([("a", 10), ("b", 20)])
+    conn.close()
+
+@test("tài khoản không tồn tại")
+def _():
+    conn = make_accounts([("a", 10)])
+    expect(lambda: transfer(conn, "a", "missing", 1)).to_raise(ValueError, match="account not found")
+    expect(conn.execute("SELECT balance_cents FROM accounts WHERE id = 'a'").fetchone()).to_equal((10,))
+    conn.close()
+
+@test("số tiền không dương")
+def _():
+    conn = make_accounts([("a", 10), ("b", 0)])
+    expect(lambda: transfer(conn, "a", "b", 0)).to_raise(ValueError, match="amount must be positive")
+    conn.close()
+'''
+hints = ["Dùng with conn để commit khi thành công và rollback khi có exception.", "Trừ tiền với điều kiện balance_cents >= amount_cents rồi kiểm tra rowcount."]
+explanation = "Điều kiện trong UPDATE tránh race giữa lần đọc số dư và lần ghi; hai cập nhật nằm chung transaction."
+sources = ["sqlite/lang_transaction", "postgresql~18/transaction-iso"]
+
+[[questions]]
+id = "db-032"
+module = "db-redis"
+type = "single"
+difficulty = 1
+prompt = "Redis TTL trả -1 cho key còn tồn tại nhưng chưa có thời hạn; giá trị nào báo key không tồn tại?"
+options = ["-2", "0", "1", "NULL"]
+answer = [0]
+explanation = "TTL trả -2 nếu key không tồn tại, -1 nếu key có tồn tại nhưng không có expiration."
+sources = ["redis/ttl/index"]
+
+[[questions]]
+id = "db-033"
+module = "db-redis"
+type = "single"
+difficulty = 2
+prompt = "Trong cache-aside, ứng dụng nên làm gì khi cache miss?"
+options = ["Đọc nguồn dữ liệu chính, ghi giá trị vào cache kèm TTL rồi trả kết quả", "Trả lỗi ngay mà không đọc nguồn", "Xoá toàn bộ cache mỗi lần miss", "Chỉ publish thông điệp và giả định đã có dữ liệu"]
+answer = [0]
+explanation = "Cache-aside để ứng dụng nạp cache theo nhu cầu; cần TTL hoặc invalidation để giới hạn dữ liệu cũ."
+sources = ["redis/set/index", "redis/expire/index"]
+
+[[questions]]
+id = "db-034"
+module = "db-redis"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các cặp cấu trúc/lệnh Redis phù hợp."
+options = ["INCR dùng để tăng counter số nguyên", "Hash lưu các field và value dưới một key", "Sorted Set xếp member theo score", "Pub/Sub lưu mọi message để subscriber đến sau đọc lại", "Set giữ các member duy nhất"]
+answer = [0, 1, 2, 4]
+explanation = "Pub/Sub gửi tới subscriber hiện đang lắng nghe; muốn lưu/đọc lại message cần cấu trúc bền vững như Stream hoặc hàng đợi phù hợp."
+sources = ["redis/incr/index", "redis/hset/index", "redis/zadd/index", "redis/sadd/index", "redis/publish/index", "redis/subscribe/index"]
+
+[[questions]]
+id = "db-035"
+module = "db-redis"
+type = "fill"
+difficulty = 1
+prompt = '''
+Lệnh Redis tăng giá trị counter của key nguyên tử:
+
+    {{blank}} api:limit:user-42
+'''
+blanks = [["INCR"]]
+explanation = "INCR tăng counter phía server mà không cần client tự đọc rồi ghi lại."
+sources = ["redis/incr/index"]
+
+[[questions]]
+id = "db-036"
+module = "db-redis"
+type = "essay"
+difficulty = 3
+prompt = "Cache-aside có thể trả dữ liệu cũ sau khi nguồn chính được cập nhật. Hãy nêu cách hạn chế vấn đề và một rủi ro vận hành cần theo dõi."
+keywords = [["ttl", "expiration", "thời hạn"], ["invalidation", "xoá cache", "vô hiệu hoá"], ["cache-aside"], ["cache stampede", "thundering herd", "dồn tải"], ["pub/sub", "publish/subscribe"], ["source of truth", "nguồn dữ liệu chính"]]
+min_keywords = 3
+model_answer = '''Cache-aside nên dùng TTL để giới hạn thời gian dữ liệu có thể cũ và invalidation sau khi nguồn dữ liệu chính được cập nhật. Có thể publish sự kiện để các instance xoá cache, nhưng subscriber không hoạt động lúc gửi có thể bỏ lỡ sự kiện. Theo dõi cache stampede khi key hết hạn khiến nhiều request cùng tải database; dùng request coalescing hoặc thời gian hết hạn lệch nhau để giảm dồn tải.'''
+explanation = "TTL giới hạn độ cũ nhưng không bảo đảm nhất quán tức thì; invalidation cũng cần xử lý khi có nhiều instance."
+sources = ["redis/set/index", "redis/expire/index", "redis/publish/index", "redis/subscribe/index"]
+
+[[questions]]
+id = "db-037"
+module = "db-redis"
+type = "code"
+lang = "python"
+difficulty = 2
+title = "Cache-aside với TTL mô phỏng Redis"
+prompt = '''
+Viết cache_aside(key, cache, loader, now, ttl) để mô phỏng cache-aside trong Redis bằng dictionary Python.
+cache lưu key -> (value, expires_at). Nếu key tồn tại và now < expires_at, trả value mà không gọi loader. Nếu thiếu hoặc đã hết hạn, gọi loader(key), lưu kết quả mới với expires_at = now + ttl khi ttl > 0 rồi trả kết quả. Với ttl <= 0, không lưu giá trị mới. Cache đã hết hạn phải được thay bằng kết quả vừa tải.
+Ví dụ: cache rỗng, loader trả "Ada", now=10, ttl=5 thì hàm trả "Ada" và cache["user:1"] là ("Ada", 15).
+'''
+starter = '''
+def cache_aside(key, cache, loader, now, ttl):
+    return loader(key)
+'''
+solution = '''
+def cache_aside(key, cache, loader, now, ttl):
+    cached = cache.get(key)
+    if cached is not None:
+        value, expires_at = cached
+        if now < expires_at:
+            return value
+    cache.pop(key, None)
+    value = loader(key)
+    if ttl > 0:
+        cache[key] = (value, now + ttl)
+    return value
+'''
+tests = '''
+@test("miss tải dữ liệu rồi ghi TTL")
+def _():
+    cache = {}
+    calls = []
+    def load(key):
+        calls.append(key)
+        return "Ada"
+    expect(cache_aside("user:1", cache, load, 10, 5)).to_be("Ada")
+    expect(cache).to_equal({"user:1": ("Ada", 15)})
+    expect(calls).to_equal(["user:1"])
+
+@test("hit trước thời điểm hết hạn không gọi loader")
+def _():
+    cache = {"k": ("cached", 15)}
+    def fail_loader(key):
+        raise AssertionError("cache hit should not load")
+    expect(cache_aside("k", cache, fail_loader, 14, 5)).to_be("cached")
+
+@test("hết hạn đúng thời điểm thì tải lại và thay giá trị")
+def _():
+    cache = {"k": ("old", 15)}
+    expect(cache_aside("k", cache, lambda key: "new", 15, 3)).to_be("new")
+    expect(cache).to_equal({"k": ("new", 18)})
+
+@test("ttl không dương thì không lưu")
+def _():
+    cache = {}
+    expect(cache_aside("k", cache, lambda key: "value", 20, 0)).to_be("value")
+    expect(cache).to_equal({})
+'''
+hints = ["Giá trị cache chỉ hợp lệ khi now nhỏ hơn expires_at.", "Xoá entry cũ trước khi gọi loader; chỉ ghi cache nếu ttl dương."]
+explanation = "Mô phỏng cache-aside và TTL; hệ thống nhiều tiến trình còn cần xử lý đồng thời và invalidation."
+sources = ["redis/set/index", "redis/expire/index", "redis/ttl/index"]

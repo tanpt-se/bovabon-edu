@@ -1,0 +1,1082 @@
+id = "vue"
+title = "Vue 3 & Vue Router"
+icon = "🟢"
+color = "#42b883"
+group = "Frontend"
+docs = ["vue~3", "vue_router~5", "vueuse"]
+description = "Xây dựng giao diện với Vue 3, Composition API, VueUse và Vue Router; nắm reactivity, component, điều hướng và hiệu năng qua tình huống thực tế."
+
+[[modules]]
+id = "vue-template"
+title = "Template & directive"
+description = "Cú pháp template, binding, event, điều kiện, danh sách và directive tùy chỉnh."
+sources = ["vue~3/guide/essentials/template-syntax", "vue~3/api/built-in-directives", "vue~3/guide/reusability/custom-directives"]
+lesson = '''
+### Template và directive
+Template của Vue cho phép khai báo giao diện bằng HTML gần chuẩn; biểu thức trong `{{ }}` chỉ dùng cho biểu thức, không viết câu lệnh nhiều bước. `v-bind` (viết tắt `:`) nối thuộc tính với dữ liệu, `v-on` (viết tắt `@`) gắn sự kiện. `v-if` tạo hoặc gỡ nhánh, còn `v-show` giữ phần tử trong DOM và đổi CSS `display`.
+
+| Cú pháp | Mục đích | Lưu ý |
+|---|---|---|
+| `:href="url"` | bind thuộc tính | giá trị được cập nhật theo state |
+| `@click="save"` | lắng nghe sự kiện | modifier như `.once` giới hạn hành vi |
+| `v-for="item in items"` | lặp danh sách | dùng `:key` ổn định, duy nhất |
+| `v-model="name"` | đồng bộ form | là cú pháp rút gọn cho prop và event |
+
+Ví dụ: `<li v-for="task in tasks" :key="task.id">{{ task.title }}</li>`. Không dùng index làm key khi danh sách có thể sắp xếp hoặc chèn giữa, vì DOM có thể bị tái sử dụng sai. Tránh `v-if` và `v-for` trên cùng một node; lọc dữ liệu bằng computed. `v-html` chèn HTML thô, nên chỉ dùng nội dung đáng tin cậy để tránh XSS. Directive tùy chỉnh phù hợp với thao tác DOM cấp thấp, không thay thế component hay composable.
+'''
+
+[[modules]]
+id = "vue-reactivity"
+title = "Reactivity"
+description = "ref, reactive, computed, watch, watchEffect, toRefs và shallowRef."
+sources = ["vue~3/guide/essentials/reactivity-fundamentals", "vue~3/api/reactivity-core", "vue~3/api/reactivity-advanced", "vue~3/api/reactivity-utilities", "vue~3/guide/essentials/watchers"]
+lesson = '''
+### Hệ thống reactivity
+`ref()` bọc một giá trị trong `.value`; `reactive()` tạo proxy cho object. Trong template, ref cấp cao nhất thường được tự unwrap, nhưng trong JavaScript cần đọc hoặc gán `.value`. Khi destructure trực tiếp thuộc tính primitive từ reactive object, liên kết reactivity bị mất; `toRefs()` tạo các ref liên kết để destructure an toàn. `shallowRef()` chỉ theo dõi việc thay `.value`, không proxy sâu object bên trong.
+
+| API | Dùng khi | Hành vi chính |
+|---|---|---|
+| `ref` / `reactive` | state thay đổi | ghi nhận dependency khi đọc |
+| `computed` | giá trị suy ra | lazy, cache đến khi dependency đổi |
+| `watch` | phản ứng với nguồn cụ thể | nhận giá trị mới/cũ và cleanup |
+| `watchEffect` | dependency dễ suy ra từ thân hàm | chạy ngay và tự track phần được đọc |
+
+Ví dụ: `const total = computed(() => price.value * quantity.value)`. Không gọi hàm phụ có side effect bên trong computed: getter nên thuần và chỉ tính giá trị. `watch` phù hợp cho request hoặc đồng bộ bên ngoài; đăng ký cleanup để hủy công việc cũ. `watchEffect` không tự biến mọi async dependency thành dependency: phần đọc sau `await` không được theo dõi như phần chạy đồng bộ ban đầu. Chọn `shallowRef` cho dữ liệu lớn hoặc tích hợp object bên ngoài khi muốn tránh proxy sâu.
+'''
+
+[[modules]]
+id = "vue-components"
+title = "Component, props và v-model"
+description = "Giao tiếp component qua props, emits, slots, v-model và provide/inject."
+sources = ["vue~3/guide/components/props", "vue~3/guide/components/events", "vue~3/guide/components/v-model", "vue~3/guide/components/slots", "vue~3/guide/components/provide-inject", "vue~3/api/sfc-script-setup#defineprops-defineemits", "vue~3/api/composition-api-dependency-injection#provide"]
+lesson = '''
+### Ranh giới component
+Component con nhận dữ liệu qua `props` và thông báo sự kiện lên component cha qua `emits`; props là đầu vào chỉ đọc, nên con không sửa trực tiếp object prop để cập nhật cha. Với `<script setup>`, `defineProps()` và `defineEmits()` là compiler macro, không cần import. Khai báo emits giúp hợp đồng component rõ ràng và tránh nhầm sự kiện component với listener fallthrough.
+
+| Cơ chế | Hướng dữ liệu | Ví dụ |
+|---|---|---|
+| prop | cha → con | `<UserCard :user="user" />` |
+| emit | con → cha | `emit('save', form)` |
+| slot | cha cung cấp nội dung | `<Panel><template #title>...</template></Panel>` |
+| provide/inject | tổ tiên → hậu duệ | dịch vụ hoặc cấu hình theo cây |
+
+`v-model` mặc định tương ứng prop `modelValue` và event `update:modelValue`; component phát event với giá trị mới thay vì mutate prop. Vue 3.4+ có `defineModel()` để rút gọn mẫu phổ biến; vẫn cần hiểu hợp đồng prop/event khi tích hợp component cũ hoặc nhiều model có tên. Slots cho phép component cha tùy biến phần trình bày; scoped slot truyền dữ liệu từ con ra nội dung slot. Provide/inject hữu ích khi tránh prop drilling trong cây sâu, nhưng đừng dùng làm kho state toàn cục thay cho thiết kế state rõ ràng.
+'''
+
+[[modules]]
+id = "vue-composables"
+title = "Composition API & composable"
+description = "Tổ chức logic bằng setup, lifecycle và composable; áp dụng tiện ích VueUse."
+sources = ["vue~3/api/composition-api-setup", "vue~3/api/composition-api-lifecycle", "vue~3/guide/reusability/composables", "vueuse/shared/refdebounced/index", "vueuse/shared/usedebouncefn/index", "vueuse/shared/watchdebounced/index"]
+lesson = '''
+### Composition API và tái sử dụng logic
+Trong Composition API, `setup()` hoặc `<script setup>` là nơi khai báo state và logic gắn với component. Lifecycle hook như `onMounted()` phải được gọi trong ngữ cảnh component đang hoạt động. Composable là hàm thường bắt đầu bằng `use`, đóng gói state/reactivity và có thể đăng ký lifecycle; mỗi lần gọi thường tạo state riêng, trừ khi chủ ý chia sẻ state ở phạm vi module.
+
+Một composable nên có đầu vào rõ, trả về các ref/computed cần thiết và dọn dẹp timer, listener hoặc subscription khi không còn dùng. VueUse cung cấp tiện ích đã giải quyết các chi tiết phổ biến như `refDebounced`, `useDebounceFn` và watcher có debounce; kiểm tra chính sách cancel/flush và thời điểm cập nhật thay vì giả định mọi tiện ích có cùng API.
+
+| Mẫu | Trách nhiệm |
+|---|---|
+| `useSearch(query)` | kết hợp state tìm kiếm và trạng thái tải |
+| `refDebounced(source, ms)` | cung cấp giá trị trễ để giảm cập nhật |
+| `onUnmounted(cleanup)` | gỡ tài nguyên thuộc vòng đời component |
+
+Không gọi composable tùy ý bên trong nhánh điều kiện nếu composable phụ thuộc lifecycle; gọi ổn định trong `setup()`. Với async effect, hủy request cũ trong cleanup để response đến trễ không ghi đè kết quả mới. Composable nên giải quyết một mối quan tâm có thể tái sử dụng, không gom mọi state của ứng dụng vào một hàm lớn.
+'''
+
+[[modules]]
+id = "vue-router"
+title = "Vue Router"
+description = "Route tĩnh/động, params, catch-all, lazy loading và navigation guard."
+sources = ["vue_router~5/guide/essentials/dynamic-matching", "vue_router~5/guide/essentials/route-matching-syntax", "vue_router~5/guide/advanced/dynamic-routing", "vue_router~5/guide/advanced/navigation-guards", "vue_router~5/guide/advanced/lazy-loading", "vue_router~5/guide/advanced/navigation-failures"]
+lesson = '''
+### Khai báo và điều hướng
+Route động dùng segment như `/users/:id`; giá trị được đưa vào `route.params`, khác với query string trong `route.query`. Route catch-all hiện đại thường viết `/:pathMatch(.*)*`. Thứ tự và độ cụ thể của route ảnh hưởng kết quả; đặt route tổng quát sau route cụ thể khi dùng matcher tự xây.
+
+| Cơ chế | Vai trò | Ví dụ |
+|---|---|---|
+| `:id` | nhận một segment động | `/users/42` |
+| `*` / catch-all | nhận phần đường dẫn còn lại | trang 404 |
+| lazy route | tải component khi cần | `component: () => import('./Page.vue')` |
+| navigation guard | cho phép, hủy hoặc chuyển hướng | `beforeEach((to, from) => ...)` |
+
+Guard có thể trả `false` để hủy, `true` hoặc `undefined` để tiếp tục, hoặc location để redirect; guard async được chờ theo thứ tự. Mẫu trả về thường dễ đọc và ít lỗi hơn callback `next`. Guard không phải nơi duy nhất kiểm tra quyền: server vẫn phải xác thực và phân quyền. Component route lazy giúp chia bundle; đừng bọc async route component bằng `defineAsyncComponent` khi Router đã xử lý dynamic import. Khi thêm route lúc ứng dụng đang chạy, matcher phải được cập nhật rõ ràng.
+'''
+
+[[modules]]
+id = "vue-performance-state"
+title = "Hiệu năng & state"
+description = "Pinia, KeepAlive, v-memo, phân tích render và tối ưu có đo lường."
+sources = ["vue~3/guide/best-practices/performance", "vue~3/guide/scaling-up/state-management", "vue~3/api/built-in-components#keepalive", "vue~3/api/built-in-directives#v-memo"]
+lesson = '''
+### State và hiệu năng
+State nên ở phạm vi hẹp nhất đủ cho nơi sử dụng: state component cho giao diện cục bộ, composable cho logic tái sử dụng, store như Pinia cho state dùng chung giữa nhiều khu vực hoặc cần công cụ/devtools rõ ràng. Pinia tổ chức state, getters và actions theo store; không cần tự xây một global reactive object khi ứng dụng đã dùng store.
+
+`<KeepAlive>` cache instance component động để giữ state khi chuyển tab/route; `include`, `exclude` và `max` điều khiển tập cache. `v-memo` bỏ qua cập nhật subtree khi các giá trị trong dependency array không đổi, nhưng chỉ nên dùng sau khi đo thấy render là nút thắt; dependency thiếu có thể làm UI hiển thị dữ liệu cũ.
+
+| Công cụ | Dùng cho | Rủi ro cần tránh |
+|---|---|---|
+| Pinia | state chia sẻ có cấu trúc | store quá rộng, phụ thuộc vòng |
+| KeepAlive | giữ component khi chuyển qua lại | cache quá nhiều instance |
+| `v-memo` | subtree lớn ít thay đổi | bỏ sót dependency |
+
+Tối ưu trước hết bằng component nhỏ, dữ liệu ổn định và danh sách có `key` tốt; kiểm tra bằng Vue DevTools hoặc profiling trình duyệt. Cache làm giảm khởi tạo nhưng giữ bộ nhớ; state cache vẫn có thể cần đồng bộ. Không thêm memoization chỉ vì một biểu thức trông phức tạp: đo, tìm nguyên nhân, rồi chọn thay đổi nhỏ nhất.
+'''
+
+[[questions]]
+id = "vue-001"
+module = "vue-template"
+type = "single"
+difficulty = 1
+prompt = "Trong template, cú pháp rút gọn nào bind thuộc tính DOM với biểu thức reactive?"
+options = ["`:`", "`@`", "`#`", "`$`"]
+answer = [0]
+explanation = "Dấu hai chấm là viết tắt của `v-bind`; `@` là viết tắt của `v-on`."
+sources = ["vue~3/guide/essentials/template-syntax"]
+
+[[questions]]
+id = "vue-002"
+module = "vue-template"
+type = "single"
+difficulty = 2
+prompt = "Một bảng có vài nghìn dòng, nội dung ít khi đổi nhưng bộ lọc có thể bật tắt thường xuyên. Chọn cách hiển thị nhánh phù hợp khi cần tránh tạo lại node mỗi lần bật tắt."
+options = ["`v-if`", "`v-show`", "`v-html`", "`v-once`"]
+answer = [1]
+explanation = "`v-show` giữ node và đổi CSS display; `v-if` tháo/gắn node nên phù hợp hơn khi điều kiện hiếm khi đổi."
+sources = ["vue~3/api/built-in-directives#v-show", "vue~3/api/built-in-directives#v-if"]
+
+[[questions]]
+id = "vue-003"
+module = "vue-template"
+type = "single"
+difficulty = 2
+prompt = "Danh sách task cho phép chèn, xóa và sắp xếp lại. Giá trị nào nên dùng làm `:key`?"
+options = ["Index hiện tại của vòng lặp", "Một id ổn định, duy nhất của task", "Giá trị `Math.random()` mỗi lần render", "Không cần key"]
+answer = [1]
+explanation = "Key ổn định giúp Vue giữ đúng danh tính node khi danh sách đổi thứ tự."
+sources = ["vue~3/api/built-in-directives#v-for"]
+
+[[questions]]
+id = "vue-004"
+module = "vue-template"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các nhận định đúng về template binding và directive."
+options = ["`@click` là dạng rút gọn của `v-on:click`", "`v-html` chèn nội dung dưới dạng text đã escape", "`.once` có thể giới hạn listener chỉ xử lý một lần", "`v-if` và `v-for` nên đặt cùng một node để Vue lọc từng phần tử", "`v-show` thường giữ node trong DOM khi ẩn"]
+answer = [0, 2, 4]
+explanation = "`v-html` chèn HTML thô, còn kết hợp `v-if`/`v-for` cùng node dễ tạo logic khó hiểu; nên lọc qua computed."
+sources = ["vue~3/api/built-in-directives", "vue~3/guide/essentials/template-syntax"]
+
+[[questions]]
+id = "vue-005"
+module = "vue-template"
+type = "fill"
+difficulty = 1
+prompt = '''
+Điền tên directive để hiển thị danh sách và key theo id:
+```html
+<li {{blank}}="task in tasks" :key="task.id">{{ task.title }}</li>
+```
+'''
+blanks = [["v-for"]]
+explanation = "`v-for` lặp qua danh sách; key được bind riêng bằng `:key`."
+sources = ["vue~3/api/built-in-directives#v-for"]
+
+[[questions]]
+id = "vue-006"
+module = "vue-template"
+type = "single"
+difficulty = 3
+prompt = "Một trang render tên người dùng bằng `v-html` từ nội dung nhập tự do. Rủi ro chính và hướng sửa phù hợp là gì?"
+options = ["Không có rủi ro nếu nội dung là string; giữ nguyên", "HTML injection/XSS; hiển thị bằng interpolation nếu chỉ cần text", "Vue tự loại mọi thẻ nguy hiểm; không cần thay đổi", "Chỉ cần thêm `:key` cho phần tử"]
+answer = [1]
+explanation = "`v-html` chèn HTML thô và không tự làm sạch dữ liệu; interpolation escape nội dung text."
+sources = ["vue~3/api/built-in-directives#v-html"]
+
+[[questions]]
+id = "vue-007"
+module = "vue-reactivity"
+type = "single"
+difficulty = 1
+prompt = "Giá trị tạo từ `ref(0)` được đọc trong JavaScript như thế nào?"
+options = ["`count.value`", "`count.current`", "`count.get()`", "`count[0]`"]
+answer = [0]
+explanation = "Trong JavaScript, ref dùng thuộc tính `.value`; template thường tự unwrap ref cấp cao nhất."
+sources = ["vue~3/api/reactivity-core#ref"]
+
+[[questions]]
+id = "vue-008"
+module = "vue-reactivity"
+type = "single"
+difficulty = 2
+prompt = "`computed(() => price.value * quantity.value)` chưa được đọc. Khi dependency đổi nhiều lần trước lần đọc đầu tiên, Vue thường làm gì?"
+options = ["Tính lại ngay sau mỗi lần đổi", "Đánh dấu dirty và tính khi được đọc; sau đó cache tới lần invalidation tiếp theo", "Chạy mỗi frame", "Chỉ tính một lần suốt vòng đời ứng dụng"]
+answer = [1]
+explanation = "Computed lazy và cache theo dependency; các thay đổi liên tiếp trước lúc đọc không buộc getter chạy từng lần."
+sources = ["vue~3/api/reactivity-core#computed"]
+
+[[questions]]
+id = "vue-009"
+module = "vue-reactivity"
+type = "single"
+difficulty = 2
+prompt = "Vì sao destructure `const { count } = reactiveState` có thể làm `count` mất liên kết reactive với thuộc tính gốc?"
+options = ["Destructure luôn clone mọi object", "`count` là giá trị primitive cục bộ, không còn được đọc qua proxy", "Vue cấm destructuring trong JavaScript", "`reactive` chỉ hoạt động với array"]
+answer = [1]
+explanation = "Destructure thuộc tính primitive tách giá trị khỏi proxy; dùng `toRefs(reactiveState)` nếu cần destructure mà vẫn giữ liên kết."
+sources = ["vue~3/api/reactivity-utilities#torefs", "vue~3/guide/essentials/reactivity-fundamentals"]
+
+[[questions]]
+id = "vue-010"
+module = "vue-reactivity"
+type = "multiple"
+difficulty = 3
+prompt = "Chọn các nhận định chính xác về watcher và shallow reactivity."
+options = ["`watch` mặc định theo dõi chính xác nguồn được khai báo", "`watchEffect` chạy ngay để thu thập dependency đồng bộ", "`shallowRef` tự proxy sâu mọi thuộc tính của object", "Cleanup giúp hủy timer hoặc request cũ trước lần chạy tiếp theo", "Đọc dependency lần đầu sau `await` trong `watchEffect` luôn được track"]
+answer = [0, 1, 3]
+explanation = "`shallowRef` chỉ theo dõi `.value`; trong async effect, dependency được đọc sau await không nằm trong lượt track đồng bộ ban đầu."
+sources = ["vue~3/api/reactivity-core#watch", "vue~3/api/reactivity-core#watcheffect", "vue~3/api/reactivity-advanced#shallowref"]
+
+[[questions]]
+id = "vue-011"
+module = "vue-reactivity"
+type = "fill"
+difficulty = 1
+prompt = '''
+Điền API chuyển các thuộc tính của reactive object thành ref liên kết để destructure an toàn:
+```js
+const state = reactive({ count: 0 })
+const { count } = {{blank}}(state)
+```
+'''
+blanks = [["toRefs"]]
+explanation = "`toRefs` tạo ref cho các thuộc tính enumerable hiện có trên proxy."
+sources = ["vue~3/api/reactivity-utilities#torefs"]
+
+[[questions]]
+id = "vue-012"
+module = "vue-reactivity"
+type = "code"
+difficulty = 3
+title = "Mini reactivity với computed lazy"
+prompt = '''
+Viết `createMiniReactivity()` trả về `{ ref, computed, effect }` bằng JavaScript thuần.
+- `ref(value)` trả object có `.value`; khi giá trị đổi, các effect phụ thuộc được chạy lại.
+- `computed(getter)` trả object có `.value`; getter chỉ chạy khi cần, cache kết quả, và đánh dấu dirty khi dependency đổi.
+- `effect(fn)` chạy `fn` ngay, tự track các ref/computed được đọc, chạy lại khi chúng đổi và trả về runner có thể gọi thủ công.
+- Chỉ cần hỗ trợ dependency đồng bộ và giá trị scalar; không cần scheduler hay `stop`.
+'''
+starter = '''
+function createMiniReactivity() {
+  function ref(value) { return { value }; }
+  function computed(getter) { return { get value() { return getter(); } }; }
+  function effect(fn) { fn(); return fn; }
+  return { ref, computed, effect };
+}
+'''
+solution = '''
+function createMiniReactivity() {
+  let activeEffect = null;
+  function cleanup(runner) {
+    for (const dep of runner.deps) dep.delete(runner);
+    runner.deps.clear();
+  }
+  function track(dep) {
+    if (!activeEffect) return;
+    dep.add(activeEffect);
+    activeEffect.deps.add(dep);
+  }
+  function trigger(dep) {
+    for (const runner of Array.from(dep)) {
+      if (runner !== activeEffect) {
+        if (runner.scheduler) runner.scheduler();
+        else runner();
+      }
+    }
+  }
+  function makeEffect(fn, scheduler, lazy) {
+    const runner = function () {
+      if (runner.running) return;
+      cleanup(runner);
+      const previous = activeEffect;
+      activeEffect = runner;
+      runner.running = true;
+      try { return fn(); }
+      finally { runner.running = false; activeEffect = previous; }
+    };
+    runner.deps = new Set();
+    runner.scheduler = scheduler;
+    runner.running = false;
+    if (!lazy) runner();
+    return runner;
+  }
+  function ref(initialValue) {
+    let value = initialValue;
+    const dep = new Set();
+    return {
+      get value() { track(dep); return value; },
+      set value(next) {
+        if (Object.is(value, next)) return;
+        value = next;
+        trigger(dep);
+      }
+    };
+  }
+  function computed(getter) {
+    let dirty = true;
+    let value;
+    const dep = new Set();
+    const runner = makeEffect(getter, () => {
+      if (!dirty) { dirty = true; trigger(dep); }
+    }, true);
+    return {
+      get value() {
+        track(dep);
+        if (dirty) { value = runner(); dirty = false; }
+        return value;
+      }
+    };
+  }
+  function effect(fn) { return makeEffect(fn, null, false); }
+  return { ref, computed, effect };
+}
+'''
+tests = '''
+test('effect chạy lần đầu và theo dõi ref', () => {
+  const api = createMiniReactivity();
+  const count = api.ref(1);
+  const seen = [];
+  api.effect(() => seen.push(count.value));
+  count.value = 2;
+  expect(seen).toEqual([1, 2]);
+});
+test('computed chạy lazy và cache', () => {
+  const api = createMiniReactivity();
+  const count = api.ref(2);
+  let calls = 0;
+  const doubled = api.computed(() => { calls++; return count.value * 2; });
+  expect(calls).toBe(0);
+  expect(doubled.value).toBe(4);
+  expect(doubled.value).toBe(4);
+  expect(calls).toBe(1);
+});
+test('computed invalidation tính giá trị mới khi đọc', () => {
+  const api = createMiniReactivity();
+  const count = api.ref(2);
+  const doubled = api.computed(() => count.value * 2);
+  expect(doubled.value).toBe(4);
+  count.value = 3;
+  expect(doubled.value).toBe(6);
+});
+test('effect theo dõi computed và chạy lại khi nguồn đổi', () => {
+  const api = createMiniReactivity();
+  const count = api.ref(2);
+  const doubled = api.computed(() => count.value * 2);
+  const seen = [];
+  api.effect(() => seen.push(doubled.value));
+  count.value = 4;
+  expect(seen).toEqual([4, 8]);
+});
+test('runner có thể gọi thủ công và bằng nhau không kích hoạt effect', () => {
+  const api = createMiniReactivity();
+  const count = api.ref(1);
+  let calls = 0;
+  const run = api.effect(() => { count.value; calls++; });
+  count.value = 1;
+  run();
+  expect(calls).toBe(2);
+});
+'''
+hints = ["Mỗi dependency có thể lưu tập runner; runner cần nhớ và gỡ dependency cũ trước khi chạy lại.", "Computed cần một effect nội bộ lazy với scheduler chỉ đánh dấu dirty và thông báo cho consumer."]
+explanation = "Bài tập mô phỏng lõi dependency tracking: đọc để đăng ký, ghi để trigger, computed cache kết quả và chỉ invalidation khi dependency đổi."
+sources = ["vue~3/api/reactivity-core#ref", "vue~3/api/reactivity-core#computed", "vue~3/api/reactivity-core#watch"]
+
+[[questions]]
+id = "vue-013"
+module = "vue-reactivity"
+type = "code"
+difficulty = 3
+title = "Watch với cleanup"
+prompt = '''
+Viết `createSignal(initialValue)` và `watch(source, callback)` để mô phỏng watcher đồng bộ trên một nguồn đơn.
+- Signal có thuộc tính `.value`, setter chỉ phát thông báo khi giá trị đổi theo `Object.is`, và phương thức `subscribe(listener)` trả hàm unsubscribe.
+- `watch` không gọi callback lúc khởi tạo. Mỗi lần nguồn đổi, gọi `callback(newValue, oldValue, onCleanup)`.
+- Cleanup được đăng ký trong callback phải chạy trước callback kế tiếp và khi hàm stop được gọi. Stop nhiều lần không được chạy cleanup lặp.
+- `watch` trả hàm stop; callback có thể đăng ký một cleanup cho mỗi lượt chạy.
+'''
+starter = '''
+function createSignal(initialValue) {
+  return { value: initialValue, subscribe() { return () => {}; } };
+}
+function watch(source, callback) {
+  return function stop() {};
+}
+'''
+solution = '''
+function createSignal(initialValue) {
+  let value = initialValue;
+  const listeners = new Set();
+  return {
+    get value() { return value; },
+    set value(next) {
+      if (Object.is(value, next)) return;
+      const previous = value;
+      value = next;
+      for (const listener of Array.from(listeners)) listener(next, previous);
+    },
+    subscribe(listener) {
+      listeners.add(listener);
+      return () => listeners.delete(listener);
+    }
+  };
+}
+function watch(source, callback) {
+  let oldValue = source.value;
+  let cleanup = null;
+  let stopped = false;
+  const unsubscribe = source.subscribe((newValue) => {
+    if (stopped) return;
+    if (cleanup) { const previousCleanup = cleanup; cleanup = null; previousCleanup(); }
+    const previousValue = oldValue;
+    oldValue = newValue;
+    callback(newValue, previousValue, (fn) => {
+      if (typeof fn === 'function') cleanup = fn;
+    });
+  });
+  return function stop() {
+    if (stopped) return;
+    stopped = true;
+    unsubscribe();
+    if (cleanup) { const previousCleanup = cleanup; cleanup = null; previousCleanup(); }
+  };
+}
+'''
+tests = '''
+test('watch nhận giá trị mới và cũ nhưng không chạy ngay', () => {
+  const source = createSignal(1);
+  const seen = [];
+  watch(source, (next, old) => seen.push([next, old]));
+  expect(seen).toEqual([]);
+  source.value = 3;
+  expect(seen).toEqual([[3, 1]]);
+});
+test('cleanup cũ chạy trước callback tiếp theo', () => {
+  const source = createSignal('a');
+  const events = [];
+  watch(source, (next, old, onCleanup) => {
+    events.push('watch:' + old + '>' + next);
+    onCleanup(() => events.push('cleanup:' + next));
+  });
+  source.value = 'b';
+  source.value = 'c';
+  expect(events).toEqual(['watch:a>b', 'cleanup:b', 'watch:b>c']);
+});
+test('stop chạy cleanup cuối đúng một lần và unsubscribe', () => {
+  const source = createSignal(0);
+  let cleanups = 0;
+  const stop = watch(source, (next, old, onCleanup) => onCleanup(() => cleanups++));
+  source.value = 1;
+  stop();
+  stop();
+  source.value = 2;
+  expect(cleanups).toBe(1);
+});
+test('giá trị không đổi không phát thông báo', () => {
+  const source = createSignal(NaN);
+  let calls = 0;
+  watch(source, () => calls++);
+  source.value = NaN;
+  expect(calls).toBe(0);
+});
+test('cleanup cũ được xóa trước callback không đăng ký cleanup mới', () => {
+  const source = createSignal(0);
+  let cleanups = 0;
+  const stop = watch(source, (next, old, onCleanup) => {
+    if (next === 1) onCleanup(() => cleanups++);
+  });
+  source.value = 1;
+  source.value = 2;
+  stop();
+  expect(cleanups).toBe(1);
+});
+'''
+hints = ["Signal lưu listener trong Set và phát bản sao tập listener để unsubscribe an toàn khi đang thông báo.", "Cleanup thuộc lượt callback trước; lấy nó ra và xóa tham chiếu trước khi gọi để tránh gọi lặp."]
+explanation = "Cleanup giúp hủy tài nguyên của lượt watch cũ, chẳng hạn timer hoặc request, trước khi phản ứng với giá trị mới."
+sources = ["vue~3/api/reactivity-core#watch", "vue~3/api/reactivity-core#onwatchercleanup"]
+
+[[questions]]
+id = "vue-014"
+module = "vue-components"
+type = "single"
+difficulty = 1
+prompt = "Component con muốn yêu cầu component cha cập nhật giá trị `modelValue`. Event mặc định nào tương ứng với `v-model`?"
+options = ["`change:modelValue`", "`update:modelValue`", "`set:modelValue`", "`input:value`"]
+answer = [1]
+explanation = "`v-model` mặc định nối prop `modelValue` với event `update:modelValue`."
+sources = ["vue~3/guide/components/v-model"]
+
+[[questions]]
+id = "vue-015"
+module = "vue-components"
+type = "single"
+difficulty = 2
+prompt = "Một component con cần báo rằng người dùng đã lưu form. Hợp đồng giao tiếp nào phù hợp nhất?"
+options = ["Con sửa trực tiếp prop `form` rồi hy vọng cha biết", "Con phát event `save` qua `emit`, cha lắng nghe event", "Con tìm component cha qua DOM", "Con ghi dữ liệu vào biến global bất kỳ"]
+answer = [1]
+explanation = "Props truyền dữ liệu từ cha xuống; emits truyền thông báo có chủ đích từ con lên cha."
+sources = ["vue~3/guide/components/events", "vue~3/guide/components/props"]
+
+[[questions]]
+id = "vue-016"
+module = "vue-components"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các nhận định đúng về props, slots và provide/inject."
+options = ["Props là đầu vào chỉ đọc của component con", "Scoped slot có thể nhận dữ liệu do component con cung cấp", "Provide/inject chỉ truyền được tới component con trực tiếp", "`defineProps` và `defineEmits` trong `<script setup>` là compiler macro", "Mọi slot đều làm component cha sở hữu state của component con"]
+answer = [0, 1, 3]
+explanation = "Provide/inject đi qua cây component tới hậu duệ; slot tùy biến nội dung nhưng không chuyển quyền sở hữu state."
+sources = ["vue~3/guide/components/props", "vue~3/guide/components/slots", "vue~3/api/sfc-script-setup#defineprops-defineemits"]
+
+[[questions]]
+id = "vue-017"
+module = "vue-components"
+type = "fill"
+difficulty = 1
+prompt = '''
+Điền prop mặc định để component con nhận giá trị của `v-model` không có tên tùy chỉnh:
+```js
+const props = defineProps({ {{blank}}: String })
+```
+'''
+blanks = [["modelValue"]]
+explanation = "`v-model` mặc định dùng prop `modelValue` và event `update:modelValue`."
+sources = ["vue~3/guide/components/v-model"]
+
+[[questions]]
+id = "vue-018"
+module = "vue-components"
+type = "essay"
+difficulty = 3
+prompt = "Mô tả luồng dữ liệu khi component cha dùng `v-model` với component con và giải thích vì sao con không nên mutate prop trực tiếp."
+keywords = [["modelValue", "prop modelValue"], ["update:modelValue", "event update:modelValue"], ["emit", "phát event"], ["props chỉ đọc", "readonly prop", "không mutate prop"]]
+min_keywords = 3
+model_answer = '''Component cha truyền giá trị qua prop `modelValue`. Component con phát event `update:modelValue` bằng `emit` với giá trị mới; cha nhận event và cập nhật state nguồn. Props là đầu vào chỉ đọc, nên mutate prop làm luồng dữ liệu một chiều khó theo dõi và không đảm bảo state của cha đổi đúng cách.'''
+explanation = "Cần nêu được prop đi từ cha xuống, event đi từ con lên và nguyên tắc không mutate prop."
+sources = ["vue~3/guide/components/v-model", "vue~3/guide/components/props"]
+
+[[questions]]
+id = "vue-019"
+module = "vue-components"
+type = "code"
+difficulty = 2
+title = "Mô phỏng emit và v-model"
+prompt = '''
+Viết `createModelBinding(initialValue)` mô phỏng component cha nối `v-model` với component con.
+- Trả object gồm `props`, `emit`, `emitted` và getter `value`.
+- `props.modelValue` luôn phản ánh giá trị hiện tại của cha.
+- Chỉ event `update:modelValue` được chấp nhận; event này ghi lại `{ event, payload }`, cập nhật giá trị cha và trả `true`.
+- Event khác không đổi state, không ghi vào `emitted` và trả `false`.
+'''
+starter = '''
+function createModelBinding(initialValue) {
+  return { props: { modelValue: initialValue }, emit() { return false; }, emitted: [], value: initialValue };
+}
+'''
+solution = '''
+function createModelBinding(initialValue) {
+  let current = initialValue;
+  const emitted = [];
+  const props = { get modelValue() { return current; } };
+  function emit(event, payload) {
+    if (event !== 'update:modelValue') return false;
+    emitted.push({ event, payload });
+    current = payload;
+    return true;
+  }
+  return { props, emit, emitted, get value() { return current; } };
+}
+'''
+tests = '''
+test('prop ban đầu và giá trị binding giống nhau', () => {
+  const binding = createModelBinding('hello');
+  expect(binding.props.modelValue).toBe('hello');
+  expect(binding.value).toBe('hello');
+});
+test('emit update:modelValue cập nhật prop và state cha', () => {
+  const binding = createModelBinding(1);
+  expect(binding.emit('update:modelValue', 2)).toBe(true);
+  expect(binding.props.modelValue).toBe(2);
+  expect(binding.value).toBe(2);
+});
+test('event cập nhật được ghi lại theo thứ tự', () => {
+  const binding = createModelBinding('a');
+  binding.emit('update:modelValue', 'b');
+  expect(binding.emitted).toEqual([{ event: 'update:modelValue', payload: 'b' }]);
+});
+test('event không được khai báo bị từ chối và không đổi state', () => {
+  const binding = createModelBinding(3);
+  expect(binding.emit('save', 4)).toBe(false);
+  expect(binding.value).toBe(3);
+  expect(binding.emitted).toEqual([]);
+});
+test('binding hỗ trợ mọi kiểu payload JavaScript', () => {
+  const value = { id: 7 };
+  const binding = createModelBinding(null);
+  binding.emit('update:modelValue', value);
+  expect(binding.props.modelValue).toBe(value);
+});
+'''
+hints = ["Dùng biến đóng để giữ state cha; prop có thể là getter đọc biến đó.", "Kiểm tra tên event trước khi ghi nhận payload."]
+explanation = "Bài tập biểu diễn hợp đồng mặc định của `v-model`: prop `modelValue` và event `update:modelValue`."
+sources = ["vue~3/guide/components/v-model", "vue~3/guide/components/events"]
+
+[[questions]]
+id = "vue-020"
+module = "vue-composables"
+type = "single"
+difficulty = 2
+prompt = "Một composable cài `window` listener trong setup. Cần làm gì để tránh rò rỉ khi component bị unmount?"
+options = ["Đăng ký cleanup qua `onUnmounted`", "Lưu listener trong computed", "Gọi listener thêm lần nữa", "Chuyển listener sang `v-memo`"]
+answer = [0]
+explanation = "Composable có thể đăng ký lifecycle hook khi được gọi trong setup để gỡ tài nguyên lúc component unmount."
+sources = ["vue~3/api/composition-api-lifecycle#onunmounted", "vue~3/api/composition-api-setup"]
+
+[[questions]]
+id = "vue-021"
+module = "vue-composables"
+type = "single"
+difficulty = 2
+prompt = "Ô tìm kiếm phát request sau mỗi ký tự khiến server bị gọi quá nhiều. Tiện ích VueUse nào phù hợp để cung cấp ref chỉ cập nhật sau một khoảng yên lặng?"
+options = ["`refDebounced`", "`refThrottled` chỉ khi cần cập nhật sau khoảng yên lặng", "`useEventListener`", "`useClipboard`"]
+answer = [0]
+explanation = "`refDebounced` tạo ref trễ theo một source ref; throttle giới hạn tần suất nhưng không có cùng ngữ nghĩa chờ yên lặng."
+sources = ["vueuse/shared/refdebounced/index"]
+
+[[questions]]
+id = "vue-022"
+module = "vue-composables"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các thực hành phù hợp khi viết composable."
+options = ["Đặt tên theo quy ước `use...` để nhận diện logic tái sử dụng", "Gọi composable ổn định trong setup nếu nó đăng ký lifecycle", "Luôn đặt mọi state vào biến module để mọi component dùng chung", "Dọn timer hoặc listener do composable tạo", "Tách composable theo mối quan tâm rõ ràng"]
+answer = [0, 1, 3, 4]
+explanation = "State module-level chỉ phù hợp khi chủ ý chia sẻ; mặc định nhiều composable nên giữ state theo từng lần gọi."
+sources = ["vue~3/guide/reusability/composables", "vue~3/api/composition-api-lifecycle"]
+
+[[questions]]
+id = "vue-023"
+module = "vue-composables"
+type = "fill"
+difficulty = 1
+prompt = '''
+Điền tên hàm VueUse chuyên tạo một function có debounce:
+```js
+const submitLater = {{blank}}(submit, 300)
+```
+'''
+blanks = [["useDebounceFn"]]
+explanation = "`useDebounceFn` bọc function để trì hoãn việc chạy đến sau khoảng yên lặng."
+sources = ["vueuse/shared/usedebouncefn/index"]
+
+[[questions]]
+id = "vue-024"
+module = "vue-composables"
+type = "essay"
+difficulty = 3
+prompt = "Thiết kế composable tìm kiếm có debounce và request bất đồng bộ. Nêu cách tránh response cũ ghi đè kết quả mới và cách dọn tài nguyên."
+keywords = [["debounce", "trì hoãn request"], ["cleanup", "hủy request", "abort"], ["stale", "response cũ", "kết quả cũ"], ["watch", "watcher"]]
+min_keywords = 3
+model_answer = '''Composable theo dõi query bằng `watch` và debounce trước khi gửi request để giảm số lần gọi. Trước lượt mới, cleanup hủy timer hoặc request cũ bằng AbortController; nếu API không hủy được thì dùng mã lượt để bỏ response cũ. Khi component unmount, cleanup cũng dọn timer và listener.'''
+explanation = "Cần kết hợp debounce với cleanup hoặc cơ chế bỏ kết quả stale; debounce riêng không giải quyết response về sai thứ tự."
+sources = ["vue~3/guide/essentials/watchers", "vueuse/shared/watchdebounced/index", "vueuse/shared/usedebouncefn/index"]
+
+[[questions]]
+id = "vue-025"
+module = "vue-composables"
+type = "code"
+difficulty = 2
+title = "useDebouncedRef với fake timers"
+prompt = '''
+Viết `useDebouncedRef(initialValue, delayMs)` bằng timer chuẩn, không dùng thư viện.
+- Trả object có getter/setter `.value`, cùng phương thức `cancel()` và `flush()`.
+- Gán `.value` lên lịch cập nhật sau `delayMs`; trước thời điểm đó getter vẫn trả giá trị đã commit.
+- Nhiều lần gán trong thời gian chờ chỉ commit giá trị cuối, tính lại khoảng chờ từ lần gán gần nhất.
+- `cancel()` bỏ giá trị đang chờ; `flush()` commit ngay giá trị chờ và trả về giá trị hiện tại.
+'''
+starter = '''
+function useDebouncedRef(initialValue, delayMs) {
+  return { value: initialValue, cancel() {}, flush() { return initialValue; } };
+}
+'''
+solution = '''
+function useDebouncedRef(initialValue, delayMs) {
+  let current = initialValue;
+  let pending;
+  let hasPending = false;
+  let timer = null;
+  function clearPendingTimer() {
+    if (timer !== null) { clearTimeout(timer); timer = null; }
+  }
+  const result = {
+    get value() { return current; },
+    set value(next) {
+      pending = next;
+      hasPending = true;
+      clearPendingTimer();
+      timer = setTimeout(() => {
+        timer = null;
+        if (hasPending) { current = pending; pending = undefined; hasPending = false; }
+      }, delayMs);
+    },
+    cancel() {
+      clearPendingTimer();
+      pending = undefined;
+      hasPending = false;
+    },
+    flush() {
+      if (!hasPending) return current;
+      clearPendingTimer();
+      current = pending;
+      pending = undefined;
+      hasPending = false;
+      return current;
+    }
+  };
+  return result;
+}
+'''
+tests = '''
+test('giữ giá trị cũ trước khi hết debounce', () => {
+  jest.useFakeTimers();
+  const value = useDebouncedRef('a', 100);
+  value.value = 'b';
+  jest.advanceTimersByTime(99);
+  expect(value.value).toBe('a');
+  jest.advanceTimersByTime(1);
+  expect(value.value).toBe('b');
+});
+test('gán liên tiếp chỉ commit giá trị cuối sau khoảng chờ mới', () => {
+  jest.useFakeTimers();
+  const value = useDebouncedRef(0, 50);
+  value.value = 1;
+  jest.advanceTimersByTime(40);
+  value.value = 2;
+  jest.advanceTimersByTime(49);
+  expect(value.value).toBe(0);
+  jest.advanceTimersByTime(1);
+  expect(value.value).toBe(2);
+});
+test('flush commit ngay và trả giá trị mới', () => {
+  jest.useFakeTimers();
+  const value = useDebouncedRef(1, 100);
+  value.value = 5;
+  expect(value.flush()).toBe(5);
+  expect(value.value).toBe(5);
+  jest.runAllTimers();
+  expect(value.value).toBe(5);
+});
+test('cancel bỏ giá trị chưa commit', () => {
+  jest.useFakeTimers();
+  const value = useDebouncedRef('old', 10);
+  value.value = 'new';
+  value.cancel();
+  jest.runAllTimers();
+  expect(value.value).toBe('old');
+});
+test('flush khi không có giá trị chờ trả giá trị hiện tại', () => {
+  jest.useFakeTimers();
+  const value = useDebouncedRef(7, 10);
+  expect(value.flush()).toBe(7);
+});
+'''
+hints = ["Lưu timer id, pending value và cờ cho biết có giá trị chờ; clear timer trước mỗi lần gán.", "`flush` và callback timer phải xóa trạng thái chờ để không commit cùng giá trị hai lần."]
+explanation = "Bài tập mô phỏng ref debounce tối giản; fake timers giúp kiểm tra chính xác biên thời gian mà không phải chờ thật."
+sources = ["vueuse/shared/refdebounced/index", "vueuse/shared/usedebouncefn/index"]
+
+[[questions]]
+id = "vue-026"
+module = "vue-router"
+type = "single"
+difficulty = 1
+prompt = "Trong route `/users/:id`, khi URL là `/users/42`, `42` thường nằm ở đâu?"
+options = ["`route.params.id`", "`route.query.id`", "`route.hash.id`", "`route.meta.id`"]
+answer = [0]
+explanation = "Segment động được đưa vào params; query string và fragment là các phần riêng của URL."
+sources = ["vue_router~5/guide/essentials/dynamic-matching"]
+
+[[questions]]
+id = "vue-027"
+module = "vue-router"
+type = "single"
+difficulty = 2
+prompt = "Guard đăng nhập không cho vào trang cần quyền và muốn đưa người dùng tới `/login`. Guard theo kiểu return-based nên trả gì?"
+options = ["`false`", "`true`", "`'/login'`", "Gọi `next()` hai lần"]
+answer = [2]
+explanation = "Trả về location để redirect; `false` hủy điều hướng hiện tại."
+sources = ["vue_router~5/guide/advanced/navigation-guards"]
+
+[[questions]]
+id = "vue-028"
+module = "vue-router"
+type = "single"
+difficulty = 3
+prompt = "Một ứng dụng SPA cần giảm bundle đầu tiên bằng cách chỉ tải trang báo cáo khi người dùng mở route. Cách cấu hình phù hợp là gì?"
+options = ["Khai báo `component: () => import('./Reports.vue')` trong route", "Import đồng bộ component vào mọi entry", "Dùng `v-html` để tải component", "Đặt route bên trong `v-memo`"]
+answer = [0]
+explanation = "Dynamic import làm route component được tải lười; Router xử lý promise component cho route."
+sources = ["vue_router~5/guide/advanced/lazy-loading"]
+
+[[questions]]
+id = "vue-029"
+module = "vue-router"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các nhận định đúng về Vue Router."
+options = ["`to.params` chứa giá trị segment động như `:id`", "Global guard async được Router chờ trước khi hoàn tất navigation", "Guard trả `false` yêu cầu tiếp tục điều hướng", "Route component dynamic import hỗ trợ lazy loading", "Navigation guard thay thế authorization phía server"]
+answer = [0, 1, 3]
+explanation = "`false` hủy điều hướng; guard phía client cải thiện UX nhưng không thay thế kiểm tra quyền ở server."
+sources = ["vue_router~5/guide/essentials/dynamic-matching", "vue_router~5/guide/advanced/navigation-guards", "vue_router~5/guide/advanced/lazy-loading"]
+
+[[questions]]
+id = "vue-030"
+module = "vue-router"
+type = "multiple"
+difficulty = 3
+prompt = "Chọn các bước hợp lý khi thêm route động vào router đang chạy."
+options = ["Cập nhật route matcher bằng API thêm route", "Nếu cần, gỡ route cũ bằng hàm disposer trả về", "Giả định sửa mảng cấu hình gốc sẽ tự cập nhật router", "Đặt catch-all trước route cụ thể để route cụ thể được ưu tiên", "Kiểm tra điều kiện để tránh thêm lặp route"]
+answer = [0, 1, 4]
+explanation = "Router cung cấp API runtime cho add/remove route; thay đổi cấu hình gốc không tự sửa matcher đã tạo."
+sources = ["vue_router~5/guide/advanced/dynamic-routing"]
+
+[[questions]]
+id = "vue-031"
+module = "vue-router"
+type = "fill"
+difficulty = 2
+prompt = '''
+Điền tên route parameter để khớp một segment động:
+```js
+{ path: '/users/:{{blank}}', component: UserPage }
+```
+'''
+blanks = [["id"]]
+explanation = "`:id` khai báo param tên `id`, có thể đọc từ `route.params.id`."
+sources = ["vue_router~5/guide/essentials/dynamic-matching"]
+
+[[questions]]
+id = "vue-032"
+module = "vue-router"
+type = "code"
+difficulty = 3
+title = "Matcher route có param và wildcard"
+prompt = '''
+Viết `createRouteMatcher(routes)` trả về hàm `match(path)`.
+- Route có dạng `{ path, name }`; hỗ trợ segment tĩnh, segment `:param` và segment `*` bắt phần đường dẫn còn lại.
+- Đường dẫn có thể bắt đầu bằng `/`; bỏ query string và fragment trước khi so khớp.
+- Trả `{ name, params }` cho route đầu tiên khớp, trong đó param động là chuỗi và wildcard lưu phần còn lại dưới khóa `pathMatch`.
+- Trả `null` nếu không có route. Các route được duyệt theo thứ tự khai báo; wildcard nên để sau route cụ thể.
+'''
+starter = '''
+function createRouteMatcher(routes) {
+  return function match(path) { return null; };
+}
+'''
+solution = '''
+function createRouteMatcher(routes) {
+  return function match(path) {
+    const pathname = path.split(/[?#]/)[0];
+    const actual = pathname.split('/').filter(Boolean);
+    for (const route of routes) {
+      const expected = route.path.split('/').filter(Boolean);
+      const params = {};
+      let index = 0;
+      let failed = false;
+      for (let i = 0; i < expected.length; i++) {
+        const segment = expected[i];
+        if (segment === '*') {
+          params.pathMatch = actual.slice(i).join('/');
+          index = actual.length;
+          break;
+        }
+        if (actual[i] === undefined) { failed = true; break; }
+        if (segment[0] === ':') params[segment.slice(1)] = actual[i];
+        else if (segment !== actual[i]) { failed = true; break; }
+        index = i + 1;
+      }
+      if (!failed && index === actual.length) return { name: route.name, params };
+    }
+    return null;
+  };
+}
+'''
+tests = '''
+test('khớp route tĩnh và root', () => {
+  const match = createRouteMatcher([{ path: '/', name: 'home' }, { path: '/about', name: 'about' }]);
+  expect(match('/')).toEqual({ name: 'home', params: {} });
+  expect(match('/about')).toEqual({ name: 'about', params: {} });
+});
+test('trích một param động', () => {
+  const match = createRouteMatcher([{ path: '/users/:id', name: 'user' }]);
+  expect(match('/users/42')).toEqual({ name: 'user', params: { id: '42' } });
+});
+test('trích nhiều param động', () => {
+  const match = createRouteMatcher([{ path: '/teams/:team/users/:id', name: 'member' }]);
+  expect(match('/teams/a/users/7').params).toEqual({ team: 'a', id: '7' });
+});
+test('wildcard lấy toàn bộ phần đường dẫn còn lại', () => {
+  const match = createRouteMatcher([{ path: '/files/*', name: 'files' }]);
+  expect(match('/files/a/b.txt')).toEqual({ name: 'files', params: { pathMatch: 'a/b.txt' } });
+});
+test('wildcard khớp phần còn lại rỗng và query bị bỏ qua', () => {
+  const match = createRouteMatcher([{ path: '/files/*', name: 'files' }]);
+  expect(match('/files?download=1')).toEqual({ name: 'files', params: { pathMatch: '' } });
+});
+test('route đầu tiên khớp được chọn, route dư segment không khớp', () => {
+  const match = createRouteMatcher([{ path: '/users/:id', name: 'user' }, { path: '*', name: 'not-found' }]);
+  expect(match('/users/2').name).toBe('user');
+  expect(match('/users/2/edit').name).toBe('not-found');
+  expect(match('/missing#top').params.pathMatch).toBe('missing');
+});
+'''
+hints = ["Tách path thành segment sau khi cắt query và fragment; bỏ segment rỗng do dấu slash đầu.", "Param động tiêu thụ một segment, còn wildcard gom các segment từ vị trí hiện tại."]
+explanation = "Bài tập mô phỏng lõi route matching để làm rõ params và catch-all; Vue Router còn có quy tắc ranking và cú pháp pattern phong phú hơn."
+sources = ["vue_router~5/guide/essentials/dynamic-matching", "vue_router~5/guide/essentials/route-matching-syntax"]
+
+[[questions]]
+id = "vue-033"
+module = "vue-router"
+type = "code"
+difficulty = 3
+title = "Navigation guard pipeline"
+prompt = '''
+Viết `async runGuards(guards, to, from)` thực thi các guard theo thứ tự.
+- Mỗi guard nhận `(to, from)` và có thể trả giá trị thường hoặc Promise.
+- `undefined` hoặc `true` cho phép chạy guard kế tiếp.
+- `false` dừng pipeline và trả `{ status: 'cancelled' }`.
+- String hoặc object location dừng pipeline và trả `{ status: 'redirect', target: result }`.
+- Nếu mọi guard cho phép, trả `{ status: 'allowed' }`. Lỗi từ guard được propagate.
+'''
+starter = '''
+async function runGuards(guards, to, from) {
+  return { status: 'allowed' };
+}
+'''
+solution = '''
+async function runGuards(guards, to, from) {
+  for (const guard of guards) {
+    const result = await guard(to, from);
+    if (result === false) return { status: 'cancelled' };
+    if (result !== undefined && result !== true) return { status: 'redirect', target: result };
+  }
+  return { status: 'allowed' };
+}
+'''
+tests = '''
+test('mọi guard cho phép thì navigation thành công', async () => {
+  const result = await runGuards([() => true, () => undefined], '/b', '/a');
+  expect(result).toEqual({ status: 'allowed' });
+});
+test('guard false hủy pipeline và không gọi guard sau', async () => {
+  let calls = 0;
+  const result = await runGuards([() => false, () => { calls++; }], '/b', '/a');
+  expect(result).toEqual({ status: 'cancelled' });
+  expect(calls).toBe(0);
+});
+test('location string tạo redirect', async () => {
+  const result = await runGuards([() => '/login'], '/private', '/home');
+  expect(result).toEqual({ status: 'redirect', target: '/login' });
+});
+test('location object tạo redirect', async () => {
+  const location = { name: 'login', query: { next: '/private' } };
+  const result = await runGuards([() => location], '/private', '/home');
+  expect(result).toEqual({ status: 'redirect', target: location });
+});
+test('guard async được chờ và chạy tuần tự', async () => {
+  const order = [];
+  const result = await runGuards([
+    async () => { order.push(1); return true; },
+    async () => { order.push(2); return undefined; }
+  ], '/b', '/a');
+  expect(order).toEqual([1, 2]);
+  expect(result.status).toBe('allowed');
+});
+test('lỗi guard được propagate', async () => {
+  let message = '';
+  try { await runGuards([async () => { throw new Error('guard failed'); }], '/b', '/a'); }
+  catch (error) { message = error.message; }
+  expect(message).toBe('guard failed');
+});
+'''
+hints = ["Dùng vòng lặp `for...of` để giữ thứ tự và `await` từng kết quả.", "Phân biệt rõ ba kết quả: tiếp tục, hủy và redirect; không chạy guard sau kết quả kết thúc."]
+explanation = "Guard pipeline dừng ngay khi một guard hủy hoặc redirect; điều này phản ánh quyết định điều hướng trước khi render route mới."
+sources = ["vue_router~5/guide/advanced/navigation-guards"]
+
+[[questions]]
+id = "vue-034"
+module = "vue-performance-state"
+type = "single"
+difficulty = 1
+prompt = "Ứng dụng có nhiều màn hình cùng đọc và cập nhật giỏ hàng, cần actions và devtools. Lựa chọn nào phù hợp để tổ chức state chia sẻ?"
+options = ["Pinia store", "Biến local trong một template", "`v-memo`", "`KeepAlive` cho toàn bộ state"]
+answer = [0]
+explanation = "Pinia tổ chức state dùng chung theo store với state, getters, actions và tích hợp devtools."
+sources = ["vue~3/guide/scaling-up/state-management"]
+
+[[questions]]
+id = "vue-035"
+module = "vue-performance-state"
+type = "single"
+difficulty = 2
+prompt = "Tab component đổi qua lại và người dùng cần giữ nguyên state form khi rời tab tạm thời. Cơ chế tích hợp nào phù hợp?"
+options = ["`<KeepAlive>`", "`v-html`", "`watchEffect`", "`shallowRef` cho mọi prop"]
+answer = [0]
+explanation = "KeepAlive cache instance component động, giúp giữ state khi component bị deactivated rồi activated lại."
+sources = ["vue~3/api/built-in-components#keepalive"]
+
+[[questions]]
+id = "vue-036"
+module = "vue-performance-state"
+type = "single"
+difficulty = 3
+prompt = "Một `v-memo` bỏ qua cập nhật subtree, nhưng UI giữ giá trị cũ sau khi `selectedId` thay đổi. Nguyên nhân có khả năng nhất là gì?"
+options = ["Dependency array thiếu `selectedId`", "`v-memo` tự cập nhật state thành immutable", "Pinia chặn mọi render", "Cần đổi mọi ref thành reactive"]
+answer = [0]
+explanation = "`v-memo` chỉ invalidation khi dependency trong array thay đổi; thiếu dependency có thể khiến subtree không được cập nhật."
+sources = ["vue~3/api/built-in-directives#v-memo"]
+
+[[questions]]
+id = "vue-037"
+module = "vue-performance-state"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các nhận định đúng về state và hiệu năng Vue."
+options = ["Pinia phù hợp cho state chia sẻ có cấu trúc", "KeepAlive có thể giữ instance trong bộ nhớ", "`v-memo` nên thêm trước khi đo bất kỳ vấn đề render nào", "Dependency thiếu trong `v-memo` có thể làm giao diện stale", "Cache component không có giới hạn tài nguyên"]
+answer = [0, 1, 3]
+explanation = "KeepAlive tiêu thụ bộ nhớ; tối ưu nên dựa trên đo lường, và `v-memo` đòi hỏi dependency đầy đủ."
+sources = ["vue~3/guide/best-practices/performance", "vue~3/api/built-in-components#keepalive", "vue~3/api/built-in-directives#v-memo"]
+
+[[questions]]
+id = "vue-038"
+module = "vue-performance-state"
+type = "fill"
+difficulty = 1
+prompt = '''
+Điền tên component tích hợp để cache component động giữa các lần chuyển màn hình:
+```html
+<{{blank}}><component :is="currentTab" /></{{blank}}>
+```
+'''
+blanks = [["KeepAlive"], ["KeepAlive"]]
+explanation = "`KeepAlive` cache instance component động; có thể giới hạn cache bằng `include`, `exclude` hoặc `max`."
+sources = ["vue~3/api/built-in-components#keepalive"]
+
+[[questions]]
+id = "vue-039"
+module = "vue-performance-state"
+type = "essay"
+difficulty = 3
+prompt = "Đề xuất cách tối ưu một danh sách Vue lớn đang render chậm. Nêu cách đo, ít nhất hai hướng xử lý và một rủi ro của memoization hoặc cache."
+keywords = [["profile", "đo", "profiling"], ["key", "stable key", "key ổn định"], ["virtual", "virtualization", "ảo hóa"], ["memo", "v-memo", "memoization"], ["cache", "keepalive", "bộ nhớ"]]
+min_keywords = 3
+model_answer = '''Dùng Vue DevTools hoặc browser profiler để đo component và subtree gây render chậm. Kiểm tra key ổn định, giảm component cập nhật không cần thiết, phân trang hoặc virtualization cho danh sách rất dài; chỉ thử `v-memo` sau khi đo. Memoization thiếu dependency có thể giữ UI stale, còn KeepAlive cache quá nhiều instance làm tăng bộ nhớ.'''
+explanation = "Tối ưu tốt bắt đầu bằng đo lường, chọn giải pháp theo nguyên nhân và nêu đánh đổi cụ thể."
+sources = ["vue~3/guide/best-practices/performance", "vue~3/api/built-in-directives#v-memo"]

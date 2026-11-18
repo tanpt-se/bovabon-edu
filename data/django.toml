@@ -1,0 +1,991 @@
+id = "django"
+title = "Django"
+icon = "🎸"
+color = "#0c4b33"
+group = "Backend"
+docs = ["django~6.0"]
+description = "Xây dựng ứng dụng web với Django: cấu trúc project, URLconf, ORM, form, template, phân quyền, API, bảo mật và triển khai."
+
+[[modules]]
+id = "django-project"
+title = "Project, app, settings & URLconf"
+description = "Cấu trúc project/app, cấu hình settings, URL resolver, FBV và CBV."
+sources = ["django~6.0/intro/tutorial01", "django~6.0/intro/tutorial02", "django~6.0/topics/settings", "django~6.0/topics/http/urls", "django~6.0/topics/http/views", "django~6.0/ref/class-based-views/base"]
+lesson = '''
+### Project và app
+| Thành phần | Vai trò |
+|---|---|
+| Project | Cấu hình và kết nối các app của một website |
+| App | Một vùng chức năng có thể tái sử dụng, như blog hoặc billing |
+| settings.py | Cấu hình app đã cài, database, middleware và bảo mật |
+| urls.py | Khai báo bảng URL patterns và chuyển tiếp tới view |
+
+Một project thường có manage.py và package cấu hình chứa settings.py, urls.py, asgi.py, wsgi.py. App được tạo riêng, khai báo trong INSTALLED_APPS và có thể có models.py, views.py, urls.py. URLconf cấp project thường dùng include() để chuyển nhánh URL sang app.
+
+~~~python
+urlpatterns = [
+    path("articles/<int:pk>/", views.detail, name="article-detail"),
+    path("news/", include("news.urls")),
+]
+~~~
+
+URL patterns được xét theo thứ tự; converter int truyền pk vào view dưới dạng số nguyên. FBV là hàm nhận request và trả response. CBV gom hành vi theo class; as_view() tạo callable để router gọi và dispatch theo HTTP method.
+
+Lỗi hay gặp: quên thêm app vào INSTALLED_APPS, đặt URL tổng quát trước URL cụ thể, hoặc gọi CBV trực tiếp thay vì dùng as_view(). Không đưa secret key vào mã nguồn.
+'''
+
+[[modules]]
+id = "django-orm"
+title = "Model, migration & QuerySet"
+description = "Schema qua model/migration, truy vấn lười, tối ưu quan hệ, biểu thức và transaction."
+sources = ["django~6.0/topics/db/models", "django~6.0/topics/db/queries", "django~6.0/ref/models/querysets", "django~6.0/ref/models/expressions", "django~6.0/topics/db/optimization", "django~6.0/topics/db/aggregation", "django~6.0/topics/db/transactions"]
+lesson = '''
+### Mô hình và truy vấn
+Model mô tả dữ liệu, field và quan hệ; migration là lịch sử thay đổi schema. makemigrations tạo migration từ khác biệt model, còn migrate áp dụng chúng lên database. QuerySet mô tả truy vấn và thường chưa đọc dữ liệu cho tới khi được đánh giá, chẳng hạn khi lặp hoặc chuyển thành list.
+
+| Nhu cầu | Công cụ |
+|---|---|
+| FK hoặc OneToOne, lấy cùng hàng | select_related |
+| ManyToMany hoặc quan hệ ngược | prefetch_related |
+| So sánh/ cập nhật bằng giá trị ở DB | F |
+| Ghép điều kiện phức tạp, gồm OR | Q |
+| Giá trị trên từng object | annotate |
+| Một kết quả tổng hợp | aggregate |
+| Gom nhiều thao tác thành một đơn vị | transaction.atomic |
+
+~~~python
+active = Article.objects.filter(published=True).order_by("-created_at")
+~~~
+
+Các thao tác QuerySet có thể nối tiếp và thông thường vẫn chưa chạy SQL ngay. Tối ưu quan hệ giúp tránh N+1; hãy đo truy vấn trước khi thêm tối ưu. Dùng transaction.atomic cho thay đổi cần thành công hoặc rollback cùng nhau.
+
+Lỗi hay gặp: nhầm makemigrations với migrate, gọi prefetch_related cho FK đơn, hoặc lấy từng quan hệ trong vòng lặp mà không kiểm tra số truy vấn.
+'''
+
+[[modules]]
+id = "django-forms"
+title = "Template, Form & phân trang"
+description = "Render HTML an toàn, làm sạch dữ liệu theo field và toàn form, chia trang kết quả."
+sources = ["django~6.0/topics/templates", "django~6.0/ref/templates/language", "django~6.0/ref/templates/builtins", "django~6.0/topics/forms/index", "django~6.0/ref/forms/api", "django~6.0/ref/forms/validation", "django~6.0/ref/paginator"]
+lesson = '''
+### Hiển thị và nhận dữ liệu
+Django template tách phần trình bày khỏi view. Autoescape được bật mặc định cho biến trong HTML, giúp dữ liệu người dùng không bị diễn giải thành markup; tránh đánh dấu dữ liệu không tin cậy là safe. Với POST dùng session/cookie, form cần token CSRF và view cần kiểm tra dữ liệu server-side.
+
+Quy trình validation của Form gồm làm sạch từng field, gọi clean_<field>(), sau đó gọi clean() cho quy tắc giữa nhiều field. is_valid() kích hoạt quy trình; cleaned_data chứa giá trị đã chuẩn hóa, errors lưu theo field và lỗi chung có thể nằm ở __all__. Chỉ dùng dữ liệu đã validate để cập nhật model.
+
+| Công việc | Cách dùng |
+|---|---|
+| Kiểm tra một field | Field.clean() hoặc clean_<field>() |
+| So sánh nhiều field | Form.clean() |
+| Hiển thị lỗi | form.errors hoặc field.errors |
+| Chia kết quả | Paginator(queryset, per_page).get_page(number) |
+
+Paginator dùng số trang bắt đầu từ 1. get_page() xử lý số trang sai theo cách thân thiện; page() phù hợp khi muốn InvalidPage rõ ràng.
+
+Lỗi hay gặp: chỉ dựa vào validation phía trình duyệt, quên token CSRF, tắt autoescape tùy tiện, hoặc giả định trang đầu có số 0.
+'''
+
+[[modules]]
+id = "django-request"
+title = "Admin, auth, middleware & signals"
+description = "Quản trị nội bộ, xác thực và quyền nhóm, chuỗi middleware, tín hiệu."
+sources = ["django~6.0/ref/contrib/admin/index", "django~6.0/topics/auth/default", "django~6.0/ref/contrib/auth", "django~6.0/ref/middleware", "django~6.0/topics/http/middleware", "django~6.0/topics/signals"]
+lesson = '''
+### Quyền và vòng đời request
+Admin tạo giao diện quản trị từ model đã đăng ký; người dùng cần được xác thực, active và có quyền truy cập admin. is_staff quyết định quyền vào admin, nhưng không thay thế permission kiểm soát thao tác trên model. Group có thể cấp quyền model cho nhiều user; kiểm tra quyền bằng user.has_perm() thay vì tự tin vào tên nhóm ở view.
+
+Middleware là các lớp bọc quanh request/response. Middleware đầu tiên trong settings.MIDDLEWARE nhận request trước; response quay ngược qua các middleware. Factory nhận get_response và trả callable. Thứ tự ảnh hưởng tới session, authentication, CSRF và response.
+
+| Thành phần | Mục đích |
+|---|---|
+| authenticate() | Xác minh thông tin đăng nhập |
+| login() | Gắn user đã xác thực vào session |
+| Group / Permission | Chia sẻ quyền và kiểm soát hành động |
+| Signal | Thông báo sự kiện giữa các thành phần |
+
+Signals có thể giúp tích hợp các app, nhưng luồng nghiệp vụ cốt lõi thường dễ hiểu hơn khi gọi service một cách tường minh. Đăng ký receiver ở AppConfig.ready() và tránh đăng ký lặp.
+
+Lỗi hay gặp: nhầm đăng nhập với phân quyền, coi is_staff là quyền sửa mọi model, hoặc dùng signal ẩn đi side effect quan trọng.
+'''
+
+[[modules]]
+id = "django-api-security"
+title = "API, caching, bảo mật & deploy"
+description = "Khái niệm DRF, cache, CSRF/XSS/SQL injection và cấu hình triển khai."
+sources = ["django~6.0/topics/http/views", "django~6.0/topics/cache", "django~6.0/topics/security", "django~6.0/howto/csrf", "django~6.0/howto/deployment/checklist", "django~6.0/howto/deployment/wsgi/gunicorn", "django~6.0/howto/deployment/asgi/index"]
+lesson = '''
+### API và vận hành
+Django REST Framework là thư viện riêng dùng cùng Django, không thuộc core Django. Serializer chuyển đổi và validate dữ liệu; APIView/ViewSet xử lý request; router có thể tạo URL; authentication xác định danh tính, permission quyết định quyền, throttling giới hạn tần suất.
+
+Cache có thể đặt ở mức site, view hoặc dữ liệu. Chọn cache key và thời hạn dựa trên dữ liệu thực tế; nội dung cá nhân hóa cần được phân biệt theo user hoặc không đưa vào shared cache. Cache invalidation cần đi cùng cập nhật dữ liệu.
+
+| Rủi ro | Biện pháp |
+|---|---|
+| CSRF | Dùng token cho request thay đổi trạng thái dựa trên cookie/session |
+| XSS | Giữ autoescape, không đánh dấu HTML không tin cậy là safe |
+| SQL injection | Dùng ORM hoặc parameter binding, không nối input vào SQL |
+| Lộ cấu hình | DEBUG=False, secret từ môi trường, đặt ALLOWED_HOSTS |
+
+Production cần HTTPS, static files được thu thập/phục vụ phù hợp, log không chứa bí mật, và chạy check --deploy. Chọn WSGI hoặc ASGI cùng server production phù hợp với ứng dụng.
+
+Lỗi hay gặp: cho rằng CSRF thay thế authorization, cache response riêng tư công khai, hoặc triển khai development server với DEBUG=True.
+'''
+
+[[questions]]
+id = "dj-001"
+module = "django-project"
+type = "single"
+difficulty = 1
+prompt = "Một website có các vùng blog, billing và accounts dùng chung cấu hình database, middleware và URL gốc. Khái niệm nào bao quanh các vùng chức năng này?"
+options = ["Một project Django", "Một migration", "Một QuerySet", "Một template"]
+answer = [0]
+explanation = "Project chứa cấu hình và kết nối các app. Mỗi app nên tập trung vào một vùng chức năng có thể tái sử dụng."
+sources = ["django~6.0/intro/tutorial01"]
+
+[[questions]]
+id = "dj-002"
+module = "django-project"
+type = "single"
+difficulty = 2
+prompt = "Hai URL patterns cùng có thể khớp với /articles/archive/. Pattern nào được dùng?"
+options = ["Pattern xuất hiện đầu tiên trong danh sách khớp", "Pattern khớp chính xác nhất bất kể thứ tự", "Pattern nằm trong app có tên ngắn hơn", "Django chọn ngẫu nhiên"]
+answer = [0]
+explanation = "Django xét URL patterns theo thứ tự và dùng pattern đầu tiên khớp."
+sources = ["django~6.0/topics/http/urls"]
+
+[[questions]]
+id = "dj-003"
+module = "django-project"
+type = "single"
+difficulty = 1
+prompt = "Với route path(\"articles/<int:pk>/\", view), view nhận pk dưới dạng nào?"
+options = ["Chuỗi nguyên trạng", "Số nguyên", "Một đối tượng Model tự tải", "Một dict chứa toàn bộ request"]
+answer = [1]
+explanation = "IntConverter kiểm tra đoạn URL là chữ số và chuyển nó thành int; view vẫn phải truy vấn object nếu cần."
+sources = ["django~6.0/topics/http/urls"]
+
+[[questions]]
+id = "dj-004"
+module = "django-project"
+type = "single"
+difficulty = 2
+prompt = "Cách gắn một class-based view có tên ArticleView vào URLconf là gì?"
+options = ["ArticleView.as_view()", "ArticleView.dispatch()", "ArticleView.get()", "ArticleView()"]
+answer = [0]
+explanation = "as_view() tạo callable nhận request và tạo instance để dispatch theo HTTP method."
+sources = ["django~6.0/ref/class-based-views/base"]
+
+[[questions]]
+id = "dj-005"
+module = "django-project"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các phát biểu đúng khi chia URLconf của một project thành các app."
+options = ["Project URLconf có thể dùng include() để chuyển tiếp một nhánh URL", "Mỗi app có thể khai báo urlpatterns riêng", "include() tự thêm mọi app vào INSTALLED_APPS", "Đổi thứ tự URL patterns không bao giờ ảnh hưởng kết quả"]
+answer = [0, 1]
+explanation = "include() phân nhánh URLconf; app vẫn cần được cấu hình cài đặt riêng. Thứ tự patterns có ý nghĩa."
+sources = ["django~6.0/topics/http/urls", "django~6.0/intro/tutorial03"]
+
+[[questions]]
+id = "dj-006"
+module = "django-project"
+type = "fill"
+difficulty = 1
+prompt = "Trong package cấu hình chuẩn, biến {{blank}} trỏ tới URLconf gốc của project."
+blanks = [["ROOT_URLCONF"]]
+explanation = "ROOT_URLCONF chỉ tới module khai báo URL patterns gốc."
+sources = ["django~6.0/topics/settings"]
+
+[[questions]]
+id = "dj-007"
+module = "django-project"
+type = "essay"
+difficulty = 2
+prompt = "So sánh FBV và CBV, rồi nêu tình huống phù hợp để chọn mỗi kiểu."
+keywords = [["function-based view", "fbv"], ["class-based view", "cbv"], ["as_view"], ["dispatch"], ["tái sử dụng", "mixin"]]
+min_keywords = 3
+model_answer = '''FBV dùng function-based view, thuận tiện khi luồng xử lý nhỏ và tường minh. CBV dùng class-based view, gắn vào URL bằng as_view() và dispatch theo method; có thể chia sẻ hành vi bằng mixin. Chọn kiểu làm rõ nhất nghiệp vụ và giữ code dễ kiểm thử.'''
+explanation = "Cả FBV và CBV đều nhận request và trả response; khác nhau ở cách tổ chức và tái sử dụng hành vi."
+sources = ["django~6.0/topics/http/views", "django~6.0/ref/class-based-views/base"]
+
+[[questions]]
+id = "dj-008"
+module = "django-project"
+type = "code"
+difficulty = 2
+title = "Mô phỏng URL resolver"
+lang = "python"
+prompt = '''
+Viết hàm resolve(path, patterns) cho bộ URL patterns dạng danh sách tuple (route, view_name). Cả route và path không có dấu / ở đầu; dấu / cuối phải khớp chính xác.
+Hàm hỗ trợ đoạn tĩnh và hai converter: <int:pk> chỉ nhận chữ số rồi chuyển thành int; <slug:slug> nhận chữ cái ASCII, số, dấu gạch ngang và gạch dưới. Trả về dict {"view": view_name, "kwargs": dict_tham_so} cho pattern đầu tiên khớp; trả về None nếu không có pattern khớp.
+Ví dụ route articles/<int:pk>/ khớp articles/42/ và trả pk là số 42; articles/nope/ không khớp.
+'''
+starter = '''
+def resolve(path, patterns):
+    return None
+'''
+solution = '''
+import re
+
+def resolve(path, patterns):
+    for route, view_name in patterns:
+        if route.endswith("/") != path.endswith("/"):
+            continue
+        route_parts = route.rstrip("/").split("/") if route else []
+        path_parts = path.rstrip("/").split("/") if path else []
+        if len(route_parts) != len(path_parts):
+            continue
+        regex_parts = []
+        converters = []
+        for part in route_parts:
+            match = re.fullmatch(r"<(int|slug):([A-Za-z_]\w*)>", part)
+            if match:
+                converter, name = match.groups()
+                converters.append((name, converter))
+                regex_parts.append(r"([0-9]+)" if converter == "int" else r"([-a-zA-Z0-9_]+)")
+            else:
+                regex_parts.append(re.escape(part))
+        matched = re.fullmatch("/".join(regex_parts), "/".join(path_parts))
+        if matched:
+            kwargs = {}
+            for (name, converter), value in zip(converters, matched.groups()):
+                kwargs[name] = int(value) if converter == "int" else value
+            return {"view": view_name, "kwargs": kwargs}
+    return None
+'''
+tests = '''
+@test("chuyển int và giữ đúng view")
+def _():
+    routes = [("articles/<int:pk>/", "detail")]
+    assert resolve("articles/42/", routes) == {"view": "detail", "kwargs": {"pk": 42}}
+
+@test("slug có dấu gạch ngang và gạch dưới")
+def _():
+    routes = [("tags/<slug:slug>/", "tag")]
+    assert resolve("tags/django_6-rocks/", routes) == {"view": "tag", "kwargs": {"slug": "django_6-rocks"}}
+
+@test("converter int từ chối chữ")
+def _():
+    assert resolve("articles/abc/", [("articles/<int:pk>/", "detail")]) is None
+
+@test("slug từ chối dấu chấm")
+def _():
+    assert resolve("tags/a.b/", [("tags/<slug:slug>/", "tag")]) is None
+
+@test("dấu slash cuối phải khớp")
+def _():
+    assert resolve("articles/12", [("articles/<int:pk>/", "detail")]) is None
+
+@test("trả None khi không có route")
+def _():
+    assert resolve("missing/", [("articles/<int:pk>/", "detail")]) is None
+'''
+hints = ["Tách route và path theo dấu /, rồi so từng đoạn tương ứng.", "Dùng re.fullmatch để bảo đảm toàn bộ đoạn URL khớp converter."]
+explanation = "URL resolver vừa xác nhận cấu trúc path vừa chuyển dữ liệu converter thành kiểu phù hợp trước khi gọi view."
+sources = ["django~6.0/topics/http/urls"]
+
+[[questions]]
+id = "dj-009"
+module = "django-orm"
+type = "single"
+difficulty = 1
+prompt = "Một view tạo qs = Article.objects.filter(published=True) nhưng không lặp, không chuyển list và không yêu cầu giá trị nào khác. Điều gì thường xảy ra?"
+options = ["QuerySet đã chạy SELECT ngay khi gọi filter", "QuerySet mới được mô tả; dữ liệu thường chưa tải", "Django ghi migration mới", "Django tự lưu mọi Article"]
+answer = [1]
+explanation = "QuerySet lazy; filter() xây dựng truy vấn, còn việc đánh giá như lặp hoặc list() mới lấy kết quả."
+sources = ["django~6.0/topics/db/queries"]
+
+[[questions]]
+id = "dj-010"
+module = "django-orm"
+type = "single"
+difficulty = 2
+prompt = "Trang hiển thị nhiều Article cùng một ForeignKey author và cần đọc author.name cho từng hàng. Cách tối ưu phù hợp nhất là gì?"
+options = ["prefetch_related(\"author\")", "select_related(\"author\")", "annotate(\"author\")", "bulk_create(\"author\")"]
+answer = [1]
+explanation = "select_related dùng JOIN cho ForeignKey và OneToOne; prefetch_related phù hợp hơn với quan hệ nhiều-nhiều hoặc chiều ngược."
+sources = ["django~6.0/topics/db/optimization", "django~6.0/ref/models/querysets"]
+
+[[questions]]
+id = "dj-011"
+module = "django-orm"
+type = "single"
+difficulty = 1
+prompt = "Sau khi sửa field trên model, quy trình nào tạo file migration rồi áp dụng thay đổi vào database?"
+options = ["migrate rồi makemigrations", "makemigrations rồi migrate", "runserver rồi collectstatic", "check rồi flush"]
+answer = [1]
+explanation = "makemigrations ghi nhận thay đổi schema thành migration; migrate áp dụng migration vào database."
+sources = ["django~6.0/topics/db/models", "django~6.0/intro/tutorial02"]
+
+[[questions]]
+id = "dj-012"
+module = "django-orm"
+type = "single"
+difficulty = 2
+prompt = "Một thao tác cần tạo Order và trừ tồn kho; nếu một bước lỗi thì cả hai thay đổi phải rollback. Nên dùng gì?"
+options = ["transaction.atomic()", "select_related()", "get_or_create() cho toàn bộ view", "makemigrations"]
+answer = [0]
+explanation = "transaction.atomic() tạo ranh giới transaction; lỗi chưa được xử lý trong khối khiến thay đổi trong khối rollback."
+sources = ["django~6.0/topics/db/transactions"]
+
+[[questions]]
+id = "dj-013"
+module = "django-orm"
+type = "multiple"
+difficulty = 3
+prompt = "Chọn các phát biểu đúng về biểu thức ORM."
+options = ["Q có thể ghép điều kiện bằng OR", "F cho phép database so sánh hoặc cập nhật dựa trên giá trị field", "F luôn tải mọi hàng về Python trước khi so sánh", "Q chỉ dùng được với aggregate"]
+answer = [0, 1]
+explanation = "Q biểu diễn điều kiện phức tạp như OR; F tham chiếu field trong SQL để tránh đọc-sửa-ghi ở Python."
+sources = ["django~6.0/ref/models/expressions"]
+
+[[questions]]
+id = "dj-014"
+module = "django-orm"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn hai mô tả đúng về annotate() và aggregate()."
+options = ["annotate() thêm giá trị tính toán cho từng object trong kết quả", "aggregate() trả về kết quả tổng hợp cho toàn QuerySet", "aggregate() tự thêm một thuộc tính vào mỗi object", "annotate() luôn tạo một hàng duy nhất"]
+answer = [0, 1]
+explanation = "annotate gắn biểu thức theo từng object/nhóm trong kết quả; aggregate rút ra một dict các giá trị tổng hợp."
+sources = ["django~6.0/topics/db/aggregation"]
+
+[[questions]]
+id = "dj-015"
+module = "django-orm"
+type = "fill"
+difficulty = 1
+prompt = "Điền tên context manager chuẩn để nhóm thay đổi database trong một transaction: transaction.{{blank}}"
+blanks = [["atomic"]]
+explanation = "transaction.atomic() cung cấp ranh giới commit/rollback."
+sources = ["django~6.0/topics/db/transactions"]
+
+[[questions]]
+id = "dj-016"
+module = "django-orm"
+type = "essay"
+difficulty = 3
+prompt = "Một danh sách bài viết tạo thêm một query cho mỗi tác giả khi render. Giải thích nguyên nhân và cách chọn biện pháp giảm N+1."
+keywords = [["n+1", "n + 1"], ["select_related"], ["foreign key", "fk", "one-to-one"], ["prefetch_related"], ["many-to-many", "many to many", "reverse relation"]]
+min_keywords = 3
+model_answer = '''Đây là vấn đề N+1: query danh sách rồi thêm query cho từng quan hệ. Với ForeignKey hoặc OneToOne, dùng select_related để JOIN. Với ManyToMany hoặc quan hệ ngược, dùng prefetch_related để lấy dữ liệu theo batch. Kiểm tra số query để xác nhận hiệu quả.'''
+explanation = "Chọn chiến lược theo loại quan hệ; cả hai API nhằm tránh query lặp trong vòng lặp."
+sources = ["django~6.0/topics/db/optimization", "django~6.0/ref/models/querysets"]
+
+[[questions]]
+id = "dj-017"
+module = "django-orm"
+type = "code"
+difficulty = 3
+title = "QuerySet lazy tối giản"
+lang = "python"
+prompt = '''
+Tạo class QuerySet(rows, metrics=None) hỗ trợ filter(**criteria), exclude(**criteria), order_by(*fields) và lặp qua kết quả. Mỗi hàm chaining trả về QuerySet mới, không sửa object cũ. Các filter/exclude chỉ hỗ trợ so sánh bằng chính xác theo tên field; order_by nhận tên field tăng dần hoặc tiền tố - để giảm dần.
+Truy vấn chỉ được thực thi khi bắt đầu lặp. Mỗi lần lặp tăng metrics["executions"] đúng một lần; nếu metrics không được truyền, khởi tạo dict với executions bằng 0. Các order_by nối tiếp thay thế thứ tự trước đó.
+'''
+starter = '''
+class QuerySet:
+    def __init__(self, rows, metrics=None):
+        self.rows = rows
+        self.metrics = metrics if metrics is not None else {"executions": 0}
+
+    def filter(self, **criteria):
+        return self
+
+    def exclude(self, **criteria):
+        return self
+
+    def order_by(self, *fields):
+        return self
+
+    def __iter__(self):
+        return iter([])
+'''
+solution = '''
+class QuerySet:
+    def __init__(self, rows, metrics=None, filters=None, ordering=()):
+        self.rows = rows
+        self.metrics = metrics if metrics is not None else {"executions": 0}
+        self.filters = list(filters or [])
+        self.ordering = tuple(ordering)
+
+    def filter(self, **criteria):
+        return QuerySet(self.rows, self.metrics, self.filters + [("include", criteria)], self.ordering)
+
+    def exclude(self, **criteria):
+        return QuerySet(self.rows, self.metrics, self.filters + [("exclude", criteria)], self.ordering)
+
+    def order_by(self, *fields):
+        return QuerySet(self.rows, self.metrics, self.filters, fields)
+
+    @staticmethod
+    def matches(row, criteria):
+        return all(row.get(field) == value for field, value in criteria.items())
+
+    def __iter__(self):
+        self.metrics["executions"] = self.metrics.get("executions", 0) + 1
+        result = list(self.rows)
+        for mode, criteria in self.filters:
+            if mode == "include":
+                result = [row for row in result if self.matches(row, criteria)]
+            else:
+                result = [row for row in result if not self.matches(row, criteria)]
+        for field in reversed(self.ordering):
+            reverse = field.startswith("-")
+            key = field[1:] if reverse else field
+            result.sort(key=lambda row: row.get(key), reverse=reverse)
+        return iter(result)
+'''
+tests = '''
+@test("chaining chưa chạy query cho tới khi lặp")
+def _():
+    metrics = {"executions": 0}
+    rows = [{"status": "live", "name": "B"}, {"status": "draft", "name": "A"}]
+    qs = QuerySet(rows, metrics).filter(status="live").order_by("name")
+    assert metrics["executions"] == 0
+    assert list(qs) == [{"status": "live", "name": "B"}]
+    assert metrics["executions"] == 1
+
+@test("filter có thể nối nhiều điều kiện")
+def _():
+    rows = [{"team": "red", "active": True}, {"team": "red", "active": False}, {"team": "blue", "active": True}]
+    assert list(QuerySet(rows).filter(team="red", active=True)) == [{"team": "red", "active": True}]
+
+@test("exclude loại các hàng khớp")
+def _():
+    rows = [{"state": "open"}, {"state": "closed"}, {"state": "open"}]
+    assert list(QuerySet(rows).exclude(state="open")) == [{"state": "closed"}]
+
+@test("order_by hỗ trợ giảm dần")
+def _():
+    rows = [{"rank": 2}, {"rank": 5}, {"rank": 1}]
+    assert list(QuerySet(rows).order_by("-rank")) == [{"rank": 5}, {"rank": 2}, {"rank": 1}]
+
+@test("order_by sau cùng thay thứ tự cũ")
+def _():
+    rows = [{"name": "A", "id": 2}, {"name": "B", "id": 1}]
+    result = list(QuerySet(rows).order_by("name").order_by("-id"))
+    assert [row["id"] for row in result] == [2, 1]
+'''
+hints = ["Lưu các điều kiện dưới dạng operation để áp dụng khi __iter__ chạy.", "Tạo QuerySet mới cho mỗi method và chia sẻ cùng metrics dict."]
+explanation = "Mô phỏng tính lazy của QuerySet: chaining mô tả truy vấn, còn vòng lặp mới thực thi."
+sources = ["django~6.0/topics/db/queries", "django~6.0/ref/models/querysets"]
+
+[[questions]]
+id = "dj-018"
+module = "django-forms"
+type = "single"
+difficulty = 1
+prompt = "Một user nhập <script> vào trường title và template in biến bằng cú pháp thông thường. Hành vi mặc định nào giúp an toàn hơn?"
+options = ["Django template autoescape nội dung HTML", "Django luôn loại bỏ mọi thẻ khỏi database", "CSRF middleware biến nội dung thành text", "Template tự mã hóa toàn bộ response thành JSON"]
+answer = [0]
+explanation = "Autoescape mã hóa ký tự đặc biệt khi render biến trong HTML; dữ liệu vẫn cần validation phù hợp và không nên đánh dấu safe tùy tiện."
+sources = ["django~6.0/topics/templates", "django~6.0/ref/templates/language"]
+
+[[questions]]
+id = "dj-019"
+module = "django-forms"
+type = "single"
+difficulty = 2
+prompt = "Sau khi gọi form.is_valid() và nhận True, nên lấy giá trị field đã được chuyển đổi, làm sạch ở đâu?"
+options = ["form.cleaned_data", "form.data trực tiếp", "request.path", "form.errors"]
+answer = [0]
+explanation = "cleaned_data chứa giá trị đã qua field cleaning và validation; form.data vẫn là dữ liệu đầu vào."
+sources = ["django~6.0/ref/forms/api", "django~6.0/ref/forms/validation"]
+
+[[questions]]
+id = "dj-020"
+module = "django-forms"
+type = "single"
+difficulty = 1
+prompt = "Trong Django Paginator, trang đầu tiên có số trang nào?"
+options = ["0", "1", "-1", "Số lượng phần tử"]
+answer = [1]
+explanation = "Số trang của Paginator bắt đầu từ 1."
+sources = ["django~6.0/ref/paginator"]
+
+[[questions]]
+id = "dj-021"
+module = "django-forms"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các phát biểu đúng về quy trình validation của Django Form."
+options = ["Field.clean() chuyển đổi và kiểm tra dữ liệu của field", "clean_<field>() dùng cho quy tắc của một field", "Form.clean() có thể kiểm tra quan hệ giữa nhiều field", "is_valid() chỉ kiểm tra HTML ở trình duyệt"]
+answer = [0, 1, 2]
+explanation = "Django chạy validation server-side qua field cleaning, clean_<field>() và Form.clean(). Lỗi được gắn theo field hoặc lỗi chung."
+sources = ["django~6.0/ref/forms/validation"]
+
+[[questions]]
+id = "dj-022"
+module = "django-forms"
+type = "fill"
+difficulty = 1
+prompt = "Trong template form POST, điền tên tag bảo vệ CSRF: {% {{blank}} %}"
+blanks = [["csrf_token"]]
+explanation = "Tag csrf_token tạo hidden input chứa token để middleware xác minh request."
+sources = ["django~6.0/howto/csrf"]
+
+[[questions]]
+id = "dj-023"
+module = "django-forms"
+type = "fill"
+difficulty = 2
+prompt = "Điền thuộc tính chứa lỗi của form theo từng field: form.{{blank}}"
+blanks = [["errors"]]
+explanation = "form.errors cung cấp lỗi gắn với field và lỗi toàn form."
+sources = ["django~6.0/ref/forms/api"]
+
+[[questions]]
+id = "dj-024"
+module = "django-forms"
+type = "code"
+difficulty = 2
+title = "Form validation và lỗi theo field"
+lang = "python"
+prompt = '''
+Mô phỏng RegistrationForm nhận dict có email, password và confirm_password. is_valid() chuẩn hóa email bằng strip/lower, yêu cầu email có ký tự @, password dài ít nhất 8 ký tự, confirm_password không rỗng và phải bằng password.
+Hàm trả True chỉ khi hợp lệ. Kết quả đã làm sạch nằm trong cleaned_data; errors là dict ánh xạ tên field tới danh sách thông báo. Lỗi password không khớp phải gắn vào confirm_password. Mỗi lần gọi is_valid() phải tính lại trạng thái.
+'''
+starter = '''
+class RegistrationForm:
+    def __init__(self, data):
+        self.data = data
+        self.cleaned_data = {}
+        self.errors = {}
+
+    def is_valid(self):
+        return True
+'''
+solution = '''
+class RegistrationForm:
+    def __init__(self, data):
+        self.data = dict(data)
+        self.cleaned_data = {}
+        self.errors = {}
+
+    def add_error(self, field, message):
+        self.errors.setdefault(field, []).append(message)
+        self.cleaned_data.pop(field, None)
+
+    def clean_email(self, value):
+        email = str(value or "").strip().lower()
+        if not email or "@" not in email:
+            raise ValueError("Enter a valid email.")
+        return email
+
+    def clean_password(self, value):
+        password = str(value or "")
+        if len(password) < 8:
+            raise ValueError("Password must be at least 8 characters.")
+        return password
+
+    def clean_confirm_password(self, value):
+        confirmation = str(value or "")
+        if not confirmation:
+            raise ValueError("This field is required.")
+        return confirmation
+
+    def clean(self):
+        password = self.cleaned_data.get("password")
+        confirmation = self.cleaned_data.get("confirm_password")
+        if password is not None and confirmation is not None and password != confirmation:
+            self.add_error("confirm_password", "Passwords do not match.")
+
+    def is_valid(self):
+        self.cleaned_data = {}
+        self.errors = {}
+        cleaners = {
+            "email": self.clean_email,
+            "password": self.clean_password,
+            "confirm_password": self.clean_confirm_password,
+        }
+        for field, cleaner in cleaners.items():
+            try:
+                self.cleaned_data[field] = cleaner(self.data.get(field, ""))
+            except ValueError as error:
+                self.add_error(field, str(error))
+        self.clean()
+        return not self.errors
+'''
+tests = '''
+@test("chuẩn hóa dữ liệu hợp lệ")
+def _():
+    form = RegistrationForm({"email": "  USER@Example.com ", "password": "long-pass", "confirm_password": "long-pass"})
+    assert form.is_valid() is True
+    assert form.cleaned_data["email"] == "user@example.com"
+    assert form.errors == {}
+
+@test("email sai có lỗi đúng field")
+def _():
+    form = RegistrationForm({"email": "bad", "password": "long-pass", "confirm_password": "long-pass"})
+    assert form.is_valid() is False
+    assert "email" in form.errors
+    assert "password" not in form.errors
+
+@test("password ngắn có lỗi đúng field")
+def _():
+    form = RegistrationForm({"email": "a@b.test", "password": "short", "confirm_password": "short"})
+    assert form.is_valid() is False
+    assert "password" in form.errors
+
+@test("password không khớp gắn lỗi vào xác nhận")
+def _():
+    form = RegistrationForm({"email": "a@b.test", "password": "long-pass", "confirm_password": "other-pass"})
+    assert form.is_valid() is False
+    assert "confirm_password" in form.errors
+
+@test("thiếu xác nhận được báo theo field")
+def _():
+    form = RegistrationForm({"email": "a@b.test", "password": "long-pass"})
+    assert form.is_valid() is False
+    assert "confirm_password" in form.errors
+'''
+hints = ["Tách cleaner cho từng field và thu ValueError vào errors[field].", "Sau khi làm sạch field, so sánh hai password trong clean()."]
+explanation = "Mô phỏng field cleaning và validation giữa nhiều field; dữ liệu chỉ được sử dụng sau khi is_valid() trả True."
+sources = ["django~6.0/ref/forms/validation", "django~6.0/ref/forms/api"]
+
+[[questions]]
+id = "dj-025"
+module = "django-forms"
+type = "code"
+difficulty = 2
+title = "Phân trang danh sách"
+lang = "python"
+prompt = '''
+Viết paginate(items, page, per_page) cho danh sách Python. page bắt đầu từ 1 và per_page phải là số nguyên dương. Trả về dict gồm items (các phần tử của trang), number, num_pages, has_next và has_previous. Danh sách rỗng vẫn có một trang rỗng.
+Ném ValueError nếu page hoặc per_page không hợp lệ, hoặc page vượt phạm vi. Không sửa danh sách đầu vào.
+'''
+starter = '''
+def paginate(items, page, per_page):
+    return {"items": [], "number": page, "num_pages": 1, "has_next": False, "has_previous": False}
+'''
+solution = '''
+def paginate(items, page, per_page):
+    if not isinstance(page, int) or isinstance(page, bool) or page < 1:
+        raise ValueError("invalid page")
+    if not isinstance(per_page, int) or isinstance(per_page, bool) or per_page < 1:
+        raise ValueError("invalid page size")
+    num_pages = max(1, (len(items) + per_page - 1) // per_page)
+    if page > num_pages:
+        raise ValueError("page out of range")
+    start = (page - 1) * per_page
+    return {
+        "items": items[start:start + per_page],
+        "number": page,
+        "num_pages": num_pages,
+        "has_next": page < num_pages,
+        "has_previous": page > 1,
+    }
+'''
+tests = '''
+@test("trang đầu có next")
+def _():
+    result = paginate([1, 2, 3, 4, 5], 1, 2)
+    assert result == {"items": [1, 2], "number": 1, "num_pages": 3, "has_next": True, "has_previous": False}
+
+@test("trang cuối có phần tử còn lại")
+def _():
+    result = paginate([1, 2, 3, 4, 5], 3, 2)
+    assert result["items"] == [5]
+    assert result["has_next"] is False
+    assert result["has_previous"] is True
+
+@test("empty list có một trang rỗng")
+def _():
+    result = paginate([], 1, 10)
+    assert result["items"] == []
+    assert result["num_pages"] == 1
+
+@test("từ chối page ngoài phạm vi")
+def _():
+    try:
+        paginate([1], 2, 1)
+    except ValueError:
+        assert True
+    else:
+        assert False
+
+@test("từ chối page size bằng không")
+def _():
+    try:
+        paginate([1], 1, 0)
+    except ValueError:
+        assert True
+    else:
+        assert False
+'''
+hints = ["Tính num_pages bằng phép chia làm tròn lên, nhưng tối thiểu là 1.", "Vị trí bắt đầu của trang là (page - 1) * per_page."]
+explanation = "Phân trang cho người dùng dùng số trang từ 1; kiểm tra phạm vi trước khi cắt danh sách."
+sources = ["django~6.0/ref/paginator"]
+
+[[questions]]
+id = "dj-026"
+module = "django-request"
+type = "single"
+difficulty = 2
+prompt = "Với hai middleware A rồi B trong settings, request đi qua A rồi B rồi view. Theo chiều response thành công, thứ tự thông thường là gì?"
+options = ["A rồi B rồi view", "View rồi A rồi B", "View rồi B rồi A", "Response không đi qua middleware"]
+answer = [2]
+explanation = "Middleware tạo chuỗi lồng nhau: request đi vào theo thứ tự khai báo, response quay ra theo thứ tự ngược."
+sources = ["django~6.0/topics/http/middleware"]
+
+[[questions]]
+id = "dj-027"
+module = "django-request"
+type = "single"
+difficulty = 2
+prompt = "Một user có is_staff=True nhưng thiếu permission cần thiết để sửa model trong admin. Kết luận nào đúng?"
+options = ["is_staff tự cấp mọi quyền model", "is_staff cho phép vào admin, nhưng vẫn cần permission cho thao tác", "is_staff tương đương superuser", "User không cần đăng nhập vào admin"]
+answer = [1]
+explanation = "is_staff là điều kiện truy cập admin; add/change/delete/view permission vẫn quyết định hành động cụ thể."
+sources = ["django~6.0/ref/contrib/admin/index", "django~6.0/topics/auth/default"]
+
+[[questions]]
+id = "dj-028"
+module = "django-request"
+type = "single"
+difficulty = 1
+prompt = "Khi user đăng nhập thành công, API nào ghi user đã xác thực vào session của request?"
+options = ["login(request, user)", "authenticate(request, user)", "has_perm(request, user)", "include(request, user)"]
+answer = [0]
+explanation = "authenticate() xác minh thông tin; login() gắn user vào session."
+sources = ["django~6.0/topics/auth/default"]
+
+[[questions]]
+id = "dj-029"
+module = "django-request"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các phát biểu đúng về quản lý quyền trong Django."
+options = ["Group có thể cấp model permissions cho các thành viên", "user.has_perm() có thể kiểm tra một permission cụ thể", "is_staff tự chứng minh user có quyền xóa mọi object", "Authentication và authorization là cùng một bước"]
+answer = [0, 1]
+explanation = "Group gom quyền; has_perm kiểm tra quyền. Authentication xác định danh tính, còn authorization kiểm tra hành động được phép."
+sources = ["django~6.0/topics/auth/default", "django~6.0/ref/contrib/auth"]
+
+[[questions]]
+id = "dj-030"
+module = "django-request"
+type = "multiple"
+difficulty = 3
+prompt = "Một app dùng signal receiver để tích hợp hành vi khi model được lưu. Chọn hai thực hành giúp code dễ kiểm soát hơn."
+options = ["Đăng ký receiver ở AppConfig.ready()", "Dùng dispatch_uid khi cần tránh đăng ký receiver lặp", "Đưa toàn bộ nghiệp vụ cốt lõi vào signal để không thấy luồng gọi", "Dùng signal thay validation và quyền truy cập"]
+answer = [0, 1]
+explanation = "ready() là nơi đăng ký signal của app; dispatch_uid giúp tránh kết nối lặp. Signal không nên làm luồng nghiệp vụ chính trở nên ẩn."
+sources = ["django~6.0/topics/signals"]
+
+[[questions]]
+id = "dj-031"
+module = "django-request"
+type = "fill"
+difficulty = 1
+prompt = "Middleware factory nhận callable tiếp theo trong chuỗi qua tham số thường được đặt tên là {{blank}}."
+blanks = [["get_response"]]
+explanation = "get_response là callable tiếp theo; middleware có thể gọi nó để tiếp tục xử lý request."
+sources = ["django~6.0/topics/http/middleware"]
+
+[[questions]]
+id = "dj-032"
+module = "django-request"
+type = "code"
+difficulty = 2
+title = "Chuỗi middleware"
+lang = "python"
+prompt = '''
+Viết build_chain(middlewares, view). Mỗi middleware là factory nhận get_response và trả callable nhận request. Hàm phải lồng middleware theo thứ tự danh sách: middleware đầu tiên bọc các middleware sau cùng và view.
+Kết quả là callable nhận request. Middleware mẫu có thể gọi get_response(request), rồi xử lý response trước khi trả về.
+'''
+starter = '''
+def build_chain(middlewares, view):
+    return view
+'''
+solution = '''
+def build_chain(middlewares, view):
+    handler = view
+    for middleware in reversed(middlewares):
+        handler = middleware(handler)
+    return handler
+'''
+tests = '''
+@test("request đi xuôi và response quay ngược")
+def _():
+    events = []
+    def wrap(name):
+        def middleware(get_response):
+            def handler(request):
+                events.append(name + "-in")
+                response = get_response(request)
+                events.append(name + "-out")
+                return response
+            return handler
+        return middleware
+    def view(request):
+        events.append("view")
+        return {"ok": request}
+    response = build_chain([wrap("A"), wrap("B")], view)("req")
+    assert events == ["A-in", "B-in", "view", "B-out", "A-out"]
+    assert response == {"ok": "req"}
+
+@test("không có middleware vẫn gọi view")
+def _():
+    view = lambda request: request + "!"
+    assert build_chain([], view)("hello") == "hello!"
+
+@test("một middleware có thể sửa response")
+def _():
+    def middleware(get_response):
+        def handler(request):
+            response = get_response(request)
+            return response + "-wrapped"
+        return handler
+    assert build_chain([middleware], lambda request: request)("ok") == "ok-wrapped"
+
+@test("request được truyền nguyên vẹn")
+def _():
+    marker = {"id": 7}
+    seen = []
+    def middleware(get_response):
+        def handler(request):
+            seen.append(request)
+            return get_response(request)
+        return handler
+    assert build_chain([middleware], lambda request: "done")(marker) == "done"
+    assert seen == [marker]
+'''
+hints = ["Khởi tạo handler bằng view.", "Duyệt middleware từ cuối lên để middleware đầu tiên trở thành lớp ngoài cùng."]
+explanation = "Cấu trúc middleware là chuỗi wrapper lồng nhau: request đi vào từ ngoài, response quay về phía ngoài."
+sources = ["django~6.0/topics/http/middleware", "django~6.0/ref/middleware"]
+
+[[questions]]
+id = "dj-033"
+module = "django-api-security"
+type = "single"
+difficulty = 1
+prompt = "Django REST Framework là gì trong một ứng dụng Django?"
+options = ["Thư viện riêng bổ sung công cụ xây dựng Web API", "Một module bắt buộc trong Django core", "Database backend", "Middleware tự động tạo mọi endpoint"]
+answer = [0]
+explanation = "DRF là thư viện bên ngoài Django core; thường dùng serializer, API views/viewsets, authentication, permission và throttling."
+sources = ["django~6.0/topics/http/views"]
+
+[[questions]]
+id = "dj-034"
+module = "django-api-security"
+type = "single"
+difficulty = 2
+prompt = "Một view nhận POST thay đổi dữ liệu và xác thực người dùng bằng session cookie. Biện pháp nào cần để chống CSRF?"
+options = ["Yêu cầu và xác minh CSRF token", "Chỉ kiểm tra user đã đăng nhập", "Tắt CSRF middleware cho toàn site", "Chuyển POST thành GET"]
+answer = [0]
+explanation = "Cookie được trình duyệt gửi tự động; CSRF token chứng minh request hợp lệ từ luồng form/app dự kiến. Authentication không thay thế CSRF protection."
+sources = ["django~6.0/howto/csrf", "django~6.0/topics/security"]
+
+[[questions]]
+id = "dj-035"
+module = "django-api-security"
+type = "single"
+difficulty = 2
+prompt = "Ứng dụng cần triển khai production. Thiết lập nào là hướng đúng?"
+options = ["DEBUG=False, ALLOWED_HOSTS phù hợp và secret lấy từ môi trường", "DEBUG=True để có log chi tiết cho mọi người dùng", "Đưa SECRET_KEY lên repository để mọi worker dùng chung", "Dùng runserver làm server production"]
+answer = [0]
+explanation = "Checklist production yêu cầu tắt DEBUG, cấu hình host, giữ secret ngoài mã nguồn và dùng server triển khai phù hợp."
+sources = ["django~6.0/howto/deployment/checklist", "django~6.0/howto/deployment/wsgi/gunicorn"]
+
+[[questions]]
+id = "dj-036"
+module = "django-api-security"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các biện pháp giảm rủi ro XSS và SQL injection trong Django."
+options = ["Giữ autoescape khi render dữ liệu do user cung cấp", "Dùng ORM hoặc parameter binding cho giá trị truy vấn", "Đánh dấu mọi nội dung người dùng là safe", "Nối trực tiếp input vào raw SQL"]
+answer = [0, 1]
+explanation = "Autoescape xử lý hiển thị HTML; ORM và parameter binding tách input khỏi cú pháp SQL. Không tin dữ liệu đầu vào."
+sources = ["django~6.0/topics/security", "django~6.0/ref/templates/language", "django~6.0/topics/db/queries"]
+
+[[questions]]
+id = "dj-037"
+module = "django-api-security"
+type = "fill"
+difficulty = 2
+prompt = "Dùng API ORM nào thay vì nối trực tiếp chuỗi SQL để lọc theo input: Article.objects.{{blank}}(title=user_input)"
+blanks = [["filter"]]
+explanation = "QuerySet filter truyền giá trị dưới dạng tham số truy vấn; không tự nối input vào SQL."
+sources = ["django~6.0/topics/db/queries", "django~6.0/topics/security"]
+
+[[questions]]
+id = "dj-038"
+module = "django-api-security"
+type = "fill"
+difficulty = 1
+prompt = "Trong cấu hình production, DEBUG = {{blank}}."
+blanks = [["False"]]
+explanation = "DEBUG phải tắt trong production để không tiết lộ trang lỗi và thông tin nội bộ."
+sources = ["django~6.0/howto/deployment/checklist"]
+
+[[questions]]
+id = "dj-039"
+module = "django-api-security"
+type = "essay"
+difficulty = 3
+prompt = "Nêu các điểm cần kiểm tra trước khi triển khai một Django project lên production."
+keywords = [["debug=false", "debug = false"], ["allowed_hosts"], ["secret_key", "secret key"], ["https", "tls"], ["check --deploy", "deploy check"], ["static files", "collectstatic"], ["wsgi", "asgi"]]
+min_keywords = 3
+model_answer = '''Đặt DEBUG=False, cấu hình ALLOWED_HOSTS chính xác và lấy SECRET_KEY từ secret store hoặc environment. Bật HTTPS, kiểm tra cookie bảo mật, chạy check --deploy, cấu hình static files và chọn WSGI hoặc ASGI server production phù hợp.'''
+explanation = "Checklist production kiểm tra cấu hình, HTTPS, static files, secrets và server chạy ứng dụng."
+sources = ["django~6.0/howto/deployment/checklist", "django~6.0/howto/deployment/asgi/index"]
+
+[[questions]]
+id = "dj-040"
+module = "django-api-security"
+type = "code"
+difficulty = 2
+title = "Quyền dựa trên group"
+lang = "python"
+prompt = '''
+Viết has_permission(user, permission, group_permissions). user là dict có is_active, permissions và groups. group_permissions ánh xạ tên group tới tập hoặc danh sách permission.
+Trả True nếu user active và permission có trong quyền trực tiếp của user hoặc trong quyền của ít nhất một group user tham gia. User inactive luôn bị từ chối. is_staff không tự cấp quyền trong mô phỏng này.
+'''
+starter = '''
+def has_permission(user, permission, group_permissions):
+    return False
+'''
+solution = '''
+def has_permission(user, permission, group_permissions):
+    if not user.get("is_active", False):
+        return False
+    if permission in user.get("permissions", ()):
+        return True
+    for group in user.get("groups", ()):
+        if permission in group_permissions.get(group, ()):
+            return True
+    return False
+'''
+tests = '''
+@test("quyền được cấp qua group")
+def _():
+    user = {"is_active": True, "permissions": [], "groups": ["Editors"]}
+    groups = {"Editors": {"articles.change_article"}}
+    assert has_permission(user, "articles.change_article", groups) is True
+
+@test("user inactive bị từ chối dù group có quyền")
+def _():
+    user = {"is_active": False, "permissions": [], "groups": ["Editors"]}
+    groups = {"Editors": {"articles.change_article"}}
+    assert has_permission(user, "articles.change_article", groups) is False
+
+@test("quyền trực tiếp được chấp nhận")
+def _():
+    user = {"is_active": True, "permissions": {"articles.view_article"}, "groups": []}
+    assert has_permission(user, "articles.view_article", {}) is True
+
+@test("staff không tự có permission")
+def _():
+    user = {"is_active": True, "is_staff": True, "permissions": [], "groups": []}
+    assert has_permission(user, "articles.delete_article", {}) is False
+
+@test("group khác không cấp quyền")
+def _():
+    user = {"is_active": True, "permissions": [], "groups": ["Readers"]}
+    groups = {"Editors": {"articles.change_article"}}
+    assert has_permission(user, "articles.change_article", groups) is False
+'''
+hints = ["Từ chối user inactive trước khi xét các nguồn quyền.", "Duyệt từng group của user và kiểm tra permission trong mapping."]
+explanation = "Group là một nguồn cấp model permission; quyền truy cập vẫn cần kiểm tra trong từng request."
+sources = ["django~6.0/topics/auth/default", "django~6.0/ref/contrib/auth"]

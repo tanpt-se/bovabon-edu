@@ -1,0 +1,1529 @@
+id = "frontend"
+title = "Frontend Developer"
+icon = "🌐"
+color = "#f59e0b"
+description = "JavaScript cốt lõi, HTML/CSS, trình duyệt & hiệu năng web, TypeScript, tooling, testing và bảo mật."
+group = "Frontend"
+docs = ["javascript", "css", "dom", "html", "typescript"]
+
+# ============================================================ MODULES
+[[modules]]
+id = "fe-js"
+sources = ["javascript/global_objects/promise/allsettled", "javascript/operators/optional_chaining", "javascript/global_objects/proxy"]
+title = "JavaScript cốt lõi"
+description = "Scope, closure, this, prototype, event loop, Promise/async, ES2015+."
+lesson = '''
+### Ý chính
+- `var` có function scope và hoisting (giá trị `undefined`); `let`/`const` có block scope và **TDZ**.
+- **Closure**: hàm "nhớ" biến của scope nơi nó được tạo.
+- **this** phụ thuộc cách gọi: method `obj.f()` → `obj`; gọi trơn → `undefined` (strict) / global; `new` → object mới; arrow function **không có this riêng** (lấy từ scope ngoài); `call/apply/bind` gán tường minh.
+- **Event loop**: call stack → hết sync code → chạy **toàn bộ microtask** (Promise `.then`, `queueMicrotask`, `await`) → render → **1 macrotask** (setTimeout, I/O, event)…
+- `==` ép kiểu, `===` không. `Object.is(NaN, NaN) === true`.
+- Promise: `all` (fail-fast), `allSettled`, `race`, `any`.
+'''
+
+[[modules]]
+id = "fe-html-css"
+sources = ["css/selectors/:has", "css/at-rules/@container", "css/at-rules/@layer", "html/reference/elements/dialog"]
+title = "HTML, CSS & Accessibility"
+description = "Semantic HTML, box model, specificity, Flexbox/Grid, position, responsive, a11y."
+lesson = '''
+### CSS
+- **Box model**: `content-box` (mặc định, width chỉ tính content) vs `border-box` (width gồm padding + border).
+- **Specificity**: inline (1,0,0,0) > id (0,1,0,0) > class/attr/pseudo-class (0,0,1,0) > element/pseudo-element (0,0,0,1). `!important` vượt tất cả (trừ `!important` khác có specificity cao hơn).
+- **Position**: `relative` (offset so với chính nó), `absolute` (so với tổ tiên positioned gần nhất), `fixed` (viewport), `sticky`.
+- **Stacking context** tạo bởi `position + z-index`, `opacity < 1`, `transform`, `filter`…
+- Flexbox: 1 chiều; Grid: 2 chiều.
+- Đơn vị: `rem` (theo font-size root), `em` (theo phần tử cha/chính nó), `vh/vw`, `dvh`, `ch`, `%`.
+
+### HTML & a11y
+- Dùng thẻ ngữ nghĩa: `header`, `nav`, `main`, `article`, `section`, `button` (không dùng `div onclick`).
+- Ảnh có `alt`; input có `<label for>`; tương phản màu tối thiểu **4.5:1** (WCAG AA, chữ thường).
+- "No ARIA is better than bad ARIA" — ưu tiên thẻ native.
+'''
+
+[[modules]]
+id = "fe-browser"
+sources = ["dom/intersectionobserver", "dom/abortcontroller", "dom/window/requestanimationframe"]
+title = "Trình duyệt & Hiệu năng Web"
+description = "Critical rendering path, reflow/repaint, Core Web Vitals, cache HTTP, lưu trữ, event delegation."
+lesson = '''
+### Critical Rendering Path
+HTML → **DOM**, CSS → **CSSOM** → **Render tree** → **Layout** (reflow) → **Paint** → **Composite**.
+- CSS **chặn render**; `<script>` thường **chặn parse** HTML → dùng `defer` (chạy sau parse, theo thứ tự) hoặc `async` (chạy ngay khi tải xong, không theo thứ tự).
+- Thay đổi `transform`/`opacity` chỉ cần composite → animation rẻ nhất.
+
+### Core Web Vitals (2024+)
+| Chỉ số | Đo | Tốt |
+|---|---|---|
+| **LCP** | tốc độ hiển thị nội dung lớn nhất | ≤ 2.5s |
+| **INP** | độ phản hồi tương tác (thay FID) | ≤ 200ms |
+| **CLS** | độ ổn định layout | ≤ 0.1 |
+
+### Lưu trữ & cache
+- `localStorage` (bền, ~5MB, đồng bộ), `sessionStorage` (theo tab), cookie (gửi kèm request, `HttpOnly`, `Secure`, `SameSite`), IndexedDB (lớn, bất đồng bộ).
+- HTTP cache: `Cache-Control: max-age`, `no-cache` (phải revalidate), `no-store`, `ETag`/`If-None-Match` → `304`.
+'''
+
+[[modules]]
+id = "fe-ts"
+sources = ["typescript/docs/handbook/utility-types", "typescript/docs/handbook/2/mapped-types", "typescript/docs/handbook/2/conditional-types"]
+title = "TypeScript"
+description = "Kiểu cơ bản, union/intersection, generic, narrowing, utility types, `unknown` vs `any`."
+lesson = '''
+### Ý chính
+- `unknown` an toàn hơn `any`: phải **narrowing** trước khi dùng.
+- `type` vs `interface`: interface có thể **declaration merging**, `extends`; type linh hoạt hơn (union, mapped, conditional).
+- Narrowing: `typeof`, `instanceof`, `in`, **discriminated union** (`kind: 'a' | 'b'`), type guard `x is Foo`.
+- Utility types: `Partial`, `Required`, `Readonly`, `Pick`, `Omit`, `Record`, `ReturnType`, `Parameters`, `Awaited`, `NonNullable`.
+- `never` cho exhaustive check trong `switch`.
+- `as const` giữ kiểu literal; `satisfies` kiểm tra kiểu mà không làm mất kiểu suy luận.
+'''
+
+[[modules]]
+id = "fe-tooling"
+sources = ["html/reference/attributes/rel/preload", "dom/performance"]
+title = "Tooling, Testing & Bảo mật"
+description = "Bundler, tree-shaking, Vite, testing pyramid, XSS, CSRF, CORS, CSP."
+lesson = '''
+### Tooling
+- **Bundler** (Vite/Rollup, webpack, esbuild, Rspack, Turbopack): gom module, **tree-shaking** (cần ES modules), code splitting, minify.
+- Vite dev server dùng **native ESM** + esbuild pre-bundle → khởi động nhanh.
+- **Transpiler** (Babel/SWC/TS) chuyển cú pháp mới → cú pháp cũ; **polyfill** thêm API còn thiếu.
+
+### Testing
+- Pyramid/Trophy: nhiều **unit/integration**, ít **E2E** (Playwright/Cypress).
+- Jest/Vitest: `describe`, `test`, `expect`, mock (`vi.fn`/`jest.fn`), fake timers.
+
+### Bảo mật
+- **XSS**: chèn script qua dữ liệu chưa escape. React escape mặc định; cẩn thận `dangerouslySetInnerHTML`, `href="javascript:..."`.
+- **CSRF**: lợi dụng cookie tự gửi kèm. Chống bằng `SameSite`, CSRF token.
+- **CORS**: cơ chế **trình duyệt** cho phép server khai báo origin nào được đọc response (`Access-Control-Allow-Origin`). Preflight `OPTIONS` cho request "không đơn giản".
+- **CSP**: header giới hạn nguồn script/style được phép chạy.
+'''
+
+# ============================================================ JS
+[[questions]]
+id = "fe-001"
+module = "fe-js"
+type = "single"
+difficulty = 2
+prompt = '''
+Thứ tự in ra?
+
+```js
+console.log('A');
+setTimeout(() => console.log('B'), 0);
+Promise.resolve().then(() => console.log('C'));
+console.log('D');
+```
+'''
+options = ["A B C D", "A D C B", "A D B C", "A C D B"]
+answer = [1]
+explanation = "Sync trước (A, D) → microtask (C) → macrotask (B)."
+tags = ["event-loop"]
+
+[[questions]]
+id = "fe-002"
+module = "fe-js"
+type = "single"
+difficulty = 2
+prompt = '''
+Kết quả?
+
+```js
+for (var i = 0; i < 3; i++) {
+  setTimeout(() => console.log(i), 0);
+}
+```
+'''
+options = ["0 1 2", "3 3 3", "undefined ×3", "2 2 2"]
+answer = [1]
+explanation = "`var` có function scope → 3 callback cùng tham chiếu một `i`, khi chạy thì `i = 3`. Dùng `let` để mỗi vòng lặp có binding riêng → `0 1 2`."
+
+[[questions]]
+id = "fe-003"
+module = "fe-js"
+type = "single"
+difficulty = 2
+prompt = '''
+In ra gì?
+
+```js
+const obj = {
+  name: 'Bovabon',
+  regular() { return this.name; },
+  arrow: () => this && this.name,
+};
+const f = obj.regular;
+console.log(obj.regular(), obj.arrow(), f());
+```
+(chạy trong ES module — strict mode)
+'''
+options = ["Bovabon Bovabon Bovabon", "Bovabon undefined → lỗi TypeError khi gọi f()", "Bovabon Bovabon undefined", "undefined undefined undefined"]
+answer = [1]
+explanation = "Arrow function lấy `this` của module (`undefined`) → `undefined`. `f()` gọi trơn trong strict mode → `this` là `undefined` → `undefined.name` ném **TypeError**."
+
+[[questions]]
+id = "fe-004"
+module = "fe-js"
+type = "single"
+difficulty = 1
+prompt = "Kết quả của `typeof null`?"
+options = ["`'null'`", "`'object'`", "`'undefined'`", "`'number'`"]
+answer = [1]
+explanation = "Một \"bug lịch sử\" của JS từ phiên bản đầu, giữ lại để tương thích."
+
+[[questions]]
+id = "fe-005"
+module = "fe-js"
+type = "single"
+difficulty = 2
+prompt = "`Promise.all([p1, p2, p3])` hành xử thế nào khi `p2` reject?"
+options = [
+  "Đợi tất cả xong rồi trả về mảng kết quả kèm lỗi",
+  "Reject ngay với lỗi của p2 (fail-fast); p1, p3 vẫn chạy nhưng kết quả bị bỏ qua",
+  "Huỷ p1 và p3",
+  "Resolve với `undefined` ở vị trí p2",
+]
+answer = [1]
+explanation = "Dùng `Promise.allSettled` nếu cần mọi kết quả. Promise không thể bị huỷ — dùng `AbortController` cho fetch."
+
+[[questions]]
+id = "fe-006"
+module = "fe-js"
+type = "single"
+difficulty = 2
+prompt = "Truy cập biến `let` trước khi khai báo trong cùng block gây ra gì?"
+options = ["`undefined`", "`ReferenceError` (Temporal Dead Zone)", "`null`", "`SyntaxError`"]
+answer = [1]
+explanation = "`let`/`const` cũng được hoist nhưng nằm trong TDZ cho tới dòng khai báo."
+
+[[questions]]
+id = "fe-007"
+module = "fe-js"
+type = "multiple"
+difficulty = 2
+prompt = "Biểu thức nào cho kết quả `true`?"
+options = ["`NaN === NaN`", "`Object.is(NaN, NaN)`", "`null == undefined`", "`null === undefined`", "`[] == false`", "`0.1 + 0.2 === 0.3`"]
+answer = [1, 2, 4]
+explanation = "`[] == false`: `[]` → `''` → `0`, `false` → `0`. `0.1 + 0.2 = 0.30000000000000004`."
+
+[[questions]]
+id = "fe-008"
+module = "fe-js"
+type = "fill"
+difficulty = 1
+prompt = '''
+Sao chép nông (shallow copy) object và mảng bằng spread:
+
+```js
+const copy = { {{blank}}obj };
+const arr2 = [{{blank}}arr];
+```
+'''
+blanks = [["..."], ["..."]]
+explanation = "Spread chỉ copy 1 cấp. Deep copy: `structuredClone(obj)`."
+
+[[questions]]
+id = "fe-009"
+module = "fe-js"
+type = "fill"
+difficulty = 2
+prompt = '''
+Huỷ một request `fetch` đang chạy:
+
+```js
+const controller = new {{blank}}();
+fetch(url, { signal: controller.signal });
+controller.{{blank}}();
+```
+'''
+blanks = [["AbortController"], ["abort"]]
+explanation = "Fetch bị reject với `AbortError`. Dùng trong cleanup của useEffect để tránh race condition."
+
+[[questions]]
+id = "fe-010"
+module = "fe-js"
+type = "essay"
+difficulty = 2
+prompt = "Closure là gì? Cho một ví dụ ứng dụng thực tế."
+keywords = [
+  ["scope", "phạm vi", "lexical"],
+  ["nhớ", "ghi nhớ", "truy cập", "giữ tham chiếu", "remember"],
+  ["private", "riêng tư", "đóng gói", "encapsulation", "debounce", "memoize", "factory", "counter", "module", "hook"],
+]
+min_keywords = 2
+model_answer = '''
+Closure là khi một hàm **ghi nhớ và truy cập được biến trong lexical scope** nơi nó được tạo, kể cả khi hàm đó được gọi ở bên ngoài scope ấy.
+
+Ứng dụng: tạo **biến private** (module pattern, `createCounter()`), **debounce/throttle** (giữ `timerId`), **memoize** (giữ cache), function factory, event handler trong React hooks.
+'''
+explanation = "Closure cũng là nguồn gốc của lỗi stale closure trong React."
+
+[[questions]]
+id = "fe-011"
+module = "fe-js"
+type = "code"
+difficulty = 2
+title = "debounce"
+prompt = '''
+Viết `debounce(fn, wait)` trả về hàm mới chỉ gọi `fn` sau khi đã **ngừng gọi** `wait` ms.
+- Giữ nguyên `this` và tham số của **lần gọi cuối cùng**
+- Hàm trả về có thêm method `cancel()` huỷ lần gọi đang chờ
+
+Test dùng fake timers (`jest.advanceTimersByTime`).
+'''
+starter = '''
+function debounce(fn, wait) {
+  // TODO
+}
+'''
+solution = '''
+function debounce(fn, wait) {
+  let timer = null;
+  function debounced(...args) {
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      timer = null;
+      fn.apply(this, args);
+    }, wait);
+  }
+  debounced.cancel = () => { clearTimeout(timer); timer = null; };
+  return debounced;
+}
+'''
+tests = '''
+test('chỉ gọi 1 lần sau khi ngừng', () => {
+  const fn = jest.fn();
+  const d = debounce(fn, 100);
+  d(1); d(2); d(3);
+  jest.advanceTimersByTime(99);
+  expect(fn).toHaveBeenCalledTimes(0);
+  jest.advanceTimersByTime(1);
+  expect(fn).toHaveBeenCalledTimes(1);
+  expect(fn).toHaveBeenCalledWith(3);
+});
+test('mỗi lần gọi reset timer', () => {
+  const fn = jest.fn();
+  const d = debounce(fn, 100);
+  d(); jest.advanceTimersByTime(50);
+  d(); jest.advanceTimersByTime(50);
+  d(); jest.advanceTimersByTime(99);
+  expect(fn).toHaveBeenCalledTimes(0);
+  jest.advanceTimersByTime(1);
+  expect(fn).toHaveBeenCalledTimes(1);
+});
+test('giữ this', () => {
+  const obj = { v: 42, got: null, run: null };
+  obj.run = debounce(function () { obj.got = this.v; }, 10);
+  obj.run();
+  jest.advanceTimersByTime(10);
+  expect(obj.got).toBe(42);
+});
+test('cancel', () => {
+  const fn = jest.fn();
+  const d = debounce(fn, 100);
+  d();
+  d.cancel();
+  jest.advanceTimersByTime(500);
+  expect(fn).toHaveBeenCalledTimes(0);
+});
+test('gọi lại được sau khi đã chạy', () => {
+  const fn = jest.fn();
+  const d = debounce(fn, 10);
+  d('a'); jest.advanceTimersByTime(10);
+  d('b'); jest.advanceTimersByTime(10);
+  expect(fn).toHaveBeenCalledTimes(2);
+});
+'''
+hints = ["Dùng `function debounced(...args)` (không phải arrow) để nhận `this` của lời gọi.", "Arrow function trong `setTimeout` giữ được `this` của `debounced`."]
+explanation = "Debounce dùng cho ô tìm kiếm, resize; throttle dùng cho scroll."
+
+[[questions]]
+id = "fe-012"
+module = "fe-js"
+type = "code"
+difficulty = 2
+title = "throttle"
+prompt = '''
+Viết `throttle(fn, wait)`: gọi `fn` **ngay lần đầu** (leading), sau đó trong khoảng `wait` ms các lần gọi bị bỏ qua, nhưng **lần gọi cuối cùng** trong khoảng đó được thực hiện khi hết `wait` (trailing) với tham số mới nhất.
+
+Thời gian lấy bằng `Date.now()` hoặc timer (đều được fake).
+'''
+starter = '''
+function throttle(fn, wait) {
+  // TODO
+}
+'''
+solution = '''
+function throttle(fn, wait) {
+  let last = -Infinity;
+  let timer = null;
+  let pendingArgs = null;
+  let pendingThis = null;
+  function invoke() {
+    last = Date.now();
+    timer = null;
+    const args = pendingArgs, ctx = pendingThis;
+    pendingArgs = pendingThis = null;
+    fn.apply(ctx, args);
+  }
+  return function throttled(...args) {
+    pendingArgs = args;
+    pendingThis = this;
+    const remaining = wait - (Date.now() - last);
+    if (remaining <= 0) {
+      clearTimeout(timer);
+      invoke();
+    } else if (!timer) {
+      timer = setTimeout(invoke, remaining);
+    }
+  };
+}
+'''
+tests = '''
+test('leading: gọi ngay lần đầu', () => {
+  const fn = jest.fn();
+  const t = throttle(fn, 100);
+  t(1);
+  expect(fn).toHaveBeenCalledTimes(1);
+  expect(fn).toHaveBeenCalledWith(1);
+});
+test('bỏ qua trong khoảng wait, trailing với tham số cuối', () => {
+  const fn = jest.fn();
+  const t = throttle(fn, 100);
+  t(1); t(2); t(3);
+  expect(fn).toHaveBeenCalledTimes(1);
+  jest.advanceTimersByTime(100);
+  expect(fn).toHaveBeenCalledTimes(2);
+  expect(fn.mock.calls[1]).toEqual([3]);
+});
+test('tối đa 1 lần mỗi wait khi gọi liên tục', () => {
+  const fn = jest.fn();
+  const t = throttle(fn, 100);
+  for (let i = 0; i < 50; i++) { t(i); jest.advanceTimersByTime(10); }
+  expect(fn.mock.calls.length).toBeGreaterThan(4);
+  expect(fn.mock.calls.length).toBeLessThan(7);
+});
+test('không trailing nếu chỉ gọi 1 lần', () => {
+  const fn = jest.fn();
+  const t = throttle(fn, 100);
+  t();
+  jest.advanceTimersByTime(1000);
+  expect(fn).toHaveBeenCalledTimes(1);
+});
+'''
+hints = ["Lưu thời điểm gọi gần nhất `last`.", "Nếu chưa hết wait và chưa có timer → đặt timer cho phần thời gian còn lại."]
+explanation = "Throttle đảm bảo tần suất tối đa — phù hợp scroll, mousemove, resize."
+
+[[questions]]
+id = "fe-013"
+module = "fe-js"
+type = "code"
+difficulty = 3
+title = "Tự cài đặt Promise.all"
+prompt = '''
+Viết `promiseAll(iterable)` hành xử như `Promise.all`:
+- Resolve mảng kết quả **đúng thứ tự** đầu vào (không phải thứ tự hoàn thành)
+- Phần tử không phải promise được coi như đã resolve
+- Reject ngay với lỗi đầu tiên
+- Mảng rỗng → resolve `[]`
+'''
+starter = '''
+function promiseAll(iterable) {
+  // TODO
+}
+'''
+solution = '''
+function promiseAll(iterable) {
+  return new Promise((resolve, reject) => {
+    const items = Array.from(iterable);
+    const results = new Array(items.length);
+    let remaining = items.length;
+    if (remaining === 0) return resolve([]);
+    items.forEach((item, i) => {
+      Promise.resolve(item).then(
+        (v) => {
+          results[i] = v;
+          if (--remaining === 0) resolve(results);
+        },
+        reject
+      );
+    });
+  });
+}
+'''
+tests = '''
+const delay = (v, ms, fail) => new Promise((res, rej) => setTimeout(() => (fail ? rej(v) : res(v)), ms));
+test('giữ thứ tự đầu vào', async () => {
+  const p = promiseAll([delay('a', 30), delay('b', 10), 'c']);
+  jest.advanceTimersByTime(30);
+  expect(await p).toEqual(['a', 'b', 'c']);
+});
+test('mảng rỗng', async () => {
+  expect(await promiseAll([])).toEqual([]);
+});
+test('reject với lỗi đầu tiên', async () => {
+  const p = promiseAll([delay(1, 50), delay('x', 10, true), delay('y', 20, true)]);
+  jest.advanceTimersByTime(50);
+  let err;
+  try { await p; } catch (e) { err = e; }
+  expect(err).toBe('x');
+});
+test('nhận iterable (Set)', async () => {
+  expect(await promiseAll(new Set([1, Promise.resolve(2)]))).toEqual([1, 2]);
+});
+test('trả về Promise', () => {
+  expect(promiseAll([1]) instanceof Promise).toBe(true);
+});
+'''
+hints = ["Đếm số promise còn lại; ghi kết quả vào `results[i]`.", "`Promise.resolve(item)` chuẩn hoá giá trị thường thành promise."]
+explanation = "Câu hỏi phỏng vấn kinh điển để kiểm tra hiểu biết về Promise."
+
+[[questions]]
+id = "fe-014"
+module = "fe-js"
+type = "code"
+difficulty = 2
+title = "EventEmitter"
+prompt = '''
+Viết class `EventEmitter` với các method:
+- `on(event, listener)` → trả về hàm **unsubscribe**
+- `off(event, listener)`
+- `once(event, listener)` → chỉ gọi 1 lần
+- `emit(event, ...args)` → gọi listener theo thứ tự đăng ký, trả về `true` nếu có listener, ngược lại `false`
+
+Lưu ý: listener tự huỷ đăng ký trong lúc `emit` không được làm các listener khác bị bỏ sót.
+'''
+starter = '''
+class EventEmitter {
+  // TODO
+}
+'''
+solution = '''
+class EventEmitter {
+  constructor() { this.events = new Map(); }
+  on(event, listener) {
+    if (!this.events.has(event)) this.events.set(event, []);
+    this.events.get(event).push(listener);
+    return () => this.off(event, listener);
+  }
+  off(event, listener) {
+    const list = this.events.get(event);
+    if (!list) return;
+    const i = list.findIndex((l) => l === listener || l.__orig === listener);
+    if (i !== -1) list.splice(i, 1);
+  }
+  once(event, listener) {
+    const wrapper = (...args) => { this.off(event, wrapper); listener.apply(this, args); };
+    wrapper.__orig = listener;
+    return this.on(event, wrapper);
+  }
+  emit(event, ...args) {
+    const list = this.events.get(event);
+    if (!list || list.length === 0) return false;
+    [...list].forEach((l) => l.apply(this, args));
+    return true;
+  }
+}
+'''
+tests = '''
+test('on + emit với tham số', () => {
+  const e = new EventEmitter();
+  const fn = jest.fn();
+  e.on('msg', fn);
+  expect(e.emit('msg', 1, 2)).toBe(true);
+  expect(fn).toHaveBeenCalledWith(1, 2);
+});
+test('emit không có listener → false', () => {
+  expect(new EventEmitter().emit('x')).toBe(false);
+});
+test('unsubscribe', () => {
+  const e = new EventEmitter();
+  const fn = jest.fn();
+  const unsub = e.on('a', fn);
+  unsub();
+  e.emit('a');
+  expect(fn).toHaveBeenCalledTimes(0);
+});
+test('off', () => {
+  const e = new EventEmitter();
+  const fn = jest.fn();
+  e.on('a', fn);
+  e.off('a', fn);
+  e.emit('a');
+  expect(fn).toHaveBeenCalledTimes(0);
+});
+test('once', () => {
+  const e = new EventEmitter();
+  const fn = jest.fn();
+  e.once('a', fn);
+  e.emit('a', 1); e.emit('a', 2);
+  expect(fn).toHaveBeenCalledTimes(1);
+  expect(fn).toHaveBeenCalledWith(1);
+});
+test('thứ tự & tự huỷ trong lúc emit', () => {
+  const e = new EventEmitter();
+  const order = [];
+  e.once('a', () => order.push(1));
+  e.on('a', () => order.push(2));
+  e.emit('a');
+  expect(order).toEqual([1, 2]);
+});
+'''
+hints = ["Lưu listener bằng `Map<string, Function[]>`.", "Khi emit, duyệt trên **bản sao** của mảng listener."]
+explanation = "Pub/sub là nền tảng của DOM events, Node.js EventEmitter, và nhiều state manager."
+
+[[questions]]
+id = "fe-015"
+module = "fe-js"
+type = "code"
+difficulty = 2
+title = "memoize"
+prompt = '''
+Viết `memoize(fn, resolver?)` cache kết quả theo tham số:
+- Mặc định key = **tham số đầu tiên**
+- Nếu có `resolver(...args)` thì key = kết quả resolver
+- Hàm trả về có thuộc tính `cache` là một `Map`
+- Giữ `this`
+'''
+starter = '''
+function memoize(fn, resolver) {
+  // TODO
+}
+'''
+solution = '''
+function memoize(fn, resolver) {
+  function memoized(...args) {
+    const key = resolver ? resolver.apply(this, args) : args[0];
+    if (memoized.cache.has(key)) return memoized.cache.get(key);
+    const value = fn.apply(this, args);
+    memoized.cache.set(key, value);
+    return value;
+  }
+  memoized.cache = new Map();
+  return memoized;
+}
+'''
+tests = '''
+test('cache theo tham số đầu', () => {
+  const fn = jest.fn((x) => x * 2);
+  const m = memoize(fn);
+  expect(m(2)).toBe(4);
+  expect(m(2)).toBe(4);
+  expect(fn).toHaveBeenCalledTimes(1);
+});
+test('resolver', () => {
+  const fn = jest.fn((a, b) => a + b);
+  const m = memoize(fn, (a, b) => a + ':' + b);
+  m(1, 2); m(1, 2); m(1, 3);
+  expect(fn).toHaveBeenCalledTimes(2);
+});
+test('cache là Map', () => {
+  const m = memoize((x) => x);
+  m('k');
+  expect(m.cache instanceof Map).toBe(true);
+  expect(m.cache.get('k')).toBe('k');
+});
+test('cache cả giá trị undefined', () => {
+  const fn = jest.fn(() => undefined);
+  const m = memoize(fn);
+  m(1); m(1);
+  expect(fn).toHaveBeenCalledTimes(1);
+});
+test('giữ this', () => {
+  const obj = { base: 10, add: memoize(function (x) { return this.base + x; }) };
+  expect(obj.add(5)).toBe(15);
+});
+'''
+hints = ["Dùng `cache.has(key)` thay vì kiểm tra `cache.get(key) !== undefined`."]
+explanation = "Giống `_.memoize` của lodash."
+
+# ============================================================ HTML/CSS
+[[questions]]
+id = "fe-020"
+module = "fe-html-css"
+type = "single"
+difficulty = 1
+prompt = "Với `box-sizing: border-box`, `width: 200px; padding: 20px; border: 5px solid` thì chiều rộng hiển thị là?"
+options = ["200px", "250px", "240px", "210px"]
+answer = [0]
+explanation = "border-box: width bao gồm padding + border → content = 200 − 40 − 10 = 150px. Với content-box sẽ là 250px."
+
+[[questions]]
+id = "fe-021"
+module = "fe-html-css"
+type = "single"
+difficulty = 2
+prompt = "Selector nào có specificity **cao nhất**?"
+options = ["`.nav .item a`", "`#menu a`", "`ul li a:hover`", "`div.nav > ul > li`"]
+answer = [1]
+explanation = "`#menu a` = (1,0,1) — 1 id thắng mọi tổ hợp không có id. `.nav .item a` = (0,2,1)."
+
+[[questions]]
+id = "fe-022"
+module = "fe-html-css"
+type = "single"
+difficulty = 2
+prompt = "Phần tử `position: absolute` được định vị so với đâu?"
+options = [
+  "Luôn so với `body`",
+  "Tổ tiên gần nhất có `position` khác `static` (hoặc initial containing block nếu không có)",
+  "Phần tử cha trực tiếp",
+  "Viewport",
+]
+answer = [1]
+explanation = "Thường đặt `position: relative` cho cha để làm mốc. (Cha có `transform` cũng trở thành containing block cho `fixed`.)"
+
+[[questions]]
+id = "fe-023"
+module = "fe-html-css"
+type = "single"
+difficulty = 2
+prompt = "Khi nào chọn CSS Grid thay vì Flexbox?"
+options = [
+  "Khi bố cục **2 chiều** (hàng và cột cùng lúc), ví dụ layout trang, gallery",
+  "Khi căn giữa 1 phần tử",
+  "Grid không hỗ trợ responsive",
+  "Khi cần animation",
+]
+answer = [0]
+explanation = "Flexbox mạnh ở bố cục 1 chiều theo nội dung; Grid mạnh ở bố cục 2 chiều theo khung."
+
+[[questions]]
+id = "fe-024"
+module = "fe-html-css"
+type = "single"
+difficulty = 2
+prompt = "Vì sao nên dùng `<button>` thay vì `<div onclick>` cho nút bấm?"
+options = [
+  "Vì div không nhận được click",
+  "`<button>` có sẵn focus bằng bàn phím, kích hoạt bằng Enter/Space, role `button` cho screen reader",
+  "Vì button đẹp hơn",
+  "Vì div không thể style",
+]
+answer = [1]
+explanation = "Muốn div tương đương phải thêm `role=\"button\"`, `tabindex=\"0\"`, xử lý phím — dễ sai sót."
+
+[[questions]]
+id = "fe-025"
+module = "fe-html-css"
+type = "multiple"
+difficulty = 2
+prompt = "Thuộc tính nào tạo **stacking context** mới?"
+options = ["`opacity: 0.9`", "`transform: translateZ(0)`", "`position: relative; z-index: 1`", "`display: block`", "`isolation: isolate`", "`margin: 10px`"]
+answer = [0, 1, 2, 4]
+explanation = "Lý do vì sao `z-index: 9999` đôi khi \"không hoạt động\": phần tử bị giam trong stacking context của cha."
+
+[[questions]]
+id = "fe-026"
+module = "fe-html-css"
+type = "fill"
+difficulty = 1
+prompt = '''
+Căn giữa một phần tử theo cả 2 chiều bằng Flexbox:
+
+```css
+.parent {
+  display: flex;
+  {{blank}}: center;
+  {{blank}}: center;
+}
+```
+'''
+blanks = [["justify-content", "align-items"], ["align-items", "justify-content"]]
+unique_blanks = true
+explanation = "Hoặc với Grid: `display: grid; place-items: center;`."
+
+[[questions]]
+id = "fe-027"
+module = "fe-html-css"
+type = "fill"
+difficulty = 2
+prompt = '''
+Grid 3 cột co giãn đều, tự xuống hàng responsive với cột tối thiểu 200px:
+
+```css
+.grid {
+  display: grid;
+  grid-template-columns: repeat({{blank}}, minmax(200px, 1fr));
+}
+```
+'''
+blanks = [["auto-fill", "auto-fit"]]
+explanation = "`auto-fit` co các track rỗng lại, `auto-fill` giữ chúng."
+
+[[questions]]
+id = "fe-028"
+module = "fe-html-css"
+type = "essay"
+difficulty = 2
+prompt = "Nêu các nguyên tắc chính để một trang web **accessible** (a11y)."
+keywords = [
+  ["semantic", "ngữ nghĩa", "thẻ html"],
+  ["alt"],
+  ["bàn phím", "keyboard", "focus", "tab"],
+  ["tương phản", "contrast"],
+  ["label", "nhãn"],
+  ["aria"],
+]
+min_keywords = 3
+model_answer = '''
+- Dùng **HTML ngữ nghĩa** (`button`, `nav`, `main`, heading đúng cấp).
+- Ảnh có **alt** mô tả (ảnh trang trí `alt=""`).
+- Điều khiển được hoàn toàn bằng **bàn phím**, có **focus** rõ ràng, thứ tự tab hợp lý.
+- **Tương phản** màu đủ (WCAG AA 4.5:1), không chỉ dùng màu để truyền tải thông tin.
+- Form có **label**, thông báo lỗi rõ ràng.
+- Dùng **ARIA** đúng chỗ khi thẻ native không đủ (`aria-live`, `aria-expanded`), tôn trọng `prefers-reduced-motion`.
+'''
+explanation = "Kiểm tra bằng Lighthouse, axe DevTools và screen reader thật (VoiceOver/NVDA)."
+
+# ============================================================ BROWSER
+[[questions]]
+id = "fe-040"
+module = "fe-browser"
+type = "single"
+difficulty = 2
+prompt = "Khác biệt giữa `<script defer>` và `<script async>`?"
+options = [
+  "Không khác",
+  "`defer` chạy sau khi parse HTML xong và **theo thứ tự**; `async` chạy ngay khi tải xong, **không đảm bảo thứ tự**",
+  "`async` chặn parse HTML",
+  "`defer` chỉ dùng cho module",
+]
+answer = [1]
+explanation = "`type=\"module\"` mặc định hành xử như `defer`."
+
+[[questions]]
+id = "fe-041"
+module = "fe-browser"
+type = "single"
+difficulty = 2
+prompt = "Chỉ số Core Web Vitals nào đo **độ phản hồi khi tương tác** (thay thế FID từ 3/2024)?"
+options = ["LCP", "CLS", "INP", "TTFB"]
+answer = [2]
+explanation = "INP (Interaction to Next Paint) — tốt khi ≤ 200ms."
+
+[[questions]]
+id = "fe-042"
+module = "fe-browser"
+type = "single"
+difficulty = 2
+prompt = "Thay đổi thuộc tính CSS nào thường **rẻ nhất** khi làm animation?"
+options = ["`width`/`height`", "`top`/`left`", "`transform` và `opacity`", "`margin`"]
+answer = [2]
+explanation = "Chỉ cần bước composite (có thể chạy trên GPU), không gây layout/paint lại."
+
+[[questions]]
+id = "fe-043"
+module = "fe-browser"
+type = "single"
+difficulty = 2
+prompt = "Header `Cache-Control: no-cache` có nghĩa là gì?"
+options = [
+  "Không bao giờ lưu cache",
+  "Được lưu cache nhưng phải **revalidate** với server trước mỗi lần dùng (ETag/Last-Modified)",
+  "Cache vĩnh viễn",
+  "Chỉ cache trên CDN",
+]
+answer = [1]
+explanation = "`no-store` mới là không lưu. Asset có hash trong tên: `max-age=31536000, immutable`."
+
+[[questions]]
+id = "fe-044"
+module = "fe-browser"
+type = "single"
+difficulty = 2
+prompt = "Event delegation là gì?"
+options = [
+  "Gắn listener cho từng phần tử con",
+  "Gắn 1 listener ở phần tử cha, dựa vào event bubbling và `event.target` để xử lý cho nhiều con (kể cả con thêm sau)",
+  "Ủy quyền event cho Web Worker",
+  "Dùng `stopPropagation` ở mọi nơi",
+]
+answer = [1]
+explanation = "Tiết kiệm bộ nhớ và tự động áp dụng cho phần tử thêm động. React cũng dùng delegation ở root."
+
+[[questions]]
+id = "fe-045"
+module = "fe-browser"
+type = "multiple"
+difficulty = 3
+prompt = "Cách nào giảm **CLS** (layout shift)?"
+options = [
+  "Khai báo `width`/`height` hoặc `aspect-ratio` cho ảnh/video",
+  "Chèn banner quảng cáo phía trên nội dung sau khi tải",
+  "Dành sẵn chỗ (skeleton) cho nội dung tải động",
+  "`font-display: optional` / preload font, dùng `size-adjust` fallback",
+  "Animate `top` thay vì `transform`",
+]
+answer = [0, 2, 3]
+explanation = "Chèn nội dung đẩy layout và animate thuộc tính layout đều gây CLS."
+
+[[questions]]
+id = "fe-046"
+module = "fe-browser"
+type = "fill"
+difficulty = 2
+prompt = '''
+Cookie phiên an toàn: không cho JS đọc, chỉ gửi qua HTTPS, chống CSRF:
+
+```
+Set-Cookie: sid=abc; {{blank}}; {{blank}}; SameSite=Lax
+```
+'''
+blanks = [["HttpOnly", "Secure"], ["Secure", "HttpOnly"]]
+unique_blanks = true
+explanation = "`HttpOnly` chặn `document.cookie` (giảm thiệt hại XSS), `Secure` chỉ gửi qua HTTPS."
+
+[[questions]]
+id = "fe-047"
+module = "fe-browser"
+type = "essay"
+difficulty = 3
+prompt = "Mô tả điều gì xảy ra từ khi gõ URL vào trình duyệt tới khi trang hiển thị."
+keywords = [
+  ["dns"],
+  ["tcp", "tls", "https", "handshake", "quic"],
+  ["http request", "request", "yêu cầu"],
+  ["dom"],
+  ["cssom"],
+  ["layout", "reflow"],
+  ["paint", "vẽ", "composite"],
+]
+min_keywords = 4
+model_answer = '''
+1. Trình duyệt phân giải tên miền qua **DNS** (cache trình duyệt → OS → resolver).
+2. Thiết lập kết nối **TCP + TLS handshake** (hoặc QUIC với HTTP/3).
+3. Gửi **HTTP request**, server trả response HTML (có thể qua CDN, redirect, cache).
+4. Parse HTML → **DOM**; gặp CSS → tải & parse thành **CSSOM**; gặp script → tải/thực thi (chặn parse nếu không `defer/async`).
+5. DOM + CSSOM → render tree → **layout** (tính vị trí kích thước) → **paint** → **composite** các layer lên màn hình.
+6. Tiếp tục tải tài nguyên (ảnh, font), chạy JS, hydrate…
+'''
+explanation = "Câu hỏi phỏng vấn kinh điển — càng chi tiết càng tốt."
+
+[[questions]]
+id = "fe-048"
+module = "fe-browser"
+type = "code"
+difficulty = 2
+title = "Phân tích query string"
+prompt = '''
+Viết `parseQuery(qs)` chuyển query string thành object:
+- Bỏ ký tự `?` đầu nếu có
+- Giải mã `decodeURIComponent`, dấu `+` là khoảng trắng
+- Key lặp lại → mảng giá trị theo thứ tự
+- Key không có `=` → giá trị `''`
+- Bỏ qua đoạn rỗng (`a=1&&b=2`)
+'''
+starter = '''
+function parseQuery(qs) {
+  // TODO
+}
+'''
+solution = '''
+function parseQuery(qs) {
+  const out = {};
+  const s = qs.startsWith('?') ? qs.slice(1) : qs;
+  for (const part of s.split('&')) {
+    if (!part) continue;
+    const i = part.indexOf('=');
+    const rawK = i === -1 ? part : part.slice(0, i);
+    const rawV = i === -1 ? '' : part.slice(i + 1);
+    const dec = (x) => decodeURIComponent(x.replace(/\+/g, ' '));
+    const k = dec(rawK), v = dec(rawV);
+    if (Object.prototype.hasOwnProperty.call(out, k)) {
+      out[k] = Array.isArray(out[k]) ? [...out[k], v] : [out[k], v];
+    } else {
+      out[k] = v;
+    }
+  }
+  return out;
+}
+'''
+tests = '''
+test('cơ bản', () => expect(parseQuery('?a=1&b=hello')).toEqual({ a: '1', b: 'hello' }));
+test('không có ?', () => expect(parseQuery('x=y')).toEqual({ x: 'y' }));
+test('giải mã', () => expect(parseQuery('q=react%20native&city=H%C3%A0+N%E1%BB%99i')).toEqual({ q: 'react native', city: 'Hà Nội' }));
+test('key lặp → mảng', () => expect(parseQuery('tag=a&tag=b&tag=c')).toEqual({ tag: ['a', 'b', 'c'] }));
+test('key không có giá trị', () => expect(parseQuery('debug&x=1')).toEqual({ debug: '', x: '1' }));
+test('bỏ đoạn rỗng', () => expect(parseQuery('a=1&&b=2&')).toEqual({ a: '1', b: '2' }));
+test('chuỗi rỗng', () => expect(parseQuery('')).toEqual({}));
+test('giá trị chứa =', () => expect(parseQuery('t=a=b')).toEqual({ t: 'a=b' }));
+'''
+hints = ["Chỉ tách tại dấu `=` **đầu tiên** (`indexOf`).", "Thay `+` trước khi `decodeURIComponent`."]
+explanation = "Thực tế dùng `new URLSearchParams(qs)` — nhưng tự viết giúp hiểu encoding URL."
+
+# ============================================================ TS
+[[questions]]
+id = "fe-060"
+module = "fe-ts"
+type = "single"
+difficulty = 1
+prompt = "Khác biệt giữa `unknown` và `any`?"
+options = [
+  "Giống nhau",
+  "`unknown` buộc phải thu hẹp kiểu (narrowing) trước khi dùng; `any` tắt kiểm tra kiểu",
+  "`any` an toàn hơn",
+  "`unknown` chỉ dùng cho hàm",
+]
+answer = [1]
+explanation = "Dùng `unknown` cho dữ liệu từ bên ngoài (JSON, catch error)."
+
+[[questions]]
+id = "fe-061"
+module = "fe-ts"
+type = "single"
+difficulty = 2
+prompt = "`Omit<User, 'password'>` tạo ra kiểu gì?"
+options = ["Chỉ có `password`", "Mọi thuộc tính của `User` trừ `password`", "`User` với `password` optional", "Lỗi"]
+answer = [1]
+explanation = "Ngược lại là `Pick<User, 'password'>`."
+
+[[questions]]
+id = "fe-062"
+module = "fe-ts"
+type = "single"
+difficulty = 3
+prompt = '''
+Mục đích của dòng `const _exhaustive: never = shape;` trong default case?
+
+```ts
+type Shape = { kind: 'circle'; r: number } | { kind: 'square'; size: number };
+function area(shape: Shape) {
+  switch (shape.kind) {
+    case 'circle': return Math.PI * shape.r ** 2;
+    case 'square': return shape.size ** 2;
+    default: const _exhaustive: never = shape; return _exhaustive;
+  }
+}
+```
+'''
+options = [
+  "Để tăng tốc runtime",
+  "Kiểm tra đầy đủ (exhaustive check): nếu thêm kiểu mới vào union mà quên xử lý thì TypeScript báo lỗi biên dịch",
+  "Để ném lỗi runtime",
+  "Không có tác dụng",
+]
+answer = [1]
+explanation = "Discriminated union + `never` giúp compiler nhắc khi thiếu case."
+
+[[questions]]
+id = "fe-063"
+module = "fe-ts"
+type = "single"
+difficulty = 2
+prompt = "Điểm khác biệt chỉ `interface` có mà `type` alias không có?"
+options = ["Kế thừa", "Declaration merging (khai báo 2 lần cùng tên sẽ được gộp)", "Generic", "Union type"]
+answer = [1]
+explanation = "Hữu ích khi mở rộng kiểu thư viện (module augmentation). Union/mapped/conditional types chỉ `type` làm được."
+
+[[questions]]
+id = "fe-064"
+module = "fe-ts"
+type = "multiple"
+difficulty = 2
+prompt = "Cách nào là **type narrowing** hợp lệ?"
+options = ["`typeof x === 'string'`", "`x instanceof Date`", "`'id' in x`", "`x as string`", "Hàm `isUser(x): x is User`", "`switch (x.kind)` với discriminated union"]
+answer = [0, 1, 2, 4, 5]
+explanation = "`as` là type assertion — ép kiểu, không kiểm tra gì ở runtime."
+
+[[questions]]
+id = "fe-065"
+module = "fe-ts"
+type = "fill"
+difficulty = 2
+prompt = '''
+Định nghĩa hàm generic trả về phần tử đầu tiên của mảng:
+
+```ts
+function first{{blank}}(arr: T[]): T | undefined {
+  return arr[0];
+}
+```
+'''
+blanks = [["<T>"]]
+explanation = "TypeScript tự suy luận `T` từ tham số: `first([1, 2])` → `number | undefined`."
+
+[[questions]]
+id = "fe-066"
+module = "fe-ts"
+type = "fill"
+difficulty = 2
+prompt = '''
+Lấy kiểu giá trị trả về của hàm (đã unwrap Promise):
+
+```ts
+async function getUser() { return { id: 1, name: 'An' }; }
+type User = {{blank}}<ReturnType<typeof getUser>>;
+```
+'''
+blanks = [["Awaited"]]
+explanation = "`ReturnType` cho `Promise<{...}>`, `Awaited` unwrap lấy `{ id: number; name: string }`."
+
+[[questions]]
+id = "fe-067"
+module = "fe-ts"
+type = "essay"
+difficulty = 2
+prompt = "Giải thích toán tử `satisfies` trong TypeScript và khác gì so với khai báo kiểu `const x: T = ...`."
+keywords = [
+  ["kiểm tra", "check", "validate"],
+  ["suy luận", "infer", "literal", "giữ kiểu", "hẹp"],
+  ["mất", "rộng", "widen", "annotation"],
+]
+min_keywords = 2
+model_answer = "`expr satisfies T` **kiểm tra** biểu thức có khớp kiểu `T` nhưng **giữ nguyên kiểu được suy luận** (hẹp hơn, giữ literal/key cụ thể). Còn annotation `const x: T = ...` khiến kiểu của `x` **bị nới rộng thành T** — mất thông tin chi tiết (vd. không biết key nào thực sự tồn tại, giá trị là string hay number)."
+explanation = "Ví dụ: `const routes = { home: '/', user: '/u' } satisfies Record<string, string>` → `routes.home` vẫn có kiểu chính xác và gõ sai key sẽ báo lỗi."
+
+# ============================================================ TOOLING
+[[questions]]
+id = "fe-080"
+module = "fe-tooling"
+type = "single"
+difficulty = 2
+prompt = "Tree-shaking hoạt động tốt nhất khi:"
+options = [
+  "Dùng CommonJS `require`",
+  "Dùng ES Modules (`import`/`export`) tĩnh và module không có side effect (`\"sideEffects\": false`)",
+  "Dùng `eval`",
+  "Gom mọi thứ vào 1 file",
+]
+answer = [1]
+explanation = "ESM có cấu trúc tĩnh nên bundler phân tích được export nào không dùng."
+
+[[questions]]
+id = "fe-081"
+module = "fe-tooling"
+type = "single"
+difficulty = 2
+prompt = "CORS là cơ chế bảo vệ do ai thực thi?"
+options = ["Server", "Trình duyệt", "Firewall", "DNS"]
+answer = [1]
+explanation = "Server chỉ **khai báo** header; trình duyệt quyết định có cho JS đọc response hay không. curl/Postman không bị CORS."
+
+[[questions]]
+id = "fe-082"
+module = "fe-tooling"
+type = "single"
+difficulty = 2
+prompt = "Trong React, code nào có nguy cơ **XSS**?"
+options = [
+  "`<p>{userInput}</p>`",
+  "`<div dangerouslySetInnerHTML={{ __html: userInput }} />`",
+  "`<input value={userInput} />`",
+  "`<img alt={userInput} />`",
+]
+answer = [1]
+explanation = "React escape text mặc định. `dangerouslySetInnerHTML` cần sanitize (DOMPurify). Cũng cẩn thận `href={userUrl}` với `javascript:`."
+
+[[questions]]
+id = "fe-083"
+module = "fe-tooling"
+type = "single"
+difficulty = 2
+prompt = "Vì sao Vite dev server khởi động nhanh hơn bundler truyền thống?"
+options = [
+  "Vì viết bằng Rust",
+  "Phục vụ source qua **native ESM** — chỉ biến đổi file khi trình duyệt yêu cầu, pre-bundle dependency bằng esbuild",
+  "Vì không hỗ trợ TypeScript",
+  "Vì bỏ qua CSS",
+]
+answer = [1]
+explanation = "Bản production Vite build bằng Rollup (Rolldown ở bản mới)."
+
+[[questions]]
+id = "fe-084"
+module = "fe-tooling"
+type = "multiple"
+difficulty = 2
+prompt = "Biện pháp nào giúp chống **CSRF**?"
+options = ["Cookie `SameSite=Lax/Strict`", "CSRF token trong form/header", "Kiểm tra header `Origin`/`Referer`", "Lưu mật khẩu bằng MD5", "Bật CORS `*`"]
+answer = [0, 1, 2]
+explanation = "MD5 không liên quan (và đã lỗi thời). CORS `*` không chống CSRF."
+
+[[questions]]
+id = "fe-085"
+module = "fe-tooling"
+type = "fill"
+difficulty = 2
+prompt = '''
+Mock một hàm và kiểm tra nó được gọi với tham số đúng (Vitest):
+
+```js
+const onSave = vi.{{blank}}();
+render(<Form onSave={onSave} />);
+await user.click(screen.getByRole('button', { name: /lưu/i }));
+expect(onSave).{{blank}}({ name: 'An' });
+```
+'''
+blanks = [["fn"], ["toHaveBeenCalledWith"]]
+explanation = "Vitest API tương thích Jest (`jest.fn` ↔ `vi.fn`)."
+
+[[questions]]
+id = "fe-086"
+module = "fe-tooling"
+type = "essay"
+difficulty = 3
+prompt = "Content Security Policy (CSP) là gì và giúp giảm thiểu tấn công nào?"
+keywords = [
+  ["header", "meta"],
+  ["xss", "cross-site scripting"],
+  ["script-src", "nguồn", "source", "whitelist", "allowlist", "domain"],
+  ["inline", "nonce", "hash", "eval"],
+]
+min_keywords = 2
+model_answer = '''
+CSP là **HTTP header** (`Content-Security-Policy`) khai báo trình duyệt chỉ được tải/thực thi tài nguyên từ các **nguồn được phép** (`script-src`, `style-src`, `img-src`, `connect-src`, `frame-ancestors`…).
+
+Giúp giảm thiểu **XSS** (chặn script inline và từ domain lạ, chặn `eval`; script hợp lệ dùng **nonce/hash**), clickjacking (`frame-ancestors`), và rò rỉ dữ liệu. Có thể chạy thử bằng `Content-Security-Policy-Report-Only`.
+'''
+explanation = "CSP là lớp phòng thủ thứ hai — vẫn phải escape/sanitize dữ liệu."
+
+[[questions]]
+id = "fe-087"
+module = "fe-tooling"
+type = "code"
+difficulty = 3
+title = "deepEqual cho test assertion"
+prompt = '''
+Viết `deepEqual(a, b)` (giống `toEqual`) so sánh sâu:
+- primitive: `Object.is`
+- mảng: cùng độ dài & từng phần tử deepEqual
+- object thường: cùng tập key & giá trị deepEqual
+- `Date`: so sánh `getTime()`
+- mảng ≠ object (`[]` khác `{}`)
+'''
+starter = '''
+function deepEqual(a, b) {
+  // TODO
+}
+'''
+solution = '''
+function deepEqual(a, b) {
+  if (Object.is(a, b)) return true;
+  if (typeof a !== 'object' || typeof b !== 'object' || a === null || b === null) return false;
+  if (a instanceof Date || b instanceof Date) {
+    return a instanceof Date && b instanceof Date && a.getTime() === b.getTime();
+  }
+  if (Array.isArray(a) !== Array.isArray(b)) return false;
+  const ka = Object.keys(a), kb = Object.keys(b);
+  if (ka.length !== kb.length) return false;
+  return ka.every((k) => Object.prototype.hasOwnProperty.call(b, k) && deepEqual(a[k], b[k]));
+}
+'''
+tests = '''
+test('primitive', () => {
+  expect(deepEqual(1, 1)).toBe(true);
+  expect(deepEqual('a', 'b')).toBe(false);
+  expect(deepEqual(NaN, NaN)).toBe(true);
+});
+test('object lồng nhau', () => {
+  expect(deepEqual({ a: { b: [1, 2, { c: 3 }] } }, { a: { b: [1, 2, { c: 3 }] } })).toBe(true);
+  expect(deepEqual({ a: { b: [1, 2] } }, { a: { b: [1, 3] } })).toBe(false);
+});
+test('khác số key', () => expect(deepEqual({ a: 1 }, { a: 1, b: 2 })).toBe(false));
+test('mảng khác object', () => expect(deepEqual([], {})).toBe(false));
+test('null', () => {
+  expect(deepEqual(null, null)).toBe(true);
+  expect(deepEqual(null, {})).toBe(false);
+});
+test('Date', () => {
+  expect(deepEqual(new Date(5), new Date(5))).toBe(true);
+  expect(deepEqual(new Date(5), new Date(6))).toBe(false);
+});
+test('thứ tự key không quan trọng', () => expect(deepEqual({ a: 1, b: 2 }, { b: 2, a: 1 })).toBe(true));
+'''
+hints = ["Xử lý trường hợp cơ sở trước (Object.is, không phải object).", "Đệ quy trên từng key."]
+explanation = "Đây là phần lõi của mọi thư viện assertion."
+
+[[questions]]
+id = "fe-088"
+module = "fe-tooling"
+type = "code"
+difficulty = 2
+title = "Escape HTML chống XSS"
+prompt = '''
+Viết `escapeHtml(str)` thay thế các ký tự nguy hiểm:
+`&` → `&amp;`, `<` → `&lt;`, `>` → `&gt;`, `"` → `&quot;`, `'` → `&#39;`
+
+Và `safeUrl(url)`: trả về `url` nếu protocol là `http:`, `https:`, `mailto:` hoặc là đường dẫn tương đối (bắt đầu bằng `/`, `./`, `#`); ngược lại (vd. `javascript:`, `data:`) trả về `'about:blank'`. Không phân biệt hoa thường và bỏ khoảng trắng đầu.
+'''
+starter = '''
+function escapeHtml(str) {
+  // TODO
+}
+
+function safeUrl(url) {
+  // TODO
+}
+'''
+solution = '''
+function escapeHtml(str) {
+  const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+  return String(str).replace(/[&<>"']/g, (c) => map[c]);
+}
+
+function safeUrl(url) {
+  const u = String(url).trim();
+  if (/^(\/|\.\/|#)/.test(u)) return u;
+  if (/^(https?:|mailto:)/i.test(u)) return u;
+  return 'about:blank';
+}
+'''
+tests = '''
+test('escape thẻ script', () => {
+  expect(escapeHtml('<script>alert("x")</script>')).toBe('&lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt;');
+});
+test('escape & trước', () => expect(escapeHtml('a & <b>')).toBe('a &amp; &lt;b&gt;'));
+test("escape '", () => expect(escapeHtml("It's")).toBe('It&#39;s'));
+test('không escape 2 lần sai', () => expect(escapeHtml('&lt;')).toBe('&amp;lt;'));
+test('safeUrl cho phép http/https/mailto', () => {
+  expect(safeUrl('https://bovabon.edu')).toBe('https://bovabon.edu');
+  expect(safeUrl('mailto:a@b.c')).toBe('mailto:a@b.c');
+});
+test('safeUrl cho phép đường dẫn tương đối', () => {
+  expect(safeUrl('/courses')).toBe('/courses');
+  expect(safeUrl('#top')).toBe('#top');
+});
+test('safeUrl chặn javascript:', () => {
+  expect(safeUrl('javascript:alert(1)')).toBe('about:blank');
+  expect(safeUrl('  JaVaScRiPt:alert(1)')).toBe('about:blank');
+  expect(safeUrl('data:text/html,<b>x</b>')).toBe('about:blank');
+});
+'''
+hints = ["Dùng 1 regex `/[&<>\"']/g` với hàm thay thế để không escape trùng.", "Allowlist an toàn hơn blocklist."]
+explanation = "Nguyên tắc: escape theo ngữ cảnh đầu ra & dùng allowlist cho URL."
+
+# ============================================================ BỔ SUNG (nguồn DevDocs)
+[[questions]]
+id = "fe-dd01"
+module = "fe-js"
+type = "single"
+difficulty = 2
+prompt = "Cần gọi 3 API độc lập và hiển thị **mọi** kết quả, kể cả khi một vài API lỗi. Dùng hàm nào?"
+options = ["`Promise.all`", "`Promise.allSettled`", "`Promise.race`", "`Promise.any`"]
+answer = [1]
+explanation = "`allSettled` không bao giờ reject; mỗi phần tử là `{status: 'fulfilled', value}` hoặc `{status: 'rejected', reason}`. `any` lấy kết quả thành công đầu tiên; `all` reject ngay khi có một lỗi."
+sources = ["javascript/global_objects/promise/allsettled", "javascript/global_objects/promise/any"]
+
+[[questions]]
+id = "fe-dd02"
+module = "fe-js"
+type = "multiple"
+difficulty = 2
+prompt = "Biểu thức nào cho kết quả `0`?"
+options = [
+  "`0 ?? 5`",
+  "`0 || 5`",
+  "`null?.length ?? 0`",
+  "`({ a: { b: 0 } }).a?.b`",
+  "`undefined?.x || 0`",
+]
+answer = [0, 2, 3, 4]
+explanation = "`??` chỉ thay thế khi vế trái là `null`/`undefined`, còn `||` thay cả giá trị falsy như `0`. `?.` dừng và trả `undefined` khi gặp `null`/`undefined`."
+sources = ["javascript/operators/nullish_coalescing", "javascript/operators/optional_chaining"]
+
+[[questions]]
+id = "fe-dd03"
+module = "fe-html-css"
+type = "single"
+difficulty = 2
+prompt = "Muốn **card** đổi bố cục theo **độ rộng của chính khung chứa nó** (sidebar hẹp vs. vùng chính rộng), không phụ thuộc kích thước viewport. Dùng:"
+options = [
+  "`@media (min-width: 600px)`",
+  "`container-type: inline-size` cho khung chứa + `@container (min-width: 400px) { ... }`",
+  "`aspect-ratio`",
+  "`@supports`",
+]
+answer = [1]
+explanation = "Container query cho phép component tự thích ứng ở bất kỳ vị trí nào trong layout."
+sources = ["css/at-rules/@container"]
+
+[[questions]]
+id = "fe-dd04"
+module = "fe-html-css"
+type = "fill"
+difficulty = 2
+prompt = '''
+Tô viền đỏ cho `.field` **chứa** một input không hợp lệ (bộ chọn "cha" của CSS):
+
+```css
+.field:{{blank}}(input:invalid) { border-color: red; }
+```
+
+Cỡ chữ co giãn: tối thiểu `1rem`, ưu tiên `2.5vw`, tối đa `2rem`:
+
+```css
+h1 { font-size: {{blank}}(1rem, 2.5vw, 2rem); }
+```
+
+Khai báo thứ tự tầng cascade để style của thư viện luôn thua style của bạn:
+
+```css
+{{blank}} reset, vendor, components;
+```
+'''
+blanks = [["has"], ["clamp"], ["@layer"]]
+explanation = "`:has()` chọn phần tử theo con/anh em của nó. `clamp(min, ưu tiên, max)`. Với `@layer`, tầng khai báo sau thắng tầng trước bất kể độ đặc hiệu (specificity)."
+sources = ["css/selectors/:has", "css/values/clamp", "css/at-rules/@layer"]
+
+[[questions]]
+id = "fe-dd05"
+module = "fe-browser"
+type = "single"
+difficulty = 2
+prompt = "Cách hiệu quả nhất để lazy-load ảnh / tải thêm dữ liệu khi người dùng cuộn gần cuối danh sách?"
+options = [
+  "Lắng nghe `scroll` và gọi `getBoundingClientRect()` cho mọi phần tử",
+  "`IntersectionObserver` theo dõi một phần tử \"sentinel\" với `rootMargin` (vd. `200px`)",
+  "`setInterval` kiểm tra `scrollTop` mỗi 100ms",
+  "`MutationObserver`",
+]
+answer = [1]
+explanation = "IntersectionObserver chạy bất đồng bộ, không ép reflow trên main thread mỗi lần cuộn. Với ảnh đơn giản, thuộc tính `loading=\"lazy\"` là đủ."
+sources = ["dom/intersectionobserver"]
+
+[[questions]]
+id = "fe-dd06"
+module = "fe-browser"
+type = "fill"
+difficulty = 2
+prompt = '''
+Huỷ request cũ khi người dùng gõ từ khoá mới:
+
+```js
+let ctrl;
+async function search(q) {
+  ctrl?.abort();
+  ctrl = new {{blank}}();
+  const res = await fetch('/api/search?q=' + encodeURIComponent(q), { {{blank}}: ctrl.signal });
+  return res.json();
+}
+```
+'''
+blanks = [["AbortController"], ["signal"]]
+explanation = "Request bị huỷ sẽ reject với `AbortError` — nhớ bỏ qua lỗi này khi hiển thị. `AbortSignal.timeout(ms)` tạo signal tự huỷ sau thời gian chờ."
+sources = ["dom/abortcontroller", "dom/abortcontroller/signal"]
+
+[[questions]]
+id = "fe-dd07"
+module = "fe-ts"
+type = "multiple"
+difficulty = 3
+prompt = '''
+Cho `type User = { id: number; name: string; email?: string }`. Kiểu nào **chính xác** là `{ id: number; name: string }`?
+'''
+options = [
+  "`Omit<User, 'email'>`",
+  "`Pick<User, 'id' | 'name'>`",
+  "`Required<User>`",
+  "`{ [K in keyof User as K extends 'email' ? never : K]: User[K] }`",
+  "`Partial<User>`",
+]
+answer = [0, 1, 3]
+explanation = "Mapped type với mệnh đề `as ... never` loại key — chính là cách `Omit` hoạt động. `Required` làm `email` bắt buộc; `Partial` làm mọi field tuỳ chọn."
+sources = ["typescript/docs/handbook/utility-types", "typescript/docs/handbook/2/mapped-types"]
+
+[[questions]]
+id = "fe-dd08"
+module = "fe-html-css"
+type = "essay"
+difficulty = 2
+prompt = "Vì sao nên dùng phần tử `<dialog>` gốc (với `showModal()`) thay vì tự dựng modal bằng `<div>`?"
+keywords = [
+  ["focus", "tiêu điểm", "bẫy focus", "focus trap"],
+  ["esc", "escape"],
+  ["inert", "nền", "không tương tác"],
+  ["::backdrop", "backdrop"],
+  ["top layer", "z-index"],
+  ["accessibility", "a11y", "trình đọc màn hình", "aria", "role"],
+]
+min_keywords = 3
+model_answer = '''
+`<dialog>` + `showModal()` cung cấp sẵn những thứ khó làm đúng bằng tay:
+- Hiển thị trên **top layer** → không phải đánh nhau với `z-index`.
+- Phần còn lại của trang trở thành **inert** (không click/focus được); **focus** tự chuyển vào dialog và trả lại khi đóng.
+- Phím **Esc** đóng dialog (sự kiện `cancel`), `<form method="dialog">` đóng và trả `returnValue`.
+- Có pseudo-element **`::backdrop`** để làm nền mờ.
+- Vai trò và trạng thái modal được trình duyệt báo cho **trình đọc màn hình** — tốt cho accessibility.
+'''
+explanation = "Tự dựng modal thường quên focus trap, Esc và aria — `<dialog>` cho tất cả miễn phí."
+sources = ["html/reference/elements/dialog", "html/reference/global_attributes/inert"]
+
+[[questions]]
+id = "fe-dd09"
+module = "fe-js"
+type = "code"
+difficulty = 2
+title = "Polyfill Object.groupBy & Promise.allSettled"
+prompt = '''
+Viết hai hàm (không dùng bản có sẵn):
+
+1. `groupBy(items, keyFn)` — giống `Object.groupBy`: trả về object **không có prototype** (`Object.create(null)`), key là kết quả `keyFn(item, index)` (ép sang chuỗi), value là mảng phần tử theo thứ tự gốc. Nhận mọi iterable.
+2. `allSettled(promises)` — giống `Promise.allSettled`: nhận iterable (phần tử có thể không phải promise), resolve thành mảng `{ status: 'fulfilled', value }` / `{ status: 'rejected', reason }` **đúng thứ tự đầu vào**; mảng rỗng → `[]`.
+'''
+starter = '''
+function groupBy(items, keyFn) {
+  return {};
+}
+
+function allSettled(promises) {
+  return Promise.all(promises);
+}
+'''
+solution = '''
+function groupBy(items, keyFn) {
+  const out = Object.create(null);
+  let i = 0;
+  for (const item of items) {
+    const k = String(keyFn(item, i++));
+    (out[k] || (out[k] = [])).push(item);
+  }
+  return out;
+}
+
+function allSettled(promises) {
+  return Promise.all(
+    Array.from(promises, (p) =>
+      Promise.resolve(p).then(
+        (value) => ({ status: 'fulfilled', value }),
+        (reason) => ({ status: 'rejected', reason }),
+      ),
+    ),
+  );
+}
+'''
+tests = '''
+test('groupBy cơ bản', () => {
+  const r = groupBy([1, 2, 3, 4, 5], (n) => (n % 2 ? 'odd' : 'even'));
+  expect(r.odd).toEqual([1, 3, 5]);
+  expect(r.even).toEqual([2, 4]);
+  expect(Object.getPrototypeOf(r)).toBeNull();
+});
+test('groupBy nhận iterable & index', () => {
+  const r = groupBy(new Set(['a', 'b', 'c']), (_, i) => i < 2);
+  expect(r['true']).toEqual(['a', 'b']);
+  expect(r['false']).toEqual(['c']);
+});
+test('allSettled giữ thứ tự & trạng thái', async () => {
+  const pending = allSettled([
+    new Promise((res) => setTimeout(() => res('chậm'), 50)),
+    Promise.reject(new Error('lỗi')),
+    42,
+  ]);
+  jest.advanceTimersByTime(60);
+  const r = await pending;
+  expect(r[0]).toEqual({ status: 'fulfilled', value: 'chậm' });
+  expect(r[1].status).toBe('rejected');
+  expect(r[1].reason.message).toBe('lỗi');
+  expect(r[2]).toEqual({ status: 'fulfilled', value: 42 });
+});
+test('allSettled rỗng', async () => {
+  expect(await allSettled([])).toEqual([]);
+});
+'''
+hints = ["`Object.create(null)` tạo object không kế thừa `toString`, `__proto__`…", "Bọc mỗi phần tử bằng `Promise.resolve(p).then(onOk, onErr)` rồi `Promise.all`."]
+explanation = "Object không prototype tránh va chạm với key như `constructor`. `Map.groupBy` dùng khi cần key không phải chuỗi."
+sources = ["javascript/global_objects/object/groupby", "javascript/global_objects/promise/allsettled"]

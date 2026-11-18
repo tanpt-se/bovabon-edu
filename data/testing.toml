@@ -1,0 +1,849 @@
+id = "testing"
+title = "Testing: Vitest, Jest, Playwright"
+icon = "🧪"
+color = "#729b1b"
+group = "Frontend"
+docs = ["vitest", "jest", "playwright", "cypress"]
+description = "Thiết kế unit, component và E2E test bằng Vitest, Jest, Playwright và Cypress; kiểm soát độ tin cậy, coverage và test flaky."
+
+[[modules]]
+id = "testing-principles"
+title = "Nguyên lý kiểm thử"
+description = "Testing pyramid, AAA và cách chọn test double phù hợp."
+sources = ["vitest/guide/learn/testing-in-practice", "vitest/guide/learn/writing-tests"]
+lesson = '''
+### Chọn mức kiểm thử
+| Mức | Phạm vi | Đặc điểm |
+|---|---|---|
+| Unit | Một hàm hoặc đơn vị nhỏ | Nhanh, lỗi thường dễ khoanh vùng |
+| Integration | Nhiều thành phần phối hợp | Bắt lỗi ở ranh giới như DB, router hoặc component |
+| E2E | Luồng người dùng qua ứng dụng | Gần thực tế nhưng chậm và tốn công giữ ổn định |
+
+Testing pyramid là một gợi ý để có nhiều test nhỏ, đủ integration test và ít E2E test trọng yếu; đây không phải tỉ lệ cứng cho mọi sản phẩm. Mỗi test nên độc lập, có kết quả xác định và kiểm tra hành vi có ý nghĩa.
+
+### AAA và test double
+AAA chia test thành **Arrange** (dựng dữ liệu), **Act** (thực hiện hành động) và **Assert** (kiểm tra kết quả). Theo cách dùng trong lộ trình này, stub trả dữ liệu đã định trước, mock ghi nhận lời gọi để kiểm tra tương tác, spy quan sát hàm thật hoặc bọc hàm, còn fake là triển khai đơn giản có hành vi hoạt động như một subsystem.
+
+Ví dụ: test tính tổng giỏ hàng có thể dùng dữ liệu cố định và assert tổng tiền; test gửi email có thể thay dịch vụ email bằng mock ở ranh giới side effect. Lỗi hay gặp: mock mọi hàm nội bộ, kiểm tra chi tiết triển khai thay vì kết quả, hoặc dùng chung state khiến test phụ thuộc thứ tự chạy.
+'''
+
+[[questions]]
+id = "tst-001"
+module = "testing-principles"
+type = "single"
+difficulty = 1
+prompt = "Unit test thường tập trung kiểm tra điều gì?"
+options = ["Một đơn vị nhỏ với các phụ thuộc được kiểm soát", "Toàn bộ luồng qua trình duyệt thật", "Thời gian tải trang của production", "Cấu hình triển khai của mọi môi trường"]
+answer = [0]
+explanation = "Unit test nhắm vào một đơn vị nhỏ để cho phản hồi nhanh và giúp khoanh vùng lỗi."
+sources = ["vitest/guide/learn/testing-in-practice"]
+
+[[questions]]
+id = "tst-002"
+module = "testing-principles"
+type = "single"
+difficulty = 2
+prompt = "Một dự án có nhiều E2E test chậm và thường hỏng do selector, trong khi logic thuần chưa có test. Điều chỉnh nào hợp lý nhất?"
+options = ["Thêm test nhỏ cho logic và integration test ở ranh giới quan trọng; giữ E2E cho luồng người dùng cốt lõi", "Chuyển tất cả test thành E2E để giống production hơn", "Xoá toàn bộ test vì có flaky test", "Tăng thời gian chờ cố định trong mọi test"]
+answer = [0]
+explanation = "Testing pyramid gợi ý kiểm thử logic bằng test nhanh hơn, còn E2E tập trung vào luồng có giá trị cao."
+sources = ["vitest/guide/learn/testing-in-practice"]
+
+[[questions]]
+id = "tst-003"
+module = "testing-principles"
+type = "single"
+difficulty = 1
+prompt = "Trong cấu trúc AAA, bước Act là gì?"
+options = ["Tạo dữ liệu và điều kiện ban đầu", "Gọi hành động hoặc hàm đang được kiểm tra", "Kiểm tra kết quả mong đợi", "Dọn mọi file test khỏi repository"]
+answer = [1]
+explanation = "Act là phần thực hiện hành vi cần kiểm tra, thường là một lời gọi hàm hoặc một tương tác."
+sources = ["vitest/guide/learn/writing-tests"]
+
+[[questions]]
+id = "tst-004"
+module = "testing-principles"
+type = "single"
+difficulty = 2
+prompt = "Theo quy ước trong lộ trình, test double nào phù hợp khi cần kiểm tra một hàm có được gọi với đúng tham số hay không?"
+options = ["Stub", "Mock", "Fake", "Fixture"]
+answer = [1]
+explanation = "Mock ghi nhận lời gọi để test có thể xác minh tương tác. Thuật ngữ có thể khác đôi chút giữa các nhóm, nên cần nêu rõ quy ước của dự án."
+sources = ["vitest/guide/learn/mock-functions"]
+
+[[questions]]
+id = "tst-005"
+module = "testing-principles"
+type = "multiple"
+difficulty = 2
+prompt = "Đặc điểm nào giúp một test unit đáng tin cậy và dễ bảo trì? Chọn tất cả đáp án đúng."
+options = ["Có kết quả xác định với cùng đầu vào", "Kiểm tra hành vi quan trọng với người dùng hoặc hợp đồng hàm", "Dựa vào thứ tự chạy của test khác", "Giữ phạm vi nhỏ để lỗi dễ định vị"]
+answer = [0, 1, 3]
+explanation = "Tính xác định, kiểm tra hành vi có ý nghĩa và phạm vi rõ giúp test ổn định. Phụ thuộc thứ tự làm suite dễ lỗi ngẫu nhiên."
+sources = ["vitest/guide/learn/writing-tests"]
+
+[[questions]]
+id = "tst-006"
+module = "testing-principles"
+type = "fill"
+difficulty = 1
+prompt = '''
+Điền ba bước AAA theo thứ tự:
+
+1. {{blank}}: chuẩn bị dữ liệu và điều kiện.
+2. {{blank}}: thực hiện hành động.
+3. {{blank}}: xác minh kết quả.
+'''
+blanks = [["Arrange"], ["Act"], ["Assert"]]
+explanation = "AAA viết tắt của Arrange, Act, Assert."
+sources = ["vitest/guide/learn/writing-tests"]
+
+[[questions]]
+id = "tst-007"
+module = "testing-principles"
+type = "essay"
+difficulty = 3
+prompt = "Giải thích khi nào nên dùng unit test và khi nào cần integration test; nêu một giới hạn của việc thay mọi phụ thuộc bằng mock."
+keywords = [["unit test", "kiểm thử đơn vị"], ["integration test", "kiểm thử tích hợp"], ["mock", "test double"]]
+min_keywords = 2
+model_answer = '''Unit test phù hợp để kiểm tra logic nhỏ nhanh và cô lập. Integration test cần thiết để xác minh các thành phần thật sự phối hợp đúng tại ranh giới. Dùng mock cho mọi phụ thuộc có thể bỏ sót lỗi tích hợp và khiến test gắn với chi tiết triển khai.'''
+explanation = "Câu trả lời tốt nêu được mục đích khác nhau của unit test và integration test, đồng thời nhận ra mock không thay thế kiểm chứng tích hợp."
+sources = ["vitest/guide/learn/testing-in-practice"]
+
+[[modules]]
+id = "testing-unit"
+title = "Unit test với Vitest và Jest"
+description = "Matcher, mock function và module, fake timers, snapshot, kiểm tra bất đồng bộ."
+sources = ["vitest/api/expect", "vitest/guide/mocking", "jest/expect", "jest/mock-function-api"]
+lesson = '''
+### Assertion và cách ly phụ thuộc
+| Nhu cầu | Matcher hoặc kỹ thuật thường dùng |
+|---|---|
+| So sánh primitive | `toBe` thường kiểm tra cùng giá trị hoặc identity |
+| So sánh cấu trúc | `toEqual` so sánh sâu các field |
+| Kiểm tra lời gọi | mock/spy cùng matcher về số lần hoặc tham số |
+| Thời gian | fake timers thay timer thật để test có thể điều khiển |
+
+Vitest và Jest có nhiều API tương tự, nhưng cấu hình và chi tiết mock module không hoàn toàn giống nhau. Mock module hữu ích để cô lập ranh giới như thư viện ngoài hoặc I/O; tránh mock những phần logic nội bộ chỉ để test khớp cấu trúc hiện tại.
+
+Fake timers làm cho timeout, interval và thời gian giả lập chạy có thể kiểm soát; sau test cần khôi phục clock và trạng thái mock. Với code bất đồng bộ, luôn return hoặc await Promise để runner biết khi nào test hoàn tất.
+
+Snapshot lưu biểu diễn đầu ra để đối chiếu lần sau. Dùng snapshot nhỏ, ổn định và xem xét diff trước khi cập nhật. Snapshot lớn, nhiều dữ liệu ngẫu nhiên hoặc cập nhật hàng loạt mà không đọc diff dễ che khuất hồi quy. Lỗi hay gặp: nhầm `toBe` với deep equality, để mock state rò sang test kế tiếp, và chờ bằng sleep thật làm suite chậm.
+'''
+
+[[questions]]
+id = "tst-008"
+module = "testing-unit"
+type = "single"
+difficulty = 1
+prompt = "Trong Vitest/Jest, khi muốn so sánh hai object khác identity nhưng có cùng cấu trúc lồng nhau, matcher nào thường phù hợp?"
+options = ["toBe", "toEqual", "toHaveBeenCalled", "toThrow"]
+answer = [1]
+explanation = "`toEqual` kiểm tra cấu trúc sâu; `toBe` phù hợp hơn với giá trị primitive hoặc khi cần cùng identity."
+sources = ["vitest/api/expect#toequal", "jest/expect#toequalvalue"]
+
+[[questions]]
+id = "tst-009"
+module = "testing-unit"
+type = "single"
+difficulty = 2
+prompt = "Một hàm gọi SDK thanh toán bên ngoài. Cách dùng mock module hợp lý nhất là gì?"
+options = ["Mock SDK ở ranh giới để xác minh dữ liệu được gửi, đồng thời test logic nghiệp vụ riêng", "Mock mọi hàm trong module nghiệp vụ", "Mock matcher của test runner", "Thay mọi assertion bằng snapshot"]
+answer = [0]
+explanation = "Mock ở ranh giới side effect giúp test không phụ thuộc dịch vụ ngoài mà vẫn tập trung vào hợp đồng cần kiểm tra."
+sources = ["vitest/guide/mocking/modules"]
+
+[[questions]]
+id = "tst-010"
+module = "testing-unit"
+type = "single"
+difficulty = 2
+prompt = "Test một hàm debounce bằng fake timers có lợi ích chính nào?"
+options = ["Có thể tiến clock có kiểm soát mà không chờ thời gian thật", "Tự chứng minh giao diện accessible", "Thay thế mọi assertion", "Đo chính xác tốc độ CPU production"]
+answer = [0]
+explanation = "Fake timers cho phép tiến thời gian giả lập để kiểm tra callback đúng hạn mà không làm test chậm."
+sources = ["vitest/guide/mocking/timers", "jest/timer-mocks"]
+
+[[questions]]
+id = "tst-011"
+module = "testing-unit"
+type = "single"
+difficulty = 2
+prompt = "Khi nào snapshot test có ích nhất?"
+options = ["Đầu ra dạng cấu trúc tương đối ổn định và diff có thể được review", "Mọi logic nghiệp vụ mà không cần assertion", "Đầu ra chứa timestamp ngẫu nhiên nhưng không được chuẩn hoá", "Thay thế kiểm tra accessibility trên browser"]
+answer = [0]
+explanation = "Snapshot giúp phát hiện thay đổi đầu ra có chủ đích hoặc ngoài ý muốn, nhưng vẫn cần review diff và test ngữ nghĩa quan trọng."
+sources = ["vitest/guide/snapshot", "jest/snapshot-testing"]
+
+[[questions]]
+id = "tst-012"
+module = "testing-unit"
+type = "multiple"
+difficulty = 2
+prompt = "Sau khi dùng mock function trong test, cách nào giúp hạn chế tương tác giữa các test? Chọn tất cả đáp án đúng."
+options = ["Reset hoặc clear trạng thái mock theo mục đích", "Await Promise do test tạo ra", "Chạy test phụ thuộc theo một thứ tự cố định", "Khôi phục fake timers sau khi dùng"]
+answer = [0, 1, 3]
+explanation = "Dọn trạng thái mock, hoàn tất công việc bất đồng bộ và khôi phục timers giúp test độc lập. Cố định thứ tự không sửa được dependency giữa các test."
+sources = ["vitest/config/clearmocks", "vitest/config/restoremocks", "jest/mock-function-api"]
+
+[[questions]]
+id = "tst-013"
+module = "testing-unit"
+type = "fill"
+difficulty = 1
+prompt = '''
+Điền matcher để so sánh sâu object và matcher kiểm tra hàm được gọi đúng 2 lần:
+
+```js
+expect({ id: 4 }).{{blank}}({ id: 4 })
+expect(callback).{{blank}}(2)
+```
+'''
+blanks = [["toEqual"], ["toHaveBeenCalledTimes"]]
+explanation = "`toEqual` so sánh cấu trúc object; `toHaveBeenCalledTimes` xác minh số lần gọi mock hoặc spy."
+sources = ["vitest/api/expect#toequal", "vitest/api/expect#tohavebeencalledtimes"]
+
+[[questions]]
+id = "tst-014"
+module = "testing-unit"
+type = "single"
+difficulty = 2
+prompt = "Một test gọi hàm trả Promise nhưng test kết thúc trước khi Promise settle. Cách sửa đáng tin cậy nhất là gì?"
+options = ["Return hoặc await Promise trong test", "Thêm sleep dài tuỳ ý ở cuối mọi test", "Xoá assertion bất đồng bộ", "Chuyển callback thành snapshot"]
+answer = [0]
+explanation = "Runner phải được thông báo khi tác vụ async hoàn tất; return hoặc await Promise giúp bắt lỗi reject đúng lúc."
+sources = ["vitest/guide/learn/async"]
+
+[[questions]]
+id = "tst-015"
+module = "testing-unit"
+type = "code"
+difficulty = 2
+lang = "javascript"
+title = "Tạo spy ghi lại lời gọi"
+prompt = '''
+Viết `createSpy(implementation)` trả về một hàm spy:
+- Mỗi lần gọi, thêm danh sách đối số của lần gọi đó vào `spy.calls`.
+- Nếu `implementation` là hàm, gọi nó với các đối số nhận được và trả về kết quả; nếu không, trả về `undefined`.
+- `spy.calls` ban đầu là mảng rỗng và giữ thứ tự lời gọi.
+
+Ví dụ: `const add = createSpy((a, b) => a + b)`; `add(2, 3)` trả `5` và `add.calls` là `[[2, 3]]`.
+'''
+starter = '''
+function createSpy(implementation) {
+  return (...args) => undefined;
+}
+'''
+solution = '''
+function createSpy(implementation) {
+  const spy = (...args) => {
+    spy.calls.push(args);
+    if (typeof implementation === 'function') return implementation(...args);
+    return undefined;
+  };
+  spy.calls = [];
+  return spy;
+}
+'''
+tests = '''
+test('ghi lại một lời gọi và trả kết quả của implementation', () => {
+  const add = createSpy((a, b) => a + b);
+  expect(add(2, 3)).toBe(5);
+  expect(add.calls).toEqual([[2, 3]]);
+});
+
+test('ghi lại nhiều lời gọi theo thứ tự', () => {
+  const spy = createSpy();
+  spy('first');
+  spy(2, true);
+  expect(spy.calls).toEqual([['first'], [2, true]]);
+});
+
+test('implementation vắng mặt trả undefined', () => {
+  const spy = createSpy();
+  expect(spy('x')).toBeUndefined();
+  expect(spy.calls).toEqual([['x']]);
+});
+
+test('không dùng giá trị implementation không phải hàm', () => {
+  const spy = createSpy(42);
+  expect(spy()).toBeUndefined();
+});
+'''
+hints = ["Khởi tạo mảng calls một lần khi tạo spy.", "Ghi lại args trước khi gọi implementation."]
+explanation = "Spy vừa giữ lịch sử đối số vừa chuyển tiếp lời gọi tới implementation nếu có."
+
+[[questions]]
+id = "tst-016"
+module = "testing-unit"
+type = "code"
+difficulty = 3
+lang = "javascript"
+title = "Mini expect với deepEqual"
+prompt = '''
+Viết `miniExpect(actual)` trả về object có matcher `toEqual(expected)`.
+- `toEqual` trả về `undefined` khi hai giá trị deep-equal.
+- Nếu không bằng nhau, ném `Error`.
+- Hỗ trợ primitive, `null`, array và plain object lồng nhau; object được so sánh theo tập key và value, không theo thứ tự khai báo key.
+- Không cần xử lý object có chu trình hoặc prototype đặc biệt.
+
+Ví dụ: `miniExpect({ a: [1] }).toEqual({ a: [1] })` không ném lỗi.
+'''
+starter = '''
+function miniExpect(actual) {
+  return { toEqual(expected) {} };
+}
+'''
+solution = '''
+function deepEqual(a, b) {
+  if (Object.is(a, b)) return true;
+  if (a === null || b === null || typeof a !== 'object' || typeof b !== 'object') return false;
+  if (Array.isArray(a) !== Array.isArray(b)) return false;
+  const keysA = Object.keys(a);
+  const keysB = Object.keys(b);
+  if (keysA.length !== keysB.length) return false;
+  return keysA.every((key) => Object.prototype.hasOwnProperty.call(b, key) && deepEqual(a[key], b[key]));
+}
+
+function miniExpect(actual) {
+  return {
+    toEqual(expected) {
+      if (!deepEqual(actual, expected)) throw new Error('Values are not deeply equal');
+    }
+  };
+}
+'''
+tests = '''
+test('so sánh primitive và array lồng nhau', () => {
+  expect(miniExpect([1, { ok: true }]).toEqual([1, { ok: true }])).toBeUndefined();
+});
+
+test('không phụ thuộc thứ tự key của object', () => {
+  expect(miniExpect({ a: 1, b: { c: 2 } }).toEqual({ b: { c: 2 }, a: 1 })).toBeUndefined();
+});
+
+test('phân biệt array với object có key số', () => {
+  expect(() => miniExpect([1]).toEqual({ 0: 1 })).toThrow();
+});
+
+test('ném lỗi khi giá trị lồng nhau khác', () => {
+  expect(() => miniExpect({ a: [1, 2] }).toEqual({ a: [1, 3] })).toThrow();
+});
+'''
+hints = ["So sánh primitive trước khi duyệt key.", "Array phải được phân biệt với object thường."]
+explanation = "Deep equality đi đệ quy trên key và value; `Object.is` xử lý primitive, cùng identity và một số trường hợp như NaN."
+
+[[modules]]
+id = "testing-components"
+title = "Test component và hook"
+description = "Ưu tiên hành vi người dùng, truy vấn theo role/name và kiểm tra hook trong ngữ cảnh phù hợp."
+sources = ["vitest/guide/browser/component-testing", "react/reference/react/act", "playwright/locators"]
+lesson = '''
+### Kiểm tra điều người dùng quan sát
+Component test nên tương tác và xác minh nội dung, trạng thái hoặc callback có ý nghĩa, thay vì phụ thuộc vào tên class nội bộ hay cấu trúc implementation. Với Testing Library, truy vấn theo role và accessible name thường diễn đạt đúng mục đích: ví dụ tìm button có tên “Lưu” rồi kích hoạt nó.
+
+| Cách truy vấn | Mức ưu tiên thường gặp | Lý do |
+|---|---|---|
+| Role và accessible name | Cao | Gần với semantic HTML và cách công nghệ hỗ trợ nhận diện |
+| Label hoặc nội dung hiển thị | Cao | Gắn với nội dung người dùng thấy |
+| Test id | Khi cần | Ít phụ thuộc CSS nhưng không tự kiểm tra semantics |
+| Class hoặc selector cấu trúc sâu | Thấp | Dễ hỏng khi refactor giao diện |
+
+Hook thường được kiểm tra thông qua component sử dụng hook để xác minh luồng người dùng. `renderHook` hữu ích cho hook tái sử dụng độc lập; cập nhật state từ tương tác cần được đồng bộ với cơ chế `act` của renderer. Component test trong browser có thể kiểm tra semantics thực tế hơn test chỉ render mô phỏng.
+
+Lỗi thường gặp: chọn node bằng class nội bộ, gọi hook ngoài ngữ cảnh React, hoặc assert state private mà không kiểm tra kết quả hiển thị. Mô hình role/name là một phần của accessible query; tên truy cập thực tế còn tuân theo quy tắc accessibility của nền tảng.
+'''
+
+[[questions]]
+id = "tst-017"
+module = "testing-components"
+type = "single"
+difficulty = 1
+prompt = "Trong component test, vì sao nên ưu tiên truy vấn button theo role và accessible name?"
+options = ["Nó kiểm tra semantics gần với cách người dùng và công nghệ hỗ trợ tìm điều khiển", "Nó luôn làm test nhanh hơn mọi truy vấn khác", "Nó tránh cần assert kết quả sau tương tác", "Nó tự xác minh toàn bộ logic server"]
+answer = [0]
+explanation = "Truy vấn theo role và tên accessible gắn với semantics mà người dùng có thể tiếp cận, đồng thời ít phụ thuộc class nội bộ."
+sources = ["vitest/guide/browser/component-testing", "playwright/locators"]
+
+[[questions]]
+id = "tst-018"
+module = "testing-components"
+type = "single"
+difficulty = 2
+prompt = "Khi một custom hook quản lý trạng thái form, lựa chọn nào thường cho test bền vững nhất?"
+options = ["Kiểm tra component sử dụng hook qua nhập liệu, hiển thị lỗi và submit; dùng renderHook nếu cần kiểm tra hook độc lập", "Đọc trực tiếp mọi biến private trong closure", "Chỉ snapshot mã nguồn hook", "Gọi hook trực tiếp trong test mà không có renderer"]
+answer = [0]
+explanation = "Kiểm tra qua component thường phản ánh hành vi người dùng; `renderHook` là lựa chọn phù hợp khi cần cô lập logic tái sử dụng."
+sources = ["vitest/guide/browser/component-testing", "react/reference/react/act"]
+
+[[questions]]
+id = "tst-019"
+module = "testing-components"
+type = "multiple"
+difficulty = 2
+prompt = "Các lựa chọn nào thường làm component test ít phụ thuộc implementation hơn? Chọn tất cả đáp án đúng."
+options = ["Tìm điều khiển qua role và accessible name", "Assert nội dung hoặc trạng thái người dùng nhìn thấy", "Dựa vào class CSS sinh tự động", "Mô phỏng tương tác phù hợp với luồng sử dụng"]
+answer = [0, 1, 3]
+explanation = "Role/name, kết quả hiển thị và tương tác gần hành vi người dùng giúp test tập trung vào hợp đồng của component."
+sources = ["vitest/guide/browser/component-testing"]
+
+[[questions]]
+id = "tst-020"
+module = "testing-components"
+type = "fill"
+difficulty = 1
+prompt = '''
+Điền hai phần để truy vấn nút theo semantic role và tên hiển thị trong Testing Library:
+
+```js
+screen.{{blank}}('button', { {{blank}}: 'Lưu' })
+```
+'''
+blanks = [["getByRole"], ["name"]]
+explanation = "`getByRole` nhận role và option `name` để khớp accessible name."
+sources = ["vitest/guide/browser/component-testing"]
+
+[[questions]]
+id = "tst-021"
+module = "testing-components"
+type = "essay"
+difficulty = 2
+prompt = "Nêu vì sao truy vấn theo role/name thường bền hơn truy vấn class nội bộ, và một tình huống hợp lý để dùng test id."
+keywords = [["getByRole", "role"], ["accessible name", "tên truy cập"], ["test id", "data-testid"]]
+min_keywords = 2
+model_answer = '''Truy vấn getByRole với accessible name thể hiện semantics người dùng có thể nhận biết và ít gắn với chi tiết triển khai như class CSS. Test id có thể dùng khi không có truy vấn semantic ổn định phù hợp, nhưng bản thân nó không chứng minh control có semantics tốt.'''
+explanation = "Câu trả lời cần liên hệ truy vấn role/name với semantics và nêu test id như lựa chọn có chủ đích."
+sources = ["vitest/guide/browser/component-testing"]
+
+[[questions]]
+id = "tst-022"
+module = "testing-components"
+type = "code"
+difficulty = 2
+lang = "javascript"
+title = "Tìm node theo role và name"
+prompt = '''
+Viết `getByRole(tree, role, name)` để tìm đúng một node trong cây giả lập. Mỗi node là object có thể có `role`, `name`, `ariaLabel`, `text` và `children` (mảng node con).
+- Duyệt depth-first từ node gốc.
+- Accessible name trong mô hình này là `ariaLabel`, nếu đó không phải string thì dùng `name`, rồi đến `text`; nếu cả ba không phải string thì là chuỗi rỗng.
+- Role và name phải khớp chính xác.
+- Trả về object node khi có đúng một kết quả; ném `Error` nếu không có hoặc có nhiều hơn một kết quả.
+- `tree` có thể thiếu hoặc là null; khi đó không tìm thấy kết quả.
+
+Đây là mô hình đơn giản hoá, không cần triển khai đầy đủ quy tắc tính accessible name của trình duyệt.
+'''
+starter = '''
+function getByRole(tree, role, name) {
+  return null;
+}
+'''
+solution = '''
+function getByRole(tree, role, name) {
+  const matches = [];
+  function visit(node) {
+    if (!node || typeof node !== 'object') return;
+    const accessibleName = typeof node.ariaLabel === 'string'
+      ? node.ariaLabel
+      : typeof node.name === 'string'
+        ? node.name
+        : typeof node.text === 'string'
+          ? node.text
+          : '';
+    if (node.role === role && accessibleName === name) matches.push(node);
+    if (Array.isArray(node.children)) node.children.forEach(visit);
+  }
+  visit(tree);
+  if (matches.length === 0) throw new Error('No matching element');
+  if (matches.length > 1) throw new Error('Multiple matching elements');
+  return matches[0];
+}
+'''
+tests = '''
+test('tìm node con theo name', () => {
+  const button = { role: 'button', name: 'Save' };
+  const tree = { role: 'main', children: [{ role: 'section', children: [button] }] };
+  expect(getByRole(tree, 'button', 'Save')).toBe(button);
+});
+
+test('ariaLabel được ưu tiên hơn name', () => {
+  const button = { role: 'button', name: 'Old', ariaLabel: 'Save' };
+  expect(getByRole(button, 'button', 'Save')).toBe(button);
+});
+
+test('nếu không có kết quả thì ném lỗi', () => {
+  expect(() => getByRole(null, 'button', 'Save')).toThrow();
+});
+
+test('nếu trùng kết quả thì ném lỗi', () => {
+  const tree = { children: [{ role: 'button', text: 'Save' }, { role: 'button', name: 'Save' }] };
+  expect(() => getByRole(tree, 'button', 'Save')).toThrow();
+});
+'''
+hints = ["Tích luỹ node khớp thay vì trả ngay kết quả đầu tiên.", "Duyệt children chỉ khi đó là mảng."]
+explanation = "Truy vấn getByRole kiểu get-by phải phát hiện cả trường hợp thiếu và mơ hồ; mô hình này cố ý chỉ hỗ trợ cây object được mô tả."
+
+[[modules]]
+id = "testing-e2e"
+title = "E2E với Playwright và Cypress"
+description = "Locator, auto-wait, web-first assertion, fixture, trace và khác biệt retry trong Cypress."
+sources = ["playwright/locators", "playwright/test-assertions", "playwright/test-fixtures", "playwright/trace-viewer", "cypress/api/commands/get", "cypress/api/commands/should"]
+lesson = '''
+### Locator và chờ điều kiện
+Playwright locator mô tả cách tìm phần tử và được đánh giá lại khi dùng; action như click tự chờ các điều kiện khả dụng trước khi tương tác. Web-first assertion như `toBeVisible()` sẽ retry trong giới hạn timeout để chờ trạng thái mong muốn. Tránh sleep cố định vì vừa làm test chậm vừa không bảo đảm trạng thái đã sẵn sàng.
+
+| Công cụ | Pattern | Ghi nhớ |
+|---|---|---|
+| Playwright | `getByRole('button', { name: 'Save' })` | Ưu tiên semantics; assertion web-first có retry |
+| Cypress | `cy.get(...).should(...)` | Chain và assertion có cơ chế retry phù hợp |
+| Fixture | Tạo context hoặc dữ liệu cho test | Chọn scope rõ để tránh chia sẻ state ngoài ý muốn |
+| Trace | Xem timeline, ảnh chụp và thông tin hành động | Hữu ích để điều tra lỗi CI khó tái hiện |
+
+Fixture của Playwright cho phép chia sẻ setup có kiểm soát theo scope và tự quản lý vòng đời. Trace Viewer giúp xem lại hành động và ngữ cảnh khi lỗi xảy ra; bật trace trên mọi lần chạy có thể tăng chi phí lưu trữ.
+
+Lỗi hay gặp: giữ element handle cũ sau khi DOM thay đổi, dùng selector phụ thuộc cấu trúc sâu, assert tức thời thay vì web-first assertion, hoặc dùng `waitForTimeout` để che race condition. Cypress cũng retry query/assertion theo mô hình command chain; không nên suy diễn rằng mọi Promise hay side effect tuỳ ý đều tự retry.
+'''
+
+[[questions]]
+id = "tst-023"
+module = "testing-e2e"
+type = "single"
+difficulty = 2
+prompt = "Một trang tải dữ liệu bất đồng bộ. Trong Playwright, cách nào thường ổn định hơn để chờ nút xuất hiện?"
+options = ["Tạo locator theo role rồi dùng assertion web-first như `toBeVisible()`", "Chờ cố định 10 giây trước mỗi assertion", "Lấy element một lần rồi giữ reference qua mọi lần render", "Bỏ assertion vì click tự thành công"]
+answer = [0]
+explanation = "Locator và web-first assertion tự chờ trạng thái trong giới hạn timeout thay vì phụ thuộc sleep cố định."
+sources = ["playwright/locators", "playwright/test-assertions"]
+
+[[questions]]
+id = "tst-024"
+module = "testing-e2e"
+type = "single"
+difficulty = 2
+prompt = "Ưu điểm chính của web-first assertion như `await expect(locator).toHaveText('Done')` là gì?"
+options = ["Nó retry điều kiện trong timeout để UI có thời gian cập nhật", "Nó chạy assertion trên mọi trình duyệt cùng lúc", "Nó bỏ qua timeout", "Nó tự tạo fixture dữ liệu backend"]
+answer = [0]
+explanation = "Web-first assertion chờ điều kiện trở thành đúng trong timeout cấu hình, giúp tránh race condition thông thường."
+sources = ["playwright/test-assertions"]
+
+[[questions]]
+id = "tst-025"
+module = "testing-e2e"
+type = "single"
+difficulty = 3
+prompt = "Sau khi submit form, ứng dụng render lại danh sách. Vì sao locator thường phù hợp hơn giữ một element handle cũ?"
+options = ["Locator được phân giải lại khi thao tác, phù hợp DOM có thể thay đổi", "Locator bỏ qua mọi lỗi selector", "Element handle không thể đọc thuộc tính", "Locator tự bảo đảm backend không lỗi"]
+answer = [0]
+explanation = "Locator mô tả cách tìm phần tử và có thể phân giải ở thời điểm action/assertion, giảm rủi ro dùng node đã stale."
+sources = ["playwright/locators"]
+
+[[questions]]
+id = "tst-026"
+module = "testing-e2e"
+type = "multiple"
+difficulty = 2
+prompt = "Một lỗi E2E chỉ xảy ra trên CI. Những biện pháp nào giúp điều tra và giảm nguyên nhân phổ biến? Chọn tất cả đáp án đúng."
+options = ["Thu trace hoặc artifact khi thất bại", "Dùng fixture và dữ liệu cô lập theo test", "Thêm sleep dài mà không xác định điều kiện cần chờ", "Dùng locator và assertion tự chờ phù hợp"]
+answer = [0, 1, 3]
+explanation = "Trace cung cấp bằng chứng để debug; fixture cô lập state; locator và assertion có retry giảm race. Sleep dài chỉ che vấn đề và làm suite chậm."
+sources = ["playwright/trace-viewer", "playwright/test-fixtures", "playwright/test-assertions"]
+
+[[questions]]
+id = "tst-027"
+module = "testing-e2e"
+type = "fill"
+difficulty = 1
+prompt = '''
+Trong Cypress, command nào thường dùng để retry assertion về trạng thái của query cho đến khi đạt hoặc hết timeout?
+
+```js
+cy.get('[role="status"]').{{blank}}('be.visible')
+```
+'''
+blanks = [["should"]]
+explanation = "`should` trong Cypress query chain retry assertion theo cơ chế của Cypress."
+sources = ["cypress/api/commands/should"]
+
+[[questions]]
+id = "tst-028"
+module = "testing-e2e"
+type = "code"
+difficulty = 3
+lang = "javascript"
+title = "waitFor có timeout"
+prompt = '''
+Viết `waitFor(check, options)` trả về Promise:
+- `check` được gọi ngay lập tức và sau đó mỗi `interval` ms.
+- Nếu `check` trả giá trị truthy, resolve với giá trị đó.
+- Nếu `check` trả falsy hoặc ném lỗi, thử lại.
+- Khi hết `timeout` ms mà chưa thành công, reject với `Error` có message `Timed out`.
+- Mặc định `timeout` là 1000 và `interval` là 50; bài tập giả định các giá trị là số hợp lệ, `timeout >= 0`, `interval > 0`.
+
+Ví dụ: `waitFor(() => ready, { timeout: 100, interval: 10 })` resolve khi `ready` thành truthy trước hoặc tại lần kiểm tra cuối.
+'''
+starter = '''
+function waitFor(check, options = {}) {
+  return Promise.resolve(null);
+}
+'''
+solution = '''
+function waitFor(check, options = {}) {
+  const timeout = options.timeout === undefined ? 1000 : options.timeout;
+  const interval = options.interval === undefined ? 50 : options.interval;
+  return new Promise((resolve, reject) => {
+    const start = Date.now();
+    function poll() {
+      let value;
+      try {
+        value = check();
+      } catch (error) {
+        value = false;
+      }
+      if (value) {
+        resolve(value);
+        return;
+      }
+      const elapsed = Date.now() - start;
+      if (elapsed >= timeout) {
+        reject(new Error('Timed out'));
+        return;
+      }
+      setTimeout(poll, Math.min(interval, timeout - elapsed));
+    }
+    poll();
+  });
+}
+'''
+tests = '''
+test('resolve ngay khi check đã truthy', async () => {
+  jest.useFakeTimers();
+  const pending = waitFor(() => 'ready', { timeout: 40, interval: 10 });
+  expect(await pending).toBe('ready');
+  jest.useRealTimers();
+});
+
+test('thử lại cho đến khi check truthy', async () => {
+  jest.useFakeTimers();
+  let ready = false;
+  const pending = waitFor(() => ready ? 'done' : false, { timeout: 100, interval: 20 });
+  jest.advanceTimersByTime(40);
+  ready = true;
+  jest.advanceTimersByTime(20);
+  expect(await pending).toBe('done');
+  jest.useRealTimers();
+});
+
+test('reject đúng message khi hết timeout', async () => {
+  jest.useFakeTimers();
+  const pending = waitFor(() => false, { timeout: 30, interval: 10 }).catch((error) => error.message);
+  jest.advanceTimersByTime(30);
+  expect(await pending).toBe('Timed out');
+  jest.useRealTimers();
+});
+
+test('retry khi check tạm thời ném lỗi', async () => {
+  jest.useFakeTimers();
+  let calls = 0;
+  const pending = waitFor(() => {
+    calls++;
+    if (calls === 1) throw new Error('not ready');
+    return calls === 3 ? 'ok' : false;
+  }, { timeout: 50, interval: 10 });
+  jest.advanceTimersByTime(20);
+  expect(await pending).toBe('ok');
+  expect(calls).toBe(3);
+  jest.useRealTimers();
+});
+'''
+hints = ["Dùng Date.now() để tính phần timeout còn lại.", "Gọi check trước khi lên lịch timer đầu tiên."]
+explanation = "Polling ngay lập tức rồi dùng fake timers trong test giúp xác minh cả lần thử lại lẫn timeout mà không đợi đồng hồ thật."
+
+[[modules]]
+id = "testing-strategy"
+title = "Chiến lược và độ tin cậy"
+description = "Coverage, flaky test, CI và vòng lặp TDD."
+sources = ["vitest/guide/coverage", "vitest/config/coverage", "vitest/config/retry", "playwright/test-retries", "vitest/guide/learn/writing-tests"]
+lesson = '''
+### Coverage và flaky test
+Line coverage là tỉ lệ dòng executable được chạy trên tổng dòng executable đã đưa vào báo cáo: `covered lines / total lines × 100%`. Nó cho biết phạm vi đã chạy, không chứng minh assertion bắt đúng lỗi; coverage cao vẫn có thể đi cùng test yếu hoặc thiếu nhánh quan trọng.
+
+Flaky test cho kết quả không ổn định giữa các lần chạy dù code và điều kiện dự kiến không đổi. Nguyên nhân thường gặp gồm race condition, dùng chung dữ liệu, phụ thuộc thứ tự, clock thật, mạng hoặc môi trường CI khác biệt. Hãy lưu log/trace, cô lập test và tìm điều kiện không xác định. Retry có thể giúp phát hiện hoặc phân loại lỗi chập chờn nhưng không thay thế việc sửa nguyên nhân.
+
+| Thực hành | Mục tiêu |
+|---|---|
+| Chạy test độc lập và dữ liệu riêng | Giảm ảnh hưởng chéo |
+| Chờ điều kiện thay vì sleep | Giảm race và thời gian chờ dư |
+| Chạy suite trên CI ổn định | Phát hiện hồi quy trong cùng điều kiện |
+| TDD: Red → Green → Refactor | Tạo test cho hành vi trước khi hoàn thiện implementation |
+
+Lỗi thường gặp: đặt ngưỡng coverage cao rồi tối ưu con số thay vì rủi ro, retry vô hạn để làm CI xanh, hoặc chỉ chạy test trên máy cá nhân. Một CI tốt còn cần phản hồi đủ nhanh và báo rõ test nào thất bại.
+'''
+
+[[questions]]
+id = "tst-029"
+module = "testing-strategy"
+type = "single"
+difficulty = 2
+prompt = "Line coverage cao nhất cho biết điều gì?"
+options = ["Nhiều dòng executable đã được chạy, nhưng chưa khẳng định assertion đủ tốt", "Mọi lỗi đều được phát hiện", "Mọi nhánh logic đã được kiểm tra", "Ứng dụng không có bug"]
+answer = [0]
+explanation = "Coverage đo phần code được thực thi; nó không trực tiếp đo chất lượng assertion hay tính đầy đủ của test."
+sources = ["vitest/guide/coverage"]
+
+[[questions]]
+id = "tst-030"
+module = "testing-strategy"
+type = "single"
+difficulty = 2
+prompt = "Trong TDD, vòng lặp Red-Green-Refactor bắt đầu bằng việc nào?"
+options = ["Viết test thể hiện hành vi chưa được hỗ trợ và quan sát test thất bại", "Refactor trước khi có test", "Xoá test cũ để bắt đầu lại", "Tăng coverage bằng test không có assertion"]
+answer = [0]
+explanation = "Red là viết test cho hành vi mong muốn và xác nhận nó thất bại trước khi cài đặt phần tối thiểu để chuyển sang Green."
+sources = ["vitest/guide/learn/writing-tests"]
+
+[[questions]]
+id = "tst-031"
+module = "testing-strategy"
+type = "multiple"
+difficulty = 3
+prompt = "Những nguyên nhân nào có thể làm test flaky? Chọn tất cả đáp án đúng."
+options = ["Dựa vào thời gian thật hoặc race condition", "Chia sẻ dữ liệu mutable giữa test", "Phụ thuộc thứ tự thực thi", "Dùng input cố định và test độc lập"]
+answer = [0, 1, 2]
+explanation = "Clock thật, race, dữ liệu chia sẻ và phụ thuộc thứ tự đều tạo đầu vào hoặc điều kiện không ổn định."
+sources = ["playwright/test-retries", "vitest/config/retry"]
+
+[[questions]]
+id = "tst-032"
+module = "testing-strategy"
+type = "multiple"
+difficulty = 3
+prompt = "CI test suite có thời gian chạy tăng và đôi lúc fail không tái hiện. Biện pháp nào giúp cải thiện chất lượng tín hiệu? Chọn tất cả đáp án đúng."
+options = ["Phân loại và điều tra test flaky thay vì chỉ tăng retry", "Thu artifact hoặc trace hữu ích khi fail", "Chạy mọi test phụ thuộc theo thứ tự cố định mãi mãi", "Tách dữ liệu và trạng thái để test có thể chạy độc lập"]
+answer = [0, 1, 3]
+explanation = "Điều tra nguyên nhân, lưu bằng chứng và cô lập trạng thái cải thiện khả năng tái hiện. Ép thứ tự che dependency và hạn chế song song."
+sources = ["playwright/test-retries", "playwright/trace-viewer"]
+
+[[questions]]
+id = "tst-033"
+module = "testing-strategy"
+type = "fill"
+difficulty = 1
+prompt = '''
+Nếu 18 trên 24 dòng executable được chạy, line coverage là {{blank}} phần trăm.
+'''
+blanks = [["75", "75%"]]
+explanation = "Coverage = 18 / 24 × 100 = 75%."
+sources = ["vitest/guide/coverage"]
+
+[[questions]]
+id = "tst-034"
+module = "testing-strategy"
+type = "fill"
+difficulty = 2
+prompt = '''
+Một test chỉ pass khi chạy riêng nhưng fail ngẫu nhiên trong suite do dùng chung biến mutable. Test đó có khả năng là {{blank}}.
+'''
+blanks = [["flaky", "flaky test"]]
+explanation = "Kết quả thay đổi do state dùng chung là dấu hiệu của flaky test và test phụ thuộc lẫn nhau."
+sources = ["vitest/config/retry"]
+
+[[questions]]
+id = "tst-035"
+module = "testing-strategy"
+type = "code"
+difficulty = 2
+lang = "javascript"
+title = "Phát hiện test flaky từ lịch sử"
+prompt = '''
+Viết `findFlakyTests(history)` nhận mảng các object `{ id, runs }`, trong đó `runs` là mảng chuỗi trạng thái `pass`, `fail` hoặc `skip`.
+- Trả về danh sách `id` theo thứ tự đầu vào.
+- Một test được xem là flaky nếu trong lịch sử có ít nhất một `pass` và ít nhất một `fail`.
+- Test luôn pass, luôn fail, chỉ skip hoặc không có lần chạy không được xem là flaky.
+- Mỗi phần tử đầu vào đại diện cho một test duy nhất.
+'''
+starter = '''
+function findFlakyTests(history) {
+  return [];
+}
+'''
+solution = '''
+function findFlakyTests(history) {
+  return history
+    .filter((test) => test.runs.includes('pass') && test.runs.includes('fail'))
+    .map((test) => test.id);
+}
+'''
+tests = '''
+test('lấy test có cả pass và fail theo thứ tự đầu vào', () => {
+  const history = [
+    { id: 'a', runs: ['pass', 'fail'] },
+    { id: 'b', runs: ['pass', 'pass'] },
+    { id: 'c', runs: ['fail', 'pass', 'fail'] }
+  ];
+  expect(findFlakyTests(history)).toEqual(['a', 'c']);
+});
+
+test('không xem test luôn fail là flaky', () => {
+  expect(findFlakyTests([{ id: 'broken', runs: ['fail', 'fail'] }])).toEqual([]);
+});
+
+test('bỏ qua skip và lịch sử rỗng', () => {
+  const history = [
+    { id: 'skipped', runs: ['skip', 'skip'] },
+    { id: 'empty', runs: [] }
+  ];
+  expect(findFlakyTests(history)).toEqual([]);
+});
+
+test('trả mảng rỗng khi history rỗng', () => {
+  expect(findFlakyTests([])).toEqual([]);
+});
+'''
+hints = ["Chỉ giữ test có cả hai trạng thái pass và fail.", "Map kết quả đã lọc sang id để giữ thứ tự."]
+explanation = "Lịch sử kết hợp pass và fail là tín hiệu không ổn định; test luôn fail cần sửa nhưng chưa đủ dữ liệu để gọi là flaky."
+
+[[questions]]
+id = "tst-036"
+module = "testing-strategy"
+type = "code"
+difficulty = 2
+lang = "javascript"
+title = "Tính line coverage"
+prompt = '''
+Viết `lineCoverage(totalLines, coveredLines)` trả về phần trăm line coverage từ 0 đến 100.
+- Đầu vào là số dòng executable tổng cộng và số dòng đã chạy; giả định cả hai là số nguyên không âm, `coveredLines <= totalLines`.
+- Nếu `totalLines` bằng 0, trả về 0.
+- Làm tròn kết quả đến hai chữ số thập phân.
+
+Ví dụ: `lineCoverage(8, 6)` trả `75`; `lineCoverage(3, 2)` trả `66.67`.
+'''
+starter = '''
+function lineCoverage(totalLines, coveredLines) {
+  return 0;
+}
+'''
+solution = '''
+function lineCoverage(totalLines, coveredLines) {
+  if (totalLines === 0) return 0;
+  return Math.round((coveredLines / totalLines) * 10000) / 100;
+}
+'''
+tests = '''
+test('tính phần trăm coverage nguyên', () => {
+  expect(lineCoverage(8, 6)).toBe(75);
+});
+
+test('làm tròn đến hai chữ số thập phân', () => {
+  expect(lineCoverage(3, 2)).toBe(66.67);
+});
+
+test('coverage đầy đủ bằng 100', () => {
+  expect(lineCoverage(5, 5)).toBe(100);
+});
+
+test('không có dòng executable trả 0', () => {
+  expect(lineCoverage(0, 0)).toBe(0);
+});
+'''
+hints = ["Tính tỉ lệ covered chia total rồi nhân 100.", "Nhân thêm 100 trước Math.round để làm tròn 2 chữ số phần trăm."]
+explanation = "Line coverage là phần trăm dòng executable đã chạy; nó không đồng nghĩa mọi hành vi hoặc nhánh đều được xác minh."
+sources = ["vitest/guide/coverage"]

@@ -1,0 +1,811 @@
+id = "web-api"
+title = "Web API & HTTP"
+icon = "🔌"
+color = "#ef4444"
+group = "Backend"
+docs = ["http"]
+description = "HTTP method/status, thiết kế REST, idempotency, phân trang, caching (ETag, Cache-Control), xác thực (session, JWT, OAuth2), CORS, GraphQL/gRPC/WebSocket."
+
+[[modules]]
+id = "api-http"
+title = "HTTP căn bản"
+description = "Method, tính an toàn & idempotent, status code, header quan trọng, HTTP/2 & HTTP/3."
+sources = ["http/reference/methods", "http/reference/status"]
+lesson = '''
+### Method
+| Method | Safe | Idempotent | Dùng cho |
+|---|---|---|---|
+| GET | ✓ | ✓ | đọc |
+| HEAD | ✓ | ✓ | như GET nhưng không body |
+| PUT | ✗ | ✓ | thay thế toàn bộ |
+| DELETE | ✗ | ✓ | xoá |
+| POST | ✗ | ✗ | tạo mới / hành động |
+| PATCH | ✗ | không đảm bảo | sửa một phần |
+
+### Status code
+- **2xx**: 200 OK, 201 Created (+ header `Location`), 204 No Content
+- **3xx**: 301/308 chuyển vĩnh viễn, 302/307 tạm thời, **304 Not Modified**
+- **4xx**: 400 Bad Request, **401** chưa xác thực, **403** không có quyền, 404, 405, 409 Conflict, 422 dữ liệu không hợp lệ, **429** Too Many Requests
+- **5xx**: 500, 502 Bad Gateway, 503 Service Unavailable, 504 Gateway Timeout
+
+HTTP/2: multiplexing nhiều request trên 1 kết nối, nén header (HPACK). HTTP/3 chạy trên **QUIC** (UDP), tránh head-of-line blocking của TCP.
+'''
+
+[[modules]]
+id = "api-rest"
+title = "Thiết kế REST API"
+description = "Resource & URL, versioning, phân trang, lọc/sắp xếp, idempotency key, định dạng lỗi."
+sources = ["http/reference/status"]
+lesson = '''
+### Nguyên tắc
+- URL là **danh từ số nhiều** chỉ resource: `GET /users/42/orders`, không phải `/getUserOrders`.
+- Hành động bằng method; status code đúng ngữ nghĩa.
+- **Versioning**: `/v1/...` hoặc header; không phá vỡ client cũ (chỉ thêm field).
+- **Phân trang**: offset/limit (đơn giản, chậm & lệch khi dữ liệu thay đổi) vs **cursor** (ổn định, hiệu quả với dữ liệu lớn).
+- Lọc/sắp xếp: `?status=paid&sort=-created_at`.
+- **Idempotency-Key** cho POST quan trọng (thanh toán): server lưu kết quả theo key, retry trả lại đúng kết quả cũ.
+- Định dạng lỗi thống nhất, ví dụ **RFC 9457 Problem Details** (`application/problem+json`: `type`, `title`, `status`, `detail`).
+- Tài liệu hoá bằng **OpenAPI**.
+'''
+
+[[modules]]
+id = "api-caching"
+title = "Caching & Hiệu năng"
+description = "Cache-Control, ETag/If-None-Match, CDN, nén, rate limit header."
+sources = ["http/rfc9111#section-5.2", "http/rfc9110#section-8.8.3", "http/rfc9110#section-15.4.5"]
+lesson = '''
+### Ý chính
+- `Cache-Control: max-age=60` (trình duyệt), `s-maxage` (CDN/shared cache), `private` (chỉ trình duyệt), `no-cache` (phải revalidate), `no-store` (không lưu), `stale-while-revalidate`.
+- **ETag** + `If-None-Match` → server trả **304** không body nếu không đổi. Tương tự `Last-Modified` + `If-Modified-Since`.
+- Strong vs weak ETag (`W/"..."`).
+- `Vary: Accept-Encoding, Authorization` để cache phân biệt biến thể.
+- Nén `br`/`gzip` qua `Accept-Encoding`/`Content-Encoding`.
+- Rate limit: trả 429 + `Retry-After`.
+'''
+
+[[modules]]
+id = "api-auth"
+title = "Xác thực, phân quyền & bảo mật"
+description = "Session cookie vs token, JWT, OAuth2 / OIDC, PKCE, CORS, CSRF, OWASP API Top 10."
+sources = ["http/guides/cors", "http/reference/headers/set-cookie", "http/reference/headers/content-security-policy", "http/reference/headers/strict-transport-security"]
+lesson = '''
+### Ý chính
+- **Authentication** (bạn là ai) ≠ **Authorization** (bạn được làm gì).
+- **Session cookie**: server lưu phiên, cookie `HttpOnly; Secure; SameSite`. Dễ thu hồi.
+- **JWT access token** ngắn hạn + **refresh token** (xoay vòng, lưu an toàn). JWT khó thu hồi trước hạn.
+- **OAuth 2.0**: uỷ quyền truy cập; luồng **Authorization Code + PKCE** cho SPA/mobile; Client Credentials cho service-to-service. **OIDC** thêm `id_token` để xác thực.
+- **CORS** do trình duyệt thực thi; preflight `OPTIONS` cho request có header/method đặc biệt.
+- **OWASP API Top 10**: BOLA (Broken Object Level Authorization — luôn kiểm tra quyền sở hữu resource!), broken auth, lộ dữ liệu quá mức, thiếu rate limit, SSRF…
+- Luôn dùng HTTPS + `Strict-Transport-Security`.
+'''
+
+[[modules]]
+id = "api-styles"
+title = "REST, GraphQL, gRPC & Realtime"
+description = "So sánh kiểu API, WebSocket, SSE, webhook, message queue."
+sources = ["dom/websocket", "dom/eventsource"]
+lesson = '''
+| | REST | GraphQL | gRPC |
+|---|---|---|---|
+| Truyền tải | HTTP + JSON | HTTP (thường POST 1 endpoint) | HTTP/2 + Protobuf |
+| Ưu | đơn giản, cache HTTP tốt | client chọn field, gộp nhiều resource | nhanh, type-safe, streaming |
+| Nhược | over/under-fetching | cache khó, N+1 (dùng DataLoader) | khó gọi trực tiếp từ trình duyệt |
+
+### Realtime
+- **Polling** → đơn giản, tốn tài nguyên.
+- **SSE** (Server-Sent Events): server → client một chiều qua HTTP, tự reconnect.
+- **WebSocket**: hai chiều, full-duplex.
+- **Webhook**: server gọi ngược tới URL của bạn khi có sự kiện — xác minh chữ ký HMAC, xử lý idempotent, trả 2xx nhanh.
+'''
+
+# ------------------------------------------------------------ HTTP
+[[questions]]
+id = "api-001"
+module = "api-http"
+type = "single"
+difficulty = 1
+prompt = "Người dùng đã đăng nhập nhưng không có quyền xoá bài viết của người khác. API nên trả status nào?"
+options = ["400", "401", "403", "404"]
+answer = [2]
+explanation = "401 = chưa xác thực / token không hợp lệ. 403 = đã biết bạn là ai nhưng không được phép. (Có thể trả 404 để không lộ sự tồn tại của resource.)"
+sources = ["http/reference/status"]
+
+[[questions]]
+id = "api-002"
+module = "api-http"
+type = "single"
+difficulty = 2
+prompt = "Method nào **idempotent** nhưng **không safe**?"
+options = ["GET", "POST", "PUT", "HEAD"]
+answer = [2]
+explanation = "Gọi PUT nhiều lần cho kết quả như một lần; nhưng nó thay đổi trạng thái server nên không safe."
+sources = ["http/reference/methods"]
+
+[[questions]]
+id = "api-003"
+module = "api-http"
+type = "single"
+difficulty = 2
+prompt = "Sau khi `POST /orders` tạo thành công, response chuẩn nên là:"
+options = [
+  "200 kèm body rỗng",
+  "201 Created, header `Location: /orders/123` và (thường) body là resource vừa tạo",
+  "204 No Content",
+  "302 redirect",
+]
+answer = [1]
+explanation = "`Location` chỉ tới resource mới."
+sources = ["http/reference/status"]
+
+[[questions]]
+id = "api-004"
+module = "api-http"
+type = "single"
+difficulty = 2
+prompt = "Khác biệt giữa 502 Bad Gateway và 504 Gateway Timeout?"
+options = [
+  "Giống nhau",
+  "502: proxy/gateway nhận phản hồi **không hợp lệ** từ upstream; 504: upstream **không phản hồi kịp**",
+  "502 là lỗi client",
+  "504 là lỗi DNS",
+]
+answer = [1]
+explanation = "Thường gặp ở Nginx/load balancer đứng trước app server."
+sources = ["http/reference/status"]
+
+[[questions]]
+id = "api-005"
+module = "api-http"
+type = "multiple"
+difficulty = 2
+prompt = "Ưu điểm của HTTP/2 so với HTTP/1.1?"
+options = [
+  "Multiplexing nhiều request song song trên một kết nối TCP",
+  "Nén header (HPACK)",
+  "Định dạng nhị phân (binary framing)",
+  "Chạy trên UDP",
+  "Không cần TLS trong mọi trình duyệt",
+]
+answer = [0, 1, 2]
+explanation = "HTTP/3 mới chạy trên QUIC (UDP). Trình duyệt chỉ hỗ trợ HTTP/2 qua TLS."
+
+[[questions]]
+id = "api-006"
+module = "api-http"
+type = "fill"
+difficulty = 1
+prompt = '''
+Hoàn thành bảng status code:
+
+- Quá nhiều request: **{{blank}}** Too Many Requests
+- Xung đột phiên bản / trùng dữ liệu: **{{blank}}** Conflict
+- Tài nguyên không đổi khi revalidate: **{{blank}}** Not Modified
+'''
+blanks = [["429"], ["409"], ["304"]]
+explanation = "Nắm vững các status phổ biến giúp client xử lý đúng (retry, refetch, hiển thị lỗi)."
+sources = ["http/reference/status", "http/rfc9110#section-15.4.5"]
+
+# ------------------------------------------------------------ REST
+[[questions]]
+id = "api-020"
+module = "api-rest"
+type = "single"
+difficulty = 1
+prompt = "URL nào đúng phong cách REST để lấy danh sách đơn hàng của user 42?"
+options = ["`GET /getOrders?userId=42`", "`GET /users/42/orders`", "`POST /orders/list`", "`GET /user/42/getOrders`"]
+answer = [1]
+explanation = "Resource dạng danh từ số nhiều, quan hệ thể hiện bằng path lồng (không quá 2 cấp)."
+
+[[questions]]
+id = "api-021"
+module = "api-rest"
+type = "single"
+difficulty = 3
+prompt = "Vì sao cursor-based pagination tốt hơn offset/limit cho feed lớn thay đổi liên tục?"
+options = [
+  "Cursor dễ cài đặt hơn",
+  "Offset lớn khiến DB quét/bỏ qua nhiều dòng (chậm) và bị **trùng/sót** phần tử khi có dữ liệu chèn/xoá giữa các lần tải; cursor dựa trên vị trí (vd. id/created_at cuối) nên ổn định và dùng index",
+  "Cursor cho phép nhảy tới trang bất kỳ",
+  "Offset không hỗ trợ sắp xếp",
+]
+answer = [1]
+explanation = "Đánh đổi: cursor không nhảy trang tuỳ ý được."
+
+[[questions]]
+id = "api-022"
+module = "api-rest"
+type = "single"
+difficulty = 2
+prompt = "Mục đích của header `Idempotency-Key` trong `POST /payments`?"
+options = [
+  "Xác thực người dùng",
+  "Cho phép client retry an toàn: server ghi nhớ kết quả theo key và không tạo thanh toán trùng",
+  "Nén request",
+  "Chọn phiên bản API",
+]
+answer = [1]
+explanation = "Stripe, Adyen… đều dùng pattern này."
+
+[[questions]]
+id = "api-023"
+module = "api-rest"
+type = "multiple"
+difficulty = 2
+prompt = "Những thay đổi nào là **breaking change** với client API hiện tại?"
+options = [
+  "Thêm một field mới vào response",
+  "Đổi tên field `user_name` → `username`",
+  "Bắt buộc thêm một tham số trước đây là tuỳ chọn",
+  "Thêm endpoint mới",
+  "Đổi kiểu `id` từ số sang chuỗi",
+]
+answer = [1, 2, 4]
+explanation = "Thay đổi tương thích ngược: chỉ thêm (field, endpoint, tham số tuỳ chọn)."
+
+[[questions]]
+id = "api-024"
+module = "api-rest"
+type = "essay"
+difficulty = 3
+prompt = "Thiết kế định dạng lỗi thống nhất cho một REST API. Nêu các thành phần và lý do."
+keywords = [
+  ["status", "mã http"],
+  ["code", "mã lỗi", "type"],
+  ["message", "detail", "thông báo", "title"],
+  ["field", "errors", "chi tiết validate", "trường"],
+  ["request id", "trace", "correlation"],
+  ["problem", "9457", "7807"],
+]
+min_keywords = 3
+model_answer = '''
+Dùng chuẩn **RFC 9457 Problem Details** (`application/problem+json`):
+
+```json
+{
+  "type": "https://api.bovabon.edu/errors/validation",
+  "title": "Dữ liệu không hợp lệ",
+  "status": 422,
+  "detail": "Email đã tồn tại",
+  "code": "EMAIL_TAKEN",
+  "errors": [{ "field": "email", "message": "đã được sử dụng" }],
+  "requestId": "req_8f2a…"
+}
+```
+- **status** khớp HTTP status; **code/type** ổn định để client xử lý bằng máy (không phụ thuộc message).
+- **title/detail** thân thiện người đọc (có thể i18n).
+- **errors theo field** cho form validation.
+- **requestId/traceId** để tra log. Không lộ stack trace hay thông tin nội bộ.
+'''
+explanation = "Định dạng nhất quán giúp frontend viết một error handler chung."
+
+[[questions]]
+id = "api-025"
+module = "api-rest"
+type = "code"
+difficulty = 2
+title = "Cursor pagination"
+prompt = '''
+Viết `paginate(items, { limit = 10, cursor = null })` cho danh sách `items` **đã sắp xếp tăng dần theo `id`** (id là số):
+- `cursor` là chuỗi **base64** của JSON `{"id": <id cuối trang trước>}` (dùng `btoa`/`atob`)
+- Trả về `{ data, nextCursor }`: `data` gồm tối đa `limit` phần tử có `id > id trong cursor`; `nextCursor` là cursor của phần tử cuối trong `data` nếu **còn phần tử phía sau**, ngược lại `null`
+- cursor không hợp lệ → `throw new Error('invalid cursor')`
+- `limit` bị kẹp trong `[1, 100]`
+'''
+starter = '''
+function paginate(items, { limit = 10, cursor = null } = {}) {
+  return { data: items.slice(0, limit), nextCursor: null };
+}
+'''
+solution = '''
+function encodeCursor(id) { return btoa(JSON.stringify({ id })); }
+function decodeCursor(c) {
+  try {
+    const v = JSON.parse(atob(c));
+    if (typeof v.id !== 'number') throw new Error();
+    return v.id;
+  } catch (e) {
+    throw new Error('invalid cursor');
+  }
+}
+function paginate(items, { limit = 10, cursor = null } = {}) {
+  const n = Math.min(100, Math.max(1, limit));
+  const after = cursor == null ? -Infinity : decodeCursor(cursor);
+  const rest = items.filter((x) => x.id > after);
+  const data = rest.slice(0, n);
+  const nextCursor = rest.length > n ? encodeCursor(data[data.length - 1].id) : null;
+  return { data, nextCursor };
+}
+'''
+tests = '''
+const items = Array.from({ length: 25 }, (_, i) => ({ id: i + 1 }));
+test('trang đầu', () => {
+  const r = paginate(items, { limit: 10 });
+  expect(r.data.map((x) => x.id)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+  expect(JSON.parse(atob(r.nextCursor))).toEqual({ id: 10 });
+});
+test('duyệt hết các trang', () => {
+  let cursor = null, all = [], pages = 0;
+  do {
+    const r = paginate(items, { limit: 10, cursor });
+    all = all.concat(r.data.map((x) => x.id));
+    cursor = r.nextCursor;
+    pages++;
+  } while (cursor);
+  expect(pages).toBe(3);
+  expect(all.length).toBe(25);
+});
+test('trang cuối vừa khít → nextCursor null', () => {
+  expect(paginate(items.slice(0, 10), { limit: 10 }).nextCursor).toBeNull();
+});
+test('ổn định khi chèn phần tử mới ở đầu', () => {
+  const first = paginate(items, { limit: 5 });
+  const withNew = [{ id: 0 }].concat(items);
+  const second = paginate(withNew, { limit: 5, cursor: first.nextCursor });
+  expect(second.data[0].id).toBe(6);
+});
+test('cursor sai', () => {
+  expect(() => paginate(items, { cursor: 'not-base64!!' })).toThrow('invalid cursor');
+});
+test('kẹp limit', () => {
+  expect(paginate(items, { limit: 0 }).data).toHaveLength(1);
+  expect(paginate(items, { limit: 1000 }).data).toHaveLength(25);
+});
+'''
+hints = ["Lọc `id > after` rồi `slice(0, limit)`.", "Còn phần tử phía sau khi số phần tử sau cursor > limit."]
+explanation = "Trong SQL: `WHERE id > $after ORDER BY id LIMIT $n + 1` (lấy dư 1 để biết còn trang sau)."
+
+[[questions]]
+id = "api-026"
+module = "api-rest"
+type = "code"
+difficulty = 3
+title = "Idempotency-Key middleware"
+prompt = '''
+Viết `withIdempotency(handler)` trả về hàm `async (req) => response`:
+- `req = { method, headers, body }`; header key không phân biệt hoa thường: `idempotency-key`
+- Chỉ áp dụng cho `POST` có header; request khác gọi thẳng `handler`
+- Lần đầu với một key: gọi `handler(req)`, lưu `{ bodyHash: JSON.stringify(req.body), response }` rồi trả response
+- Lặp lại cùng key + cùng body → trả **response đã lưu** (không gọi handler)
+- Cùng key nhưng **body khác** → `{ status: 422, body: { error: 'idempotency key reused with different payload' } }`
+- Nếu request đầu với key đó **đang xử lý** → `{ status: 409, body: { error: 'request in progress' } }`
+- Nếu handler ném lỗi → **không** lưu key (cho phép retry)
+'''
+starter = '''
+function withIdempotency(handler) {
+  return async (req) => handler(req);
+}
+'''
+solution = '''
+function withIdempotency(handler) {
+  const store = new Map();
+  return async (req) => {
+    const headers = {};
+    for (const k of Object.keys(req.headers || {})) headers[k.toLowerCase()] = req.headers[k];
+    const key = headers['idempotency-key'];
+    if (req.method !== 'POST' || !key) return handler(req);
+    const bodyHash = JSON.stringify(req.body);
+    const saved = store.get(key);
+    if (saved) {
+      if (saved.bodyHash !== bodyHash) return { status: 422, body: { error: 'idempotency key reused with different payload' } };
+      if (saved.pending) return { status: 409, body: { error: 'request in progress' } };
+      return saved.response;
+    }
+    store.set(key, { bodyHash, pending: true });
+    try {
+      const response = await handler(req);
+      store.set(key, { bodyHash, pending: false, response });
+      return response;
+    } catch (e) {
+      store.delete(key);
+      throw e;
+    }
+  };
+}
+'''
+tests = '''
+let seq = 0;
+const createPayment = jest.fn(async (req) => ({ status: 201, body: { id: ++seq, amount: req.body.amount } }));
+const api = withIdempotency(createPayment);
+const post = (key, body) => api({ method: 'POST', headers: key ? { 'Idempotency-Key': key } : {}, body });
+
+test('lần đầu gọi handler', async () => {
+  const r = await post('k1', { amount: 100 });
+  expect(r.status).toBe(201);
+  expect(createPayment).toHaveBeenCalledTimes(1);
+});
+test('retry cùng key trả kết quả cũ', async () => {
+  const a = await post('k2', { amount: 50 });
+  const b = await post('k2', { amount: 50 });
+  expect(b).toEqual(a);
+  expect(createPayment).toHaveBeenCalledTimes(2);
+});
+test('cùng key khác body → 422', async () => {
+  await post('k3', { amount: 1 });
+  expect((await post('k3', { amount: 2 })).status).toBe(422);
+});
+test('không có key → luôn gọi handler', async () => {
+  const before = createPayment.mock.calls.length;
+  await post(null, { amount: 1 });
+  await post(null, { amount: 1 });
+  expect(createPayment.mock.calls.length - before).toBe(2);
+});
+test('đang xử lý → 409', async () => {
+  let release;
+  const slow = withIdempotency(() => new Promise((r) => { release = () => r({ status: 201, body: {} }); }));
+  const first = slow({ method: 'POST', headers: { 'idempotency-key': 'x' }, body: {} });
+  const second = await slow({ method: 'POST', headers: { 'idempotency-key': 'x' }, body: {} });
+  expect(second.status).toBe(409);
+  release();
+  expect((await first).status).toBe(201);
+});
+test('handler lỗi → cho phép retry', async () => {
+  let fail = true;
+  const flaky = withIdempotency(async () => { if (fail) throw new Error('db'); return { status: 201, body: {} }; });
+  const req = { method: 'POST', headers: { 'idempotency-key': 'y' }, body: {} };
+  try { await flaky(req); } catch (e) {}
+  fail = false;
+  expect((await flaky(req)).status).toBe(201);
+});
+'''
+hints = ["Đánh dấu `pending: true` trước khi `await handler` để phát hiện request đồng thời.", "Chuẩn hoá tên header về chữ thường."]
+explanation = "Thực tế lưu trong Redis/DB với TTL (vd. 24h) và khoá nguyên tử (`SET NX`)."
+
+# ------------------------------------------------------------ CACHING
+[[questions]]
+id = "api-040"
+module = "api-caching"
+type = "single"
+difficulty = 2
+prompt = "Client gửi `If-None-Match: \"abc\"` và ETag hiện tại trên server vẫn là `\"abc\"`. Server trả:"
+options = ["200 kèm toàn bộ body", "304 Not Modified, không body", "204 No Content", "412 Precondition Failed"]
+answer = [1]
+explanation = "Tiết kiệm băng thông; client dùng bản cache. 412 dùng cho `If-Match` khi cập nhật (optimistic locking)."
+sources = ["http/rfc9110#section-8.8.3", "http/rfc9110#section-15.4.5"]
+
+[[questions]]
+id = "api-041"
+module = "api-caching"
+type = "single"
+difficulty = 2
+prompt = "Response chứa dữ liệu riêng của người dùng (`/me`) nên dùng `Cache-Control` nào để CDN **không** cache?"
+options = ["`public, max-age=3600`", "`private, max-age=60` (hoặc `no-store` nếu nhạy cảm)", "`s-maxage=3600`", "`immutable`"]
+answer = [1]
+explanation = "`private` chỉ cho phép cache của trình duyệt người dùng đó."
+sources = ["http/rfc9111#section-5.2"]
+
+[[questions]]
+id = "api-042"
+module = "api-caching"
+type = "fill"
+difficulty = 2
+prompt = '''
+Cache asset có hash trong tên file (`app.3f9a1c.js`) vĩnh viễn:
+
+```
+Cache-Control: public, max-age={{blank}}, {{blank}}
+```
+'''
+blanks = [["31536000"], ["immutable"]]
+explanation = "1 năm; `immutable` báo trình duyệt không cần revalidate kể cả khi reload."
+sources = ["http/rfc9111#section-5.2"]
+
+[[questions]]
+id = "api-043"
+module = "api-caching"
+type = "code"
+difficulty = 3
+title = "Conditional GET với ETag"
+prompt = '''
+Viết:
+1. `etagOf(body)` — tạo **strong ETag** dạng `"<hash>"` (có dấu ngoặc kép) từ `JSON.stringify(body)` bằng hàm băm FNV-1a 32-bit, in hex 8 ký tự (đệm 0):
+   `h = 0x811c9dc5`; với mỗi mã ký tự `c`: `h ^= c; h = Math.imul(h, 0x01000193) >>> 0`
+2. `conditionalGet(req, body)` → response:
+   - header `If-None-Match` (không phân biệt hoa thường) chứa ETag hiện tại (danh sách cách nhau bởi dấu phẩy, chấp nhận dạng weak `W/"..."`, hoặc `*`) → `{ status: 304, headers: { ETag } }`
+   - ngược lại `{ status: 200, headers: { ETag, 'Cache-Control': 'no-cache' }, body }`
+'''
+starter = '''
+function etagOf(body) {
+  return '"0"';
+}
+
+function conditionalGet(req, body) {
+  return { status: 200, headers: {}, body };
+}
+'''
+solution = '''
+function etagOf(body) {
+  const s = JSON.stringify(body);
+  let h = 0x811c9dc5;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
+  return '"' + h.toString(16).padStart(8, '0') + '"';
+}
+
+function conditionalGet(req, body) {
+  const etag = etagOf(body);
+  let inm;
+  for (const k of Object.keys(req.headers || {})) if (k.toLowerCase() === 'if-none-match') inm = req.headers[k];
+  if (inm) {
+    const tags = inm.split(',').map((t) => t.trim().replace(/^W\//, ''));
+    if (tags.includes('*') || tags.includes(etag)) return { status: 304, headers: { ETag: etag } };
+  }
+  return { status: 200, headers: { ETag: etag, 'Cache-Control': 'no-cache' }, body };
+}
+'''
+tests = '''
+const body = { id: 1, name: 'Bovabon' };
+test('etag ổn định & đúng định dạng', () => {
+  const e = etagOf(body);
+  expect(e).toMatch(/^"[0-9a-f]{8}"$/);
+  expect(etagOf({ id: 1, name: 'Bovabon' })).toBe(e);
+  expect(etagOf({ id: 2 })).not.toBe(e);
+});
+test('FNV-1a đúng thuật toán', () => {
+  // JSON.stringify(1) === "1" → FNV-1a 32-bit của "1" = 0x340ca71c
+  expect(etagOf(1)).toBe('"340ca71c"');
+});
+test('lần đầu → 200 + ETag', () => {
+  const r = conditionalGet({ headers: {} }, body);
+  expect(r.status).toBe(200);
+  expect(r.body).toEqual(body);
+  expect(r.headers['Cache-Control']).toBe('no-cache');
+});
+test('ETag khớp → 304', () => {
+  const tag = conditionalGet({ headers: {} }, body).headers.ETag;
+  const r = conditionalGet({ headers: { 'If-None-Match': tag } }, body);
+  expect(r).toEqual({ status: 304, headers: { ETag: tag } });
+});
+test('danh sách + weak + hoa thường header', () => {
+  const tag = etagOf(body);
+  expect(conditionalGet({ headers: { 'if-none-match': '"x", W/' + tag } }, body).status).toBe(304);
+});
+test('dữ liệu đổi → 200', () => {
+  const old = etagOf(body);
+  expect(conditionalGet({ headers: { 'If-None-Match': old } }, { ...body, name: 'New' }).status).toBe(200);
+});
+test('* luôn khớp', () => {
+  expect(conditionalGet({ headers: { 'If-None-Match': '*' } }, body).status).toBe(304);
+});
+'''
+hints = ["`Math.imul` nhân 32-bit; `>>> 0` đưa về số không dấu.", "Bỏ tiền tố `W/` trước khi so sánh (weak comparison cho GET)."]
+explanation = "Express tự sinh ETag (weak) cho `res.send`; với API lớn nên tính ETag từ version/updated_at thay vì băm cả body."
+sources = ["http/rfc9110#section-8.8.3", "http/rfc9110#section-15.4.5"]
+
+# ------------------------------------------------------------ AUTH
+[[questions]]
+id = "api-060"
+module = "api-auth"
+type = "single"
+difficulty = 2
+prompt = "Luồng OAuth 2.0 được khuyến nghị cho SPA và ứng dụng mobile hiện nay là:"
+options = ["Implicit flow", "Resource Owner Password Credentials", "Authorization Code + **PKCE**", "Client Credentials"]
+answer = [2]
+explanation = "Implicit và Password grant đã bị khuyến cáo không dùng (OAuth 2.1). Client Credentials cho máy-với-máy."
+
+[[questions]]
+id = "api-061"
+module = "api-auth"
+type = "single"
+difficulty = 3
+prompt = "`GET /api/invoices/1002` trả về hoá đơn của người khác chỉ vì đổi số id. Đây là lỗ hổng gì?"
+options = ["XSS", "BOLA / IDOR (Broken Object Level Authorization)", "CSRF", "SQL Injection"]
+answer = [1]
+explanation = "Lỗ hổng #1 trong OWASP API Security Top 10. Luôn kiểm tra resource thuộc về user hiện tại (`WHERE id = ? AND owner_id = ?`)."
+
+[[questions]]
+id = "api-062"
+module = "api-auth"
+type = "single"
+difficulty = 2
+prompt = "Request nào khiến trình duyệt gửi **preflight** `OPTIONS` trước khi gọi API khác origin?"
+options = [
+  "`GET` không header tuỳ chỉnh",
+  "`POST` với `Content-Type: application/json` hoặc header `Authorization`",
+  "`<img src>`",
+  "`POST` form `application/x-www-form-urlencoded` không header thêm",
+]
+answer = [1]
+explanation = "\"Simple request\" chỉ cho GET/HEAD/POST với một số content-type & header nhất định."
+sources = ["http/guides/cors"]
+
+[[questions]]
+id = "api-063"
+module = "api-auth"
+type = "multiple"
+difficulty = 2
+prompt = "Thuộc tính cookie nào giúp bảo vệ session cookie?"
+options = ["`HttpOnly`", "`Secure`", "`SameSite=Lax`", "`Domain=.com`", "`Max-Age` hợp lý"]
+answer = [0, 1, 2, 4]
+explanation = "`Domain` quá rộng làm cookie gửi tới nhiều subdomain hơn cần thiết."
+sources = ["http/reference/headers/set-cookie"]
+
+[[questions]]
+id = "api-064"
+module = "api-auth"
+type = "fill"
+difficulty = 1
+prompt = '''
+Gửi access token theo chuẩn OAuth 2.0 Bearer:
+
+```
+{{blank}}: Bearer eyJhbGciOi...
+```
+'''
+blanks = [["Authorization"]]
+explanation = "RFC 6750. Không đặt token trong query string (bị log lại)."
+
+[[questions]]
+id = "api-065"
+module = "api-auth"
+type = "essay"
+difficulty = 3
+prompt = "So sánh xác thực bằng **session cookie** và **JWT (stateless token)**."
+keywords = [
+  ["stateless", "không lưu", "không trạng thái"],
+  ["thu hồi", "revoke", "logout", "blacklist"],
+  ["cookie"],
+  ["refresh"],
+  ["scale", "nhiều server", "microservice", "mở rộng"],
+  ["xss", "csrf", "httponly"],
+]
+min_keywords = 3
+model_answer = '''
+- **Session cookie**: server lưu phiên (DB/Redis), client giữ session id trong cookie `HttpOnly`. Dễ **thu hồi** (xoá session), nhưng cần store dùng chung khi **scale** nhiều server. Cần chống **CSRF** (SameSite, token).
+- **JWT**: **stateless**, server chỉ cần kiểm chữ ký → hợp microservice, mobile, API bên thứ ba. Nhược: khó **thu hồi** trước hạn → dùng access token ngắn hạn + **refresh token** xoay vòng (có thể lưu server để thu hồi); payload đọc được; lưu ở localStorage dễ lộ khi **XSS**.
+- Web app một domain thường dùng session cookie là đơn giản & an toàn nhất; API cho nhiều client dùng token.
+'''
+explanation = "Không có lựa chọn tuyệt đối — hiểu đánh đổi là chính."
+
+[[questions]]
+id = "api-066"
+module = "api-auth"
+type = "code"
+difficulty = 2
+title = "Kiểm tra CORS"
+prompt = '''
+Viết `corsHeaders(req, { origins, methods, credentials })` trả về object header cho response (hoặc `{}` nếu không cho phép):
+- `req = { method, headers }` (header lowercase: `origin`, `access-control-request-method`)
+- Origin không nằm trong `origins` (mảng; `'*'` nghĩa là mọi origin) → `{}`
+- Cho phép → luôn có `Access-Control-Allow-Origin` và `Vary: 'Origin'`
+  - nếu `credentials` true → giá trị là **chính origin** (không bao giờ `*`) và thêm `Access-Control-Allow-Credentials: 'true'`
+  - nếu `credentials` false và `origins` chứa `'*'` → `'*'`, ngược lại là origin
+- Preflight (`method === 'OPTIONS'` và có `access-control-request-method`): nếu method yêu cầu không thuộc `methods` → `{}`; ngược lại thêm `Access-Control-Allow-Methods: methods.join(', ')`
+'''
+starter = '''
+function corsHeaders(req, { origins, methods, credentials }) {
+  return { 'Access-Control-Allow-Origin': '*' };
+}
+'''
+solution = '''
+function corsHeaders(req, { origins, methods, credentials }) {
+  const origin = req.headers.origin;
+  if (!origin) return {};
+  const any = origins.includes('*');
+  if (!any && !origins.includes(origin)) return {};
+  const h = { Vary: 'Origin' };
+  if (credentials) {
+    h['Access-Control-Allow-Origin'] = origin;
+    h['Access-Control-Allow-Credentials'] = 'true';
+  } else {
+    h['Access-Control-Allow-Origin'] = any ? '*' : origin;
+  }
+  const reqMethod = req.headers['access-control-request-method'];
+  if (req.method === 'OPTIONS' && reqMethod) {
+    if (!methods.includes(reqMethod)) return {};
+    h['Access-Control-Allow-Methods'] = methods.join(', ');
+  }
+  return h;
+}
+'''
+tests = '''
+const cfg = { origins: ['https://app.bovabon.edu'], methods: ['GET', 'POST'], credentials: true };
+test('origin được phép + credentials', () => {
+  expect(corsHeaders({ method: 'GET', headers: { origin: 'https://app.bovabon.edu' } }, cfg)).toEqual({
+    Vary: 'Origin',
+    'Access-Control-Allow-Origin': 'https://app.bovabon.edu',
+    'Access-Control-Allow-Credentials': 'true',
+  });
+});
+test('origin lạ → không header', () => {
+  expect(corsHeaders({ method: 'GET', headers: { origin: 'https://evil.com' } }, cfg)).toEqual({});
+});
+test('wildcard không credentials', () => {
+  const h = corsHeaders({ method: 'GET', headers: { origin: 'https://x.dev' } }, { origins: ['*'], methods: ['GET'], credentials: false });
+  expect(h['Access-Control-Allow-Origin']).toBe('*');
+});
+test('wildcard + credentials không bao giờ trả *', () => {
+  const h = corsHeaders({ method: 'GET', headers: { origin: 'https://x.dev' } }, { origins: ['*'], methods: ['GET'], credentials: true });
+  expect(h['Access-Control-Allow-Origin']).toBe('https://x.dev');
+});
+test('preflight hợp lệ', () => {
+  const h = corsHeaders({ method: 'OPTIONS', headers: { origin: 'https://app.bovabon.edu', 'access-control-request-method': 'POST' } }, cfg);
+  expect(h['Access-Control-Allow-Methods']).toBe('GET, POST');
+});
+test('preflight method không cho phép', () => {
+  expect(corsHeaders({ method: 'OPTIONS', headers: { origin: 'https://app.bovabon.edu', 'access-control-request-method': 'DELETE' } }, cfg)).toEqual({});
+});
+test('không có Origin (same-origin / server-to-server)', () => {
+  expect(corsHeaders({ method: 'GET', headers: {} }, cfg)).toEqual({});
+});
+'''
+hints = ["Kiểm tra origin trước, rồi mới xét preflight.", "`Vary: Origin` để cache không trộn response giữa các origin."]
+explanation = "Hiểu logic CORS giúp debug lỗi \"blocked by CORS policy\" nhanh hơn — và nhớ CORS không phải cơ chế xác thực."
+sources = ["http/guides/cors"]
+
+# ------------------------------------------------------------ STYLES
+[[questions]]
+id = "api-080"
+module = "api-styles"
+type = "single"
+difficulty = 2
+prompt = "Vấn đề **N+1 query** trong GraphQL thường được giải quyết bằng:"
+options = ["Tăng timeout", "DataLoader — gom (batch) và cache các lần load theo key trong một request", "Dùng REST", "Thêm index"]
+answer = [1]
+explanation = "Resolver cho từng `post.author` gọi DB riêng → N+1. DataLoader gom thành một truy vấn `WHERE id IN (...)`."
+
+[[questions]]
+id = "api-081"
+module = "api-styles"
+type = "single"
+difficulty = 2
+prompt = "Dashboard chỉ cần server **đẩy** cập nhật giá một chiều tới trình duyệt. Lựa chọn đơn giản và phù hợp nhất?"
+options = ["Long polling mỗi 100ms", "Server-Sent Events (EventSource)", "gRPC streaming từ trình duyệt", "Webhook"]
+answer = [1]
+explanation = "SSE chạy trên HTTP thường, tự reconnect, có `Last-Event-ID`. Cần hai chiều tần suất cao thì dùng WebSocket."
+sources = ["dom/eventsource"]
+
+[[questions]]
+id = "api-082"
+module = "api-styles"
+type = "multiple"
+difficulty = 2
+prompt = "Best practice khi **nhận webhook** từ bên thứ ba (Stripe, GitHub)?"
+options = [
+  "Xác minh chữ ký HMAC trong header bằng secret",
+  "Trả 2xx nhanh, đưa xử lý nặng vào queue",
+  "Xử lý idempotent theo event id (webhook có thể gửi lặp)",
+  "Tin tưởng mọi request gửi tới URL webhook",
+  "Kiểm tra timestamp để chống replay",
+]
+answer = [0, 1, 2, 4]
+explanation = "URL webhook là public — ai cũng gọi được, nên bắt buộc xác minh chữ ký."
+
+[[questions]]
+id = "api-083"
+module = "api-styles"
+type = "fill"
+difficulty = 2
+prompt = '''
+Mở kết nối WebSocket và gửi tin nhắn từ trình duyệt:
+
+```js
+const ws = new {{blank}}('wss://chat.bovabon.edu/room/1');
+ws.addEventListener('open', () => ws.{{blank}}(JSON.stringify({ text: 'Xin chào' })));
+```
+'''
+blanks = [["WebSocket"], ["send"]]
+explanation = "Dùng `wss://` (TLS) ở production; cần cơ chế reconnect + heartbeat."
+sources = ["dom/websocket"]
+
+[[questions]]
+id = "api-084"
+module = "api-styles"
+type = "essay"
+difficulty = 3
+prompt = "Khi nào nên chọn GraphQL thay vì REST, và ngược lại?"
+keywords = [
+  ["over-fetching", "under-fetching", "thừa", "thiếu dữ liệu", "chọn field"],
+  ["nhiều client", "mobile", "nhiều màn hình", "frontend"],
+  ["cache", "http cache", "cdn"],
+  ["đơn giản", "public api", "phổ biến"],
+  ["schema", "type"],
+]
+min_keywords = 3
+model_answer = '''
+**GraphQL** phù hợp khi có **nhiều client** (web, mobile) với nhu cầu dữ liệu khác nhau, màn hình cần gộp nhiều resource lồng nhau — client chọn đúng field cần, tránh **over/under-fetching**, có **schema** mạnh kiểu và introspection.
+
+**REST** phù hợp khi API **đơn giản/CRUD**, **public API** cho bên thứ ba, cần tận dụng **HTTP cache/CDN**, upload file, hoặc đội ngũ muốn vận hành đơn giản. GraphQL đòi hỏi xử lý thêm: N+1 (DataLoader), giới hạn độ sâu/độ phức tạp query, cache phía client.
+'''
+explanation = "Nhiều hệ thống dùng cả hai: REST cho public/webhook, GraphQL (BFF) cho frontend."

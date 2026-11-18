@@ -1,0 +1,11 @@
+MỞ RỘNG lộ trình có sẵn `data/react.toml` (xem mục "Mở rộng một lộ trình có sẵn" trong AGENTS.md). Hiện có 61 câu, module: react-basics, react-state, react-hooks, react-perf, react-patterns. Mục tiêu: thêm ~70 câu mới (tổng ≥ 130), tiền tố id câu mới `react-x` (vd. `react-x001`, bài code `react-xc01`), docs slug `react`.
+
+1. Làm bài học (lesson) của 5 module cũ dày hơn: bảng so sánh, ví dụ code, "lỗi hay gặp", checklist phỏng vấn.
+2. Thêm module mới:
+   - `react-19`: Actions, useActionState, useOptimistic, useFormStatus, `use()`, ref là prop, document metadata, React Compiler.
+   - `react-server`: Server Components vs Client Components, "use client" / "use server", Suspense & streaming, hydration và lỗi hydration mismatch.
+   - `react-effects`: khi nào KHÔNG cần effect, cleanup, race condition khi fetch, Strict Mode chạy effect 2 lần, useLayoutEffect, useEffectEvent.
+   - `react-forms-a11y`: controlled/uncontrolled, validation, quản lý focus, ARIA cơ bản, portal & modal.
+   - `react-testing-arch`: Testing Library truy vấn theo role, tổ chức thư mục, state colocation, context vs store, error boundary, code splitting với lazy.
+3. Phân bố câu mới: ~40% single, ~15% multiple, ~15% fill, 6–8 essay, 12–15 bài code JavaScript (dùng hooks tối giản/renderHook/act của harness): reducer phức tạp, custom hook useFetch có huỷ request + chống race condition (fake timers), mô phỏng useOptimistic, form validation, memo selector, undo/redo history, virtualized list tính range hiển thị, hook debounce/throttle, context selector…
+4. Ưu tiên câu đọc code → dự đoán render/log, debug tình huống thực tế, chọn giải pháp. Kiến thức theo React 19 hiện hành.

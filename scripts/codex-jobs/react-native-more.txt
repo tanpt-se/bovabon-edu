@@ -1,0 +1,12 @@
+MỞ RỘNG lộ trình có sẵn `data/react-native.toml` (xem mục "Mở rộng một lộ trình có sẵn" trong AGENTS.md). Hiện có 49 câu, module: rn-core, rn-styling, rn-lists, rn-navigation, rn-native. Mục tiêu: thêm ~70 câu mới (tổng ≥ 120), tiền tố id câu mới `rn-x` (bài code `rn-xc01`…), docs slug `react_native`.
+
+1. Làm dày bài học 5 module cũ (bảng, ví dụ, lỗi hay gặp, so sánh với web).
+2. Thêm module mới:
+   - `rn-architecture`: New Architecture (JSI, Fabric, TurboModules, Codegen), Hermes, bridgeless, luồng JS/UI.
+   - `rn-expo`: Expo SDK, Expo Router (file-based), EAS Build/Update, config plugin, dev client vs Expo Go, prebuild.
+   - `rn-perf`: tối ưu FlatList (keyExtractor, getItemLayout, windowSize, removeClippedSubviews), FlashList (khái niệm), tránh re-render, profiling.
+   - `rn-animation-gesture`: Animated API, useNativeDriver, Reanimated (worklet, shared value), Gesture Handler.
+   - `rn-data-offline`: AsyncStorage/MMKV, SecureStore cho token, NetInfo, hàng đợi offline, push notification, deep link & universal link.
+   - `rn-release`: permissions, Platform.select, ký app, rủi ro OTA update, crash reporting, review của store.
+3. Phân bố: ~40% single, ~15% multiple, ~15% fill, 6–8 essay, 12–15 bài code JavaScript (logic thuần mô phỏng): tính item hiển thị theo scroll offset/windowSize, hàng đợi offline có retry + exponential backoff (fake timers), parser deep link, StyleSheet.flatten cho mảng style lồng nhau, Platform.select, reducer navigation stack (push/pop/replace/reset), interpolate của Animated có clamp/extend, throttle sự kiện scroll…
+4. Không dùng API web (DOM). Kiến thức theo React Native/Expo hiện hành.

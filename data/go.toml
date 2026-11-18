@@ -1,0 +1,1104 @@
+id = "go"
+title = "Go (Golang)"
+icon = "🐹"
+color = "#00add8"
+group = "Backend"
+docs = ["go"]
+description = "Cú pháp & kiểu dữ liệu, error handling, goroutine/channel, context, net/http và testing trong Go 1.2x."
+
+[[modules]]
+id = "go-basics"
+title = "Cú pháp, kiểu & interface"
+description = "Zero value, slice/map, struct, method, interface ngầm định, generics."
+sources = ["go/slices/index", "go/maps/index", "go/fmt/index"]
+lesson = '''
+### Ý chính
+- **Zero value**: biến khai báo không gán có giá trị mặc định (`0`, `""`, `false`, `nil`). Map `nil` đọc được nhưng **ghi sẽ panic**.
+- **Slice** là view (pointer, len, cap) lên mảng nền; `append` có thể cấp phát mảng mới khi vượt `cap` → luôn gán lại `s = append(s, x)`.
+- **Map** không có thứ tự duyệt cố định; không an toàn khi ghi đồng thời.
+- **Method** với pointer receiver `func (u *User) Rename()` mới sửa được struct gốc.
+- **Interface** được thoả mãn **ngầm định** (không có `implements`). Interface nhỏ là tốt (`io.Reader`, `fmt.Stringer`).
+- **Generics** (Go 1.18+): `func Map[T, U any](s []T, f func(T) U) []U`; ràng buộc `cmp.Ordered`, `comparable`.
+- Package `slices`, `maps` (1.21+) có `slices.Sort`, `slices.Contains`, `maps.Keys`…
+
+> Bài code: viết code trong `package main` (không viết hàm `main`). Test dùng `var _ = Test("tên", func(t *T) { ... })` với `t.Errorf`/`t.Fatalf` giống `testing.T`.
+'''
+
+[[modules]]
+id = "go-errors"
+title = "Error handling"
+description = "error là giá trị, wrapping với %w, errors.Is/As, sentinel error, panic/recover, defer."
+sources = ["go/errors/index", "go/errors/index#Is"]
+lesson = '''
+### Ý chính
+- Error là **giá trị**: hàm trả về `(T, error)`; kiểm tra `if err != nil` ngay.
+- **Wrap** lỗi kèm ngữ cảnh: `fmt.Errorf("load user %d: %w", id, err)`.
+- `errors.Is(err, ErrNotFound)` so sánh theo chuỗi wrap; `errors.As(err, &target)` lấy lỗi theo **kiểu**.
+- **Sentinel error**: `var ErrNotFound = errors.New("not found")`.
+- `defer` chạy khi hàm return, theo thứ tự **LIFO**; đối số của defer được **đánh giá ngay** lúc khai báo.
+- `panic` cho lỗi không thể phục hồi (bug); `recover()` chỉ có tác dụng trong hàm được `defer`.
+'''
+
+[[modules]]
+id = "go-concurrency"
+title = "Concurrency"
+description = "Goroutine, channel, select, sync.WaitGroup/Mutex, context, worker pool, race condition."
+sources = ["go/sync/index", "go/context/index", "go/sync/index#WaitGroup"]
+lesson = '''
+### Ý chính
+- **Goroutine** (`go f()`) rất nhẹ (vài KB stack), được Go runtime lập lịch M:N.
+- **Channel**: unbuffered → gửi/nhận đồng bộ; buffered → gửi chặn khi đầy. Chỉ **bên gửi** nên `close(ch)`. Đọc từ channel đã đóng trả zero value ngay (`v, ok := <-ch`).
+- `select` chờ nhiều channel; `default` để không chặn.
+- `sync.WaitGroup` đợi nhóm goroutine; `sync.Mutex` bảo vệ dữ liệu chung; `sync.Once`.
+- **context.Context**: truyền deadline/huỷ qua các tầng. Luôn `defer cancel()`. Tham số đầu tiên của hàm: `ctx context.Context`.
+- "Don't communicate by sharing memory; share memory by communicating."
+- Phát hiện race: `go test -race`.
+'''
+
+[[modules]]
+id = "go-web"
+title = "net/http & JSON"
+description = "http.Handler, ServeMux pattern (Go 1.22), middleware, encoding/json, struct tag, graceful shutdown."
+sources = ["go/net/http/index", "go/net/http/index#Handler", "go/encoding/json/index"]
+lesson = '''
+### Ý chính
+- `http.Handler` là interface có `ServeHTTP(w http.ResponseWriter, r *http.Request)`; `http.HandlerFunc` biến hàm thành Handler.
+- Go 1.22 `ServeMux` hỗ trợ method + wildcard: `mux.HandleFunc("GET /users/{id}", h)` → `r.PathValue("id")`.
+- **Middleware**: `func(next http.Handler) http.Handler`.
+- Gọi `w.WriteHeader(code)` **trước** `w.Write`; header phải set trước khi ghi body.
+- JSON: `json.NewDecoder(r.Body).Decode(&v)`, `json.NewEncoder(w).Encode(v)`; struct tag `json:"name,omitempty"`; chỉ field **viết hoa** (exported) mới được encode.
+- Server production: đặt `ReadTimeout`, `WriteTimeout`; graceful shutdown bằng `srv.Shutdown(ctx)`.
+'''
+
+# ------------------------------------------------------------ BASICS
+[[questions]]
+id = "go-001"
+module = "go-basics"
+type = "single"
+difficulty = 1
+prompt = "Điều gì xảy ra khi ghi vào một map `nil` (`var m map[string]int; m[\"a\"] = 1`)?"
+options = ["Map tự được khởi tạo", "Panic: assignment to entry in nil map", "Không có gì xảy ra", "Lỗi biên dịch"]
+answer = [1]
+explanation = "Đọc từ nil map trả zero value, nhưng ghi thì panic. Khởi tạo bằng `make(map[string]int)` hoặc literal `map[string]int{}`."
+
+[[questions]]
+id = "go-002"
+module = "go-basics"
+type = "single"
+difficulty = 2
+prompt = '''
+In ra gì?
+
+```go
+a := []int{1, 2, 3}
+b := a[:2]
+b[0] = 99
+fmt.Println(a[0])
+```
+'''
+options = ["1", "99", "panic", "0"]
+answer = [1]
+explanation = "`b` là slice chia sẻ cùng mảng nền với `a`. Muốn bản sao độc lập dùng `slices.Clone(a)` hoặc `copy`."
+sources = ["go/slices/index"]
+
+[[questions]]
+id = "go-003"
+module = "go-basics"
+type = "single"
+difficulty = 2
+prompt = "Một type thoả mãn interface trong Go khi nào?"
+options = [
+  "Khi khai báo `implements`",
+  "Khi nó có đủ các method của interface (ngầm định, không cần khai báo)",
+  "Khi embed interface đó",
+  "Khi đăng ký với runtime",
+]
+answer = [1]
+explanation = "Structural typing ngầm định giúp tách rời package — interface thường được khai báo ở phía **sử dụng**."
+
+[[questions]]
+id = "go-004"
+module = "go-basics"
+type = "single"
+difficulty = 2
+prompt = "Khi nào nên dùng **pointer receiver** `func (s *Stack) Push(v int)`?"
+options = [
+  "Không bao giờ",
+  "Khi method cần sửa receiver hoặc struct lớn (tránh copy); và nên nhất quán cho mọi method của type",
+  "Chỉ với interface",
+  "Chỉ khi struct rỗng",
+]
+answer = [1]
+explanation = "Value receiver nhận **bản sao** — thay đổi không ảnh hưởng bản gốc."
+
+[[questions]]
+id = "go-005"
+module = "go-basics"
+type = "multiple"
+difficulty = 2
+prompt = "Phát biểu nào đúng về Go?"
+options = [
+  "Thứ tự duyệt `for k := range m` của map là ngẫu nhiên, không được dựa vào",
+  "Field viết thường (unexported) không được `encoding/json` encode",
+  "Go có exception try/catch",
+  "`s = append(s, x)` có thể trả về slice trỏ tới mảng nền mới",
+  "Biến khai báo không sử dụng chỉ là warning",
+]
+answer = [0, 1, 3]
+explanation = "Go không có try/catch (dùng error value, panic/recover). Biến/import không dùng là **lỗi biên dịch**."
+
+[[questions]]
+id = "go-006"
+module = "go-basics"
+type = "fill"
+difficulty = 1
+prompt = '''
+Khai báo và khởi tạo map, sau đó kiểm tra key có tồn tại:
+
+```go
+ages := {{blank}}(map[string]int)
+age, {{blank}} := ages["an"]
+```
+'''
+blanks = [["make"], ["ok"]]
+explanation = "Idiom \"comma ok\": `v, ok := m[k]` — `ok` là false nếu key không tồn tại."
+
+[[questions]]
+id = "go-007"
+module = "go-basics"
+type = "fill"
+difficulty = 2
+prompt = '''
+Hàm generic tìm giá trị lớn nhất (dùng ràng buộc từ package `cmp`):
+
+```go
+func Max[T {{blank}}](xs []T) T { ... }
+```
+'''
+blanks = [["cmp.Ordered"]]
+explanation = "`cmp.Ordered` gồm các kiểu hỗ trợ `<`, `>`: số, chuỗi. `comparable` chỉ hỗ trợ `==`."
+
+[[questions]]
+id = "go-008"
+module = "go-basics"
+type = "code"
+lang = "go"
+difficulty = 2
+title = "Generic Map / Filter / GroupBy"
+prompt = '''
+Viết các hàm generic:
+
+- `Map[T, U any](s []T, f func(T) U) []U`
+- `Filter[T any](s []T, keep func(T) bool) []T` — luôn trả về slice **khác nil** (rỗng thì `[]T{}`)
+- `GroupBy[T any, K comparable](s []T, key func(T) K) map[K][]T` — giữ thứ tự xuất hiện trong mỗi nhóm
+'''
+starter = '''
+package main
+
+func Map[T, U any](s []T, f func(T) U) []U {
+	return nil
+}
+
+func Filter[T any](s []T, keep func(T) bool) []T {
+	return nil
+}
+
+func GroupBy[T any, K comparable](s []T, key func(T) K) map[K][]T {
+	return nil
+}
+'''
+solution = '''
+package main
+
+func Map[T, U any](s []T, f func(T) U) []U {
+	out := make([]U, 0, len(s))
+	for _, v := range s {
+		out = append(out, f(v))
+	}
+	return out
+}
+
+func Filter[T any](s []T, keep func(T) bool) []T {
+	out := []T{}
+	for _, v := range s {
+		if keep(v) {
+			out = append(out, v)
+		}
+	}
+	return out
+}
+
+func GroupBy[T any, K comparable](s []T, key func(T) K) map[K][]T {
+	out := make(map[K][]T)
+	for _, v := range s {
+		k := key(v)
+		out[k] = append(out[k], v)
+	}
+	return out
+}
+'''
+tests = '''
+package main
+
+import (
+	"reflect"
+	"strconv"
+)
+
+var _ = Test("Map int -> string", func(t *T) {
+	got := Map([]int{1, 2, 3}, func(i int) string { return strconv.Itoa(i * 2) })
+	if !reflect.DeepEqual(got, []string{"2", "4", "6"}) {
+		t.Errorf("got %v", got)
+	}
+})
+
+var _ = Test("Filter giữ số chẵn", func(t *T) {
+	got := Filter([]int{1, 2, 3, 4}, func(i int) bool { return i%2 == 0 })
+	if !reflect.DeepEqual(got, []int{2, 4}) {
+		t.Errorf("got %v", got)
+	}
+})
+
+var _ = Test("Filter rỗng trả về slice khác nil", func(t *T) {
+	got := Filter([]int{1}, func(int) bool { return false })
+	if got == nil || len(got) != 0 {
+		t.Errorf("muốn []int{} khác nil, got %#v", got)
+	}
+})
+
+var _ = Test("GroupBy theo độ dài chuỗi", func(t *T) {
+	got := GroupBy([]string{"go", "js", "rust", "py", "java"}, func(s string) int { return len(s) })
+	want := map[int][]string{2: {"go", "js", "py"}, 4: {"rust", "java"}}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("got %v", got)
+	}
+})
+'''
+hints = ["`make([]U, 0, len(s))` cấp phát trước đủ dung lượng.", "Với map, `append(out[k], v)` hoạt động cả khi `out[k]` chưa có (nil slice)."]
+explanation = "Từ Go 1.21 có sẵn `slices` và `maps`, nhưng tự viết giúp hiểu generics và nil vs empty slice."
+sources = ["go/slices/index", "go/maps/index"]
+
+[[questions]]
+id = "go-009"
+module = "go-basics"
+type = "code"
+lang = "go"
+difficulty = 2
+title = "Stack generic có kiểm tra rỗng"
+prompt = '''
+Cài đặt `Stack[T any]` với method (pointer receiver):
+- `Push(v T)`
+- `Pop() (T, bool)` — rỗng thì trả về zero value và `false`
+- `Peek() (T, bool)`
+- `Len() int`
+
+Zero value `Stack[T]{}` phải dùng được ngay.
+'''
+starter = '''
+package main
+
+type Stack[T any] struct {
+	items []T
+}
+
+func (s *Stack[T]) Push(v T) {}
+
+func (s *Stack[T]) Pop() (T, bool) {
+	var zero T
+	return zero, false
+}
+
+func (s *Stack[T]) Peek() (T, bool) {
+	var zero T
+	return zero, false
+}
+
+func (s *Stack[T]) Len() int { return 0 }
+'''
+solution = '''
+package main
+
+type Stack[T any] struct {
+	items []T
+}
+
+func (s *Stack[T]) Push(v T) { s.items = append(s.items, v) }
+
+func (s *Stack[T]) Pop() (T, bool) {
+	var zero T
+	if len(s.items) == 0 {
+		return zero, false
+	}
+	v := s.items[len(s.items)-1]
+	s.items[len(s.items)-1] = zero
+	s.items = s.items[:len(s.items)-1]
+	return v, true
+}
+
+func (s *Stack[T]) Peek() (T, bool) {
+	var zero T
+	if len(s.items) == 0 {
+		return zero, false
+	}
+	return s.items[len(s.items)-1], true
+}
+
+func (s *Stack[T]) Len() int { return len(s.items) }
+'''
+tests = '''
+package main
+
+var _ = Test("LIFO", func(t *T) {
+	var s Stack[int]
+	s.Push(1)
+	s.Push(2)
+	s.Push(3)
+	for _, want := range []int{3, 2, 1} {
+		v, ok := s.Pop()
+		if !ok || v != want {
+			t.Fatalf("Pop() = %d, %v; muốn %d", v, ok, want)
+		}
+	}
+})
+
+var _ = Test("Pop khi rỗng", func(t *T) {
+	var s Stack[string]
+	v, ok := s.Pop()
+	if ok || v != "" {
+		t.Errorf("muốn chuỗi rỗng, false; got %q, %v", v, ok)
+	}
+})
+
+var _ = Test("Peek không xoá", func(t *T) {
+	var s Stack[string]
+	s.Push("go")
+	v, ok := s.Peek()
+	if !ok || v != "go" || s.Len() != 1 {
+		t.Errorf("Peek sai: %q %v len=%d", v, ok, s.Len())
+	}
+})
+
+var _ = Test("Len", func(t *T) {
+	var s Stack[int]
+	s.Push(1)
+	s.Push(1)
+	s.Pop()
+	if s.Len() != 1 {
+		t.Errorf("Len = %d", s.Len())
+	}
+})
+'''
+hints = ["Lấy phần tử cuối `s.items[len(s.items)-1]` rồi cắt slice `s.items[:len-1]`."]
+explanation = "Gán zero value vào ô vừa pop giúp GC thu hồi đối tượng (quan trọng khi T là pointer)."
+
+# ------------------------------------------------------------ ERRORS
+[[questions]]
+id = "go-020"
+module = "go-errors"
+type = "single"
+difficulty = 2
+prompt = "Khác biệt giữa `fmt.Errorf(\"...: %v\", err)` và `fmt.Errorf(\"...: %w\", err)`?"
+options = [
+  "Không khác",
+  "`%w` **bọc** (wrap) lỗi gốc nên `errors.Is/As` vẫn tìm được; `%v` chỉ chèn chuỗi, mất liên kết",
+  "`%w` in ra stack trace",
+  "`%v` gây panic",
+]
+answer = [1]
+explanation = "Wrap để thêm ngữ cảnh mà vẫn giữ khả năng kiểm tra loại lỗi gốc."
+sources = ["go/errors/index", "go/fmt/index"]
+
+[[questions]]
+id = "go-021"
+module = "go-errors"
+type = "single"
+difficulty = 2
+prompt = '''
+In ra gì?
+
+```go
+for i := 0; i < 3; i++ {
+    defer fmt.Print(i)
+}
+```
+'''
+options = ["012", "210", "333", "000"]
+answer = [1]
+explanation = "Defer chạy LIFO; đối số `i` được đánh giá ngay lúc defer."
+
+[[questions]]
+id = "go-022"
+module = "go-errors"
+type = "single"
+difficulty = 2
+prompt = "`recover()` có tác dụng khi nào?"
+options = [
+  "Gọi ở bất kỳ đâu",
+  "Chỉ khi được gọi trực tiếp trong một hàm **deferred** trong goroutine đang panic",
+  "Chỉ trong hàm main",
+  "Chỉ trong goroutine khác",
+]
+answer = [1]
+explanation = "Panic trong goroutine khác không thể recover từ goroutine cha — mỗi goroutine cần tự recover (vd. trong HTTP handler)."
+
+[[questions]]
+id = "go-023"
+module = "go-errors"
+type = "fill"
+difficulty = 2
+prompt = '''
+Kiểm tra lỗi theo **sentinel** và theo **kiểu**:
+
+```go
+if errors.{{blank}}(err, sql.ErrNoRows) { ... }
+
+var pe *fs.PathError
+if errors.{{blank}}(err, &pe) { log.Println(pe.Path) }
+```
+'''
+blanks = [["Is"], ["As"]]
+explanation = "`Is` so sánh giá trị; `As` gán lỗi đầu tiên trong chuỗi khớp kiểu vào target."
+sources = ["go/errors/index#Is"]
+
+[[questions]]
+id = "go-024"
+module = "go-errors"
+type = "essay"
+difficulty = 2
+prompt = "Vì sao Go dùng error là giá trị thay vì exception? Nêu best practice xử lý lỗi trong Go."
+keywords = [
+  ["tường minh", "explicit", "rõ ràng"],
+  ["wrap", "%w", "ngữ cảnh", "context"],
+  ["errors.is", "errors.as", "sentinel"],
+  ["panic"],
+  ["không bỏ qua", "if err != nil", "kiểm tra ngay", "return sớm"],
+]
+min_keywords = 3
+model_answer = '''
+Error là giá trị khiến luồng lỗi **tường minh** trong chữ ký hàm, buộc người gọi xử lý, không có luồng nhảy ẩn như exception.
+
+Best practice:
+- Kiểm tra `if err != nil` ngay và **return sớm**, không bỏ qua lỗi (`_`).
+- **Wrap** kèm ngữ cảnh bằng `fmt.Errorf("...: %w", err)`, chỉ log ở tầng trên cùng (tránh log trùng).
+- Dùng **sentinel error** / kiểu lỗi riêng và kiểm tra bằng `errors.Is` / `errors.As`, không so sánh chuỗi.
+- `panic` chỉ cho lỗi lập trình không phục hồi được; recover ở ranh giới (HTTP middleware).
+'''
+explanation = "Go 1.20+ có `errors.Join` để gộp nhiều lỗi."
+
+[[questions]]
+id = "go-025"
+module = "go-errors"
+type = "code"
+lang = "go"
+difficulty = 3
+title = "Sentinel error, custom error & wrapping"
+prompt = '''
+Một repository người dùng:
+
+1. Khai báo sentinel `ErrNotFound = errors.New("not found")`
+2. Kiểu lỗi `ValidationError{Field string}` có method `Error()` trả về `"invalid " + Field`
+3. `FindUser(db map[int]string, id int) (string, error)`:
+   - `id <= 0` → trả về `&ValidationError{Field: "id"}`
+   - không có trong map → lỗi **wrap** `ErrNotFound` với ngữ cảnh: `fmt.Errorf("user %d: %w", id, ErrNotFound)`
+   - có → trả về tên, `nil`
+'''
+starter = '''
+package main
+
+import "errors"
+
+var ErrNotFound = errors.New("TODO")
+
+type ValidationError struct {
+	Field string
+}
+
+func (e *ValidationError) Error() string { return "" }
+
+func FindUser(db map[int]string, id int) (string, error) {
+	return "", nil
+}
+'''
+solution = '''
+package main
+
+import (
+	"errors"
+	"fmt"
+)
+
+var ErrNotFound = errors.New("not found")
+
+type ValidationError struct {
+	Field string
+}
+
+func (e *ValidationError) Error() string { return "invalid " + e.Field }
+
+func FindUser(db map[int]string, id int) (string, error) {
+	if id <= 0 {
+		return "", &ValidationError{Field: "id"}
+	}
+	name, ok := db[id]
+	if !ok {
+		return "", fmt.Errorf("user %d: %w", id, ErrNotFound)
+	}
+	return name, nil
+}
+'''
+tests = '''
+package main
+
+import "errors"
+
+var db = map[int]string{1: "An", 2: "Bình"}
+
+var _ = Test("tìm thấy", func(t *T) {
+	name, err := FindUser(db, 2)
+	if err != nil || name != "Bình" {
+		t.Errorf("got %q, %v", name, err)
+	}
+})
+
+var _ = Test("không tìm thấy: errors.Is + message có ngữ cảnh", func(t *T) {
+	_, err := FindUser(db, 9)
+	if !errors.Is(err, ErrNotFound) {
+		t.Fatalf("errors.Is(err, ErrNotFound) = false, err = %v", err)
+	}
+	if err.Error() != "user 9: not found" {
+		t.Errorf("message = %q", err.Error())
+	}
+})
+
+var _ = Test("id không hợp lệ: errors.As", func(t *T) {
+	_, err := FindUser(db, 0)
+	var ve *ValidationError
+	if !errors.As(err, &ve) || ve.Field != "id" {
+		t.Fatalf("muốn *ValidationError{id}, got %v", err)
+	}
+	if err.Error() != "invalid id" {
+		t.Errorf("message = %q", err.Error())
+	}
+})
+
+var _ = Test("id âm không hợp lệ", func(t *T) {
+	_, err := FindUser(db, -1)
+	var ve *ValidationError
+	if !errors.As(err, &ve) || ve.Field != "id" {
+		t.Fatalf("muốn *ValidationError{id}, got %v", err)
+	}
+})
+'''
+hints = ["Nhớ import `fmt` khi dùng `fmt.Errorf`.", "Dùng `%w` (không phải `%v`) để wrap."]
+explanation = "Pattern chuẩn: tầng repository trả lỗi có ngữ cảnh, tầng handler dùng `errors.Is/As` để map sang HTTP status (404, 400)."
+sources = ["go/errors/index#Is", "go/errors/index"]
+
+# ------------------------------------------------------------ CONCURRENCY
+[[questions]]
+id = "go-040"
+module = "go-concurrency"
+type = "single"
+difficulty = 2
+prompt = "Gửi vào một **unbuffered channel** khi chưa có goroutine nào nhận sẽ:"
+options = ["Lưu tạm vào buffer", "Chặn (block) cho tới khi có bên nhận", "Panic", "Bỏ qua giá trị"]
+answer = [1]
+explanation = "Nếu không có goroutine nào khác có thể nhận, runtime báo `fatal error: all goroutines are asleep - deadlock!`."
+
+[[questions]]
+id = "go-041"
+module = "go-concurrency"
+type = "single"
+difficulty = 2
+prompt = "Ai nên gọi `close(ch)`?"
+options = ["Bên nhận", "Bên gửi (khi không còn gửi gì nữa)", "Bất kỳ ai", "Garbage collector tự đóng"]
+answer = [1]
+explanation = "Gửi vào channel đã đóng → panic. Đóng để báo cho `for v := range ch` biết kết thúc."
+
+[[questions]]
+id = "go-042"
+module = "go-concurrency"
+type = "single"
+difficulty = 2
+prompt = "Mục đích chính của `context.Context` trong server Go?"
+options = [
+  "Lưu cấu hình toàn cục",
+  "Truyền tín hiệu huỷ, deadline và giá trị theo request xuyên qua các tầng gọi hàm/goroutine",
+  "Thay thế mutex",
+  "Ghi log",
+]
+answer = [1]
+explanation = "`r.Context()` bị huỷ khi client ngắt kết nối → DB query, HTTP call bên dưới dừng theo."
+sources = ["go/context/index", "go/context/index#WithTimeout"]
+
+[[questions]]
+id = "go-043"
+module = "go-concurrency"
+type = "multiple"
+difficulty = 3
+prompt = "Những code nào có **data race** / lỗi đồng thời?"
+options = [
+  "Nhiều goroutine cùng `count++` trên biến chung không có mutex",
+  "Nhiều goroutine cùng ghi vào một `map` thường",
+  "Mỗi goroutine ghi vào phần tử `results[i]` riêng của slice đã cấp phát đủ",
+  "Dùng `atomic.AddInt64(&count, 1)`",
+  "Gọi `wg.Add(1)` **bên trong** goroutine mới thay vì trước khi `go`",
+]
+answer = [0, 1, 4]
+explanation = "Ghi các index khác nhau của slice là an toàn. `wg.Add` bên trong goroutine có thể chạy sau `wg.Wait()`."
+
+[[questions]]
+id = "go-044"
+module = "go-concurrency"
+type = "fill"
+difficulty = 2
+prompt = '''
+Đặt timeout 2 giây cho một thao tác:
+
+```go
+ctx, cancel := context.{{blank}}(context.Background(), 2*time.Second)
+{{blank}} cancel()
+```
+'''
+blanks = [["WithTimeout"], ["defer"]]
+explanation = "Luôn `defer cancel()` để giải phóng timer/tài nguyên kể cả khi xong sớm."
+sources = ["go/context/index#WithTimeout"]
+
+[[questions]]
+id = "go-045"
+module = "go-concurrency"
+type = "essay"
+difficulty = 3
+prompt = "So sánh dùng **channel** và **mutex** để chia sẻ dữ liệu giữa goroutine. Khi nào dùng cái nào?"
+keywords = [
+  ["channel"],
+  ["mutex", "lock"],
+  ["truyền", "ownership", "sở hữu", "pipeline", "giao tiếp", "communicate"],
+  ["trạng thái", "state", "cache", "bộ đếm", "counter", "map"],
+]
+min_keywords = 3
+model_answer = '''
+- **Channel**: dùng khi **truyền dữ liệu / chuyển quyền sở hữu** giữa các goroutine, điều phối luồng công việc (pipeline, worker pool, fan-in/fan-out, tín hiệu done/cancel).
+- **Mutex**: dùng khi nhiều goroutine cùng đọc/ghi một **trạng thái chung** đơn giản (bộ đếm, cache, map) — gọn và nhanh hơn.
+- Nguyên tắc: "share memory by communicating", nhưng đừng ép mọi thứ vào channel; chọn cách làm code dễ hiểu và kiểm tra bằng `-race`.
+'''
+explanation = "Go wiki: \"Use whichever is most expressive and/or most simple.\""
+
+[[questions]]
+id = "go-046"
+module = "go-concurrency"
+type = "code"
+lang = "go"
+difficulty = 3
+title = "Worker pool giữ thứ tự kết quả"
+prompt = '''
+Viết `ParallelMap(inputs []int, workers int, f func(int) int) []int`:
+- Chạy `f` song song với **tối đa** `workers` goroutine
+- Kết quả trả về **đúng thứ tự** của `inputs`
+- `workers <= 0` coi như 1
+
+Dùng channel jobs + `sync.WaitGroup`.
+'''
+starter = '''
+package main
+
+func ParallelMap(inputs []int, workers int, f func(int) int) []int {
+	return nil
+}
+'''
+solution = '''
+package main
+
+import "sync"
+
+func ParallelMap(inputs []int, workers int, f func(int) int) []int {
+	if workers <= 0 {
+		workers = 1
+	}
+	results := make([]int, len(inputs))
+	jobs := make(chan int)
+	var wg sync.WaitGroup
+	for w := 0; w < workers; w++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for i := range jobs {
+				results[i] = f(inputs[i])
+			}
+		}()
+	}
+	for i := range inputs {
+		jobs <- i
+	}
+	close(jobs)
+	wg.Wait()
+	return results
+}
+'''
+tests = '''
+package main
+
+import (
+	"reflect"
+	"sync"
+	"sync/atomic"
+	"time"
+)
+
+var _ = Test("đúng thứ tự", func(t *T) {
+	got := ParallelMap([]int{1, 2, 3, 4, 5}, 3, func(x int) int {
+		time.Sleep(time.Duration(6-x) * time.Millisecond)
+		return x * x
+	})
+	if !reflect.DeepEqual(got, []int{1, 4, 9, 16, 25}) {
+		t.Errorf("got %v", got)
+	}
+})
+
+var _ = Test("không vượt quá số worker", func(t *T) {
+	var cur, peak int64
+	var mu sync.Mutex
+	ParallelMap(make([]int, 20), 4, func(x int) int {
+		n := atomic.AddInt64(&cur, 1)
+		mu.Lock()
+		if n > peak {
+			peak = n
+		}
+		mu.Unlock()
+		time.Sleep(3 * time.Millisecond)
+		atomic.AddInt64(&cur, -1)
+		return x
+	})
+	if peak > 4 || peak < 2 {
+		t.Errorf("peak concurrency = %d, muốn 2..4", peak)
+	}
+})
+
+var _ = Test("input rỗng", func(t *T) {
+	got := ParallelMap(nil, 2, func(x int) int { return x })
+	if len(got) != 0 {
+		t.Errorf("got %v", got)
+	}
+})
+
+var _ = Test("workers <= 0", func(t *T) {
+	got := ParallelMap([]int{7}, 0, func(x int) int { return x + 1 })
+	if !reflect.DeepEqual(got, []int{8}) {
+		t.Errorf("got %v", got)
+	}
+})
+'''
+hints = ["Gửi **index** vào channel jobs, worker ghi vào `results[i]` — mỗi index chỉ một goroutine ghi nên không race.", "Nhớ `close(jobs)` để các worker thoát vòng `range`."]
+explanation = "Worker pool giới hạn tài nguyên (số kết nối DB, CPU) — thực tế có thể dùng `errgroup.Group` với `SetLimit`."
+sources = ["go/sync/index#WaitGroup"]
+
+[[questions]]
+id = "go-047"
+module = "go-concurrency"
+type = "code"
+lang = "go"
+difficulty = 3
+title = "Gọi hàm có timeout bằng context"
+prompt = '''
+Viết `WithTimeout(ctx context.Context, d time.Duration, f func(ctx context.Context) (string, error)) (string, error)`:
+- Tạo context con có timeout `d`, gọi `f` trong goroutine
+- Nếu `f` xong trước → trả kết quả của `f`
+- Nếu hết giờ / ctx cha bị huỷ trước → trả về `"", ctx.Err()` của context con (`context.DeadlineExceeded` hoặc `context.Canceled`)
+- Không được rò rỉ goroutine bị chặn mãi (dùng channel có buffer 1)
+'''
+starter = '''
+package main
+
+import (
+	"context"
+	"time"
+)
+
+func WithTimeout(ctx context.Context, d time.Duration, f func(ctx context.Context) (string, error)) (string, error) {
+	return f(ctx)
+}
+'''
+solution = '''
+package main
+
+import (
+	"context"
+	"time"
+)
+
+func WithTimeout(ctx context.Context, d time.Duration, f func(ctx context.Context) (string, error)) (string, error) {
+	ctx, cancel := context.WithTimeout(ctx, d)
+	defer cancel()
+	type result struct {
+		v   string
+		err error
+	}
+	ch := make(chan result, 1)
+	go func() {
+		v, err := f(ctx)
+		ch <- result{v, err}
+	}()
+	select {
+	case r := <-ch:
+		return r.v, r.err
+	case <-ctx.Done():
+		return "", ctx.Err()
+	}
+}
+'''
+tests = '''
+package main
+
+import (
+	"context"
+	"errors"
+	"time"
+)
+
+var _ = Test("xong trước timeout", func(t *T) {
+	v, err := WithTimeout(context.Background(), 200*time.Millisecond, func(ctx context.Context) (string, error) {
+		return "ok", nil
+	})
+	if v != "ok" || err != nil {
+		t.Errorf("got %q, %v", v, err)
+	}
+})
+
+var _ = Test("hết giờ trả DeadlineExceeded", func(t *T) {
+	start := time.Now()
+	_, err := WithTimeout(context.Background(), 30*time.Millisecond, func(ctx context.Context) (string, error) {
+		time.Sleep(500 * time.Millisecond)
+		return "late", nil
+	})
+	if !errors.Is(err, context.DeadlineExceeded) {
+		t.Fatalf("err = %v", err)
+	}
+	if time.Since(start) > 300*time.Millisecond {
+		t.Errorf("phải trả về ngay khi hết giờ, mất %v", time.Since(start))
+	}
+})
+
+var _ = Test("ctx cha bị huỷ", func(t *T) {
+	parent, cancel := context.WithCancel(context.Background())
+	cancel()
+	_, err := WithTimeout(parent, time.Second, func(ctx context.Context) (string, error) {
+		<-ctx.Done()
+		return "", ctx.Err()
+	})
+	if !errors.Is(err, context.Canceled) {
+		t.Errorf("err = %v", err)
+	}
+})
+
+var _ = Test("lỗi của f được trả về", func(t *T) {
+	boom := errors.New("boom")
+	_, err := WithTimeout(context.Background(), time.Second, func(ctx context.Context) (string, error) {
+		return "", boom
+	})
+	if !errors.Is(err, boom) {
+		t.Errorf("err = %v", err)
+	}
+})
+'''
+hints = ["`select` giữa channel kết quả và `ctx.Done()`.", "Buffer 1 giúp goroutine của `f` gửi được kết quả và kết thúc dù không còn ai nhận."]
+explanation = "Pattern select + ctx.Done() là cốt lõi cho mọi I/O có timeout trong Go."
+sources = ["go/context/index#WithTimeout"]
+
+# ------------------------------------------------------------ WEB
+[[questions]]
+id = "go-060"
+module = "go-web"
+type = "single"
+difficulty = 1
+prompt = "Interface `http.Handler` yêu cầu method nào?"
+options = ["`Handle(req)`", "`ServeHTTP(w http.ResponseWriter, r *http.Request)`", "`Serve(port int)`", "`Do(req) (*Response, error)`"]
+answer = [1]
+explanation = "`http.HandlerFunc(fn)` là adapter biến hàm có chữ ký đó thành Handler."
+sources = ["go/net/http/index#Handler"]
+
+[[questions]]
+id = "go-061"
+module = "go-web"
+type = "single"
+difficulty = 2
+prompt = "Từ Go 1.22, cách khai báo route `GET /users/{id}` và đọc `id` với `http.ServeMux` là:"
+options = [
+  "`mux.Get(\"/users/:id\", h)` và `r.Param(\"id\")`",
+  "`mux.HandleFunc(\"GET /users/{id}\", h)` và `r.PathValue(\"id\")`",
+  "Không thể, phải dùng thư viện ngoài",
+  "`mux.Route(\"/users/*\")`",
+]
+answer = [1]
+explanation = "ServeMux mới hỗ trợ method, wildcard `{name}` và `{path...}` — đủ cho nhiều API mà không cần router ngoài."
+sources = ["go/net/http/index"]
+
+[[questions]]
+id = "go-062"
+module = "go-web"
+type = "single"
+difficulty = 2
+prompt = "Struct field nào sẽ xuất hiện trong JSON khi `json.Marshal`?"
+options = [
+  "`password string`",
+  "`Email string `json:\"email,omitempty\"`` (khi Email khác rỗng)",
+  "`Token string `json:\"-\"``",
+  "`internal int`",
+]
+answer = [1]
+explanation = "Chỉ field exported; tag `-` bỏ qua; `omitempty` bỏ khi zero value."
+sources = ["go/encoding/json/index"]
+
+[[questions]]
+id = "go-063"
+module = "go-web"
+type = "fill"
+difficulty = 2
+prompt = '''
+Trả về JSON với status 201:
+
+```go
+w.Header().Set("Content-Type", "application/json")
+w.{{blank}}(http.StatusCreated)
+json.{{blank}}(w).Encode(user)
+```
+'''
+blanks = [["WriteHeader"], ["NewEncoder"]]
+explanation = "Header phải set trước `WriteHeader`; sau khi ghi body thì không đổi được status."
+
+[[questions]]
+id = "go-064"
+module = "go-web"
+type = "code"
+lang = "go"
+difficulty = 3
+title = "Middleware RequireAPIKey + handler JSON"
+prompt = '''
+Viết:
+
+1. `RequireAPIKey(key string, next http.Handler) http.Handler` — nếu header `X-API-Key` khác `key` thì trả **401** với body JSON `{"error":"unauthorized"}`; ngược lại gọi `next`.
+2. `HelloHandler` (kiểu `http.HandlerFunc`) — đọc query `name` (mặc định `"world"`), trả **200** JSON `{"message":"hello, <name>"}` với header `Content-Type: application/json`.
+
+Test dùng `net/http/httptest`.
+'''
+starter = '''
+package main
+
+import "net/http"
+
+func RequireAPIKey(key string, next http.Handler) http.Handler {
+	return next
+}
+
+var HelloHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+})
+'''
+solution = '''
+package main
+
+import (
+	"encoding/json"
+	"net/http"
+)
+
+func writeJSON(w http.ResponseWriter, status int, v any) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	_ = json.NewEncoder(w).Encode(v)
+}
+
+func RequireAPIKey(key string, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("X-API-Key") != key {
+			writeJSON(w, http.StatusUnauthorized, map[string]string{"error": "unauthorized"})
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+var HelloHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	name := r.URL.Query().Get("name")
+	if name == "" {
+		name = "world"
+	}
+	writeJSON(w, http.StatusOK, map[string]string{"message": "hello, " + name})
+})
+'''
+tests = '''
+package main
+
+import (
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+)
+
+func call(h http.Handler, url, key string) (*httptest.ResponseRecorder, map[string]string) {
+	req := httptest.NewRequest("GET", url, nil)
+	if key != "" {
+		req.Header.Set("X-API-Key", key)
+	}
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+	var body map[string]string
+	_ = json.Unmarshal(rec.Body.Bytes(), &body)
+	return rec, body
+}
+
+var app = RequireAPIKey("secret", HelloHandler)
+
+var _ = Test("thiếu API key → 401", func(t *T) {
+	rec, body := call(app, "/hello", "")
+	if rec.Code != 401 || body["error"] != "unauthorized" {
+		t.Errorf("code=%d body=%v", rec.Code, body)
+	}
+})
+
+var _ = Test("sai API key → 401", func(t *T) {
+	rec, _ := call(app, "/hello", "wrong")
+	if rec.Code != 401 {
+		t.Errorf("code=%d", rec.Code)
+	}
+})
+
+var _ = Test("đúng key + name", func(t *T) {
+	rec, body := call(app, "/hello?name=Gopher", "secret")
+	if rec.Code != 200 || body["message"] != "hello, Gopher" {
+		t.Errorf("code=%d body=%v", rec.Code, body)
+	}
+	if ct := rec.Header().Get("Content-Type"); ct != "application/json" {
+		t.Errorf("Content-Type = %q", ct)
+	}
+})
+
+var _ = Test("name mặc định", func(t *T) {
+	_, body := call(app, "/hello", "secret")
+	if body["message"] != "hello, world" {
+		t.Errorf("body=%v", body)
+	}
+})
+'''
+hints = ["Middleware trả về `http.HandlerFunc(func(w, r) { ... next.ServeHTTP(w, r) })`.", "Nhớ `return` sau khi ghi 401."]
+explanation = "Middleware dạng `func(http.Handler) http.Handler` có thể xếp chồng: logging → auth → handler."
+sources = ["go/net/http/index#Handler", "go/encoding/json/index"]
+
+[[questions]]
+id = "go-065"
+module = "go-web"
+type = "essay"
+difficulty = 3
+prompt = "Mô tả cách thực hiện **graceful shutdown** cho một HTTP server Go."
+keywords = [
+  ["signal", "sigterm", "sigint", "os/signal", "notifycontext"],
+  ["shutdown"],
+  ["timeout", "context", "deadline"],
+  ["request đang xử lý", "in-flight", "đang chạy", "hoàn tất", "kết nối"],
+]
+min_keywords = 3
+model_answer = '''
+1. Chạy `srv.ListenAndServe()` trong goroutine.
+2. Lắng nghe tín hiệu **SIGINT/SIGTERM** bằng `signal.NotifyContext`.
+3. Khi nhận tín hiệu, tạo `context.WithTimeout` (vd. 10s) và gọi `srv.Shutdown(ctx)`: server ngừng nhận kết nối mới, đợi các **request đang xử lý** hoàn tất (hoặc tới khi hết timeout).
+4. Đóng tài nguyên khác (DB pool, queue) rồi thoát. `ListenAndServe` trả về `http.ErrServerClosed` — không coi là lỗi.
+'''
+explanation = "Quan trọng khi deploy trên Kubernetes (rolling update gửi SIGTERM)."
+sources = ["go/net/http/index", "go/context/index"]

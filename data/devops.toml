@@ -1,0 +1,965 @@
+id = "devops"
+title = "DevOps: Git, Docker, Kubernetes"
+icon = "🐳"
+color = "#2496ed"
+group = "Backend"
+docs = ["git", "docker", "kubernetes", "nginx", "bash", "terraform"]
+description = "Thực hành quy trình DevOps từ Git và Linux đến container, Kubernetes, reverse proxy, CI/CD và Terraform."
+
+[[modules]]
+id = "ops-git"
+title = "Git: nhánh, lịch sử và cứu hộ"
+description = "Branch, merge/rebase, conflict, reset/restore/revert, cherry-pick, reflog và workflow cộng tác."
+sources = ["git/git-branch", "git/git-merge", "git/git-rebase", "git/git-restore", "git/git-reset", "git/git-revert", "git/git-cherry-pick", "git/git-reflog", "git/git-log"]
+lesson = '''
+### Git và lịch sử thay đổi
+Git giữ snapshot trong commit; working tree là file đang sửa, index là vùng chuẩn bị commit. Branch chỉ là con trỏ nhẹ tới một commit.
+
+| Lệnh | Tác động chính | Dùng khi |
+|---|---|---|
+| git merge | Kết hợp lịch sử, có thể tạo merge commit | Cập nhật nhánh chia sẻ mà không viết lại lịch sử |
+| git rebase | Phát lại commit trên nền mới | Làm gọn nhánh riêng trước khi review |
+| git restore | Khôi phục nội dung file hoặc bỏ staging | Sửa trạng thái working tree/index |
+| git reset | Di chuyển HEAD và có thể thay đổi index/working tree | Chỉnh lịch sử cục bộ cẩn thận |
+| git revert | Tạo commit đảo ngược thay đổi cũ | Hoàn tác an toàn trên nhánh đã chia sẻ |
+| git cherry-pick | Áp dụng một commit lên nhánh hiện tại | Chuyển bản sửa chọn lọc |
+
+Ví dụ workflow: tạo feature branch, commit các thay đổi nhỏ, cập nhật từ main bằng merge hoặc rebase theo quy ước nhóm, xử lý conflict rồi mở review. Rebase thay đổi commit ID và không nên dùng để viết lại nhánh người khác đang dựa vào. Reflog ghi lại vị trí HEAD gần đây, hữu ích khi commit tưởng như mất sau reset. Lỗi thường gặp là nhầm reset với revert, force-push nhánh chia sẻ, hoặc giải quyết conflict nhưng quên kiểm tra diff trước commit.
+'''
+
+[[questions]]
+id = "ops-001"
+module = "ops-git"
+type = "single"
+difficulty = 1
+prompt = "Bạn vô tình sửa một file nhưng chưa stage và muốn bỏ toàn bộ thay đổi của file đó về nội dung ở working tree của commit hiện tại. Lệnh nào phù hợp?"
+options = ["git restore path/to/file", "git revert HEAD", "git cherry-pick HEAD", "git reflog"]
+answer = [0]
+explanation = "git restore file khôi phục nội dung working tree từ index hoặc nguồn chỉ định; thao tác này bỏ phần sửa chưa commit của file."
+sources = ["git/git-restore"]
+
+[[questions]]
+id = "ops-002"
+module = "ops-git"
+type = "single"
+difficulty = 2
+prompt = "Một nhánh release đã được nhiều người dùng chung. Cách hoàn tác commit lỗi nào giữ lịch sử và dễ truy vết nhất?"
+options = ["git reset --hard HEAD~1 rồi force-push", "git revert <commit>", "Xoá thư mục .git", "git restore --source=HEAD~1 ."]
+answer = [1]
+explanation = "git revert thêm commit mới đảo ngược thay đổi, giữ nguyên các commit đã chia sẻ."
+sources = ["git/git-revert"]
+
+[[questions]]
+id = "ops-003"
+module = "ops-git"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các phát biểu đúng về thao tác lịch sử Git."
+options = [
+  "Rebase tạo commit mới khi phát lại các commit trên nền khác.",
+  "Merge có thể kết hợp hai lịch sử mà không đổi commit ID cũ.",
+  "Cherry-pick áp dụng thay đổi của commit được chọn vào nhánh hiện tại.",
+  "git reset --hard chỉ xoá staging mà không đụng working tree.",
+  "Reflog có thể giúp tìm lại một vị trí HEAD cũ còn được ghi nhận."
+]
+answer = [0, 1, 2, 4]
+explanation = "Rebase tạo commit ID mới; reset --hard cập nhật cả index và working tree. Reflog ghi lại các lần cập nhật tham chiếu cục bộ."
+sources = ["git/git-rebase", "git/git-merge", "git/git-cherry-pick", "git/git-reset", "git/git-reflog"]
+
+[[questions]]
+id = "ops-004"
+module = "ops-git"
+type = "fill"
+difficulty = 1
+prompt = '''
+Điền lệnh tạo commit mới để đảo ngược một commit đã được push lên nhánh dùng chung: git {{blank}} <commit>
+'''
+blanks = [["revert"]]
+explanation = "Revert ghi lại một thay đổi đảo ngược mới thay vì xoá commit khỏi lịch sử."
+sources = ["git/git-revert"]
+
+[[questions]]
+id = "ops-005"
+module = "ops-git"
+type = "code"
+lang = "python"
+difficulty = 2
+title = "Tạo changelog từ git log"
+prompt = '''
+Viết generate_changelog(lines) nhận danh sách dòng theo dạng hash rồi đến subject từ git log --oneline. Phân loại các Conventional Commit hợp lệ vào dict có đủ bốn khóa Breaking Changes, Features, Bug Fixes, Other; mỗi giá trị là danh sách chuỗi theo dạng hash + khoảng trắng + subject, giữ thứ tự đầu vào. feat vào Features, fix vào Bug Fixes, các type hợp lệ khác vào Other. Commit có dấu ! ngay trước dấu hai chấm hoặc có cụm BREAKING CHANGE: trong subject chỉ vào Breaking Changes. Bỏ qua dòng sai định dạng hoặc subject không theo Conventional Commits. Ví dụ a1b2 feat(ui): add theme được đưa vào Features.
+'''
+starter = '''
+def generate_changelog(lines):
+    return {"Breaking Changes": [], "Features": [], "Bug Fixes": [], "Other": []}
+'''
+solution = '''
+import re
+
+_HEADER = re.compile(r"^([A-Za-z]+)(?:\([^)]+\))?(!)?:\s*(.+)$")
+
+
+def generate_changelog(lines):
+    result = {"Breaking Changes": [], "Features": [], "Bug Fixes": [], "Other": []}
+    for line in lines:
+        parts = line.strip().split(None, 1)
+        if len(parts) != 2 or not re.fullmatch(r"[0-9a-fA-F]+", parts[0]):
+            continue
+        commit_hash, subject = parts
+        match = _HEADER.fullmatch(subject)
+        if not match:
+            continue
+        kind, breaking_mark, _ = match.groups()
+        kind = kind.lower()
+        if breaking_mark or "BREAKING CHANGE:" in subject:
+            section = "Breaking Changes"
+        elif kind == "feat":
+            section = "Features"
+        elif kind == "fix":
+            section = "Bug Fixes"
+        else:
+            section = "Other"
+        result[section].append(commit_hash + " " + subject)
+    return result
+'''
+tests = '''
+@test("phân loại feat và fix")
+def _():
+    result = generate_changelog(["a1b2 feat(ui): add theme", "b2c3 fix: handle timeout"])
+    expect(result["Features"]).to_equal(["a1b2 feat(ui): add theme"])
+    expect(result["Bug Fixes"]).to_equal(["b2c3 fix: handle timeout"])
+
+@test("breaking change được ưu tiên")
+def _():
+    result = generate_changelog(["c3d4 feat(api)!: remove v1"])
+    expect(result["Breaking Changes"]).to_equal(["c3d4 feat(api)!: remove v1"])
+    expect(result["Features"]).to_equal([])
+
+@test("type khác vào Other và giữ thứ tự")
+def _():
+    result = generate_changelog(["a1 docs: add guide", "b2 chore: update lock"])
+    expect(result["Other"]).to_equal(["a1 docs: add guide", "b2 chore: update lock"])
+
+@test("bỏ dòng sai định dạng")
+def _():
+    result = generate_changelog(["not-a-log", "zzzz feat: bad hash", "a1 custom text"])
+    expect(result).to_equal({"Breaking Changes": [], "Features": [], "Bug Fixes": [], "Other": []})
+
+@test("nhận marker breaking trong subject")
+def _():
+    result = generate_changelog(["d4e5 refactor(core): BREAKING CHANGE: new API"])
+    expect(result["Breaking Changes"]).to_have_length(1)
+'''
+hints = ["Dùng regex tách hash và kiểm tra header Conventional Commit.", "Phân loại breaking trước khi xét feat hoặc fix."]
+explanation = "Một changelog ổn định cần giữ thứ tự commit và cho người đọc biết thay đổi nào phá vỡ tương thích."
+
+[[questions]]
+id = "ops-006"
+module = "ops-git"
+type = "code"
+lang = "python"
+difficulty = 3
+title = "Bump phiên bản SemVer"
+prompt = '''
+Viết bump_version(version, commits). version là dạng MAJOR.MINOR.PATCH, có thể có tiền tố v; commits là danh sách subject Conventional Commit. Tăng major nếu có ! ở header hoặc BREAKING CHANGE:, nếu không tăng minor khi có feat, nếu không tăng patch khi có ít nhất một commit Conventional Commit hợp lệ. Nếu danh sách rỗng hoặc không có commit hợp lệ thì giữ nguyên version. Giữ tiền tố v nếu đầu vào có. Số phiên bản không có số 0 thừa ở đầu.
+'''
+starter = '''
+def bump_version(version, commits):
+    return version
+'''
+solution = '''
+import re
+
+_VERSION = re.compile(r"^(v?)(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$")
+_COMMIT = re.compile(r"^([A-Za-z]+)(?:\([^)]+\))?(!)?:\s*(.+)$")
+
+
+def bump_version(version, commits):
+    match = _VERSION.fullmatch(version)
+    if not match:
+        raise ValueError("invalid version")
+    prefix, major, minor, patch = match.groups()
+    major, minor, patch = int(major), int(minor), int(patch)
+    valid = []
+    for subject in commits:
+        parsed = _COMMIT.fullmatch(subject.strip())
+        if parsed:
+            valid.append((parsed.group(1).lower(), bool(parsed.group(2)), parsed.group(3)))
+    if not valid:
+        return version
+    if any(mark or "BREAKING CHANGE:" in message for _, mark, message in valid):
+        major, minor, patch = major + 1, 0, 0
+    elif any(kind == "feat" for kind, _, _ in valid):
+        minor, patch = minor + 1, 0
+    else:
+        patch += 1
+    return f"{prefix}{major}.{minor}.{patch}"
+'''
+tests = '''
+@test("fix tăng patch")
+def _():
+    expect(bump_version("1.2.3", ["fix: handle timeout"])).to_equal("1.2.4")
+
+@test("feat tăng minor và reset patch")
+def _():
+    expect(bump_version("v1.2.9", ["feat(api): add cursor"])).to_equal("v1.3.0")
+
+@test("breaking tăng major và reset phần sau")
+def _():
+    expect(bump_version("2.4.8", ["feat(api)!: remove v1"])).to_equal("3.0.0")
+
+@test("commit thường không hợp lệ thì giữ nguyên")
+def _():
+    expect(bump_version("0.1.0", ["update stuff"])).to_equal("0.1.0")
+
+@test("phiên bản không hợp lệ báo lỗi")
+def _():
+    expect(lambda: bump_version("01.2.3", ["fix: x"])).to_raise(ValueError)
+'''
+hints = ["Tách tiền tố v khỏi ba số phiên bản trước khi so sánh commit.", "Thứ tự ưu tiên là breaking, feat, rồi patch."]
+explanation = "SemVer giúp người dùng phân biệt thay đổi phá vỡ tương thích, tính năng mới và bản sửa tương thích."
+
+[[modules]]
+id = "ops-linux-bash"
+title = "Linux và Bash"
+description = "Quyền file, process, pipeline, redirect và viết script có kiểm soát lỗi."
+sources = ["bash/the-set-builtin", "bash/pipelines", "bash/redirections", "bash/quoting", "bash/shell-parameters"]
+lesson = '''
+### Quan sát hệ thống và viết script
+Quyền file thường hiển thị theo chủ sở hữu, nhóm và người khác; chmod 640 file cấp đọc/ghi cho chủ sở hữu, đọc cho nhóm và không cấp quyền cho người khác. ps và kill hỗ trợ quan sát, gửi tín hiệu tới process; ưu tiên xác định đúng PID và thử dừng mềm trước khi dùng SIGKILL.
+
+| Cú pháp | Ý nghĩa |
+|---|---|
+| command > out.txt | Ghi stdout, ghi đè file |
+| command >> out.txt | Ghi stdout nối thêm |
+| command 2> err.txt | Ghi stderr riêng |
+| command1 \\| command2 | Nối stdout của lệnh trước vào stdin lệnh sau |
+| set -euo pipefail | Bật một số kiểm tra lỗi hữu ích cho script |
+
+Ví dụ: grep ERROR app.log | sort | uniq -c cho biết số dòng lỗi duy nhất. Dấu nháy kép bảo toàn khoảng trắng trong biến, còn dấu nháy đơn giữ nguyên nội dung theo nghĩa đen. set -e có ngoại lệ theo ngữ cảnh điều kiện; pipefail làm pipeline thất bại nếu một lệnh con thất bại, còn -u bắt biến chưa đặt. Lỗi thường gặp là dùng chmod 777, quên quote biến, hoặc hiểu set -e như cơ chế bắt mọi lỗi.
+'''
+
+[[questions]]
+id = "ops-007"
+module = "ops-linux-bash"
+type = "single"
+difficulty = 1
+prompt = "Bạn cần cấp quyền đọc/ghi cho chủ sở hữu, chỉ đọc cho group và không cấp quyền cho others. Giá trị số chmod nào đúng?"
+options = ["777", "755", "640", "600"]
+answer = [2]
+explanation = "6 là đọc + ghi, 4 là chỉ đọc, 0 là không có quyền."
+sources = ["bash/quoting"]
+
+[[questions]]
+id = "ops-008"
+module = "ops-linux-bash"
+type = "single"
+difficulty = 2
+prompt = "Trong lệnh grep ERROR app.log | sort, stdout của grep được đưa đi đâu?"
+options = ["Vào stdin của sort", "Vào file app.log", "Bị bỏ đi", "Vào stderr của sort"]
+answer = [0]
+explanation = "Pipe nối stdout của lệnh bên trái với stdin của lệnh bên phải."
+sources = ["bash/pipelines"]
+
+[[questions]]
+id = "ops-009"
+module = "ops-linux-bash"
+type = "single"
+difficulty = 2
+prompt = "Trong script dùng set -euo pipefail, tác dụng chính của pipefail là gì?"
+options = ["Làm pipeline báo thất bại nếu có lệnh con thất bại", "Tự retry lệnh lỗi", "Tắt stderr", "Chấm dứt mọi process trong máy"]
+answer = [0]
+explanation = "Mặc định pipeline thường nhận exit status của lệnh cuối; pipefail làm thất bại được truyền ra nếu một lệnh trong pipeline thất bại."
+sources = ["bash/the-set-builtin", "bash/pipelines"]
+
+[[questions]]
+id = "ops-010"
+module = "ops-linux-bash"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các thói quen an toàn khi viết script triển khai."
+options = [
+  "Quote biến khi đường dẫn có thể chứa khoảng trắng.",
+  "Kiểm tra exit status và xử lý lỗi của lệnh quan trọng.",
+  "Dùng chmod 777 để tránh lỗi quyền.",
+  "Dùng pipefail khi muốn lỗi ở giữa pipeline không bị che.",
+  "Dùng SIGKILL trước tiên với mọi process bị treo."
+]
+answer = [0, 1, 3]
+explanation = "Quote và xử lý lỗi giúp script dự đoán được; quyền tối thiểu và tín hiệu dừng mềm giảm rủi ro ngoài ý muốn."
+sources = ["bash/quoting", "bash/the-set-builtin", "bash/pipelines"]
+
+[[questions]]
+id = "ops-011"
+module = "ops-linux-bash"
+type = "fill"
+difficulty = 1
+prompt = '''
+Hoàn thành lệnh để nối thêm stdout vào file mà không ghi đè: command {{blank}} deploy.log
+'''
+blanks = [[">>"]]
+explanation = "Toán tử >> mở file ở chế độ nối thêm."
+sources = ["bash/redirections"]
+
+[[questions]]
+id = "ops-012"
+module = "ops-linux-bash"
+type = "code"
+lang = "python"
+difficulty = 3
+title = "Đọc file .env"
+prompt = '''
+Viết parse_env(text) trả về dict từ nội dung file .env. Bỏ dòng trống và dòng bắt đầu bằng #; cho phép khoảng trắng quanh key và dấu =, cùng tiền tố export. Key phải theo dạng chữ cái hoặc _ trước, sau đó là chữ, số hoặc _, sai thì raise ValueError. Giá trị không quote kết thúc tại dấu # nếu dấu này đứng đầu hoặc có khoảng trắng ngay trước. Giá trị trong nháy đơn giữ nguyên ký tự bên trong; giá trị trong nháy kép giải mã \\n, \\r, \\t, \\", \\\\. Sau quote chỉ cho phép khoảng trắng hoặc comment bắt đầu bằng #. Key lặp lại lấy giá trị sau cùng.
+'''
+starter = '''
+def parse_env(text):
+    return {}
+'''
+solution = '''
+import re
+
+
+def parse_env(text):
+    result = {}
+    key_pattern = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
+    escapes = {"n": "\n", "r": "\r", "t": "\t", '"': '"', "\\": "\\"}
+    for line_number, line in enumerate(text.splitlines(), 1):
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        if stripped.startswith("export "):
+            stripped = stripped[7:].lstrip()
+        if "=" not in stripped:
+            raise ValueError(f"line {line_number}: expected KEY=VALUE")
+        key, raw = stripped.split("=", 1)
+        key = key.strip()
+        if not key_pattern.fullmatch(key):
+            raise ValueError(f"line {line_number}: invalid key")
+        raw = raw.strip()
+        if raw.startswith("'") or raw.startswith('"'):
+            quote = raw[0]
+            value_parts = []
+            index = 1
+            closed = False
+            while index < len(raw):
+                char = raw[index]
+                if quote == '"' and char == "\\":
+                    index += 1
+                    if index >= len(raw):
+                        break
+                    escaped = raw[index]
+                    if escaped in escapes:
+                        value_parts.append(escapes[escaped])
+                    else:
+                        value_parts.extend(["\\", escaped])
+                elif char == quote:
+                    closed = True
+                    index += 1
+                    break
+                else:
+                    value_parts.append(char)
+                index += 1
+            if not closed:
+                raise ValueError(f"line {line_number}: unterminated quote")
+            remainder = raw[index:].strip()
+            if remainder and not remainder.startswith("#"):
+                raise ValueError(f"line {line_number}: unexpected text after quote")
+            value = "".join(value_parts)
+        else:
+            comment = None
+            for index, char in enumerate(raw):
+                if char == "#" and (index == 0 or raw[index - 1].isspace()):
+                    comment = index
+                    break
+            value = raw[:comment].rstrip() if comment is not None else raw.strip()
+        result[key] = value
+    return result
+'''
+tests = '''
+@test("giá trị thường và khoảng trắng")
+def _():
+    expect(parse_env(" PORT = 8080 \nNAME=api ")).to_equal({"PORT": "8080", "NAME": "api"})
+
+@test("export và comment")
+def _():
+    expect(parse_env("export MODE=prod # release")).to_equal({"MODE": "prod"})
+
+@test("giải mã escape nháy kép")
+def _():
+    expect(parse_env('TEXT="a\\nb\\"c"')["TEXT"]).to_equal('a\nb"c')
+
+@test("nháy đơn giữ nguyên nội dung")
+def _():
+    expect(parse_env("TEXT='a\\nb'")["TEXT"]).to_equal("a\\nb")
+
+@test("dấu thăng trong token không phải comment")
+def _():
+    expect(parse_env("TOKEN=abc#123")["TOKEN"]).to_equal("abc#123")
+
+@test("key lặp lấy giá trị cuối")
+def _():
+    expect(parse_env("A=1\nA=2")["A"]).to_equal("2")
+
+@test("key sai và quote chưa đóng báo lỗi")
+def _():
+    expect(lambda: parse_env("2BAD=x")).to_raise(ValueError)
+    expect(lambda: parse_env('A="open')).to_raise(ValueError)
+'''
+hints = ["Tách comment không quote trước khi gán giá trị.", "Với nháy kép, duyệt từng ký tự để xử lý escape và tìm dấu quote đóng."]
+explanation = "Parser .env phải phân biệt comment thật với ký tự # trong token, đồng thời không làm mất escape có ý nghĩa."
+
+[[modules]]
+id = "ops-docker"
+title = "Docker và Compose"
+description = "Image, container, layer, build cache, multi-stage, volume, network và Compose."
+sources = ["docker/engine/reference/commandline/image/index", "docker/engine/reference/commandline/build/index", "docker/engine/reference/commandline/volume/index", "docker/engine/reference/commandline/network/index", "docker/compose/compose-file/compose-file-v2/index", "docker/compose/reference/up/index"]
+lesson = '''
+### Từ image tới dịch vụ
+Image là mẫu chỉ đọc gồm các layer; container là instance được tạo từ image, có writable layer riêng. Layer có thể được tái sử dụng trong build cache nếu instruction và input phía trước không đổi.
+
+| Thành phần | Vai trò |
+|---|---|
+| Image | Đóng gói filesystem và metadata để chạy ứng dụng |
+| Container | Process đang chạy cùng cấu hình runtime |
+| Volume | Lưu dữ liệu bền vững ngoài vòng đời container |
+| Network | Cho phép container giao tiếp theo tên/service |
+| Compose | Khai báo nhiều service và quan hệ của chúng |
+
+Ví dụ Dockerfile có thể đặt dependency trước mã nguồn để tận dụng cache; multi-stage build dùng stage đầu để biên dịch rồi chỉ chép artifact cần thiết sang image runtime. Compose thuận tiện cho môi trường phát triển nhiều service. Tag latest không cố định phiên bản image; pin tag hoặc digest khi cần build lặp lại. Lỗi thường gặp là lưu dữ liệu duy nhất trong writable layer, đưa secret vào image, hoặc giả định image giống container đang chạy.
+'''
+
+[[questions]]
+id = "ops-013"
+module = "ops-docker"
+type = "single"
+difficulty = 1
+prompt = "Ứng dụng ghi database vào filesystem của container; dữ liệu cần còn sau khi xoá và tạo container mới. Thành phần nào phù hợp?"
+options = ["Writable layer của container", "Docker volume", "Build cache", "Tag latest"]
+answer = [1]
+explanation = "Volume tồn tại độc lập với vòng đời container và phù hợp lưu dữ liệu bền vững."
+sources = ["docker/engine/reference/commandline/volume/index"]
+
+[[questions]]
+id = "ops-014"
+module = "ops-docker"
+type = "single"
+difficulty = 2
+prompt = "Một thay đổi ở lệnh COPY mã nguồn làm các layer phía sau phải build lại. Cách sắp xếp nào thường cải thiện cache dependency?"
+options = ["Đưa COPY toàn bộ mã lên trước bước cài dependency", "Tách file khai báo dependency, cài dependency trước rồi mới COPY mã thường xuyên đổi", "Dùng tag latest cho mọi base image", "Gộp mọi stage thành một container đang chạy"]
+answer = [1]
+explanation = "Layer cache bị vô hiệu từ bước có input thay đổi trở đi; dependency ít đổi nên nên nằm trước mã thường xuyên thay đổi."
+sources = ["docker/engine/reference/commandline/build/index"]
+
+[[questions]]
+id = "ops-015"
+module = "ops-docker"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các phát biểu đúng về Docker."
+options = [
+  "Container có writable layer, nhưng dữ liệu cần bền vững nên đặt trong volume hoặc storage phù hợp.",
+  "Multi-stage build có thể loại compiler và công cụ build khỏi image runtime.",
+  "Mọi container tự động chia sẻ filesystem writable layer.",
+  "Compose mô tả dịch vụ, cấu hình và kết nối giữa nhiều container.",
+  "Image và container là hai tên gọi cho cùng một đối tượng."
+]
+answer = [0, 1, 3]
+explanation = "Container được tạo từ image nhưng có runtime và writable layer riêng; volume và Compose giải quyết nhu cầu khác nhau."
+sources = ["docker/engine/reference/commandline/image/index", "docker/engine/reference/commandline/volume/index", "docker/compose/compose-file/compose-file-v2/index"]
+
+[[questions]]
+id = "ops-016"
+module = "ops-docker"
+type = "fill"
+difficulty = 1
+prompt = '''
+Trong Dockerfile, chỉ thị thường dùng để chọn image nền là {{blank}}.
+'''
+blanks = [["FROM"]]
+explanation = "FROM khai báo base image và bắt đầu một build stage."
+sources = ["docker/engine/reference/commandline/build/index"]
+
+[[questions]]
+id = "ops-017"
+module = "ops-docker"
+type = "essay"
+difficulty = 2
+prompt = "Giải thích vì sao dữ liệu database trong container nên được đặt vào volume, và nêu một đánh đổi cần cân nhắc khi quản lý volume."
+keywords = [["vòng đời container", "lifecycle container"], ["volume", "persistent volume", "lưu trữ bền vững"], ["backup", "sao lưu", "quản lý dữ liệu"]]
+min_keywords = 2
+model_answer = '''Volume tách dữ liệu khỏi vòng đời container nên dữ liệu còn sau khi container bị thay thế. Đội vận hành cần có chính sách sao lưu, phục hồi và quyền truy cập volume phù hợp.'''
+explanation = "Container dễ được thay thế trong triển khai; volume cần quy trình sao lưu và quản lý riêng."
+sources = ["docker/engine/reference/commandline/volume/index"]
+
+[[questions]]
+id = "ops-018"
+module = "ops-docker"
+type = "code"
+lang = "python"
+difficulty = 3
+title = "Cảnh báo best-practice Dockerfile"
+prompt = '''
+Viết dockerfile_warnings(text) trả về danh sách mã cảnh báo theo thứ tự latest_tag, many_run, root_user. Bỏ dòng trống và comment. Cảnh báo latest_tag nếu bất kỳ FROM nào dùng tag latest, không ghi tag, hoặc dùng scratch thì scratch không tính; image có digest @sha256: được xem là đã pin. Cảnh báo many_run khi có từ ba chỉ thị RUN trở lên. Mỗi FROM bắt đầu stage mới; cảnh báo root_user nếu stage cuối không có USER, hoặc USER cuối cùng của stage đó là root, 0, root:root hay 0:0. Chỉ thị không phân biệt hoa thường; FROM có thể có các tùy chọn --platform trước tên image.
+'''
+starter = '''
+def dockerfile_warnings(text):
+    return []
+'''
+solution = '''
+def dockerfile_warnings(text):
+    from_latest = False
+    run_count = 0
+    stage_count = 0
+    final_user = None
+    for raw_line in text.splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        parts = line.split(None, 1)
+        instruction = parts[0].upper()
+        argument = parts[1].strip() if len(parts) == 2 else ""
+        if instruction == "FROM":
+            stage_count += 1
+            final_user = None
+            tokens = argument.split()
+            image = next((token for token in tokens if not token.startswith("--")), "")
+            if image and image.lower() != "scratch" and "@sha256:" not in image:
+                slash = image.rfind("/")
+                colon = image.rfind(":")
+                tag = image[colon + 1:] if colon > slash else None
+                if tag is None or tag.lower() == "latest":
+                    from_latest = True
+        elif instruction == "RUN":
+            run_count += 1
+        elif instruction == "USER" and stage_count:
+            final_user = argument.split()[0].lower() if argument else ""
+    warnings = []
+    if from_latest:
+        warnings.append("latest_tag")
+    if run_count >= 3:
+        warnings.append("many_run")
+    if stage_count and (final_user is None or final_user in {"root", "0", "root:root", "0:0"}):
+        warnings.append("root_user")
+    return warnings
+'''
+tests = '''
+@test("tag latest và mặc định bị cảnh báo")
+def _():
+    expect(dockerfile_warnings("FROM python\nUSER app")).to_equal(["latest_tag"])
+
+@test("scratch không bị xem là tag latest")
+def _():
+    expect(dockerfile_warnings("FROM scratch\nUSER 1000")).to_equal([])
+
+@test("nhiều RUN tạo cảnh báo")
+def _():
+    text = "FROM alpine:3.20\nRUN a\nRUN b\nRUN c\nUSER app"
+    expect(dockerfile_warnings(text)).to_equal(["many_run"])
+
+@test("stage cuối mặc định chạy root")
+def _():
+    text = "FROM golang:1.23 AS build\nUSER builder\nFROM alpine:3.20\nCOPY app /app"
+    expect(dockerfile_warnings(text)).to_equal(["root_user"])
+
+@test("stage cuối có USER không root")
+def _():
+    expect(dockerfile_warnings("FROM app@sha256:abc\nUSER 10001")).to_equal([])
+
+@test("FROM platform option và explicit root")
+def _():
+    text = "FROM --platform=linux/amd64 app:latest\nUSER root"
+    expect(dockerfile_warnings(text)).to_equal(["latest_tag", "root_user"])
+'''
+hints = ["Tách chỉ thị và đối số sau khi bỏ khoảng trắng đầu dòng.", "Khi gặp FROM mới, đặt lại USER vì cần đánh giá stage cuối."]
+explanation = "Tag không pin, quá nhiều layer RUN và chạy mặc định bằng root là các tín hiệu review hữu ích; chúng không thay thế đánh giá ngữ cảnh."
+sources = ["docker/engine/reference/commandline/build/index"]
+
+[[modules]]
+id = "ops-kubernetes"
+title = "Kubernetes"
+description = "Pod, Deployment, Service, Ingress, cấu hình, probe, rollout và HPA."
+sources = ["kubernetes/core/pod-v1/index", "kubernetes/apps/deployment-v1/index", "kubernetes/core/service-v1/index", "kubernetes/networking/ingress-v1/index", "kubernetes/core/config-map-v1/index", "kubernetes/core/secret-v1/index", "kubernetes/autoscaling/horizontal-pod-autoscaler-v2/index"]
+lesson = '''
+### Kubernetes: đối tượng và controller
+Pod chạy một hoặc nhiều container cùng các tài nguyên mạng cơ bản; Deployment quản lý ReplicaSet và số Pod mong muốn. Service tạo điểm truy cập ổn định tới các Pod phù hợp selector. Ingress mô tả luật HTTP(S), nhưng cần Ingress controller thực thi.
+
+| Đối tượng | Trách nhiệm |
+|---|---|
+| ConfigMap | Cấu hình không bí mật |
+| Secret | Dữ liệu nhạy cảm, cần kiểm soát quyền và mã hoá phù hợp |
+| readinessProbe | Xác định khi nào Pod nhận traffic |
+| livenessProbe | Phát hiện container cần khởi động lại |
+| HPA | Điều chỉnh replicas theo metric và giới hạn đã cấu hình |
+
+Ví dụ Deployment đặt replicas, image và resource requests; Service chọn Pod bằng label. Rolling update thay Pod theo từng bước để giảm downtime. HPA thường cần metrics server và resource requests phù hợp khi dùng CPU utilization. Secret không tự động an toàn chỉ vì loại object mang tên Secret. Lỗi thường gặp là probe liveness quá gắt, selector không khớp label, hoặc nghĩ Ingress hoạt động khi chưa cài controller.
+'''
+
+[[questions]]
+id = "ops-019"
+module = "ops-kubernetes"
+type = "single"
+difficulty = 1
+prompt = "Bạn cần giữ tên endpoint ổn định dù các Pod phía sau được thay thế. Object nào phù hợp?"
+options = ["Service", "Pod IP tĩnh", "ConfigMap", "ReplicaSet thủ công"]
+answer = [0]
+explanation = "Service cung cấp endpoint ổn định và chọn Pod qua selector."
+sources = ["kubernetes/core/service-v1/index"]
+
+[[questions]]
+id = "ops-020"
+module = "ops-kubernetes"
+type = "single"
+difficulty = 2
+prompt = "Readiness probe thất bại nhưng liveness probe vẫn thành công. Hệ quả mong đợi là gì?"
+options = ["Pod không được đưa vào endpoint nhận traffic cho tới khi ready", "Container luôn bị xoá ngay", "Deployment bị xoá", "Node lập tức reboot"]
+answer = [0]
+explanation = "Readiness quyết định Pod có sẵn sàng nhận traffic hay không; liveness dùng để phát hiện cần khởi động lại container."
+sources = ["kubernetes/core/pod-v1/index#Probe"]
+
+[[questions]]
+id = "ops-021"
+module = "ops-kubernetes"
+type = "single"
+difficulty = 2
+prompt = "Một Deployment cần chuyển image mới mà vẫn duy trì dịch vụ trong lúc thay Pod. Cơ chế nào nên cấu hình và theo dõi?"
+options = ["Rolling update", "Xoá namespace rồi tạo lại", "Chỉ sửa ConfigMap", "Dùng Pod đơn lẻ không controller"]
+answer = [0]
+explanation = "Deployment hỗ trợ rolling update theo chiến lược và giới hạn availability đã cấu hình."
+sources = ["kubernetes/apps/deployment-v1/index"]
+
+[[questions]]
+id = "ops-022"
+module = "ops-kubernetes"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các phát biểu đúng về cấu hình và truy cập trong Kubernetes."
+options = [
+  "ConfigMap dành cho cấu hình không bí mật.",
+  "Secret nên được xem là dữ liệu nhạy cảm và giới hạn quyền truy cập.",
+  "Ingress tự thực thi traffic dù cluster không có controller.",
+  "Service thường chọn Pod thông qua label selector.",
+  "Liveness và readiness probe có cùng mục đích."
+]
+answer = [0, 1, 3]
+explanation = "Ingress cần controller; readiness điều khiển việc nhận traffic còn liveness giúp phát hiện container cần restart."
+sources = ["kubernetes/core/config-map-v1/index", "kubernetes/core/secret-v1/index", "kubernetes/core/service-v1/index", "kubernetes/networking/ingress-v1/index", "kubernetes/core/pod-v1/index#Probe"]
+
+[[questions]]
+id = "ops-023"
+module = "ops-kubernetes"
+type = "fill"
+difficulty = 1
+prompt = '''
+Object Kubernetes cung cấp endpoint ổn định và định tuyến tới Pod theo selector là {{blank}}.
+'''
+blanks = [["Service"]]
+explanation = "Service tách client khỏi địa chỉ Pod có thể thay đổi."
+sources = ["kubernetes/core/service-v1/index"]
+
+[[questions]]
+id = "ops-024"
+module = "ops-kubernetes"
+type = "essay"
+difficulty = 3
+prompt = "Giải thích vai trò khác nhau của readiness probe, liveness probe và resource requests trong một workload được HPA theo dõi."
+keywords = [["readiness", "sẵn sàng nhận traffic"], ["liveness", "khởi động lại", "restart"], ["resource requests", "requests", "cpu request"], ["hpa", "horizontal pod autoscaler"]]
+min_keywords = 3
+model_answer = '''Readiness probe quyết định Pod có nhận traffic hay chưa, còn liveness probe phát hiện container cần restart. HPA dùng metric để điều chỉnh replicas; requests phù hợp giúp tính utilization có ý nghĩa khi metric là phần trăm CPU request.'''
+explanation = "Ba cấu hình ảnh hưởng các khía cạnh khác nhau: routing, tự phục hồi và tính toán autoscaling."
+sources = ["kubernetes/core/pod-v1/index#Probe", "kubernetes/autoscaling/horizontal-pod-autoscaler-v2/index"]
+
+[[questions]]
+id = "ops-025"
+module = "ops-kubernetes"
+type = "code"
+lang = "python"
+difficulty = 2
+title = "Tính replicas mục tiêu cho HPA"
+prompt = '''
+Viết desired_replicas(current_replicas, current_value, target_value, min_replicas, max_replicas). Dùng công thức ceil(current_replicas * current_value / target_value), sau đó giới hạn kết quả trong min_replicas..max_replicas. target_value phải dương, min_replicas không âm và không lớn hơn max_replicas, max_replicas phải ít nhất 1; nếu vi phạm raise ValueError. Hàm mô phỏng phép tính cơ bản, không cần xử lý tolerance, metric thiếu hay stabilization window.
+'''
+starter = '''
+def desired_replicas(current_replicas, current_value, target_value, min_replicas, max_replicas):
+    return current_replicas
+'''
+solution = '''
+import math
+
+
+def desired_replicas(current_replicas, current_value, target_value, min_replicas, max_replicas):
+    if target_value <= 0 or min_replicas < 0 or max_replicas < 1 or min_replicas > max_replicas:
+        raise ValueError("invalid HPA bounds or target")
+    calculated = math.ceil(current_replicas * current_value / target_value)
+    return max(min_replicas, min(max_replicas, calculated))
+'''
+tests = '''
+@test("tăng replicas theo utilization")
+def _():
+    expect(desired_replicas(4, 75, 50, 1, 10)).to_equal(6)
+
+@test("ceiling cho kết quả phân số")
+def _():
+    expect(desired_replicas(3, 51, 50, 1, 10)).to_equal(4)
+
+@test("giới hạn min và max")
+def _():
+    expect(desired_replicas(2, 10, 50, 3, 5)).to_equal(3)
+    expect(desired_replicas(8, 100, 50, 1, 10)).to_equal(10)
+
+@test("không vượt min khi kết quả bằng không")
+def _():
+    expect(desired_replicas(2, 0, 50, 1, 10)).to_equal(1)
+
+@test("đầu vào không hợp lệ báo lỗi")
+def _():
+    expect(lambda: desired_replicas(2, 50, 0, 1, 5)).to_raise(ValueError)
+    expect(lambda: desired_replicas(2, 50, 10, 6, 5)).to_raise(ValueError)
+'''
+hints = ["Tính số nguyên trên bằng math.ceil.", "Giới hạn kết quả sau khi tính công thức."]
+explanation = "Đây là mô hình hoá công thức replica cơ bản; controller thật còn cân nhắc tolerance, metric và ổn định scale."
+sources = ["kubernetes/autoscaling/horizontal-pod-autoscaler-v2/index"]
+
+[[modules]]
+id = "ops-nginx"
+title = "Nginx và reverse proxy"
+description = "Khớp location, chuyển tiếp upstream, header, TLS và kiểm tra cấu hình."
+sources = ["nginx/http/ngx_http_core_module#location", "nginx/http/ngx_http_proxy_module", "nginx/http/ngx_http_upstream_module"]
+lesson = '''
+### Reverse proxy và location
+Nginx nhận request từ client rồi có thể chuyển tiếp tới upstream bằng proxy_pass. Proxy thường kết thúc TLS, áp dụng routing, giới hạn request và ghi access/error log. Cần hiểu URI thay đổi thế nào khi proxy_pass có hoặc không có phần URI.
+
+| Location | Cách chọn |
+|---|---|
+| = /health | Khớp chính xác và dừng |
+| ^~ /assets/ | Prefix dài nhất; bỏ qua kiểm tra regex |
+| /api/ | Prefix thông thường, so theo prefix dài nhất |
+| ~ \.php$ | Regex phân biệt hoa thường, kiểm tra theo thứ tự khai báo |
+| ~* \.jpg$ | Regex không phân biệt hoa thường |
+
+Nginx chọn exact trước; nếu không có exact thì xét prefix dài nhất. Prefix ^~ thắng regex sau khi tìm được prefix đó; nếu không, regex được xét theo thứ tự khai báo trước khi dùng prefix đã chọn. Ví dụ route tĩnh có thể dùng ^~ để tránh regex PHP bắt nhầm. Lỗi thường gặp là cho rằng regex dài nhất thắng, nhầm thứ tự location, hoặc quên kiểm tra cấu hình trước reload.
+'''
+
+[[questions]]
+id = "ops-026"
+module = "ops-nginx"
+type = "single"
+difficulty = 1
+prompt = "Trong cấu hình Nginx, location = /health dùng modifier nào?"
+options = ["Khớp chính xác", "Prefix dài nhất", "Regex không phân biệt hoa thường", "Chuyển request sang upstream"]
+answer = [0]
+explanation = "Modifier = yêu cầu URI khớp chính xác và kết thúc việc tìm location."
+sources = ["nginx/http/ngx_http_core_module#location"]
+
+[[questions]]
+id = "ops-027"
+module = "ops-nginx"
+type = "single"
+difficulty = 3
+prompt = "URI /assets/app.js khớp prefix ^~ /assets/ và một regex ~ \\.js$. Nếu không có exact match, lựa chọn nào được ưu tiên?"
+options = ["^~ /assets/ vì prefix này dừng việc kiểm tra regex", "~ \\.js$ vì regex luôn ưu tiên", "Prefix ngắn nhất", "Nginx chọn ngẫu nhiên"]
+answer = [0]
+explanation = "Sau khi tìm prefix dài nhất, modifier ^~ ngăn bước kiểm tra regex."
+sources = ["nginx/http/ngx_http_core_module#location"]
+
+[[questions]]
+id = "ops-028"
+module = "ops-nginx"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các nhận định đúng về reverse proxy."
+options = [
+  "Nginx có thể chuyển request tới upstream bằng proxy_pass.",
+  "Reverse proxy có thể kết thúc TLS và áp dụng routing.",
+  "Nginx tự động bảo vệ ứng dụng khỏi mọi lỗi bảo mật ở upstream.",
+  "Cấu hình nên được kiểm tra trước khi reload.",
+  "Regex location luôn được chọn theo độ dài pattern."
+]
+answer = [0, 1, 3]
+explanation = "Proxy cung cấp điểm xử lý trung gian nhưng không thay thế bảo mật ứng dụng; regex được xét theo thứ tự khai báo."
+sources = ["nginx/http/ngx_http_proxy_module", "nginx/http/ngx_http_core_module#location"]
+
+[[questions]]
+id = "ops-029"
+module = "ops-nginx"
+type = "fill"
+difficulty = 1
+prompt = '''
+Modifier Nginx buộc URI khớp chính xác là {{blank}}.
+'''
+blanks = [["="]]
+explanation = "Location exact dùng dấu bằng ngay sau từ khoá location."
+sources = ["nginx/http/ngx_http_core_module#location"]
+
+[[questions]]
+id = "ops-030"
+module = "ops-nginx"
+type = "code"
+lang = "python"
+difficulty = 3
+title = "Mô phỏng chọn Nginx location"
+prompt = '''
+Viết select_location(locations, path). locations là danh sách tuple (modifier, pattern) theo thứ tự cấu hình; modifier thuộc "", "=", "^~", "~", "~*". Trả về tuple location được chọn hoặc None. Khớp exact = lập tức; nếu không, lấy prefix dài nhất trong location "" và ^~, hoà độ dài thì giữ mục xuất hiện trước. Prefix ^~ đã chọn thì không xét regex. Nếu prefix không phải ^~, kiểm tra regex ~ phân biệt hoa thường và ~* không phân biệt hoa thường theo thứ tự cấu hình, trả regex khớp đầu tiên; nếu không regex nào khớp thì trả prefix dài nhất. Pattern regex là cú pháp Python re.
+'''
+starter = '''
+def select_location(locations, path):
+    return None
+'''
+solution = '''
+import re
+
+
+def select_location(locations, path):
+    prefixes = []
+    regexes = []
+    for index, location in enumerate(locations):
+        modifier, pattern = location
+        if modifier == "=" and path == pattern:
+            return location
+        if modifier in ("", "^~") and path.startswith(pattern):
+            prefixes.append((len(pattern), -index, modifier, location))
+        elif modifier in ("~", "~*"):
+            regexes.append(location)
+    prefix = max(prefixes, default=None)
+    if prefix is not None and prefix[2] == "^~":
+        return prefix[3]
+    for modifier, pattern in regexes:
+        flags = re.IGNORECASE if modifier == "~*" else 0
+        if re.search(pattern, path, flags):
+            return (modifier, pattern)
+    return prefix[3] if prefix is not None else None
+'''
+tests = '''
+@test("exact match thắng")
+def _():
+    locations = [("", "/"), ("=", "/health"), ("~", ".*")]
+    expect(select_location(locations, "/health")).to_equal(("=", "/health"))
+
+@test("prefix dài nhất thắng khi không có regex")
+def _():
+    locations = [("", "/"), ("", "/api"), ("", "/api/v2")]
+    expect(select_location(locations, "/api/v2/users")).to_equal(("", "/api/v2"))
+
+@test("prefix ^~ bỏ qua regex")
+def _():
+    locations = [("~", "\\.js$"), ("^~", "/assets/")]
+    expect(select_location(locations, "/assets/app.js")).to_equal(("^~", "/assets/"))
+
+@test("regex đầu tiên khớp được chọn")
+def _():
+    locations = [("", "/"), ("~", "\\.js$"), ("~", "app")]
+    expect(select_location(locations, "/app.js")).to_equal(("~", "\\.js$"))
+
+@test("regex không phân biệt hoa thường")
+def _():
+    expect(select_location([("~*", "\\.jpg$")], "/img/PHOTO.JPG")).to_equal(("~*", "\\.jpg$"))
+
+@test("không khớp trả None")
+def _():
+    expect(select_location([("", "/api")], "/static/a.css")).to_be_none()
+'''
+hints = ["Kiểm tra exact trong lần duyệt đầu.", "Tách nhóm prefix và regex; dùng thứ tự cấu hình cho regex."]
+explanation = "Thuật toán location có ưu tiên rõ ràng; ^~ chỉ ảnh hưởng bước xét regex sau khi prefix đã thắng."
+sources = ["nginx/http/ngx_http_core_module#location"]
+
+[[modules]]
+id = "ops-cicd-terraform"
+title = "CI/CD và Terraform"
+description = "Pipeline kiểm tra, triển khai có kiểm soát, Infrastructure as Code, state, plan và apply."
+sources = ["terraform/language/syntax/configuration", "terraform/language/state/purpose", "terraform/language/state/remote", "terraform/tutorials/cli/plan", "terraform/tutorials/cli/apply"]
+lesson = '''
+### Tự động hoá triển khai và hạ tầng
+CI chạy các bước kiểm tra lặp lại khi có thay đổi; CD tự động đưa artifact đã kiểm chứng tới môi trường theo quy tắc phát hành. Pipeline nên tách build, test, scan và deploy; chỉ cấp credential tối thiểu cho job cần dùng, không in secret vào log.
+
+| Terraform command | Vai trò |
+|---|---|
+| init | Khởi tạo thư mục làm việc và provider |
+| plan | Tính toán thay đổi dự kiến, chưa áp dụng vào hạ tầng |
+| apply | Thực thi kế hoạch thay đổi đã xác nhận |
+| state | Theo dõi liên hệ giữa cấu hình và resource thực tế |
+
+Terraform state có thể chứa dữ liệu nhạy cảm; backend từ xa cần hỗ trợ kiểm soát truy cập và khoá state phù hợp. Hãy review plan, lưu state an toàn và tránh nhiều người apply đồng thời không có locking. Ví dụ pipeline có thể chạy fmt, validate, plan khi mở pull request rồi chỉ apply sau khi được phê duyệt ở môi trường mục tiêu. Lỗi thường gặp là coi plan là thay đổi đã xảy ra, sửa state bằng tay tuỳ tiện hoặc lưu secret trong repository.
+'''
+
+[[questions]]
+id = "ops-031"
+module = "ops-cicd-terraform"
+type = "single"
+difficulty = 1
+prompt = "Trong Terraform, lệnh nào hiển thị các thay đổi dự kiến mà chưa áp dụng chúng?"
+options = ["terraform plan", "terraform apply", "terraform destroy", "terraform init"]
+answer = [0]
+explanation = "Plan tính toán và trình bày thay đổi dự kiến; apply mới thực thi thay đổi."
+sources = ["terraform/tutorials/cli/plan"]
+
+[[questions]]
+id = "ops-032"
+module = "ops-cicd-terraform"
+type = "single"
+difficulty = 2
+prompt = "Vì sao nhóm dùng remote state có locking cho môi trường hạ tầng chung?"
+options = ["Ngăn nhiều thao tác đồng thời làm state lệch, đồng thời chia sẻ state có kiểm soát", "Để không cần review plan", "Để biến state thành file cấu hình công khai", "Để Terraform tự xoá mọi resource cũ"]
+answer = [0]
+explanation = "Remote backend giúp chia sẻ state; locking giảm nguy cơ nhiều người cùng ghi state trong lúc apply."
+sources = ["terraform/language/state/remote"]
+
+[[questions]]
+id = "ops-033"
+module = "ops-cicd-terraform"
+type = "single"
+difficulty = 2
+prompt = "Một pipeline định deploy artifact nhưng unit test thất bại. Điều kiện nào giúp tránh triển khai bản lỗi?"
+options = ["Đặt gate để deploy chỉ chạy sau khi các bước kiểm tra bắt buộc thành công", "Bỏ qua exit code để pipeline luôn xanh", "Chạy deploy song song trước test", "In toàn bộ secret để debug nhanh"]
+answer = [0]
+explanation = "Pipeline cần phụ thuộc giữa bước kiểm tra và triển khai; lỗi kiểm tra phải chặn release."
+sources = ["terraform/tutorials/cli/plan"]
+
+[[questions]]
+id = "ops-034"
+module = "ops-cicd-terraform"
+type = "single"
+difficulty = 3
+prompt = "Plan cho thấy sẽ thay thế database production ngoài dự kiến. Hành động phù hợp trước apply là gì?"
+options = ["Dừng apply, kiểm tra diff và nguyên nhân thay thế, sau đó điều chỉnh hoặc xin review", "Apply ngay để đồng bộ state", "Xoá file state rồi chạy lại", "Tắt mọi policy kiểm tra"]
+answer = [0]
+explanation = "Plan là cơ hội phát hiện blast radius trước khi thay đổi thật; thay database có thể gây downtime hoặc mất dữ liệu."
+sources = ["terraform/tutorials/cli/plan", "terraform/tutorials/cli/apply"]
+
+[[questions]]
+id = "ops-035"
+module = "ops-cicd-terraform"
+type = "multiple"
+difficulty = 2
+prompt = "Chọn các thực hành tốt trong quy trình IaC và CI/CD."
+options = [
+  "Review plan trước khi apply vào môi trường quan trọng.",
+  "Giới hạn quyền credential theo job và môi trường cần thiết.",
+  "Commit secret truy cập cloud vào repository private.",
+  "Dùng remote state có quyền truy cập và locking phù hợp khi làm việc nhóm.",
+  "Cho phép nhiều pipeline apply đồng thời cùng workspace mà không kiểm soát."
+]
+answer = [0, 1, 3]
+explanation = "Review, quyền tối thiểu và quản lý state có kiểm soát giảm rủi ro thay đổi ngoài ý muốn."
+sources = ["terraform/language/state/remote", "terraform/tutorials/cli/plan", "terraform/tutorials/cli/apply"]
+
+[[questions]]
+id = "ops-036"
+module = "ops-cicd-terraform"
+type = "fill"
+difficulty = 1
+prompt = '''
+Lệnh Terraform thực thi thay đổi hạ tầng theo cấu hình/kế hoạch là terraform {{blank}}.
+'''
+blanks = [["apply"]]
+explanation = "Apply mới áp dụng thay đổi lên resource; plan chỉ mô tả dự kiến."
+sources = ["terraform/tutorials/cli/apply"]
+
+[[questions]]
+id = "ops-037"
+module = "ops-cicd-terraform"
+type = "essay"
+difficulty = 3
+prompt = "Mô tả cách một pipeline CI/CD có thể triển khai hạ tầng Terraform an toàn qua pull request và môi trường production."
+keywords = [["plan", "terraform plan"], ["review", "phê duyệt", "approval"], ["apply", "terraform apply"], ["secret", "credential", "quyền tối thiểu"], ["state", "locking", "remote state"]]
+min_keywords = 4
+model_answer = '''Pull request chạy kiểm tra cấu hình và tạo Terraform plan để review. Sau khi plan được phê duyệt, pipeline production dùng credential có quyền tối thiểu để apply; state được lưu ở remote backend có kiểm soát truy cập và locking.'''
+explanation = "Luồng an toàn tách kế hoạch, review và thực thi, đồng thời bảo vệ credential và state."
+sources = ["terraform/tutorials/cli/plan", "terraform/tutorials/cli/apply", "terraform/language/state/remote"]

@@ -1,0 +1,999 @@
+id = "nextjs"
+title = "Next.js & TanStack"
+icon = "▲"
+color = "#111827"
+group = "Frontend"
+docs = ["nextjs", "tanstack_query", "tanstack_router"]
+description = "Xây dựng ứng dụng với App Router, Server Components, cache và streaming; quản lý dữ liệu client bằng TanStack Query và điều hướng type-safe bằng TanStack Router."
+
+[[modules]]
+id = "next-routing"
+title = "App Router và quy ước route"
+description = "Page, layout, route group, dynamic segment, loading và error boundary."
+sources = ["nextjs/app/building-your-application/routing/defining-routes", "nextjs/app/building-your-application/routing/dynamic-routes", "nextjs/app/building-your-application/routing/route-groups", "nextjs/app/api-reference/file-conventions/layout", "nextjs/app/api-reference/file-conventions/page", "nextjs/app/api-reference/file-conventions/loading", "nextjs/app/api-reference/file-conventions/error"]
+lesson = '''
+### Từ cây thư mục tới URL
+Trong App Router, thư mục trong app tạo segment; page làm segment thành route có thể truy cập, còn layout bao phần con và giữ trạng thái UI khi điều hướng trong nhánh đó. Root layout cung cấp html và body.
+
+| File hoặc segment | Vai trò |
+|---|---|
+| page.tsx | Nội dung route |
+| layout.tsx | UI dùng chung cho route con |
+| loading.tsx | Fallback trong lúc segment chờ dữ liệu |
+| error.tsx | Error boundary của segment; cần Client Component |
+| (marketing) | Route group, không xuất hiện trong URL |
+| [id] | Một dynamic segment |
+| [...slug] / [[...slug]] | Catch-all bắt buộc / catch-all tuỳ chọn |
+
+Ví dụ app/(shop)/products/[id]/page.tsx khớp /products/42; tên (shop) chỉ tổ chức layout. Catch-all nhận nhiều segment và phải nằm cuối route. loading.tsx tạo trạng thái chờ gần route; error.tsx có thể thử lại qua reset(). Lỗi thường gặp là đặt page.tsx và route.ts cùng một segment, hoặc nghĩ route group tạo thêm URL.
+'''
+
+[[modules]]
+id = "next-render-cache"
+title = "Server Components, Actions và dữ liệu"
+description = "Chọn server/client boundary, xử lý mutation và thiết kế cache, revalidation, ISR, streaming."
+sources = ["nextjs/app/building-your-application/rendering/server-components", "nextjs/app/building-your-application/rendering/client-components", "nextjs/app/building-your-application/data-fetching/server-actions-and-mutations", "nextjs/app/building-your-application/data-fetching/fetching-caching-and-revalidating", "nextjs/app/building-your-application/routing/loading-ui-and-streaming", "nextjs/app/api-reference/functions/fetch", "nextjs/app/api-reference/functions/revalidatetag"]
+lesson = '''
+### Chọn nơi chạy và thời điểm làm mới
+Server Components là mặc định trong App Router. Chúng phù hợp để đọc dữ liệu phía server và giữ credential khỏi bundle trình duyệt. Dùng use client tại ranh giới nhỏ nhất cần state, event handler hoặc browser API; mọi module import từ ranh giới đó cũng thuộc client bundle. Props truyền qua ranh giới phải serialize được.
+
+Không giả định fetch luôn được cache. Chọn rõ cache: force-cache cho dữ liệu có thể dùng lại hoặc next: { revalidate: 60, tags: ['posts'] } khi cần thời hạn/tag. ISR phục vụ bản đã tạo rồi tái tạo theo thời gian hay khi revalidate. revalidateTag('posts', 'max') đánh dấu dữ liệu tag là cũ để làm mới theo profile; nó khác với xoá ngay một route cụ thể.
+
+| Nhu cầu | Cách nghĩ |
+|---|---|
+| Dữ liệu gần như tĩnh | Cache và revalidate theo thời hạn |
+| Dữ liệu thay đổi theo người dùng | Không dùng cache dùng chung sai phạm vi |
+| Một phần trang tải chậm | Suspense hoặc loading.tsx để stream fallback |
+
+Server Action là điểm vào có thể được gọi qua request; xác thực và phân quyền vẫn phải kiểm tra trong action. Lỗi thường gặp là đưa secret vào Client Component hoặc nghĩ use server tự đảm bảo quyền truy cập.
+'''
+
+[[modules]]
+id = "next-route-platform"
+title = "Route Handler, Middleware và metadata"
+description = "Tạo endpoint, kiểm soát matcher và tối ưu metadata, ảnh, font."
+sources = ["nextjs/app/building-your-application/routing/route-handlers", "nextjs/app/api-reference/file-conventions/middleware", "nextjs/app/api-reference/file-conventions/metadata", "nextjs/app/building-your-application/optimizing/images", "nextjs/app/building-your-application/optimizing/fonts", "nextjs/app/building-your-application/optimizing/metadata"]
+lesson = '''
+### Endpoint và lớp trình bày
+route.ts định nghĩa HTTP handler bằng các hàm export như GET hoặc POST, nhận Request và trả Response/NextResponse. Route Handler là endpoint; không đặt page.tsx cùng segment với route.ts. Middleware chạy trước khi hoàn tất request và có thể giới hạn phạm vi bằng config.matcher; matcher nên khai báo tĩnh để framework phân tích lúc build. Middleware hữu ích cho redirect, rewrite hoặc kiểm tra sơ bộ, nhưng không thay thế phân quyền ở nơi đọc/ghi dữ liệu.
+
+> **Next.js 16:** file `middleware.ts` được đổi tên thành `proxy.ts` (hàm export `proxy`, chạy trên runtime Node.js); cơ chế `config.matcher`, redirect/rewrite giữ nguyên. Codemod `npx @next/codemod@latest middleware-to-proxy` hỗ trợ chuyển đổi.
+
+Metadata tĩnh dùng metadata; metadata phụ thuộc dữ liệu có thể tạo bằng generateMetadata. next/image hỗ trợ tối ưu ảnh, và cần khai báo sizes phù hợp khi dùng fill để trình duyệt chọn đúng biến thể. next/font giúp self-host font ở build time.
+
+| Công cụ | Chú ý |
+|---|---|
+| Route Handler | Trả status/header/body đúng ngữ nghĩa |
+| config.matcher | Chỉ chạy middleware cho route cần thiết |
+| Metadata | Đặt title/description theo từng route |
+| Image và font | Chú ý kích thước, alt, sizes và layout shift |
+
+Ví dụ matcher cho /dashboard/:path* phủ cả /dashboard và các trang con. Lỗi thường gặp là matcher rộng làm mọi request đi qua logic nặng, hoặc chỉ bảo vệ giao diện mà bỏ quên kiểm tra quyền trong handler/action.
+'''
+
+[[modules]]
+id = "tanstack-query"
+title = "TanStack Query và cache client"
+description = "Query key, freshness, retention, invalidation, optimistic update và phân trang."
+sources = ["tanstack_query/framework/react/guides/query-keys", "tanstack_query/framework/react/guides/caching", "tanstack_query/framework/react/guides/important-defaults", "tanstack_query/framework/react/guides/query-invalidation", "tanstack_query/framework/react/guides/optimistic-updates", "tanstack_query/framework/react/guides/paginated-queries", "tanstack_query/framework/react/guides/infinite-queries", "tanstack_query/framework/react/reference/classes/queryclient"]
+lesson = '''
+### Cache dữ liệu theo danh tính query
+queryKey là mảng mô tả dữ liệu và mọi biến đầu vào của queryFn, ví dụ ['projects', { teamId, page }]. TanStack Query hash ổn định object trong key nên thứ tự property không làm đổi danh tính; thứ tự phần tử mảng vẫn có ý nghĩa. Thiếu biến trong key có thể khiến hai request khác nhau dùng chung cache.
+
+| Tuỳ chọn | Ý nghĩa |
+|---|---|
+| staleTime | Khoảng dữ liệu được xem là fresh |
+| gcTime | Thời gian giữ cache không còn observer |
+| invalidateQueries | Đánh dấu query khớp là stale và thường refetch query đang active |
+
+Cùng key đang tải được dedupe thành một request. Với mutation lạc quan, snapshot cache trước khi cập nhật, khôi phục snapshot nếu lỗi, rồi invalidate khi hoàn tất. Phân trang thường đặt page vào key và dùng placeholderData: keepPreviousData; infinite query dùng initialPageParam cùng getNextPageParam. Lỗi thường gặp là nhầm staleTime với thời gian xoá cache, hoặc sửa object cache tại chỗ khiến dữ liệu cũ không thể rollback.
+'''
+
+[[modules]]
+id = "tanstack-router"
+title = "TanStack Router: type-safe routing"
+description = "Khai báo route tree, validate search params và tải dữ liệu bằng loader."
+sources = ["tanstack_router/routing/code-based-routing", "tanstack_router/guide/creating-a-router#router-type-safety", "tanstack_router/guide/type-safety#route-definitions", "tanstack_router/guide/search-params#validating-and-typing-search-params", "tanstack_router/guide/data-loading#route-loaders", "tanstack_router/guide/data-loading#using-search-params-in-loaders", "tanstack_router/guide/path-params"]
+lesson = '''
+### Route tree có kiểu và dữ liệu theo URL
+TanStack Router suy luận path params, search params và context từ route tree đã đăng ký. Khi cấu hình đúng, Link và navigate có thể báo lỗi sớm nếu truyền sai route hoặc thiếu param. File-based routing có thể sinh route tree; code-based routing khai báo route bằng API.
+
+validateSearch chuẩn hoá và xác thực query string thành dữ liệu có kiểu; vì URL là input không đáng tin, cần xử lý giá trị thiếu hoặc sai. loader nhận params/search/context đã parse để tải trước dữ liệu, quyết định pending/error UI và hỗ trợ preload khi điều hướng.
+
+| Vị trí | Dùng cho |
+|---|---|
+| Path params | Định danh resource như /posts/$postId |
+| Search params | Bộ lọc, sort, page có thể chia sẻ qua URL |
+| Loader | Nạp dữ liệu trước khi route render |
+
+Ví dụ /posts/42?page=2 tách postId khỏi page; loader có thể lấy cả hai để gọi API. Lỗi thường gặp là để query string không validate, hoặc giữ bộ lọc chỉ trong component state khiến refresh/link chia sẻ mất trạng thái. Type-safe routing giúp phát hiện lỗi phía client, không thay thế xác thực ở server.
+'''
+
+[[questions]]
+id = "next-001"
+module = "next-routing"
+type = "single"
+difficulty = 1
+prompt = "Trong App Router, thư mục app/(shop)/products/[id]/page.tsx ứng với URL nào khi id là 42?"
+options = ["/(shop)/products/42", "/shop/products/42", "/products/42", "/products/[id]/42"]
+answer = [2]
+explanation = "Route group trong ngoặc chỉ tổ chức route và không tạo URL segment; [id] khớp một segment."
+sources = ["nextjs/app/building-your-application/routing/route-groups", "nextjs/app/building-your-application/routing/dynamic-routes"]
+
+[[questions]]
+id = "next-002"
+module = "next-routing"
+type = "single"
+difficulty = 1
+prompt = "Vai trò chính của layout.tsx trong một nhánh App Router là gì?"
+options = ["Tạo endpoint HTTP cho nhánh", "Bao UI route con và có thể giữ trạng thái khi điều hướng trong nhánh", "Thay mọi page.tsx bằng nội dung tĩnh", "Tự động tạo dynamic segment"]
+answer = [1]
+explanation = "Layout chia sẻ giao diện giữa các route con; root layout cung cấp cấu trúc html/body."
+sources = ["nextjs/app/api-reference/file-conventions/layout"]
+
+[[questions]]
+id = "next-003"
+module = "next-routing"
+type = "single"
+difficulty = 2
+prompt = "Route app/docs/[[...slug]]/page.tsx cần nhận được cả /docs và /docs/setup/install. Quy ước này là:"
+options = ["Dynamic segment thường", "Catch-all bắt buộc", "Optional catch-all", "Route group"]
+answer = [2]
+explanation = "Hai cặp ngoặc vuông làm catch-all trở thành tuỳ chọn, nên nó cũng khớp khi không có segment phía sau."
+sources = ["nextjs/app/building-your-application/routing/dynamic-routes"]
+
+[[questions]]
+id = "next-004"
+module = "next-routing"
+type = "multiple"
+difficulty = 2
+prompt = "Những nhận định nào đúng về loading.tsx và error.tsx trong App Router?"
+options = ["loading.tsx cung cấp fallback chờ cho segment", "error.tsx là boundary cho lỗi trong nhánh", "error.tsx bắt buộc là Server Component", "error.tsx có thể cung cấp thao tác thử lại bằng reset"]
+answer = [0, 1, 3]
+explanation = "Error boundary convention cần Client Component và có thể gọi reset để thử render lại nhánh."
+sources = ["nextjs/app/api-reference/file-conventions/loading", "nextjs/app/api-reference/file-conventions/error"]
+
+[[questions]]
+id = "next-005"
+module = "next-routing"
+type = "multiple"
+difficulty = 3
+prompt = "Một trang tài liệu nằm dưới app/(docs)/guide/[...slug]/page.tsx. URL nào có thể khớp?"
+options = ["/guide/start", "/guide/api/auth", "/docs/guide/start", "/guide"]
+answer = [0, 1]
+explanation = "Route group (docs) không xuất hiện trên URL; catch-all bắt buộc cần ít nhất một segment."
+sources = ["nextjs/app/building-your-application/routing/route-groups", "nextjs/app/building-your-application/routing/dynamic-routes"]
+
+[[questions]]
+id = "next-006"
+module = "next-routing"
+type = "fill"
+difficulty = 1
+prompt = '''
+Hoàn thành dynamic segment để một route khớp /users/abc với đúng một giá trị động:
+app/users/{{blank}}/page.tsx
+'''
+blanks = [["[id]", "[userId]", "[slug]"]]
+explanation = "Một cặp ngoặc vuông đại diện cho một dynamic segment; tên param do ứng dụng chọn."
+sources = ["nextjs/app/building-your-application/routing/dynamic-routes"]
+
+[[questions]]
+id = "next-007"
+module = "next-routing"
+type = "essay"
+difficulty = 2
+prompt = "Giải thích cách route group và layout giúp tổ chức hai khu vực giao diện khác nhau mà không làm URL chứa tên nhóm."
+keywords = [["route group", "nhóm route"], ["không xuất hiện trong url", "không đổi url", "không tạo url segment"], ["layout riêng", "layout"], ["dùng chung giao diện", "shared ui", "giao diện dùng chung"]]
+min_keywords = 2
+model_answer = '''
+Route group như (marketing) hoặc (admin) tổ chức route mà tên nhóm không xuất hiện trong URL. Mỗi nhóm có thể dùng layout riêng, trong khi layout cha vẫn chia sẻ giao diện cho các trang con.
+'''
+explanation = "Route group tách cấu trúc và layout mà không thêm một segment địa chỉ."
+sources = ["nextjs/app/building-your-application/routing/route-groups", "nextjs/app/api-reference/file-conventions/layout"]
+
+[[questions]]
+id = "next-008"
+module = "next-routing"
+type = "code"
+difficulty = 3
+title = "Khớp mẫu route App Router"
+prompt = '''
+Viết matchesAppRoute(pathname, filePattern) trả về boolean.
+- pathname và filePattern là đường dẫn có dấu / đầu; bỏ qua dấu / cuối.
+- Segment (name) trong filePattern là route group và không chiếm segment URL.
+- [id] khớp đúng một segment không rỗng.
+- [...slug] ở cuối khớp ít nhất một segment; [[...slug]] ở cuối khớp không hoặc nhiều segment.
+- Segment còn lại phải giống hệt. Không cần xử lý query string hoặc percent-encoding.
+
+Ví dụ /products/42 khớp /(shop)/products/[id].
+'''
+starter = '''
+function matchesAppRoute(pathname, filePattern) {
+  return pathname === filePattern;
+}
+'''
+solution = '''
+function routeParts(path) {
+  if (path === '/') return [];
+  return path.split('/').filter(Boolean);
+}
+function matchesAppRoute(pathname, filePattern) {
+  const pathParts = routeParts(pathname);
+  const patternParts = routeParts(filePattern).filter((part) => !(/^\(.+\)$/).test(part));
+  let i = 0;
+  let j = 0;
+  while (j < patternParts.length) {
+    const part = patternParts[j];
+    if (part === '[[...slug]]') return j === patternParts.length - 1;
+    if (part === '[...slug]') return j === patternParts.length - 1 && i < pathParts.length;
+    if (i >= pathParts.length) return false;
+    if (!(/^\[.+\]$/).test(part) && part !== pathParts[i]) return false;
+    i++;
+    j++;
+  }
+  return i === pathParts.length;
+}
+'''
+tests = '''
+test('khớp route tĩnh và bỏ route group', () => {
+  expect(matchesAppRoute('/products', '/(shop)/products')).toBe(true);
+});
+test('dynamic segment khớp đúng một phần', () => {
+  expect(matchesAppRoute('/products/42', '/products/[id]')).toBe(true);
+  expect(matchesAppRoute('/products/42/reviews', '/products/[id]')).toBe(false);
+});
+test('catch-all bắt buộc cần ít nhất một segment', () => {
+  expect(matchesAppRoute('/docs/a/b', '/docs/[...slug]')).toBe(true);
+  expect(matchesAppRoute('/docs', '/docs/[...slug]')).toBe(false);
+});
+test('optional catch-all chấp nhận rỗng hoặc nhiều segment', () => {
+  expect(matchesAppRoute('/docs', '/docs/[[...slug]]')).toBe(true);
+  expect(matchesAppRoute('/docs/a/b', '/docs/[[...slug]]')).toBe(true);
+});
+test('bỏ dấu slash cuối nhưng vẫn phân biệt route khác', () => {
+  expect(matchesAppRoute('/about/', '/about')).toBe(true);
+  expect(matchesAppRoute('/about/team', '/about')).toBe(false);
+});
+'''
+hints = ["Bỏ các segment route group trước khi so sánh.", "Catch-all chỉ hợp lệ ở cuối pattern; optional catch-all có thể không tiêu thụ segment nào."]
+explanation = "Bài mô phỏng quy tắc tên file của App Router và cho thấy route group không tác động đến URL."
+sources = ["nextjs/app/building-your-application/routing/dynamic-routes", "nextjs/app/building-your-application/routing/route-groups"]
+
+[[questions]]
+id = "next-009"
+module = "next-render-cache"
+type = "single"
+difficulty = 1
+prompt = "Một component cần useState và xử lý click trong App Router. Thay đổi phù hợp nhất là gì?"
+options = ["Đánh dấu file component bằng use client ở đầu module", "Đặt use server trong component", "Đổi tên file thành client.tsx", "Chuyển mọi layout thành Client Component"]
+answer = [0]
+explanation = "use client tạo client boundary cho state và event; nên giữ boundary nhỏ để tránh tăng client bundle."
+sources = ["nextjs/app/building-your-application/rendering/client-components"]
+
+[[questions]]
+id = "next-010"
+module = "next-render-cache"
+type = "single"
+difficulty = 3
+prompt = "Server Action thay đổi hồ sơ người dùng. Biện pháp nào cần thực hiện trong chính action?"
+options = ["Chỉ kiểm tra nút submit đã bị disable", "Xác thực danh tính và quyền trên dữ liệu mục tiêu trước khi ghi", "Tin rằng action chỉ được gọi từ form của trang", "Đưa secret vào module client để action dùng lại"]
+answer = [1]
+explanation = "Server Action có thể được gọi qua request; kiểm tra quyền phải đặt phía server tại điểm mutation."
+sources = ["nextjs/app/building-your-application/data-fetching/server-actions-and-mutations"]
+
+[[questions]]
+id = "next-011"
+module = "next-render-cache"
+type = "single"
+difficulty = 2
+prompt = "Một request fetch lấy dữ liệu thay đổi liên tục theo từng người dùng. Cách chọn an toàn nhất là gì?"
+options = ["Dùng cache dùng chung cho mọi người", "Không dựa vào cache mặc định; chọn chính sách uncached hoặc phạm vi cache phù hợp", "Đặt staleTime của TanStack Query thành 0 là đủ cho server fetch", "Đổi endpoint thành GET để đảm bảo dữ liệu không cache"]
+answer = [1]
+explanation = "Cache server và cache client là hai cơ chế khác nhau; dữ liệu riêng tư cần chính sách cache rõ ràng, đúng phạm vi."
+sources = ["nextjs/app/building-your-application/data-fetching/fetching-caching-and-revalidating", "nextjs/app/api-reference/functions/fetch"]
+
+[[questions]]
+id = "next-012"
+module = "next-render-cache"
+type = "single"
+difficulty = 2
+prompt = "Một request đã gắn tag posts cần được làm mới theo profile stale-while-revalidate hiện đại. Lựa chọn nào phù hợp?"
+options = ["revalidateTag('posts', 'max')", "revalidatePath('/posts') dù cần invalidation theo tag", "router.refresh('posts')", "cacheTag('posts', 0)"]
+answer = [0]
+explanation = "revalidateTag làm mới dữ liệu theo tag; profile max cho phép phục vụ dữ liệu cũ trong lúc revalidate theo chính sách."
+sources = ["nextjs/app/api-reference/functions/revalidatetag", "nextjs/app/building-your-application/data-fetching/fetching-caching-and-revalidating"]
+
+[[questions]]
+id = "next-013"
+module = "next-render-cache"
+type = "multiple"
+difficulty = 2
+prompt = "Những lựa chọn nào giúp stream giao diện khi một phần dữ liệu tải chậm?"
+options = ["Bọc vùng chậm bằng Suspense có fallback", "Đặt loading.tsx ở segment phù hợp", "Đổi mọi component sang Client Component", "Đợi mọi request hoàn tất rồi mới render toàn trang"]
+answer = [0, 1]
+explanation = "Suspense và loading convention cho phép gửi fallback trước, sau đó stream phần nội dung khi sẵn sàng."
+sources = ["nextjs/app/building-your-application/routing/loading-ui-and-streaming"]
+
+[[questions]]
+id = "next-014"
+module = "next-render-cache"
+type = "fill"
+difficulty = 1
+prompt = '''
+Muốn dùng fetch có thể cache và tái sử dụng thay vì mặc định xem mọi request là uncached, giá trị cache rõ ràng là {{blank}}.
+'''
+blanks = [["force-cache"]]
+explanation = "Nêu chính sách cache ngay tại request giúp hành vi rõ ràng và tránh giả định sai về mặc định."
+sources = ["nextjs/app/api-reference/functions/fetch"]
+
+[[questions]]
+id = "next-015"
+module = "next-render-cache"
+type = "fill"
+difficulty = 1
+prompt = '''
+Directive ở đầu module tạo client boundary cho component dùng state và event handler là {{blank}}.
+'''
+blanks = [["use client", "'use client'", "\"use client\""]]
+explanation = "Directive này đặt ở đầu module; component được import từ đó cũng nằm trong client bundle."
+sources = ["nextjs/app/building-your-application/rendering/client-components"]
+
+[[questions]]
+id = "next-016"
+module = "next-render-cache"
+type = "code"
+difficulty = 3
+title = "Revalidate cache theo tag"
+prompt = '''
+Viết revalidateByTag(entries, tag) cho mô hình cache thuần JavaScript. entries là mảng object có path, tags (mảng chuỗi) và các field khác.
+- Với mỗi entry có tag, đặt stale thành true.
+- Giữ nguyên các field còn lại và thứ tự phần tử.
+- Trả về mảng path đã được đánh dấu, theo thứ tự ban đầu.
+- Không sửa entry không chứa tag.
+
+Bài tập mô phỏng invalidation theo tag: dữ liệu được đánh dấu stale để lần đọc tiếp theo revalidate.
+'''
+starter = '''
+function revalidateByTag(entries, tag) {
+  return [];
+}
+'''
+solution = '''
+function revalidateByTag(entries, tag) {
+  const paths = [];
+  for (const entry of entries) {
+    if (entry.tags.includes(tag)) {
+      entry.stale = true;
+      paths.push(entry.path);
+    }
+  }
+  return paths;
+}
+'''
+tests = '''
+test('đánh dấu mọi entry có tag và trả path theo thứ tự', () => {
+  const entries = [
+    { path: '/posts', tags: ['posts'], value: 1 },
+    { path: '/about', tags: ['pages'], value: 2 },
+    { path: '/posts/1', tags: ['posts', 'detail'], value: 3 }
+  ];
+  expect(revalidateByTag(entries, 'posts')).toEqual(['/posts', '/posts/1']);
+  expect(entries[0].stale).toBe(true);
+  expect(entries[1].stale).toBeUndefined();
+  expect(entries[2].value).toBe(3);
+});
+test('tag không có kết quả không sửa entries', () => {
+  const entry = { path: '/home', tags: ['home'] };
+  expect(revalidateByTag([entry], 'posts')).toEqual([]);
+  expect(entry.stale).toBeUndefined();
+});
+test('tag rỗng vẫn so khớp chính xác', () => {
+  const entries = [{ path: '/x', tags: ['', 'x'] }];
+  expect(revalidateByTag(entries, '')).toEqual(['/x']);
+});
+test('mảng rỗng trả kết quả rỗng', () => {
+  expect(revalidateByTag([], 'posts')).toEqual([]);
+});
+'''
+hints = ["Duyệt entries một lần và kiểm tra bằng includes.", "Chỉ sửa field stale ở entry thực sự có tag."]
+explanation = "Trong ứng dụng thật, tag gắn với dữ liệu fetch/cache; revalidateTag đánh dấu nội dung tag là cũ theo profile."
+sources = ["nextjs/app/api-reference/functions/revalidatetag"]
+
+[[questions]]
+id = "next-017"
+module = "next-route-platform"
+type = "single"
+difficulty = 1
+prompt = "Trong App Router, file nào khai báo HTTP endpoint ở /api/health?"
+options = ["app/api/health/page.tsx", "app/api/health/route.ts", "app/api/health/layout.tsx", "app/route.ts"]
+answer = [1]
+explanation = "route.ts chứa các handler HTTP cho route segment; page.tsx tạo giao diện."
+sources = ["nextjs/app/building-your-application/routing/route-handlers", "nextjs/app/api-reference/file-conventions/route"]
+
+[[questions]]
+id = "next-018"
+module = "next-route-platform"
+type = "single"
+difficulty = 2
+prompt = "Title của trang bài viết cần dựa trên dữ liệu tải từ slug. API nào thích hợp?"
+options = ["Export metadata cố định cho mọi bài", "Export generateMetadata dựa trên params/dữ liệu", "Dùng useEffect để sửa title sau khi render", "Đặt title trong middleware matcher"]
+answer = [1]
+explanation = "generateMetadata hỗ trợ metadata phụ thuộc route và dữ liệu; metadata tĩnh dùng export metadata."
+sources = ["nextjs/app/api-reference/file-conventions/metadata", "nextjs/app/building-your-application/optimizing/metadata"]
+
+[[questions]]
+id = "next-019"
+module = "next-route-platform"
+type = "single"
+difficulty = 2
+prompt = "Ảnh hero dùng fill trong next/image nhưng trình duyệt tải ảnh quá lớn trên màn hình điện thoại. Field nào giúp mô tả kích thước hiển thị dự kiến?"
+options = ["sizes", "priorityMode", "cacheTag", "fontDisplay"]
+answer = [0]
+explanation = "sizes giúp browser chọn biến thể ảnh phù hợp với kích thước layout và viewport."
+sources = ["nextjs/app/building-your-application/optimizing/images"]
+
+[[questions]]
+id = "next-020"
+module = "next-route-platform"
+type = "multiple"
+difficulty = 3
+prompt = "Những nhận định nào đúng về middleware và bảo vệ route?"
+options = ["config.matcher giới hạn request cần middleware xử lý", "Matcher nên là cấu hình tĩnh để framework phân tích", "Middleware thay thế việc kiểm tra quyền trong Server Action", "Quyền truy cập dữ liệu vẫn cần được xác minh ở điểm đọc/ghi"]
+answer = [0, 1, 3]
+explanation = "Middleware là lớp xử lý request hữu ích nhưng không phải ranh giới phân quyền cuối cùng cho dữ liệu."
+sources = ["nextjs/app/api-reference/file-conventions/middleware"]
+
+[[questions]]
+id = "next-025"
+module = "tanstack-query"
+type = "single"
+difficulty = 2
+prompt = "Query có staleTime: 30_000 và gcTime: 300_000. Cách hiểu nào đúng?"
+options = ["Sau 30 giây data bị xoá khỏi cache", "30 giây là thời gian xem data fresh; gcTime giữ cache không còn observer", "gcTime quyết định lúc request đang bay được dedupe", "Hai tuỳ chọn có cùng ý nghĩa"]
+answer = [1]
+explanation = "staleTime kiểm soát freshness; gcTime kiểm soát thời gian lưu query không còn được quan sát."
+sources = ["tanstack_query/framework/react/guides/caching", "tanstack_query/framework/react/guides/important-defaults"]
+
+[[questions]]
+id = "next-026"
+module = "tanstack-query"
+type = "single"
+difficulty = 2
+prompt = "Query function lấy danh sách đơn hàng theo userId và status. Query key nào mô tả đầu vào đầy đủ nhất?"
+options = ["['orders']", "['orders', userId, status]", "['orders', Date.now()]", "['orders', queryFn]"]
+answer = [1]
+explanation = "Mọi biến ảnh hưởng kết quả query nên có trong key để cache không trộn dữ liệu khác nhau."
+sources = ["tanstack_query/framework/react/guides/query-keys#if-your-query-function-depends-on-a-variable-include-it-in-your-query-key"]
+
+[[questions]]
+id = "next-027"
+module = "tanstack-query"
+type = "single"
+difficulty = 2
+prompt = "Mutation cập nhật một bài viết thành công. Muốn query danh sách bài viết được xem là stale và đồng bộ lại, API nào phù hợp?"
+options = ["invalidateQueries", "setGcTime", "removeObserver", "resetStaleTime"]
+answer = [0]
+explanation = "Invalidation đánh dấu query khớp stale và thường refetch các query đang active."
+sources = ["tanstack_query/framework/react/guides/query-invalidation"]
+
+[[questions]]
+id = "next-028"
+module = "tanstack-query"
+type = "multiple"
+difficulty = 2
+prompt = "Nhận định nào đúng về hashing queryKey?"
+options = ["Object property order không làm đổi hash của key tương đương", "Thứ tự phần tử trong array key vẫn quan trọng", "Nên đưa biến lọc ảnh hưởng kết quả vào key", "Mọi query nên dùng cùng một key để cache dễ tái sử dụng"]
+answer = [0, 1, 2]
+explanation = "Hash ổn định cho object giúp key tương đương dùng chung cache, nhưng array order và các biến đầu vào vẫn biểu đạt danh tính query."
+sources = ["tanstack_query/framework/react/guides/query-keys", "tanstack_query/framework/react/guides/query-keys#query-keys-are-hashed-deterministically"]
+
+[[questions]]
+id = "next-029"
+module = "tanstack-query"
+type = "multiple"
+difficulty = 3
+prompt = "Một infinite query dùng cursor. Những phần nào thuộc pattern đúng?"
+options = ["Khai báo initialPageParam", "Dùng getNextPageParam để suy ra cursor kế tiếp", "Dùng hasNextPage để quyết định còn trang", "Tạo một query key khác nhau cho mỗi lần gọi fetchNextPage"]
+answer = [0, 1, 2]
+explanation = "Infinite query giữ pages trong cùng query; page param thay đổi theo lần tải nhưng không cần tạo query key mới cho từng trang."
+sources = ["tanstack_query/framework/react/guides/infinite-queries"]
+
+[[questions]]
+id = "next-030"
+module = "tanstack-query"
+type = "fill"
+difficulty = 1
+prompt = '''
+Trong useQuery, field bắt buộc nhận mảng mô tả danh tính dữ liệu được gọi là {{blank}}.
+'''
+blanks = [["queryKey"]]
+explanation = "Query key định danh cache entry và nên chứa các biến ảnh hưởng dữ liệu."
+sources = ["tanstack_query/framework/react/guides/query-keys"]
+
+[[questions]]
+id = "next-031"
+module = "tanstack-query"
+type = "code"
+difficulty = 3
+title = "Stable hash và Mini QueryClient"
+prompt = '''
+Viết stableQueryKeyHash(key) và MiniQueryClient.
+- Hash key dạng array bằng JSON sau khi sắp xếp đệ quy property của object; giữ nguyên thứ tự array.
+- new MiniQueryClient({ staleTime }) lưu cache trong bộ nhớ.
+- fetchQuery(queryKey, queryFn, { staleTime }) trả data cache nếu còn fresh. staleTime option ghi đè mặc định của client; tại đúng mốc staleTime, data đã stale.
+- Cùng hash đang có request chưa hoàn tất phải dùng chung Promise và chỉ gọi queryFn một lần.
+- getQueryData(key) đọc data; setQueryData(key, value) ghi data.
+- invalidateQueries(prefix) đánh dấu stale mọi query key bắt đầu bằng prefix; lần fetch sau phải gọi queryFn mới. Prefix so sánh từng phần theo stable hash.
+
+Đồng hồ kiểm tra dùng Date.now(); có thể dùng fake timers.
+'''
+starter = '''
+function stableQueryKeyHash(key) {
+  return JSON.stringify(key);
+}
+class MiniQueryClient {
+  constructor() {
+    this.cache = new Map();
+  }
+  async fetchQuery(queryKey, queryFn) {
+    return null;
+  }
+  getQueryData(queryKey) {
+    return undefined;
+  }
+  setQueryData(queryKey, value) {}
+  invalidateQueries(prefix) {}
+}
+'''
+solution = '''
+function stableQueryKeyHash(key) {
+  function normalize(value) {
+    if (Array.isArray(value)) return value.map(normalize);
+    if (value && typeof value === 'object') {
+      const result = {};
+      for (const name of Object.keys(value).sort()) result[name] = normalize(value[name]);
+      return result;
+    }
+    return value;
+  }
+  return JSON.stringify(normalize(key));
+}
+function keyStartsWith(key, prefix) {
+  if (!Array.isArray(key) || !Array.isArray(prefix) || prefix.length > key.length) return false;
+  for (let i = 0; i < prefix.length; i++) {
+    if (stableQueryKeyHash([key[i]]) !== stableQueryKeyHash([prefix[i]])) return false;
+  }
+  return true;
+}
+class MiniQueryClient {
+  constructor({ staleTime = 0 } = {}) {
+    this.defaultStaleTime = staleTime;
+    this.cache = new Map();
+    this.inflight = new Map();
+  }
+  fetchQuery(queryKey, queryFn, options = {}) {
+    const hash = stableQueryKeyHash(queryKey);
+    const entry = this.cache.get(hash);
+    const staleTime = options.staleTime === undefined ? this.defaultStaleTime : options.staleTime;
+    if (entry && !entry.invalidated && Date.now() - entry.updatedAt < staleTime) return Promise.resolve(entry.data);
+    if (this.inflight.has(hash)) return this.inflight.get(hash);
+    const request = Promise.resolve().then(queryFn).then((data) => {
+      this.cache.set(hash, { queryKey, data, updatedAt: Date.now(), invalidated: false });
+      return data;
+    }).finally(() => {
+      this.inflight.delete(hash);
+    });
+    this.inflight.set(hash, request);
+    return request;
+  }
+  getQueryData(queryKey) {
+    const entry = this.cache.get(stableQueryKeyHash(queryKey));
+    return entry ? entry.data : undefined;
+  }
+  setQueryData(queryKey, value) {
+    const hash = stableQueryKeyHash(queryKey);
+    this.cache.set(hash, { queryKey, data: value, updatedAt: Date.now(), invalidated: false });
+  }
+  invalidateQueries(prefix) {
+    for (const entry of this.cache.values()) {
+      if (keyStartsWith(entry.queryKey, prefix)) entry.invalidated = true;
+    }
+  }
+}
+'''
+tests = '''
+test('object order ổn định nhưng array order có ý nghĩa', () => {
+  expect(stableQueryKeyHash(['posts', { page: 2, tag: 'a' }])).toBe(stableQueryKeyHash(['posts', { tag: 'a', page: 2 }]));
+  expect(stableQueryKeyHash(['posts', 1, 2])).not.toBe(stableQueryKeyHash(['posts', 2, 1]));
+});
+test('dùng fresh cache trong staleTime', async () => {
+  const client = new MiniQueryClient({ staleTime: 100 });
+  const queryFn = jest.fn(() => 7);
+  expect(await client.fetchQuery(['count'], queryFn)).toBe(7);
+  expect(await client.fetchQuery(['count'], queryFn)).toBe(7);
+  expect(queryFn).toHaveBeenCalledTimes(1);
+});
+test('tại mốc staleTime chính xác thì query được tải lại', async () => {
+  jest.useFakeTimers();
+  const client = new MiniQueryClient({ staleTime: 100 });
+  const queryFn = jest.fn(() => 1);
+  await client.fetchQuery(['time'], queryFn);
+  jest.advanceTimersByTime(100);
+  await client.fetchQuery(['time'], queryFn);
+  expect(queryFn).toHaveBeenCalledTimes(2);
+  jest.useRealTimers();
+});
+test('dedupe request đang bay có cùng key', async () => {
+  const client = new MiniQueryClient();
+  let finish;
+  const queryFn = jest.fn(() => new Promise((resolve) => { finish = resolve; }));
+  const first = client.fetchQuery(['slow'], queryFn);
+  const second = client.fetchQuery(['slow'], queryFn);
+  await Promise.resolve();
+  expect(queryFn).toHaveBeenCalledTimes(1);
+  finish('ready');
+  expect(await first).toBe('ready');
+  expect(await second).toBe('ready');
+});
+test('invalidate theo prefix buộc query tải lại', async () => {
+  const client = new MiniQueryClient({ staleTime: 1000 });
+  let value = 1;
+  const queryFn = () => value;
+  await client.fetchQuery(['posts', { page: 1 }], queryFn);
+  client.invalidateQueries(['posts']);
+  value = 2;
+  expect(await client.fetchQuery(['posts', { page: 1 }], queryFn)).toBe(2);
+  expect(client.getQueryData(['posts', { page: 1 }])).toBe(2);
+});
+test('set và get dùng stable key hash', () => {
+  const client = new MiniQueryClient();
+  client.setQueryData(['user', { id: 4, view: 'full' }], { name: 'An' });
+  expect(client.getQueryData(['user', { view: 'full', id: 4 }])).toEqual({ name: 'An' });
+});
+'''
+hints = ["Chuẩn hoá key đệ quy: object sort key, array giữ nguyên thứ tự.", "Lưu queryKey gốc cùng cache entry để invalidation prefix; đăng ký inflight trước khi queryFn chạy."]
+explanation = "Bài mô phỏng các ý cốt lõi của query cache: danh tính ổn định, freshness, dedupe và invalidation."
+sources = ["tanstack_query/framework/react/guides/query-keys", "tanstack_query/framework/react/guides/caching", "tanstack_query/framework/react/guides/query-invalidation"]
+
+[[questions]]
+id = "next-032"
+module = "tanstack-query"
+type = "code"
+difficulty = 3
+title = "Optimistic update có rollback"
+prompt = '''
+Viết optimisticMutation(cache, key, update, mutation) với cache là Map.
+- Chụp lại giá trị cũ và cập nhật cache ngay bằng update(previousValue).
+- Nếu mutation resolve, trả kết quả mutation và giữ giá trị optimistic.
+- Nếu mutation reject, phục hồi giá trị cũ rồi ném lại đúng lỗi.
+- Nếu trước đó key chưa có trong Map và mutation lỗi, xoá key thay vì lưu undefined.
+
+Đây là mô hình thuần JS cho snapshot trong onMutate, rollback trong onError; ứng dụng thật thường invalidate query sau khi settled.
+'''
+starter = '''
+async function optimisticMutation(cache, key, update, mutation) {
+  cache.set(key, update(cache.get(key)));
+  return mutation();
+}
+'''
+solution = '''
+async function optimisticMutation(cache, key, update, mutation) {
+  const hadValue = cache.has(key);
+  const previous = cache.get(key);
+  cache.set(key, update(previous));
+  try {
+    return await mutation();
+  } catch (error) {
+    if (hadValue) cache.set(key, previous);
+    else cache.delete(key);
+    throw error;
+  }
+}
+'''
+tests = '''
+test('mutation thất bại khôi phục snapshot cũ và ném lại lỗi', async () => {
+  const cache = new Map([['likes', 4]]);
+  const failure = new Error('offline');
+  try {
+    await optimisticMutation(cache, 'likes', (n) => n + 1, () => Promise.reject(failure));
+  } catch (error) {
+    expect(error).toBe(failure);
+  }
+  expect(cache.get('likes')).toBe(4);
+});
+test('mutation thành công giữ optimistic value và trả kết quả server', async () => {
+  const cache = new Map([['likes', 4]]);
+  const result = await optimisticMutation(cache, 'likes', (n) => n + 1, () => Promise.resolve({ ok: true }));
+  expect(cache.get('likes')).toBe(5);
+  expect(result).toEqual({ ok: true });
+});
+test('rollback xoá key vốn chưa tồn tại', async () => {
+  const cache = new Map();
+  try {
+    await optimisticMutation(cache, 'new', () => 'temporary', () => Promise.reject(new Error('failed')));
+  } catch (error) {
+    expect(error.message).toBe('failed');
+  }
+  expect(cache.has('new')).toBe(false);
+});
+test('hỗ trợ giá trị cũ là null', async () => {
+  const cache = new Map([['profile', null]]);
+  try {
+    await optimisticMutation(cache, 'profile', () => ({ name: 'An' }), () => Promise.reject(new Error('failed')));
+  } catch (error) {
+    expect(error.message).toBe('failed');
+  }
+  expect(cache.has('profile')).toBe(true);
+  expect(cache.get('profile')).toBeNull();
+});
+'''
+hints = ["Phân biệt key không có với key có giá trị undefined bằng Map.has.", "Rollback trong catch rồi ném lại cùng lỗi để caller vẫn xử lý được."]
+explanation = "Snapshot cho phép UI phản hồi ngay nhưng vẫn khôi phục trạng thái nhất quán khi request thất bại."
+sources = ["tanstack_query/framework/react/guides/optimistic-updates", "tanstack_query/framework/react/guides/query-invalidation"]
+
+[[questions]]
+id = "next-033"
+module = "tanstack-router"
+type = "single"
+difficulty = 1
+prompt = "Lợi ích chính của route tree đã đăng ký kiểu trong TanStack Router là gì?"
+options = ["Tạo API server tự động", "Cho phép suy luận và kiểm tra route, params khi dùng Link/navigate", "Xoá nhu cầu validate input trên server", "Tự thay Next.js App Router trong mọi project"]
+answer = [1]
+explanation = "Router có thể suy luận route hợp lệ từ route tree; dữ liệu vẫn cần được tin cậy và xác thực đúng tầng."
+sources = ["tanstack_router/guide/creating-a-router#router-type-safety", "tanstack_router/guide/type-safety#route-definitions"]
+
+[[questions]]
+id = "next-034"
+module = "tanstack-router"
+type = "single"
+difficulty = 2
+prompt = "Trang có bộ lọc và số trang cần giữ trong URL, chia sẻ được và kiểm tra kiểu trước khi dùng. Nên đặt logic chính ở đâu?"
+options = ["validateSearch của route", "State cục bộ không đồng bộ URL", "useEffect ở root layout", "Middleware của Next.js"]
+answer = [0]
+explanation = "validateSearch parse và chuẩn hoá search params để route và loader dùng dữ liệu đáng tin cậy hơn."
+sources = ["tanstack_router/guide/search-params#validating-and-typing-search-params"]
+
+[[questions]]
+id = "next-035"
+module = "tanstack-router"
+type = "single"
+difficulty = 2
+prompt = "Một route cần tải dữ liệu theo path params trước khi component hiển thị. Cơ chế route phù hợp nhất là:"
+options = ["loader", "validateSearch", "Link", "Outlet"]
+answer = [0]
+explanation = "Loader nhận params/context để nạp dữ liệu trước route render và hỗ trợ trạng thái pending/error."
+sources = ["tanstack_router/guide/data-loading#route-loaders", "tanstack_router/guide/data-loading#using-path-params"]
+
+[[questions]]
+id = "next-036"
+module = "tanstack-router"
+type = "single"
+difficulty = 3
+prompt = "Loader dùng search.page để gọi API. Bước nào nên xảy ra trước khi loader dùng giá trị đó?"
+options = ["Tin mọi giá trị query string là số nguyên hợp lệ", "Validate và chuẩn hoá search params trong route", "Chuyển page vào component state sau render", "Bỏ search khỏi URL"]
+answer = [1]
+explanation = "Search params đến từ URL nên cần parse/validate trước; route có thể cung cấp kiểu và giá trị mặc định."
+sources = ["tanstack_router/guide/search-params#validating-and-typing-search-params", "tanstack_router/guide/data-loading#using-search-params-in-loaders"]
+
+[[questions]]
+id = "next-037"
+module = "tanstack-router"
+type = "multiple"
+difficulty = 2
+prompt = "Những việc nào phù hợp với TanStack Router loader và route context?"
+options = ["Đọc path params để tải resource tương ứng", "Dùng validated search params cho bộ lọc", "Dùng context đã cung cấp cho router/route", "Tin rằng loader tự cấp quyền đọc dữ liệu backend"]
+answer = [0, 1, 2]
+explanation = "Loader phối hợp params, search và context; authorization vẫn cần được kiểm tra tại backend hoặc data boundary."
+sources = ["tanstack_router/guide/data-loading#route-loaders", "tanstack_router/guide/data-loading#using-route-context", "tanstack_router/guide/data-loading#using-search-params-in-loaders"]
+
+[[questions]]
+id = "next-038"
+module = "tanstack-router"
+type = "fill"
+difficulty = 1
+prompt = '''
+Hook cấu hình để parse, validate và chuẩn hoá query string tại một route có tên {{blank}}.
+'''
+blanks = [["validateSearch"]]
+explanation = "Route dùng validateSearch để biến dữ liệu URL thành search state đã kiểm tra."
+sources = ["tanstack_router/guide/search-params#validating-and-typing-search-params"]
+
+[[questions]]
+id = "next-039"
+module = "tanstack-router"
+type = "essay"
+difficulty = 3
+prompt = "Giải thích quan hệ giữa search params đã validate và loader trong một trang danh sách có lọc, phân trang."
+keywords = [["validate search", "validatesearch", "xác thực search"], ["kiểu", "type", "typed"], ["loader"], ["lọc", "filter"], ["phân trang", "page"], ["url", "query string"]]
+min_keywords = 3
+model_answer = '''
+validateSearch đọc và chuẩn hoá query string thành giá trị có kiểu, có thể thêm mặc định hoặc từ chối dữ liệu sai. Loader dùng search đã validate cùng params/context để tải trang đúng bộ lọc và số trang; URL vẫn có thể chia sẻ hoặc tải lại.
+'''
+explanation = "Tách parse URL khỏi tải dữ liệu làm route loader nhận đầu vào rõ ràng."
+sources = ["tanstack_router/guide/search-params#validating-and-typing-search-params", "tanstack_router/guide/data-loading#using-search-params-in-loaders"]
+
+[[questions]]
+id = "next-040"
+module = "tanstack-router"
+type = "code"
+difficulty = 3
+title = "Validate search và gọi route loader"
+prompt = '''
+Viết loadPostRoute(input, fetchPost) để mô phỏng hợp đồng của một route:
+- input có { params, search }, trong đó params.postId là chuỗi và search là object.
+- search.page mặc định là 1. Chấp nhận số nguyên dương hoặc chuỗi số nguyên dương; giá trị khác ném Error('invalid page').
+- search.q mặc định là chuỗi rỗng; nếu là string thì trim khoảng trắng, còn kiểu khác ném Error('invalid query').
+- Gọi fetchPost(postId, { page, q }) và trả lại kết quả của nó. Thiếu hoặc không phải string postId ném Error('invalid post id').
+- Có thể await fetchPost nếu trả Promise.
+'''
+starter = '''
+async function loadPostRoute(input, fetchPost) {
+  return fetchPost(input.params.postId, input.search);
+}
+'''
+solution = '''
+async function loadPostRoute(input, fetchPost) {
+  const params = input && input.params;
+  const search = input && input.search ? input.search : {};
+  if (!params || typeof params.postId !== 'string' || params.postId.length === 0) {
+    throw new Error('invalid post id');
+  }
+  const rawPage = search.page === undefined ? 1 : search.page;
+  const page = typeof rawPage === 'number' ? rawPage : Number(rawPage);
+  if (!Number.isInteger(page) || page < 1) throw new Error('invalid page');
+  const rawQuery = search.q === undefined ? '' : search.q;
+  if (typeof rawQuery !== 'string') throw new Error('invalid query');
+  return await fetchPost(params.postId, { page, q: rawQuery.trim() });
+}
+'''
+tests = '''
+test('loader dùng mặc định và truyền post id', async () => {
+  const fetchPost = jest.fn((id, search) => ({ id, search }));
+  const result = await loadPostRoute({ params: { postId: '42' }, search: {} }, fetchPost);
+  expect(result).toEqual({ id: '42', search: { page: 1, q: '' } });
+});
+test('loader parse page và trim query', async () => {
+  const result = await loadPostRoute(
+    { params: { postId: '42' }, search: { page: '3', q: '  router  ' } },
+    (id, search) => [id, search]
+  );
+  expect(result).toEqual(['42', { page: 3, q: 'router' }]);
+});
+test('page không hợp lệ bị từ chối', async () => {
+  try {
+    await loadPostRoute({ params: { postId: '42' }, search: { page: '0' } }, () => null);
+  } catch (error) {
+    expect(error.message).toBe('invalid page');
+  }
+});
+test('query sai kiểu và post id thiếu có lỗi riêng', async () => {
+  try {
+    await loadPostRoute({ params: { postId: '42' }, search: { q: 3 } }, () => null);
+  } catch (error) {
+    expect(error.message).toBe('invalid query');
+  }
+  try {
+    await loadPostRoute({ params: {}, search: {} }, () => null);
+  } catch (error) {
+    expect(error.message).toBe('invalid post id');
+  }
+});
+test('chờ kết quả async từ loader function', async () => {
+  const result = await loadPostRoute(
+    { params: { postId: 'x' }, search: { page: 2 } },
+    async (id, search) => ({ id, page: search.page })
+  );
+  expect(result).toEqual({ id: 'x', page: 2 });
+});
+'''
+hints = ["Validate params và search trước khi gọi fetch.", "Chuyển page sang number rồi kiểm tra integer dương; không ép kiểu q."]
+explanation = "Route loader nên nhận params/search đã chuẩn hoá để việc tải dữ liệu theo URL có hành vi xác định."
+sources = ["tanstack_router/guide/search-params#validating-and-typing-search-params", "tanstack_router/guide/data-loading#route-loaders"]
+
+[[questions]]
+id = "next-021"
+module = "next-route-platform"
+type = "fill"
+difficulty = 1
+prompt = '''
+Để tự host font thông qua cơ chế tối ưu của Next.js, package thường dùng là {{blank}}.
+'''
+blanks = [["next/font"]]
+explanation = "next/font tải và self-host font trong quá trình build thay vì phụ thuộc request tới nhà cung cấp font lúc chạy."
+sources = ["nextjs/app/building-your-application/optimizing/fonts"]
+
+[[questions]]
+id = "next-022"
+module = "next-route-platform"
+type = "fill"
+difficulty = 1
+prompt = '''
+Một Route Handler hỗ trợ đọc dữ liệu HTTP khai báo hàm export theo tên method {{blank}}.
+'''
+blanks = [["GET"]]
+explanation = "Route Handler export các hàm như GET, POST, PUT hoặc DELETE để xử lý method tương ứng."
+sources = ["nextjs/app/building-your-application/routing/route-handlers"]
+
+[[questions]]
+id = "next-023"
+module = "next-route-platform"
+type = "essay"
+difficulty = 2
+prompt = "Nêu hai việc phù hợp với middleware và giải thích vì sao middleware không nên là nơi duy nhất phân quyền dữ liệu."
+keywords = [["redirect", "chuyển hướng"], ["rewrite", "viết lại"], ["matcher", "lọc route", "giới hạn route"], ["phân quyền", "authorization", "kiểm tra quyền"], ["server action", "route handler", "điểm đọc", "điểm ghi"], ["request", "middleware"]]
+min_keywords = 3
+model_answer = '''
+Middleware có thể dùng matcher để giới hạn request, redirect hoặc rewrite trước khi route hoàn tất. Dữ liệu vẫn cần kiểm tra phân quyền tại Route Handler, Server Action hoặc tầng truy cập dữ liệu vì client có thể gọi endpoint trực tiếp.
+'''
+explanation = "UI và middleware không thay cho authorization tại ranh giới dữ liệu."
+sources = ["nextjs/app/api-reference/file-conventions/middleware", "nextjs/app/building-your-application/data-fetching/server-actions-and-mutations"]
+
+[[questions]]
+id = "next-024"
+module = "next-route-platform"
+type = "code"
+difficulty = 3
+title = "Mô phỏng middleware matcher"
+prompt = '''
+Viết matchesMiddleware(pathname, matcher) cho một tập con có chủ đích của matcher:
+- matcher là một string hoặc mảng string; nếu là mảng, chỉ cần một mẫu khớp.
+- Mẫu /dashboard khớp chính xác path đó.
+- Segment :id khớp đúng một segment không rỗng.
+- Segment cuối :path* khớp không hoặc nhiều segment.
+- Bỏ dấu / cuối khi so sánh; không xử lý query string, regex hay locale prefix.
+
+Ví dụ matchesMiddleware('/dashboard/users/2', '/dashboard/:path*') trả true.
+'''
+starter = '''
+function matchesMiddleware(pathname, matcher) {
+  return false;
+}
+'''
+solution = '''
+function parts(path) {
+  if (path === '/') return [];
+  return path.split('/').filter(Boolean);
+}
+function matchesOne(pathname, pattern) {
+  const path = parts(pathname);
+  const route = parts(pattern);
+  let i = 0;
+  let j = 0;
+  while (j < route.length) {
+    if (route[j] === ':path*') return j === route.length - 1;
+    if (i >= path.length) return false;
+    if (!(/^:[A-Za-z0-9_]+$/).test(route[j]) && route[j] !== path[i]) return false;
+    i++;
+    j++;
+  }
+  return i === path.length;
+}
+function matchesMiddleware(pathname, matcher) {
+  const patterns = Array.isArray(matcher) ? matcher : [matcher];
+  return patterns.some((pattern) => matchesOne(pathname, pattern));
+}
+'''
+tests = '''
+test('khớp path chính xác', () => {
+  expect(matchesMiddleware('/dashboard', '/dashboard')).toBe(true);
+  expect(matchesMiddleware('/dashboard/users', '/dashboard')).toBe(false);
+});
+test('dynamic segment khớp một phần', () => {
+  expect(matchesMiddleware('/users/42', '/users/:id')).toBe(true);
+  expect(matchesMiddleware('/users/42/edit', '/users/:id')).toBe(false);
+});
+test('wildcard cuối khớp rỗng hoặc nhiều phần con', () => {
+  expect(matchesMiddleware('/dashboard', '/dashboard/:path*')).toBe(true);
+  expect(matchesMiddleware('/dashboard/a/b', '/dashboard/:path*')).toBe(true);
+});
+test('mảng matcher là lựa chọn OR', () => {
+  expect(matchesMiddleware('/settings/profile', ['/admin/:path*', '/settings/:path*'])).toBe(true);
+});
+test('bỏ slash cuối và không khớp segment tĩnh sai', () => {
+  expect(matchesMiddleware('/settings/', '/settings')).toBe(true);
+  expect(matchesMiddleware('/setting', '/settings')).toBe(false);
+});
+'''
+hints = ["Chuẩn hoá path thành mảng segment trước khi so sánh.", "Xử lý :path* riêng vì nó chỉ hợp lệ ở cuối và có thể khớp 0 segment."]
+explanation = "Đây là mô phỏng matcher cơ bản; matcher thực tế của Next.js còn hỗ trợ biểu thức và các tuỳ chọn cấu hình khác."
+sources = ["nextjs/app/api-reference/file-conventions/middleware"]
