@@ -766,3 +766,388 @@ keywords = [[ '''target''', '''syntax output''', '''emitted syntax''' ], [ '''li
 model_answer = '''Choose `target` for the supported runtime and `lib` for the APIs that actually exist in the environment; type declarations are not polyfills. Choose `moduleResolution` to match the bundler and coordinate it with `module`. If the bundler emits JavaScript, `noEmit` can keep `tsc` focused on type-checking. Project references and `composite` are useful for dividing a monorepo into projects with clear build dependencies.
 '''
 explanation = '''The configuration should describe both the runtime environment and the build pipeline, rather than merely making an import error disappear.'''
+
+[modules.frontend-lead]
+title = '''Tech Lead Perspective'''
+description = '''Performance budgets and Core Web Vitals as KPIs, browser support/polyfill strategy, design systems and tokens, a11y standards, third-party script governance, migrations, and code review at team scale.'''
+lesson = '''### A decision-making framework
+At the Lead level the question is rarely "which API is correct" but "which option makes the most sense **given the team's constraints**": headcount, deadlines, risk, operating cost, reversibility. A simple framework:
+1. **State the problem with data** (e.g. mobile LCP p75 is 3.8 s, target ≤ 2.5 s).
+2. **List 2–4 options**, including "do nothing".
+3. **Score them against criteria**: user impact, effort, risk, ability to roll back, maintenance cost.
+4. **Choose, write an ADR, set metrics to track** and a review date.
+
+| Option (e.g. CSS for an SSR app, team of 8) | Effort | Runtime risk | Consistency | Reversibility |
+|---|---|---|---|---|
+| CSS Modules + design tokens (CSS variables) | Low | Low | Medium (needs lint) | Easy |
+| Utility-first (utility classes) | Medium | Low | High | Medium |
+| Runtime CSS-in-JS | Medium | High (render-time cost, complex SSR) | High | Hard |
+
+### Performance budgets as KPIs
+- Measure **field data (RUM)** at **p75** per device/network; lab data (Lighthouse) is for **blocking regressions in CI**, not a replacement for field data.
+- Reference Core Web Vitals thresholds: LCP ≤ 2.5 s, INP ≤ 200 ms, CLS ≤ 0.1. Initial JS budget (rough estimate): ~170 KB gzip for the main route on a mid-range mobile device.
+- Attach each budget to an **owner** and a process for when it is exceeded (block the merge, or warn + ticket).
+
+### Browser support & polyfills
+Decide based on **your own product analytics**, recorded in a `browserslist` shared by build, lint and polyfills. Prefer progressive enhancement (`@supports`), polyfill only features you actually use, and review every quarter.
+
+### Review checklist (short)
+- Automate what machines can do: format, lint, type-check, tests, bundle-size diff, axe.
+- Human reviewers focus on: component API design, error/loading/empty states, keyboard a11y, security (untrusted HTML), performance impact, rollback ability.
+
+### Sample ADR
+```
+ADR-012: Use CSS Modules + design tokens
+Context: SSR, 8 devs, 3 squads, INP close to the threshold.
+Decision: CSS Modules, tokens via CSS variables, no runtime CSS-in-JS for new code.
+Consequences: + no runtime cost; − needs stylelint to stay consistent.
+Review: after 2 quarters or when changing framework.
+```
+
+### Team-scale anti-patterns
+- Using the Lighthouse score on a dev machine as a KPI.
+- A "big bang rewrite" while still having to ship features.
+- A design system with no owner and no versioning → every squad forks its own copy.
+- Treating a11y as a year-end audit instead of part of the Definition of Done.
+- Adding marketing tags without review and without a budget.
+'''
+
+[questions.frontend-lv001]
+prompt = '''Does the following code throw an error?
+
+```js
+const items = [1, 2, 3];
+items.push(4);
+console.log(items);
+```
+'''
+options = [ '''No error, logs `[1, 2, 3, 4]`''', '''TypeError because `items` is `const`''', '''Logs `[1, 2, 3]` because `const` makes the array immutable''', '''SyntaxError''' ]
+explanation = '''`const` only forbids **reassigning** the variable; it does not make the value immutable. To prevent content changes use `Object.freeze` (shallow) or immutable data structures.'''
+
+[questions.frontend-lv002]
+prompt = '''After running this, what are `nums` and `doubled`?
+
+```js
+const nums = [1, 2, 3];
+const doubled = nums.map(n => n * 2);
+```
+'''
+explanation = '''`map` returns a **new array** and does not modify the original. It is `forEach` that returns `undefined`.'''
+
+[questions.frontend-lv003]
+prompt = '''Check whether the array contains the string `"admin"` (returns `true`/`false`):
+
+```js
+const isAdmin = roles.{{blank}}("admin");
+```
+'''
+explanation = '''`Array.prototype.includes` returns a boolean and compares using SameValueZero (so it can even find `NaN`), unlike `indexOf`.'''
+
+[questions.frontend-lv004]
+prompt = '''Which values are **falsy** in JavaScript?'''
+options = [ '''`0`''', '''`""` (empty string)''', '''`"0"`''', '''`[]`''', '''`null`''', '''`NaN`''' ]
+explanation = '''Falsy values: `false`, `0`, `-0`, `0n`, `""`, `null`, `undefined`, `NaN`. The string `"0"`, an empty array and an empty object are all truthy — a common bug when writing `if (list)` to check for an empty array.'''
+
+[questions.frontend-lv005]
+prompt = '''Which element should wrap the page's main navigation links?'''
+explanation = '''`<nav>` is the navigation landmark; screen readers let users jump straight to it. `<div>` has no semantics, and `<aside>` is for secondary content.'''
+
+[questions.frontend-lv006]
+prompt = '''An image is purely decorative (a background pattern within the content). How should its `alt` attribute be set?'''
+options = [ '''`alt=""` (empty) so screen readers skip it''', '''Omit the `alt` attribute entirely''', '''`alt="image"`''', '''Repeat the image file name''' ]
+explanation = '''An empty `alt` marks the image as decorative. A missing `alt` makes some screen readers read the file name; `alt="image"` is useless noise.'''
+
+[questions.frontend-lv007]
+prompt = '''Use the CSS variable `--brand` declared on `:root`:
+
+```css
+.btn { background: {{blank}}(--brand); }
+```
+'''
+explanation = '''Custom properties are read with `var(--name, fallback)`. CSS variables inherit down the DOM tree, so they can be overridden per theme or per component.'''
+
+[questions.frontend-lv008]
+prompt = '''What gets logged?
+
+```js
+localStorage.setItem("cart", { id: 1 });
+console.log(localStorage.getItem("cart"));
+```
+'''
+options = [ '''`"[object Object]"`''', '''`{ id: 1 }`''', '''`null`''', '''Throws a TypeError''' ]
+explanation = '''`localStorage` stores only **strings**; the object is coerced to the string `[object Object]`. Use `JSON.stringify` when saving and `JSON.parse` when reading.'''
+
+[questions.frontend-lv009]
+prompt = '''What does `document.querySelector(".item")` return when the page has 3 `.item` elements?'''
+options = [ '''The **first** `.item` element in document order''', '''A NodeList containing all 3 elements''', '''The last `.item` element''', '''An empty array if there is no id''' ]
+explanation = '''`querySelector` returns the first matching element or `null`; to get all of them use `querySelectorAll` (a static NodeList).'''
+
+[questions.frontend-lv010]
+prompt = '''The user clicks a `<span>` inside a `<button>`. A listener is attached to the `<button>`:
+
+```js
+button.addEventListener("click", (e) => { /* ... */ });
+```
+
+Which statements are correct?
+'''
+options = [ '''`e.target` is the `<span>` (the element actually clicked)''', '''`e.currentTarget` is the `<button>` (the element the listener is attached to)''', '''`e.target` always equals `e.currentTarget`''', '''The listener does not run because the user clicked the `<span>`''' ]
+explanation = '''The event bubbles from the `<span>` up to the `<button>`. `target` is where it originated, `currentTarget` is where the listener is running — the foundation of event delegation.'''
+
+[questions.frontend-lv011]
+prompt = '''What does TypeScript report?
+
+```ts
+let count = 5;
+count = "five";
+```
+'''
+options = [ '''Error: `string` is not assignable to `number` because the type was inferred as `number`''', '''No error because no type was declared''', '''Error because you must use `const`''', '''No error, `count` has type `any`''' ]
+explanation = '''TypeScript infers the type from the initial value. `let count = 5` has type `number`; to accept several types, declare a union `number | string`.'''
+
+[questions.frontend-lv012]
+prompt = '''Declare the `email` property as **optional** (it may be absent):
+
+```ts
+interface User {
+  id: number;
+  email{{blank}}: string;
+}
+```
+'''
+explanation = '''The `?` makes the property optional; its type when read is `string | undefined`, so you need narrowing before using it.'''
+
+[questions.frontend-lvc01]
+title = '''Split an array into chunks'''
+prompt = '''Write `chunk(arr, size)` that splits an array into sub-arrays of at most `size` elements (useful for pagination or grid layouts).
+- `chunk([1, 2, 3, 4, 5], 2)` → `[[1, 2], [3, 4], [5]]`
+- Empty array → `[]`
+- Must not modify the original array
+- `size` is not a positive integer → throw `RangeError`
+'''
+hints = [ '''A `for` loop stepping with `i += size`.''', '''`arr.slice(i, i + size)` returns a new array without modifying `arr`.''' ]
+explanation = '''`slice` does not change the original array, whereas `splice` does. Validating arguments early avoids an infinite loop when `size = 0`.'''
+
+[questions.frontend-lv013]
+prompt = '''An SPA stores metadata for each DOM element so tooltips can reuse it. A heap snapshot after several page navigations shows thousands of **detached DOM nodes** still alive:
+
+```js
+const meta = new Map();
+function attach(el, data) { meta.set(el, data); }
+```
+
+What is the least invasive fix?
+'''
+options = [ '''Change `Map` to `WeakMap` so element keys do not keep the elements alive''', '''Call `meta.clear()` in a `setInterval` every minute''', '''Use `el.id` as the key instead of the element''', '''Raise the tab's memory limit''' ]
+explanation = '''A `Map` holds strong references to its keys, so elements removed from the DOM are never garbage-collected. A `WeakMap` lets the GC reclaim them once no other references remain. Periodic clearing loses data still in use; id keys may collide and still leak the `data` part.'''
+
+[questions.frontend-lv014]
+prompt = '''The following code freezes the tab: the spinner stops spinning and the `setTimeout` never runs. Why?
+
+```js
+function pump() {
+  processChunk();
+  if (hasMore()) queueMicrotask(pump);
+}
+pump();
+setTimeout(() => console.log("tick"), 0);
+```
+'''
+options = [ '''The microtask queue is drained **completely** before the browser renders or runs a macrotask, so a self-chaining microtask blocks both''', '''`queueMicrotask` runs in parallel on another thread and competes for CPU''', '''The browser rounds `setTimeout(…, 0)` up to 1 second''', '''`queueMicrotask` only runs after all timers have finished''' ]
+explanation = '''The event loop runs every microtask (including newly queued ones) before rendering and the next macrotask. To yield to rendering/input, split the work using macrotasks (`setTimeout`, `MessageChannel`) or `scheduler.yield()` when available.'''
+
+[questions.frontend-lv015]
+prompt = '''Select the correct statements about the rendering pipeline (style → layout → paint → composite).'''
+options = [ '''Changing an element's `width` usually triggers layout for that element and possibly its surroundings.''', '''Reading `el.offsetHeight` right after writing styles inside a loop can force a **forced synchronous layout** (layout thrashing).''', '''Animating with `transform`/`opacity` usually only needs the composite step if the element is already on its own layer.''', '''Setting `will-change: transform` on every element always makes the page faster.''', '''`requestAnimationFrame` helps batch DOM writes at the right moment before the next frame.''' ]
+explanation = '''Separate read and write phases, animate composite-only properties, and use rAF to batch changes. Overusing `will-change` creates too many layers, consumes GPU memory and can make things slower.'''
+
+[questions.frontend-lv016]
+prompt = '''A very long documentation page (hundreds of sections) has a high initial render time even though only the top part is visible. Which CSS change reduces rendering of off-screen content while keeping the scrollbar stable?'''
+options = [ '''`content-visibility: auto` with an estimated `contain-intrinsic-size` on each section''', '''`display: none` on off-screen sections, toggled back on with JS''', '''`visibility: hidden` on the lower sections''', '''`overflow: hidden` on `body`''' ]
+explanation = '''`content-visibility: auto` skips layout/paint for content outside the viewport; `contain-intrinsic-size` provides a placeholder size so the scrollbar does not jump. `display: none` removes content from find-in-page and the a11y tree; `visibility: hidden` still costs layout.'''
+
+[questions.frontend-lv017]
+prompt = '''A comment widget is embedded multiple times and frequently updates its inner content. What does applying `contain: layout paint` to the widget's container give you?'''
+options = [ '''Layout changes inside it do not trigger layout recalculation for the rest of the page.''', '''Content overflowing the box is clipped when painted (similar to clip).''', '''The element becomes the containing block for `position: fixed` children.''', '''The widget is automatically lazy-loaded when scrolled into view.''', '''You can drop `width`/`height` entirely with no effect at all.''' ]
+explanation = '''`contain: layout` isolates layout and creates a containing block (including for `fixed`); `paint` clips overflow and limits the repaint area. Containment does not lazy-load anything, and only `size` containment requires explicit dimensions.'''
+
+[questions.frontend-lv018]
+prompt = '''After saving a form, the app shows a "Saved" toast in the corner without moving focus. Screen reader users hear nothing. What is the most appropriate fix?'''
+options = [ '''Put the toast in a region that exists from the start with `role="status"` (a polite live region) and then update its content''', '''Move focus to the toast every time it appears''', '''Add `aria-hidden="true"` to the toast''', '''Use the browser's `alert()`''' ]
+explanation = '''A live region must exist in the DOM **before** its content changes to be announced; `status` is polite and does not interrupt the user. Moving focus loses the user's place; `aria-hidden` hides it from screen readers entirely.'''
+
+[questions.frontend-lv019]
+prompt = '''RUM shows INP p75 = 480 ms on the "Filter" button of a list page. The profiler shows the click handler filtering 5,000 rows and re-rendering in a single 400 ms task. Which approach improves INP most directly?'''
+options = [ '''Update the UI immediately (a filtering state), then **yield the main thread** and split filtering/rendering into many small tasks''', '''Wrap the handler in `Promise.resolve().then(...)`''', '''Add `loading="lazy"` to images in the list''', '''Preload the page's font''' ]
+explanation = '''INP measures from the interaction to the next painted frame. Letting the browser paint feedback first and then splitting heavy work (yield via macrotasks/`scheduler.yield`, list virtualization) shortens the delay. Pushing to a microtask still blocks rendering; lazy images and fonts do not touch the long task.'''
+
+[questions.frontend-lv020]
+prompt = '''A RUM script loads late but still needs to receive LCP entries that occurred **before** the observer was created:
+
+```js
+new PerformanceObserver((list) => report(list.getEntries()))
+  .observe({ type: "largest-contentful-paint", {{blank}}: true });
+```
+'''
+explanation = '''`buffered: true` also delivers entries recorded in the buffer before `observe` was called. Without it, a late-loading RUM script misses LCP.'''
+
+[questions.frontend-lv021]
+prompt = '''Interview: explain the browser event loop (macrotasks, microtasks, rendering) and how you keep a heavy task from freezing the UI.'''
+keywords = [[ '''call stack''', '''stack''' ], [ '''microtask''', '''promise''', '''queuemicrotask''' ], [ '''macrotask''', '''task queue''', '''settimeout''' ], [ '''render''', '''paint''', '''frame''' ], [ '''split''', '''chunk''', '''yield''', '''web worker''', '''worker''' ]]
+model_answer = '''JavaScript on the main thread runs on the **call stack**. Each event loop iteration takes **one macrotask** (an event, `setTimeout`, a message), runs it, then drains **all microtasks** (`Promise.then`, `await`, `queueMicrotask`), after which the browser gets a chance to **render** a frame (style, layout, paint; `requestAnimationFrame` runs right before that).
+
+Because rendering only happens between tasks, a long task (> 50 ms) or a never-ending chain of microtasks freezes the UI and hurts INP. To avoid it: **split** the work into **chunks** across many tasks and **yield** the main thread (`setTimeout`, `MessageChannel`, `scheduler.yield()`), update UI feedback before the heavy work, virtualize long lists, and move pure computation to a **Web Worker**.
+'''
+explanation = '''Bonus points: explaining that microtasks run before rendering, why recursive microtasks block rendering, and measuring with Long Tasks/INP.'''
+
+[questions.frontend-lv022]
+prompt = '''Given:
+
+```ts
+const ROUTES = { home: "/", user: "/users/:id" } as const;
+type RouteName = keyof typeof ROUTES;
+type RoutePath = (typeof ROUTES)[RouteName];
+```
+
+Which statements are correct?
+'''
+options = [ '''`RouteName` is `"home" | "user"`.''', '''`RoutePath` is `"/" | "/users/:id"` because `as const` preserves literal types.''', '''Without `as const`, `RoutePath` would be just `string`.''', '''`as const` makes the object immutable at runtime like `Object.freeze`.''', '''`ROUTES.home = "/x"` is a TypeScript error because the property is `readonly`.''' ]
+explanation = '''`as const` only acts at the type level: literal types + `readonly`. At runtime it is still a plain object; true immutability needs `Object.freeze`.'''
+
+[questions.frontend-lv023]
+prompt = '''The page heading uses a custom web font. Lab tests show invisible text for ~1 s (FOIT), and the layout jumps when the font finishes loading. Which combination best balances LCP and CLS?'''
+options = [ '''`preload` the critical font file + `font-display: swap` + a fallback font with closely matched metrics (tuned with `size-adjust`)''', '''`font-display: block` to always wait for the font''', '''Inline the whole font as base64 in the main CSS''', '''Load the font with JS after the `load` event''' ]
+explanation = '''Preloading shortens download time, `swap` shows text immediately in the fallback, and tuning fallback metrics reduces the shift when the font swaps. `block` causes FOIT; base64 makes render-blocking CSS heavier; loading after `load` causes a late jump.'''
+
+[questions.frontend-lv024]
+prompt = '''Leadership wants "improve web speed" as a quarterly KPI for a team of 6 devs. Today there is only a Lighthouse score run manually on a laptop. How do you propose setting the KPI?'''
+options = [ '''KPI = Core Web Vitals **p75 from RUM** per device class (mobile/desktop) for the key revenue pages; Lighthouse CI with budgets is used to block regressions before merging''', '''KPI = Lighthouse score ≥ 90 on the tech lead's laptop every week''', '''KPI = total bundle size reduced by 50% this quarter, no need to measure users''', '''KPI = average (mean) `DOMContentLoaded` time across the site''' ]
+explanation = '''A KPI must reflect real experience and be stable enough: field data at p75, split by device, focused on important pages. Lab data is cheap and repeatable, so it suits a CI gate. A Lighthouse score on a powerful machine does not represent users; shrinking the bundle is a means, not an outcome; the mean is skewed by outliers and DCL is not an experience metric.'''
+
+[questions.frontend-lv025]
+prompt = '''Analytics: 1.2% of sessions come from old browsers that do not support `:has()` and container queries, but this group accounts for 6% of revenue (B2B customers on company machines). The team wants to use both features for a new layout. What is the most sensible decision?'''
+options = [ '''Use progressive enhancement: a basic layout works everywhere, enhanced via `@supports`; record the support policy in `browserslist` + docs and review it quarterly''', '''Ban `:has()` and container queries until the share of old browsers reaches 0''', '''Use them freely; the 1.2% can upgrade their browsers''', '''Write a JS polyfill for `:has()` that runs in every browser so the code has only one branch''' ]
+explanation = '''The group is small in sessions but large in revenue, so it must not be abandoned — but it should not freeze the whole team either. Progressive enhancement gives most users the new experience at low cost. Polyfilling `:has()` for everyone costs performance for the 98.8% who already support it.'''
+
+[questions.frontend-lv026]
+prompt = '''The company has 3 squads, each defining its own colors and spacing. You are tasked with building shared design tokens. Which decisions are sensible?'''
+options = [ '''Split into 2 tiers: **primitive** tokens (`blue-600`) and **semantic** tokens (`color-action-primary`); components only use semantic tokens.''', '''Publish tokens as a package with **semver** and a changelog; renaming/removing a token is a breaking change.''', '''Export tokens as CSS custom properties so themes (dark mode, brand) can change without rebuilding components.''', '''Force every squad to migrate to tokens within one sprint and block merging of any PR that has not migrated.''', '''Assign an owner (a small group or a rotation) and a process for proposing new tokens.''' ]
+explanation = '''Two token tiers let you change the palette without touching components; semver + an owner keep the system from being forked. Forcing migration within one sprint is a high-risk big bang — instead, lint warnings for hard-coded colors and migrate gradually area by area.'''
+
+[questions.frontend-lv027]
+prompt = '''The product just received an accessibility complaint from an enterprise customer and must reach WCAG 2.2 AA within 2 quarters. The team has 8 devs and no a11y specialist. Which strategy is most sustainable?'''
+options = [ '''Put AA criteria in the Definition of Done, run axe automatically in CI, use a keyboard + screen reader testing checklist for key flows, fix shared components first, and train 1–2 people as champions''', '''Install a third-party "accessibility overlay" widget to fix the UI automatically''', '''Hire a one-off audit at the end of Q2 and fix according to the report''', '''Rely solely on axe in CI because automated tools catch every issue''' ]
+explanation = '''A11y bugs are introduced continuously along with new features, so it must be part of the process. Fixing shared components has the greatest leverage. Overlays cannot fix semantics and often add bugs; an end-of-period audit finds issues too late; automated tools catch only part of the issues (roughly ~30–40%), the rest needs manual testing.'''
+
+[questions.frontend-lv028]
+prompt = '''Marketing added 9 tags through a tag manager; INP on the product page rose from 180 ms to 320 ms. Marketing needs these tags to measure campaigns. What do you choose?'''
+options = [ '''Set up a governance process: each tag has an owner and a purpose, is reviewed before being added, and there is a main-thread budget for third parties; defer non-essential tags until after consent/first interaction, remove duplicate tags''', '''Remove the tag manager from the site entirely''', '''Leave it as is because marketing is paying''', '''Switching all tags to `<script async>` is enough''' ]
+explanation = '''This is a governance problem between two parties with legitimate goals; it needs rules and data, not a ban or a free-for-all. `async` only stops blocking parsing; the script still occupies the main thread when it runs, so INP stays bad.'''
+
+[questions.frontend-lv029]
+prompt = '''PR reviews take 2 days on average, and most comments are about formatting and import naming. Which changes should you make?'''
+options = [ '''Automate format/lint/type-check in pre-commit or CI so reviewers do not have to comment on them.''', '''Add bundle-size diff and axe reports to PRs for objective data.''', '''Have a short reviewer checklist: loading/error/empty states, keyboard a11y, security of untrusted data, rollback ability.''', '''Require 4 approvals on every PR to make sure of quality.''', '''Encourage small PRs (e.g. < 400 changed lines) and set a review response SLA.''' ]
+explanation = '''Let machines do machine work and humans focus on design and risk; small PRs + an SLA cut waiting time. More required approvers slows things down further without a proportional quality gain.'''
+
+[questions.frontend-lv030]
+prompt = '''An 8-year-old internal jQuery app (~60 screens) is hard to maintain. A team of 3 devs still has to ship features monthly. Which modernization plan has the lowest risk?'''
+options = [ '''Strangler: build a new shell, migrate gradually by route/screen priority (most edited, most bugs), run both side by side, track progress by % of screens migrated''', '''Freeze features for 6 months to rewrite everything''', '''Keep jQuery forever because the app still works''', '''Outsource a parallel rewrite and switch over in one go when it is done''' ]
+explanation = '''Gradual migration delivers value continuously, allows rolling back piece by piece and learning along the way. A big bang (in-house or outsourced) carries high risk of business-logic drift and delays; keeping it as is means technical debt keeps increasing the cost of every feature.'''
+
+[questions.frontend-lv031]
+prompt = '''Write a short ADR choosing a CSS strategy for a new SSR app (team of 8, 3 squads, INP close to the threshold): compare at least CSS Modules, utility-first and runtime CSS-in-JS.'''
+keywords = [[ '''context''' ], [ '''css modules''', '''css module''' ], [ '''utility''', '''tailwind''' ], [ '''runtime''', '''css-in-js''' ], [ '''token''', '''css variable''', '''custom propert''' ], [ '''consequence''', '''trade-off''', '''tradeoff''' ], [ '''review''', '''revisit''', '''re-evaluate''' ]]
+model_answer = '''**ADR-012: CSS strategy for the SSR app**
+
+**Context:** SSR, 8 devs in 3 squads, INP p75 at ~190 ms, need a consistent UI and theming.
+
+**Options:**
+- **CSS Modules + design tokens** (CSS custom properties): no runtime cost, file-scoped, SSR-friendly; consistency depends on linting.
+- **Utility-first**: high consistency, little dead CSS; takes time to learn, verbose markup.
+- **Runtime CSS-in-JS**: flexible via props but costs style computation at render time, and SSR and streaming are more complex — a risk for INP.
+
+**Decision:** CSS Modules + tokens; allow some utility classes provided by the design system; no runtime CSS-in-JS for new code.
+
+**Consequences:** + no runtime cost, easy to debug; − needs stylelint and review to avoid hard-coded values (an acceptable trade-off).
+
+**Review:** after 2 quarters, based on the number of UI inconsistency bugs and INP.
+'''
+explanation = '''A good ADR states the context with data, the rejected options and why, consequences both good and bad, and a review date.'''
+
+[questions.frontend-lv032]
+prompt = '''Present a one-quarter plan to turn performance budgets and Core Web Vitals into a team process (measurement, CI gates, ownership, handling budget overruns).'''
+keywords = [[ '''rum''', '''field''', '''real user''' ], [ '''p75''', '''percentile''' ], [ '''lighthouse''', '''lab''', '''ci''' ], [ '''budget''' ], [ '''owner''', '''ownership''', '''responsib''' ], [ '''dashboard''', '''alert''' ]]
+model_answer = '''**Month 1 – Measure:** add RUM (the web-vitals library or PerformanceObserver) sending LCP, INP, CLS with device type and route; a dashboard at **p75** for mobile/desktop. Pick the 5 pages with the most revenue impact as the scope.
+
+**Month 2 – CI gate:** Lighthouse CI (lab) runs on each PR preview with a **budget**: main-route JS, lab LCP, number of third-party requests. Exceeding the budget → the PR is flagged and needs an approved justification.
+
+**Month 3 – Process:** every page has an **owner**; an **alert** fires when p75 worsens past the threshold for 2 consecutive weeks → a priority ticket is created; 10–15% of capacity each sprint goes to performance work; a monthly report to stakeholders.
+
+Risk: lab and field disagree → always decide based on field data; lab only blocks regressions.
+'''
+explanation = '''Key point: field data as the KPI, lab data as the gate; budgets have owners and clear consequences when exceeded.'''
+
+[questions.frontend-lv033]
+prompt = '''After an XSS incident you want to enable a strict CSP on a large site with many legacy inline scripts and third-party scripts. Which rollout path is safest?'''
+options = [ '''Enable `Content-Security-Policy-Report-Only` with the target policy, collect violation reports for a few weeks, move inline scripts to nonces/files, and only then enable enforcement piece by piece''', '''Immediately enable `script-src 'self'` in enforcing mode for the whole site in one release''', '''Add `'unsafe-inline'` to the policy so nothing breaks''', '''Drop CSP and rely only on output escaping''' ]
+explanation = '''Report-only shows what the policy would block without breaking pages, so cleanup can be planned. Enforcing immediately can easily break checkout/analytics; `unsafe-inline` disables most of the XSS protection; output escaping is still needed, but CSP is a second line of defense.'''
+
+[questions.frontend-lv034]
+prompt = '''The header used to **trial** a Content Security Policy: the browser only sends violation reports and does not block resources.
+
+```
+{{blank}}: script-src 'self' 'nonce-r4nd0m'; report-to csp-endpoint
+```
+'''
+explanation = '''Running a report-only header with the new policy alongside the old policy (or none) lets you measure impact before enforcing it.'''
+
+[questions.frontend-lv035]
+prompt = '''Lighthouse CI is green, but RUM reports LCP p75 of 4.6 s for a new market (mostly low-end Android, weak 3G/4G networks). The team wants to know where to invest first. What is the most sensible next step?'''
+options = [ '''Break down LCP in RUM by phase (TTFB, resource load delay, load duration, render delay) and by LCP element for that segment, then prioritize the largest phase''', '''Increase the hardware spec of the Lighthouse CI machine''', '''Ignore the new market because CI passes''', '''Rewrite the whole frontend in a different framework''' ]
+explanation = '''Field data has already revealed the problem; the job now is to diagnose the right cause for the right segment before spending money. If TTFB dominates, CDN/edge matters more than optimizing JS, and vice versa.'''
+
+[questions.frontend-lv036]
+prompt = '''The frontend tech-debt backlog has 70 items, and the PM always prioritizes features. Which approaches help handle debt sustainably?'''
+options = [ '''Tie each debt item to a measurable impact (build time, bug rate, onboarding time, CWV) so it can be compared with features.''', '''Agree on a fixed share of capacity each sprint (e.g. 15–20%) for tech debt.''', '''Bundle debt fixes into features that touch the same code area ("leave the code cleaner").''', '''Stop all features for a quarter to pay off all 70 items.''', '''Remove debt items that are no longer relevant after periodic review.''' ]
+explanation = '''Debt needs a common language with the business (cost, risk) and a steady budget line. Stopping features entirely is rarely accepted and not sustainable: new debt keeps appearing.'''
+
+[questions.frontend-lv037]
+prompt = '''A 200k-line JavaScript codebase where type bugs cause many incidents. The team of 10 cannot stop shipping features. Which TypeScript adoption path makes sense?'''
+options = [ '''Enable `allowJs` (+ `checkJs` per directory), write new code in `.ts` with `strict`, gradually migrate the buggiest/most-edited modules, and track the number of migrated files and remaining type errors''', '''Rename every file to `.ts` in one PR and add `any` everywhere there is an error''', '''Use only JSDoc forever and never migrate''', '''Migrate everything in one sprint with `strict: true` from the start''' ]
+explanation = '''Gradual migration with strict new code avoids adding debt, while old code is upgraded by risk level. Mass renaming + `any` creates a false sense of safety; full strict in one sprint produces thousands of errors and blocks delivery.'''
+
+[questions.frontend-lv038]
+prompt = '''Interview: 3 squads use 3 different UI libraries, the UI is inconsistent and a11y bugs keep recurring. Would you propose a design system? Describe how you decide, the scope of the first phase, and how you measure success.'''
+keywords = [[ '''cost''', '''effort''' ], [ '''token''' ], [ '''component''' ], [ '''owner''', '''platform team''', '''platform''' ], [ '''measure''', '''metric''', '''adoption''', '''rate''' ], [ '''gradual''', '''incremental''', '''phase''', '''step by step''' ], [ '''a11y''', '''accessibility''', '''accessible''' ]]
+model_answer = '''First, measure the current **cost**: the number of duplicated UI/a11y bugs, the time spent building the same component in 3 places, and user feedback about inconsistency. If that cost exceeds the effort of maintaining a design system (it needs at least 1–2 part-time **owners**), then propose it.
+
+**First phase** (1 quarter): unify **tokens** (color, spacing, typography) and the 8–10 most used **components** (Button, Input, Select, Dialog, Toast…) with tested **a11y** standards, wrapping existing libraries where possible to reduce effort. Adopt it **gradually**: new code uses the design system, old code migrates when touched.
+
+**Measure success**: adoption rate (% of screens using shared components), number of a11y/UI bugs per month, time to build a new screen, developer surveys. Keep a changelog, semver and a proposal channel so squads do not fork.
+'''
+explanation = '''A good answer does not default to "yes": it weighs maintenance cost against benefit, starts small and uses data.'''
+
+[questions.frontend-lv039]
+prompt = '''The checkout page has been completely rebuilt and accounts for 70% of revenue. It launches into peak season in 3 weeks. Which release strategy fits best?'''
+options = [ '''Put it behind a feature flag, roll out by percentage (1% → 10% → 50% → 100%), compare conversion rate, JS errors and CWV between the two versions, with a kill switch that turns it off instantly without a deploy''', '''Deploy to 100% the night before peak season''', '''Test thoroughly on staging only, then deploy to 100%''', '''Postpone indefinitely until there are no bugs left''' ]
+explanation = '''A gradual rollout limits the blast radius and provides real data for decisions; a kill switch reduces time to recover. Staging cannot reproduce every browser, data set and real-world load; waiting for "no bugs" means never launching.'''
+
+[questions.frontend-lv040]
+prompt = '''The bundle analyzer shows an old date library taking 70 KB gzip (including every locale), imported in 120 files. The library is no longer maintained. Which direction do you choose?'''
+options = [ '''Create an internal wrapper module (`formatDate`, `addDays`…) using `Intl` + a small tree-shakeable library, migrate imports with codemods in batches, and add a lint rule banning direct imports of the old library''', '''Leave it as is because it still works''', '''Manually change all 120 files to the new library in one big PR''', '''Copy the old library's source into the repo and maintain it yourselves''' ]
+explanation = '''An internal wrapper reduces direct dependence on the library, making the next replacement cheaper; codemods + lint make migration safe and prevent regressions. A huge PR is hard to review; forking a dead library means taking on more maintenance and security debt.'''
+
+[questions.frontend-lvc02]
+title = '''Performance budget gate (p75)'''
+prompt = '''Write `checkBudget(samples, budget)` used in a daily CI/RUM job to decide whether to alert the team.
+
+- `samples`: an object `{ LCP: number[], INP: number[], CLS: number[] , ... }` — measurements from real users.
+- `budget`: an object `{ LCP: 2500, INP: 200, CLS: 0.1 }` — the maximum allowed thresholds.
+- For **each metric in `budget`** (keeping the key order of `budget`), compute **p75** using the nearest-rank method: sort ascending, take the element at position `ceil(0.75 * n)` (1-based).
+- Return `{ pass, report }`, where `report` is an array of `{ metric, p75, limit, ok }` with `ok = p75 <= limit`.
+- A metric with no samples (missing or an empty array) → `p75: null`, `ok: false` (missing data is a bad signal too).
+- `pass` is `true` when every row is `ok`.
+- Must not modify the input sample arrays.
+'''
+hints = [ '''Copy before sorting: `[...values].sort((a, b) => a - b)` — the default sort compares as strings.''', '''Iterate over `Object.keys(budget)` to keep the order and skip extra metrics.''' ]
+explanation = '''Using p75 instead of the mean avoids being skewed by outliers and matches how Core Web Vitals are assessed. Treating missing data as "fail" helps detect a broken RUM script instead of silently reporting green.'''

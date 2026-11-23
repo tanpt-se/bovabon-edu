@@ -585,3 +585,336 @@ This models a client-side `beforeLoad` decision; the server API still needs its 
 '''
 hints = ["Check identity before checking roles.", "If `requiredRole` is absent, you do not need to compare the roles array."]
 explanation = "`beforeLoad` can use a policy result to redirect; a decision in the browser does not replace permission checks at the API."
+
+[modules.nextjs-lead]
+title = "Next.js Technical Leadership"
+description = "Choose rendering and caching strategies, manage security, cost, architecture, observability, and safe upgrades at team scale."
+lesson = '''
+### Make rendering and caching an explicit system decision
+At scale, rendering choices affect search visibility, infrastructure cost, freshness, and failure behavior. Prefer static rendering or ISR for shared content that changes occasionally; reserve dynamic rendering for request-specific data. Keep personalization inside a small boundary so a session lookup does not make an entire site dynamic. For multi-tenant applications, tenant identity must be included in every cache key, tag, and data query.
+
+| Concern | Practical approach |
+|---|---|
+| Large catalog with SEO | Prerender popular pages and use ISR for the rest |
+| Private account page | Render with request-scoped data and avoid shared caching |
+| Edge runtime | Use for light request logic; measure latency to regional databases |
+| Safe rollout | Use stable canary buckets, stop thresholds, and a quick rollback |
+
+Instrument route and data traces before optimizing. Track cache hit rate, p95 response time, errors, and user-facing Web Vitals. During upgrades, use migration guides and codemods, then canary one application before broad rollout. Common mistakes include reading cookies in a root layout, using one cache entry across tenants, and treating middleware as the only authorization layer.
+'''
+
+[questions.nextjs-lv001]
+prompt = "An e-commerce site has 40k product pages, prices change several times per day through a CMS, SEO matters, and builds already take 35 minutes with only two infrastructure engineers. Which rendering strategy is most appropriate?"
+options = ["Prerender all 40k pages at build time and rebuild whenever a price changes", "ISR: prerender popular pages, render the rest on the first request, and have the CMS webhook call revalidateTag by SKU", "Use dynamic SSR for every request so prices are always absolutely current", "Use CSR: send an empty page and have the client fetch all product data"]
+explanation = "Tag-based ISR keeps SEO and CDN costs favorable, shortens builds, and refreshes prices soon after a webhook. Rebuilding everything is slow; SSR spends compute on mostly stable content and is sensitive to backend latency; CSR harms SEO for primary content."
+
+[questions.nextjs-lv002]
+prompt = "After a PR adds a personalized greeting banner to the root layout using cookies(), compute costs rise sixfold and cache hits approach zero. What is the best team response?"
+options = ["Add more instances and accept the cost because personalization matters", "Remove the banner entirely", "Move cookie reading into a small component behind Suspense (or a client island), keep the layout and pages static, and add review/CI checks for dynamic APIs in the root layout", "Move the entire site to CSR"]
+explanation = "Reading cookies in the root layout makes every route dynamic. Isolating personalization preserves caching elsewhere, and a review rule prevents recurrence. More instances treat the symptom; removing the feature avoids the problem; full-site CSR trades away SEO and performance."
+
+[questions.nextjs-lv003]
+prompt = "A SaaS app resolves tenants by subdomain in middleware. One customer reports seeing another tenant’s logo and pricing table. What is the most likely root cause and system-level fix?"
+options = ["The CDN is slow; increase its TTL", "Data is cached under keys/tags that omit tenant identity; include tenant ID in every cache key, tag, and route parameter, and add tenant-isolation tests", "Middleware runs on the edge; switch to the Node runtime", "The browser cached the logo; rename the image file"]
+explanation = "Cross-tenant leakage usually means shared cache entries do not distinguish tenants. Include tenant identity in keys and tags, and test isolation. TTL, runtime, and image naming do not fix shared cache identity."
+
+[questions.nextjs-lv004]
+prompt = "A Pages Router app has 300 pages, a six-person team, and weekly feature delivery must continue. What is a sensible App Router migration plan?"
+options = ["Pause features for two months and rewrite everything in one long-lived branch", "Migrate incrementally by route, allow both routers to coexist, start with low-risk pages, measure Web Vitals and errors after each stage, and set a convention for new pages", "Keep Pages Router forever and prohibit App Router", "Let each developer choose a router without a plan"]
+explanation = "Next.js allows app/ and pages/ to coexist, so incremental migration reduces risk without blocking the roadmap. A full rewrite creates a long-lived branch; banning the App Router blocks future benefits; an unplanned mix leaves an incoherent codebase."
+
+[questions.nextjs-lv005]
+prompt = "The team wants to move every Route Handler to the Edge runtime for lower latency. PostgreSQL is in one region, and many handlers use Node-based ORM and payment SDK libraries. What do you recommend?"
+options = ["Move everything to Edge; Edge is always faster", "Keep the Node runtime for handlers that access the database or Node SDKs; consider Edge only for lightweight logic such as geo redirects or header checks, and measure before and after", "Move the database to Edge", "Remove Route Handlers and call the database directly from the client"]
+explanation = "Edge may be close to users but far from a single-region database, and some Node libraries do not run there. Choose a runtime per handler and measure. Calling a database from the client breaks the security boundary."
+
+[questions.nextjs-lv006]
+prompt = "An audit finds Server Actions that delete data rely only on middleware having checked sign-in on the page containing the delete button. Which measure addresses the root cause across the team?"
+options = ["Hide the delete button from users without permission", "Add a data access layer: every action/handler invokes session and resource-permission checks before reading or writing; add review/lint rules and tests for actions", "Expand the middleware matcher to every route", "Rename the action to make it harder to guess"]
+explanation = "A Server Action is directly callable, so checks belong near data access. A shared data access layer improves consistency and reviewability. Hiding UI, broadening middleware, or renaming does not prevent direct requests."
+
+[questions.nextjs-lv007]
+prompt = "The same order data is fetched in a Server Component, TanStack Query, and a Zustand store, causing inconsistent displays. What team convention should be standardized?"
+options = ["Ban TanStack Query and fetch everything in Server Components", "Use Server Components for initial reads and SEO; TanStack Query for interactive or polled client data (hydrate from the server when useful); keep client stores for UI state, and record the convention in an ADR", "Put all data in Zustand as the single source", "Let each feature choose freely as long as it works"]
+explanation = "Clear roles for server state and client UI state prevent multiple sources of truth. Banning a tool loses interactive use cases; putting server state in a client store loses cache/revalidation behavior; unrestricted choice caused the inconsistency."
+
+[questions.nextjs-lv008]
+prompt = "You are launching an App Router rewrite of checkout for two million monthly users. Which rollout plan is safest?"
+options = ["Deploy to 100% on Friday night when traffic is low", "Use a feature flag and stable-bucket canary (1% → 10% → 50% → 100%), define stop criteria for error rate and conversion, and roll back by disabling the flag", "Show the new version to a random 50% on every request", "Test only in staging, then enable it for everyone"]
+explanation = "Stable-bucket canaries keep each user on one version, limit impact, and provide business signals for stopping. Random assignment per request makes users switch versions; Friday deployment and staging alone provide no safety net."
+
+[questions.nextjs-lv009]
+prompt = "Users report a slow dashboard, but logs contain only aggregate access logs. What is the most useful first step to gather evidence for a decision?"
+options = ["Rewrite the dashboard with CSR", "Enable instrumentation (OpenTelemetry) for route and data-call traces, combine it with client Web Vitals, then identify the slow segment or fetch", "Increase server size", "Add loading.tsx to every route"]
+explanation = "Without measurement, optimization is guesswork. Route and fetch traces reveal waterfalls or slow APIs; Web Vitals show user impact. Rewriting, scaling, or adding loading UI before identifying the cause is premature."
+
+[questions.nextjs-lv010]
+prompt = "After each deployment, users with an old tab see 'Failed to find Server Action' and chunk 404 errors for a few minutes. What approach fits?"
+options = ["Tell users to reload the page", "Handle version skew: retain previous-build assets temporarily, use a stable deployment ID so old clients can be routed or prompted to reload, and track errors by build", "Disable Server Actions", "Deploy less often, once a month"]
+explanation = "Old clients reference action IDs and chunks from the previous build; address skew instead of blaming users. Disabling the feature or reducing deployment frequency slows the team without fixing the cause."
+
+[questions.nextjs-lv011]
+prompt = "You are writing a Next.js PR review checklist for a new team. Which items belong on it?"
+options = ["Place use client at the smallest leaf component that needs interaction", "Require each Server Action and Route Handler to check session and permission", "Require cache: 'no-store' for every fetch as a security measure", "Document cache policy: duration, tag, and scope (per user/tenant or shared)", "Do not pass secrets or sensitive objects to a Client Component through props"]
+explanation = "These checks address bundle size, security, and intentional caching. Forcing no-store everywhere does not improve safety and removes cache benefits; choose a policy with the correct scope."
+
+[questions.nextjs-lv012]
+prompt = "Hosting costs have risen quickly over three months. Which actions commonly reduce cost without harming the experience?"
+options = ["Move rarely changing pages from dynamic SSR to prerendering/ISR", "Limit remotePatterns and the dimensions/formats generated for optimized images", "Add cookies() to the layout so every page stays fresh", "Measure cache hit rate by route and investigate unusually low-hit routes", "Move every fetch to the client to make the server lighter"]
+explanation = "Static/ISR, constrained image variants, and cache-hit monitoring reduce unnecessary compute. cookies() in a layout makes pages dynamic; moving all fetches client-side shifts costs to APIs and can slow users."
+
+[questions.nextjs-lv013]
+prompt = "Three teams (marketing, shop, accounts) work on a large Next.js app and often block one another during deployments. Which options are worth considering?"
+options = ["Multi-zones: split into several Next.js apps served under one domain by path", "A monorepo with shared UI/config packages and CODEOWNERS by directory", "Give every team a different framework for maximum independence", "Keep one app but organize route groups and layouts by team with clear ownership"]
+explanation = "Multi-zones, monorepo ownership, and route-group separation are different levels of isolation to match the problem. Different frameworks fragment design systems, auth, and performance, increasing maintenance cost."
+
+[questions.nextjs-lv014]
+prompt = "What are sensible steps for upgrading five apps in a monorepo to a new Next.js major version?"
+options = ["Read the upgrade guide and run the official codemod on a branch", "Upgrade a low-risk app first, run E2E tests, and compare Web Vitals/errors before and after", "Upgrade all five apps and every dependency in one PR to finish at once", "Record relevant breaking changes (for example, middleware becoming proxy) and update internal docs"]
+explanation = "Codemods, staged upgrades with measurements, and documented breaking changes reduce risk. A huge PR is hard to review, debug, and roll back in pieces."
+
+[questions.nextjs-lv015]
+prompt = "A five-person team has a 25-minute CI pipeline and flaky E2E tests. Which test strategy is best balanced for a Next.js app?"
+options = ["Unit-test pure functions and the data layer (permissions, transformations)", "Keep E2E tests to a few critical flows (sign-in, checkout) with isolated seed data", "Run E2E tests for every page and state", "Integration-test Route Handlers and Server Actions with a test database", "Remove tests because E2E is flaky"]
+explanation = "Focus tests on cheaper, more stable layers, with a small set of high-value E2E flows. E2E everywhere makes CI slower and flakier; removing tests shifts risk to production."
+
+[questions.nextjs-lv016]
+prompt = "Write a short ADR choosing a rendering strategy for a company blog (5k posts, updated a few times per week, SEO required) and a “My Account” page. State the context, decision, rejected alternatives, and consequences."
+explanation = "A good ADR records constraints, rejected options, and consequences so future readers understand the reasoning, not just the conclusion."
+keywords = [["context", "background"], ["isr", "revalidate", "prerender", "static"], ["ssr", "dynamic rendering"], ["seo"], ["cost", "compute cost"], ["consequence", "trade-off", "impact"]]
+model_answer = '''
+**Context:** The 5k-post blog needs SEO and changes a few times per week; the account page depends on the signed-in user.
+**Decision:** Use prerendering plus ISR for the blog, with the CMS calling `revalidateTag` by post on publication; render the account page dynamically because it needs a session, with no shared cache.
+**Rejected options:** SSR for the blog spends unnecessary compute; CSR harms blog SEO; prerendering a private account page is not practical.
+**Consequences:** A post may be stale for a few seconds after publication, an acceptable trade-off; monitor webhook revalidation. Track p95 TTFB for the account page.
+'''
+
+[questions.nextjs-lv017]
+prompt = "You are designing a multi-tenant Next.js platform (one subdomain per customer, with custom domains). Explain tenant resolution, cache/data isolation, and monitoring that can detect cross-tenant leakage."
+explanation = "The key is to include tenant identity in every cache key and query, and to detect violations of that assumption."
+keywords = [["middleware", "proxy"], ["tenant id", "tenant identifier"], ["cache key", "cache tag", "tag"], ["authorization", "permission check", "data layer"], ["monitoring", "observability", "trace"], ["test", "testing"]]
+model_answer = "Middleware (proxy) reads the host, looks up the domain-to-tenant mapping, and rewrites to a route with an explicit tenant parameter so every Server Component receives the tenant. Include the tenant ID in every cache key and tag (for example, `tenant:42:products`) so revalidation for one tenant cannot affect another and entries are never shared accidentally. The data layer must filter by tenant and authorize the user within that tenant; never trust a client parameter. For monitoring, attach tenant ID to traces/logs, alert if a response contains data for a different tenant, and add CI tests that attempt cross-tenant access between sample tenants."
+
+[questions.nextjs-lvc01]
+prompt = '''
+The team wants to roll out a new page to a percentage of users, with each person staying in the same group across requests. Implement two functions:
+
+- `bucketOf(userId)`: hash the string userId to an integer from 0 to 99. Algorithm: `h = 7`; for each character, `h = (h * 31 + charCode) % 1000003`; return `h % 100`.
+- `isInCanary(userId, percent)`: return false when `percent <= 0`; true when `percent >= 100`; otherwise return `bucketOf(userId) < percent`.
+
+Example: `bucketOf('a')` = (7·31 + 97) % 1000003 = 314 → 14. Desired property: users in a 10% canary remain in the canary when it grows to 25%.
+'''
+explanation = "A stable ID-based bucket keeps users from switching versions and only adds users as the percentage increases."
+hints = ["Use charCodeAt and take the modulo at each step to keep the number small.", "Do not use Math.random: the same userId must always produce the same bucket."]
+
+[questions.nextjs-lvc02]
+prompt = '''
+Write `parseSegment(name)` to accept a folder name from `app/` and return an object `{ type, name }`:
+
+| Input | type | name |
+|---|---|---|
+| `(shop)` | `'group'` | `'shop'` |
+| `[id]` | `'dynamic'` | `'id'` |
+| `[...slug]` | `'catchAll'` | `'slug'` |
+| `[[...slug]]` | `'optionalCatchAll'` | `'slug'` |
+| `blog` | `'static'` | `'blog'` |
+
+Check longer forms first (`[[...` before `[...` before `[` ).
+'''
+explanation = "The exercise reinforces App Router folder naming: parentheses mark groups, while square brackets mark dynamic parameters."
+hints = ["Use startsWith/endsWith and slice to remove the delimiters.", "The order matters: `[[...` is a special case of `[` and must be checked first."]
+
+[questions.nextjs-lvc03]
+prompt = '''
+Model how `invalidateQueries({ queryKey })` matches partially. Write `matchesQueryKey(queryKey, filterKey)` returning a boolean:
+- `filterKey` matches when it is a **prefix** of `queryKey`: every `filterKey[i]` is deeply equal to `queryKey[i]`.
+- An empty `filterKey` matches every key; a longer `filterKey` does not match.
+- Deep equality: numbers/strings/booleans/null use `===`; arrays compare element by element; objects have the same key set and deeply equal values, regardless of key order.
+
+Example: `todos` keys with status `done` match the prefix `['todos']` and an exact filter, but not a filter for status `open`.
+'''
+explanation = "Hierarchical query keys let prefix invalidation refresh a group (such as every todos list) without enumerating every exact key."
+hints = ["Write a separate deepEqual helper, then apply it to each filterKey element.", "Handle null separately because typeof null is 'object'."]
+
+[questions.nextjs-lvc04]
+prompt = '''
+During one render, several components may request the same data. Write `createDeduper()` returning an object with:
+- `run(key, fn)`: if a promise for `key` is still pending, return that exact promise without calling `fn`; otherwise call `fn()` (which returns a promise), store it, and return it.
+- When the promise settles (resolves **or** rejects), remove the key so a later call invokes `fn` again.
+- `size()`: number of pending keys.
+
+Do not cache completed results; this is request deduplication, not a cache.
+'''
+explanation = "Deduplication reduces backend load when multiple components need the same data; React `cache()` and Next.js request memoization solve a similar problem within one request."
+hints = ["Store promises in a Map by key.", "Use finally to remove the key after either outcome; ensure the cleanup promise does not create an unhandled rejection."]
+
+[questions.nextjs-lv018]
+prompt = "Which file makes `app/about` an accessible `/about` route?"
+options = ["app/about/layout.tsx", "app/about/page.tsx", "app/about/index.tsx", "app/about/route.html"]
+explanation = "A `page.tsx` (or `route.ts`) makes a segment public. `layout.tsx` wraps child content; `index.tsx` is a Pages Router convention; `route.html` is not a convention."
+
+[questions.nextjs-lv019]
+prompt = "What is the appropriate way to create an internal navigation link with prefetching between Next.js pages?"
+options = ["An `a` tag with `href` and `window.location", "The `Link` component from `next/link`", "Call `fetch` for the destination page", "Use a form with method GET"]
+explanation = "`Link` provides client-side navigation and can prefetch routes in the viewport. A plain anchor usually reloads the whole page; fetch and forms are not link components."
+
+[questions.nextjs-lv020]
+prompt = "Create a custom 404 page for a segment using the file `app/blog/{{blank}}.tsx`."
+explanation = "`not-found.tsx` is shown when `notFound()` is called in the segment or when no route matches the URL."
+
+[questions.nextjs-lv021]
+prompt = "For `app/shop/[id]/page.tsx`, where does the page (a Server Component) read the `id` value from the `/shop/42` URL?"
+options = ["From the page `params` prop", "From `window.location.pathname`", "From `process.env.id`", "By importing it from the parent layout"]
+explanation = "The page receives `params` containing dynamic segment values. A Server Component has no `window`; environment variables and imports are unrelated to the URL."
+
+[questions.nextjs-lv022]
+prompt = "In the App Router, what is a component by default when no directive appears at the top of its file?"
+options = ["Client Component", "Server Component", "Route Handler", "Middleware"]
+explanation = "Components in `app/` are Server Components by default. Add `use client` when state, event handlers, or browser APIs are needed."
+
+[questions.nextjs-lv023]
+prompt = '''
+A component using `useState` must be marked on the first line of the file:
+```tsx'{{blank}}'
+import { useState } from 'react'
+```
+'''
+explanation = "`use client` declares a Client Component boundary, enabling hooks and event handlers."
+
+[questions.nextjs-lv024]
+prompt = "Which component below must be a Client Component?"
+options = ["A component that reads a post list from a database", "A component with an `onClick` button that increments a counter using `useState`", "A component that only renders a static heading", "A component that reads a secret environment variable to call an API"]
+explanation = "`onClick` and `useState` run in the browser. Database reads, static rendering, and secret access belong in Server Components."
+
+[questions.nextjs-lv025]
+prompt = '''
+A Route Handler handles a GET request to `/api/health`:
+```ts
+// app/api/health/route.ts
+export async function {{blank}}() {
+  return Response.json({ ok: true })
+}
+```
+'''
+explanation = "A Route Handler exports functions named for HTTP methods such as `GET`, `POST`, `PUT`, and `DELETE`."
+
+[questions.nextjs-lv026]
+prompt = "What is the simplest way to set a static title for `app/about/page.tsx`?"
+options = ["Export `const metadata = { title: '...' }` from the page", "Add a title tag inside the body", "Set `document.title` in `useEffect`", "Set the title in `next.config.js`"]
+explanation = "The Metadata API lets a page or layout export a `metadata` object. `document.title` runs only on the client and is not ideal for SEO; `next.config` does not set per-page titles."
+
+[questions.nextjs-lv027]
+prompt = "In `useQuery({ queryKey: ['todos'], queryFn: fetchTodos })`, what is `queryKey` for?"
+options = ["Identifying data in the cache for sharing, refetching, and invalidation", "Providing a URL for TanStack Query to call automatically", "Acting as an authentication token", "Displaying a label only in devtools; it has no other effect"]
+explanation = "The query key is the cache identity: the same key refers to the same data, while a changed key triggers a different query. The library does not infer a URL from the key."
+
+[questions.nextjs-lv028]
+prompt = "In TanStack Router, how should code navigate after a successful form submission?"
+options = ["Use the `useNavigate` hook and call `navigate({ to: '/done' })`", "Assign `window.location.href`", "Call `router.reload()`", "Rerender the root component"]
+explanation = "`useNavigate` returns a function with type checking for the destination route. Assigning `window.location` reloads the page and loses state."
+
+[questions.nextjs-lv029]
+prompt = "A dashboard must show two independent regions (stats and notifications), each with its own loading and error UI. Which App Router convention fits?"
+options = ["Parallel routes with `@stats` and `@notifications` slots passed through layout props", "Two route groups, `(stats)` and `(notifications)`", "Two Route Handlers fetched from the client", "A catch-all route, `[...slot]`"]
+explanation = "Parallel routes render multiple slots in one layout, each with separate loading and error UI. Route groups organize folders but do not render in parallel."
+
+[questions.nextjs-lv030]
+prompt = "A page uses `useSearchParams()` in a Client Component and the build warns that the whole page will render on the client. What is the right fix?"
+options = ["Wrap the component using `useSearchParams` in Suspense so the rest can still prerender", "Move the entire page to `use client`", "Read `window.location.search` in a Server Component", "Remove `use client` from the component"]
+explanation = "`useSearchParams` depends on the request; Suspense confines the dynamic portion to a small boundary. Server Components have no `window`, and removing `use client` prevents the hook from running."
+
+[questions.nextjs-lv031]
+prompt = "After a Server Action creates a post, the list at `/posts` still shows old data. What should the action do?"
+options = ["Call `revalidatePath('/posts')` (or `revalidateTag` for the list's tag) after a successful write", "Call `router.refresh()` inside the action", "Disable caching for the entire app", "Wait 60 seconds"]
+explanation = "`revalidatePath` or `revalidateTag` marks cached data stale so a later render can load the new version. `router.refresh` is a client API; disabling all cache is excessive."
+
+[questions.nextjs-lv032]
+prompt = "A product detail page sequentially calls `getProduct`, then `getReviews`, then `getRelated`, though all three are independent. Which approaches reduce load time?"
+options = ["Start all three promises before awaiting them with `Promise.all`", "Move reviews and related into separate components behind Suspense to stream them", "Add `loading.tsx` but keep the sequential awaits in the same component", "Move all three calls to client-side `useEffect`"]
+explanation = "Parallel work and streaming the slow portions remove the waterfall. `loading.tsx` shows a fallback but does not shorten sequential work; client effects create a new waterfall."
+
+[questions.nextjs-lv033]
+prompt = "`API_SECRET` in `.env` is undefined in a Client Component but available in a Server Component. Which explanation is correct?"
+options = ["Only variables prefixed with `NEXT_PUBLIC_` are bundled for the client; keep secrets on the server and call through a Server Action/Route Handler", "Next.js is broken and must be restarted", "The variable must be placed in `next.config.js`", "Client Components cannot read any environment variables"]
+explanation = "Variables without `NEXT_PUBLIC_` stay server-side to protect secrets. Renaming a secret with that prefix would expose it."
+
+[questions.nextjs-lv034]
+prompt = "A hero image uses `next/image` with `fill`, but Lighthouse reports an oversized image download on mobile. How should it be fixed?"
+options = ["Add `sizes` describing display width at breakpoints, for example `(max-width: 768px) 100vw, 50vw`", "Remove `next/image` and use an `img` tag", "Set quality to 100", "Set `unoptimized`"]
+explanation = "Without `sizes`, the browser assumes a viewport-wide image at all breakpoints and may select a larger variant. The alternatives remove optimization or increase bytes."
+
+[questions.nextjs-lv035]
+prompt = "Users see a request repeat whenever they switch browser tabs and return. With TanStack Query defaults, what is the likely cause and a reasonable adjustment?"
+options = ["The default `staleTime` is zero, so the query is stale and `refetchOnWindowFocus` runs; set `staleTime` to match the data freshness needs", "A library bug", "`gcTime` is too short; set it to Infinity", "Disable all caching"]
+explanation = "By default data becomes stale immediately and can refetch on focus. A suitable `staleTime` keeps it fresh for an appropriate period; `gcTime` controls removal of unused cache."
+
+[questions.nextjs-lv036]
+prompt = "After a `useMutation` successfully adds a todo, which approaches can make the list display the new todo?"
+options = ["In `onSuccess`, call `queryClient.invalidateQueries({ queryKey: ['todos'] })`", "Use `setQueryData` with the mutation response", "Call `useQuery` again inside `onSuccess`", "Change the list query key to a random value"]
+explanation = "Invalidating to refetch or updating the cache directly are both valid. Calling a hook in a callback violates the Rules of Hooks; a random key breaks cache reuse."
+
+[questions.nextjs-lv037]
+prompt = "A list page receives `?page=2&sort=price`. In TanStack Router, what is the best way to get typed search params with defaults?"
+options = ["Declare `validateSearch` on the route to parse/validate them, then read with `Route.useSearch()`", "Split `window.location.search` in every component", "Store page and sort in `useState`", "Put page in the path parameter `/list/$page`"]
+explanation = "`validateSearch` turns search params into typed, validated data with defaults. Component state is not shareable through URLs; manual parsing duplicates code and lacks typing."
+
+[questions.nextjs-lv038]
+prompt = "Which statements about the Next.js App Router cache layers are correct?"
+options = ["Request memoization deduplicates identical calls within one server render", "The data cache can persist across requests and deployments depending on configuration", "The client router cache can show old data during back/forward navigation", "`revalidateTag` immediately clears every user’s browser cache"]
+explanation = "Each layer has a different scope: request memoization, persistent server data cache, and client router cache. `revalidateTag` affects the server, not browser caches directly."
+
+[questions.nextjs-lv039]
+prompt = "A Server Component passes `onSave={async (d) => db.save(d)}` (a regular function without `use server`) to a Client Component and gets an error. What is the cause and fix?"
+options = ["A regular function cannot be serialized across the server-to-client boundary; declare it as a Server Action (`use server`) or move the logic to a Route Handler", "Client Components cannot receive props", "Wrap the function in `JSON.stringify`", "Place the Client Component in Suspense"]
+explanation = "Props crossing the boundary must be serializable; a Server Action is a special reference identified by an ID. JSON cannot serialize a function, and Suspense is unrelated."
+
+[questions.nextjs-lv040]
+prompt = "Production logs show hydration mismatches in a component displaying 'Updated 3 minutes ago'. What fixes the underlying cause?"
+options = ["Render relative time only on the client after mount (or render the same absolute timestamp on both sides)", "Suppress hydration warnings for the whole page", "Make the entire page dynamic SSR", "Increase revalidation time"]
+explanation = "Values based on different server and client times create a mismatch. Make that portion client-only or output deterministic data. Broad suppression hides real bugs; SSR or revalidation does not synchronize the two timestamps."
+
+[questions.nextjs-lv041]
+prompt = "Which measures reduce security risk for a Route Handler that receives payment webhooks?"
+options = ["Verify the webhook signature using a server-side secret against the raw body", "Process events idempotently by event ID to prevent duplicates", "Trust the `status` field in the body without verifying its source", "Check only the `Referer` header"]
+explanation = "A signature verifies origin; idempotency handles retries and duplicate delivery. An unverified body and `Referer` can both be forged."
+
+[questions.nextjs-lv042]
+prompt = "Middleware calls a slow authentication API (150 ms) for every request, including images and static files, increasing site-wide TTFB. What is the best approach?"
+options = ["Narrow `config.matcher` to exclude `_next/static`, images, and public files; keep middleware checks lightweight and enforce full permission in the data layer", "Cache every user’s authentication result for one hour under a shared key", "Run middleware after rendering", "Remove middleware and all checks"]
+explanation = "A narrow matcher and lightweight checks reduce latency while real permissions remain enforced near data. One shared cache key is a security defect; middleware cannot run after rendering; removing all checks removes protection."
+
+[questions.nextjs-lv043]
+prompt = "An optimistic like-count update sometimes jumps back to the old value before becoming correct. What step is often missing from `onMutate`?"
+options = ["Await `queryClient.cancelQueries` for the relevant key before `setQueryData`, and save a snapshot for rollback in `onError`", "Call `invalidateQueries` at the start of `onMutate`", "Increase mutation retry count", "Set `staleTime` to zero"]
+explanation = "An in-flight refetch can overwrite optimistic data with an old result. Cancel it before updating and retain a snapshot for rollback. Invalidating first triggers a refetch even sooner."
+
+[questions.nextjs-lv044]
+prompt = "Explain how to prefetch TanStack Query data in a Next.js Server Component and pass it to the client without fetching again. Mention a common mistake when creating the QueryClient."
+explanation = "A strong answer covers prefetch → dehydrate → hydrate and the risk of sharing cache state across requests."
+keywords = [["prefetchQuery", "prefetch"], ["dehydrate"], ["HydrationBoundary", "hydrate"], ["staleTime"], ["new QueryClient per request", "per request", "each request"]]
+model_answer = "In a Server Component, create a `QueryClient`, call `prefetchQuery` with the same `queryKey` that the client will use, then dehydrate the cache and wrap the child tree in a `HydrationBoundary` with that state. A client component calling `useQuery` with the same key can reuse the hydrated data. Set a positive `staleTime` so it does not immediately refetch after hydration. A common mistake is using one global server `QueryClient`, which can leak one user's data to another; create a new QueryClient per request on the server (and keep a stable instance on the client)."
+
+[questions.nextjs-lv045]
+prompt = "A TanStack Router route loader calls a slow API and blocks navigation for two seconds. You want the page to appear with essential content first and slow content later. What fits?"
+options = ["Await essential data in the loader, return the slow promise without awaiting it, and render it with Await/Suspense (deferred data loading)", "Move every fetch to `useEffect`", "Increase the router timeout", "Remove the loader and hardcode data"]
+explanation = "Deferred loading allows navigation to finish when essential data is ready and streams the slow portion later. `useEffect` creates a waterfall and loses preloading."
+
+[questions.nextjs-lv046]
+prompt = "Which statements about `error.tsx` in the App Router are correct?"
+options = ["`error.tsx` does not catch errors in the layout of the same segment; place a boundary in a parent segment", "`global-error.tsx` handles errors in the root layout", "A Server Action error always exposes its full detailed message to the client in production", "`reset()` retries rendering the segment without reloading the page"]
+explanation = "A boundary wraps the page and descendants, not its own same-segment layout; the root layout needs `global-error`. In production, server error details are hidden to reduce information leakage."
+
+[questions.nextjs-lv047]
+prompt = "A page uses `generateStaticParams` for 100 popular products. When a user opens the 101st product, which was not prerendered, what happens by default with `dynamicParams` (`true`)?"
+options = ["The page is rendered on the first request and may be cached for later requests", "It always returns 404", "The build fails", "The page renders empty on the client"]
+explanation = "`dynamicParams = true` allows parameters outside the generated list to render on demand; setting it to false returns 404 for missing generated parameters."
+
+[questions.nextjs-lv048]
+prompt = "A query that loads a user’s projects needs `userId` from another query. How do you avoid calling the API with `userId` undefined?"
+options = ["Use `enabled: !!userId` for the dependent query", "Call both queries inside one `queryFn` with try/catch", "Set `retry: 10` to wait for `userId`", "Use `setTimeout` before calling `useQuery`"]
+explanation = "`enabled` pauses the query until its condition is true, which is the declarative pattern for dependent queries. Retries or timeouts hide the issue and create unnecessary requests."
+
+[questions.nextjs-lv049]
+prompt = "Enabling `preload='intent'` on a Link triples loader requests when users move the pointer across a long list. What is the best adjustment?"
+options = ["Set `preloadStaleTime`/`staleTime` for loaders (or reuse TanStack Query cache) and enable preload only on links likely to be clicked", "Disable the router entirely", "Move the loader to `useEffect`", "Add more backend instances"]
+explanation = "Preloading is useful when its result is cached and reused; limiting scope avoids wasted requests. Scaling up merely pays for unnecessary traffic."

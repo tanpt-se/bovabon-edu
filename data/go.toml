@@ -132,12 +132,67 @@ Ví dụ đọc dòng: mở file bằng `os.Open`, defer `Close`, tạo `bufio.S
 Chọn `ReadFile` cho cấu hình nhỏ đã biết kích thước; với upload hay log lớn hãy stream hoặc giới hạn bytes bằng `io.LimitReader`. Lỗi thường gặp là bỏ qua lỗi cuối của Scanner, gọi `ReadAll` trên input không tin cậy gây tốn RAM, không đóng file, hoặc coi `io.EOF` luôn có nghĩa là lần đọc không trả dữ liệu.
 '''
 
+[[modules]]
+id = "go-lead"
+title = "Góc nhìn Tech Lead"
+description = "Layout dự án & ranh giới interface, quy ước error handling, logging/observability, profiling production, chiến lược concurrency cho team, review code Go, nâng version & dependency."
+sources = ["go/log/slog/index", "go/net/http/pprof/index", "go/runtime/pprof/index", "go/runtime/debug/index#SetMemoryLimit", "go/errors/index#Join", "go/context/index"]
+lesson = '''
+### Vai trò Tech Lead trong một codebase Go
+Go cố ý ít "phép màu": không có framework DI bắt buộc, không exception, không kế thừa. Vì vậy chất lượng codebase phụ thuộc rất nhiều vào **quy ước của team**. Lead không cần viết code khó nhất, mà phải giúp 5–10 người viết code **giống nhau, dễ đọc, dễ vận hành**.
+
+### Khung ra quyết định
+1. **Nêu ràng buộc**: số người, deadline, SLO, chi phí hạ tầng, mức kinh nghiệm Go của team.
+2. **Liệt kê 2–3 phương án** và so theo tiêu chí cố định (độ phức tạp, rủi ro vận hành, khả năng đảo ngược).
+3. **Chọn phương án đơn giản nhất đạt ràng buộc**, ghi lại bằng ADR ngắn, đặt điểm xem lại (vd. khi traffic x5).
+
+### Bảng so sánh: tổ chức package
+| Phương án | Ưu | Nhược | Hợp khi |
+|---|---|---|---|
+| Phẳng (`main` + vài file) | Nhanh, ít lễ nghi | Rối khi > ~5k dòng | CLI, PoC, service nhỏ |
+| Theo tầng (`handler/`, `service/`, `repo/`) | Quen thuộc | Thay đổi 1 tính năng chạm nhiều package, dễ import vòng | Team mới từ Java/.NET, domain đơn giản |
+| Theo domain (`order/`, `billing/`) + `internal/` | Ranh giới rõ, dễ tách service sau này | Cần kỷ luật đặt interface | Service sống lâu, nhiều người cùng sửa |
+
+Nguyên tắc: **interface khai báo ở phía dùng** (consumer), nhỏ (1–3 method); trả về struct cụ thể ("accept interfaces, return structs"). Dùng `internal/` để chặn package khác import nhầm.
+
+### Quy ước error handling cho team
+- Luôn bọc lỗi bằng `%w` kèm ngữ cảnh thao tác (`"load order %d: %w"`), không log rồi lại return (log trùng).
+- Sentinel/kiểu lỗi chỉ export khi caller **thật sự cần phân nhánh**; còn lại là lỗi mờ (opaque).
+- Map lỗi domain → HTTP status ở **một chỗ** (tầng transport), không rải `http.Error` khắp service.
+- Panic chỉ cho lỗi lập trình; middleware recover ở biên để một request lỗi không làm sập process.
+
+### Observability & profiling production
+- Log có cấu trúc bằng `log/slog`, gắn `request_id` qua context; metric RED (rate, errors, duration) cho mỗi endpoint.
+- Bật `net/http/pprof` trên **cổng nội bộ riêng**, không phơi ra internet; lấy CPU/heap/goroutine profile khi có sự cố thay vì đoán.
+- Đặt `GOMEMLIMIT` (hoặc `debug.SetMemoryLimit`) thấp hơn giới hạn container (ước lượng ~90%) để GC chạy sớm thay vì bị OOM-kill.
+- Số goroutine tăng đều theo thời gian gần như luôn là **goroutine leak** — cảnh báo trên metric này.
+
+### Checklist review code Go
+- [ ] Mọi goroutine có đường kết thúc (context, close channel, WaitGroup)?
+- [ ] I/O nhận `context.Context` làm tham số đầu, có timeout ở client HTTP/DB?
+- [ ] Lỗi được kiểm tra, bọc ngữ cảnh, không nuốt `rows.Err()`/`Close()` quan trọng?
+- [ ] Map/slice dùng chung có khoá hoặc chỉ một goroutine sở hữu?
+- [ ] Test chạy với `-race` trong CI?
+- [ ] Interface mới có thật sự cần (≥ 2 implementation hoặc cần fake trong test)?
+
+### ADR mẫu (rút gọn)
+> **ADR-007: Dùng `errgroup`-style fan-out có giới hạn cho gọi downstream.** Bối cảnh: endpoint gọi 4 service, p99 1.2s. Quyết định: gọi song song, giới hạn 4, huỷ cả nhóm khi một lỗi, timeout tổng 800ms. Hệ quả: p99 ước lượng ~400ms; tải downstream tăng đột biến → cần rate limit phía họ. Xem lại khi thêm service thứ 6.
+
+### Anti-pattern ở quy mô team
+- Package `utils`/`common` phình to, mọi thứ import nó → import vòng, khó tách.
+- Interface "khổng lồ" định nghĩa sẵn cho mọi struct "để mock" → khó thay đổi, vô nghĩa.
+- `go func()` rải rác không quản lý vòng đời; dùng `context.Background()` sâu trong request.
+- Tự viết framework nội bộ (router, DI, ORM) khi thư viện chuẩn đủ dùng — chi phí bảo trì dồn lên team.
+- Nâng Go version/dependency hàng loạt không có CI `-race`, không đọc release note (vd. thay đổi ngữ nghĩa biến vòng lặp ở Go 1.22).
+'''
+
 # ------------------------------------------------------------ BASICS
 [[questions]]
 id = "go-001"
 module = "go-basics"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Điều gì xảy ra khi ghi vào một map `nil` (`var m map[string]int; m[\"a\"] = 1`)?"
 options = ["Map tự được khởi tạo", "Panic: assignment to entry in nil map", "Không có gì xảy ra", "Lỗi biên dịch"]
 answer = [1]
@@ -147,7 +202,8 @@ explanation = "Đọc từ nil map trả zero value, nhưng ghi thì panic. Kh�
 id = "go-002"
 module = "go-basics"
 type = "single"
-difficulty = 2
+difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 In ra gì?
 
@@ -167,7 +223,8 @@ sources = ["go/slices/index"]
 id = "go-003"
 module = "go-basics"
 type = "single"
-difficulty = 2
+difficulty = 1
+tags = ["level:junior"]
 prompt = "Một type thoả mãn interface trong Go khi nào?"
 options = [
   "Khi khai báo `implements`",
@@ -183,6 +240,7 @@ id = "go-004"
 module = "go-basics"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Khi nào nên dùng **pointer receiver** `func (s *Stack) Push(v int)`?"
 options = [
   "Không bao giờ",
@@ -198,6 +256,7 @@ id = "go-005"
 module = "go-basics"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Phát biểu nào đúng về Go?"
 options = [
   "Thứ tự duyệt `for k := range m` của map là ngẫu nhiên, không được dựa vào",
@@ -214,6 +273,7 @@ id = "go-006"
 module = "go-basics"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Khai báo và khởi tạo map, sau đó kiểm tra key có tồn tại:
 
@@ -230,6 +290,7 @@ id = "go-007"
 module = "go-basics"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 Hàm generic tìm giá trị lớn nhất (dùng ràng buộc từ package `cmp`):
 
@@ -246,6 +307,7 @@ module = "go-basics"
 type = "code"
 lang = "go"
 difficulty = 2
+tags = ["level:middle"]
 title = "Generic Map / Filter / GroupBy"
 prompt = '''
 Viết các hàm generic:
@@ -346,6 +408,7 @@ module = "go-basics"
 type = "code"
 lang = "go"
 difficulty = 2
+tags = ["level:middle"]
 title = "Stack generic có kiểm tra rỗng"
 prompt = '''
 Cài đặt `Stack[T any]` với method (pointer receiver):
@@ -459,6 +522,7 @@ id = "go-020"
 module = "go-errors"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Khác biệt giữa `fmt.Errorf(\"...: %v\", err)` và `fmt.Errorf(\"...: %w\", err)`?"
 options = [
   "Không khác",
@@ -475,6 +539,7 @@ id = "go-021"
 module = "go-errors"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 In ra gì?
 
@@ -493,6 +558,7 @@ id = "go-022"
 module = "go-errors"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "`recover()` có tác dụng khi nào?"
 options = [
   "Gọi ở bất kỳ đâu",
@@ -508,6 +574,7 @@ id = "go-023"
 module = "go-errors"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 Kiểm tra lỗi theo **sentinel** và theo **kiểu**:
 
@@ -527,6 +594,7 @@ id = "go-024"
 module = "go-errors"
 type = "essay"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Vì sao Go dùng error là giá trị thay vì exception? Nêu best practice xử lý lỗi trong Go."
 keywords = [
   ["tường minh", "explicit", "rõ ràng"],
@@ -553,6 +621,7 @@ module = "go-errors"
 type = "code"
 lang = "go"
 difficulty = 3
+tags = ["level:senior"]
 title = "Sentinel error, custom error & wrapping"
 prompt = '''
 Một repository người dùng:
@@ -660,7 +729,8 @@ sources = ["go/errors/index#Is", "go/errors/index"]
 id = "go-040"
 module = "go-concurrency"
 type = "single"
-difficulty = 2
+difficulty = 1
+tags = ["level:junior"]
 prompt = "Gửi vào một **unbuffered channel** khi chưa có goroutine nào nhận sẽ:"
 options = ["Lưu tạm vào buffer", "Chặn (block) cho tới khi có bên nhận", "Panic", "Bỏ qua giá trị"]
 answer = [1]
@@ -671,6 +741,7 @@ id = "go-041"
 module = "go-concurrency"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Ai nên gọi `close(ch)`?"
 options = ["Bên nhận", "Bên gửi (khi không còn gửi gì nữa)", "Bất kỳ ai", "Garbage collector tự đóng"]
 answer = [1]
@@ -681,6 +752,7 @@ id = "go-042"
 module = "go-concurrency"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Mục đích chính của `context.Context` trong server Go?"
 options = [
   "Lưu cấu hình toàn cục",
@@ -697,6 +769,7 @@ id = "go-043"
 module = "go-concurrency"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Những code nào có **data race** / lỗi đồng thời?"
 options = [
   "Nhiều goroutine cùng `count++` trên biến chung không có mutex",
@@ -713,6 +786,7 @@ id = "go-044"
 module = "go-concurrency"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 Đặt timeout 2 giây cho một thao tác:
 
@@ -730,6 +804,7 @@ id = "go-045"
 module = "go-concurrency"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "So sánh dùng **channel** và **mutex** để chia sẻ dữ liệu giữa goroutine. Khi nào dùng cái nào?"
 keywords = [
   ["channel"],
@@ -751,6 +826,7 @@ module = "go-concurrency"
 type = "code"
 lang = "go"
 difficulty = 3
+tags = ["level:senior"]
 title = "Worker pool giữ thứ tự kết quả"
 prompt = '''
 Viết `ParallelMap(inputs []int, workers int, f func(int) int) []int`:
@@ -859,6 +935,7 @@ module = "go-concurrency"
 type = "code"
 lang = "go"
 difficulty = 3
+tags = ["level:senior"]
 title = "Gọi hàm có timeout bằng context"
 prompt = '''
 Viết `WithTimeout(ctx context.Context, d time.Duration, f func(ctx context.Context) (string, error)) (string, error)`:
@@ -971,6 +1048,7 @@ id = "go-060"
 module = "go-web"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Interface `http.Handler` yêu cầu method nào?"
 options = ["`Handle(req)`", "`ServeHTTP(w http.ResponseWriter, r *http.Request)`", "`Serve(port int)`", "`Do(req) (*Response, error)`"]
 answer = [1]
@@ -982,6 +1060,7 @@ id = "go-061"
 module = "go-web"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Từ Go 1.22, cách khai báo route `GET /users/{id}` và đọc `id` với `http.ServeMux` là:"
 options = [
   "`mux.Get(\"/users/:id\", h)` và `r.Param(\"id\")`",
@@ -998,6 +1077,7 @@ id = "go-062"
 module = "go-web"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Struct field nào sẽ xuất hiện trong JSON khi `json.Marshal`?"
 options = [
   "`password string`",
@@ -1014,6 +1094,7 @@ id = "go-063"
 module = "go-web"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 Trả về JSON với status 201:
 
@@ -1032,6 +1113,7 @@ module = "go-web"
 type = "code"
 lang = "go"
 difficulty = 3
+tags = ["level:senior"]
 title = "Middleware RequireAPIKey + handler JSON"
 prompt = '''
 Viết:
@@ -1148,6 +1230,7 @@ id = "go-065"
 module = "go-web"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Mô tả cách thực hiện **graceful shutdown** cho một HTTP server Go."
 keywords = [
   ["signal", "sigterm", "sigint", "os/signal", "notifycontext"],
@@ -1170,6 +1253,7 @@ id = "go-dv001"
 module = "go-dv-database"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một service gọi `sql.Open` thành công nhưng truy vấn đầu tiên báo không kết nối được database. Kết luận nào đúng?"
 options = ["`sql.Open` luôn mở sẵn và xác minh một connection", "`sql.Open` có thể chỉ tạo pool handle; dùng `PingContext` để kiểm tra kết nối", "`sql.Open` đã tự chạy `BeginTx`", "`sql.Open` chỉ dùng được từ một goroutine"]
 answer = [1]
@@ -1181,6 +1265,7 @@ id = "go-dv002"
 module = "go-dv-database"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Repository cần lấy tối đa một user theo email và phân biệt trường hợp không có hàng. API nào phù hợp?"
 options = ["`db.ExecContext` rồi ép kiểu kết quả thành user", "`db.QueryContext`, nhưng không cần gọi `Next`", "`db.QueryRowContext` rồi gọi `Scan`, xử lý `sql.ErrNoRows`", "`db.BeginTx` rồi đọc field từ `sql.Tx`"]
 answer = [2]
@@ -1192,6 +1277,7 @@ id = "go-dv003"
 module = "go-dv-database"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Sau `for rows.Next() { rows.Scan(&id) }`, kiểm tra nào còn cần thiết để phát hiện lỗi đọc giữa chừng?"
 options = ["`rows.Err()`", "`rows.Close()` trả về số hàng", "`db.PingContext` trên mỗi hàng", "Không cần kiểm tra thêm"]
 answer = [0]
@@ -1203,6 +1289,7 @@ id = "go-dv004"
 module = "go-dv-database"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Chọn các thực hành an toàn khi chạy truy vấn từ dữ liệu request."
 options = ["Truyền `context.Context` vào `QueryContext` hoặc `ExecContext`", "Truyền dữ liệu qua arguments của placeholder", "Dùng `fmt.Sprintf` chèn email trực tiếp vào SQL", "Đóng `Rows` và kiểm tra `Rows.Err()`", "Mở một `sql.DB` mới cho mỗi request"]
 answer = [0, 1, 3]
@@ -1214,6 +1301,7 @@ id = "go-dv005"
 module = "go-dv-database"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 Truy vấn trả về nhiều hàng; sau khi kiểm tra `err`, duyệt và kiểm tra lỗi cuối:
 
@@ -1236,6 +1324,7 @@ id = "go-dv006"
 module = "go-dv-database"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 Mở transaction với context và xác nhận thành công sau khi hoàn tất các lệnh:
 
@@ -1255,6 +1344,7 @@ id = "go-dv007"
 module = "go-dv-database"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Trong phỏng vấn, hãy mô tả cách viết repository dùng `database/sql` an toàn khi truy vấn nhiều hàng và khi cập nhật nhiều bảng trong một thao tác."
 keywords = [
   ["connection pool", "pool", "sql.db"],
@@ -1276,6 +1366,7 @@ module = "go-dv-database"
 type = "code"
 lang = "go"
 difficulty = 2
+tags = ["level:middle"]
 title = "Tạo truy vấn IN có tham số"
 prompt = '''
 Viết `BuildFindUsersQuery(statuses []string) (string, []any)` cho driver SQL dùng dấu `?`:
@@ -1365,6 +1456,7 @@ id = "go-dv008"
 module = "go-dv-testing"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Hàm nào được `go test` nhận diện như một test thông thường?"
 options = ["`func testParser(t *testing.T)` trong file bất kỳ", "`func TestParser(t *testing.T)` trong file `*_test.go`", "`func TestParser()` trong file `main.go`", "`func BenchmarkParser(t *testing.T)`"]
 answer = [1]
@@ -1376,6 +1468,7 @@ id = "go-dv009"
 module = "go-dv-testing"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Trong một subtest, điều gì phù hợp nhất khi assertion thất bại nhưng các kiểm tra tiếp theo trong cùng test vẫn có ích?"
 options = ["Gọi `t.Error` để ghi lỗi và tiếp tục", "Gọi `t.Fatal` từ mọi goroutine", "Bỏ qua assertion", "Gọi `os.Exit(1)`"]
 answer = [0]
@@ -1387,6 +1480,7 @@ id = "go-dv010"
 module = "go-dv-testing"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một benchmark Go nên lặp thao tác cần đo theo giá trị nào để `go test` điều chỉnh số lần chạy?"
 options = ["`b.N`", "`runtime.NumCPU()`", "`testing.Short()`", "`t.Parallel()`"]
 answer = [0]
@@ -1398,6 +1492,7 @@ id = "go-dv011"
 module = "go-dv-testing"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn các thực hành giúp test Go dễ bảo trì và ổn định."
 options = ["Đặt nhiều input/expected thành table và đặt tên cho từng case bằng `t.Run`", "Dùng `t.Cleanup` để đăng ký dọn tài nguyên", "Dùng `time.Sleep` dài để đồng bộ mọi goroutine", "Dùng `t.TempDir` cho file test cần thư mục tạm", "Mọi test đều dùng chung một file cố định trong thư mục làm việc"]
 answer = [0, 1, 3]
@@ -1409,6 +1504,7 @@ id = "go-dv012"
 module = "go-dv-testing"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Chạy mỗi trường hợp như một subtest có tên:
 
@@ -1428,6 +1524,7 @@ id = "go-dv013"
 module = "go-dv-testing"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 Benchmark phải dùng số vòng lặp do framework hiệu chỉnh:
 
@@ -1448,6 +1545,7 @@ id = "go-dv014"
 module = "go-dv-testing"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Trong phỏng vấn, hãy mô tả cách thiết kế test cho một hàm parser có input hợp lệ, input biên và input sai; khi nào bạn dùng benchmark hoặc fuzzing?"
 keywords = [
   ["table-driven", "table driven", "bảng test"],
@@ -1470,6 +1568,7 @@ module = "go-dv-testing"
 type = "code"
 lang = "go"
 difficulty = 2
+tags = ["level:middle"]
 title = "Parse và xác thực port"
 prompt = '''
 Viết `ParsePort(input string) (int, bool)`:
@@ -1555,6 +1654,7 @@ id = "go-dv015"
 module = "go-dv-io"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một lần gọi `Read(p)` trả `n > 0` cùng `io.EOF`. Caller nên làm gì?"
 options = ["Bỏ qua `p[:n]` vì EOF luôn có nghĩa không có dữ liệu", "Xử lý `p[:n]` trước, rồi xử lý EOF", "Gọi `Read` lại đến khi `n == len(p)` mà không kiểm tra lỗi", "Chuyển EOF thành panic"]
 answer = [1]
@@ -1566,6 +1666,7 @@ id = "go-dv016"
 module = "go-dv-io"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Cần sao chép một file lớn từ `src io.Reader` sang `dst io.Writer` mà không nạp toàn bộ nội dung vào RAM. API nào phù hợp?"
 options = ["`io.Copy(dst, src)`", "`io.ReadAll(src)` rồi giữ byte slice", "`os.ReadFile` trên một path không có", "`bufio.Scanner` bất kể định dạng dữ liệu"]
 answer = [0]
@@ -1577,6 +1678,7 @@ id = "go-dv017"
 module = "go-dv-io"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "`bufio.Scanner` dừng trước khi đọc hết một dòng rất dài. Cách xử lý phù hợp là gì?"
 options = ["Bỏ qua `scanner.Err()`", "Tăng buffer và giới hạn token bằng `scanner.Buffer` phù hợp, đồng thời vẫn kiểm tra `Err`", "Gọi `Scan` thêm một lần để tự bỏ giới hạn", "Chuyển sang `io.ReadAll` cho mọi input không giới hạn"]
 answer = [1]
@@ -1588,6 +1690,7 @@ id = "go-dv018"
 module = "go-dv-io"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn các thực hành đúng khi đọc file theo dòng trong Go."
 options = ["Đóng file bằng `defer file.Close()` sau khi mở thành công", "Kiểm tra `scanner.Err()` sau vòng `Scan`", "Giả định `Read` luôn lấp đầy buffer", "Tăng giới hạn Scanner nếu dòng hợp lệ có thể vượt mặc định", "Dùng `io.ReadAll` với body không giới hạn của client"]
 answer = [0, 1, 3]
@@ -1599,6 +1702,7 @@ id = "go-dv019"
 module = "go-dv-io"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Stream dữ liệu từ reader sang writer:
 
@@ -1615,6 +1719,7 @@ id = "go-dv020"
 module = "go-dv-io"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 Sau vòng lặp `for scanner.Scan()`, lấy lỗi đọc cuối cùng bằng:
 
@@ -1633,6 +1738,7 @@ id = "go-dv021"
 module = "go-dv-io"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Trong phỏng vấn, hãy chọn giữa `os.ReadFile`, `io.Copy`, `bufio.Scanner` và `bufio.Reader` cho các loại input khác nhau; nêu cách xử lý EOF và lỗi."
 keywords = [
   ["readfile", "readall", "toàn bộ memory", "toàn bộ bộ nhớ"],
@@ -1655,6 +1761,7 @@ module = "go-dv-io"
 type = "code"
 lang = "go"
 difficulty = 3
+tags = ["level:senior"]
 title = "Đọc dòng từ io.Reader"
 prompt = '''
 Viết `ReadLines(r io.Reader) ([]string, error)` bằng thư viện chuẩn:
@@ -1763,3 +1870,1775 @@ var _ = Test("trả lỗi từ reader", func(t *T) {
 hints = ["Dùng `bufio.Scanner` và cấu hình buffer tối đa 1 MiB.", "Luôn kiểm tra `scanner.Err()` sau khi `Scan` kết thúc."]
 explanation = "Hàm xử lý một stream mượn từ caller, giữ quy tắc dòng rõ ràng và trả lỗi đọc thay vì âm thầm bỏ dữ liệu."
 sources = ["go/bufio/index#NewScanner", "go/bufio/index#Scanner.Buffer", "go/bufio/index#Scanner.Err"]
+
+# ------------------------------------------------------------ LEAD
+[[questions]]
+id = "go-lv001"
+module = "go-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "architecture"]
+prompt = '''
+Team 6 người, một service Go đã ~25k dòng tổ chức theo tầng (`handlers/`, `services/`, `repos/`). Mỗi tính năng mới phải sửa cả ba package và thường xuyên gặp lỗi import vòng. Roadmap 6 tháng tới có khả năng tách phần `billing` thành service riêng. Hướng tổ chức lại hợp lý nhất?
+'''
+options = [
+  "Chuyển dần sang package theo domain (`order/`, `billing/`, `user/`) đặt trong `internal/`, mỗi domain tự chứa handler/service/repo; làm từng domain, bắt đầu từ `billing`",
+  "Gom mọi thứ vào một package `app` để hết import vòng",
+  "Tạo package `common` chứa toàn bộ interface và model dùng chung để các tầng cùng import",
+  "Viết lại toàn bộ service theo microservices ngay trong quý này",
+]
+answer = [0]
+explanation = "Package theo domain giảm số package bị chạm mỗi tính năng và tạo ranh giới sẵn cho việc tách `billing`; làm dần nên rủi ro thấp. Gom một package xoá hết ranh giới. Package `common` thường thành nơi mọi thứ phụ thuộc vào, dễ phình và vẫn gây coupling. Viết lại toàn bộ thành microservices là rủi ro lớn nhất với team 6 người."
+sources = ["go/go/build/index"]
+
+[[questions]]
+id = "go-lv002"
+module = "go-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "interface"]
+prompt = '''
+Trong review, một dev đề xuất định nghĩa sẵn interface `UserRepository` có 14 method trong package `repo`, kèm mock sinh tự động, "để sau này dễ thay database". Hiện chỉ có một implementation Postgres và các service chỉ dùng 1–3 method. Phản hồi phù hợp nhất của lead?
+'''
+options = [
+  "Đề nghị mỗi service khai báo interface nhỏ ở phía dùng, chỉ gồm method nó cần; package `repo` trả về struct cụ thể",
+  "Đồng ý, interface càng đầy đủ càng tốt cho tương lai",
+  "Bỏ hẳn interface, test service bằng database thật cho mọi trường hợp",
+  "Chuyển sang dùng framework DI để tự sinh interface cho mọi struct",
+]
+answer = [0]
+explanation = "Interface trong Go thoả mãn ngầm định nên có thể khai báo ở phía dùng, nhỏ và đúng nhu cầu — dễ fake trong test và không khoá mọi thay đổi vào một interface 14 method. Interface lớn \"cho tương lai\" là YAGNI và làm mọi thay đổi chữ ký tốn kém. Bỏ hẳn interface khiến unit test chậm/khó; framework DI thêm độ phức tạp không cần thiết."
+sources = ["go/io/index#Reader"]
+
+[[questions]]
+id = "go-lv003"
+module = "go-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "observability"]
+prompt = '''
+Service Go chạy trong container giới hạn 1 GiB thỉnh thoảng bị OOM-kill lúc traffic đỉnh, trong khi heap "live" đo được chỉ ~400 MiB. Cần giải pháp trong tuần này, rủi ro thấp. Bước nào nên làm đầu tiên?
+'''
+options = [
+  "Đặt `GOMEMLIMIT` khoảng 900MiB (dưới giới hạn container) để GC chạy sớm hơn khi gần chạm trần, rồi theo dõi CPU GC và heap profile",
+  "Tăng giới hạn container lên 4 GiB và bỏ qua",
+  "Đặt `GOGC=off` để tắt GC, giảm CPU",
+  "Viết lại các đường nóng bằng `unsafe` để tránh cấp phát",
+]
+answer = [0]
+explanation = "Với heap live thấp hơn nhiều so với giới hạn, OOM thường do GC để heap phình tới gấp đôi live trước khi thu. Memory limit (Go 1.19+) bảo GC tôn trọng trần mềm — thay đổi cấu hình, đảo ngược dễ. Tăng RAM gấp 4 tốn chi phí và che vấn đề. `GOGC=off` không giới hạn sẽ làm OOM nhanh hơn. `unsafe` rủi ro cao, không phải bước đầu."
+sources = ["go/runtime/debug/index#SetMemoryLimit"]
+
+[[questions]]
+id = "go-lv004"
+module = "go-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "profiling"]
+prompt = '''
+p99 latency một API Go tăng từ 80ms lên 600ms sau một release, chỉ xảy ra trên production. Team muốn bật `net/http/pprof` để điều tra. Cách triển khai phù hợp nhất?
+'''
+options = [
+  "Đăng ký pprof trên một `http.Server` riêng lắng nghe cổng nội bộ (vd. `127.0.0.1:6060` hoặc chỉ trong mạng cluster), lấy CPU profile 30s lúc có tải",
+  "Import `net/http/pprof` vào mux công khai để ai cũng lấy được profile cho nhanh",
+  "Không dùng pprof trên production, chỉ benchmark trên laptop",
+  "Bật pprof bằng cách tăng log level lên debug cho toàn bộ request",
+]
+answer = [0]
+explanation = "pprof cho dữ liệu thật thay vì đoán; chi phí lấy CPU profile ngắn là chấp nhận được. Nhưng endpoint pprof lộ thông tin nội bộ và có thể bị lạm dụng, nên phải tách cổng nội bộ. Chỉ benchmark local bỏ lỡ điều kiện production. Log debug không đo được thời gian CPU/khoá."
+sources = ["go/net/http/pprof/index", "go/runtime/pprof/index"]
+
+[[questions]]
+id = "go-lv005"
+module = "go-lead"
+type = "multiple"
+difficulty = 3
+tags = ["level:lead", "errors"]
+prompt = '''
+Bạn soạn quy ước error handling cho team (8 dev, 3 service Go). Chọn các quy ước nên đưa vào.
+'''
+options = [
+  "Bọc lỗi bằng `%w` kèm ngữ cảnh thao tác khi trả lên tầng trên",
+  "Mapping lỗi domain sang HTTP status đặt ở một chỗ tại tầng transport",
+  "Mỗi tầng đều log lỗi rồi return, để chắc chắn không bỏ sót",
+  "Chỉ export sentinel/kiểu lỗi khi caller cần phân nhánh theo nó",
+  "Dùng `panic` cho lỗi validation input để code gọn hơn",
+]
+answer = [0, 1, 3]
+explanation = "Bọc `%w` giữ chuỗi lỗi cho `errors.Is/As`; mapping status tập trung tránh không nhất quán; chỉ export lỗi khi cần giữ API nhỏ. Log ở mọi tầng gây log trùng nhiều lần cho một lỗi — nên log một lần ở biên. Panic cho lỗi input là lạm dụng; panic dành cho lỗi lập trình."
+sources = ["go/errors/index", "go/fmt/index#Errorf"]
+
+[[questions]]
+id = "go-lv006"
+module = "go-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "concurrency"]
+prompt = '''
+Endpoint `GET /dashboard` gọi tuần tự 5 service nội bộ (mỗi cái ~150ms), p99 ~1s, SLO là 400ms. Các service downstream có giới hạn tải. Hướng tiếp cận hợp lý nhất?
+'''
+options = [
+  "Gọi song song có giới hạn đồng thời, dùng một context có deadline tổng ~350ms, huỷ các lời gọi còn lại khi một lời gọi bắt buộc lỗi; phần không bắt buộc trả về rỗng khi quá hạn",
+  "Mở một goroutine cho mỗi lời gọi, không timeout, chờ tất cả",
+  "Cache toàn bộ dashboard 24 giờ",
+  "Tăng số replica của service dashboard lên gấp 3",
+]
+answer = [0]
+explanation = "Song song hoá giảm latency xuống gần lời gọi chậm nhất; deadline tổng đảm bảo SLO, huỷ sớm tránh lãng phí, degrade phần phụ giữ trải nghiệm. Không timeout thì một service chậm kéo cả request. Cache 24h sai dữ liệu. Thêm replica không giảm latency tuần tự."
+sources = ["go/context/index#WithTimeout", "go/sync/index#WaitGroup"]
+
+[[questions]]
+id = "go-lv007"
+module = "go-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "upgrade"]
+prompt = '''
+Team đang ở Go 1.20, muốn lên Go 1.22+ để dùng pattern route mới của `ServeMux`. Codebase có nhiều `for _, v := range xs { go func() { use(v) }() }`. Kế hoạch nâng version hợp lý nhất?
+'''
+options = [
+  "Nâng dòng `go` trong go.mod theo từng module, chạy toàn bộ test với `-race` trong CI, đọc release note (đặc biệt thay đổi ngữ nghĩa biến vòng lặp), canary một service trước",
+  "Nâng tất cả service cùng lúc vào thứ Sáu để kịp sprint",
+  "Giữ Go 1.20 vĩnh viễn vì nâng version luôn rủi ro",
+  "Nâng version nhưng tắt test race cho nhanh",
+]
+answer = [0]
+explanation = "Go 1.22 tạo biến vòng lặp mới mỗi lần lặp — thường sửa bug, nhưng có thể đổi hành vi code dựa vào ngữ nghĩa cũ; nâng theo module + CI race + canary giới hạn bán kính ảnh hưởng. Big-bang thứ Sáu tăng rủi ro. Ở lại version cũ mất bản vá bảo mật. Tắt race bỏ lưới an toàn quan trọng nhất."
+sources = ["go/net/http/index#ServeMux"]
+
+[[questions]]
+id = "go-lv008"
+module = "go-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "observability"]
+prompt = '''
+Ba service Go của team mỗi cái log một kiểu (`log.Printf`, chuỗi tự do), khi sự cố mất 30 phút để ghép log của một request. Ngân sách: 1 sprint, không thêm hạ tầng mới ngoài hệ log hiện có. Lựa chọn hợp lý nhất?
+'''
+options = [
+  "Chuẩn hoá `log/slog` với JSON handler, middleware sinh/nhận `request_id` và gắn vào context, quy ước tên field chung",
+  "Triển khai ngay một hệ thống distributed tracing đầy đủ cho mọi service",
+  "Tăng log level lên debug ở tất cả service",
+  "Yêu cầu dev viết log chi tiết hơn bằng `fmt.Println`",
+]
+answer = [0]
+explanation = "`log/slog` có trong thư viện chuẩn, log có cấu trúc + request_id giải quyết đúng vấn đề ghép log, vừa 1 sprint, không thêm hạ tầng. Tracing đầy đủ tốt nhưng vượt ràng buộc. Debug log tăng khối lượng mà vẫn khó ghép. `fmt.Println` không có cấu trúc."
+sources = ["go/log/slog/index"]
+
+[[questions]]
+id = "go-lv009"
+module = "go-lead"
+type = "multiple"
+difficulty = 3
+tags = ["level:lead", "code-review"]
+prompt = '''
+Chọn các mục nên có trong checklist review PR Go của team (ưu tiên lỗi gây sự cố production).
+'''
+options = [
+  "Mỗi goroutine mới có đường kết thúc rõ (context, close channel, WaitGroup)",
+  "HTTP client/DB call có timeout hoặc nhận context của request",
+  "Mọi tên biến phải dài ít nhất 8 ký tự",
+  "Test chạy với `-race` trong CI",
+  "Mọi struct phải có interface tương ứng",
+]
+answer = [0, 1, 3]
+explanation = "Goroutine leak, thiếu timeout và data race là ba nguồn sự cố production phổ biến của service Go. Quy định độ dài tên biến đi ngược phong cách Go (tên ngắn trong phạm vi hẹp). Bắt buộc interface cho mọi struct gây trừu tượng thừa."
+sources = ["go/context/index", "go/sync/index#WaitGroup"]
+
+[[questions]]
+id = "go-lv010"
+module = "go-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "dependencies"]
+prompt = '''
+Một dev muốn thêm một ORM/web framework lớn (kéo theo ~60 module phụ thuộc gián tiếp) cho service CRUD 12 endpoint. Team đang dùng `net/http` + `database/sql`, chạy ổn. Quyết định hợp lý nhất?
+'''
+options = [
+  "Giữ thư viện chuẩn, có thể thêm một thư viện nhỏ chuyên biệt (vd. sinh code truy vấn) nếu có pain point đo được; mọi dependency mới cần lý do, owner và chạy `govulncheck` trong CI",
+  "Đồng ý ngay vì framework lớn luôn giúp code nhanh hơn",
+  "Cấm tuyệt đối mọi dependency ngoài thư viện chuẩn",
+  "Fork framework vào repo để tự sửa khi cần",
+]
+answer = [0]
+explanation = "Với 12 endpoint, thư viện chuẩn đủ dùng; dependency lớn tăng bề mặt supply chain và chi phí nâng version. Cách tiếp cận cân bằng là thêm có lý do, có owner và quét lỗ hổng. Cấm tuyệt đối thì cực đoan; fork khiến team gánh bảo trì toàn bộ."
+sources = ["go/net/http/index", "go/database/sql/index#DB"]
+
+[[questions]]
+id = "go-lv011"
+module = "go-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "reliability"]
+prompt = '''
+Service Go chạy trên Kubernetes, mỗi lần deploy có ~0,5% request lỗi 502. Kiểm tra cho thấy process thoát ngay khi nhận SIGTERM. Phương án sửa hợp lý nhất?
+'''
+options = [
+  "Bắt SIGTERM bằng `signal.NotifyContext`, chuyển readiness sang fail, chờ ngắn cho load balancer cập nhật rồi `Server.Shutdown(ctx)` với timeout nhỏ hơn `terminationGracePeriodSeconds`",
+  "Tăng số replica để tỷ lệ lỗi chia nhỏ hơn",
+  "Bỏ qua SIGTERM hoàn toàn, để Kubernetes SIGKILL",
+  "Thêm retry vô hạn ở client cho mọi request",
+]
+answer = [0]
+explanation = "Graceful shutdown đúng thứ tự: ngừng nhận traffic mới (readiness), chờ request đang chạy xong với deadline, rồi thoát — loại bỏ 502 lúc deploy. Thêm replica không sửa nguyên nhân. Bỏ qua SIGTERM khiến request bị cắt khi SIGKILL. Retry vô hạn có thể nhân đôi thao tác không idempotent."
+sources = ["go/os/signal/index#NotifyContext", "go/net/http/index#Server.Shutdown"]
+
+[[questions]]
+id = "go-lv012"
+module = "go-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "testing"]
+prompt = '''
+CI của monorepo Go mất 25 phút; 70% thời gian là integration test khởi tạo Postgres cho mỗi package. Dev bắt đầu bỏ qua CI. Mục tiêu: dưới 10 phút trong 2 sprint. Lựa chọn hợp lý nhất?
+'''
+options = [
+  "Tách unit test (fake qua interface nhỏ) chạy mọi PR; integration test dùng chung một DB mỗi job, cô lập bằng transaction/schema riêng, chỉ chạy cho package bị ảnh hưởng và đầy đủ trên nhánh chính",
+  "Xoá integration test",
+  "Chỉ chạy CI vào ban đêm",
+  "Mua máy CI mạnh gấp 4 lần và giữ nguyên cách test",
+]
+answer = [0]
+explanation = "Giảm chi phí khởi tạo DB và chạy test có chọn lọc rút ngắn mạnh thời gian mà vẫn giữ lưới an toàn ở nhánh chính. Xoá test làm mất phát hiện lỗi tích hợp. CI ban đêm khiến phản hồi chậm một ngày. Máy mạnh hơn chỉ giảm tuyến tính và tốn chi phí."
+sources = ["go/testing/index"]
+
+[[questions]]
+id = "go-lv013"
+module = "go-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "performance"]
+prompt = '''
+Một dev junior đề xuất dùng `sync.Pool`, `unsafe` và tự quản lý buffer khắp service để "tối ưu hiệu năng", trong khi chưa có profile nào và service đang đạt SLO với CPU ~30%. Phản hồi phù hợp nhất?
+'''
+options = [
+  "Chưa làm; yêu cầu có benchmark/profile chỉ ra điểm nóng trước, ưu tiên code dễ đọc; nếu có điểm nóng thật thì tối ưu cục bộ kèm benchmark trước/sau",
+  "Đồng ý áp dụng toàn bộ vì tối ưu sớm không bao giờ thừa",
+  "Từ chối và cấm dùng `sync.Pool` trong mọi trường hợp",
+  "Viết lại service bằng Rust",
+]
+answer = [0]
+explanation = "Khi đạt SLO và CPU thấp, tối ưu không có dữ liệu làm tăng độ phức tạp và rủi ro (unsafe, bug tái dùng buffer) mà không có lợi ích đo được. Đúng quy trình là đo trước, tối ưu cục bộ có bằng chứng. Cấm tuyệt đối thì cực đoan; viết lại bằng ngôn ngữ khác không có cơ sở."
+sources = ["go/sync/index#Pool", "go/testing/index#B"]
+
+[[questions]]
+id = "go-lv014"
+module = "go-lead"
+type = "fill"
+difficulty = 3
+tags = ["level:lead", "errors"]
+prompt = '''
+Một hàm dọn dẹp chạy nhiều bước và quy ước team là **gộp tất cả lỗi** (không chỉ lỗi đầu tiên) để caller vẫn dùng được `errors.Is` với từng lỗi con:
+
+```go
+var errs []error
+for _, c := range closers {
+	if err := c.Close(); err != nil {
+		errs = append(errs, err)
+	}
+}
+return errors.{{blank}}(errs...)
+```
+'''
+blanks = [["Join"]]
+explanation = "`errors.Join` (Go 1.20) gộp nhiều lỗi, trả `nil` nếu không có lỗi nào và hỗ trợ `errors.Is/As` với từng lỗi bên trong — phù hợp làm quy ước cho các thao tác cleanup."
+sources = ["go/errors/index#Join"]
+
+[[questions]]
+id = "go-lv015"
+module = "go-lead"
+type = "fill"
+difficulty = 3
+tags = ["level:lead", "context"]
+prompt = '''
+Sau khi trả response, handler cần ghi audit log bất đồng bộ. Quy ước team: giữ giá trị trong context (request_id) nhưng **không bị huỷ** khi request kết thúc:
+
+```go
+auditCtx := context.{{blank}}(r.Context())
+go audit.Write(auditCtx, event)
+```
+'''
+blanks = [["WithoutCancel"]]
+explanation = "`context.WithoutCancel` (Go 1.21) giữ values nhưng không truyền tín hiệu huỷ/deadline của parent. Dùng `context.Background()` sẽ mất request_id; dùng thẳng `r.Context()` thì audit bị huỷ khi request xong. Vẫn nên tự đặt timeout riêng cho việc ghi."
+sources = ["go/context/index#WithoutCancel"]
+
+[[questions]]
+id = "go-lv016"
+module = "go-lead"
+type = "essay"
+difficulty = 3
+tags = ["level:lead", "architecture"]
+prompt = '''
+Bạn là lead của một team 5 người sắp bắt đầu một service Go mới (REST API + Postgres + worker xử lý job nền), dự kiến sống nhiều năm. Hãy viết ADR ngắn về **layout dự án và ranh giới package**: phương án đã cân nhắc, quyết định, hệ quả và điều kiện xem lại.
+'''
+keywords = [["internal", "internal/"], ["domain", "theo tính năng", "feature"], ["interface"], ["cmd", "cmd/"], ["trade-off", "đánh đổi", "hệ quả", "nhược điểm"], ["test", "kiểm thử"]]
+min_keywords = 4
+model_answer = '''
+**ADR-001: Layout service theo domain.**
+
+- **Bối cảnh**: 5 dev, API + worker dùng chung logic, dự kiến sống lâu, có thể tách service sau này.
+- **Phương án**: (1) phẳng một package — nhanh nhưng rối khi lớn; (2) theo tầng `handler/service/repo` — quen thuộc nhưng mỗi tính năng chạm nhiều package, dễ import vòng; (3) theo domain.
+- **Quyết định**: chọn (3). `cmd/api` và `cmd/worker` là hai binary mỏng; logic nằm trong `internal/order`, `internal/billing`… để package bên ngoài không import được. Mỗi domain tự chứa handler, service, store. Interface nhỏ khai báo ở phía dùng; constructor trả struct cụ thể. Wiring dependency làm thủ công trong `main`.
+- **Hệ quả / đánh đổi**: ranh giới rõ, dễ tách domain thành service; nhược điểm là cần kỷ luật để không gọi chéo nội bộ domain khác — chỉ qua API export của domain. Unit test dùng fake qua interface, integration test cho store với DB thật.
+- **Xem lại** khi số domain > 10 hoặc khi một domain cần deploy độc lập.
+'''
+explanation = "ADR tốt nêu bối cảnh, các phương án và trade-off, quyết định cụ thể (cmd/, internal/, interface phía dùng), chiến lược test và điều kiện xem lại."
+sources = ["go/go/build/index"]
+
+[[questions]]
+id = "go-lv017"
+module = "go-lead"
+type = "essay"
+difficulty = 3
+tags = ["level:lead", "incident"]
+prompt = '''
+Một service Go trên production có số goroutine tăng đều từ 2k lên 80k trong 3 ngày, memory tăng theo, cuối cùng bị restart. Hãy trình bày kế hoạch của lead: điều tra, khắc phục ngắn hạn, sửa gốc và biện pháp phòng ngừa cho cả team.
+'''
+keywords = [["pprof", "goroutine profile", "profile"], ["leak", "rò rỉ"], ["context", "timeout", "deadline"], ["metric", "alert", "cảnh báo", "dashboard"], ["postmortem", "hậu kiểm"], ["test", "goleak", "kiểm thử"]]
+min_keywords = 4
+model_answer = '''
+**Điều tra**: lấy goroutine profile từ endpoint pprof nội bộ (`debug=2` để thấy stack), nhóm theo stack — thường một vài vị trí chiếm hầu hết, ví dụ goroutine kẹt ở gửi vào channel không ai đọc hoặc chờ HTTP call không có timeout. Đối chiếu thời điểm bắt đầu tăng với release.
+
+**Ngắn hạn**: rollback release nghi vấn hoặc tạm restart định kỳ, đặt cảnh báo để không bị bất ngờ.
+
+**Sửa gốc**: đảm bảo mọi goroutine có đường thoát — truyền context có timeout/deadline vào lời gọi downstream, dùng `select` với `ctx.Done()` khi gửi/nhận channel, dùng channel có buffer cho kết quả mà người nhận có thể bỏ đi. Đây là goroutine leak kinh điển.
+
+**Phòng ngừa**: metric số goroutine + alert khi tăng tuyến tính; checklist review "mỗi goroutine có đường kết thúc"; test kiểm tra rò rỉ (đếm goroutine trước/sau hoặc dùng thư viện kiểu goleak); viết postmortem không đổ lỗi và chia sẻ cho team.
+'''
+explanation = "Câu trả lời tốt dùng dữ liệu (goroutine profile) thay vì đoán, tách khắc phục ngắn hạn và sửa gốc, và biến bài học thành cơ chế cho team: metric/alert, checklist review, test."
+sources = ["go/runtime/pprof/index", "go/net/http/pprof/index", "go/context/index"]
+
+[[questions]]
+id = "go-lv018"
+module = "go-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "api"]
+prompt = '''
+Team cung cấp một Go module nội bộ `pkg/client` được 9 service khác import. Cần đổi chữ ký `Get(id string) (*Item, error)` thành nhận `context.Context`. Cách rollout ít gây vỡ nhất?
+'''
+options = [
+  "Thêm `GetContext(ctx, id)` mới, cho `Get` gọi lại nó với `context.Background()` và đánh dấu `// Deprecated:`, thông báo lịch gỡ ở major version sau",
+  "Đổi chữ ký `Get` ngay trong bản patch vì chỉ là thêm một tham số",
+  "Copy package thành `client2` và để hai bản tồn tại vĩnh viễn",
+  "Yêu cầu 9 team kia cùng merge trong một ngày",
+]
+answer = [0]
+explanation = "Thêm API mới song song và deprecate API cũ giữ tương thích ngược theo semver, cho các team chủ động chuyển. Đổi chữ ký trong patch làm vỡ build 9 service. Hai bản vĩnh viễn gây phân mảnh. Ép merge đồng loạt tạo điểm phối hợp rủi ro."
+sources = ["go/context/index#Context"]
+
+[[questions]]
+id = "go-lvc01"
+module = "go-lead"
+type = "code"
+lang = "go"
+difficulty = 3
+tags = ["level:lead", "concurrency"]
+title = "Fan-out có giới hạn và huỷ khi lỗi"
+prompt = '''
+Team quy ước mọi fan-out gọi downstream phải đi qua một helper chung. Viết:
+
+```go
+func RunAll(ctx context.Context, limit int, tasks []func(context.Context) error) error
+```
+
+Yêu cầu:
+- Chạy các task **đồng thời**, nhưng không quá `limit` task cùng lúc (`limit <= 0` coi như 1).
+- Mỗi task nhận một context con; khi **một task trả lỗi**, context con bị huỷ để các task khác dừng sớm.
+- Trả về **lỗi đầu tiên** xảy ra (theo thời gian); `nil` nếu tất cả thành công.
+- Task chưa bắt đầu khi đã có lỗi (hoặc khi `ctx` cha bị huỷ) thì **không được chạy**; nếu `ctx` cha bị huỷ và chưa có lỗi task nào, trả `ctx.Err()`.
+- Hàm chỉ return sau khi mọi task đã bắt đầu đều kết thúc (không rò goroutine).
+'''
+starter = '''
+package main
+
+import "context"
+
+func RunAll(ctx context.Context, limit int, tasks []func(context.Context) error) error {
+	for _, t := range tasks {
+		_ = t
+	}
+	return nil
+}
+'''
+solution = '''
+package main
+
+import (
+	"context"
+	"sync"
+)
+
+func RunAll(ctx context.Context, limit int, tasks []func(context.Context) error) error {
+	if limit <= 0 {
+		limit = 1
+	}
+	cctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	var (
+		wg       sync.WaitGroup
+		once     sync.Once
+		firstErr error
+	)
+	sem := make(chan struct{}, limit)
+	for _, task := range tasks {
+		select {
+		case sem <- struct{}{}:
+		case <-cctx.Done():
+		}
+		if cctx.Err() != nil {
+			break
+		}
+		wg.Add(1)
+		go func(task func(context.Context) error) {
+			defer wg.Done()
+			defer func() { <-sem }()
+			if err := task(cctx); err != nil {
+				once.Do(func() {
+					firstErr = err
+					cancel()
+				})
+			}
+		}(task)
+	}
+	wg.Wait()
+	if firstErr != nil {
+		return firstErr
+	}
+	return ctx.Err()
+}
+'''
+tests = '''
+package main
+
+import (
+	"context"
+	"errors"
+	"sync"
+	"sync/atomic"
+	"time"
+)
+
+var _ = Test("tất cả thành công trả nil và chạy đủ task", func(t *T) {
+	var n int32
+	tasks := make([]func(context.Context) error, 10)
+	for i := range tasks {
+		tasks[i] = func(context.Context) error { atomic.AddInt32(&n, 1); return nil }
+	}
+	if err := RunAll(context.Background(), 3, tasks); err != nil {
+		t.Fatalf("err = %v", err)
+	}
+	if n != 10 {
+		t.Errorf("chạy %d task, muốn 10", n)
+	}
+})
+
+var _ = Test("không vượt quá limit task đồng thời", func(t *T) {
+	var cur, peak int32
+	var mu sync.Mutex
+	tasks := make([]func(context.Context) error, 12)
+	for i := range tasks {
+		tasks[i] = func(context.Context) error {
+			c := atomic.AddInt32(&cur, 1)
+			mu.Lock()
+			if c > peak {
+				peak = c
+			}
+			mu.Unlock()
+			time.Sleep(10 * time.Millisecond)
+			atomic.AddInt32(&cur, -1)
+			return nil
+		}
+	}
+	if err := RunAll(context.Background(), 3, tasks); err != nil {
+		t.Fatalf("err = %v", err)
+	}
+	if peak > 3 || peak < 2 {
+		t.Errorf("peak = %d, muốn 2..3 (song song nhưng <= limit)", peak)
+	}
+})
+
+var _ = Test("lỗi đầu tiên huỷ các task khác và được trả về", func(t *T) {
+	boom := errors.New("boom")
+	var cancelled int32
+	tasks := []func(context.Context) error{
+		func(context.Context) error { time.Sleep(5 * time.Millisecond); return boom },
+		func(ctx context.Context) error {
+			select {
+			case <-ctx.Done():
+				atomic.AddInt32(&cancelled, 1)
+				return ctx.Err()
+			case <-time.After(2 * time.Second):
+				return nil
+			}
+		},
+	}
+	start := time.Now()
+	err := RunAll(context.Background(), 2, tasks)
+	if !errors.Is(err, boom) {
+		t.Fatalf("err = %v, muốn boom", err)
+	}
+	if cancelled != 1 || time.Since(start) > time.Second {
+		t.Errorf("task chậm không bị huỷ sớm (cancelled=%d)", cancelled)
+	}
+})
+
+var _ = Test("task chưa bắt đầu không chạy sau khi có lỗi", func(t *T) {
+	var ran int32
+	tasks := []func(context.Context) error{
+		func(context.Context) error { return errors.New("fail") },
+	}
+	for i := 0; i < 5; i++ {
+		tasks = append(tasks, func(context.Context) error { atomic.AddInt32(&ran, 1); return nil })
+	}
+	if err := RunAll(context.Background(), 1, tasks); err == nil {
+		t.Fatal("muốn lỗi")
+	}
+	if ran != 0 {
+		t.Errorf("%d task chạy sau lỗi, muốn 0", ran)
+	}
+})
+
+var _ = Test("ctx cha đã huỷ trả ctx.Err và không chạy task", func(t *T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	var ran int32
+	tasks := []func(context.Context) error{
+		func(context.Context) error { atomic.AddInt32(&ran, 1); return nil },
+	}
+	err := RunAll(ctx, 2, tasks)
+	if !errors.Is(err, context.Canceled) || ran != 0 {
+		t.Errorf("err=%v ran=%d", err, ran)
+	}
+})
+
+var _ = Test("limit <= 0 vẫn chạy tuần tự", func(t *T) {
+	var n int32
+	tasks := []func(context.Context) error{
+		func(context.Context) error { atomic.AddInt32(&n, 1); return nil },
+		func(context.Context) error { atomic.AddInt32(&n, 1); return nil },
+	}
+	if err := RunAll(context.Background(), 0, tasks); err != nil || n != 2 {
+		t.Errorf("err=%v n=%d", err, n)
+	}
+})
+'''
+hints = ["Dùng channel có buffer `limit` làm semaphore; lấy slot bằng `select` cùng `cctx.Done()`.", "`sync.Once` để ghi lỗi đầu tiên và gọi `cancel()` đúng một lần; `wg.Wait()` trước khi return."]
+explanation = "Đây là pattern kiểu errgroup với `SetLimit`: semaphore giới hạn tải downstream, context con để huỷ dây chuyền, WaitGroup đảm bảo không rò goroutine. Gom vào một helper chung giúp cả team không tự viết lại (và viết sai) logic này."
+sources = ["go/context/index#WithCancel", "go/sync/index#WaitGroup", "go/sync/index#Once"]
+
+[[questions]]
+id = "go-lv019"
+module = "go-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "mentoring"]
+prompt = '''
+Team có 3 dev mới chuyển từ Java sang Go, PR của họ thường có class hierarchy giả lập bằng embedding, getter/setter cho mọi field và interface cho mọi struct. Deadline dự án không cho phép đào tạo dài. Cách tiếp cận hiệu quả nhất của lead?
+'''
+options = [
+  "Viết một tài liệu \"Go style của team\" ngắn kèm ví dụ trước/sau, pair review vài PR đầu, bật linter (vd. `go vet`, `staticcheck`) trong CI cho lỗi máy bắt được",
+  "Tự sửa lại mọi PR của họ trước khi merge",
+  "Cho phép phong cách Java để kịp deadline, sửa sau",
+  "Từ chối mọi PR đến khi họ tự học xong sách Go",
+]
+answer = [0]
+explanation = "Hướng dẫn ngắn + ví dụ cụ thể + pair review + tự động hoá bằng linter chuyển kiến thức nhanh mà không chặn deadline. Tự sửa hộ khiến họ không học và lead thành nút thắt. Chấp nhận phong cách lệch tích luỹ nợ kỹ thuật. Từ chối PR làm trễ dự án và giảm tinh thần."
+sources = ["go/go/build/index"]
+
+# ------------------------------------------------------------ SENIOR (level framework)
+[[questions]]
+id = "go-lv020"
+module = "go-concurrency"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "goroutine-leak"]
+prompt = '''
+Hàm sau được gọi mỗi request. Sau vài giờ số goroutine tăng liên tục. Vì sao?
+
+```go
+func firstResult(ctx context.Context, urls []string) string {
+	ch := make(chan string)
+	for _, u := range urls {
+		go func(u string) { ch <- fetch(u) }(u)
+	}
+	select {
+	case r := <-ch:
+		return r
+	case <-ctx.Done():
+		return ""
+	}
+}
+```
+'''
+options = [
+  "Chỉ một giá trị được nhận; các goroutine còn lại chặn mãi ở `ch <- ...` vì channel không buffer và không còn ai đọc",
+  "`select` không hỗ trợ `ctx.Done()`",
+  "Closure bắt sai biến `u`",
+  "`fetch` chạy song song nên luôn gây data race",
+]
+answer = [0]
+explanation = "Sau khi hàm return, không ai đọc `ch` nữa nên mọi goroutine gửi sau đều kẹt vĩnh viễn — goroutine leak. Sửa: `make(chan string, len(urls))` để gửi không chặn, và truyền ctx vào `fetch` để huỷ. Tham số `u` được truyền vào nên closure đúng."
+sources = ["go/context/index#Context"]
+
+[[questions]]
+id = "go-lv021"
+module = "go-concurrency"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "channels"]
+prompt = '''
+Trong vòng `for { select { ... } }` gộp hai channel `a`, `b`, khi `a` đã bị đóng ta muốn **ngừng chọn** nhánh `a` nhưng vẫn đọc `b`. Kỹ thuật chuẩn là gì?
+'''
+options = [
+  "Gán `a = nil`; nhận từ channel nil chặn mãi nên nhánh đó không bao giờ được chọn",
+  "Gọi `close(a)` lần nữa",
+  "Thêm `default:` để bỏ qua `a`",
+  "Dùng `runtime.Gosched()` trong nhánh `a`",
+]
+answer = [0]
+explanation = "Channel nil trong `select` tắt nhánh đó. Khi cả hai đều nil thì thoát vòng lặp. Đóng lại channel đã đóng gây panic; `default` biến vòng lặp thành busy-loop; `Gosched` không liên quan."
+sources = ["go/builtin/index#close"]
+
+[[questions]]
+id = "go-lv022"
+module = "go-concurrency"
+type = "multiple"
+difficulty = 3
+tags = ["level:senior", "race"]
+prompt = '''
+Chọn các nhận định **đúng** về race detector (`go test -race`).
+'''
+options = [
+  "Chỉ phát hiện data race thực sự xảy ra trên đường code được chạy trong lần thực thi đó",
+  "Không báo race nghĩa là chương trình chắc chắn không có race",
+  "Làm chương trình chậm và tốn memory hơn nhiều lần nên thường bật trong CI/test thay vì production",
+  "Có thể phát hiện race khi hai goroutine ghi cùng một map không có khoá",
+  "Phát hiện được deadlock giữa hai mutex",
+]
+answer = [0, 2, 3]
+explanation = "Race detector là công cụ động: chỉ thấy truy cập thực sự xảy ra, nên cần test phủ các đường đồng thời. Overhead lớn (ước lượng CPU vài lần, memory 5–10 lần). Ghi map đồng thời là race điển hình. Không báo không chứng minh không có race; deadlock không phải việc của race detector."
+sources = ["go/testing/index"]
+
+[[questions]]
+id = "go-lv023"
+module = "go-basics"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "escape-analysis"]
+prompt = '''
+`go build -gcflags=-m` báo `&buf escapes to heap` cho hàm sau. Nguyên nhân hợp lý nhất?
+
+```go
+func newBuf() *bytes.Buffer {
+	var buf bytes.Buffer
+	return &buf
+}
+```
+'''
+options = [
+  "Con trỏ tới biến cục bộ được trả ra ngoài hàm nên biến phải sống lâu hơn stack frame → compiler đặt nó trên heap",
+  "Go luôn cấp phát mọi struct trên heap",
+  "Đây là lỗi; trả con trỏ tới biến cục bộ là undefined behavior",
+  "Vì `bytes.Buffer` có method với pointer receiver",
+]
+answer = [0]
+explanation = "Escape analysis quyết định stack hay heap: giá trị bị tham chiếu sau khi hàm return phải lên heap. Trong Go điều này an toàn (khác C). Không phải mọi struct đều lên heap; pointer receiver tự nó không gây escape."
+sources = ["go/runtime/index"]
+
+[[questions]]
+id = "go-lv024"
+module = "go-basics"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "interface"]
+prompt = '''
+Đoạn sau in ra gì?
+
+```go
+type MyErr struct{}
+func (*MyErr) Error() string { return "x" }
+
+func do() error {
+	var p *MyErr = nil
+	return p
+}
+
+func main() {
+	fmt.Println(do() == nil)
+}
+```
+'''
+options = ["`false`", "`true`", "Không biên dịch được", "Panic nil pointer"]
+answer = [0]
+explanation = "Interface chỉ bằng nil khi cả type và value đều nil. Ở đây interface `error` mang type `*MyErr` với value nil, nên khác nil. Đây là bug kinh điển: hàm trả lỗi nên `return nil` tường minh thay vì trả con trỏ kiểu cụ thể."
+sources = ["go/errors/index"]
+
+[[questions]]
+id = "go-lv025"
+module = "go-concurrency"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "sync"]
+prompt = '''
+`go vet` báo `passes lock by value` cho đoạn sau. Hậu quả thực tế là gì?
+
+```go
+type Counter struct {
+	mu sync.Mutex
+	n  int
+}
+func (c Counter) Inc() { c.mu.Lock(); c.n++; c.mu.Unlock() }
+```
+'''
+options = [
+  "Value receiver sao chép cả struct lẫn mutex; mỗi lần gọi khoá một bản sao riêng và tăng `n` của bản sao, nên struct gốc không đổi và không được bảo vệ",
+  "Chương trình deadlock ngay lần gọi đầu",
+  "Không ảnh hưởng gì, `go vet` báo nhầm",
+  "Compiler tự chuyển sang pointer receiver",
+]
+answer = [0]
+explanation = "`sync.Mutex` không được sao chép sau khi dùng. Với value receiver, `Inc` thao tác trên bản sao: `n` gốc không tăng và khoá vô nghĩa. Sửa bằng pointer receiver `func (c *Counter) Inc()`."
+sources = ["go/sync/index#Mutex"]
+
+[[questions]]
+id = "go-lv026"
+module = "go-concurrency"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "sync"]
+prompt = '''
+Cache đọc rất nhiều, ghi hiếm, giá trị là cấu hình được nạp lại cả khối mỗi 5 phút. Cách đồng bộ hoá đơn giản và hiệu quả nhất?
+'''
+options = [
+  "`atomic.Pointer[Config]`: goroutine nạp lại tạo Config mới bất biến rồi `Store`; reader chỉ `Load`",
+  "Một `sync.Mutex` khoá mọi lần đọc",
+  "`sync.Map` với mỗi field cấu hình là một key",
+  "Không cần đồng bộ vì ghi hiếm",
+]
+answer = [0]
+explanation = "Thay cả khối bất biến bằng atomic pointer cho reader không bao giờ chờ khoá và luôn thấy một snapshot nhất quán. Mutex hoạt động nhưng tạo tranh chấp khi đọc nhiều. `sync.Map` theo key không đảm bảo snapshot nhất quán giữa các field. Không đồng bộ là data race dù ghi hiếm."
+sources = ["go/sync/atomic/index", "go/sync/index#RWMutex"]
+
+[[questions]]
+id = "go-lv027"
+module = "go-web"
+type = "multiple"
+difficulty = 3
+tags = ["level:senior", "http-client"]
+prompt = '''
+Service gọi API bên thứ ba bằng `http.Client`. Chọn các thực hành **đúng** để tránh rò kết nối và treo request.
+'''
+options = [
+  "Đặt `Timeout` cho client hoặc dùng `http.NewRequestWithContext` với context có deadline",
+  "Luôn `defer resp.Body.Close()` sau khi kiểm tra `err == nil`",
+  "Tạo `http.Client` mới cho mỗi request để tránh chia sẻ trạng thái",
+  "Đọc hết (hoặc bỏ phần còn lại) body trước khi đóng để kết nối được tái sử dụng",
+  "Dùng `http.DefaultClient` vì mặc định đã có timeout 30 giây",
+]
+answer = [0, 1, 3]
+explanation = "Timeout/deadline tránh treo; đóng body giải phóng kết nối; đọc hết body giúp keep-alive tái sử dụng. Tạo client mới mỗi request làm mất connection pool. `http.DefaultClient` **không** có timeout mặc định."
+sources = ["go/net/http/index#Client"]
+
+[[questions]]
+id = "go-lv028"
+module = "go-web"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "security"]
+prompt = '''
+Một endpoint nhận JSON từ internet bằng `json.NewDecoder(r.Body).Decode(&req)`. Pentest cho thấy gửi body 2 GB làm service tốn RAM nghiêm trọng. Cách khắc phục đúng chỗ nhất?
+'''
+options = [
+  "Bọc body bằng `http.MaxBytesReader(w, r.Body, 1<<20)` trước khi decode và trả 413 khi vượt giới hạn",
+  "Đổi sang `io.ReadAll` rồi `json.Unmarshal`",
+  "Tăng RAM cho container",
+  "Dùng `DisallowUnknownFields()`",
+]
+answer = [0]
+explanation = "`MaxBytesReader` giới hạn số byte đọc từ body và báo lỗi khi vượt. `io.ReadAll` còn tệ hơn vì nạp toàn bộ. Tăng RAM không chặn tấn công. `DisallowUnknownFields` chỉ kiểm tra tên field, không giới hạn kích thước."
+sources = ["go/net/http/index", "go/encoding/json/index#Decoder"]
+
+[[questions]]
+id = "go-lv029"
+module = "go-web"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "http-server"]
+prompt = '''
+`http.Server{Addr: ":8080", Handler: mux}` được đưa ra internet. Review bảo mật chỉ ra rủi ro "slowloris" (client mở nhiều kết nối, gửi header cực chậm). Cấu hình nào giải quyết?
+'''
+options = [
+  "Đặt `ReadHeaderTimeout` (và hợp lý cả `ReadTimeout`, `WriteTimeout`, `IdleTimeout`)",
+  "Đặt `MaxHeaderBytes = 0`",
+  "Dùng `http.ListenAndServe` thay vì struct `http.Server`",
+  "Bọc handler bằng `http.TimeoutHandler` là đủ",
+]
+answer = [0]
+explanation = "Giá trị zero của các timeout nghĩa là không giới hạn; `ReadHeaderTimeout` cắt client gửi header chậm. `MaxHeaderBytes = 0` dùng mặc định chứ không chống chậm. `ListenAndServe` không có timeout. `TimeoutHandler` chỉ giới hạn thời gian chạy handler, không bảo vệ giai đoạn đọc header."
+sources = ["go/net/http/index#Server", "go/net/http/index#TimeoutHandler"]
+
+[[questions]]
+id = "go-lv030"
+module = "go-dv-database"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "database"]
+prompt = '''
+Dưới tải cao, service Go báo `too many connections` từ Postgres (giới hạn 100), có 8 replica. `sql.DB` để cấu hình mặc định. Điều chỉnh hợp lý nhất?
+'''
+options = [
+  "Đặt `SetMaxOpenConns` mỗi replica (vd. ~10 để tổng < 100 kèm dư địa), cùng `SetMaxIdleConns` và `SetConnMaxLifetime` phù hợp",
+  "Gọi `sql.Open` cho mỗi request rồi `Close`",
+  "Tăng `max_connections` của Postgres lên 10.000",
+  "Bỏ connection pool bằng `SetMaxOpenConns(1)` cho mọi replica",
+]
+answer = [0]
+explanation = "Mặc định `MaxOpenConns` không giới hạn, nên 8 replica có thể mở vượt trần DB. Giới hạn theo replica giữ tổng dưới ngưỡng. `sql.Open` mỗi request phá pool và chậm. Tăng `max_connections` quá lớn tốn RAM DB. Một kết nối mỗi replica tạo nút thắt nghiêm trọng."
+sources = ["go/database/sql/index#DB"]
+
+[[questions]]
+id = "go-lv031"
+module = "go-dv-database"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "transaction"]
+prompt = '''
+Đoạn sau đôi khi làm hết connection pool. Lỗi nằm ở đâu?
+
+```go
+tx, err := db.BeginTx(ctx, nil)
+if err != nil { return err }
+if _, err := tx.ExecContext(ctx, q1); err != nil {
+	return err
+}
+return tx.Commit()
+```
+'''
+options = [
+  "Khi `ExecContext` lỗi, hàm return mà không `Rollback` nên transaction và kết nối bị giữ; nên `defer tx.Rollback()` ngay sau `BeginTx`",
+  "`Commit` phải gọi trước `ExecContext`",
+  "Không được dùng `ctx` cho cả `BeginTx` và `ExecContext`",
+  "`BeginTx` với options nil là không hợp lệ",
+]
+answer = [0]
+explanation = "Transaction giữ một kết nối tới khi Commit/Rollback. `defer tx.Rollback()` an toàn vì sau khi Commit thành công, Rollback chỉ trả `sql.ErrTxDone`. (Khi ctx bị huỷ, sql cũng tự rollback, nhưng không nên dựa vào đó.)"
+sources = ["go/database/sql/index#DB.BeginTx", "go/database/sql/index#Tx.Rollback"]
+
+[[questions]]
+id = "go-lv032"
+module = "go-dv-testing"
+type = "multiple"
+difficulty = 3
+tags = ["level:senior", "testing"]
+prompt = '''
+Một test đôi khi fail trên CI (flaky): nó khởi động goroutine xử lý rồi `time.Sleep(50 * time.Millisecond)` trước khi kiểm tra kết quả. Chọn các cách sửa **tốt**.
+'''
+options = [
+  "Đồng bộ bằng channel/WaitGroup để chờ đúng sự kiện thay vì ngủ cố định",
+  "Inject clock/ticker vào code để test điều khiển thời gian",
+  "Tăng sleep lên 2 giây",
+  "Đánh dấu `t.Skip()` trên CI",
+  "Chạy thêm `-race -count=50` cục bộ để tái hiện và xác nhận bản sửa",
+]
+answer = [0, 1, 4]
+explanation = "Chờ sự kiện tường minh và điều khiển thời gian loại bỏ nguồn flaky; chạy lặp với `-count` giúp xác nhận. Tăng sleep chỉ giảm xác suất và làm test chậm; skip che giấu lỗi."
+sources = ["go/testing/index#T"]
+
+[[questions]]
+id = "go-lv033"
+module = "go-dv-testing"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "fuzzing"]
+prompt = '''
+Bạn có parser `ParseDuration(s string) (time.Duration, error)` tự viết và hàm `Format(d)`. Fuzz test nào có giá trị nhất?
+'''
+options = [
+  "`FuzzParse` với seed `f.Add(\"1h30m\")`…, kiểm tra không panic và nếu parse thành công thì `Parse(Format(d)) == d` (round-trip)",
+  "Fuzz chỉ kiểm tra hàm trả lỗi `nil` với mọi input",
+  "Fuzz sinh ngẫu nhiên số nguyên rồi so sánh với hằng số",
+  "Không cần fuzz vì đã có table test 5 case",
+]
+answer = [0]
+explanation = "Fuzz mạnh nhất khi kiểm tra thuộc tính bất biến (không panic, round-trip) thay vì giá trị cụ thể. Input ngẫu nhiên phần lớn không hợp lệ nên kỳ vọng luôn `nil` là sai. Table test 5 case không phủ input bất thường."
+sources = ["go/testing/index#F.Add"]
+
+[[questions]]
+id = "go-lv034"
+module = "go-errors"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "panic"]
+prompt = '''
+Một HTTP server Go có middleware `recover`. Handler khởi chạy `go process(job)` và `process` bị panic. Điều gì xảy ra?
+'''
+options = [
+  "Cả process sập; `recover` chỉ bắt panic trong cùng goroutine, nên goroutine con phải tự `defer recover`",
+  "Middleware recover bắt được và trả 500",
+  "Chỉ goroutine con dừng, process tiếp tục bình thường",
+  "Runtime tự restart goroutine",
+]
+answer = [0]
+explanation = "Panic không được recover trong goroutine của nó sẽ kết thúc toàn bộ chương trình. Middleware chỉ bảo vệ goroutine phục vụ request. Mọi goroutine nền nên có wrapper `defer func(){ if r := recover(); ... }()` kèm log/metric."
+sources = ["go/builtin/index#recover", "go/builtin/index#panic"]
+
+[[questions]]
+id = "go-lv035"
+module = "go-dv-io"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "io"]
+prompt = '''
+Service sinh báo cáo CSV vài trăm MB rồi trả về HTTP. Phiên bản hiện tại build toàn bộ vào `bytes.Buffer` rồi `w.Write(buf.Bytes())`, khiến memory tăng vọt. Thiết kế tốt hơn?
+'''
+options = [
+  "Ghi trực tiếp vào `http.ResponseWriter` qua `bufio.Writer`/`csv.Writer`, flush định kỳ, kiểm tra `r.Context()` để dừng khi client ngắt",
+  "Dùng `strings.Builder` thay `bytes.Buffer`",
+  "Nén toàn bộ buffer bằng gzip trước khi gửi",
+  "Tăng `GOGC` để GC chạy ít hơn",
+]
+answer = [0]
+explanation = "Stream qua `io.Writer` giữ memory ổn định bất kể kích thước báo cáo; kiểm tra context tránh làm việc thừa khi client đã đi. `strings.Builder` vẫn giữ toàn bộ trong RAM. Nén cả buffer vẫn cần buffer đầy đủ. Tăng `GOGC` làm memory còn cao hơn."
+sources = ["go/io/index#Copy", "go/net/http/index"]
+
+[[questions]]
+id = "go-lv036"
+module = "go-concurrency"
+type = "essay"
+difficulty = 3
+tags = ["level:senior", "context"]
+prompt = '''
+Phỏng vấn senior: giải thích cách `context.Context` lan truyền huỷ bỏ và deadline qua một chuỗi gọi (HTTP handler → service → DB/HTTP client). Nêu các quy tắc dùng context đúng và các lỗi thường gặp.
+'''
+keywords = [["tham số đầu", "first parameter", "tham số đầu tiên"], ["ctx.done", "done()"], ["cancel", "huỷ", "hủy"], ["deadline", "timeout"], ["struct", "lưu trong struct"], ["value", "withvalue"]]
+min_keywords = 4
+model_answer = '''
+Context tạo thành cây: `r.Context()` là gốc của request, mỗi `WithTimeout`/`WithCancel` tạo con. Khi cha bị huỷ (client ngắt, server shutdown) hoặc hết deadline, tín hiệu lan xuống mọi con; code chờ I/O lắng nghe `ctx.Done()` và trả `ctx.Err()`. Thư viện chuẩn như `database/sql` (`QueryContext`) và `http.NewRequestWithContext` tôn trọng context này.
+
+Quy tắc: truyền ctx làm tham số đầu tiên, không lưu trong struct; luôn `defer cancel()` sau `WithTimeout` để giải phóng timer; timeout con nên nhỏ hơn deadline cha; `WithValue` chỉ cho dữ liệu phạm vi request (request_id, user) với key kiểu riêng, không dùng để truyền tham số tuỳ chọn.
+
+Lỗi thường gặp: dùng `context.Background()` sâu trong request nên mất huỷ bỏ; quên `cancel` gây rò timer; vòng lặp/goroutine không kiểm tra `ctx.Done()` nên tiếp tục chạy sau khi request kết thúc; nuốt `context.Canceled` như lỗi thường và log ồn ào.
+'''
+explanation = "Câu trả lời cần nêu cây context, lan truyền huỷ/deadline, quy tắc (tham số đầu, không lưu struct, defer cancel, WithValue hạn chế) và lỗi phổ biến."
+sources = ["go/context/index", "go/context/index#WithTimeout"]
+
+[[questions]]
+id = "go-lv037"
+module = "go-basics"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "slices"]
+prompt = '''
+In ra gì?
+
+```go
+a := make([]int, 3, 10)
+b := append(a, 1)
+c := append(a, 2)
+fmt.Println(b[3], c[3])
+```
+'''
+options = ["`2 2`", "`1 2`", "`1 1`", "Panic index out of range"]
+answer = [0]
+explanation = "`a` có cap 10 nên cả hai `append` ghi vào cùng mảng nền tại chỉ số 3; lần sau ghi đè lần trước, nên `b[3]` và `c[3]` đều là 2. Muốn tách bạch, dùng full slice expression `a[:3:3]` hoặc `slices.Clone` trước khi append."
+sources = ["go/builtin/index#append", "go/slices/index#Clone"]
+
+[[questions]]
+id = "go-lvc02"
+module = "go-concurrency"
+type = "code"
+lang = "go"
+difficulty = 3
+tags = ["level:senior", "rate-limit"]
+title = "Token bucket an toàn đồng thời"
+prompt = '''
+Cài đặt rate limiter token bucket, thời gian được **inject** để test được:
+
+```go
+type Bucket struct { /* tự thiết kế */ }
+func NewBucket(capacity int, refillPerSec float64, now func() time.Time) *Bucket
+func (b *Bucket) Allow() bool
+```
+
+- Bucket bắt đầu **đầy** (`capacity` token).
+- Token được nạp liên tục theo thời gian: sau `d` thời gian thêm `d.Seconds() * refillPerSec` token (cho phép phần lẻ), không vượt `capacity`.
+- `Allow()` lấy 1 token nếu còn ≥ 1 và trả `true`; ngược lại trả `false`.
+- Đồng hồ lấy từ `now()`, **không** gọi `time.Now()` trực tiếp.
+- `Allow` phải an toàn khi gọi từ nhiều goroutine.
+'''
+starter = '''
+package main
+
+import "time"
+
+type Bucket struct {
+	now func() time.Time
+}
+
+func NewBucket(capacity int, refillPerSec float64, now func() time.Time) *Bucket {
+	return &Bucket{now: now}
+}
+
+func (b *Bucket) Allow() bool {
+	return true
+}
+'''
+solution = '''
+package main
+
+import (
+	"sync"
+	"time"
+)
+
+type Bucket struct {
+	mu     sync.Mutex
+	cap    float64
+	rate   float64
+	tokens float64
+	last   time.Time
+	now    func() time.Time
+}
+
+func NewBucket(capacity int, refillPerSec float64, now func() time.Time) *Bucket {
+	return &Bucket{cap: float64(capacity), rate: refillPerSec, tokens: float64(capacity), last: now(), now: now}
+}
+
+func (b *Bucket) Allow() bool {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	t := b.now()
+	if elapsed := t.Sub(b.last).Seconds(); elapsed > 0 {
+		b.tokens += elapsed * b.rate
+		if b.tokens > b.cap {
+			b.tokens = b.cap
+		}
+		b.last = t
+	}
+	if b.tokens >= 1 {
+		b.tokens--
+		return true
+	}
+	return false
+}
+'''
+tests = '''
+package main
+
+import (
+	"sync"
+	"sync/atomic"
+	"time"
+)
+
+type fakeClock struct {
+	mu sync.Mutex
+	t  time.Time
+}
+
+func (c *fakeClock) Now() time.Time { c.mu.Lock(); defer c.mu.Unlock(); return c.t }
+func (c *fakeClock) Add(d time.Duration) { c.mu.Lock(); c.t = c.t.Add(d); c.mu.Unlock() }
+
+func newClock() *fakeClock { return &fakeClock{t: time.Unix(1000, 0)} }
+
+var _ = Test("bắt đầu đầy và hết token thì từ chối", func(t *T) {
+	c := newClock()
+	b := NewBucket(3, 1, c.Now)
+	for i := 0; i < 3; i++ {
+		if !b.Allow() {
+			t.Fatalf("lần %d phải được phép", i+1)
+		}
+	}
+	if b.Allow() {
+		t.Error("lần thứ 4 phải bị từ chối")
+	}
+})
+
+var _ = Test("nạp lại theo thời gian", func(t *T) {
+	c := newClock()
+	b := NewBucket(2, 2, c.Now)
+	b.Allow()
+	b.Allow()
+	c.Add(500 * time.Millisecond)
+	if !b.Allow() {
+		t.Error("sau 0.5s với 2 token/s phải có 1 token")
+	}
+	if b.Allow() {
+		t.Error("chỉ có 1 token")
+	}
+})
+
+var _ = Test("không vượt capacity", func(t *T) {
+	c := newClock()
+	b := NewBucket(2, 10, c.Now)
+	c.Add(time.Hour)
+	n := 0
+	for i := 0; i < 5; i++ {
+		if b.Allow() {
+			n++
+		}
+	}
+	if n != 2 {
+		t.Errorf("được phép %d, muốn 2", n)
+	}
+})
+
+var _ = Test("cộng dồn phần lẻ token", func(t *T) {
+	c := newClock()
+	b := NewBucket(1, 1, c.Now)
+	b.Allow()
+	c.Add(400 * time.Millisecond)
+	if b.Allow() {
+		t.Fatal("0.4 token chưa đủ")
+	}
+	c.Add(700 * time.Millisecond)
+	if !b.Allow() {
+		t.Error("0.4 + 0.7 = 1.1 token phải đủ")
+	}
+})
+
+var _ = Test("an toàn đồng thời: đúng capacity lượt được phép", func(t *T) {
+	c := newClock()
+	b := NewBucket(50, 0, c.Now)
+	var ok int32
+	var wg sync.WaitGroup
+	for i := 0; i < 200; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			if b.Allow() {
+				atomic.AddInt32(&ok, 1)
+			}
+		}()
+	}
+	wg.Wait()
+	if ok != 50 {
+		t.Errorf("được phép %d, muốn 50", ok)
+	}
+})
+'''
+hints = ["Lưu `tokens float64` và thời điểm nạp cuối `last`; mỗi lần `Allow` tính thời gian trôi qua để cộng token.", "Bảo vệ toàn bộ đọc-sửa-ghi bằng `sync.Mutex`."]
+explanation = "Token bucket cho phép burst tới `capacity` rồi giữ tốc độ trung bình. Nạp lười (lazy refill) khi gọi `Allow` tránh cần goroutine ticker; inject clock giúp test xác định, không phụ thuộc `time.Sleep`."
+sources = ["go/sync/index#Mutex", "go/time/index#Duration"]
+
+# ------------------------------------------------------------ JUNIOR (level framework)
+[[questions]]
+id = "go-lv038"
+module = "go-basics"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "syntax"]
+prompt = '''
+Đoạn sau in ra gì?
+
+```go
+var n int
+var s string
+var ok bool
+fmt.Println(n, s == "", ok)
+```
+'''
+options = ["`0 true false`", "`nil true nil`", "`0 false false`", "Không biên dịch được vì biến chưa gán"]
+answer = [0]
+explanation = "Biến khai báo không gán nhận zero value: `0` cho số, `\"\"` cho string, `false` cho bool. Go không có biến \"chưa khởi tạo\"."
+sources = ["go/builtin/index"]
+
+[[questions]]
+id = "go-lv039"
+module = "go-basics"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "syntax"]
+prompt = '''
+Vì sao đoạn sau không biên dịch?
+
+```go
+func main() {
+	x := 1
+	y := 2
+	fmt.Println(x)
+}
+```
+'''
+options = [
+  "Biến cục bộ `y` được khai báo nhưng không dùng",
+  "Thiếu dấu `;` cuối dòng",
+  "`:=` chỉ dùng được ngoài hàm",
+  "`fmt.Println` cần ít nhất 2 tham số",
+]
+answer = [0]
+explanation = "Compiler Go báo lỗi `declared and not used` cho biến cục bộ không dùng (và import không dùng). Dấu `;` được tự chèn; `:=` chỉ dùng được **trong** hàm."
+sources = ["go/fmt/index"]
+
+[[questions]]
+id = "go-lv040"
+module = "go-basics"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "strings"]
+prompt = '''
+`len("héllo")` trả về bao nhiêu?
+'''
+options = ["`6`", "`5`", "`4`", "Lỗi biên dịch"]
+answer = [0]
+explanation = "`len` của string đếm **byte** (UTF-8). `é` chiếm 2 byte nên tổng là 6. Đếm ký tự dùng `utf8.RuneCountInString` hoặc `len([]rune(s))`."
+sources = ["go/unicode/utf8/index#RuneCountInString"]
+
+[[questions]]
+id = "go-lv041"
+module = "go-basics"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "loops"]
+prompt = '''
+Go có những dạng vòng lặp nào?
+'''
+options = [
+  "Chỉ có `for` (dạng 3 thành phần, dạng điều kiện như while, vòng vô hạn và `for range`)",
+  "`for`, `while` và `do-while`",
+  "`for` và `foreach`",
+  "`loop` và `repeat`",
+]
+answer = [0]
+explanation = "Go chỉ có từ khoá `for`: `for i := 0; i < n; i++`, `for cond {}`, `for {}` và `for k, v := range x`."
+sources = ["go/builtin/index"]
+
+[[questions]]
+id = "go-lv042"
+module = "go-basics"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "visibility"]
+prompt = '''
+Trong package `user`, identifier nào **dùng được** từ package khác?
+'''
+options = ["`func NewUser()`", "`func validate()`", "`var defaultName`", "`type user struct`"]
+answer = [0]
+explanation = "Go không có từ khoá `public/private`: tên bắt đầu bằng chữ **hoa** được export, chữ thường chỉ dùng trong package."
+sources = ["go/go/build/index"]
+
+[[questions]]
+id = "go-lv043"
+module = "go-basics"
+type = "fill"
+difficulty = 1
+tags = ["level:junior", "slices"]
+prompt = '''
+Thêm phần tử `4` vào cuối slice và gán lại:
+
+```go
+nums := []int{1, 2, 3}
+nums = {{blank}}(nums, 4)
+```
+'''
+blanks = [["append"]]
+explanation = "`append` trả về slice mới (có thể cấp phát mảng nền khác), nên luôn gán lại kết quả."
+sources = ["go/builtin/index#append"]
+
+[[questions]]
+id = "go-lv044"
+module = "go-basics"
+type = "fill"
+difficulty = 1
+tags = ["level:junior", "maps"]
+prompt = '''
+Xoá key `"bob"` khỏi map:
+
+```go
+ages := map[string]int{"bob": 30, "ann": 25}
+{{blank}}(ages, "bob")
+```
+'''
+blanks = [["delete"]]
+explanation = "Built-in `delete(m, key)` xoá key; xoá key không tồn tại không gây lỗi."
+sources = ["go/builtin/index"]
+
+[[questions]]
+id = "go-lv045"
+module = "go-basics"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "struct"]
+prompt = '''
+Đoạn sau in ra gì?
+
+```go
+type Point struct{ X, Y int }
+
+func move(p Point) { p.X = 10 }
+
+func main() {
+	p := Point{1, 2}
+	move(p)
+	fmt.Println(p.X)
+}
+```
+'''
+options = ["`1`", "`10`", "`0`", "Không biên dịch được"]
+answer = [0]
+explanation = "Go truyền tham số theo giá trị: `move` nhận bản sao của struct. Muốn sửa bản gốc, truyền con trỏ `func move(p *Point)` và gọi `move(&p)`."
+sources = ["go/builtin/index"]
+
+[[questions]]
+id = "go-lv046"
+module = "go-basics"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "defer"]
+prompt = '''
+Đoạn sau in ra gì?
+
+```go
+func main() {
+	defer fmt.Println("a")
+	defer fmt.Println("b")
+	fmt.Println("c")
+}
+```
+'''
+options = ["`c b a`", "`a b c`", "`c a b`", "`b a c`"]
+answer = [0]
+explanation = "Lời gọi `defer` chạy khi hàm return, theo thứ tự ngược (LIFO): defer sau chạy trước."
+sources = ["go/builtin/index"]
+
+[[questions]]
+id = "go-lv047"
+module = "go-basics"
+type = "multiple"
+difficulty = 1
+tags = ["level:junior", "types"]
+prompt = '''
+Chọn các cách khai báo biến **hợp lệ trong thân hàm**.
+'''
+options = ["`var x int = 5`", "`x := 5`", "`var x = 5`", "`int x = 5`", "`let x = 5`"]
+answer = [0, 1, 2]
+explanation = "Go dùng `var tên kiểu = giá trị`, có thể bỏ kiểu để suy luận, hoặc dạng ngắn `:=` trong hàm. `int x` là cú pháp C, `let` là JavaScript/Rust."
+sources = ["go/builtin/index"]
+
+[[questions]]
+id = "go-lv048"
+module = "go-errors"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "errors"]
+prompt = '''
+Cách xử lý lỗi điển hình nhất trong Go khi gọi `strconv.Atoi(s)` là gì?
+'''
+options = [
+  "`n, err := strconv.Atoi(s); if err != nil { return err }`",
+  "`try { n := strconv.Atoi(s) } catch (e) { ... }`",
+  "`n := strconv.Atoi(s)!`",
+  "Bỏ qua lỗi vì Atoi không bao giờ lỗi",
+]
+answer = [0]
+explanation = "Hàm Go trả lỗi như giá trị cuối cùng; caller kiểm tra `err != nil` ngay sau lời gọi. Go không có try/catch."
+sources = ["go/strconv/index#Atoi"]
+
+[[questions]]
+id = "go-lv049"
+module = "go-errors"
+type = "fill"
+difficulty = 1
+tags = ["level:junior", "errors"]
+prompt = '''
+Tạo một lỗi đơn giản với thông điệp cố định:
+
+```go
+var ErrEmpty = errors.{{blank}}("empty input")
+```
+'''
+blanks = [["New"]]
+explanation = "`errors.New` tạo error với thông điệp cho trước; khai báo ở mức package để dùng như sentinel và so sánh bằng `errors.Is`."
+sources = ["go/errors/index#New"]
+
+[[questions]]
+id = "go-lv050"
+module = "go-concurrency"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "goroutine"]
+prompt = '''
+Chương trình sau thường in ra gì?
+
+```go
+func main() {
+	go fmt.Println("hello")
+}
+```
+'''
+options = [
+  "Thường không in gì, vì `main` kết thúc ngay và chương trình thoát trước khi goroutine kịp chạy",
+  "Luôn in `hello`",
+  "Lỗi biên dịch vì thiếu `await`",
+  "Deadlock",
+]
+answer = [0]
+explanation = "Khi `main` return, chương trình dừng mà không chờ các goroutine khác. Cần đồng bộ, ví dụ `sync.WaitGroup` hoặc channel."
+sources = ["go/sync/index#WaitGroup"]
+
+[[questions]]
+id = "go-lv051"
+module = "go-concurrency"
+type = "fill"
+difficulty = 1
+tags = ["level:junior", "waitgroup"]
+prompt = '''
+Chờ các goroutine hoàn tất:
+
+```go
+var wg sync.WaitGroup
+for i := 0; i < 3; i++ {
+	wg.Add(1)
+	go func() {
+		defer wg.{{blank}}()
+		work()
+	}()
+}
+wg.Wait()
+```
+'''
+blanks = [["Done"]]
+explanation = "`wg.Done()` giảm bộ đếm đi 1; `defer` đảm bảo được gọi kể cả khi `work` return sớm. `Wait` chặn tới khi bộ đếm về 0."
+sources = ["go/sync/index#WaitGroup"]
+
+[[questions]]
+id = "go-lv052"
+module = "go-concurrency"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "channels"]
+prompt = '''
+Đoạn sau in ra gì?
+
+```go
+ch := make(chan int, 2)
+ch <- 1
+ch <- 2
+close(ch)
+for v := range ch {
+	fmt.Print(v, " ")
+}
+```
+'''
+options = ["`1 2 `", "`2 1 `", "Deadlock", "Panic vì đọc channel đã đóng"]
+answer = [0]
+explanation = "Channel giữ thứ tự FIFO. `range` đọc hết giá trị còn trong buffer rồi dừng khi channel đã đóng và rỗng. Đọc channel đã đóng không panic (chỉ gửi vào mới panic)."
+sources = ["go/builtin/index#close"]
+
+[[questions]]
+id = "go-lv053"
+module = "go-web"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "http"]
+prompt = '''
+Đoạn nào khởi động HTTP server lắng nghe cổng 8080 với handler mặc định?
+'''
+options = [
+  "`http.ListenAndServe(\":8080\", nil)`",
+  "`http.Start(8080)`",
+  "`http.Serve(\"8080\")`",
+  "`net.Listen(8080).Run()`",
+]
+answer = [0]
+explanation = "`http.ListenAndServe(addr, handler)` với handler `nil` dùng `http.DefaultServeMux`. Trên production nên dùng `http.Server` có timeout."
+sources = ["go/net/http/index"]
+
+[[questions]]
+id = "go-lv054"
+module = "go-web"
+type = "fill"
+difficulty = 1
+tags = ["level:junior", "json"]
+prompt = '''
+Chuyển struct thành JSON bytes:
+
+```go
+b, err := json.{{blank}}(user)
+```
+'''
+blanks = [["Marshal"]]
+explanation = "`json.Marshal` trả `[]byte` và error; ngược lại là `json.Unmarshal`. Chỉ field export (chữ hoa) được mã hoá."
+sources = ["go/encoding/json/index"]
+
+[[questions]]
+id = "go-lv055"
+module = "go-dv-testing"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "testing"]
+prompt = '''
+File test cho `math.go` nên đặt tên gì để `go test` nhận diện?
+'''
+options = ["`math_test.go`", "`test_math.go`", "`math.test.go`", "`math_spec.go`"]
+answer = [0]
+explanation = "`go test` chỉ biên dịch các file có hậu tố `_test.go`; các file này không nằm trong binary build thường."
+sources = ["go/testing/index"]
+
+[[questions]]
+id = "go-lv056"
+module = "go-dv-testing"
+type = "fill"
+difficulty = 1
+tags = ["level:junior", "testing"]
+prompt = '''
+Báo lỗi nhưng vẫn chạy tiếp phần còn lại của test:
+
+```go
+if got != want {
+	t.{{blank}}("got %d, want %d", got, want)
+}
+```
+'''
+blanks = [["Errorf"]]
+explanation = "`t.Errorf` đánh dấu test fail và tiếp tục; `t.Fatalf` dừng test ngay."
+sources = ["go/testing/index#T.Error"]
+
+[[questions]]
+id = "go-lv057"
+module = "go-dv-io"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "files"]
+prompt = '''
+Cách ngắn gọn để đọc toàn bộ một file cấu hình nhỏ `config.json` vào `[]byte`?
+'''
+options = [
+  "`data, err := os.ReadFile(\"config.json\")`",
+  "`data := os.Open(\"config.json\")`",
+  "`data := io.Read(\"config.json\")`",
+  "`data, err := fmt.Scan(\"config.json\")`",
+]
+answer = [0]
+explanation = "`os.ReadFile` mở, đọc hết và đóng file. `os.Open` chỉ trả `*os.File` (và error), phải tự đọc và `Close`. Với file lớn nên stream thay vì nạp hết."
+sources = ["go/os/index#ReadFile"]
+
+[[questions]]
+id = "go-lvc03"
+module = "go-basics"
+type = "code"
+lang = "go"
+difficulty = 1
+tags = ["level:junior", "maps"]
+title = "Đếm tần suất từ"
+prompt = '''
+Viết `func WordCount(s string) map[string]int` đếm số lần xuất hiện mỗi từ:
+
+- Từ được tách theo khoảng trắng bất kỳ (space, tab, xuống dòng).
+- Không phân biệt hoa thường: `"Go"` và `"go"` là một từ, key lưu dạng chữ thường.
+- Chuỗi rỗng hoặc chỉ có khoảng trắng trả về map rỗng (khác nil).
+
+Ví dụ: `WordCount("Go is fun go")` → `map[fun:1 go:2 is:1]`.
+'''
+starter = '''
+package main
+
+func WordCount(s string) map[string]int {
+	return nil
+}
+'''
+solution = '''
+package main
+
+import "strings"
+
+func WordCount(s string) map[string]int {
+	out := make(map[string]int)
+	for _, w := range strings.Fields(s) {
+		out[strings.ToLower(w)]++
+	}
+	return out
+}
+'''
+tests = '''
+package main
+
+import "reflect"
+
+var _ = Test("đếm cơ bản", func(t *T) {
+	got := WordCount("a b a")
+	if !reflect.DeepEqual(got, map[string]int{"a": 2, "b": 1}) {
+		t.Errorf("got %v", got)
+	}
+})
+
+var _ = Test("không phân biệt hoa thường", func(t *T) {
+	got := WordCount("Go is fun go")
+	want := map[string]int{"go": 2, "is": 1, "fun": 1}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("got %v", got)
+	}
+})
+
+var _ = Test("nhiều loại khoảng trắng", func(t *T) {
+	got := WordCount("  x\ty\n\nx  ")
+	if !reflect.DeepEqual(got, map[string]int{"x": 2, "y": 1}) {
+		t.Errorf("got %v", got)
+	}
+})
+
+var _ = Test("chuỗi rỗng trả map rỗng khác nil", func(t *T) {
+	got := WordCount("   ")
+	if got == nil || len(got) != 0 {
+		t.Errorf("got %#v", got)
+	}
+})
+'''
+hints = ["`strings.Fields` tách theo mọi khoảng trắng và bỏ phần rỗng.", "`m[k]++` hoạt động cả khi key chưa có vì zero value là 0."]
+explanation = "Bài tập luyện map, zero value và package `strings`. `make(map...)` đảm bảo kết quả khác nil để caller ghi thêm được."
+sources = ["go/strings/index#Fields", "go/maps/index"]
+
+# ------------------------------------------------------------ MIDDLE (level framework)
+[[questions]]
+id = "go-lv058"
+module = "go-basics"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "maps"]
+prompt = '''
+Test so sánh output của hàm in map `for k, v := range m` đôi khi fail vì thứ tự dòng thay đổi. Cách sửa đúng?
+'''
+options = [
+  "Lấy keys, sắp xếp (vd. `slices.Sorted(maps.Keys(m))`) rồi duyệt theo thứ tự đó",
+  "Chạy test nhiều lần cho tới khi pass",
+  "Dùng `sync.Map` để giữ thứ tự",
+  "Khai báo map với capacity cố định để thứ tự ổn định",
+]
+answer = [0]
+explanation = "Thứ tự duyệt map trong Go được cố ý ngẫu nhiên hoá. Muốn output xác định phải sắp xếp keys. `sync.Map` và capacity không đảm bảo thứ tự."
+sources = ["go/maps/index#Keys", "go/slices/index#Sort"]
+
+[[questions]]
+id = "go-lv059"
+module = "go-basics"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "strings"]
+prompt = '''
+Hàm ghép 100.000 chuỗi bằng `s += part` trong vòng lặp rất chậm. Cách sửa phù hợp nhất?
+'''
+options = [
+  "Dùng `strings.Builder` (có thể `Grow` trước) rồi `b.String()` ở cuối",
+  "Dùng `fmt.Sprintf(\"%s%s\", s, part)` trong vòng lặp",
+  "Chuyển sang `[]rune` rồi nối",
+  "Chạy vòng lặp trong goroutine",
+]
+answer = [0]
+explanation = "String bất biến nên mỗi `+=` cấp phát và sao chép lại toàn bộ — O(n²). `strings.Builder` ghi vào buffer tăng dần. `Sprintf` còn chậm hơn; goroutine không giải quyết độ phức tạp."
+sources = ["go/strings/index#Builder"]
+
+[[questions]]
+id = "go-lv060"
+module = "go-errors"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "errors"]
+prompt = '''
+Repository trả `fmt.Errorf("find user %d: %w", id, sql.ErrNoRows)`. Handler muốn trả 404 trong trường hợp này. Cách kiểm tra đúng?
+'''
+options = [
+  "`if errors.Is(err, sql.ErrNoRows) { ... 404 }`",
+  "`if err == sql.ErrNoRows { ... }`",
+  "`if strings.Contains(err.Error(), \"no rows\") { ... }`",
+  "`if err.(sql.ErrNoRows) { ... }`",
+]
+answer = [0]
+explanation = "`errors.Is` duyệt chuỗi lỗi đã bọc bằng `%w`. So sánh `==` thất bại vì lỗi đã được bọc. So sánh chuỗi mong manh. `sql.ErrNoRows` là giá trị chứ không phải kiểu nên type assertion sai."
+sources = ["go/errors/index#Is"]
+
+[[questions]]
+id = "go-lv061"
+module = "go-concurrency"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "sync"]
+prompt = '''
+Nhiều goroutine cần khởi tạo một client tốn kém **đúng một lần**, lần đầu có goroutine cần dùng. Công cụ phù hợp nhất trong thư viện chuẩn?
+'''
+options = [
+  "`sync.Once` (hoặc `sync.OnceValue` từ Go 1.21)",
+  "`if client == nil { client = newClient() }` không khoá",
+  "`time.AfterFunc`",
+  "Khởi tạo trong mỗi goroutine",
+]
+answer = [0]
+explanation = "`sync.Once` đảm bảo hàm chạy một lần và các goroutine khác chờ tới khi xong. Kiểm tra nil không khoá là data race và có thể khởi tạo nhiều lần."
+sources = ["go/sync/index#Once", "go/sync/index#OnceValue"]
+
+[[questions]]
+id = "go-lv062"
+module = "go-web"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "middleware"]
+prompt = '''
+Middleware logging cần ghi **status code** mà handler đã trả. `http.ResponseWriter` không có getter status. Cách làm phổ biến?
+'''
+options = [
+  "Bọc `ResponseWriter` bằng struct riêng ghi đè `WriteHeader(code)` để lưu code (mặc định 200) rồi gọi tiếp writer gốc",
+  "Đọc `r.Response.StatusCode` sau khi handler chạy",
+  "Parse lại body đã gửi",
+  "Bắt buộc mọi handler tự log status",
+]
+answer = [0]
+explanation = "Embedding `http.ResponseWriter` trong struct wrapper và ghi đè `WriteHeader` là pattern chuẩn. Nếu handler chỉ gọi `Write` thì status ngầm là 200. `r.Response` chỉ có ở client redirect, không phải server."
+sources = ["go/net/http/index#Handler"]
+
+[[questions]]
+id = "go-lv063"
+module = "go-web"
+type = "fill"
+difficulty = 2
+tags = ["level:middle", "json"]
+prompt = '''
+Từ chối JSON request có field lạ (không có trong struct):
+
+```go
+dec := json.NewDecoder(r.Body)
+dec.{{blank}}()
+err := dec.Decode(&req)
+```
+'''
+blanks = [["DisallowUnknownFields"]]
+explanation = "`DisallowUnknownFields` làm `Decode` trả lỗi khi gặp key không khớp field nào — giúp phát hiện client gõ sai tên field."
+sources = ["go/encoding/json/index#Decoder"]
+
+[[questions]]
+id = "go-lv064"
+module = "go-dv-database"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "database"]
+prompt = '''
+Cột `deleted_at` có thể NULL. `rows.Scan(&deletedAt)` với `deletedAt time.Time` báo lỗi khi gặp NULL. Cách đúng?
+'''
+options = [
+  "Scan vào `sql.NullTime` (hoặc `*time.Time`) rồi kiểm tra `Valid`/nil",
+  "Thay NULL bằng chuỗi rỗng trong Go",
+  "Bỏ qua lỗi Scan",
+  "Đổi kiểu biến sang `string`",
+]
+answer = [0]
+explanation = "`database/sql` có các kiểu `Null*` (và chấp nhận con trỏ) để biểu diễn NULL. Bỏ qua lỗi làm mất dữ liệu; string không chuyển được NULL."
+sources = ["go/database/sql/index#Row.Scan"]
+
+[[questions]]
+id = "go-lv065"
+module = "go-dv-testing"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "testing"]
+prompt = '''
+Test handler HTTP mà không mở cổng mạng thật. Công cụ nào trong thư viện chuẩn phù hợp nhất?
+'''
+options = [
+  "`httptest.NewRecorder()` + `httptest.NewRequest`, gọi `handler.ServeHTTP(rec, req)` rồi kiểm tra `rec.Code`, `rec.Body`",
+  "Chạy `go run main.go` rồi dùng `curl` trong test",
+  "Mock toàn bộ package `net/http`",
+  "Chỉ test hàm service, bỏ qua handler",
+]
+answer = [0]
+explanation = "`net/http/httptest` cho phép gọi handler trực tiếp với ResponseRecorder — nhanh, xác định, không cần cổng. Chạy server thật trong test chậm và flaky; mock cả `net/http` không cần thiết."
+sources = ["go/net/http/index#Handler", "go/testing/index"]

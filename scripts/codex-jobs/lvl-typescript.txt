@@ -1,0 +1,9 @@
+Nâng lộ trình theo khung cấp độ Junior → Lead: chỉ sửa `data/typescript.toml` (id = "typescript"). Đọc trước `docs/se-levels.md` (mục 1–4, dòng `typescript` trong bảng chủ đề) và mục "Cấp độ & chỉ tiêu" trong AGENTS.md.
+Job này chạy lặp nhiều lượt. Mỗi lượt thêm tối đa ~30 câu mới rồi dừng; lượt sau làm tiếp phần còn thiếu.
+1. Chạy `python3 scripts/bank-stats.py data/typescript.toml` để xem chỉ tiêu còn thiếu.
+2. Nếu chưa có module `typescript-lead` thì tạo: title "Góc nhìn Tech Lead", description, `lesson` ≥ 1500 ký tự (khung ra quyết định, bảng so sánh phương án, checklist review, ADR mẫu ngắn, anti-pattern ở quy mô team), `sources` có thật trong `.devdocs/` (nếu có). Module này đã được khai báo sẵn trong `data/categories.toml`.
+3. Rà tag level của câu cũ (đã gắn tự động theo difficulty). Mỗi lượt sửa tối đa 15 câu bị gắn sai cấp, đổi cả tag lẫn `difficulty`, giữ nguyên id.
+4. Thêm câu mới, ưu tiên level còn thiếu nhiều nhất (thường là lead → senior → junior). Có đủ dạng câu; mỗi level có ít nhất 1 bài code (ngôn ngữ đang dùng trong lộ trình: javascript). Câu lead nằm chủ yếu ở module `typescript-lead`; câu junior/middle/senior rải vào module chuyên đề phù hợp. Id mới `typescript-lv001`, `typescript-lv002`…, bài code `typescript-lvc01`… (nối tiếp số lớn nhất đang có).
+5. Sau mỗi ~10 câu chạy `./target/release/bovabon_edu check data/typescript.toml` và sửa tới khi ✅.
+6. Kết thúc khi `check` ✅; in kết quả `python3 scripts/bank-stats.py data/typescript.toml` cuối lượt.
+Không sửa `data/categories.toml` hay bất kỳ file nào khác.

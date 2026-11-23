@@ -131,11 +131,64 @@ Ví dụ: cache hồ sơ theo user:id với TTL ngắn; sau khi cập nhật h�
 Lỗi hay gặp: không có TTL cho cache; invalidation thiếu dẫn tới dữ liệu cũ; cache miss đồng loạt gây tải dồn lên database; nghĩ Pub/Sub giữ lại tin nhắn cho subscriber đến sau; dùng key quá lớn hoặc không có quy ước namespace.
 '''
 
+[[modules]]
+id = "databases-lead"
+title = "Góc nhìn Tech Lead"
+description = "Ra quyết định về lưu trữ dữ liệu cho cả team: RPO/RTO, backup & DR, schema evolution, sharding, SQL vs NoSQL, managed vs tự vận hành, review và ADR."
+sources = ["postgresql~18/continuous-archiving", "postgresql~18/backup-dump", "postgresql~18/ddl-partitioning", "postgresql~18/ddl-alter", "postgresql~18/different-replication-solutions"]
+lesson = '''
+### Từ "query chạy nhanh" đến "hệ thống dữ liệu team vận hành được"
+Ở cấp Lead, câu hỏi không còn là "index nào đúng" mà là: **với team, ngân sách, thời gian và mức rủi ro này, ta chọn cách lưu trữ và vận hành nào, và ghi lại vì sao?** Dữ liệu là phần khó đổi nhất của hệ thống: code có thể rollback trong vài phút, còn schema, dữ liệu đã ghi và thói quen của team thì không.
+
+### Khung ra quyết định
+Trước khi chọn công nghệ, chốt các ràng buộc bằng con số (ước lượng, thay bằng số đo thật khi có):
+
+| Ràng buộc | Câu hỏi cần trả lời | Ví dụ |
+|---|---|---|
+| RPO (Recovery Point Objective) | Mất tối đa bao nhiêu dữ liệu (tính theo thời gian) là chấp nhận được? | Đơn hàng: RPO ≤ 5 phút; log phân tích: vài giờ |
+| RTO (Recovery Time Objective) | Từ lúc sự cố đến lúc phục vụ lại tối đa bao lâu? | Thanh toán: RTO ≤ 30 phút |
+| Tăng trưởng | Dữ liệu và QPS nhân mấy lần trong 12 tháng? | 3x dữ liệu, 5x lượt đọc |
+| Năng lực team | Ai on-call, ai từng vận hành công nghệ này? | 4 dev, chưa ai chạy Kafka/Cassandra |
+| Chi phí | Tiền hạ tầng và tiền nhân lực vận hành | Managed đắt hơn 30–50% nhưng bớt 1 người trực |
+
+### So sánh phương án theo tiêu chí
+| Phương án | Hợp khi | Rủi ro / chi phí ẩn |
+|---|---|---|
+| Nâng cấu hình (scale up) | Chưa chạm trần, cần thắng nhanh | Có trần cứng, downtime khi đổi cấu hình |
+| Read replica | Đọc nhiều, chấp nhận trễ replication | Read-your-writes bị vỡ, cần routing |
+| Cache (Redis) | Dữ liệu nóng, đọc lặp | Invalidation, stampede, thêm một hệ thống phải vận hành |
+| Partitioning (một node) | Bảng rất lớn theo thời gian, cần xoá/archive theo lô | Khoá phân vùng sai thì không prune được |
+| Sharding | Ghi vượt giới hạn một node | Join/transaction xuyên shard, resharding rất đắt: làm sau cùng |
+| Managed service | Team nhỏ, chưa có DBA | Phụ thuộc nhà cung cấp, giới hạn extension/tuning |
+
+Nguyên tắc: chọn phương án **rẻ nhất đảo ngược được** thoả ràng buộc hiện tại, và ghi rõ ngưỡng số liệu sẽ kích hoạt bước tiếp theo.
+
+### Checklist review thay đổi dữ liệu
+- Migration có tương thích ngược (expand/contract) để deploy code cũ và mới chạy song song không?
+- Có lock dài không (ALTER trên bảng lớn, tạo index không CONCURRENTLY)? Đã đặt `lock_timeout` chưa?
+- Có kế hoạch rollback và đã thử trên bản sao dữ liệu có kích thước thật chưa?
+- Backup gần nhất **đã được restore thử** khi nào? Thời gian restore đo được là bao nhiêu?
+- Truy vấn mới có chạy EXPLAIN trên dữ liệu thật, có index phù hợp, có giới hạn kết quả?
+- Ai sở hữu dữ liệu này, ai được truy cập, dữ liệu cá nhân có mã hoá/ẩn trong log?
+
+### ADR mẫu (rút gọn)
+**Bối cảnh:** bảng `events` 1,8 TB, tăng 60 GB/tháng, truy vấn chủ yếu theo 30 ngày gần nhất; team 5 dev, không có DBA. **Quyết định:** partition theo tháng (PostgreSQL declarative partitioning), archive phân vùng cũ sang object storage; hoãn sharding. **Hệ quả:** xoá dữ liệu cũ bằng DROP PARTITION thay vì DELETE; truy vấn bắt buộc có điều kiện thời gian. **Ngưỡng xem lại:** ghi > 8 000 dòng/giây kéo dài hoặc CPU primary > 70% giờ cao điểm.
+
+### Anti-pattern ở quy mô team
+- Nhiều service dùng chung một database và đọc/ghi bảng của nhau: schema bị đóng băng vì không ai dám đổi.
+- Chọn NoSQL "vì scale" khi dữ liệu 50 GB và cần join/transaction.
+- Có backup nhưng chưa từng restore; RPO/RTO chỉ tồn tại trên slide.
+- Sharding sớm khi một node còn dư 5 lần công suất.
+- Migration "big bang" lúc nửa đêm không có đường lùi.
+- Thêm index theo cảm tính cho từng truy vấn chậm mà không đo ảnh hưởng lên ghi.
+'''
+
 [[questions]]
 id = "db-001"
 module = "db-sql-basics"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Muốn chỉ giữ các phòng ban có ít nhất 4 nhân viên đang hoạt động, vị trí nào phù hợp để kiểm tra COUNT(*) sau GROUP BY?"
 options = ["WHERE", "HAVING", "ORDER BY", "ON"]
 answer = [1]
@@ -147,6 +200,7 @@ id = "db-002"
 module = "db-sql-basics"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Truy vấn WHERE email = NULL không tìm thấy các dòng email chưa có giá trị. Cách kiểm tra đúng là gì?"
 options = ["email = NULL", "email IS NULL", "email == NULL", "email IN NULL"]
 answer = [1]
@@ -158,6 +212,7 @@ id = "db-003"
 module = "db-sql-basics"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Cần liệt kê mọi khách hàng, kể cả người chưa có đơn hàng, nhưng chỉ nối đơn hàng trạng thái paid. Cách nào giữ được khách không có đơn?"
 options = ["LEFT JOIN orders o ON o.customer_id = c.id AND o.status = 'paid'", "LEFT JOIN orders o ON o.customer_id = c.id WHERE o.status = 'paid'", "INNER JOIN orders o ON o.customer_id = c.id", "CROSS JOIN orders o"]
 answer = [0]
@@ -169,6 +224,7 @@ id = "db-004"
 module = "db-sql-basics"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn các nhận định đúng về JOIN."
 options = ["INNER JOIN chỉ giữ cặp dòng thoả điều kiện nối", "LEFT JOIN giữ mọi dòng bên trái dù không có dòng phải tương ứng", "FULL JOIN giữ cả dòng không khớp ở hai phía và điền NULL ở phía thiếu", "CROSS JOIN bắt buộc có điều kiện ON", "Trong LEFT JOIN, điều kiện ở ON và WHERE luôn tương đương"]
 answer = [0, 1, 2]
@@ -180,6 +236,7 @@ id = "db-005"
 module = "db-sql-basics"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Hoàn thành điều kiện tìm khách hàng chưa cung cấp email:
 
@@ -195,6 +252,7 @@ module = "db-sql-basics"
 type = "code"
 lang = "python"
 difficulty = 2
+tags = ["level:middle"]
 title = "Báo cáo doanh thu theo tháng"
 prompt = '''
 Viết monthly_revenue(orders, items), dùng sqlite3 và một database :memory:.
@@ -262,6 +320,7 @@ id = "db-007"
 module = "db-sql-advanced"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Muốn lấy tối đa ba sản phẩm mỗi danh mục, đồng thời giữ từng sản phẩm và xử lý hoà điểm theo thứ tự tên. Nên dùng cấu trúc nào?"
 options = ["GROUP BY category rồi MAX(score)", "ROW_NUMBER() OVER (PARTITION BY category ORDER BY score DESC, name) rồi lọc số thứ tự <= 3", "HAVING score <= 3", "DISTINCT category"]
 answer = [1]
@@ -273,6 +332,7 @@ id = "db-008"
 module = "db-sql-advanced"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một CTE đệ quy duyệt cây danh mục cần có thành phần nào để bắt đầu và tiếp tục đi xuống?"
 options = ["Chỉ một SELECT có GROUP BY", "Phần truy vấn gốc và phần truy vấn đệ quy nối với kết quả trước", "Chỉ một UPDATE", "ORDER BY trong mọi nhánh"]
 answer = [1]
@@ -284,6 +344,7 @@ id = "db-009"
 module = "db-sql-advanced"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Trong bảng settings có UNIQUE(key), muốn chèn key mới hoặc cập nhật value khi key đã có, cách nào phù hợp?"
 options = ["INSERT ... ON CONFLICT(key) DO UPDATE SET value = excluded.value", "SELECT rồi INSERT bất kể kết quả", "DELETE cả bảng rồi INSERT", "UPDATE chỉ cập nhật được dòng chưa tồn tại"]
 answer = [0]
@@ -295,6 +356,7 @@ id = "db-010"
 module = "db-sql-advanced"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Chọn các nhận định đúng."
 options = ["Window function có thể tính thứ hạng mà vẫn giữ từng dòng", "PARTITION BY bắt đầu lại phép tính cửa sổ cho mỗi nhóm", "ROW_NUMBER luôn gán cùng số thứ tự cho các dòng đồng hạng", "CTE đệ quy thường có phần gốc và phần đệ quy", "JSONB là kiểu dữ liệu riêng của PostgreSQL"]
 answer = [0, 1, 3, 4]
@@ -306,6 +368,7 @@ id = "db-011"
 module = "db-sql-advanced"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 Từ khoá mở đầu CTE để duyệt cấu trúc đệ quy:
 
@@ -321,6 +384,7 @@ module = "db-sql-advanced"
 type = "code"
 lang = "python"
 difficulty = 3
+tags = ["level:senior"]
 title = "Top N mỗi nhóm bằng window function"
 prompt = '''
 Viết top_n_per_group(records, n), dùng sqlite3.connect(":memory:").
@@ -384,6 +448,7 @@ module = "db-sql-advanced"
 type = "code"
 lang = "python"
 difficulty = 3
+tags = ["level:senior"]
 title = "Duyệt cây danh mục với CTE đệ quy"
 prompt = '''
 Viết category_tree(categories, root_id), dùng SQLite trong bộ nhớ.
@@ -446,6 +511,7 @@ module = "db-sql-advanced"
 type = "code"
 lang = "python"
 difficulty = 2
+tags = ["level:middle"]
 title = "UPSERT cấu hình"
 prompt = '''
 Viết upsert_setting(existing, key, value), dùng một bảng SQLite trong database :memory:.
@@ -502,6 +568,7 @@ id = "db-015"
 module = "db-data-model"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Một bảng invoices có invoice_id và customer_id. Vai trò phù hợp của hai cột này là gì?"
 options = ["invoice_id là PRIMARY KEY; customer_id là FOREIGN KEY tham chiếu khách hàng", "Cả hai bắt buộc là UNIQUE", "customer_id là CHECK constraint", "invoice_id phải trùng customer_id"]
 answer = [0]
@@ -513,6 +580,7 @@ id = "db-016"
 module = "db-data-model"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Trong bảng orders(order_id, customer_id, customer_name), customer_name chỉ phụ thuộc customer_id chứ không trực tiếp phụ thuộc order_id. Đây là dấu hiệu nào?"
 options = ["Dữ liệu phi chuẩn hoá có phụ thuộc bắc cầu; có thể tách bảng customers", "Bảng đã đạt 3NF chắc chắn", "Thiếu index B-tree", "Cần đổi customer_id thành NULL"]
 answer = [0]
@@ -524,6 +592,7 @@ id = "db-017"
 module = "db-data-model"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn những ràng buộc giúp thực thi quy tắc dữ liệu ngay trong database."
 options = ["CHECK (quantity > 0)", "FOREIGN KEY (customer_id) REFERENCES customers(id)", "UNIQUE (email)", "NOT NULL trên created_at", "ORDER BY created_at"]
 answer = [0, 1, 2, 3]
@@ -535,6 +604,7 @@ id = "db-018"
 module = "db-data-model"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Loại ràng buộc định danh duy nhất một dòng và không cho phép NULL:
 
@@ -549,6 +619,7 @@ id = "db-019"
 module = "db-data-model"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Nêu khi nào nên chuẩn hoá dữ liệu và khi nào có thể denormalize một phần để tối ưu đọc. Hãy đề cập cách bảo đảm dữ liệu không bị lệch."
 keywords = [["1NF", "first normal form"], ["2NF", "second normal form"], ["3NF", "third normal form"], ["read workload", "đọc nhiều", "truy vấn đọc"], ["đồng bộ", "cập nhật nhất quán", "consistency"], ["đo tải", "đo hiệu năng"]]
 min_keywords = 4
@@ -561,6 +632,7 @@ id = "db-020"
 module = "db-index-performance"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Có index composite (tenant_id, created_at). Truy vấn lọc tenant_id = ? và khoảng created_at thường tận dụng index này tốt vì lý do nào?"
 options = ["B-tree composite thường hỗ trợ tiền tố từ cột đầu và tiếp tục điều kiện ở cột sau", "Index tự sắp xếp mọi cột trong mọi thứ tự", "Chỉ cần có index thì database không đọc bảng", "Cột created_at luôn được tìm độc lập như index đơn"]
 answer = [0]
@@ -572,6 +644,7 @@ id = "db-021"
 module = "db-index-performance"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "EXPLAIN QUERY PLAN trong SQLite hữu ích nhất cho việc gì?"
 options = ["Xem cách planner dự kiến tìm và kết hợp dòng", "Tự tạo index tối ưu mà không cần kiểm tra", "Bảo đảm truy vấn luôn nhanh trên mọi kích cỡ dữ liệu", "Thay đổi dữ liệu để tăng tốc"]
 answer = [0]
@@ -583,6 +656,7 @@ id = "db-022"
 module = "db-index-performance"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Khi nào covering index có thể tránh đọc thêm bảng chính?"
 options = ["Index chứa các cột cần lọc và trả về của truy vấn", "Index chỉ chứa khoá chính dù truy vấn cần nhiều cột khác", "Truy vấn dùng SELECT *", "Mọi truy vấn có ORDER BY"]
 answer = [0]
@@ -594,6 +668,7 @@ id = "db-023"
 module = "db-index-performance"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Chọn các nhận định đúng về index."
 options = ["B-tree phù hợp với nhiều truy vấn bằng, khoảng và sắp xếp", "Index (a, b) thường có ích cho điều kiện chỉ lọc b ngang như index đơn trên b", "Index làm tăng dung lượng và chi phí ghi", "Planner có thể chọn quét bảng khi bảng nhỏ hoặc phần lớn dòng cần trả", "EXPLAIN ANALYZE trong PostgreSQL thực sự chạy câu lệnh được phân tích"]
 answer = [0, 2, 3, 4]
@@ -605,6 +680,7 @@ id = "db-024"
 module = "db-index-performance"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Kiểu index phổ biến hỗ trợ tìm bằng và khoảng:
 
@@ -619,6 +695,7 @@ id = "db-025"
 module = "db-transactions"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Trong chuyển tiền, hệ thống đã trừ tài khoản gửi nhưng lỗi trước khi cộng tài khoản nhận. Thuộc tính ACID nào yêu cầu cả hai bước cùng thành công hoặc cùng bị huỷ?"
 options = ["Atomicity", "Consistency", "Isolation", "Durability"]
 answer = [0]
@@ -630,6 +707,7 @@ id = "db-026"
 module = "db-transactions"
 type = "single"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Với PostgreSQL ở READ COMMITTED, hai câu SELECT trong cùng transaction có thể thấy dữ liệu commit mới giữa hai câu vì sao?"
 options = ["Mỗi câu lệnh đọc snapshot tại thời điểm riêng", "READ COMMITTED giữ một snapshot cố định cho toàn transaction", "PostgreSQL tắt MVCC ở mức này", "SELECT luôn khoá mọi writer"]
 answer = [0]
@@ -641,6 +719,7 @@ id = "db-027"
 module = "db-transactions"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Hai transaction mỗi bên giữ một row lock và chờ lock của bên kia. Cách giảm nguy cơ và xử lý đúng là gì?"
 options = ["Luôn lấy lock theo cùng thứ tự và retry transaction bị database huỷ khi deadlock", "Tắt mọi constraint", "Tăng timeout vô hạn", "Commit sau mỗi UPDATE dù thao tác chưa hoàn tất"]
 answer = [0]
@@ -652,6 +731,7 @@ id = "db-028"
 module = "db-transactions"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn các nhận định đúng về transaction và đồng thời."
 options = ["Một transaction có thể rollback các thay đổi chưa commit khi lỗi", "MVCC giúp reader thấy phiên bản phù hợp với snapshot", "MVCC loại bỏ mọi lock và mọi xung đột ghi", "Deadlock có thể khiến database huỷ một transaction", "Ràng buộc số dư trong một câu UPDATE có thể giúp tránh ghi âm do race"]
 answer = [0, 1, 3, 4]
@@ -663,6 +743,7 @@ id = "db-029"
 module = "db-transactions"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 Kỹ thuật nhiều phiên bản cho phép reader quan sát snapshot dữ liệu trong khi dữ liệu mới được ghi:
 
@@ -677,6 +758,7 @@ id = "db-030"
 module = "db-transactions"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Mô tả cách chuyển tiền giữa hai tài khoản để không mất hoặc tạo tiền khi có yêu cầu đồng thời hay lỗi giữa chừng."
 keywords = [["transaction", "giao dịch"], ["atomicity", "nguyên tử"], ["conditional update", "update có điều kiện", "balance >= amount"], ["rollback"], ["deadlock", "retry"], ["constraint", "ràng buộc"]]
 min_keywords = 4
@@ -690,6 +772,7 @@ module = "db-transactions"
 type = "code"
 lang = "python"
 difficulty = 3
+tags = ["level:senior"]
 title = "Chuyển tiền có rollback"
 prompt = '''
 Viết transfer(conn, sender, receiver, amount_cents) trên connection SQLite đã có bảng accounts(id TEXT PRIMARY KEY, balance_cents INTEGER NOT NULL).
@@ -769,6 +852,7 @@ id = "db-032"
 module = "db-redis"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Redis TTL trả -1 cho key còn tồn tại nhưng chưa có thời hạn; giá trị nào báo key không tồn tại?"
 options = ["-2", "0", "1", "NULL"]
 answer = [0]
@@ -780,6 +864,7 @@ id = "db-033"
 module = "db-redis"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Trong cache-aside, ứng dụng nên làm gì khi cache miss?"
 options = ["Đọc nguồn dữ liệu chính, ghi giá trị vào cache kèm TTL rồi trả kết quả", "Trả lỗi ngay mà không đọc nguồn", "Xoá toàn bộ cache mỗi lần miss", "Chỉ publish thông điệp và giả định đã có dữ liệu"]
 answer = [0]
@@ -791,6 +876,7 @@ id = "db-034"
 module = "db-redis"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn các cặp cấu trúc/lệnh Redis phù hợp."
 options = ["INCR dùng để tăng counter số nguyên", "Hash lưu các field và value dưới một key", "Sorted Set xếp member theo score", "Pub/Sub lưu mọi message để subscriber đến sau đọc lại", "Set giữ các member duy nhất"]
 answer = [0, 1, 2, 4]
@@ -802,6 +888,7 @@ id = "db-035"
 module = "db-redis"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Lệnh Redis tăng giá trị counter của key nguyên tử:
 
@@ -816,6 +903,7 @@ id = "db-036"
 module = "db-redis"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Cache-aside có thể trả dữ liệu cũ sau khi nguồn chính được cập nhật. Hãy nêu cách hạn chế vấn đề và một rủi ro vận hành cần theo dõi."
 keywords = [["ttl", "expiration", "thời hạn"], ["invalidation", "xoá cache", "vô hiệu hoá"], ["cache-aside"], ["cache stampede", "thundering herd", "dồn tải"], ["pub/sub", "publish/subscribe"], ["source of truth", "nguồn dữ liệu chính"]]
 min_keywords = 3
@@ -829,6 +917,7 @@ module = "db-redis"
 type = "code"
 lang = "python"
 difficulty = 2
+tags = ["level:middle"]
 title = "Cache-aside với TTL mô phỏng Redis"
 prompt = '''
 Viết cache_aside(key, cache, loader, now, ttl) để mô phỏng cache-aside trong Redis bằng dictionary Python.
@@ -912,6 +1001,7 @@ id = "databases-dv001"
 module = "databases-dv-pg-search"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Trong PostgreSQL, kiểu nào biểu diễn văn bản đã được phân tích thành lexeme và vị trí để phục vụ full-text search?"
 options = ["tsvector", "tsquery", "jsonb", "bytea"]
 answer = [0]
@@ -923,6 +1013,7 @@ id = "databases-dv002"
 module = "databases-dv-pg-search"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Cần lập chỉ mục cho cột tsvector để tăng tốc phép so khớp @@ trên tập từ lớn. Chọn loại index phù hợp nhất."
 options = ["GIN", "B-tree trên chuỗi gốc", "Hash trên chuỗi query", "Không thể lập chỉ mục"]
 answer = [0]
@@ -934,6 +1025,7 @@ id = "databases-dv003"
 module = "databases-dv-pg-search"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một ứng dụng có bản ghi tiếng Anh và tiếng Việt. Vì sao cấu hình text search cần được chọn có chủ đích?"
 options = ["Cấu hình quyết định tokenization, stop word và stemming nên ảnh hưởng cả vector lẫn query", "Cấu hình chỉ đổi kiểu mã hoá byte", "Mỗi cấu hình tự tạo một GIN index riêng", "Cấu hình làm cho @@ không cần tsvector"]
 answer = [0]
@@ -945,6 +1037,7 @@ id = "databases-dv004"
 module = "databases-dv-pg-search"
 type = "single"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Truy vấn chỉ xếp hạng kết quả bằng ts_rank nhưng chạy chậm. Nhận định nào đúng nhất?"
 options = ["Lọc ứng viên bằng @@ và index phù hợp trước; ts_rank vẫn phải tính trên các kết quả phù hợp", "GIN tự sắp mọi dòng theo ts_rank", "Đổi GIN thành B-tree luôn giải quyết việc xếp hạng", "Bỏ điều kiện tìm kiếm để PostgreSQL xếp hạng nhanh hơn"]
 answer = [0]
@@ -956,6 +1049,7 @@ id = "databases-dv005"
 module = "databases-dv-pg-search"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn các thực hành phù hợp khi nhận câu tìm kiếm do người dùng nhập."
 options = ["Bind input làm tham số cho hàm tạo tsquery", "Dùng websearch_to_tsquery khi muốn cú pháp gần kiểu tìm kiếm web", "Ghép input trực tiếp vào chuỗi SQL", "Dùng coalesce khi ghép các cột có thể NULL", "Coi GIN là thứ tự relevance cuối cùng"]
 answer = [0, 1, 3]
@@ -967,6 +1061,7 @@ id = "databases-dv006"
 module = "databases-dv-pg-search"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Những thay đổi nào có thể làm truy vấn full-text search không khớp dự kiến hoặc không dùng được index biểu thức?"
 options = ["Dùng cấu hình khác khi tạo tsvector và khi tạo tsquery", "Thay đổi biểu thức được index nhưng vẫn truy vấn biểu thức cũ", "Thêm GIN index khớp chính xác cột tsvector", "Không xử lý NULL trong phép nối nhiều cột", "Thêm ORDER BY ts_rank sau điều kiện @@"]
 answer = [0, 1, 3]
@@ -978,6 +1073,7 @@ id = "databases-dv007"
 module = "databases-dv-pg-search"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Điền toán tử kiểm tra xem tsvector có khớp tsquery hay không:
 
@@ -992,6 +1088,7 @@ id = "databases-dv008"
 module = "databases-dv-pg-search"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Khi thiết kế tìm kiếm bài viết theo tiêu đề và nội dung trong PostgreSQL, hãy giải thích cách tạo vector, chọn index, xử lý input và xếp hạng kết quả."
 keywords = [["tsvector"], ["tsquery"], ["GIN"], ["ranking", "ts_rank"], ["configuration", "cấu hình"]]
 min_keywords = 4
@@ -1005,6 +1102,7 @@ module = "databases-dv-pg-search"
 type = "code"
 lang = "python"
 difficulty = 2
+tags = ["level:middle"]
 title = "Xếp hạng ứng viên tìm kiếm"
 prompt = '''
 Viết hàm rank_search(documents, terms). documents là danh sách dictionary có các khoá id, title, body; terms là danh sách từ cần tìm.
@@ -1114,6 +1212,7 @@ id = "databases-dv009"
 module = "databases-dv-pg-recovery"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Cần sao lưu logic một database PostgreSQL để khôi phục chọn bảng hoặc chuyển dữ liệu. Công cụ phù hợp nhất là gì?"
 options = ["pg_dump", "pg_basebackup", "VACUUM", "pg_ctl"]
 answer = [0]
@@ -1125,6 +1224,7 @@ id = "databases-dv010"
 module = "databases-dv-pg-recovery"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Muốn khôi phục database về một thời điểm trước khi người dùng xoá nhầm dữ liệu, ngoài base backup còn cần gì?"
 options = ["Chuỗi WAL archive liên tục tới thời điểm cần phục hồi", "Một lần chạy ANALYZE sau sự cố", "Bản sao của pg_stat_activity", "Chỉ một bản pg_dump của database khác"]
 answer = [0]
@@ -1136,6 +1236,7 @@ id = "databases-dv011"
 module = "databases-dv-pg-recovery"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một standby cần theo kịp toàn bộ thay đổi của cluster chính để phục vụ hot standby. Kiểu replication nào phù hợp nhất?"
 options = ["Physical replication", "Logical replication theo một publication", "Chỉ chạy pg_dump định kỳ", "Tạo foreign key giữa hai server"]
 answer = [0]
@@ -1147,6 +1248,7 @@ id = "databases-dv012"
 module = "databases-dv-pg-recovery"
 type = "single"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Một replication slot còn tồn tại nhưng subscriber đã ngừng lâu ngày. Rủi ro vận hành đáng chú ý nhất là gì?"
 options = ["WAL cần cho subscriber có thể bị giữ lại và làm tăng dung lượng đĩa", "PostgreSQL tự xoá mọi bảng trên publisher", "Slot tự chuyển thành backup logical", "Mọi transaction mới lập tức bị rollback"]
 answer = [0]
@@ -1158,6 +1260,7 @@ id = "databases-dv013"
 module = "databases-dv-pg-recovery"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn các nhận định đúng về backup PostgreSQL."
 options = ["pg_dump thường sao lưu một database theo dạng logical", "Physical backup có thể làm nền để phục hồi cluster hoặc dựng standby", "pg_dump một database luôn bao gồm mọi role toàn cluster", "PITR cần base backup và WAL archive phù hợp", "Một backup thành công chứng minh chắc chắn restore sẽ thành công"]
 answer = [0, 1, 3]
@@ -1169,6 +1272,7 @@ id = "databases-dv014"
 module = "databases-dv-pg-recovery"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Chọn các nhận định đúng về logical replication."
 options = ["Publication xác định các thay đổi/bảng được phát từ publisher", "Subscription nhận thay đổi từ publisher và có thể thực hiện initial copy", "Logical replication tự đồng bộ mọi thay đổi DDL", "Bảng cần replica identity thích hợp để áp dụng UPDATE hoặc DELETE", "Logical replication tự thay thế hoàn toàn quy trình backup"]
 answer = [0, 1, 3]
@@ -1180,6 +1284,7 @@ id = "databases-dv015"
 module = "databases-dv-pg-recovery"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Điền tên log cần lưu liên tục cùng base backup để hỗ trợ point-in-time recovery:
 
@@ -1194,6 +1299,7 @@ id = "databases-dv016"
 module = "databases-dv-pg-recovery"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Một dịch vụ cần mất tối đa vài phút dữ liệu và khôi phục trong một giờ. Nêu các thành phần của kế hoạch backup/restore và cách chứng minh kế hoạch đạt mục tiêu."
 keywords = [["base backup"], ["WAL archive", "archived WAL"], ["PITR", "point-in-time recovery"], ["restore test", "test restore"], ["RPO"], ["RTO"]]
 min_keywords = 4
@@ -1229,6 +1335,7 @@ id = "databases-dv017"
 module = "databases-dv-redis-workflows"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "MULTI/EXEC trong Redis chủ yếu đảm bảo điều gì?"
 options = ["Các lệnh được chạy liên tiếp mà client khác không chen vào", "Rollback mọi lệnh nếu một lệnh runtime bị lỗi", "Một transaction SQL bao trùm mọi database", "Tự lưu kết quả backup xuống đĩa"]
 answer = [0]
@@ -1240,6 +1347,7 @@ id = "databases-dv018"
 module = "databases-dv-redis-workflows"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Ứng dụng đọc giá trị key, tính giá trị mới rồi muốn bỏ cập nhật nếu key đã bị client khác sửa. Cơ chế nào phù hợp?"
 options = ["WATCH key rồi MULTI/EXEC, đọc lại khi EXEC bị huỷ", "PUBLISH key rồi giả định không có thay đổi", "XACK key trước khi ghi", "Dùng TTL dài hơn"]
 answer = [0]
@@ -1251,6 +1359,7 @@ id = "databases-dv019"
 module = "databases-dv-redis-workflows"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Trong Redis Streams, XREADGROUP đọc entry mới cho một consumer group thường đưa entry chưa xác nhận vào đâu?"
 options = ["Pending-entry list của consumer group", "Danh sách subscriber của Pub/Sub", "Hash metadata của key", "WAL archive của PostgreSQL"]
 answer = [0]
@@ -1262,6 +1371,7 @@ id = "databases-dv020"
 module = "databases-dv-redis-workflows"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Chọn các cách xử lý an toàn hơn cho consumer Redis Stream có thể nhận lại cùng entry."
 options = ["Lưu event id để loại tác động nghiệp vụ lặp", "XACK sau khi side effect đã được lưu bền vững", "XACK trước rồi mới bắt đầu xử lý để giảm pending", "Theo dõi pending entry và có cách claim entry bị bỏ lại", "Giả định consumer group bảo đảm xử lý đúng một lần"]
 answer = [0, 1, 3]
@@ -1273,6 +1383,7 @@ id = "databases-dv021"
 module = "databases-dv-redis-workflows"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Chọn các nhận định đúng về MULTI/EXEC và WATCH."
 options = ["WATCH hỗ trợ optimistic concurrency trên key được theo dõi", "EXEC chạy transaction đã xếp theo thứ tự", "Lỗi runtime của một lệnh luôn rollback toàn bộ transaction", "Key bị thay đổi sau WATCH có thể làm EXEC bị huỷ", "MULTI làm Redis và PostgreSQL commit nguyên tử cùng nhau"]
 answer = [0, 1, 3]
@@ -1284,6 +1395,7 @@ id = "databases-dv022"
 module = "databases-dv-redis-workflows"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Điền lệnh xác nhận một entry đã được consumer xử lý trong Stream group:
 
@@ -1298,6 +1410,7 @@ id = "databases-dv023"
 module = "databases-dv-redis-workflows"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Một worker ghi kết quả vào database rồi bị dừng trước khi ACK entry trên Redis Stream. Hãy mô tả cách thiết kế để xử lý việc entry được giao lại mà không tạo tác động nghiệp vụ trùng."
 keywords = [["at-least-once", "ít nhất một lần"], ["idempotent", "idempotency"], ["XACK"], ["pending"], ["event id", "mã sự kiện"]]
 min_keywords = 3
@@ -1311,6 +1424,7 @@ module = "databases-dv-redis-workflows"
 type = "code"
 lang = "python"
 difficulty = 2
+tags = ["level:middle"]
 title = "Lọc sự kiện đã xử lý"
 prompt = '''
 Viết select_new_events(event_ids, processed_ids). event_ids là danh sách id nhận từ một lô Redis Stream; processed_ids là tập id đã áp dụng vào hệ thống nghiệp vụ.
@@ -1365,3 +1479,932 @@ def _():
 hints = ["Tạo bản sao set của processed_ids để cập nhật mà không sửa input.", "Duyệt event_ids theo thứ tự và thêm id vào set ngay khi nhận để loại bản lặp trong cùng lô."]
 explanation = "Bài tập mô phỏng deduplication phía consumer; hệ thống thực tế cần lưu event id và side effect theo cách bền vững."
 sources = ["redis/xreadgroup/index", "redis/xack/index"]
+
+[[questions]]
+id = "databases-lv001"
+module = "db-sql-basics"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "join"]
+prompt = "Bảng customers(id, name) và orders(id, customer_id, total). Truy vấn nào liệt kê các khách hàng chưa có đơn hàng nào?"
+options = ["SELECT c.name FROM customers c INNER JOIN orders o ON o.customer_id = c.id", "SELECT c.name FROM customers c LEFT JOIN orders o ON o.customer_id = c.id WHERE o.id IS NULL", "SELECT c.name FROM customers c LEFT JOIN orders o ON o.customer_id = c.id WHERE o.id = NULL", "SELECT c.name FROM customers c CROSS JOIN orders o WHERE o.id IS NULL"]
+answer = [1]
+explanation = "LEFT JOIN giữ mọi khách hàng; khách không có đơn sẽ có các cột của orders là NULL nên lọc o.id IS NULL. INNER JOIN chỉ trả khách có đơn. So sánh = NULL luôn cho kết quả unknown nên không trả dòng nào. CROSS JOIN tạo tích Descartes, không biểu diễn được quan hệ khách - đơn."
+sources = ["sqlite/lang_select", "postgresql~18/queries-table-expressions#QUERIES-JOIN"]
+
+[[questions]]
+id = "databases-lv002"
+module = "db-data-model"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "constraint"]
+prompt = "Cột email của bảng users cần là duy nhất và bắt buộc có giá trị. Cách khai báo nào đúng nhất?"
+options = ["email TEXT", "email TEXT UNIQUE NOT NULL", "email TEXT DEFAULT ''", "email TEXT CHECK (email LIKE '%@%') và bỏ qua UNIQUE"]
+answer = [1]
+explanation = "UNIQUE ngăn trùng giá trị, NOT NULL ngăn thiếu giá trị. Không ràng buộc gì thì dữ liệu bẩn lọt vào; DEFAULT rỗng cho phép nhiều email rỗng; CHECK chỉ kiểm tra định dạng chứ không đảm bảo duy nhất."
+sources = ["postgresql~18/ddl-constraints"]
+
+[[questions]]
+id = "databases-lv003"
+module = "db-sql-basics"
+type = "fill"
+difficulty = 1
+tags = ["level:junior", "select"]
+prompt = '''
+Lấy 5 bài viết mới nhất:
+
+    SELECT title FROM posts ORDER BY created_at {{blank}} LIMIT 5
+'''
+blanks = [["DESC"]]
+explanation = "Mặc định ORDER BY sắp xếp tăng dần (ASC); muốn mới nhất trước phải dùng DESC."
+sources = ["sqlite/lang_select"]
+
+[[questions]]
+id = "databases-lv004"
+module = "db-data-model"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "normalization"]
+prompt = "Bảng posts có cột tags lưu chuỗi 'sql,redis,index'. Vấn đề chính của thiết kế này khi cần tìm mọi bài có tag redis là gì?"
+options = ["Chuỗi quá ngắn nên không lưu được", "Vi phạm dạng chuẩn 1: mỗi ô chứa nhiều giá trị, khó lọc/đánh index và khó đảm bảo toàn vẹn", "Không thể dùng kiểu TEXT cho tag", "Cần chuyển hết sang Redis"]
+answer = [1]
+explanation = "Nên tách thành bảng tags và bảng nối post_tags (quan hệ nhiều-nhiều) để lọc bằng JOIN, đánh index và dùng khoá ngoại. Lưu chuỗi phân cách bằng dấu phẩy buộc phải LIKE '%redis%' (khớp nhầm 'redis-cluster') và không dùng được index thông thường."
+sources = ["postgresql~18/ddl-constraints"]
+
+[[questions]]
+id = "databases-lv005"
+module = "db-index-performance"
+type = "multiple"
+difficulty = 1
+tags = ["level:junior", "index"]
+prompt = "Chọn các nhận định đúng về index B-tree thông thường."
+options = ["Giúp tăng tốc tìm kiếm theo cột được đánh index", "Làm chậm INSERT/UPDATE/DELETE vì phải cập nhật thêm cấu trúc index", "Tốn thêm dung lượng lưu trữ", "Luôn được dùng cho mọi truy vấn có cột đó trong WHERE"]
+answer = [0, 1, 2]
+explanation = "Index đánh đổi tốc độ đọc lấy chi phí ghi và dung lượng. Planner chỉ dùng index khi ước tính rẻ hơn quét tuần tự; bảng nhỏ hoặc điều kiện lấy phần lớn dòng thì quét tuần tự có thể nhanh hơn."
+sources = ["postgresql~18/indexes-types#INDEXES-TYPES-BTREE", "sqlite/lang_createindex"]
+
+[[questions]]
+id = "databases-lv006"
+module = "db-sql-basics"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "security"]
+prompt = "Ứng dụng ghép chuỗi: query = \"SELECT * FROM users WHERE name = '\" + name + \"'\". Cách khắc phục đúng bản chất lỗi SQL injection là gì?"
+options = ["Thay dấu nháy đơn bằng dấu nháy kép trong name", "Dùng truy vấn tham số hoá (prepared statement) để dữ liệu không bao giờ được diễn giải thành SQL", "Chuyển name thành chữ thường", "Giới hạn độ dài name tối đa 20 ký tự"]
+answer = [1]
+explanation = "Tham số hoá tách phần lệnh khỏi phần dữ liệu. Các cách lọc ký tự, đổi dấu nháy hay giới hạn độ dài chỉ là vá víu và thường bị vượt qua."
+sources = ["sqlite/lang_expr"]
+
+[[questions]]
+id = "databases-lv007"
+module = "db-sql-basics"
+type = "fill"
+difficulty = 1
+tags = ["level:junior", "aggregate"]
+prompt = '''
+Đếm tổng số dòng của bảng orders, kể cả dòng có cột bị NULL:
+
+    SELECT COUNT({{blank}}) FROM orders
+'''
+blanks = [["*"]]
+explanation = "COUNT(*) đếm mọi dòng; COUNT(cột) bỏ qua các dòng mà cột đó là NULL."
+sources = ["sqlite/lang_aggfunc"]
+
+[[questions]]
+id = "databases-lv008"
+module = "db-transactions"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "dml"]
+prompt = "Lệnh DELETE FROM orders; (không có WHERE) được chạy nhầm trên bảng production trong một transaction chưa COMMIT. Cách xử lý đúng ngay lập tức là gì?"
+options = ["COMMIT để chốt lại rồi nhập lại dữ liệu", "ROLLBACK để huỷ transaction, dữ liệu trở về trạng thái trước đó", "Chạy lại DELETE cho chắc", "Khởi động lại máy chủ ứng dụng"]
+answer = [1]
+explanation = "Chưa COMMIT thì ROLLBACK huỷ mọi thay đổi trong transaction. Sau COMMIT mới phải khôi phục từ backup/point-in-time recovery. Thói quen tốt: viết WHERE trước, chạy SELECT cùng điều kiện để kiểm tra, và mở transaction khi sửa dữ liệu thủ công."
+sources = ["sqlite/lang_transaction", "postgresql~18/transaction-iso"]
+
+[[questions]]
+id = "databases-lv009"
+module = "db-redis"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "redis"]
+prompt = "Muốn lưu một giá trị cache trong Redis tự hết hạn sau 60 giây bằng một lệnh nguyên tử, lệnh nào phù hợp?"
+options = ["SET session:42 data EX 60", "SET session:42 data rồi sleep 60 và DEL ở ứng dụng", "GET session:42 EX 60", "HSET session:42 ttl 60"]
+answer = [0]
+explanation = "SET với EX gán giá trị và TTL trong cùng một lệnh. Tự DEL từ ứng dụng không đảm bảo chạy nếu tiến trình chết; GET không đặt TTL; một field tên ttl trong hash không có ý nghĩa với Redis."
+sources = ["redis/set/index", "redis/expire/index"]
+
+[[questions]]
+id = "databases-lv010"
+module = "db-data-model"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "foreign-key"]
+prompt = "Khoá ngoại orders.customer_id REFERENCES customers(id) giúp ích gì?"
+options = ["Tự động tạo index trên customers", "Ngăn đơn hàng trỏ tới khách hàng không tồn tại, giữ toàn vẹn tham chiếu", "Làm truy vấn JOIN luôn nhanh hơn", "Cho phép lưu nhiều khách trong một đơn"]
+answer = [1]
+explanation = "Khoá ngoại là ràng buộc toàn vẹn: không thể chèn đơn với customer_id không có thật và (tuỳ ON DELETE) kiểm soát việc xoá khách. Nó không tự động tăng tốc JOIN; cột khoá ngoại thường cần index riêng."
+sources = ["postgresql~18/ddl-constraints"]
+
+[[questions]]
+id = "databases-lv011"
+module = "db-transactions"
+type = "fill"
+difficulty = 1
+tags = ["level:junior", "transaction"]
+prompt = '''
+Hoàn tác mọi thay đổi trong transaction đang mở:
+
+    BEGIN;
+    UPDATE accounts SET balance = balance - 100 WHERE id = 1;
+    {{blank}};
+'''
+blanks = [["ROLLBACK"]]
+explanation = "ROLLBACK huỷ các thay đổi chưa commit của transaction hiện tại; COMMIT sẽ chốt chúng."
+sources = ["sqlite/lang_transaction"]
+
+[[questions]]
+id = "databases-lv012"
+module = "db-sql-basics"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "select"]
+prompt = "Vì sao thường không nên viết SELECT * trong code ứng dụng chạy production?"
+options = ["SELECT * không hợp lệ trong SQL chuẩn", "Lấy cả cột không cần, tốn băng thông, khó dùng covering index và code vỡ khi schema thêm/đổi cột", "SELECT * luôn bị lỗi khi có JOIN", "SELECT * không thể dùng với WHERE"]
+answer = [1]
+explanation = "Liệt kê cột cần thiết làm rõ hợp đồng dữ liệu, giảm dữ liệu truyền và cho phép index-only scan. SELECT * vẫn hợp lệ và hữu ích khi khám phá dữ liệu thủ công."
+sources = ["sqlite/lang_select"]
+
+[[questions]]
+id = "databases-lv013"
+module = "db-sql-basics"
+type = "multiple"
+difficulty = 1
+tags = ["level:junior", "null"]
+prompt = "Chọn các nhận định đúng về NULL trong SQL."
+options = ["NULL = NULL cho kết quả unknown, không phải true", "Dùng IS NULL để kiểm tra giá trị thiếu", "SUM bỏ qua các giá trị NULL", "NULL bằng chuỗi rỗng ''"]
+answer = [0, 1, 2]
+explanation = "NULL nghĩa là không biết/không có giá trị; mọi phép so sánh thông thường với NULL cho unknown. Hàm tổng hợp (trừ COUNT(*)) bỏ qua NULL. NULL khác chuỗi rỗng và khác số 0."
+sources = ["sqlite/lang_expr#isisnot", "sqlite/lang_aggfunc"]
+
+[[questions]]
+id = "databases-lv014"
+module = "db-redis"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "redis"]
+prompt = "Làm bảng xếp hạng điểm người chơi, cần lấy nhanh top 10 theo điểm. Kiểu dữ liệu Redis nào phù hợp nhất?"
+options = ["String chứa JSON của toàn bộ bảng xếp hạng", "Sorted set (ZADD / ZREVRANGE)", "List với LPUSH", "Set thường (SADD)"]
+answer = [1]
+explanation = "Sorted set giữ thành viên theo score và truy vấn theo thứ hạng hiệu quả. String JSON phải đọc/ghi lại toàn bộ; List và Set không sắp theo điểm."
+sources = ["redis/zadd/index", "redis/zrange/index"]
+
+[[questions]]
+id = "databases-lvc01"
+module = "db-sql-basics"
+type = "code"
+lang = "python"
+difficulty = 1
+tags = ["level:junior", "join"]
+title = "Khách hàng chưa mua hàng"
+prompt = '''
+Viết customers_without_orders(conn) nhận một kết nối sqlite3. Cơ sở dữ liệu có bảng customers(id, name) và orders(id, customer_id, total).
+Trả về danh sách tên các khách hàng không có đơn hàng nào, sắp xếp tăng dần theo tên.
+Ví dụ: có khách An (có đơn) và Binh (không có đơn) thì kết quả là ["Binh"]. Nếu mọi khách đều có đơn, trả về danh sách rỗng.
+'''
+starter = '''
+def customers_without_orders(conn):
+    return []
+'''
+solution = '''
+def customers_without_orders(conn):
+    rows = conn.execute(
+        "SELECT c.name FROM customers c "
+        "LEFT JOIN orders o ON o.customer_id = c.id "
+        "WHERE o.id IS NULL ORDER BY c.name"
+    ).fetchall()
+    return [r[0] for r in rows]
+'''
+tests = '''
+import sqlite3
+
+def make_db():
+    conn = sqlite3.connect(":memory:")
+    conn.executescript("""
+        CREATE TABLE customers (id INTEGER PRIMARY KEY, name TEXT NOT NULL);
+        CREATE TABLE orders (id INTEGER PRIMARY KEY, customer_id INTEGER, total INTEGER);
+    """)
+    return conn
+
+@test("trả về khách chưa có đơn")
+def _():
+    conn = make_db()
+    conn.executemany("INSERT INTO customers VALUES (?, ?)", [(1, "An"), (2, "Binh")])
+    conn.execute("INSERT INTO orders VALUES (1, 1, 100)")
+    expect(customers_without_orders(conn)).to_equal(["Binh"])
+
+@test("khách có nhiều đơn không bị lặp hay trả về")
+def _():
+    conn = make_db()
+    conn.executemany("INSERT INTO customers VALUES (?, ?)", [(1, "An"), (2, "Chi")])
+    conn.executemany("INSERT INTO orders VALUES (?, ?, ?)", [(1, 1, 10), (2, 1, 20), (3, 1, 30)])
+    expect(customers_without_orders(conn)).to_equal(["Chi"])
+
+@test("sắp xếp theo tên")
+def _():
+    conn = make_db()
+    conn.executemany("INSERT INTO customers VALUES (?, ?)", [(1, "Zoe"), (2, "Bao"), (3, "Mai")])
+    expect(customers_without_orders(conn)).to_equal(["Bao", "Mai", "Zoe"])
+
+@test("mọi khách đều có đơn")
+def _():
+    conn = make_db()
+    conn.execute("INSERT INTO customers VALUES (1, 'An')")
+    conn.execute("INSERT INTO orders VALUES (1, 1, 5)")
+    expect(customers_without_orders(conn)).to_equal([])
+
+@test("bảng rỗng")
+def _():
+    expect(customers_without_orders(make_db())).to_equal([])
+'''
+hints = ["LEFT JOIN từ customers sang orders rồi lọc dòng không khớp.", "Dòng không khớp có o.id IS NULL; nhớ ORDER BY c.name."]
+explanation = "Mẫu anti-join: LEFT JOIN + IS NULL. Cũng có thể dùng NOT EXISTS; chọn cách dễ đọc với team."
+sources = ["sqlite/lang_select"]
+
+[[questions]]
+id = "databases-lv015"
+module = "databases-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "backup", "rpo-rto"]
+prompt = "Hệ thống đặt hàng chạy PostgreSQL, yêu cầu kinh doanh: mất tối đa 5 phút dữ liệu (RPO) và phục hồi trong 1 giờ (RTO). Hiện chỉ có pg_dump mỗi đêm. Team 4 người, chưa có DBA. Bước nào hợp lý nhất?"
+options = ["Giữ pg_dump nhưng chạy mỗi 5 phút", "Bật base backup định kỳ kèm lưu trữ WAL liên tục (PITR), và diễn tập restore đo thời gian thật", "Mua một cụm multi-region đồng bộ để RPO bằng 0", "Chuyển sang NoSQL vì backup đơn giản hơn"]
+answer = [1]
+explanation = "Base backup + WAL archiving cho phép khôi phục tới thời điểm bất kỳ gần sự cố, đáp ứng RPO vài phút với chi phí vừa phải, và phải diễn tập để chứng minh RTO. pg_dump mỗi 5 phút làm tải và khoá nặng, không đạt RTO với dữ liệu lớn. Multi-region đồng bộ đắt và phức tạp vượt yêu cầu (RPO 0) với team 4 người. Đổi sang NoSQL không giải quyết RPO/RTO mà còn tốn chi phí di chuyển."
+sources = ["postgresql~18/continuous-archiving", "postgresql~18/backup-dump"]
+
+[[questions]]
+id = "databases-lv016"
+module = "databases-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "sql-vs-nosql"]
+prompt = "Startup 5 dev xây ứng dụng quản lý đơn hàng B2B: dữ liệu quan hệ rõ (khách, đơn, hoá đơn), cần báo cáo ad-hoc và transaction đa bảng, dự kiến 100 GB sau 2 năm. Một thành viên đề xuất MongoDB vì dễ scale. Quyết định hợp lý nhất?"
+options = ["Dùng MongoDB, scale ngang ngay từ đầu", "Dùng PostgreSQL một node kèm backup/PITR; xem lại khi ghi hoặc dung lượng vượt ngưỡng đã đặt", "Dùng cả MongoDB và PostgreSQL để dự phòng", "Tự viết lớp lưu trữ trên file để toàn quyền kiểm soát"]
+answer = [1]
+explanation = "Dữ liệu quan hệ + transaction + báo cáo ad-hoc là điểm mạnh của RDBMS; 100 GB nằm thoải mái trên một node. Scale ngang là bài toán chưa tồn tại, trong khi MongoDB làm mất join, ràng buộc và tăng rủi ro cho team chưa có kinh nghiệm. Dùng hai hệ thống nhân đôi chi phí vận hành; tự viết lớp lưu trữ là rủi ro lớn nhất."
+sources = ["postgresql~18/ddl-partitioning"]
+
+[[questions]]
+id = "databases-lv017"
+module = "databases-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "migration"]
+prompt = "Cần đổi kiểu cột lớn trên bảng 1,5 TB đang nhận ghi liên tục, cho phép downtime tối đa 2 phút, team 3 người, có 3 tuần. Phương án phù hợp nhất?"
+options = ["Chạy ALTER TABLE ... TYPE trực tiếp vào cuối tuần", "Expand/contract: thêm cột mới, ghi kép, backfill theo lô nhỏ, chuyển đọc, rồi bỏ cột cũ trong các lần deploy riêng", "Dừng hệ thống 6 giờ để export/import", "Tạo database mới và bắt người dùng đăng ký lại"]
+answer = [1]
+explanation = "Expand/contract tránh khoá dài, cho phép rollback ở từng bước và fit ngân sách 2 phút downtime. ALTER TYPE thường viết lại toàn bộ bảng và giữ khoá mạnh trong thời gian rất dài. Dừng 6 giờ vượt ràng buộc. Làm lại database là mất dữ liệu và niềm tin."
+sources = ["postgresql~18/ddl-alter#DDL-ALTER-COLUMN-TYPE"]
+
+[[questions]]
+id = "databases-lv018"
+module = "databases-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "scaling"]
+prompt = "Lượt truy cập sắp tăng 3 lần trong 2 tháng; 90% truy vấn là đọc, CPU primary đang ở 55%, dữ liệu 200 GB, team 4 người. Bước đầu tiên nên làm gì?"
+options = ["Shard theo user_id ngay để chuẩn bị tương lai", "Đo truy vấn nặng nhất, tối ưu index/cache, rồi thêm read replica cho các đọc chấp nhận trễ nhẹ", "Viết lại sang microservice, mỗi service một database", "Không làm gì, chờ khi hệ thống chậm"]
+answer = [1]
+explanation = "Với đọc chiếm đa số và còn dư công suất, tối ưu truy vấn và read replica/cache là rẻ nhất, đảo ngược được. Sharding sớm đưa join/transaction xuyên shard vào hệ thống và resharding rất đắt. Tách microservice không giải quyết tải đọc. Chờ sự cố vi phạm trách nhiệm lập kế hoạch năng lực."
+sources = ["postgresql~18/different-replication-solutions"]
+
+[[questions]]
+id = "databases-lv019"
+module = "databases-lead"
+type = "multiple"
+difficulty = 3
+tags = ["level:lead", "adr"]
+prompt = "Team viết ADR cho quyết định chọn chiến lược partition bảng events. Chọn các mục nên có trong ADR."
+options = ["Bối cảnh và ràng buộc có số liệu (kích thước, tốc độ tăng, mẫu truy vấn)", "Các phương án đã cân nhắc và lý do loại", "Hệ quả và ngưỡng số liệu để xem lại quyết định", "Tên người đã đề xuất để quy trách nhiệm nếu sai"]
+answer = [0, 1, 2]
+explanation = "ADR ghi bối cảnh, phương án, quyết định, hệ quả và điều kiện xem lại để người sau hiểu vì sao. Tên người đề xuất không phải mục đích của ADR; văn hoá blameless coi quyết định là của team."
+sources = ["postgresql~18/ddl-partitioning"]
+
+[[questions]]
+id = "databases-lv020"
+module = "databases-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "backup"]
+prompt = "Công ty có backup hằng ngày chạy xanh 2 năm, nhưng chưa ai restore thử. Quản lý hỏi rủi ro lớn nhất là gì và nên làm gì tuần này?"
+options = ["Không có rủi ro vì job backup báo thành công", "Backup chưa được chứng minh dùng được: lên lịch restore thử định kỳ vào môi trường riêng, đo RTO và kiểm tra dữ liệu", "Tăng tần suất backup lên mỗi giờ", "Mua thêm dung lượng lưu trữ backup"]
+answer = [1]
+explanation = "Backup chỉ có giá trị khi restore được trong RTO. Job xanh không chứng minh file đọc được, đủ dữ liệu hay đủ nhanh. Tăng tần suất hay thêm dung lượng không xử lý rủi ro cốt lõi là chưa kiểm chứng."
+sources = ["postgresql~18/backup-dump"]
+
+[[questions]]
+id = "databases-lv021"
+module = "databases-lead"
+type = "multiple"
+difficulty = 3
+tags = ["level:lead", "managed-vs-self"]
+prompt = "Team 6 người cân nhắc managed PostgreSQL và tự vận hành trên VM. Chọn các yếu tố nghiêng về managed."
+options = ["Không có DBA và không ai muốn on-call chuyện backup/failover", "Cần patch bảo mật và nâng minor version đều đặn với ít công sức", "Bắt buộc dùng extension tuỳ chỉnh không có trong danh sách của nhà cung cấp", "Chi phí vận hành nhân lực đắt hơn chênh lệch giá dịch vụ"]
+answer = [0, 1, 3]
+explanation = "Managed chuyển các việc backup, failover, patch cho nhà cung cấp, hợp với team nhỏ. Nếu cần extension hay tinh chỉnh sâu mà managed không hỗ trợ thì tự vận hành mới hợp lý hơn."
+sources = ["postgresql~18/different-replication-solutions"]
+
+[[questions]]
+id = "databases-lv022"
+module = "databases-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "dr"]
+prompt = "Ngân hàng nhỏ yêu cầu RPO = 0 cho ví điện tử trong cùng một khu vực, sẵn sàng chịu độ trễ ghi cao hơn. Cấu hình replication nào phù hợp nhất?"
+options = ["Replication bất đồng bộ tới standby", "Replication đồng bộ (synchronous_commit với ít nhất một standby xác nhận) và cảnh báo khi standby mất kết nối", "Backup mỗi 1 phút", "Đọc từ replica, ghi vào primary không replication"]
+answer = [1]
+explanation = "RPO = 0 cần commit chỉ thành công khi ít nhất một bản sao đã nhận WAL, tức replication đồng bộ; đổi lại độ trễ ghi tăng và phải xử lý trường hợp standby chết làm treo ghi. Bất đồng bộ có thể mất giao dịch cuối khi primary hỏng; backup mỗi phút vẫn mất tới 1 phút dữ liệu."
+sources = ["postgresql~18/runtime-config-replication#GUC-SYNCHRONOUS-STANDBY-NAMES"]
+
+[[questions]]
+id = "databases-lv023"
+module = "databases-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "multi-tenant"]
+prompt = "SaaS dự kiến 5 000 tenant nhỏ (mỗi tenant vài MB), team 4 người, schema đổi thường xuyên. Mô hình dữ liệu hợp lý nhất?"
+options = ["Một database riêng cho mỗi tenant", "Một schema chung, mọi bảng có tenant_id, index bắt đầu bằng tenant_id và áp dụng row-level security hoặc bắt buộc lọc ở tầng truy cập", "Mỗi tenant một file SQLite trên máy chủ ứng dụng", "Mỗi tenant một cluster PostgreSQL"]
+answer = [1]
+explanation = "Với nhiều tenant nhỏ, một schema chung giữ chi phí và migration ở mức một lần cho tất cả. Database/cluster riêng cho 5 000 tenant làm migration và vận hành nhân lên 5 000 lần. Cần kỷ luật chống rò rỉ chéo tenant: RLS hoặc lớp truy cập luôn gắn tenant_id."
+sources = ["postgresql~18/ddl-alter"]
+
+[[questions]]
+id = "databases-lv024"
+module = "databases-lead"
+type = "fill"
+difficulty = 3
+tags = ["level:lead", "rpo-rto"]
+prompt = '''
+Thuật ngữ viết tắt chỉ khoảng thời gian dữ liệu tối đa chấp nhận bị mất khi sự cố (khác với RTO là thời gian phục hồi) là: {{blank}}
+'''
+blanks = [["RPO"]]
+explanation = "RPO (Recovery Point Objective) quyết định tần suất backup/WAL archive/replication; RTO (Recovery Time Objective) quyết định tốc độ failover và restore."
+sources = ["postgresql~18/continuous-archiving"]
+
+[[questions]]
+id = "databases-lv025"
+module = "databases-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "upgrade"]
+prompt = "Cần nâng PostgreSQL một phiên bản major cho cơ sở dữ liệu 800 GB phục vụ 24/7; business chỉ chấp nhận downtime tối đa 5 phút, team có 2 tuần chuẩn bị. Phương án hợp lý nhất?"
+options = ["pg_dump rồi restore trong khung bảo trì 4 giờ", "Dựng cụm mới, đồng bộ bằng logical replication, kiểm thử ứng dụng rồi chuyển lưu lượng trong cửa sổ ngắn, giữ cụm cũ để rollback", "Nâng thẳng tại chỗ không có bản sao dự phòng", "Hoãn nâng cấp vô thời hạn"]
+answer = [1]
+explanation = "Logical replication giữ downtime ở mức phút và có đường lùi vì cụm cũ vẫn còn. Dump/restore 4 giờ vượt ràng buộc. Nâng tại chỗ không dự phòng là rủi ro không có rollback. Hoãn mãi tích nợ và có thể gặp hết hạn hỗ trợ bảo mật."
+sources = ["postgresql~18/logical-replication-upgrade"]
+
+[[questions]]
+id = "databases-lv026"
+module = "databases-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "incident"]
+prompt = "Lúc cao điểm, CPU primary 95% và API chậm. Bạn là on-call lead. Thứ tự ưu tiên hợp lý nhất trong 30 phút đầu?"
+options = ["Viết lại ORM để giảm truy vấn", "Giảm thiệt hại trước (tắt tính năng nặng, giới hạn tốc độ, kill truy vấn chạy lâu), tìm truy vấn gây tải bằng thống kê, rồi mới sửa gốc và viết postmortem", "Khởi động lại database để làm sạch", "Tăng gấp đôi cấu hình rồi bỏ qua nguyên nhân"]
+answer = [1]
+explanation = "Ổn định dịch vụ trước, chẩn đoán dựa trên số liệu, sửa gốc sau. Khởi động lại làm mất cache và có thể làm tệ thêm; viết lại ORM không phải thao tác xử lý sự cố; tăng cấu hình mù có thể tốn tiền mà không trúng nguyên nhân."
+sources = ["postgresql~18/using-explain"]
+
+[[questions]]
+id = "databases-lv027"
+module = "databases-lead"
+type = "multiple"
+difficulty = 3
+tags = ["level:lead", "anti-pattern"]
+prompt = "Chọn các anti-pattern về dữ liệu thường gây đau đầu khi team lớn lên."
+options = ["Nhiều service đọc/ghi trực tiếp vào bảng của nhau trong một database chung", "Không ai sở hữu schema; migration được chạy tay trên production", "Mỗi thay đổi schema đều có review, chạy thử trên bản sao và có kế hoạch rollback", "Thêm index cho từng truy vấn chậm mà không đo chi phí ghi và dung lượng"]
+answer = [0, 1, 3]
+explanation = "Coupling qua database chung, thiếu chủ sở hữu và migration thủ công khiến mọi thay đổi trở nên rủi ro. Index thêm vô tội vạ làm chậm ghi và tốn bộ nhớ. Review và rollback kế hoạch là thực hành tốt, không phải anti-pattern."
+sources = ["postgresql~18/ddl-alter"]
+
+[[questions]]
+id = "databases-lv028"
+module = "databases-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "partitioning"]
+prompt = "Bảng logs 3 TB, 95% truy vấn lọc theo 7 ngày gần nhất, cần xoá dữ liệu quá 90 ngày; DELETE hằng đêm đang gây bloat và khoá. Team 4 người. Quyết định hợp lý?"
+options = ["Shard theo log_id lên 8 node", "Partition theo ngày/tuần và xoá bằng DROP/DETACH phân vùng cũ", "Tăng tần suất DELETE lên mỗi giờ", "Chuyển hết sang cache Redis"]
+answer = [1]
+explanation = "Partition theo thời gian khớp mẫu truy vấn (partition pruning) và biến việc xoá thành thao tác metadata rẻ, không bloat. Sharding giải bài toán ghi vượt một node, không phải vòng đời dữ liệu. DELETE thường xuyên hơn làm tệ thêm. Redis không phù hợp lưu 3 TB log."
+sources = ["postgresql~18/ddl-partitioning"]
+
+[[questions]]
+id = "databases-lv029"
+module = "databases-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "process"]
+prompt = "Team vừa có sự cố vì một migration thêm cột NOT NULL có default chạy khoá bảng lớn. Quy trình nào đáng đưa vào chuẩn của team nhất?"
+options = ["Cấm mọi migration vào thứ Sáu", "Checklist migration bắt buộc trong PR: tương thích ngược, đặt lock_timeout, chạy thử trên bản sao dữ liệu thật, kế hoạch rollback", "Chỉ giao migration cho người senior nhất", "Bỏ migration, sửa schema bằng tay khi cần"]
+answer = [1]
+explanation = "Chuẩn hoá bằng checklist và kiểm thử trên dữ liệu thật giải quyết nguyên nhân gốc và chia sẻ kiến thức cho cả team. Cấm thứ Sáu chỉ dời rủi ro; dồn cho một người tạo điểm nghẽn; sửa tay mất khả năng truy vết."
+sources = ["postgresql~18/ddl-alter#DDL-ALTER-ADDING-A-COLUMN"]
+
+[[questions]]
+id = "databases-lv030"
+module = "databases-lead"
+type = "essay"
+difficulty = 3
+tags = ["level:lead", "dr"]
+prompt = "Dịch vụ thanh toán yêu cầu RPO 5 phút và RTO 30 phút, team 5 người, ngân sách vừa phải. Hãy đề xuất kế hoạch backup và disaster recovery cho cơ sở dữ liệu chính, nêu cách chứng minh kế hoạch đạt yêu cầu."
+keywords = [["wal", "point-in-time", "pitr"], ["standby", "replica", "failover"], ["restore", "khôi phục"], ["diễn tập", "drill", "kiểm thử"], ["rpo"], ["rto"]]
+min_keywords = 4
+model_answer = '''Dùng base backup định kỳ kèm lưu trữ WAL liên tục sang kho riêng (point-in-time recovery) để RPO thực tế dưới 5 phút; thêm một standby/replica ở vùng khác để failover nhanh đáp ứng RTO 30 phút. Mã hoá, tách quyền và lưu bản sao backup ngoài tài khoản chính. Diễn tập restore và failover mỗi quý, đo thời gian thật so với RTO, kiểm tra tính toàn vẹn dữ liệu, giám sát độ trễ WAL archive và replication để cảnh báo khi RPO bị vi phạm. Ghi runbook và quyết định vào ADR, xem lại khi dữ liệu tăng làm restore chậm hơn RTO.'''
+explanation = "Đáp án tốt nối ràng buộc RPO/RTO với cơ chế cụ thể, có đo đạc và diễn tập, thay vì chỉ nói chung chung rằng đã có backup."
+sources = ["postgresql~18/continuous-archiving"]
+
+[[questions]]
+id = "databases-lv031"
+module = "databases-lead"
+type = "essay"
+difficulty = 3
+tags = ["level:lead", "sharding"]
+prompt = "Primary PostgreSQL đạt 75% CPU do ghi tăng đều. Cấp trên hỏi có nên shard ngay không. Hãy trình bày cách bạn ra quyết định và các bước thay thế trước khi shard."
+keywords = [["đo", "profil", "số liệu"], ["partition", "phân vùng"], ["index", "tối ưu truy vấn", "query"], ["batch", "gom ghi"], ["shard", "sharding"], ["khoá shard", "shard key", "chi phí"]]
+min_keywords = 4
+model_answer = '''Trước hết đo: truy vấn ghi nặng nhất, lock wait, I/O và tốc độ tăng để biết còn bao lâu đến trần. Thử các bước rẻ và đảo ngược được: tối ưu truy vấn và index thừa, gom ghi theo batch, partition bảng lớn, nâng cấu hình, chuyển đọc sang replica hoặc cache. Chỉ shard khi dự báo ghi vượt giới hạn một node dù đã làm các bước trên; khi đó phải chọn shard key theo mẫu truy cập, chấp nhận mất join/transaction xuyên shard và chi phí resharding. Ghi quyết định cùng ngưỡng số liệu xem lại vào ADR.'''
+explanation = "Điểm cốt lõi: quyết định dựa trên số liệu, ưu tiên bước rẻ và đảo ngược được, nhận ra chi phí thật của sharding."
+sources = ["postgresql~18/ddl-partitioning"]
+
+[[questions]]
+id = "databases-lvc02"
+module = "databases-lead"
+type = "code"
+lang = "python"
+difficulty = 3
+tags = ["level:lead", "rpo-rto"]
+title = "Kiểm tra RPO của lịch backup"
+prompt = '''
+Viết worst_case_data_loss(backup_times, horizon). backup_times là danh sách thời điểm (phút) các bản backup/WAL archive thành công, có thể chưa sắp xếp, nằm trong khoảng [0, horizon]. Hệ thống bắt đầu ở phút 0 với bản backup ban đầu, nên coi 0 luôn là một mốc, và horizon là thời điểm cuối của cửa sổ đánh giá.
+Trả về khoảng cách lớn nhất (phút) giữa hai mốc liên tiếp (gồm cả mốc 0 và horizon). Đó là lượng dữ liệu tối đa có thể mất nếu sự cố xảy ra ngay trước mốc tiếp theo.
+Ví dụ: backup_times [60, 120] và horizon 240 cho mốc 0, 60, 120, 240 nên kết quả là 120. Không sửa danh sách đầu vào; mốc trùng nhau không ảnh hưởng.
+'''
+starter = '''
+def worst_case_data_loss(backup_times, horizon):
+    return 0
+'''
+solution = '''
+def worst_case_data_loss(backup_times, horizon):
+    points = sorted(set(backup_times) | {0, horizon})
+    return max(b - a for a, b in zip(points, points[1:]))
+'''
+tests = '''
+@test("lịch đều")
+def _():
+    expect(worst_case_data_loss([60, 120], 180)).to_equal(60)
+
+@test("khoảng trống cuối cửa sổ")
+def _():
+    expect(worst_case_data_loss([60, 120], 240)).to_equal(120)
+
+@test("danh sách chưa sắp xếp và có trùng")
+def _():
+    expect(worst_case_data_loss([120, 60, 60, 180], 200)).to_equal(60)
+
+@test("chưa có backup nào ngoài mốc đầu")
+def _():
+    expect(worst_case_data_loss([], 300)).to_equal(300)
+
+@test("không sửa danh sách đầu vào")
+def _():
+    data = [90, 30]
+    worst_case_data_loss(data, 100)
+    expect(data).to_equal([90, 30])
+
+@test("mốc nằm sát đầu hoặc cuối")
+def _():
+    expect(worst_case_data_loss([0, 100], 100)).to_equal(100)
+'''
+hints = ["Gộp 0 và horizon vào tập mốc rồi sắp xếp.", "Dùng zip(points, points[1:]) để tính hiệu giữa các mốc liên tiếp."]
+explanation = "RPO thực tế được quyết định bởi khoảng trống lớn nhất giữa hai điểm khôi phục, không phải khoảng cách trung bình. Cần giám sát khoảng trống này, đặc biệt khi job backup/WAL archive lỗi."
+sources = ["postgresql~18/continuous-archiving"]
+
+[[questions]]
+id = "databases-lv032"
+module = "db-index-performance"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "index"]
+prompt = "Có index (country, city) trên bảng stores. Truy vấn nào ít có khả năng tận dụng index này một cách hiệu quả?"
+options = ["WHERE country = 'VN'", "WHERE country = 'VN' AND city = 'Hanoi'", "WHERE city = 'Hanoi'", "WHERE country = 'VN' ORDER BY city"]
+answer = [2]
+explanation = "Index nhiều cột theo thứ tự tiền tố bên trái: dùng tốt khi điều kiện bắt đầu từ cột đầu (country). Chỉ lọc theo city bỏ qua cột đầu nên không dùng được index một cách hiệu quả (có thể phải quét toàn bộ index hoặc bảng). Với country rồi ORDER BY city, thứ tự trong index còn giúp tránh sắp xếp."
+sources = ["postgresql~18/indexes-types#INDEXES-TYPES-BTREE"]
+
+[[questions]]
+id = "databases-lv033"
+module = "db-index-performance"
+type = "multiple"
+difficulty = 2
+tags = ["level:middle", "index"]
+prompt = "Chọn các nhận định đúng về covering index (index chứa đủ cột truy vấn cần)."
+options = ["Có thể cho phép index-only scan, không cần đọc bảng", "Làm index lớn hơn và chậm ghi hơn", "Luôn tốt hơn mọi index khác nên nên đưa mọi cột vào", "Vẫn cần bảo trì khi dữ liệu thay đổi"]
+answer = [0, 1, 3]
+explanation = "Covering index giảm truy cập bảng nhưng phải trả bằng dung lượng và chi phí ghi, nên chỉ nên dùng cho truy vấn nóng. Đưa mọi cột vào là lãng phí và phản tác dụng."
+sources = ["postgresql~18/indexes-types"]
+
+[[questions]]
+id = "databases-lv034"
+module = "db-transactions"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "isolation"]
+prompt = "Trong READ COMMITTED, transaction A đọc balance của tài khoản hai lần; giữa hai lần đó transaction B commit cập nhật balance. Điều gì xảy ra?"
+options = ["Cả hai lần A đều thấy giá trị cũ", "Lần đọc thứ hai có thể thấy giá trị mới (non-repeatable read)", "A bị lỗi và tự rollback", "B bị chặn đến khi A kết thúc"]
+answer = [1]
+explanation = "READ COMMITTED chỉ thấy dữ liệu đã commit tại thời điểm mỗi câu lệnh bắt đầu, nên hai lần đọc có thể khác nhau. REPEATABLE READ dùng snapshot cố định cho cả transaction. Ghi của B không bị đọc của A chặn (MVCC)."
+sources = ["postgresql~18/transaction-iso#XACT-READ-COMMITTED"]
+
+[[questions]]
+id = "databases-lv035"
+module = "db-sql-advanced"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "n-plus-one"]
+prompt = "API trả danh sách 100 bài viết kèm tên tác giả: code chạy 1 truy vấn lấy bài rồi 100 truy vấn lấy tác giả. Cách sửa tốt nhất?"
+options = ["Tăng kích thước connection pool", "Dùng một JOIN hoặc một truy vấn WHERE id IN (...) để lấy toàn bộ tác giả một lần", "Thêm cache cho từng truy vấn tác giả mà vẫn chạy 100 lần khi cache miss", "Chạy 100 truy vấn song song"]
+answer = [1]
+explanation = "Đây là N+1. Gom thành 1–2 truy vấn giảm round trip và tải DB. Tăng pool hoặc chạy song song không giảm số truy vấn; cache từng phần chỉ che giấu vấn đề khi miss."
+sources = ["postgresql~18/queries-table-expressions#QUERIES-JOIN"]
+
+[[questions]]
+id = "databases-lv036"
+module = "db-sql-advanced"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "pagination"]
+prompt = "Phân trang feed bằng OFFSET 200000 LIMIT 20 ngày càng chậm. Cách khắc phục phù hợp nhất cho cuộn vô hạn?"
+options = ["Tăng LIMIT lên 1000", "Keyset pagination: WHERE (created_at, id) < (:last_created, :last_id) ORDER BY created_at DESC, id DESC LIMIT 20, có index tương ứng", "Đếm COUNT(*) trước mỗi trang", "Dùng SELECT DISTINCT"]
+answer = [1]
+explanation = "OFFSET lớn buộc DB đọc rồi bỏ qua nhiều dòng. Keyset dùng điều kiện theo khoá cuối cùng và index để nhảy thẳng tới vị trí, thời gian ổn định. Cần cặp (created_at, id) để thứ tự xác định khi trùng thời gian."
+sources = ["postgresql~18/sql-select"]
+
+[[questions]]
+id = "databases-lv037"
+module = "db-transactions"
+type = "fill"
+difficulty = 2
+tags = ["level:middle", "locking"]
+prompt = '''
+Nhiều worker lấy job từ bảng jobs mà không chờ nhau bị khoá:
+
+    SELECT id FROM jobs WHERE status = 'pending' ORDER BY id LIMIT 1 FOR UPDATE {{blank}}
+'''
+blanks = [["SKIP LOCKED"]]
+explanation = "SKIP LOCKED bỏ qua các dòng đang bị worker khác khoá, cho mẫu hàng đợi trên PostgreSQL mà không tranh chấp."
+sources = ["postgresql~18/sql-select"]
+
+[[questions]]
+id = "databases-lv038"
+module = "db-redis"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "cache"]
+prompt = "Mẫu cache-aside: khi cập nhật user trong database, cách xử lý cache an toàn thường gặp nhất là gì?"
+options = ["Ghi vào cache trước rồi mới ghi database", "Cập nhật database, sau đó xoá (invalidate) key cache để lần đọc kế tiếp nạp lại", "Không bao giờ xoá cache, chỉ dựa vào TTL dài 24 giờ", "Ghi database và cache song song không cần thứ tự"]
+answer = [1]
+explanation = "Ghi nguồn sự thật trước rồi xoá cache giảm cửa sổ dữ liệu cũ và tránh ghi nhầm giá trị lỗi vào cache. Ghi cache trước làm lệch nếu ghi DB thất bại; TTL dài cho phép dữ liệu cũ lâu; ghi song song không thứ tự dễ tạo race."
+sources = ["redis/del/index", "redis/expire/index"]
+
+[[questions]]
+id = "databases-lv039"
+module = "db-transactions"
+type = "multiple"
+difficulty = 2
+tags = ["level:middle", "deadlock"]
+prompt = "Chọn các biện pháp giảm khả năng deadlock giữa các transaction."
+options = ["Luôn khoá các dòng/bảng theo cùng một thứ tự", "Giữ transaction ngắn, không chờ I/O bên ngoài khi đang giữ khoá", "Dùng transaction dài để gom nhiều thao tác", "Có retry với backoff khi gặp lỗi deadlock"]
+answer = [0, 1, 3]
+explanation = "Thứ tự khoá nhất quán loại bỏ chu trình chờ; transaction ngắn giảm thời gian giữ khoá; deadlock vẫn có thể xảy ra nên cần retry. Transaction dài làm tệ thêm."
+sources = ["postgresql~18/transaction-iso"]
+
+[[questions]]
+id = "databases-lv040"
+module = "db-sql-advanced"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "window-function"]
+prompt = "Bảng events có nhiều dòng trùng user_id; cần giữ bản ghi mới nhất cho mỗi user. Cách nào đúng?"
+options = ["SELECT DISTINCT user_id, created_at FROM events", "ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY created_at DESC) rồi giữ dòng có rn = 1", "GROUP BY user_id mà chọn mọi cột khác", "ORDER BY created_at LIMIT 1"]
+answer = [1]
+explanation = "Window function đánh số trong từng nhóm user rồi lọc rn = 1. DISTINCT không chọn dòng mới nhất; GROUP BY không hợp lệ khi chọn cột không tổng hợp; LIMIT 1 chỉ trả một dòng toàn bảng."
+sources = ["sqlite/windowfunctions", "postgresql~18/tutorial-window"]
+
+[[questions]]
+id = "databases-lv041"
+module = "db-index-performance"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "explain"]
+prompt = "EXPLAIN ANALYZE cho thấy Seq Scan trên bảng 50 000 dòng dù đã có index trên cột lọc, và điều kiện khớp 60% số dòng. Nhận định nào hợp lý?"
+options = ["Planner sai, buộc phải tắt seq scan toàn hệ thống", "Khi điều kiện lấy phần lớn dòng, quét tuần tự thường rẻ hơn dùng index; đây có thể là kế hoạch đúng", "Index bị hỏng và phải tạo lại", "Cần thêm RAM ngay"]
+answer = [1]
+explanation = "Dùng index cho tỉ lệ dòng lớn gây nhiều truy cập ngẫu nhiên, đắt hơn đọc tuần tự. Hãy kiểm tra độ chọn lọc và thống kê trước khi kết luận; không tắt seq scan toàn cục."
+sources = ["postgresql~18/using-explain", "postgresql~18/sql-explain"]
+
+[[questions]]
+id = "databases-lv042"
+module = "db-data-model"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "schema"]
+prompt = "Cần lưu lịch sử giá sản phẩm để tra giá tại một thời điểm bất kỳ trong quá khứ. Thiết kế nào hợp lý?"
+options = ["Chỉ một cột price và ghi đè khi đổi giá", "Bảng product_prices(product_id, price, valid_from, valid_to) và truy vấn theo khoảng hiệu lực", "Lưu giá cũ trong cột notes", "Dùng một bảng mỗi ngày"]
+answer = [1]
+explanation = "Bảng lịch sử với khoảng hiệu lực cho phép tra theo thời điểm và kiểm toán. Ghi đè mất lịch sử; cột notes không truy vấn được; bảng mỗi ngày làm schema phình to."
+sources = ["postgresql~18/ddl-constraints"]
+
+[[questions]]
+id = "databases-lv043"
+module = "db-index-performance"
+type = "essay"
+difficulty = 2
+tags = ["level:middle", "performance"]
+prompt = "Một truy vấn báo cáo đột nhiên chậm từ 200 ms lên 8 giây sau khi dữ liệu tăng gấp 3. Hãy mô tả quy trình chẩn đoán và các hướng khắc phục."
+keywords = [["explain", "kế hoạch thực thi", "query plan"], ["index"], ["thống kê", "analyze", "statistics"], ["seq scan", "quét tuần tự", "quét toàn bảng"], ["join", "chọn lọc", "selectivity"]]
+min_keywords = 3
+model_answer = '''Chạy EXPLAIN (ANALYZE) để xem kế hoạch thực thi thực tế: có seq scan trên bảng lớn không, ước lượng số dòng lệch thực tế bao nhiêu, thuật toán join nào được chọn. Kiểm tra thống kê của planner đã cập nhật (ANALYZE), kiểm tra điều kiện lọc có độ chọn lọc cao và có index phù hợp (có thể là index nhiều cột hoặc covering index). Khắc phục theo bằng chứng: thêm hoặc sửa index, viết lại truy vấn, phân trang kiểu keyset, bảng tổng hợp cho báo cáo. Đo lại trước và sau, và theo dõi tác động lên ghi.'''
+explanation = "Câu trả lời mạnh đi theo vòng đo - giả thuyết - sửa - đo lại thay vì thêm index đoán mò."
+sources = ["postgresql~18/using-explain"]
+
+[[questions]]
+id = "databases-lvc03"
+module = "db-sql-advanced"
+type = "code"
+lang = "python"
+difficulty = 2
+tags = ["level:middle", "pagination"]
+title = "Phân trang keyset"
+prompt = '''
+Viết fetch_page(conn, after_id, limit) nhận kết nối sqlite3 và bảng posts(id INTEGER PRIMARY KEY, title TEXT). Trả về danh sách tuple (id, title) của tối đa limit bài viết có id lớn hơn after_id, sắp xếp tăng dần theo id. Nếu after_id là None thì bắt đầu từ đầu.
+Dùng truy vấn tham số hoá, không dùng OFFSET.
+Ví dụ: posts có id 1..5, after_id = 2, limit = 2 thì kết quả là [(3, ...), (4, ...)].
+'''
+starter = '''
+def fetch_page(conn, after_id, limit):
+    return []
+'''
+solution = '''
+def fetch_page(conn, after_id, limit):
+    if after_id is None:
+        after_id = -1
+    rows = conn.execute(
+        "SELECT id, title FROM posts WHERE id > ? ORDER BY id LIMIT ?",
+        (after_id, limit),
+    ).fetchall()
+    return [(r[0], r[1]) for r in rows]
+'''
+tests = '''
+import sqlite3
+
+def make_db(n):
+    conn = sqlite3.connect(":memory:")
+    conn.execute("CREATE TABLE posts (id INTEGER PRIMARY KEY, title TEXT)")
+    conn.executemany("INSERT INTO posts VALUES (?, ?)", [(i, "t%d" % i) for i in range(1, n + 1)])
+    return conn
+
+@test("trang đầu khi after_id là None")
+def _():
+    expect(fetch_page(make_db(5), None, 2)).to_equal([(1, "t1"), (2, "t2")])
+
+@test("trang tiếp theo")
+def _():
+    expect(fetch_page(make_db(5), 2, 2)).to_equal([(3, "t3"), (4, "t4")])
+
+@test("trang cuối ít hơn limit")
+def _():
+    expect(fetch_page(make_db(5), 4, 10)).to_equal([(5, "t5")])
+
+@test("hết dữ liệu")
+def _():
+    expect(fetch_page(make_db(3), 3, 2)).to_equal([])
+
+@test("khoá không liền nhau")
+def _():
+    conn = sqlite3.connect(":memory:")
+    conn.execute("CREATE TABLE posts (id INTEGER PRIMARY KEY, title TEXT)")
+    conn.executemany("INSERT INTO posts VALUES (?, ?)", [(10, "a"), (20, "b"), (30, "c")])
+    expect(fetch_page(conn, 10, 5)).to_equal([(20, "b"), (30, "c")])
+'''
+hints = ["Điều kiện WHERE id > ? thay cho OFFSET.", "Khi after_id là None có thể dùng một giá trị nhỏ hơn mọi id hợp lệ."]
+explanation = "Keyset pagination có chi phí ổn định theo kích thước trang vì dùng index để nhảy tới vị trí, không đọc bỏ qua các dòng trước đó."
+sources = ["sqlite/lang_select"]
+
+[[questions]]
+id = "databases-lv044"
+module = "db-transactions"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "mvcc"]
+prompt = "Một transaction báo cáo ở trạng thái idle in transaction đã mở 6 giờ trên PostgreSQL. Hậu quả điển hình lên hệ thống là gì?"
+options = ["Không ảnh hưởng gì vì chỉ đọc", "Giữ snapshot cũ nên VACUUM không dọn được các dòng chết mới hơn nó, gây bloat và có thể giữ khoá", "Làm tăng tốc mọi truy vấn khác", "Tự động commit sau 1 giờ"]
+answer = [1]
+explanation = "Với MVCC, snapshot cũ buộc phải giữ các phiên bản dòng mà nó còn có thể thấy, vacuum không thu hồi được và bảng/index phình. Transaction dài còn có thể giữ khoá và cản DDL. Giải pháp: giới hạn bằng idle_in_transaction_session_timeout, kết thúc transaction sớm."
+sources = ["postgresql~18/routine-vacuuming", "postgresql~18/mvcc-intro"]
+
+[[questions]]
+id = "databases-lv045"
+module = "databases-dv-pg-recovery"
+type = "multiple"
+difficulty = 3
+tags = ["level:senior", "replication"]
+prompt = "Chọn các hệ quả đúng của việc đọc từ replica bất đồng bộ."
+options = ["Người dùng vừa ghi có thể không thấy dữ liệu của mình ngay (vi phạm read-your-writes)", "Độ trễ replication có thể tăng mạnh khi primary ghi nặng hoặc replica chậm", "Replica bất đồng bộ đảm bảo mất 0 dữ liệu khi primary hỏng", "Có thể định tuyến các đọc cần nhất quán về primary"]
+answer = [0, 1, 3]
+explanation = "Replica bất đồng bộ có trễ nên cần chiến lược routing (đọc sau ghi về primary, hoặc theo dõi LSN). Chúng không đảm bảo RPO = 0: giao dịch chưa kịp gửi sang sẽ mất khi primary hỏng."
+sources = ["postgresql~18/different-replication-solutions"]
+
+[[questions]]
+id = "databases-lv046"
+module = "db-data-model"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "migration"]
+prompt = "Chạy ALTER TABLE ... ADD CONSTRAINT trên bảng lớn đang nhận ghi làm toàn bộ API treo, dù lệnh chỉ cần vài giây khi không có tải. Nguyên nhân nhiều khả năng nhất?"
+options = ["ALTER phải chờ một transaction dài giữ khoá; mọi truy vấn sau đó xếp hàng sau nó", "Máy chủ hết dung lượng đĩa", "Index bị xoá tự động", "Kết nối mạng bị mất"]
+answer = [0]
+explanation = "ALTER cần khoá mạnh; nếu chờ một transaction dài thì các truy vấn đến sau bị chặn sau lệnh ALTER đang chờ (lock queue). Giảm rủi ro bằng lock_timeout kèm retry, chạy lúc ít tải và tránh transaction dài."
+sources = ["postgresql~18/ddl-alter#DDL-ALTER-ADDING-A-CONSTRAINT"]
+
+[[questions]]
+id = "databases-lv047"
+module = "db-index-performance"
+type = "fill"
+difficulty = 3
+tags = ["level:senior", "index"]
+prompt = '''
+Tạo index trên bảng đang phục vụ ghi mà không chặn ghi:
+
+    CREATE INDEX {{blank}} idx_orders_created ON orders (created_at);
+'''
+blanks = [["CONCURRENTLY"]]
+explanation = "CONCURRENTLY xây index mà không khoá ghi, đổi lại tốn thời gian hơn, không chạy trong transaction block và có thể để lại index INVALID nếu lỗi."
+sources = ["postgresql~18/sql-createindex"]
+
+[[questions]]
+id = "databases-lv048"
+module = "db-transactions"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "serializable"]
+prompt = "Dùng SERIALIZABLE trong PostgreSQL, thỉnh thoảng một transaction lỗi serialization failure dù không có deadlock. Ứng dụng nên xử lý thế nào?"
+options = ["Coi là bug của database và chuyển về READ UNCOMMITTED", "Bắt lỗi, rollback và retry toàn bộ transaction (có giới hạn số lần và backoff)", "Bỏ qua lỗi và tiếp tục", "Chỉ retry câu lệnh cuối cùng"]
+answer = [1]
+explanation = "Serialization failure là cơ chế bình thường để giữ tính tuần tự; ứng dụng phải sẵn sàng chạy lại cả transaction. Chỉ retry câu cuối sẽ làm mất ngữ cảnh đã đọc. PostgreSQL không hỗ trợ READ UNCOMMITTED thực sự."
+sources = ["postgresql~18/transaction-iso#XACT-SERIALIZABLE", "postgresql~18/mvcc-serialization-failure-handling"]
+
+[[questions]]
+id = "databases-lv049"
+module = "db-data-model"
+type = "multiple"
+difficulty = 3
+tags = ["level:senior", "partitioning"]
+prompt = "Chọn các nhận định đúng về declarative partitioning trong PostgreSQL."
+options = ["Truy vấn có điều kiện trên khoá phân vùng có thể loại bỏ phân vùng không liên quan (partition pruning)", "Có thể xoá dữ liệu cũ nhanh bằng cách DETACH/DROP phân vùng", "Khoá chính/unique trên bảng phân vùng phải bao gồm các cột khoá phân vùng", "Partitioning tự động làm mọi truy vấn nhanh hơn dù không lọc theo khoá phân vùng"]
+answer = [0, 1, 2]
+explanation = "Partition pruning và DROP phân vùng là lợi ích chính. Ràng buộc unique phải chứa khoá phân vùng. Truy vấn không lọc theo khoá phân vùng phải quét mọi phân vùng nên có thể còn chậm hơn."
+sources = ["postgresql~18/ddl-partitioning#DDL-PARTITION-PRUNING", "postgresql~18/ddl-partitioning#DDL-PARTITIONING-DECLARATIVE"]
+
+[[questions]]
+id = "databases-lv050"
+module = "db-redis"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "redis"]
+prompt = "Redis dùng làm cache thuần, khi đầy bộ nhớ cần tự đẩy bớt key ít dùng và không để ghi bị lỗi. Chính sách maxmemory-policy nào phù hợp?"
+options = ["noeviction", "allkeys-lru (hoặc allkeys-lfu)", "volatile-ttl khi không key nào có TTL", "Không đặt maxmemory"]
+answer = [1]
+explanation = "allkeys-lru/lfu loại bỏ key ít dùng trong toàn bộ keyspace nên hợp với cache. noeviction trả lỗi khi đầy; volatile-* chỉ loại key có TTL nên không hiệu quả nếu không key nào có TTL; không giới hạn bộ nhớ có thể làm tiến trình bị OOM."
+sources = ["redis/config-set/index"]
+
+[[questions]]
+id = "databases-lv051"
+module = "db-transactions"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "contention"]
+prompt = "Bộ đếm lượt xem UPDATE counters SET n = n + 1 WHERE id = 1 chạy từ hàng nghìn request/giây gây chờ khoá trên một dòng. Hướng giải quyết hợp lý nhất?"
+options = ["Tăng isolation lên SERIALIZABLE", "Chia nhỏ bộ đếm thành nhiều dòng (sharded counter) hoặc gom tăng vào Redis rồi ghi định kỳ, chấp nhận độ trễ", "Thêm index lên cột n", "Mở transaction dài hơn"]
+answer = [1]
+explanation = "Hot row serialize mọi ghi. Phân tán thành nhiều dòng hoặc gom ở tầng đệm giảm tranh chấp. SERIALIZABLE làm tệ thêm; index trên n tăng chi phí ghi; transaction dài giữ khoá lâu hơn."
+sources = ["postgresql~18/transaction-iso"]
+
+[[questions]]
+id = "databases-lv052"
+module = "db-data-model"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "pooling"]
+prompt = "Dùng bộ gom kết nối ở chế độ transaction pooling, ứng dụng bắt đầu mất các SET session và prepared statement ở kết nối trước đó. Nguyên nhân?"
+options = ["Pooler xoá bảng", "Ở chế độ transaction pooling, mỗi transaction có thể dùng một kết nối server khác nên trạng thái cấp session không được giữ", "Database tự đổi mật khẩu", "Kết nối luôn mã hoá lại"]
+answer = [1]
+explanation = "Transaction pooling chia sẻ kết nối server giữa nhiều client, nên SET session, advisory lock session hay temp table không ổn định. Dùng SET LOCAL trong transaction, tránh tính năng session-level, hoặc chọn session pooling cho workload cần chúng."
+sources = ["postgresql~18/transaction-iso"]
+
+[[questions]]
+id = "databases-lv053"
+module = "db-index-performance"
+type = "essay"
+difficulty = 3
+tags = ["level:senior", "sharding"]
+prompt = "Hệ thống cần shard bảng events theo tenant. Hãy phân tích cách chọn shard key và các rủi ro vận hành chính."
+keywords = [["shard key", "khoá shard"], ["hot", "phân bố", "lệch", "skew"], ["join", "xuyên shard", "cross-shard"], ["resharding", "chia lại"], ["tenant"]]
+min_keywords = 3
+model_answer = '''Shard key phải phân bố tải đều và khớp mẫu truy vấn chính để đa số truy vấn chỉ chạm một shard. Với tenant_id, một tenant rất lớn có thể thành hot shard (phân bố lệch), nên cần chiến lược cho tenant lớn như shard riêng hoặc băm thêm khoá phụ. Rủi ro gồm truy vấn join/aggregate xuyên shard, transaction phân tán, resharding khi thêm node (nên dùng consistent hashing hoặc bảng ánh xạ tenant-shard), và độ phức tạp của migration schema trên nhiều shard. Cần giám sát độ lệch tải từng shard và có công cụ di chuyển tenant.'''
+explanation = "Điểm then chốt: shard key quyết định phân bố tải và chi phí truy vấn xuyên shard; resharding là chi phí lớn cần tính từ đầu."
+sources = ["postgresql~18/ddl-partitioning"]
+
+[[questions]]
+id = "databases-lv054"
+module = "db-index-performance"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "query-plan"]
+prompt = "EXPLAIN ANALYZE cho thấy planner ước lượng 10 dòng nhưng thực tế trả 2 triệu dòng và chọn Nested Loop. Nguyên nhân và hướng xử lý hợp lý?"
+options = ["Thống kê lỗi thời hoặc tương quan cột bị đánh giá sai; chạy ANALYZE, cân nhắc extended statistics, rồi kiểm tra lại kế hoạch", "Cần xoá mọi index", "Nested Loop luôn tối ưu cho mọi dữ liệu", "Chuyển hết sang Redis"]
+answer = [0]
+explanation = "Ước lượng sai số dòng dẫn tới chọn thuật toán join không phù hợp. Cập nhật thống kê hoặc dùng extended statistics cho cột tương quan thường sửa kế hoạch; xoá index hay đổi hệ lưu trữ không giải quyết nguyên nhân."
+sources = ["postgresql~18/using-explain"]
+
+[[questions]]
+id = "databases-lvc04"
+module = "db-transactions"
+type = "code"
+lang = "python"
+difficulty = 3
+tags = ["level:senior", "optimistic-lock"]
+title = "Khoá lạc quan bằng cột version"
+prompt = '''
+Bảng accounts(id INTEGER PRIMARY KEY, balance INTEGER, version INTEGER). Viết withdraw(conn, account_id, amount, expected_version) dùng optimistic locking.
+Thực hiện một UPDATE trừ amount khỏi balance và tăng version thêm 1 chỉ khi version hiện tại bằng expected_version VÀ balance >= amount. Trả True nếu cập nhật đúng một dòng, ngược lại trả False (version cũ, không đủ số dư hoặc tài khoản không tồn tại). Phải commit khi thành công. Dùng truy vấn tham số hoá.
+'''
+starter = '''
+def withdraw(conn, account_id, amount, expected_version):
+    return False
+'''
+solution = '''
+def withdraw(conn, account_id, amount, expected_version):
+    cur = conn.execute(
+        "UPDATE accounts SET balance = balance - ?, version = version + 1 "
+        "WHERE id = ? AND version = ? AND balance >= ?",
+        (amount, account_id, expected_version, amount),
+    )
+    conn.commit()
+    return cur.rowcount == 1
+'''
+tests = '''
+import sqlite3
+
+def make_db():
+    conn = sqlite3.connect(":memory:")
+    conn.execute("CREATE TABLE accounts (id INTEGER PRIMARY KEY, balance INTEGER, version INTEGER)")
+    conn.execute("INSERT INTO accounts VALUES (1, 100, 0)")
+    return conn
+
+def row(conn):
+    return conn.execute("SELECT balance, version FROM accounts WHERE id = 1").fetchone()
+
+@test("rút thành công tăng version")
+def _():
+    conn = make_db()
+    expect(withdraw(conn, 1, 30, 0)).to_be_true()
+    expect(row(conn)).to_equal((70, 1))
+
+@test("version cũ bị từ chối")
+def _():
+    conn = make_db()
+    expect(withdraw(conn, 1, 30, 0)).to_be_true()
+    expect(withdraw(conn, 1, 30, 0)).to_be_false()
+    expect(row(conn)).to_equal((70, 1))
+
+@test("không đủ số dư")
+def _():
+    conn = make_db()
+    expect(withdraw(conn, 1, 500, 0)).to_be_false()
+    expect(row(conn)).to_equal((100, 0))
+
+@test("tài khoản không tồn tại")
+def _():
+    expect(withdraw(make_db(), 99, 10, 0)).to_be_false()
+
+@test("rút chính xác toàn bộ số dư")
+def _():
+    conn = make_db()
+    expect(withdraw(conn, 1, 100, 0)).to_be_true()
+    expect(row(conn)).to_equal((0, 1))
+'''
+hints = ["Đặt cả điều kiện version và balance trong WHERE của câu UPDATE.", "cursor.rowcount cho biết số dòng bị ảnh hưởng."]
+explanation = "Optimistic locking tránh giữ khoá lâu: xung đột được phát hiện lúc ghi nhờ điều kiện version; người gọi tải lại dữ liệu và thử lại."
+sources = ["sqlite/lang_update"]

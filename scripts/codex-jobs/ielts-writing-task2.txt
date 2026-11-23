@@ -1,0 +1,7 @@
+Soạn lộ trình mới `data/english-ielts-writing-task2.toml` (chỉ file này). Đọc trước `docs/ielts-6.5-syllabus.md` (toàn bộ, đặc biệt mục 3 phần `english-ielts-writing-task2` và mục 4–5) và mục "Cấp độ & chỉ tiêu" trong AGENTS.md.
+Khung file (nếu chưa có): id = "english-ielts-writing-task2", title = "IELTS Writing Task 2", icon = "W2", color = "#b45309", group = "Tiếng Anh", area = "english" (KHÔNG có câu code, không khai báo `docs`/`sources`), description 1–2 câu.
+Module: đúng id & thứ tự trong bảng của `english-ielts-writing-task2` ở mục 3 đề cương (đã khai báo sẵn trong `data/categories.toml`). Mỗi module `lesson` ≥ 1500 ký tự theo yêu cầu ở mục 4.
+Mỗi câu có đúng 1 tag band (`band:5.5` / `band:6.5` / `band:7`) và `difficulty` khớp band (1/2/3). Id câu `iw2-001`, `iw2-002`….
+Job này chạy lặp nhiều lượt. Mỗi lượt thêm tối đa ~30 câu rồi dừng; lượt sau đọc file hiện có và làm tiếp module còn thiếu theo `python3 scripts/bank-stats.py data/english-ielts-writing-task2.toml`. Lượt đầu: tạo khung file và mọi module với lesson đầy đủ, sau đó soạn câu cho module đầu tiên.
+Văn bản đọc, transcript, đề bài đều TỰ SOẠN (không chép sách/đề IELTS thật). Giải thích bằng tiếng Việt, trích căn cứ trong văn bản. Fill: liệt kê đủ biến thể đáp án chấp nhận.
+Sau mỗi ~10 câu chạy `./target/release/bovabon_edu check data/english-ielts-writing-task2.toml` và sửa tới khi ✅. Không sửa file khác.

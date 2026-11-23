@@ -569,3 +569,743 @@ Implement `ReadLines(r io.Reader) ([]string, error)` using the standard library:
 '''
 hints = ["Use `bufio.Scanner` and configure its maximum buffer size to 1 MiB.", "Always check `scanner.Err()` after `Scan` finishes."]
 explanation = "This function processes a stream borrowed from the caller, follows explicit line rules, and returns read errors instead of silently dropping data."
+
+[modules.go-lead]
+title = "Tech Lead Perspective"
+description = "Project layout & interface boundaries, error-handling conventions, logging/observability, production profiling, team concurrency strategy, Go code review, upgrading versions & dependencies."
+lesson = '''
+### The Tech Lead's role in a Go codebase
+Go deliberately has little "magic": no mandatory DI framework, no exceptions, no inheritance. So codebase quality depends heavily on **team conventions**. A lead does not need to write the hardest code, but must help 5–10 people write code that is **consistent, readable and easy to operate**.
+
+### Decision framework
+1. **State the constraints**: headcount, deadline, SLOs, infrastructure cost, the team's Go experience.
+2. **List 2–3 options** and compare them on fixed criteria (complexity, operational risk, reversibility).
+3. **Pick the simplest option that meets the constraints**, record it in a short ADR, and set a review point (e.g. when traffic grows 5x).
+
+### Comparison: package organization
+| Option | Pros | Cons | Fits when |
+|---|---|---|---|
+| Flat (`main` + a few files) | Fast, little ceremony | Messy past ~5k lines | CLIs, PoCs, small services |
+| By layer (`handler/`, `service/`, `repo/`) | Familiar | One feature touches many packages, import cycles are easy | Teams coming from Java/.NET, simple domains |
+| By domain (`order/`, `billing/`) + `internal/` | Clear boundaries, easy to split into services later | Needs discipline about where interfaces live | Long-lived services, many people editing |
+
+Principle: **declare interfaces on the consumer side**, keep them small (1–3 methods); return concrete structs ("accept interfaces, return structs"). Use `internal/` to stop other packages importing by mistake.
+
+### Team error-handling conventions
+- Always wrap errors with `%w` plus the operation context (`"load order %d: %w"`); do not log and then return (duplicate logs).
+- Export sentinels/error types only when callers **really need to branch**; everything else stays opaque.
+- Map domain errors → HTTP status in **one place** (the transport layer), not `http.Error` scattered across services.
+- Panic only for programmer errors; a recover middleware at the edge keeps one bad request from crashing the process.
+
+### Observability & production profiling
+- Structured logs with `log/slog`, attach a `request_id` through context; RED metrics (rate, errors, duration) per endpoint.
+- Enable `net/http/pprof` on a **separate internal port**, never exposed to the internet; grab CPU/heap/goroutine profiles during incidents instead of guessing.
+- Set `GOMEMLIMIT` (or `debug.SetMemoryLimit`) below the container limit (roughly ~90%) so the GC works earlier instead of getting OOM-killed.
+- A goroutine count that grows steadily over time is almost always a **goroutine leak** — alert on this metric.
+
+### Go code review checklist
+- [ ] Does every goroutine have a way to finish (context, closed channel, WaitGroup)?
+- [ ] Does I/O take `context.Context` as the first parameter, with timeouts on HTTP/DB clients?
+- [ ] Are errors checked, wrapped with context, and important `rows.Err()`/`Close()` not swallowed?
+- [ ] Are shared maps/slices locked or owned by a single goroutine?
+- [ ] Do tests run with `-race` in CI?
+- [ ] Is a new interface really needed (≥ 2 implementations or a fake for tests)?
+
+### Sample ADR (abridged)
+> **ADR-007: Use bounded `errgroup`-style fan-out for downstream calls.** Context: the endpoint calls 4 services, p99 1.2s. Decision: call in parallel, limit 4, cancel the whole group on one error, 800ms total timeout. Consequences: estimated p99 ~400ms; downstream load spikes → they need rate limiting. Revisit when a 6th service is added.
+
+### Team-scale anti-patterns
+- A bloated `utils`/`common` package that everything imports → import cycles, hard to split.
+- "Giant" interfaces predefined for every struct "for mocking" → hard to change, pointless.
+- Scattered `go func()` with no lifecycle management; `context.Background()` deep inside a request.
+- Writing an in-house framework (router, DI, ORM) when the standard library is enough — the maintenance cost lands on the team.
+- Bulk Go/dependency upgrades with no `-race` CI and no reading of release notes (e.g. the loop variable semantics change in Go 1.22).
+'''
+
+[questions.go-lv001]
+prompt = '''
+A 6-person team has a ~25k-line Go service organized by layer (`handlers/`, `services/`, `repos/`). Every new feature touches all three packages and import cycles are frequent. The 6-month roadmap may split `billing` into its own service. What is the most sensible reorganization?
+'''
+options = ["Gradually move to domain packages (`order/`, `billing/`, `user/`) under `internal/`, each domain containing its own handler/service/repo; do one domain at a time, starting with `billing`", "Merge everything into a single `app` package to eliminate import cycles", "Create a `common` package holding all shared interfaces and models for every layer to import", "Rewrite the whole service as microservices this quarter"]
+explanation = "Domain packages reduce the number of packages each feature touches and create a ready-made boundary for splitting out `billing`; doing it gradually keeps risk low. A single package erases all boundaries. A `common` package usually becomes something everything depends on, bloats and still causes coupling. A full microservices rewrite is the riskiest option for a 6-person team."
+
+[questions.go-lv002]
+prompt = '''
+In review, a developer proposes predefining a 14-method `UserRepository` interface in the `repo` package, with auto-generated mocks, "so we can swap the database later". There is only one Postgres implementation and services use only 1–3 methods. What is the lead's best response?
+'''
+options = ["Suggest each service declare a small interface on the consumer side with only the methods it needs; the `repo` package returns a concrete struct", "Agree — the more complete the interface, the better for the future", "Drop interfaces entirely and test services against a real database in every case", "Switch to a DI framework that generates interfaces for every struct"]
+explanation = "Go interfaces are satisfied implicitly, so they can be declared on the consumer side, small and fit for purpose — easy to fake in tests and not locking every change into a 14-method interface. A big interface \"for the future\" is YAGNI and makes every signature change expensive. Dropping interfaces entirely makes unit tests slow/hard; a DI framework adds unnecessary complexity."
+
+[questions.go-lv003]
+prompt = '''
+A Go service in a 1 GiB container is occasionally OOM-killed at peak traffic, while the measured "live" heap is only ~400 MiB. A low-risk fix is needed this week. What should be done first?
+'''
+options = ["Set `GOMEMLIMIT` to about 900MiB (below the container limit) so the GC runs earlier near the ceiling, then watch GC CPU and heap profiles", "Raise the container limit to 4 GiB and move on", "Set `GOGC=off` to disable the GC and save CPU", "Rewrite hot paths with `unsafe` to avoid allocations"]
+explanation = "With a live heap well below the limit, OOMs usually happen because the GC lets the heap grow to twice the live size before collecting. A memory limit (Go 1.19+) tells the GC to respect a soft ceiling — a config change that is easy to revert. Quadrupling RAM is costly and hides the problem. An unbounded `GOGC=off` makes OOMs happen sooner. `unsafe` is high-risk and not a first step."
+
+[questions.go-lv004]
+prompt = '''
+p99 latency of a Go API rose from 80ms to 600ms after a release, only in production. The team wants to enable `net/http/pprof` to investigate. What is the most appropriate deployment?
+'''
+options = ["Register pprof on a separate `http.Server` listening on an internal port (e.g. `127.0.0.1:6060` or cluster-only), and take a 30s CPU profile under load", "Import `net/http/pprof` into the public mux so anyone can grab profiles quickly", "Do not use pprof in production; only benchmark on a laptop", "Enable pprof by raising the log level to debug for all requests"]
+explanation = "pprof gives real data instead of guesses; the cost of a short CPU profile is acceptable. But pprof endpoints leak internal information and can be abused, so they must be on an internal port. Local benchmarks miss production conditions. Debug logs cannot measure CPU/lock time."
+
+[questions.go-lv005]
+prompt = '''
+You are drafting error-handling conventions for the team (8 devs, 3 Go services). Choose the conventions to include.
+'''
+options = ["Wrap errors with `%w` plus operation context when returning them upward", "Map domain errors to HTTP status in one place in the transport layer", "Every layer logs the error and returns it, to be sure nothing is missed", "Export sentinels/error types only when callers need to branch on them", "Use `panic` for input validation errors to keep code shorter"]
+explanation = "Wrapping with `%w` preserves the error chain for `errors.Is/As`; centralized status mapping avoids inconsistency; exporting errors only when needed keeps the API small. Logging at every layer logs one error many times — log once at the edge. Panicking on input errors is misuse; panic is for programmer errors."
+
+[questions.go-lv006]
+prompt = '''
+The `GET /dashboard` endpoint calls 5 internal services sequentially (~150ms each), p99 ~1s, and the SLO is 400ms. The downstream services have load limits. What is the most sensible approach?
+'''
+options = ["Call in parallel with a concurrency limit, use one context with a total deadline of ~350ms, cancel remaining calls when a required call fails; optional parts return empty when the deadline passes", "Start one goroutine per call, with no timeout, and wait for all of them", "Cache the whole dashboard for 24 hours", "Triple the number of dashboard service replicas"]
+explanation = "Parallelizing brings latency down to roughly the slowest call; a total deadline secures the SLO, early cancellation avoids waste, and degrading optional parts preserves the experience. Without a timeout one slow service drags the whole request. A 24h cache serves wrong data. More replicas do not reduce sequential latency."
+
+[questions.go-lv007]
+prompt = '''
+The team is on Go 1.20 and wants Go 1.22+ for the new `ServeMux` route patterns. The codebase has many `for _, v := range xs { go func() { use(v) }() }`. What is the most sensible upgrade plan?
+'''
+options = ["Bump the `go` line in go.mod module by module, run the full test suite with `-race` in CI, read the release notes (especially the loop variable semantics change), canary one service first", "Upgrade all services at once on a Friday to make the sprint", "Stay on Go 1.20 forever because upgrades are always risky", "Upgrade but disable race tests to go faster"]
+explanation = "Go 1.22 creates a new loop variable per iteration — usually fixing bugs, but it can change behavior of code relying on the old semantics; upgrading per module + race CI + canary limits the blast radius. A Friday big-bang raises risk. Staying on an old version misses security fixes. Disabling race drops the most important safety net."
+
+[questions.go-lv008]
+prompt = '''
+The team's three Go services each log differently (`log.Printf`, free-form strings); during incidents it takes 30 minutes to stitch together one request's logs. Budget: 1 sprint, no new infrastructure beyond the existing log system. What is the best choice?
+'''
+options = ["Standardize on `log/slog` with a JSON handler, a middleware that generates/accepts a `request_id` and attaches it to the context, and shared field-name conventions", "Immediately roll out full distributed tracing for every service", "Raise the log level to debug in all services", "Ask devs to write more detailed logs with `fmt.Println`"]
+explanation = "`log/slog` is in the standard library; structured logs + request_id solve exactly the stitching problem, fit in 1 sprint and need no new infrastructure. Full tracing is good but exceeds the constraints. Debug logs increase volume and remain hard to correlate. `fmt.Println` is unstructured."
+
+[questions.go-lv009]
+prompt = '''
+Choose the items that belong in the team's Go PR review checklist (prioritizing bugs that cause production incidents).
+'''
+options = ["Every new goroutine has a clear way to finish (context, closed channel, WaitGroup)", "HTTP client/DB calls have a timeout or take the request context", "Every variable name must be at least 8 characters long", "Tests run with `-race` in CI", "Every struct must have a matching interface"]
+explanation = "Goroutine leaks, missing timeouts and data races are three common sources of production incidents in Go services. A variable-length rule goes against Go style (short names in narrow scopes). Mandatory interfaces for every struct create needless abstraction."
+
+[questions.go-lv010]
+prompt = '''
+A developer wants to add a large ORM/web framework (pulling ~60 indirect dependencies) to a 12-endpoint CRUD service. The team uses `net/http` + `database/sql` and things run fine. What is the most sensible decision?
+'''
+options = ["Keep the standard library, possibly adding a small focused library (e.g. query code generation) if there is a measured pain point; every new dependency needs a reason, an owner, and `govulncheck` in CI", "Agree right away because big frameworks always make code faster", "Ban every dependency outside the standard library", "Fork the framework into the repo to patch it when needed"]
+explanation = "For 12 endpoints the standard library is enough; a large dependency grows the supply-chain surface and upgrade cost. A balanced approach adds dependencies with a reason, an owner and vulnerability scanning. A total ban is extreme; forking makes the team maintain all of it."
+
+[questions.go-lv011]
+prompt = '''
+A Go service runs on Kubernetes and each deploy produces ~0.5% 502 errors. Investigation shows the process exits immediately on SIGTERM. What is the most sensible fix?
+'''
+options = ["Catch SIGTERM with `signal.NotifyContext`, switch readiness to failing, wait briefly for the load balancer to update, then `Server.Shutdown(ctx)` with a timeout shorter than `terminationGracePeriodSeconds`", "Add replicas so the error rate is spread thinner", "Ignore SIGTERM entirely and let Kubernetes SIGKILL", "Add infinite client retries for every request"]
+explanation = "Graceful shutdown in the right order: stop accepting new traffic (readiness), let in-flight requests finish within a deadline, then exit — eliminating 502s during deploys. More replicas do not fix the cause. Ignoring SIGTERM cuts requests off at SIGKILL. Infinite retries can duplicate non-idempotent operations."
+
+[questions.go-lv012]
+prompt = '''
+CI for a Go monorepo takes 25 minutes; 70% of that is integration tests spinning up Postgres for every package. Developers have started ignoring CI. Goal: under 10 minutes within 2 sprints. What is the best choice?
+'''
+options = ["Separate unit tests (fakes via small interfaces) that run on every PR; integration tests share one DB per job, isolated by transaction/separate schema, run only for affected packages and fully on the main branch", "Delete the integration tests", "Run CI only at night", "Buy CI machines 4x more powerful and keep testing the same way"]
+explanation = "Cutting DB setup cost and running tests selectively shortens time dramatically while keeping the safety net on the main branch. Deleting tests loses integration bug detection. Nightly CI delays feedback by a day. Faster machines only give linear gains at a cost."
+
+[questions.go-lv013]
+prompt = '''
+A junior developer proposes using `sync.Pool`, `unsafe` and hand-managed buffers throughout the service to "optimize performance", without any profile, while the service meets its SLO at ~30% CPU. What is the best response?
+'''
+options = ["Not now; first require a benchmark/profile showing a hotspot, prefer readable code; if a real hotspot exists, optimize locally with before/after benchmarks", "Agree to apply it all, since early optimization is never wasted", "Refuse and ban `sync.Pool` in all cases", "Rewrite the service in Rust"]
+explanation = "When the SLO is met and CPU is low, data-free optimization adds complexity and risk (unsafe, buffer-reuse bugs) with no measurable benefit. The right process is to measure first and optimize locally with evidence. A total ban is extreme; a rewrite in another language has no basis."
+
+[questions.go-lv014]
+prompt = '''
+A cleanup function runs several steps and the team convention is to **combine all errors** (not just the first) so callers can still use `errors.Is` on each one:
+
+```go
+var errs []error
+for _, c := range closers {
+	if err := c.Close(); err != nil {
+		errs = append(errs, err)
+	}
+}
+return errors.{{blank}}(errs...)
+```
+'''
+explanation = "`errors.Join` (Go 1.20) combines multiple errors, returns `nil` if there are none, and supports `errors.Is/As` on each wrapped error — a good convention for cleanup operations."
+
+[questions.go-lv015]
+prompt = '''
+After sending the response, a handler must write an audit log asynchronously. Team convention: keep the context values (request_id) but **do not get cancelled** when the request ends:
+
+```go
+auditCtx := context.{{blank}}(r.Context())
+go audit.Write(auditCtx, event)
+```
+'''
+explanation = "`context.WithoutCancel` (Go 1.21) keeps values but does not propagate the parent's cancellation/deadline. `context.Background()` would lose the request_id; using `r.Context()` directly cancels the audit when the request finishes. You should still set a separate timeout for the write."
+
+[questions.go-lv016]
+prompt = '''
+You lead a 5-person team about to start a new Go service (REST API + Postgres + background job worker) expected to live for years. Write a short ADR on **project layout and package boundaries**: options considered, decision, consequences and revisit conditions.
+'''
+keywords = [["internal", "internal/"], ["domain", "by feature", "feature"], ["interface"], ["cmd", "cmd/"], ["trade-off", "tradeoff", "consequence", "downside", "drawback"], ["test"]]
+model_answer = '''
+**ADR-001: Domain-based service layout.**
+
+- **Context**: 5 devs, API + worker share logic, long-lived, may split into services later.
+- **Options**: (1) flat single package — fast but messy as it grows; (2) by layer `handler/service/repo` — familiar but each feature touches many packages and import cycles are easy; (3) by domain.
+- **Decision**: choose (3). `cmd/api` and `cmd/worker` are two thin binaries; logic lives in `internal/order`, `internal/billing`… so outside packages cannot import it. Each domain contains its own handler, service and store. Small interfaces are declared on the consumer side; constructors return concrete structs. Dependency wiring is done by hand in `main`.
+- **Consequences / trade-offs**: clear boundaries, easy to split a domain into a service; the downside is the discipline needed not to reach into another domain's internals — only through its exported API. Unit tests use fakes via interfaces, integration tests cover the store with a real DB.
+- **Revisit** when there are more than 10 domains or when a domain needs independent deployment.
+'''
+explanation = "A good ADR states context, options and trade-offs, a concrete decision (cmd/, internal/, consumer-side interfaces), a testing strategy and revisit conditions."
+
+[questions.go-lv017]
+prompt = '''
+A production Go service's goroutine count grows steadily from 2k to 80k over 3 days, memory grows with it, and it eventually restarts. Present the lead's plan: investigation, short-term mitigation, root-cause fix and prevention measures for the whole team.
+'''
+keywords = [["pprof", "goroutine profile", "profile"], ["leak"], ["context", "timeout", "deadline"], ["metric", "alert", "dashboard"], ["postmortem", "post-mortem"], ["test", "goleak"]]
+model_answer = '''
+**Investigate**: grab a goroutine profile from the internal pprof endpoint (`debug=2` to see stacks) and group by stack — usually a few locations account for most of them, e.g. goroutines stuck sending to a channel nobody reads or waiting on an HTTP call with no timeout. Correlate when the growth started with releases.
+
+**Short term**: roll back the suspect release or temporarily restart periodically, and set up an alert so it is no longer a surprise.
+
+**Root-cause fix**: make sure every goroutine has an exit path — pass a context with a timeout/deadline into downstream calls, use `select` with `ctx.Done()` when sending/receiving on channels, use buffered channels for results the receiver may abandon. This is a classic goroutine leak.
+
+**Prevention**: a goroutine-count metric + alert on linear growth; a review checklist item "every goroutine has a way to finish"; leak tests (count goroutines before/after or use a library like goleak); write a blameless postmortem and share it with the team.
+'''
+explanation = "A good answer uses data (goroutine profile) instead of guessing, separates short-term mitigation from the root-cause fix, and turns the lesson into team mechanisms: metrics/alerts, a review checklist, tests."
+
+[questions.go-lv018]
+prompt = '''
+The team provides an internal Go module `pkg/client` imported by 9 other services. The signature `Get(id string) (*Item, error)` must change to take a `context.Context`. What is the least breaking rollout?
+'''
+options = ["Add a new `GetContext(ctx, id)`, make `Get` call it with `context.Background()` and mark it `// Deprecated:`, announcing removal in the next major version", "Change the `Get` signature in a patch release since it only adds one parameter", "Copy the package to `client2` and keep both forever", "Require the 9 other teams to merge on the same day"]
+explanation = "Adding a new API alongside and deprecating the old one keeps backward compatibility under semver and lets teams migrate on their own schedule. Changing the signature in a patch breaks the build of 9 services. Two permanent copies fragment the code. Forcing a simultaneous merge creates a risky coordination point."
+
+[questions.go-lvc01]
+title = "Bounded fan-out with cancel on error"
+prompt = '''
+The team requires every downstream fan-out to go through a shared helper. Write:
+
+```go
+func RunAll(ctx context.Context, limit int, tasks []func(context.Context) error) error
+```
+
+Requirements:
+- Run tasks **concurrently**, but no more than `limit` at a time (`limit <= 0` is treated as 1).
+- Each task gets a child context; when **one task returns an error**, the child context is cancelled so the others stop early.
+- Return the **first error** that occurred (in time); `nil` if all succeed.
+- Tasks not yet started when an error has occurred (or when the parent `ctx` is cancelled) **must not run**; if the parent `ctx` is cancelled and no task has failed, return `ctx.Err()`.
+- The function returns only after every started task has finished (no goroutine leaks).
+'''
+explanation = "This is the errgroup pattern with `SetLimit`: a semaphore bounds downstream load, a child context cascades cancellation, a WaitGroup prevents goroutine leaks. Putting it in one shared helper keeps the whole team from rewriting (and getting wrong) this logic."
+hints = ["Use a channel buffered to `limit` as a semaphore; acquire a slot with `select` together with `cctx.Done()`.", "Use `sync.Once` to record the first error and call `cancel()` exactly once; `wg.Wait()` before returning."]
+
+[questions.go-lv019]
+prompt = '''
+The team has 3 developers who just moved from Java to Go; their PRs often simulate class hierarchies with embedding, add getters/setters for every field and an interface for every struct. The deadline does not allow long training. What is the lead's most effective approach?
+'''
+options = ["Write a short \"team Go style\" document with before/after examples, pair-review their first few PRs, enable linters (e.g. `go vet`, `staticcheck`) in CI for machine-detectable issues", "Fix every one of their PRs yourself before merging", "Allow Java style to meet the deadline and fix it later", "Reject every PR until they finish a Go book"]
+explanation = "A short guide + concrete examples + pair review + automation via linters transfers knowledge quickly without blocking the deadline. Fixing PRs for them means they do not learn and the lead becomes a bottleneck. Accepting off-style code accumulates technical debt. Rejecting PRs delays the project and hurts morale."
+
+[questions.go-lv020]
+prompt = '''
+The function below is called on every request. After a few hours the goroutine count keeps rising. Why?
+
+```go
+func firstResult(ctx context.Context, urls []string) string {
+	ch := make(chan string)
+	for _, u := range urls {
+		go func(u string) { ch <- fetch(u) }(u)
+	}
+	select {
+	case r := <-ch:
+		return r
+	case <-ctx.Done():
+		return ""
+	}
+}
+```
+'''
+options = ["Only one value is received; the remaining goroutines block forever on `ch <- ...` because the channel is unbuffered and nobody reads it anymore", "`select` does not support `ctx.Done()`", "The closure captures the wrong `u` variable", "`fetch` runs in parallel so it always causes a data race"]
+explanation = "After the function returns nobody reads `ch`, so every later sender is stuck forever — a goroutine leak. Fix: `make(chan string, len(urls))` so sends do not block, and pass ctx into `fetch` for cancellation. `u` is passed as a parameter so the closure is correct."
+
+[questions.go-lv021]
+prompt = '''
+In a `for { select { ... } }` loop merging two channels `a` and `b`, once `a` is closed we want to **stop selecting** the `a` case but keep reading `b`. What is the standard technique?
+'''
+options = ["Set `a = nil`; receiving from a nil channel blocks forever so that case is never chosen", "Call `close(a)` again", "Add `default:` to skip `a`", "Use `runtime.Gosched()` in the `a` case"]
+explanation = "A nil channel in a `select` disables that case. When both are nil, exit the loop. Closing an already-closed channel panics; `default` turns the loop into a busy-loop; `Gosched` is unrelated."
+
+[questions.go-lv022]
+prompt = '''
+Choose the **correct** statements about the race detector (`go test -race`).
+'''
+options = ["It only detects data races that actually happen on the code paths executed in that run", "No race reported means the program certainly has no races", "It makes the program several times slower and more memory-hungry, so it is usually enabled in CI/tests rather than production", "It can detect two goroutines writing the same map without a lock", "It detects deadlocks between two mutexes"]
+explanation = "The race detector is a dynamic tool: it only sees accesses that actually happen, so tests must cover the concurrent paths. Overhead is large (roughly a few times CPU, 5–10x memory). Concurrent map writes are a classic race. No report does not prove absence of races; deadlocks are not the race detector's job."
+
+[questions.go-lv023]
+prompt = '''
+`go build -gcflags=-m` reports `&buf escapes to heap` for the function below. What is the most likely cause?
+
+```go
+func newBuf() *bytes.Buffer {
+	var buf bytes.Buffer
+	return &buf
+}
+```
+'''
+options = ["A pointer to a local variable is returned from the function, so the variable must outlive the stack frame → the compiler places it on the heap", "Go always allocates every struct on the heap", "It is a bug; returning a pointer to a local variable is undefined behavior", "Because `bytes.Buffer` has pointer-receiver methods"]
+explanation = "Escape analysis decides stack vs heap: values referenced after the function returns must go to the heap. In Go this is safe (unlike C). Not every struct goes to the heap; pointer receivers by themselves do not cause escapes."
+
+[questions.go-lv024]
+prompt = '''
+What does this print?
+
+```go
+type MyErr struct{}
+func (*MyErr) Error() string { return "x" }
+
+func do() error {
+	var p *MyErr = nil
+	return p
+}
+
+func main() {
+	fmt.Println(do() == nil)
+}
+```
+'''
+options = ["`false`", "`true`", "It does not compile", "Nil pointer panic"]
+explanation = "An interface is nil only when both its type and value are nil. Here the `error` interface holds type `*MyErr` with a nil value, so it is not nil. This is a classic bug: functions returning errors should `return nil` explicitly instead of returning a typed pointer."
+
+[questions.go-lv025]
+prompt = '''
+`go vet` reports `passes lock by value` for the code below. What is the actual consequence?
+
+```go
+type Counter struct {
+	mu sync.Mutex
+	n  int
+}
+func (c Counter) Inc() { c.mu.Lock(); c.n++; c.mu.Unlock() }
+```
+'''
+options = ["The value receiver copies the whole struct including the mutex; each call locks its own copy and increments the copy's `n`, so the original struct never changes and is not protected", "The program deadlocks on the first call", "No effect; `go vet` is wrong", "The compiler automatically switches to a pointer receiver"]
+explanation = "A `sync.Mutex` must not be copied after use. With a value receiver, `Inc` operates on a copy: the original `n` never increases and the lock is meaningless. Fix it with a pointer receiver `func (c *Counter) Inc()`."
+
+[questions.go-lv026]
+prompt = '''
+A cache is read very often and written rarely; the value is a configuration reloaded as a whole block every 5 minutes. What is the simplest, most efficient synchronization?
+'''
+options = ["`atomic.Pointer[Config]`: the reloading goroutine builds a new immutable Config and calls `Store`; readers just `Load`", "A `sync.Mutex` locking every read", "A `sync.Map` with each config field as a key", "No synchronization needed because writes are rare"]
+explanation = "Swapping an immutable block via an atomic pointer means readers never wait on a lock and always see a consistent snapshot. A mutex works but creates contention under heavy reads. A per-key `sync.Map` does not guarantee a consistent snapshot across fields. No synchronization is a data race even if writes are rare."
+
+[questions.go-lv027]
+prompt = '''
+A service calls a third-party API with `http.Client`. Choose the **correct** practices to avoid leaking connections and hanging requests.
+'''
+options = ["Set a `Timeout` on the client or use `http.NewRequestWithContext` with a context that has a deadline", "Always `defer resp.Body.Close()` after checking `err == nil`", "Create a new `http.Client` per request to avoid sharing state", "Read (or discard the rest of) the body before closing so the connection can be reused", "Use `http.DefaultClient` because it has a 30-second timeout by default"]
+explanation = "Timeouts/deadlines prevent hangs; closing the body releases the connection; draining the body lets keep-alive reuse it. A new client per request loses the connection pool. `http.DefaultClient` has **no** default timeout."
+
+[questions.go-lv028]
+prompt = '''
+An endpoint receives JSON from the internet with `json.NewDecoder(r.Body).Decode(&req)`. A pentest shows that a 2 GB body makes the service use a dangerous amount of RAM. What is the most appropriate fix?
+'''
+options = ["Wrap the body with `http.MaxBytesReader(w, r.Body, 1<<20)` before decoding and return 413 when the limit is exceeded", "Switch to `io.ReadAll` and then `json.Unmarshal`", "Give the container more RAM", "Use `DisallowUnknownFields()`"]
+explanation = "`MaxBytesReader` caps how many bytes are read from the body and errors when exceeded. `io.ReadAll` is even worse because it loads everything. More RAM does not stop the attack. `DisallowUnknownFields` only checks field names, not size."
+
+[questions.go-lv029]
+prompt = '''
+`http.Server{Addr: ":8080", Handler: mux}` is exposed to the internet. A security review flags "slowloris" risk (a client opens many connections and sends headers extremely slowly). Which configuration addresses it?
+'''
+options = ["Set `ReadHeaderTimeout` (and sensibly also `ReadTimeout`, `WriteTimeout`, `IdleTimeout`)", "Set `MaxHeaderBytes = 0`", "Use `http.ListenAndServe` instead of an `http.Server` struct", "Wrapping the handler with `http.TimeoutHandler` is enough"]
+explanation = "The zero value of the timeouts means no limit; `ReadHeaderTimeout` cuts off clients that send headers slowly. `MaxHeaderBytes = 0` uses the default and does not fight slowness. `ListenAndServe` has no timeouts. `TimeoutHandler` only bounds handler run time, not the header-reading phase."
+
+[questions.go-lv030]
+prompt = '''
+Under high load, a Go service gets `too many connections` from Postgres (limit 100), with 8 replicas. `sql.DB` uses the default configuration. What is the most sensible adjustment?
+'''
+options = ["Set `SetMaxOpenConns` per replica (e.g. ~10 so the total stays under 100 with headroom), along with suitable `SetMaxIdleConns` and `SetConnMaxLifetime`", "Call `sql.Open` per request and then `Close`", "Raise Postgres `max_connections` to 10,000", "Disable pooling with `SetMaxOpenConns(1)` on every replica"]
+explanation = "By default `MaxOpenConns` is unlimited, so 8 replicas can exceed the DB ceiling. A per-replica limit keeps the total below the threshold. `sql.Open` per request breaks the pool and is slow. A huge `max_connections` costs DB RAM. One connection per replica creates a severe bottleneck."
+
+[questions.go-lv031]
+prompt = '''
+The code below sometimes exhausts the connection pool. Where is the bug?
+
+```go
+tx, err := db.BeginTx(ctx, nil)
+if err != nil { return err }
+if _, err := tx.ExecContext(ctx, q1); err != nil {
+	return err
+}
+return tx.Commit()
+```
+'''
+options = ["When `ExecContext` fails, the function returns without `Rollback`, so the transaction and connection are held; add `defer tx.Rollback()` right after `BeginTx`", "`Commit` must be called before `ExecContext`", "The same `ctx` must not be used for both `BeginTx` and `ExecContext`", "`BeginTx` with nil options is invalid"]
+explanation = "A transaction holds a connection until Commit/Rollback. `defer tx.Rollback()` is safe because after a successful Commit, Rollback just returns `sql.ErrTxDone`. (When ctx is cancelled, sql also rolls back automatically, but you should not rely on that.)"
+
+[questions.go-lv032]
+prompt = '''
+A test is sometimes flaky on CI: it starts a worker goroutine and then calls `time.Sleep(50 * time.Millisecond)` before checking the result. Choose the **good** fixes.
+'''
+options = ["Synchronize with a channel/WaitGroup to wait for the actual event instead of a fixed sleep", "Inject a clock/ticker into the code so the test controls time", "Increase the sleep to 2 seconds", "Mark it `t.Skip()` on CI", "Run `-race -count=50` locally to reproduce and confirm the fix"]
+explanation = "Waiting for an explicit event and controlling time remove the source of flakiness; repeated runs with `-count` help confirm the fix. A longer sleep only lowers the probability and slows the test; skipping hides the bug."
+
+[questions.go-lv033]
+prompt = '''
+You have a hand-written parser `ParseDuration(s string) (time.Duration, error)` and a `Format(d)` function. Which fuzz test is most valuable?
+'''
+options = ["`FuzzParse` with seeds `f.Add(\"1h30m\")`…, checking it does not panic and that when parsing succeeds `Parse(Format(d)) == d` (round-trip)", "A fuzz test that only checks the function returns a `nil` error for every input", "Fuzz random integers and compare them to a constant", "No fuzzing needed because there is already a 5-case table test"]
+explanation = "Fuzzing is strongest when it checks invariants (no panic, round-trip) rather than specific values. Most random inputs are invalid, so expecting `nil` every time is wrong. A 5-case table test does not cover unusual inputs."
+
+[questions.go-lv034]
+prompt = '''
+A Go HTTP server has a `recover` middleware. A handler starts `go process(job)` and `process` panics. What happens?
+'''
+options = ["The whole process crashes; `recover` only catches panics in the same goroutine, so child goroutines must `defer recover` themselves", "The recover middleware catches it and returns 500", "Only the child goroutine stops and the process continues normally", "The runtime automatically restarts the goroutine"]
+explanation = "A panic not recovered within its own goroutine terminates the whole program. The middleware only protects the goroutine serving the request. Every background goroutine should have a wrapper `defer func(){ if r := recover(); ... }()` with logging/metrics."
+
+[questions.go-lv035]
+prompt = '''
+A service generates CSV reports of several hundred MB and returns them over HTTP. The current version builds everything into a `bytes.Buffer` and then calls `w.Write(buf.Bytes())`, causing memory spikes. What is a better design?
+'''
+options = ["Write directly to the `http.ResponseWriter` through a `bufio.Writer`/`csv.Writer`, flush periodically, and check `r.Context()` to stop when the client disconnects", "Use `strings.Builder` instead of `bytes.Buffer`", "Gzip the whole buffer before sending", "Raise `GOGC` so the GC runs less often"]
+explanation = "Streaming through an `io.Writer` keeps memory stable regardless of report size; checking the context avoids wasted work after the client leaves. `strings.Builder` still holds everything in RAM. Compressing the whole buffer still needs the full buffer. A higher `GOGC` makes memory use even higher."
+
+[questions.go-lv036]
+prompt = '''
+Senior interview: explain how `context.Context` propagates cancellation and deadlines through a call chain (HTTP handler → service → DB/HTTP client). State the rules for using context correctly and common mistakes.
+'''
+keywords = [["first parameter", "first argument"], ["ctx.done", "done()"], ["cancel"], ["deadline", "timeout"], ["struct"], ["value", "withvalue"]]
+model_answer = '''
+Contexts form a tree: `r.Context()` is the request's root, and each `WithTimeout`/`WithCancel` creates a child. When a parent is cancelled (client disconnects, server shuts down) or its deadline passes, the signal propagates to every child; code waiting on I/O listens on `ctx.Done()` and returns `ctx.Err()`. Standard libraries such as `database/sql` (`QueryContext`) and `http.NewRequestWithContext` honor this context.
+
+Rules: pass ctx as the first parameter, do not store it in a struct; always `defer cancel()` after `WithTimeout` to release the timer; child timeouts should be shorter than the parent deadline; `WithValue` is only for request-scoped data (request_id, user) with a private key type, not for passing optional parameters.
+
+Common mistakes: using `context.Background()` deep inside a request so cancellation is lost; forgetting `cancel`, leaking timers; loops/goroutines that never check `ctx.Done()` and keep running after the request ends; treating `context.Canceled` as an ordinary error and logging noisily.
+'''
+explanation = "The answer should cover the context tree, propagation of cancellation/deadlines, the rules (first parameter, not stored in structs, defer cancel, limited WithValue) and common mistakes."
+
+[questions.go-lv037]
+prompt = '''
+What does this print?
+
+```go
+a := make([]int, 3, 10)
+b := append(a, 1)
+c := append(a, 2)
+fmt.Println(b[3], c[3])
+```
+'''
+options = ["`2 2`", "`1 2`", "`1 1`", "Panic: index out of range"]
+explanation = "`a` has cap 10, so both `append`s write into the same backing array at index 3; the second overwrites the first, so `b[3]` and `c[3]` are both 2. To keep them separate, use a full slice expression `a[:3:3]` or `slices.Clone` before appending."
+
+[questions.go-lvc02]
+title = "Concurrency-safe token bucket"
+prompt = '''
+Implement a token bucket rate limiter with **injected** time so it can be tested:
+
+```go
+type Bucket struct { /* your design */ }
+func NewBucket(capacity int, refillPerSec float64, now func() time.Time) *Bucket
+func (b *Bucket) Allow() bool
+```
+
+- The bucket starts **full** (`capacity` tokens).
+- Tokens refill continuously over time: after a duration `d`, add `d.Seconds() * refillPerSec` tokens (fractions allowed), never exceeding `capacity`.
+- `Allow()` takes 1 token if at least 1 remains and returns `true`; otherwise returns `false`.
+- The clock comes from `now()`; **do not** call `time.Now()` directly.
+- `Allow` must be safe to call from multiple goroutines.
+'''
+explanation = "A token bucket allows bursts up to `capacity` while keeping the average rate. Lazy refill on each `Allow` call avoids a ticker goroutine; an injected clock makes tests deterministic, without relying on `time.Sleep`."
+hints = ["Store `tokens float64` and the last refill time `last`; on each `Allow`, compute elapsed time to add tokens.", "Protect the whole read-modify-write with a `sync.Mutex`."]
+
+[questions.go-lv038]
+prompt = '''
+What does this print?
+
+```go
+var n int
+var s string
+var ok bool
+fmt.Println(n, s == "", ok)
+```
+'''
+options = ["`0 true false`", "`nil true nil`", "`0 false false`", "It does not compile because the variables are unassigned"]
+explanation = "Declared but unassigned variables get their zero value: `0` for numbers, `\"\"` for strings, `false` for bools. Go has no \"uninitialized\" variables."
+
+[questions.go-lv039]
+prompt = '''
+Why does this not compile?
+
+```go
+func main() {
+	x := 1
+	y := 2
+	fmt.Println(x)
+}
+```
+'''
+options = ["The local variable `y` is declared but not used", "A `;` is missing at the end of a line", "`:=` can only be used outside functions", "`fmt.Println` needs at least 2 arguments"]
+explanation = "The Go compiler reports `declared and not used` for unused local variables (and unused imports). Semicolons are inserted automatically; `:=` can only be used **inside** functions."
+
+[questions.go-lv040]
+prompt = '''
+What does `len("héllo")` return?
+'''
+options = ["`6`", "`5`", "`4`", "Compile error"]
+explanation = "`len` of a string counts **bytes** (UTF-8). `é` takes 2 bytes, so the total is 6. To count characters use `utf8.RuneCountInString` or `len([]rune(s))`."
+
+[questions.go-lv041]
+prompt = '''
+What kinds of loops does Go have?
+'''
+options = ["Only `for` (three-clause form, condition-only form like while, infinite loop, and `for range`)", "`for`, `while` and `do-while`", "`for` and `foreach`", "`loop` and `repeat`"]
+explanation = "Go has only the `for` keyword: `for i := 0; i < n; i++`, `for cond {}`, `for {}` and `for k, v := range x`."
+
+[questions.go-lv042]
+prompt = '''
+In package `user`, which identifier is **usable** from another package?
+'''
+options = ["`func NewUser()`", "`func validate()`", "`var defaultName`", "`type user struct`"]
+explanation = "Go has no `public/private` keywords: names starting with an **uppercase** letter are exported; lowercase names are package-private."
+
+[questions.go-lv043]
+prompt = '''
+Append the element `4` to the end of the slice and reassign:
+
+```go
+nums := []int{1, 2, 3}
+nums = {{blank}}(nums, 4)
+```
+'''
+explanation = "`append` returns a new slice (it may allocate a different backing array), so always reassign the result."
+
+[questions.go-lv044]
+prompt = '''
+Delete the key `"bob"` from the map:
+
+```go
+ages := map[string]int{"bob": 30, "ann": 25}
+{{blank}}(ages, "bob")
+```
+'''
+explanation = "The built-in `delete(m, key)` removes a key; deleting a missing key is not an error."
+
+[questions.go-lv045]
+prompt = '''
+What does this print?
+
+```go
+type Point struct{ X, Y int }
+
+func move(p Point) { p.X = 10 }
+
+func main() {
+	p := Point{1, 2}
+	move(p)
+	fmt.Println(p.X)
+}
+```
+'''
+options = ["`1`", "`10`", "`0`", "It does not compile"]
+explanation = "Go passes arguments by value: `move` receives a copy of the struct. To modify the original, take a pointer `func move(p *Point)` and call `move(&p)`."
+
+[questions.go-lv046]
+prompt = '''
+What does this print?
+
+```go
+func main() {
+	defer fmt.Println("a")
+	defer fmt.Println("b")
+	fmt.Println("c")
+}
+```
+'''
+options = ["`c b a`", "`a b c`", "`c a b`", "`b a c`"]
+explanation = "Deferred calls run when the function returns, in reverse order (LIFO): the last defer runs first."
+
+[questions.go-lv047]
+prompt = '''
+Choose the variable declarations that are **valid inside a function body**.
+'''
+options = ["`var x int = 5`", "`x := 5`", "`var x = 5`", "`int x = 5`", "`let x = 5`"]
+explanation = "Go uses `var name type = value`, the type can be omitted for inference, or the short form `:=` inside functions. `int x` is C syntax, `let` is JavaScript/Rust."
+
+[questions.go-lv048]
+prompt = '''
+What is the most idiomatic way to handle the error when calling `strconv.Atoi(s)` in Go?
+'''
+options = ["`n, err := strconv.Atoi(s); if err != nil { return err }`", "`try { n := strconv.Atoi(s) } catch (e) { ... }`", "`n := strconv.Atoi(s)!`", "Ignore the error because Atoi never fails"]
+explanation = "Go functions return errors as the last value; the caller checks `err != nil` right after the call. Go has no try/catch."
+
+[questions.go-lv049]
+prompt = '''
+Create a simple error with a fixed message:
+
+```go
+var ErrEmpty = errors.{{blank}}("empty input")
+```
+'''
+explanation = "`errors.New` creates an error with the given message; declare it at package level to use as a sentinel compared with `errors.Is`."
+
+[questions.go-lv050]
+prompt = '''
+What does this program usually print?
+
+```go
+func main() {
+	go fmt.Println("hello")
+}
+```
+'''
+options = ["Usually nothing, because `main` ends immediately and the program exits before the goroutine gets to run", "Always prints `hello`", "Compile error because `await` is missing", "Deadlock"]
+explanation = "When `main` returns, the program stops without waiting for other goroutines. You need synchronization, e.g. a `sync.WaitGroup` or a channel."
+
+[questions.go-lv051]
+prompt = '''
+Wait for the goroutines to finish:
+
+```go
+var wg sync.WaitGroup
+for i := 0; i < 3; i++ {
+	wg.Add(1)
+	go func() {
+		defer wg.{{blank}}()
+		work()
+	}()
+}
+wg.Wait()
+```
+'''
+explanation = "`wg.Done()` decrements the counter by 1; `defer` guarantees it is called even if `work` returns early. `Wait` blocks until the counter reaches 0."
+
+[questions.go-lv052]
+prompt = '''
+What does this print?
+
+```go
+ch := make(chan int, 2)
+ch <- 1
+ch <- 2
+close(ch)
+for v := range ch {
+	fmt.Print(v, " ")
+}
+```
+'''
+options = ["`1 2 `", "`2 1 `", "Deadlock", "Panic because of reading a closed channel"]
+explanation = "Channels are FIFO. `range` reads the remaining buffered values and stops once the channel is closed and empty. Receiving from a closed channel does not panic (only sending does)."
+
+[questions.go-lv053]
+prompt = '''
+Which snippet starts an HTTP server listening on port 8080 with the default handler?
+'''
+explanation = "`http.ListenAndServe(addr, handler)` with a `nil` handler uses `http.DefaultServeMux`. In production use an `http.Server` with timeouts."
+
+[questions.go-lv054]
+prompt = '''
+Convert a struct to JSON bytes:
+
+```go
+b, err := json.{{blank}}(user)
+```
+'''
+explanation = "`json.Marshal` returns `[]byte` and an error; the reverse is `json.Unmarshal`. Only exported (uppercase) fields are encoded."
+
+[questions.go-lv055]
+prompt = '''
+What should the test file for `math.go` be named so `go test` picks it up?
+'''
+explanation = "`go test` only compiles files with the `_test.go` suffix; these files are not included in the regular build."
+
+[questions.go-lv056]
+prompt = '''
+Report a failure but keep running the rest of the test:
+
+```go
+if got != want {
+	t.{{blank}}("got %d, want %d", got, want)
+}
+```
+'''
+explanation = "`t.Errorf` marks the test as failed and continues; `t.Fatalf` stops the test immediately."
+
+[questions.go-lv057]
+prompt = '''
+What is a concise way to read a whole small config file `config.json` into a `[]byte`?
+'''
+explanation = "`os.ReadFile` opens, reads everything and closes the file. `os.Open` only returns an `*os.File` (and an error); you must read it and `Close` it yourself. For large files, stream instead of loading everything."
+
+[questions.go-lvc03]
+title = "Word frequency count"
+prompt = '''
+Write `func WordCount(s string) map[string]int` that counts occurrences of each word:
+
+- Words are split on any whitespace (space, tab, newline).
+- Case-insensitive: `"Go"` and `"go"` are the same word; keys are stored in lowercase.
+- An empty or whitespace-only string returns an empty (non-nil) map.
+
+Example: `WordCount("Go is fun go")` → `map[fun:1 go:2 is:1]`.
+'''
+explanation = "An exercise in maps, zero values and the `strings` package. `make(map...)` guarantees a non-nil result that callers can write to."
+hints = ["`strings.Fields` splits on any whitespace and drops empty parts.", "`m[k]++` works even when the key is missing because the zero value is 0."]
+
+[questions.go-lv058]
+prompt = '''
+A test comparing the output of a function that prints a map with `for k, v := range m` sometimes fails because line order changes. What is the correct fix?
+'''
+options = ["Collect the keys, sort them (e.g. `slices.Sorted(maps.Keys(m))`) and iterate in that order", "Rerun the test until it passes", "Use `sync.Map` to preserve order", "Declare the map with a fixed capacity so the order is stable"]
+explanation = "Map iteration order in Go is deliberately randomized. For deterministic output you must sort the keys. `sync.Map` and capacity do not guarantee order."
+
+[questions.go-lv059]
+prompt = '''
+A function concatenating 100,000 strings with `s += part` in a loop is very slow. What is the best fix?
+'''
+options = ["Use `strings.Builder` (optionally `Grow` first) and call `b.String()` at the end", "Use `fmt.Sprintf(\"%s%s\", s, part)` in the loop", "Convert to `[]rune` and then concatenate", "Run the loop in a goroutine"]
+explanation = "Strings are immutable, so every `+=` allocates and copies everything again — O(n²). `strings.Builder` writes into a growing buffer. `Sprintf` is even slower; a goroutine does not fix the complexity."
+
+[questions.go-lv060]
+prompt = '''
+The repository returns `fmt.Errorf("find user %d: %w", id, sql.ErrNoRows)`. The handler wants to return 404 in this case. What is the correct check?
+'''
+explanation = "`errors.Is` walks the chain of errors wrapped with `%w`. Comparing with `==` fails because the error is wrapped. String matching is fragile. `sql.ErrNoRows` is a value, not a type, so a type assertion is wrong."
+
+[questions.go-lv061]
+prompt = '''
+Several goroutines need an expensive client to be initialized **exactly once**, the first time a goroutine needs it. What is the best tool in the standard library?
+'''
+options = ["`sync.Once` (or `sync.OnceValue` since Go 1.21)", "`if client == nil { client = newClient() }` without a lock", "`time.AfterFunc`", "Initialize it in every goroutine"]
+explanation = "`sync.Once` guarantees the function runs once and other goroutines wait until it finishes. An unlocked nil check is a data race and may initialize multiple times."
+
+[questions.go-lv062]
+prompt = '''
+A logging middleware needs to record the **status code** the handler returned. `http.ResponseWriter` has no status getter. What is the common approach?
+'''
+options = ["Wrap the `ResponseWriter` in your own struct that overrides `WriteHeader(code)` to store the code (default 200) and then calls the original writer", "Read `r.Response.StatusCode` after the handler runs", "Re-parse the body that was sent", "Require every handler to log its own status"]
+explanation = "Embedding `http.ResponseWriter` in a wrapper struct and overriding `WriteHeader` is the standard pattern. If the handler only calls `Write`, the status is implicitly 200. `r.Response` only exists for client redirects, not on the server."
+
+[questions.go-lv063]
+prompt = '''
+Reject JSON requests that contain unknown fields (not in the struct):
+
+```go
+dec := json.NewDecoder(r.Body)
+dec.{{blank}}()
+err := dec.Decode(&req)
+```
+'''
+explanation = "`DisallowUnknownFields` makes `Decode` return an error when a key matches no field — helping catch clients that misspell field names."
+
+[questions.go-lv064]
+prompt = '''
+The `deleted_at` column can be NULL. `rows.Scan(&deletedAt)` with `deletedAt time.Time` errors on NULL. What is the correct approach?
+'''
+options = ["Scan into `sql.NullTime` (or `*time.Time`) and check `Valid`/nil", "Replace NULL with an empty string in Go", "Ignore the Scan error", "Change the variable type to `string`"]
+explanation = "`database/sql` provides `Null*` types (and accepts pointers) to represent NULL. Ignoring the error loses data; a string cannot hold NULL."
+
+[questions.go-lv065]
+prompt = '''
+Test an HTTP handler without opening a real network port. Which standard library tool fits best?
+'''
+options = ["`httptest.NewRecorder()` + `httptest.NewRequest`, call `handler.ServeHTTP(rec, req)` and check `rec.Code`, `rec.Body`", "Run `go run main.go` and use `curl` in the test", "Mock the whole `net/http` package", "Only test service functions and skip the handler"]
+explanation = "`net/http/httptest` lets you call the handler directly with a ResponseRecorder — fast, deterministic, no port needed. Running a real server in tests is slow and flaky; mocking all of `net/http` is unnecessary."

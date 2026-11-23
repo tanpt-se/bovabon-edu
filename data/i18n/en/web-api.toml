@@ -513,3 +513,437 @@ explanation = "An observational rollout can uncover legitimate dependencies befo
 prompt = "What is the difference between CSP `frame-src` and `frame-ancestors`?"
 options = ["`frame-src` restricts who can embed this page; `frame-ancestors` restricts images", "`frame-src` restricts frames the page loads; `frame-ancestors` restricts which sites may embed this page", "The two directives are synonymous", "Both apply only to WebSocket"]
 explanation = "One directive controls frames loaded by the page; the other controls whether another site may embed the page."
+
+[questions.web-api-lv017]
+prompt = "A client sends `POST /users` with a JSON body missing the required `email` field. Which status is most appropriate?"
+options = ["200 OK", "400 Bad Request (or 422)", "404 Not Found", "500 Internal Server Error"]
+explanation = "Invalid client input is a 4xx error; 400 or 422 is commonly used for validation. 200 would falsely indicate success, 404 is for a missing resource, and 500 is for a server-side failure."
+
+[questions.web-api-lv018]
+prompt = "Which method is used to **read** a resource and must not change data on the server?"
+options = ["POST", "GET", "DELETE", "PUT"]
+explanation = "GET is a safe method for reading. POST commonly creates resources, DELETE removes them, and PUT replaces a resource."
+
+[questions.web-api-lv019]
+prompt = "Which status code indicates that the user is **unauthenticated** (credentials are missing or invalid)?"
+options = ["401 Unauthorized", "403 Forbidden", "404 Not Found", "409 Conflict"]
+explanation = "401 means the user's identity could not be authenticated. 403 means the user is known but lacks permission. 404 means not found, and 409 indicates a state conflict."
+
+[questions.web-api-lv020]
+prompt = "Which header tells the server the format of the body the client is sending, such as `application/json`?"
+options = ["Accept", "Content-Type", "Authorization", "Cache-Control"]
+explanation = "`Content-Type` describes the body in the current message. `Accept` describes what the client wants to receive, `Authorization` carries credentials, and `Cache-Control` controls caching."
+
+[questions.web-api-lv023]
+prompt = "Which HTTP methods are **idempotent** by definition?"
+options = ["GET", "PUT", "DELETE", "POST"]
+explanation = "GET, PUT, and DELETE are idempotent: repeating them has the same intended effect as performing them once. Repeating POST may create multiple records."
+
+[questions.web-api-lv024]
+prompt = "Which status codes belong to the **client error** (4xx) class?"
+options = ["400", "404", "502", "429"]
+explanation = "400, 404, and 429 are 4xx responses. 502 Bad Gateway is a 5xx error on the server/gateway side."
+
+[questions.web-api-lv025]
+prompt = "Complete: a missing resource returns **{{blank}}**; a successful deletion with no response body commonly returns **{{blank}}**.\n"
+explanation = "404 Not Found indicates a missing resource. 204 No Content indicates success without a response body, for example after a DELETE."
+
+[questions.web-api-lv026]
+prompt = "To send a Bearer access token, the client uses the header `{{blank}}: Bearer <token>`.\n"
+explanation = "A Bearer token belongs in the `Authorization` header. Do not put tokens in URLs, which may be recorded in logs and browser history."
+
+[questions.web-api-lv044]
+prompt = "A client updates `PUT /documents/7` with `If-Match: \"v3\"`, but the current server version is `\"v4\"`. Which response is most appropriate?\n"
+options = ["200 OK", "412 Precondition Failed", "304 Not Modified", "401 Unauthorized"]
+explanation = "A non-matching `If-Match` ETag means another writer changed the resource (a lost update). 412 tells the client the precondition failed so it can fetch the latest version and reconcile its changes."
+
+[questions.web-api-lv046]
+prompt = "The `{{blank}}` header in a 429/503 response tells the client how long to wait before retrying.\n"
+explanation = "`Retry-After` can be a number of seconds or an HTTP date. Clients should honor it instead of retrying aggressively."
+
+[questions.web-api-lv050]
+prompt = "A service receives a partner webhook and verifies the body's HMAC signature. Which signature comparison approach is correct?\n"
+options = ["Compare hexadecimal strings with `==`", "Compute the HMAC over the received **raw body** and compare it with a constant-time function; also check a timestamp to prevent replay", "Parse the JSON and stringify it again before computing the HMAC", "Check only the source IP"]
+explanation = "Compute the signature over the original bytes: parsing and re-serializing can change ordering or whitespace. `==` can leak information through timing. A signed timestamp helps prevent replay; source IPs can change and do not prove integrity."
+
+[questions.web-api-lv051]
+prompt = "The `POST /fetch-preview` endpoint accepts a user-provided `url`, then the server fetches it to build a link preview. What is the main security risk and an appropriate mitigation?\n"
+options = ["CORS; add `Access-Control-Allow-Origin`", "SSRF: the server could be induced to access internal networks or cloud metadata; use an allowlist, block private/loopback IPs after DNS resolution, and limit redirects and timeouts", "Reflected XSS; HTML-encode the value", "CSRF; add a CSRF token"]
+explanation = "Letting a server fetch arbitrary URLs is a classic SSRF scenario, especially dangerous for metadata services. Check resolved IPs (to mitigate DNS rebinding) and control redirects. CORS, CSRF, and XSS address different risks."
+
+[questions.web-api-lvc05]
+title = "Calculate a Retry Delay"
+prompt = '''Implement `retryDelay(attempt, response, opts)` to return the number of milliseconds to wait before the next attempt, or `null` if it should not be retried:
+- `attempt` starts at 1 (the first failed attempt).
+- `response = { status, headers }` (header names are lowercase); `opts = { base, cap, maxAttempts, random }`, where `random()` returns a value in `[0, 1)`.
+- Retry only for status 429, 502, 503, or 504; return `null` for any other status.
+- Return `null` when `attempt >= maxAttempts`.
+- If `retry-after` is a number of seconds, return `seconds * 1000` without jitter, capped at `cap`.
+- Otherwise use exponential backoff with **full jitter**: `Math.floor(random() * Math.min(cap, base * 2 ** (attempt - 1)))`.
+'''
+explanation = "Full jitter spreads retries across clients to avoid synchronized load spikes. Respecting `Retry-After` follows the server's guidance."
+hints = ["Check the status and attempt count first.", "Set the ceiling to `min(cap, base * 2^(attempt-1))`, then multiply it by the random value."]
+
+[questions.web-api-lv060]
+prompt = "Which statements about timeouts and retries between services are correct?"
+options = ["Automatically retry only idempotent operations or operations protected by an idempotency key", "A client's timeout should be shorter than the timeout of the layer calling it, to control failure propagation (deadline propagation)", "Retries at every layer in a call chain multiply the number of calls during an incident", "Retrying without a limit until success is always safe"]
+explanation = "Retries multiply across layers, so systems need retry budgets and deadline propagation. Unlimited retries can overwhelm a service that is already struggling."
+
+[questions.web-api-lv021]
+prompt = "In REST design, which URL follows the plural-noun resource convention for retrieving a list of posts?"
+options = ["GET /getPosts", "GET /posts", "POST /posts/list", "GET /post/get-all"]
+explanation = "REST uses nouns for resources and HTTP methods to express actions: `GET /posts`. Verb-based URLs such as `getPosts` follow an RPC style."
+
+[questions.web-api-lv022]
+prompt = "A new resource is successfully created using `POST /posts`. Which status code is most appropriate?"
+options = ["200", "201 Created", "204 No Content", "302 Found"]
+explanation = "201 Created indicates that a resource was created and commonly includes a `Location` header pointing to it. 200 can work but is less specific; 204 has no body, and 302 is a redirect."
+
+[questions.web-api-lvc03]
+title = "Build a Query String"
+prompt = '''Implement `buildQuery(params)` to accept a flat object and return a query string without a leading `?`:
+- Skip `null` and `undefined` values.
+- Encode each key and value with `encodeURIComponent`.
+- Join pairs with `&`, preserving the key order from the object.
+- Return the empty string `''` for an empty object or when all values are skipped.
+'''
+explanation = "Values such as 0, false, and the empty string are valid, so skip only null and undefined. `encodeURIComponent` prevents characters such as `&` from breaking the query structure."
+hints = ["Filter out null and undefined values before mapping.", "Remember to encode both keys and values."]
+
+[questions.web-api-lv033]
+prompt = "A list endpoint returns tens of thousands of records in one response. What is the most basic improvement?"
+options = ["Increase the server timeout", "Use pagination", "Change the method to POST", "Compress images"]
+explanation = "Pagination limits the number of records returned at once, reducing load on the server, network, and client. Increasing the timeout does not reduce payload size, and changing the method is unrelated."
+
+[questions.web-api-lv035]
+prompt = "Which components are commonly part of a good REST API error response?"
+options = ["An appropriate status code", "A developer-friendly error message", "The full server stack trace", "A stable error code that clients can handle programmatically"]
+explanation = "A status, message, and stable error code help clients respond. A stack trace exposes internal details and creates security risk; keep it in server-side logs instead."
+
+[questions.web-api-lv037]
+prompt = "A **partial** update of a resource (only a few fields) commonly uses **{{blank}}**; replacing the **entire** resource uses **{{blank}}**.\n"
+explanation = "PATCH sends the changes, while PUT sends a complete new representation of the resource."
+
+[questions.web-api-lv038]
+prompt = "A post feed has five million records, and users keep adding new posts at the beginning. Pagination with `?page=N&limit=20` repeats or skips posts while scrolling. What is the best fix?\n"
+options = ["Increase `limit` to 1000", "Use cursor/keyset pagination based on a stable sort key, such as `created_at, id`", "Cache the entire list on the client", "Switch to a larger `offset`"]
+explanation = "Offsets shift as records are inserted, causing repeats or omissions; large offsets are also slow. A cursor follows key values, remains stable, and can use an index. Increasing the limit or offset does not fix the underlying issue."
+
+[questions.web-api-lv039]
+prompt = "A mobile app sends `POST /orders`, times out, and automatically retries; sometimes this creates two identical orders. What is the best API-side fix?\n"
+options = ["Change POST to GET", "Accept a client-generated `Idempotency-Key`, store the result by key, and return the same result on retry", "Increase the timeout to five minutes", "Lock the entire orders table while processing"]
+explanation = "An idempotency key makes retries safe for a POST. GET is not appropriate for writes, a long timeout still leaves retry ambiguity, and locking the whole table can block the system."
+
+[questions.web-api-lv045]
+prompt = "Compare offset pagination with cursor pagination. When should each be chosen?"
+keywords = [["offset"], ["cursor", "keyset"], ["stable", "repeat", "skip", "insert"], ["index", "performance", "slow"], ["jump to any page", "arbitrary page", "total count", "random access"]]
+model_answer = '''- **Offset**: `LIMIT n OFFSET m` is simple, supports jumping to an arbitrary page, and makes total-page counts easy. Insertions or deletions can cause repeated or skipped records; large offsets are slow because the database must skip rows.
+- **Cursor/keyset**: uses a key from the last record, such as `WHERE id > :last`. It has stable performance with an index and stays stable as data changes. It does not support arbitrary page jumps, needs a stable sort key, and makes totals harder to count.
+- Choose **offset** for small tables or admin screens that need page jumps; choose **cursor** for feeds, large datasets, or frequently changing data.
+'''
+explanation = "A strong answer covers offset's convenience as well as cursor's stability and performance."
+
+[questions.web-api-lv053]
+prompt = "Two people edit the same document through `PUT /docs/1`; the later update overwrites the earlier one (a lost update). Which measures address this correctly?"
+options = ["Return an ETag from GET and require `If-Match` on PUT; return 412 on mismatch", "Use a `version` column and `UPDATE ... WHERE id=? AND version=?`; return 409 if zero rows are updated", "Increase the request timeout", "Require `If-Match` and return 428 Precondition Required when it is missing"]
+explanation = "Optimistic concurrency using ETags/If-Match or a version column detects conflicts; 428 requires clients to provide a condition. A longer timeout does not prevent overwrites."
+
+[questions.web-api-lv056]
+prompt = "What weakness of a fixed window of 100 requests per minute does a token bucket address?\n"
+options = ["A fixed window cannot count requests", "At a window boundary, a client can send 100 requests at the end of one window and 100 at the start of the next, causing a double-sized burst; a token bucket smooths traffic and allows controlled bursts", "A token bucket requires no state", "A fixed window works only with HTTP/1.1"]
+explanation = "The window-boundary effect permits a short burst of twice the limit. A token bucket refills steadily, controlling the average rate while allowing bounded bursts. Both approaches require state."
+
+[questions.web-api-lv027]
+prompt = "What does the `Cache-Control: no-store` header mean?"
+options = ["Cache the response for one year", "Do not store the response in any cache", "Cache only in the browser, not in a CDN", "Always revalidate with the server before using a cached copy"]
+explanation = "`no-store` instructs caches not to store the response, which is useful for sensitive data. Browser-only caching is `private`; revalidation before reuse is `no-cache`."
+
+[questions.web-api-lv028]
+prompt = "A client sends a request with `If-None-Match` matching the resource's current ETag. Which status should the server return?"
+options = ["200 with the full body", "304 Not Modified with no body", "404 Not Found", "412 Precondition Failed"]
+explanation = "A matching ETag means the client's cached copy is still current, so the server returns 304 to save bandwidth. 412 applies when `If-Match` fails during an update."
+
+[questions.web-api-lv036]
+prompt = "To let a browser cache a static file for one hour, the server returns `Cache-Control: max-age={{blank}}` (in seconds).\n"
+explanation = "`max-age` is measured in seconds; one hour is 60 × 60 = 3600 seconds."
+
+[questions.web-api-lv040]
+prompt = "An API returns different content based on `Accept-Language`, but omits `Vary`. A CDN caches the Vietnamese response and serves it to users who want English. What is the correct fix?\n"
+options = ["Add `Vary: Accept-Language` to the response", "Set `Cache-Control: max-age=0` on every route", "Replace `Accept-Language` with a cookie", "Disable the CDN permanently"]
+explanation = "`Vary` tells caches to distinguish variants based on the named request header. `max-age=0` only forces revalidation and does not address the cause; moving this to a cookie can make shared caching harder."
+
+[questions.web-api-lvc04]
+title = "Parse Cache-Control"
+prompt = '''Implement `parseCacheControl(header)` to return an object describing the directives:
+- Split on `,`, trim extra whitespace, and lowercase directive names.
+- A directive without a value becomes `true` (for example, `public` becomes `{ public: true }`).
+- Convert numeric values for `max-age`, `s-maxage`, and `stale-while-revalidate` to numbers.
+- For other directives with values, preserve the string and remove surrounding double quotes if present.
+- Return `{}` when `header` is `null`, `undefined`, or empty.
+'''
+explanation = "Proxies, CDNs, and HTTP clients parse this header to decide whether a response can be cached and for how long."
+hints = ["Split on commas, then trim each item.", "Use `indexOf('=')` to distinguish directives with values."]
+
+[questions.web-api-lv049]
+prompt = "A popular cache entry expires just as 10,000 requests per second arrive; they all go to the origin and overload it (a cache stampede). Which measure is effective?\n"
+options = ["Reduce TTL to one second", "Request coalescing (only one request fetches the data), `stale-while-revalidate`/`stale-if-error`, and TTL jitter", "Increase the number of origins by ten", "Delete the cache when an error occurs"]
+explanation = "Coalescing duplicate requests and serving stale data during refresh protects the origin. Jitter prevents many keys from expiring simultaneously. Reducing TTL makes stampedes happen more often."
+
+[questions.web-api-lv054]
+prompt = "Which statements about validators in HTTP caching are correct?"
+options = ["A weak ETag (`W/\"v1\"`) promises semantic equivalence, not byte-for-byte identity", "A matching ETag in `If-None-Match` allows the server to return 304 without a body", "`Last-Modified` has one-second resolution and may miss two changes made within the same second", "An ETag must always be a hash of the entire body"]
+explanation = "An ETag is an opaque string defined by the server; it need not be a body hash and may be a version or revision. The other three statements are correct."
+
+[questions.web-api-lvc06]
+title = "Handle a Conditional GET"
+prompt = '''Implement `handleConditionalGet(req, resource)` where `req = { headers }` (lowercase names) and `resource = { body, etag }` (the ETag is quoted, e.g. a quoted version value):
+- Without `if-none-match`, return `{ status: 200, headers: { ETag: resource.etag }, body: resource.body }`.
+- `if-none-match` can be `*` or a comma-separated list of ETags; compare **weakly** (remove the `W/` prefix from both sides).
+- On a match, return `{ status: 304, headers: { ETag: resource.etag } }` with no `body` property.
+- On a non-match, return the same shape as the 200 case.
+'''
+explanation = "Conditional GET saves bandwidth: the client keeps its cached copy and downloads again only when the ETag changes. GET uses weak comparison under RFC 9110."
+hints = ["Split `if-none-match` on commas and normalize each value.", "A 304 response has no body but includes the ETag again."]
+
+[questions.web-api-lv062]
+prompt = "An API returns a product list shared by everyone, but the response also contains an `isFavorite` field calculated for the signed-in user. Which cache policy is most appropriate?"
+options = ["`Cache-Control: public, max-age=300` because the product list changes infrequently", "`Cache-Control: private, max-age=60` (or move personalization to a separate endpoint so the shared portion can be cached publicly)", "`Cache-Control: no-store` for every response to avoid all risk", "`Vary: *` with `public, max-age=300` so the CDN distinguishes users"]
+explanation = "A response containing user-specific data must not be stored by a shared CDN or proxy (`private`). Better still, separate personalization so the shared portion can remain publicly cacheable. `no-store` is safe but gives up browser caching; `Vary: *` makes the response effectively uncacheable."
+
+
+[questions.web-api-lv029]
+prompt = "Why should an access token not be placed in a URL query string, for example `/api/me?token=abc`?"
+options = ["URLs are limited to ten characters", "URLs are commonly recorded in access logs, browser history, and the `Referer` header", "GET does not support query strings", "The token would expire automatically"]
+explanation = "URLs appear in many places, including logs, browser history, and `Referer` headers, so tokens can leak. Put the token in the `Authorization` header."
+
+[questions.web-api-lv030]
+prompt = "How should user passwords be stored in a database?"
+options = ["Store them in plaintext so they can be recovered", "Encode them with Base64", "Hash them with a password-specific algorithm such as bcrypt, scrypt, or Argon2 and use a salt", "Hash them once with MD5"]
+explanation = "Passwords should be hashed with a deliberately slow, salted password-hashing algorithm. Plaintext and reversible Base64 expose them immediately in a database leak; MD5 is too fast to resist brute force."
+
+[questions.web-api-lv031]
+prompt = "Which component enforces CORS when a web page tries to call an API on another origin and the server has not allowed it?"
+options = ["The API server automatically blocks it", "The browser", "The operating system", "The network router"]
+explanation = "Browsers enforce CORS based on response headers such as `Access-Control-Allow-Origin`. Tools such as curl and server-to-server clients are not blocked by CORS."
+
+[questions.web-api-lv034]
+prompt = "Which practices help protect an API while data is transmitted over a network?"
+options = ["Use HTTPS for every endpoint", "Send passwords in query strings for easier debugging", "Put tokens in the `Authorization` header", "Enable HSTS so browsers consistently use HTTPS"]
+explanation = "HTTPS protects against eavesdropping; the Authorization header avoids exposing tokens in URL logs; HSTS tells browsers to use HTTPS. Passwords in query strings may be recorded in logs and browser history."
+
+[questions.web-api-lv041]
+prompt = "An SPA at `https://app.example.com` calls `https://api.example.com` with `fetch` and cookies (`credentials: 'include'`). The browser blocks it because the server returned `Access-Control-Allow-Origin: *`. Why?\n"
+options = ["For credentialed requests the server cannot use `*`; it must return an allowed specific origin and `Access-Control-Allow-Credentials: true`", "Browsers do not support cross-origin cookies", "The method must be changed to POST", "The `Content-Length` header is missing"]
+explanation = "For requests with credentials, browsers reject the wildcard origin. The server must echo an allowed origin and include `Access-Control-Allow-Credentials: true` (and `Vary: Origin`)."
+
+[questions.web-api-lv042]
+prompt = "Which statements about storing a web application's session in a cookie are correct?"
+options = ["`HttpOnly` prevents JavaScript from reading the cookie, reducing some XSS impact", "`Secure` sends the cookie only over HTTPS", "`SameSite=Lax/Strict` helps reduce CSRF risk", "Session cookies do not need CSRF protection because the browser sends them automatically"]
+explanation = "HttpOnly, Secure, and SameSite are useful baseline attributes. Automatic cookie sending is exactly why CSRF protection is needed; it is not a reason to omit it."
+
+[questions.web-api-lv047]
+prompt = "A service reads the `alg` value from a JWT's own header to choose the verification algorithm. What is the most serious risk?\n"
+options = ["The token becomes longer", "An attacker could set `alg: none` or switch to HS256 and use the public key as a secret to forge a token", "The token expires sooner", "Key rotation becomes impossible"]
+explanation = "The server must fix the accepted algorithm set and choose keys from trusted configuration (with an allowlisted `kid`); it must not trust the token's claimed `alg`. Otherwise `none` or RS256/HS256 confusion may enable forgery."
+
+[questions.web-api-lv048]
+prompt = "A SPA or mobile app (a public client that cannot keep a secret) uses the Authorization Code flow. What prevents someone who intercepts the redirect `code` from exchanging it for a token?\n"
+options = ["A client secret embedded in the JavaScript bundle", "PKCE: send `code_challenge` when requesting the code and `code_verifier` when exchanging it", "The `Referer` header", "An `HttpOnly` cookie"]
+explanation = "PKCE binds the authorization code to a verifier known only to the original client, making an intercepted code unusable. A secret embedded in a bundle is not secret; Referer and cookies do not provide this protection."
+
+[questions.web-api-lv055]
+prompt = "An access-token JWT lasts 24 hours. A user selects “sign out of all devices,” but old tokens remain usable until they expire. What is a reasonable balance?\n"
+options = ["Keep the current setup; JWTs cannot be revoked", "Use short-lived access tokens (5–15 minutes) plus rotating refresh tokens stored server-side for revocation, or check a revocation list/`jti` for sensitive actions", "Increase token lifetime to 30 days to reduce logins", "Store JWTs in `localStorage` so they are easy to delete"]
+explanation = "Short-lived access tokens limit exposure, while stateful refresh tokens can be revoked. Longer lifetimes increase risk; `localStorage` does not solve revocation and can be read by injected JavaScript."
+
+[questions.web-api-lv061]
+prompt = "To prevent clickjacking, a page should send the CSP directive `frame-ancestors {{blank}}` to prohibit all sites from embedding it in a frame."
+explanation = "`frame-ancestors 'none'` prohibits embedding; `'self'` allows only the same origin. Modern browsers use this directive in place of `X-Frame-Options`."
+
+[questions.web-api-lv059]
+prompt = "When putting GraphQL into production with clients that are not fully trusted, which measures are needed?"
+options = ["Limit query depth and complexity", "Disable or control introspection in public environments if it is not needed", "Use persisted queries/an allowlist for known clients", "Allow arbitrary queries because the clients were written by our team"]
+explanation = "Deeply nested queries can cause denial of service; introspection can expose the schema; persisted queries reduce the attack surface. No client is fully trusted because an attacker can send requests directly."
+
+[questions.web-api-lv058]
+prompt = "A client is downloading a 2 GB file and loses connection at 1.2 GB. The server supports `Accept-Ranges: bytes`. How should the client resume?\n"
+options = ["Start over because HTTP does not support resuming", "Send `Range: bytes=1200000000-` with `If-Range` and an ETag; receive 206 Partial Content if the file is unchanged (or the full response with 200 if it changed)", "Send `Content-Length: 1200000000`", "Use `Cache-Control: max-age`"]
+explanation = "A Range request downloads only part of a representation. `If-Range` ensures the resumed part is from the same file version; if the file changed, the server returns the full new content with 200."
+
+[questions.web-api-lv052]
+prompt = "Compared with HTTP/1.1 over TCP, what is the clearest improvement HTTP/3 (QUIC) provides on a mobile network with frequent packet loss?\n"
+options = ["It removes the need for TLS entirely", "Each stream progresses independently during packet loss, avoiding transport-layer head-of-line blocking as with HTTP/2 over TCP", "It automatically compresses the body with gzip", "It makes every request idempotent"]
+explanation = "HTTP/2 multiplexes streams over one TCP connection, so losing a packet can stall all streams. QUIC handles loss per stream. QUIC still uses TLS 1.3 and does not change idempotency semantics."
+
+[questions.web-api-lv057]
+prompt = "An application has many inline scripts, so the team adds `'unsafe-inline'` to `script-src`. Why is this a poor choice, and what is a better approach?\n"
+options = ["`'unsafe-inline'` makes the page slower; use `defer`", "It allows any inline script, including an injected XSS script; use a nonce or hash for each trusted script and begin with `Content-Security-Policy-Report-Only`", "CSP does not support inline scripts, so remove CSP", "Just add `X-Frame-Options`"]
+explanation = "CSP is valuable because it blocks unauthorized scripts; `'unsafe-inline'` undermines that protection. A nonce or hash allows only a specific trusted script. Report-Only helps introduce the policy gradually without breaking the page."
+
+[questions.web-api-lv032]
+prompt = "In GraphQL, the client selects exactly the fields it needs in a query. What is the main benefit?"
+options = ["The server no longer needs a schema", "Avoiding over-fetching and under-fetching", "Every request is cached by a CDN", "Authentication is no longer needed"]
+explanation = "The client fetches only the data it needs, reducing excess data and extra calls. GraphQL still has a schema and still requires authentication; CDN caching is harder than with REST GET requests."
+
+[questions.web-api-lv043]
+prompt = "A GraphQL query fetches 50 posts with their authors and makes 51 database queries (one for the list plus one per author). What is this called, and what is a common fix?"
+options = ["Deadlock; add a database lock", "The N+1 query problem; batch with DataLoader or use a join/preload", "Race condition; add a mutex", "Cache stampede; add a TTL"]
+explanation = "This is N+1: one list query triggers N child queries. Request-level batching with DataLoader or a join/preload can reduce this to a small number of queries."
+
+
+[modules.web-api-lead]
+title = "API Architecture & Technical Leadership"
+description = "Make API decisions across teams: compatibility, operations, governance, security, and migration trade-offs."
+lesson = '''### Leading API decisions across teams
+At senior and lead levels, API design includes the operating model and migration path, not only endpoint shapes. A technically clean contract can still fail if dozens of consumers cannot migrate together. Prefer additive changes, make ownership explicit, and measure actual usage before removing a field or version.
+
+| Decision | Useful default | Watch for |
+|---|---|---|
+| Breaking contract change | Keep the old version stable; introduce a new version and migration window | A version header alone does not make incompatible behavior safe |
+| Quota and rate limit | Apply limits per tenant/API key and plan | IP-only limits can penalize users behind shared NAT |
+| Shared caching | Cache public, non-personalized representations at a CDN | Never serve one user's response to another user |
+| Service retries | Use deadlines, bounded retries, backoff, jitter, and idempotency | Retries at multiple layers can amplify an outage |
+| Authorization | Check access to each object at the data boundary | An unpredictable identifier does not prevent BOLA/IDOR |
+
+For a public API used by many partners, announce deprecation early, expose machine-readable `Deprecation`/`Sunset` signals, publish migration guidance, and track traffic by consumer. For example, retain `/v1` while `/v2` adopts a new field shape; remove `/v1` only after the announced window and measured migration progress support it. A common mistake is treating email notice as a compatibility strategy.
+
+### Review checklist for an API change
+1. Is the change breaking (removed/renamed field, changed type, stricter validation, changed status semantics)?
+2. Are retries safe: which methods are idempotent, and which writes need an `Idempotency-Key`?
+3. Do errors follow a consistent format such as RFC 9457 without exposing internals?
+4. Are body size, page size, query depth, and timeouts bounded?
+5. Is authorization checked for every object, not just at the route?
+6. Are endpoint-level 4xx/5xx rates, p95/p99 latency, 429 rates, and request IDs observable?
+7. Is there a migration plan and a clear retirement date for existing consumers?
+
+### A short ADR example
+- **Context**: 40 partners integrate with the API; migrations cannot happen at once; a five-person team supports it.
+- **Decision**: keep `/v1` stable, add fields there only when additive, and create `/v2` for breaking changes; publish a `Sunset` signal well ahead of retirement (for example, six months, subject to contracts).
+- **Consequences**: maintain two versions during the transition, in exchange for avoiding unannounced partner outages.
+
+### Team-scale anti-patterns
+- Hot-patching a contract without notice because a change seems small.
+- Applying one hard rate limit to internal clients and paying partners alike.
+- Caching responses with `Set-Cookie` or personal data in a shared CDN.
+- Retrying without backoff and turning a slow server into a retry storm.
+- Leaving deprecation without an owner or an end date.
+- Failing to record decisions, then losing the rationale a few months later.
+'''
+
+[questions.web-api-lv001]
+prompt = "A five-person team operates a public API used by 40 partners, many without an actively maintained client. You need to change `price` from a number to an object `{amount, currency}` within three weeks. Which option is most reasonable?\n"
+options = ["Change `/v1` immediately and email partners one day in advance", "Keep `/v1` unchanged, create `/v2` with the new shape, add `Deprecation`/`Sunset` headers to `/v1`, and allow a long migration window", "Force all partners to update their SDK by returning 400 for old requests next week", "Run two databases in parallel with a separate schema for each partner"]
+explanation = "With consumers outside your control, a breaking change needs a new version and a migration window. Changing `/v1` directly or returning 400 would break partner integrations and create outages and support cost. Per-partner databases are expensive and do not solve the contract issue."
+
+[questions.web-api-lv002]
+prompt = "An API serves two groups: a free tier (~2,000 tenants) and an enterprise tier (~20 tenants under SLA contracts). One free tenant runs a scraping script that slows the whole system. You have two weeks and an existing Redis. What should you prioritize?\n"
+options = ["Rate-limit by source IP across every endpoint", "Double the number of API instances", "Rate-limit by API key/tenant with tier-based quotas (Redis counters), return 429 with `Retry-After`, and separate queue/budget capacity for enterprise", "Block free accounts whenever p99 exceeds a threshold"]
+explanation = "Per-tenant limits align with the commercial unit and use Redis already available. IP limits misclassify users behind shared NATs and can be bypassed with multiple IPs. More instances cost money without stopping one tenant from consuming resources. Blocking accounts is crude and invites disputes."
+
+[questions.web-api-lv003]
+prompt = "`GET /catalog` receives 90% of traffic; its data changes a few times per hour and is the same for everyone. The origin is overloaded at peak times. This sprint can change only HTTP and CDN configuration. What is the best choice?\n"
+options = ["Set `Cache-Control: public, s-maxage=60, stale-while-revalidate=30` for catalog responses and use the CDN as the primary cache", "Set `Cache-Control: no-store` to keep data always current", "Set `private, max-age=3600` so each browser caches it", "Rewrite the endpoint in GraphQL so clients can choose fields"]
+explanation = "The data is shared and a delay of several seconds is acceptable, so a shared CDN cache can substantially reduce origin load. `no-store` sends all traffic to the origin. `private` prevents CDN caching. GraphQL is outside the sprint constraint and may be harder to cache."
+
+[questions.web-api-lv004]
+prompt = "A payment service calls a partner API that sometimes times out. The client retries, and a previous incident charged a customer twice. The team is small, has a two-week deadline, and cannot change providers. Which measure addresses the root cause?\n"
+options = ["Shorten the timeout so failures appear sooner", "Generate a stable `Idempotency-Key` for each payment operation, store results by key on the server, and retry with backoff using the same key", "Disable retries and ask users to click again", "Run a nightly reconciliation job and issue refunds manually"]
+explanation = "POST is not idempotent, so a retry after a timeout can create a duplicate. An idempotency key makes retries safe. Disabling retries shifts failures to users and still permits double submissions; a shorter timeout increases ambiguous outcomes. Reconciliation is a safety net, not a replacement."
+
+[questions.web-api-lv005]
+prompt = "A penetration test finds that `GET /orders/{id}` returns another user's order when the `id` is changed. The release is in three days; a four-person team has 60 endpoints shaped like `/{resource}/{id}`. What is the best action?\n"
+options = ["Change sequential IDs to UUIDs and consider the issue fixed", "Patch only this endpoint and leave the rest for next quarter", "Hotfix object-ownership checks here, then audit all 60 endpoints with a checklist/automated authorization tests and move the check into shared middleware or policy", "Add a WAF rule to block ID-changing patterns"]
+explanation = "The root cause is missing object-level authorization (BOLA/IDOR). UUIDs make IDs harder to guess but do not replace permission checks. Fixing one endpoint leaves 59 similar risks. A WAF cannot infer data ownership rules. Hotfix first, then standardize the policy and automated checks."
+
+[questions.web-api-lv006]
+prompt = "You are preparing to deprecate `/v1/reports` after `/v2/reports` is available. Which actions belong in the plan?"
+options = ["Send `Deprecation` and `Sunset` headers with a migration-documentation link in `/v1` responses", "Measure `/v1` traffic by consumer to identify who has not migrated", "Turn off `/v1` as soon as `/v2` launches to avoid maintaining two versions", "Communicate through multiple channels with a clear date, and retire only after contacting consumers still using it"]
+explanation = "Deprecation needs machine-readable signals, per-consumer usage data, and a communicated timeline. Turning off v1 at v2 launch breaks consumers who have not migrated; the temporary cost of maintaining two versions is reasonable."
+
+[questions.web-api-lv007]
+prompt = "A team operating a public API wants to detect partner integration problems early. Which signals belong on a dashboard or in alerts?"
+options = ["5xx rate and p95/p99 latency by endpoint", "429 rate by tenant to find incorrect quotas or faulty clients", "Number of new lines of code each week", "A sudden 4xx increase by client version/User-Agent, which may indicate a broken client release"]
+explanation = "Latency and 5xx measure server health; 429 by tenant highlights rate-limit policy; 4xx by client version can reveal a partner release that violates the contract. Lines of code do not measure operational health."
+
+[questions.web-api-lv008]
+prompt = "When rejecting a tenant that exceeded its quota, the API should return status **{{blank}}** and the **{{blank}}** header to tell the client how many seconds to wait before calling again.\n"
+explanation = "429 Too Many Requests is the standard rate-limit status. `Retry-After` tells the client when to retry instead of making it guess, reducing retry storms."
+
+[questions.web-api-lv009]
+prompt = "Write a short ADR for this decision: a public API needs a breaking contract change, but 40 partners cannot upgrade at once. State the context, decision, consequences, and alternatives rejected."
+keywords = [["context", "constraints"], ["version", "v2"], ["sunset", "deprecation", "retirement date"], ["consequence", "trade-off", "cost"], ["measure", "metric", "traffic", "consumer"]]
+model_answer = '''**Context**: 40 partners cannot upgrade simultaneously; the team is small; a breaking contract change is necessary.
+
+**Decision**: keep the old version stable and introduce `v2` with the new contract; send `Deprecation` and `Sunset` headers for v1; measure traffic by consumer to identify partners who have not migrated; set a retirement date that can be adjusted for contractual needs.
+
+**Consequences/trade-offs**: maintain two versions during migration and provide migration documentation and partner support; in return, avoid breaking integrations.
+
+**Rejected alternatives**: change v1 directly (breaks partners), force upgrades with 400 responses (reputational risk), or build a separate system for each partner (too expensive).
+'''
+explanation = "A strong answer states the constraint, timeline, progress measure, and accepted cost."
+
+[questions.web-api-lvc01]
+title = "Tenant Plan Rate Limiter"
+prompt = '''Implement `createLimiter(plans, now)` to return `check(tenant)` using a fixed 60-second window:
+- `plans` is `{ free: 3, pro: 10 }` (requests per minute); `tenant = { id, plan }`; unknown plans use the `free` limit.
+- `now()` returns the current time in milliseconds.
+- Each tenant has its own counter. The window starts on that tenant's first request and lasts 60,000 ms, then resets.
+- `check` returns `{ allowed: true, remaining }` (remaining after consuming this request), or, when over quota, `{ allowed: false, status: 429, retryAfter }`, where `retryAfter` is the number of seconds (rounded up) until the window ends.
+'''
+explanation = "This is a per-tenant fixed window. A production system might store counters in Redis with INCR + EXPIRE or use a token bucket to smooth window boundaries."
+hints = ["Store `{ start, count }` for each tenant in a `Map`.", "Compute `retryAfter` as `ceil((start + 60000 - now) / 1000)`." ]
+
+[questions.web-api-lv010]
+prompt = "A company has a web app, a mobile app, and five B2B partners. The frontend needs six to eight endpoints for one screen; partners need a few stable resources and want CDN caching. The team has eight people. What is the most reasonable decision?\n"
+options = ["Move everything to GraphQL and remove REST", "Keep public REST for partners and add a separate BFF (possibly GraphQL) for web/mobile to aggregate screen data", "Combine every resource in a `/everything` endpoint", "Move every client to gRPC-web"]
+explanation = "The groups have different needs: first-party clients need aggregation, while partners need a simple cacheable contract. A BFF serves the first group without disrupting the second. Removing REST loses CDN benefits for partners; a huge endpoint is hard to cache and version; gRPC-web adds tooling cost for partners."
+
+[questions.web-api-lv011]
+prompt = "A system has web and mobile clients plus three internal services. Each service manages separate user credentials, leaving four password stores. A six-person team needs SSO within two months. What is a reasonable direction?\n"
+options = ["Write another login service with a custom token", "Use OIDC/OAuth2 with an Identity Provider (self-hosted or managed), have internal services verify access tokens with public keys (JWKS), and migrate users gradually", "Share one user database and let every service read the user table directly", "Give every service the same symmetric JWT secret through environment variables"]
+explanation = "Standard protocols and a mature identity provider reduce security risk and development time for a small team. Custom tokens invite cryptographic mistakes and maintenance. A shared database creates tight coupling. A shared symmetric secret lets every service sign tokens, so a compromise of one service compromises all."
+
+[questions.web-api-lv012]
+prompt = "Service A calls service B over HTTP. B has an outage for ten minutes and A immediately retries each request three times, preventing B from recovering. You need a low-cost way to reduce risk for all services this week. What should be prioritized?\n"
+options = ["Increase retries to ten to guarantee success", "Standardize a shared client library with explicit timeouts, bounded retries with backoff and jitter, a retry budget, a circuit breaker, and retries only for idempotent operations", "Remove timeouts and wait for B to respond", "Let each team decide its own retry behavior"]
+explanation = "Unbounded retries amplify load into a retry storm. A shared library is a low-cost organization-wide fix. More retries worsen the problem; removing timeouts exhausts threads/connections; independent team choices create inconsistent behavior."
+
+[questions.web-api-lv013]
+prompt = '''A PR changes `GET /users/{id}` from `{"name": "An"}` to `{"firstName": "An", "lastName": "Le"}`. The author says, “the mobile app will update later.” You can approve the change. What should you do?'''
+options = ["Approve because the mobile app will update later", "Reject it and require a complete rewrite in GraphQL", "Keep `name` alongside the new fields, add contract tests, and remove `name` only after usage data shows no clients depend on it", "Approve but ask the author to deploy outside peak hours"]
+explanation = "This is breaking because already-released apps still request the old field and users do not update immediately. Keeping the field while clients migrate is the safest low-cost approach. Deploying off-hours does not solve compatibility; a GraphQL rewrite is out of scope."
+
+[questions.web-api-lv014]
+prompt = "After enabling a CDN for an API, a customer reports seeing another user's data at `GET /me/dashboard`. The origin sends `Cache-Control: public, max-age=300`. What is your first response?\n"
+options = ["Assume it is a browser bug and close the ticket", "Purge this route's cache immediately, change it to `Cache-Control: private, no-store` (or an appropriate `Vary`), inspect other personalized routes, and write a postmortem", "Reduce `max-age` to 60 seconds", "Disable the CDN across the entire system permanently"]
+explanation = "A data leak is a security incident: contain it immediately (purge and fix headers), review its scope, and learn from it. Shortening max-age only reduces the exposure window. Permanently disabling the CDN is an excessive response that loses its benefits."
+
+[questions.web-api-lv015]
+prompt = "When standardizing API change reviews across an organization of 20 teams, which practices provide value that justifies their cost?"
+options = ["Use OpenAPI as the source of truth and run breaking-change detection in CI", "Require every API PR to be manually approved by one person on the platform team", "Provide shared API guidance (naming, errors, pagination) and an automated linter", "Record ADRs for hard-to-reverse decisions such as versioning, authentication, and error formats"]
+explanation = "CI automation and shared standards scale across teams. Requiring one person to approve every PR creates a bottleneck and a single point of failure."
+
+[questions.web-api-lv016]
+prompt = "You need to design rate limits/quotas for a public API with free and paid plans on a five-person team. Describe the key decisions and trade-offs."
+keywords = [["by tenant", "api key", "per-tenant", "customer-based"], ["429", "retry-after"], ["redis", "counter", "token bucket", "sliding window"], ["burst", "controlled bursts"], ["header", "transparent", "ratelimit", "documentation"]]
+model_answer = '''- **Limit unit**: use the API key/tenant to match commercial plans; optionally add an IP limit for unauthenticated endpoints.
+- **Algorithm**: a token bucket permits short bursts while controlling the average rate; a fixed window is simpler but can allow boundary bursts. Store counters in Redis so instances share them.
+- **Response**: return 429 with `Retry-After` and headers showing remaining quota so clients can self-throttle; document each plan's limits.
+- **Tiers**: give paid plans separate quotas and apply lower limits to expensive endpoints.
+- **Trade-off**: exact precision costs more; accept small inaccuracies in exchange for low latency.
+'''
+explanation = "A strong answer explains the limit unit, burst behavior, and signals that help clients adjust."
+
+[questions.web-api-lvc02]
+title = "Version Deprecation Policy"
+prompt = '''Implement `resolveVersion(headers, policy, now)` to decide how to serve a request:
+- `headers` may contain `x-api-version` (lowercase); if absent, use `policy.default`.
+- `policy.versions` is an object such as `{ '1': { sunset: Date.UTC(2026,5,1) }, '2': {} }`; `sunset` is a timestamp in milliseconds or may be absent.
+- `now` is the current timestamp in milliseconds.
+- If the version is absent from `policy.versions`, return `{ status: 400, error: 'unsupported version' }`.
+- If its `sunset` has passed (`now >= sunset`), return `{ status: 410, error: 'version sunset' }`.
+- If `sunset` is in the future, return `{ status: 200, version, headers: { Deprecation: 'true', Sunset: <string in the format returned by new Date(sunset).toUTCString()> } }`.
+- If the version has no `sunset`, return `{ status: 200, version, headers: {} }`.
+'''
+explanation = "Returning 410 Gone after sunset tells clients the version was intentionally removed. `Deprecation` and `Sunset` give them machine-readable advance notice."
+hints = ["Convert the version to a string before looking it up in `policy.versions`.", "Check whether `sunset` has passed before returning the warning headers."]

@@ -48,6 +48,26 @@ prompt = "A page renders a username from free-form user input with `v-html`. Wha
 options = ["There is no risk when the content is a string; leave it as is", "HTML injection/XSS; use interpolation if only text is needed", "Vue automatically removes every dangerous tag; no change is needed", "Just add a `:key` to the element"]
 explanation = "`v-html` inserts raw HTML and does not sanitize the data; interpolation escapes text content."
 
+[questions.vue-lv019]
+prompt = "Given `const agree = ref(false)` and `<input type=\"checkbox\" v-model=\"agree\">`, what is `agree.value` after the user checks the box?"
+options = ["`true`", "`\"on\"`", "`\"checked\"`", "`1`"]
+explanation = "For a single checkbox, `v-model` synchronizes a boolean (`true`/`false` by default), unless `true-value` or `false-value` is specified."
+
+[questions.vue-lv020]
+prompt = "For `<div :class=\"{ active: isActive, error: hasError }\">` with `isActive = true` and `hasError = false`, which class is rendered?"
+options = ["`active`", "`active error`", "`error`", "No classes"]
+explanation = "Object syntax adds a class when its corresponding value is truthy; `error` is omitted because `hasError` is false."
+
+[questions.vue-lv021]
+prompt = '''
+Fill in the directive that shows the remaining branch when `loggedIn` is false:
+```html
+<p v-if="loggedIn">Welcome!</p>
+<p {{blank}}>Please sign in.</p>
+```
+'''
+explanation = "`v-else` must immediately follow an element with `v-if` or `v-else-if`."
+
 [modules.vue-reactivity]
 title = "Reactivity"
 description = "ref, reactive, computed, watch, watchEffect, toRefs, and shallowRef."
@@ -119,6 +139,69 @@ Implement `createSignal(initialValue)` and `watch(source, callback)` to model a 
 explanation = "Cleanup lets you cancel resources from an earlier watch run, such as a timer or request, before reacting to a new value."
 hints = ["Store listeners in a Set and notify a copy of the set so listeners can unsubscribe safely during notification.", "Cleanup belongs to the previous callback run; take it and clear the reference before invoking it to prevent duplicate calls."]
 
+[questions.vue-lv022]
+prompt = '''
+After `inc()` runs, what does the template display for `{{ state.count }}`?
+```js
+const state = reactive({ count: 0 })
+let { count } = state
+function inc() { count++ }
+```
+'''
+options = ["`0` — destructuring takes an ordinary value and loses the reactive connection", "`1`", "An error because a reactive value cannot be destructured", "`NaN`"]
+explanation = "Destructuring a primitive property from a reactive object copies its current value; incrementing the local variable does not change `state.count`. Use `toRefs(state)` to preserve reactivity when destructuring."
+
+[questions.vue-lv023]
+prompt = '''
+Fill in the API that creates a cached derived value and updates it when `items` changes:
+```js
+const total = {{blank}}(() => items.value.length)
+```
+'''
+explanation = "`computed` caches its result and recalculates only when a reactive dependency changes."
+
+[questions.vue-lv024]
+prompt = "You need to call an API to save a draft whenever `title` changes. Which API is the best fit?"
+options = ["`watch(title, save)`", "`computed(() => save(title.value))`", "Call `save()` directly in the template", "`ref(save)`"]
+explanation = "Side effects such as API calls belong in a watcher; a computed getter should be pure and only calculate a value."
+
+[questions.vue-lvc01]
+title = "Filter a Task List"
+prompt = '''
+Write a pure function `summarizeTasks(tasks, filter)`—the kind of logic often placed in a todo screen's `computed` value.
+- `tasks`: an array of `{ id, title, done }` objects.
+- `filter`: `"all"`, `"active"` (not done), or `"done"` (done). Treat any other value as `"all"`.
+- Return `{ visible, remaining }`: `visible` is a new array of tasks matching the filter, in their original order; `remaining` is the total number of tasks that are not done.
+- Do not modify the input array or its objects.
+'''
+explanation = "Keeping filtering in a pure function makes it easy to test; the component can use `computed(() => summarizeTasks(tasks.value, filter.value))`."
+hints = ["`Array.prototype.filter` always returns a new array.", "Calculate `remaining` from `tasks`, not from `visible`."]
+
+[questions.vue-lv031]
+prompt = "An edit form has `const user = ref({ name: '', address: { city: '' } })`. `watch(user, save)` does not run when the user edits `user.value.address.city`. What is an appropriate fix?"
+options = ["Use `watch(user, save, { deep: true })` or watch a specific getter such as `() => user.value.address.city`", "Change `ref` to a regular `let`", "Use `computed` instead of a watcher", "Call `save` in `onMounted`"]
+explanation = "Watching a ref that contains an object tracks reassignment of `.value`; use `deep: true` or watch a getter for the specific nested property."
+
+[questions.vue-lv032]
+prompt = "After `items.value.push(x)`, you want to scroll to the last item that was just rendered, but `listEl.lastElementChild` still refers to the previous item. What should you do?"
+options = ["Await `nextTick()` before scrolling", "Call `push` twice", "Use `setTimeout(fn, 5000)`", "Change `ref` to `reactive`"]
+explanation = "Vue batches DOM updates asynchronously; `nextTick` waits for the next DOM update to finish."
+
+[questions.vue-lv043]
+prompt = "A watcher needs to read the DOM size after Vue updates the DOM for new state. By default, the watcher runs before the component DOM is updated. Which option fits?"
+options = ["`{ flush: 'post' }` (or `watchPostEffect`)", "`{ flush: 'sync' }`", "`{ immediate: true }`", "`{ deep: true }`"]
+explanation = "`flush: 'post'` defers the callback until after the DOM update. `sync` runs immediately when state changes, before the DOM update, and may be costly when state changes frequently."
+
+[questions.vue-lv044]
+prompt = "A screen receives 50,000 data points per second over WebSocket and replaces the entire array each time. Profiling shows much of the time is spent creating deep proxies. What is the best choice?"
+options = ["Keep the array in a `shallowRef` and assign `.value = newArray` each time", "Use `reactive([])` and replace everything with `splice`", "Wrap the array in `computed`", "Keep the deep `ref` and add `deep: true` to the watcher"]
+explanation = "`shallowRef` tracks assignment to `.value` without proxying each item, which suits large data replaced as a whole. If you mutate it in place, use `triggerRef`."
+
+[questions.vue-lv045]
+prompt = "Choose the accurate statements about `markRaw`, `toRaw`, and reactive proxies."
+options = ["`markRaw(obj)` prevents `obj` from becoming a proxy, which is useful for third-party instances such as maps or charts", "`reactive(obj) === obj` is always true", "`reactive(obj) === obj` is false, so identity comparisons such as `includes` or `indexOf` can cause bugs", "`toRaw(proxy)` returns the original object; reading or writing through it does not trigger effects", "`markRaw` also automatically makes every nested object raw in the future"]
+explanation = "A proxy has a different identity from its original object. `markRaw` marks only that object; a nested object placed elsewhere in reactive state can still become a proxy."
+
 [modules.vue-components]
 title = "Components, Props, and v-model"
 description = "Component communication through props, emits, slots, v-model, and provide/inject."
@@ -177,6 +260,36 @@ Implement `createModelBinding(initialValue)` to model a parent connecting `v-mod
 '''
 explanation = "This exercise models the default `v-model` contract: the `modelValue` prop and the `update:modelValue` event."
 hints = ["Use a closure variable to hold the parent's state; the prop can be a getter that reads it.", "Check the event name before recording the payload."]
+
+[questions.vue-lv025]
+prompt = "In `<script setup>`, how do you declare a string prop named `title`?"
+options = ["`const props = defineProps({ title: String })`", "`const props = useProps('title')`", "`export const title = String`", "`this.props.title = String`"]
+explanation = "`defineProps` is a compiler macro in `<script setup>` and does not need to be imported."
+
+[questions.vue-lv026]
+prompt = "A child component wants to tell its parent that the user clicked a delete button. What is the standard approach in `<script setup>`?"
+options = ["Declare `const emit = defineEmits(['remove'])` and call `emit('remove', id)`", "Assign directly to a parent prop", "Call `window.parent.remove(id)`", "Use `document.dispatchEvent` for every event"]
+explanation = "A child communicates with its parent through a declared event; the parent listens with `@remove`."
+
+[questions.vue-lv027]
+prompt = "Component `Card` contains `<div class=\"card\"><slot /></div>`. What happens when it is used as `<Card><p>Hello</p></Card>`?"
+options = ["`<p>Hello</p>` is rendered at the `<slot />` position", "The content is ignored", "Vue reports a missing prop error", "`<p>` is rendered outside `.card`"]
+explanation = "The default slot receives content placed between a component's opening and closing tags."
+
+[questions.vue-lv033]
+prompt = "A layout calls `provide('theme', theme)` where `theme` is a ref. Descendants should be able to read the theme but not change it themselves. What is appropriate?"
+options = ["Provide `readonly(theme)` and also provide a `setTheme` function if changes are needed", "Provide `theme.value` as a string", "Use the global variable `window.theme`", "Pass a prop through every level"]
+explanation = "`readonly` preserves reactivity while preventing writes; providing `theme.value` would lose reactivity. Changes can go through a function owned by the provider."
+
+[questions.vue-lv034]
+prompt = "A modal is rendered inside a container with `overflow: hidden` and a low `z-index`, so it is clipped. What is the most appropriate Vue solution?"
+options = ["Wrap the modal content in `<Teleport to=\"body\">`", "Increase `z-index` to 999999", "Use `v-show` instead of `v-if`", "Put the modal in `<KeepAlive>`"]
+explanation = "Teleport renders DOM elsewhere (for example, under `body`) while preserving the logical component relationship; a higher z-index cannot escape an ancestor's stacking context."
+
+[questions.vue-lv035]
+prompt = "Component `BaseInput` has a root `<label>` wrapping an `<input>`. The parent uses `<BaseInput placeholder=\"Email\" @focus=\"f\" />`. Which statement is correct?"
+options = ["By default, `placeholder` falls through to the root `<label>`", "Set `inheritAttrs: false` and bind `v-bind=\"$attrs\"` to the `<input>` to forward the attribute there", "Fallthrough attributes never include listeners", "An attribute declared in `defineProps` is not present in `$attrs`"]
+explanation = "Attributes not declared as props or emits fall through to the root; listeners such as `onFocus` are also in `$attrs`. To attach them to a child element, disable `inheritAttrs` and bind them manually."
 
 [modules.vue-composables]
 title = "Composition API and Composables"
@@ -237,6 +350,26 @@ Implement `useDebouncedRef(initialValue, delayMs)` with the standard timer APIs 
 '''
 explanation = "This exercise models a minimal debounced ref; fake timers allow exact boundary checks without waiting in real time."
 hints = ["Store the timer ID, pending value, and a flag indicating whether a value is pending; clear the timer before each assignment.", "Both `flush` and the timer callback should clear the pending state so the same value is not committed twice."]
+
+[questions.vue-lv028]
+prompt = "You need to measure a DOM element through a template ref. In which hook should you read the ref?"
+options = ["`onMounted`", "At the start of `<script setup>`", "`onBeforeMount`", "`onUnmounted`"]
+explanation = "A template ref points to the element only after the component has mounted; before that its value is `null`."
+
+[questions.vue-lv036]
+prompt = "Composable `useWindowWidth()` adds a `resize` listener in `onMounted`. After navigating back and forth several times, the handler runs dozens of times per resize. What caused this, and how should it be fixed?"
+options = ["The listener is never removed; add `onUnmounted(() => removeEventListener(...))` or use VueUse's `useEventListener`", "`resize` is asynchronous; wrap it in `nextTick`", "It uses `ref`; change it to `reactive`", "The router caused it; disable history mode"]
+explanation = "Each remount adds another listener while old listeners remain. A composable must clean up its side effects with the component lifecycle."
+
+[questions.vue-lv037]
+prompt = "Composable `useUser(id)` should reload when `id` changes, and callers may pass either a ref or a plain value. Which implementation is appropriate?"
+options = ["Accept `MaybeRefOrGetter` and use `watchEffect(() => fetchUser(toValue(id)))`", "Read `id.value` once at the start of the function", "Require callers to invoke the composable again when the ID changes", "Save the ID in `localStorage` and read it back"]
+explanation = "`toValue` normalizes a ref, getter, or plain value. Reading it inside `watchEffect` tracks the dependency and reruns when the ID changes."
+
+[questions.vue-lv047]
+prompt = "A shared singleton composable creates several `watch` and `computed` effects outside a component; they all need to be disposed when the user signs out. Which API fits?"
+options = ["Create them in `effectScope()` and call `scope.stop()` on sign-out", "Call `onUnmounted` in the composable", "Put every watcher in `setTimeout`", "No cleanup is needed because the garbage collector handles it"]
+explanation = "Outside a component there is no component instance for lifecycle hooks; `effectScope` groups effects so they can be stopped together. `onUnmounted` has no effect outside setup."
 
 [modules.vue-router]
 title = "Vue Router"
@@ -314,6 +447,30 @@ Implement async `runGuards(guards, to, from)` to run guards in order.
 explanation = "The guard pipeline stops as soon as a guard cancels or redirects, reflecting the navigation decision before the new route renders."
 hints = ["Use a `for...of` loop to preserve order and `await` each result.", "Distinguish the three outcomes—continue, cancel, and redirect—and do not run later guards after a terminal result."]
 
+[questions.vue-lv029]
+prompt = '''
+Fill in the component used to create a navigation link without reloading the page:
+```html
+<{{blank}} to="/about">About</{{blank}}>
+```
+'''
+explanation = "`RouterLink` renders an `<a>` element and handles client-side navigation."
+
+[questions.vue-lv030]
+prompt = "A route is declared as `{ path: '/users/:id', component: UserView }`. In `UserView` (`<script setup>`), how do you get `id`?"
+options = ["`const route = useRoute(); route.params.id`", "`useRouter().id`", "`window.location.id`", "`defineProps(['params'])`"]
+explanation = "`useRoute()` returns the current route; dynamic parameters are in `params`."
+
+[questions.vue-lv038]
+prompt = "In `router.beforeEach`, you want to redirect a user who is not signed in to `/login` without creating an infinite loop. Which code is correct?"
+options = ["`if (to.meta.requiresAuth && !auth.loggedIn) return { path: '/login', query: { redirect: to.fullPath } }`", "`if (!auth.loggedIn) return '/login'` for every route, including `/login`", "`router.push('/login')` and then `return true`", "`window.location = '/login'`"]
+explanation = "Redirect only routes marked with `meta.requiresAuth` and return a location. Redirecting every route would loop on `/login` itself."
+
+[questions.vue-lv039]
+prompt = "When navigating from `/users/1` to `/users/2`, `UserView` does not reload its data. Why, and how can you fix it?"
+options = ["The component is reused, so `onMounted` does not run again; watch `() => route.params.id` or use `onBeforeRouteUpdate`", "The Router has a cache bug; clear the browser cache", "You must use `v-if` on `<RouterView>`", "The route is missing a `name`"]
+explanation = "When only the parameter changes within the same route record, the instance is reused; respond to changes in the parameter."
+
 [modules.vue-performance-state]
 title = "Performance and State"
 description = "Pinia, KeepAlive, v-memo, render profiling, and measurement-driven optimization."
@@ -366,6 +523,22 @@ prompt = "Propose how to optimize a large Vue list that renders slowly. Explain 
 keywords = [["profile", "measure", "profiling"], ["stable key", "key"], ["virtualization", "virtual"], ["memoization", "v-memo", "memo"], ["cache", "KeepAlive", "memory"]]
 model_answer = '''Use Vue DevTools or a browser profiler to measure which component or subtree is causing slow renders. Check for a stable key, reduce unnecessary component updates, and paginate or use virtualization for very long lists; try `v-memo` only after measuring. Missing memoization dependencies can leave the UI stale, while caching too many KeepAlive instances increases memory use.'''
 explanation = "Good optimization starts with measurement, selects a solution based on the cause, and states a concrete tradeoff."
+
+[questions.vue-lv040]
+prompt = "After `const { count, double } = useCounterStore()`, the template displays `count` but does not update when the store changes. How should you fix it?"
+options = ["Use `const { count, double } = storeToRefs(store)`; actions can be destructured directly from the store", "Use `JSON.parse(JSON.stringify(store))`", "Call `store.$reset()` on every render", "Change the store to a global variable"]
+explanation = "A store is a reactive object, and destructuring its state loses reactivity. `storeToRefs` creates refs for state and getters."
+
+[questions.vue-lv041]
+prompt = "A user switches between a 'List' tab and a 'Details' tab. Each time they return, the list loses its filter and requests data again. What is the lightest solution?"
+options = ["Wrap the view in `<KeepAlive include=\"ListView\">` to retain its instance; refetch conditionally in `onActivated`", "Save the entire DOM in `localStorage`", "Use `v-once` for the list", "Disable the router"]
+explanation = "KeepAlive caches a deactivated component instance; `onActivated` can refresh it when needed. Limit the cache with `include` or `max` to control memory use."
+
+[questions.vue-lv042]
+prompt = "Explain how you would test a form component that calls an API on submit: how to render it, mock the API, wait for DOM updates, and decide what to verify."
+keywords = [["mount", "render"], ["mock", "mock the api", "fake api"], ["user", "interaction", "submit"], ["async", "wait for dom", "next tick"], ["assert", "verify", "expect"]]
+model_answer = '''Mount or render the form, mock its API dependency, and submit the form through a user-like interaction. Await the asynchronous API result and Vue's DOM update, then assert on observable behavior such as the rendered success or error message, emitted events, and API call arguments rather than private implementation details.'''
+explanation = "A good answer covers mounting, an API mock, a user interaction, waiting for asynchronous updates, and assertions about behavior such as the DOM, events, or API calls."
 
 [modules.vue-dv-render]
 title = "Async Components, Teleport, and Transitions"
@@ -437,6 +610,177 @@ Implement `createAsyncLoader(load)` so it returns a `loadOnce()` function.
 '''
 explanation = "A shared loader avoids duplicate loads when multiple parts of the interface request the same module; an error should not be cached permanently."
 hints = ["Track whether a result exists separately from its value, because `null` can be a valid result.", "Keep the in-flight Promise; clear it after rejection so the next call can retry."]
+
+[questions.vue-lv046]
+prompt = "An SSR app reports a hydration mismatch in a component that displays `new Date().toLocaleTimeString()`. What is the most appropriate fix?"
+options = ["Render a stable value (or placeholder) on the server and update the live time in `onMounted`, which only runs on the client", "Disable hydration warnings in production", "Add `:key=\"Math.random()\"`", "Call `location.reload()` after loading"]
+explanation = "The server HTML and the first client render must match. A value that depends on time or timezone should be created after mounting. Hiding the warning does not fix the DOM mismatch."
+
+[questions.vue-lv048]
+prompt = "A 10,000-row Vue list stutters while scrolling and when one row changes. Describe how you would diagnose it and give optimization techniques with their tradeoffs."
+keywords = [["measure", "profile", "profiling"], ["virtualization", "virtual list", "windowing"], ["reactivity", "shallowref", "shallow reactive"], ["render", "patch", "updates"], ["tradeoff", "memory", "complexity"]]
+model_answer = '''First measure and profile the page to determine whether rendering, reactive tracking, or layout is the bottleneck. Use virtualization to render only visible rows, reducing DOM and patch work at the cost of more complex scrolling and row sizing. For large immutable data, consider shallow reactivity to reduce proxy overhead, and keep row components and keys stable. Measure again to confirm the change helped; memoization can make content stale if its dependencies are incomplete.'''
+explanation = "A strong answer measures before changing code, identifies techniques such as virtualization and reduced reactive overhead, and explains a concrete tradeoff."
+
+[modules.vue-lead]
+title = "Advanced Architecture, Migration, and Optimization"
+description = "Scalable state management, component architecture, testing strategy, performance optimization, TypeScript integration, and Vue 2-to-3 migration."
+lesson = '''
+### Advanced Vue architecture and optimization
+
+For a large application, divide state by domain: use Pinia for shared state, composables for reusable logic, and local state for local UI. Feature-oriented components keep code close to its purpose, reduce coupling, and make maintenance easier. Testing choices should reflect the risk: unit tests for composables and logic, and end-to-end tests for important user flows; uniform coverage is not the goal. Begin performance work by measuring, then reduce bundle size with lazy routes and code splitting or virtualize large lists. TypeScript catches errors at compile time, especially around `defineProps` and `defineEmits`. For a Vue 2-to-3 migration, `@vue/compat` can support a gradual transition, together with automated migration tools.
+'''
+
+[questions.vue-lv001]
+prompt = "A large Vue application has about 50 screens and an 8-person team. State is shared across several domains (auth, product, cart, notifications). Which state strategy is most appropriate?"
+options = ["Put all state in one global Pinia store to avoid cross-store imports", "Split stores by domain (authStore, productStore, etc.), use composables for reusable logic, and keep local UI state local", "Use only module-level `ref`/`reactive` and avoid Pinia", "Use Vuex 4 because Pinia is not ready for this scale"]
+explanation = "Domain-specific stores reduce coupling and are easier to test and tree-shake. Composables package reusable logic, while local `ref` state suits UI that does not need to be shared. Pinia supports multiple stores rather than requiring one monolithic store."
+
+[questions.vue-lv002]
+prompt = "In a Pinia store, an async `fetchProducts()` action calls an API. Components A and B call it at nearly the same time. What is the most effective way to avoid duplicate requests?"
+options = ["Use an `isLoading` variable in the store and return early if a request is in progress", "Cache the in-flight Promise so later callers await the same Promise", "Debounce the action", "Watch a getter to trigger the fetch automatically"]
+explanation = "Caching the in-flight Promise lets multiple components await the same request. A separate `isLoading` check can race between checking and setting the flag; debounce adds latency, and watching a getter is not a good fit for an explicitly requested fetch."
+
+[questions.vue-lv003]
+prompt = "A team chooses feature folders instead of type-based folders for organizing components. What is the main benefit?"
+options = ["Fewer imports because everything is in one directory", "Keep a feature's logic, UI, and tests together, reducing coupling between features and making removal or migration easier", "Circular dependencies become safe", "Code splitting happens automatically by route"]
+explanation = "Feature folders colocate components, composables, utilities, tests, and stories for a feature. This reduces coupling and aids refactoring or removal, but does not automatically split code; circular dependencies should still be avoided."
+
+[questions.vue-lv004]
+prompt = "Which statement about the test strategy for a large Vue application is correct?"
+options = ["Unit test every component with `shallowMount` to reach 100% coverage", "Focus unit tests on composables and pure logic, use E2E for important user flows, and add fewer component tests for complex UI", "Use only E2E because unit tests cannot find real bugs", "Snapshot-test every component to catch accidental UI changes"]
+explanation = "A testing pyramid uses fast, less flaky unit tests for pure logic (composables, store actions, utilities), E2E for critical paths such as login or checkout, and component tests for complex UI behavior. Full coverage is not a practical goal, and snapshots can create false positives."
+
+[questions.vue-lv005]
+prompt = "A page with 5,000 items renders slowly. Measurement shows that only the initial render is slow (2.8 seconds); later interactions are smooth. What is the most conservative solution?"
+options = ["Immediately rewrite it as a virtual list using `vue-virtual-scroller`", "Add `v-memo` to item components with dependencies `[item.id, item.version]`, and lazy-load images", "Use server-side pagination and remove infinite scrolling", "Use `v-once` for each item because its data rarely changes"]
+explanation = "`v-memo` can skip item re-renders when its dependencies have not changed, with relatively low cost. Virtual lists add complexity and are most useful for very large lists (over about 10,000 items) or variable-height rows. Pagination changes the UX, while `v-once` prevents future updates."
+
+[questions.vue-lv006]
+prompt = "Choose appropriate performance techniques for a large Vue 3 app. (Select all that apply.)"
+options = ["Use route-level code splitting with `defineAsyncComponent` and lazy routes", "Use `v-memo` for stable list items and subtrees", "Use `mapState`/`mapActions` in Pinia stores to optimize reactivity", "Tree-shake icons and libraries with ES module imports and `sideEffects: false`", "Use `shallowRef`/`shallowReactive` for large objects that do not need deep reactivity"]
+explanation = "Lazy routes reduce the initial bundle; `v-memo` can avoid unnecessary re-renders; ES module tree-shaking reduces bundle size; and shallow reactivity lowers overhead for large data such as canvas or 3D objects. `mapState`/`mapActions` are an Options API pattern and are not more optimized than setup stores."
+
+[questions.vue-lv007]
+prompt = "When using TypeScript with Vue 3 `<script setup>`, which statements are correct? (Select all that apply.)"
+options = ["`defineProps<{ msg: string }>()` infers the type without requiring a runtime declaration", "`defineEmits<{ (e: 'change', id: number): void }>()` provides type checking for `$emit`", "`withDefaults(defineProps<{ count?: number }>(), { count: 0 })` supplies a typed default", "`const props = defineProps([...])` (array syntax) still provides full type inference", "A generic component's `<Comp v-slot=\"{ item }\">` can infer the slot type from the parent's scope"]
+explanation = "Type-based `defineProps` and `defineEmits` are ergonomic compile-time declarations, and `withDefaults` supplies typed defaults. Array syntax such as `['msg']` does not provide type inference. Generic slot scope can be inferred with TypeScript 4.7 and later."
+
+[questions.vue-lv008]
+prompt = '''
+For a Vue 2-to-3 migration using `@vue/compat`, what is the compat layer's package name?
+```json
+"devDependencies": { "{{blank}}": "^3.0.0" }
+```
+'''
+explanation = "`@vue/compat` provides a compatibility layer for running Vue 2 and Vue 3 code during migration. Install it with `npm i -D @vue/compat`."
+
+[questions.vue-lv009]
+prompt = '''
+In a Pinia store using the Composition API style, declare reactive state for an `items` array and a boolean `loading` value:
+```js
+export const useProductStore = defineStore('product', () => {
+  const items = {{blank}}([])
+  const loading = {{blank}}(false)
+  // ...
+})
+```
+'''
+explanation = "Pinia's Composition API style uses `ref`, `reactive`, and `computed` as in `setup()`. `ref` works for primitives and for arrays or objects that need replacement; `reactive` suits objects kept as proxies."
+
+[questions.vue-lv010]
+prompt = "You lead a six-person team maintaining an 80-component Vue app that is three years old and uses Vue 2, Vuex, and the Options API. Plan a migration to Vue 3, Pinia, and the Composition API across six two-week sprints. Name the three largest risks and how you would mitigate them."
+keywords = [["gradual", "incremental", "@vue/compat"], ["team", "training", "readiness"], ["bundle", "performance", "regression"], ["testing", "regression tests"], ["migration plan", "sprint"]]
+model_answer = '''Start with an incremental migration using `@vue/compat` so compatible components can move before the entire app changes. Mitigate team readiness risk with training, pairing, and clear conventions before migrating feature areas. Protect against behavior and bundle regressions with baseline metrics, automated regression tests, and performance checks in each sprint. Inventory Vuex and Options API usage, migrate one bounded feature at a time, and keep rollback points.'''
+explanation = "A strong answer identifies concrete risks and actionable mitigations, including gradual migration with `@vue/compat`, team readiness, and bundle or performance regressions."
+
+[questions.vue-lv011]
+prompt = "Design a test strategy for a real-time dashboard feature with WebSocket, a Pinia store, five child components, and a chart library. Specify unit-test, integration-test, and E2E scope, plus recommended tooling."
+keywords = [["unit", "pure logic", "store logic"], ["integration", "component and store", "mock websocket"], ["e2e", "user journey", "critical flow"], ["tooling", "vitest", "playwright", "cypress"], ["chart", "mock chart"]]
+model_answer = '''Use Vitest for unit tests of message parsing, store transitions, and pure formatting logic. For integration tests, mount the dashboard with a test Pinia, mock the WebSocket and chart boundary, and verify that messages update the relevant UI. Use Playwright or Cypress for an end-to-end journey such as opening the dashboard, receiving an update, and changing a filter. Keep the chart library behind a small adapter so tests can replace it predictably.'''
+explanation = "A good strategy separates pure logic, component/store integration, and user-level flows, with explicit mocks for the network and chart library."
+
+[questions.vue-lv012]
+prompt = "A dashboard has a 3-second LCP, 450 ms TBT, and 0.15 CLS. Chrome DevTools shows 1.8 seconds of main-thread work evaluating scripts, a 420 KB gzipped bundle (280 KB vendor), and 40 requests. Name the three highest-priority optimizations and their expected impact."
+keywords = [["code splitting", "lazy route", "bundle"], ["tree shaking", "vendor", "dead code"], ["reactivity", "main thread", "script"], ["lcp", "largest contentful paint"], ["impact", "measure"]]
+model_answer = '''First split code by route and lazy-load noncritical dashboard sections to reduce the initial JavaScript and improve LCP. Inspect the 280 KB vendor portion and tree-shake or replace unused library features to lower transfer and script-evaluation cost, which should help TBT. Profile expensive reactive updates and reduce unnecessary work on the main thread; verify each change against LCP, TBT, and bundle measurements. Consolidating requests or deferring noncritical assets can also reduce contention among the 40 requests.'''
+explanation = "Prioritize improvements tied to the measured causes: initial bundle size, vendor code, and main-thread evaluation. State how each will be measured after the change."
+
+[questions.vue-lv013]
+title = "Debounce Function with run, cancel, and pending"
+prompt = '''
+Implement `createDebounce(fn, ms)` and return `{ run, cancel, pending }`.
+- `run(...args)` calls `fn(...args)` after there have been no new calls for `ms` milliseconds. Return a Promise that resolves with the result of `fn`.
+- `cancel()` cancels a pending call if there is one, returning `true` when it cancelled a call and `false` when there was nothing to cancel.
+- `pending` (a getter) indicates whether a call is waiting.
+- For consecutive `run` calls, only the latest call's arguments are used, and all returned Promises settle with that call's result.
+'''
+explanation = "Debouncing resets a timer on each call and executes only the last call. Returning a Promise lets callers await its result; cancellation must also reject the pending Promise."
+hints = ["Use `setTimeout`/`clearTimeout` and a closure to store the timer and Promise settlement functions.", "Handle synchronous and asynchronous functions by wrapping the result with `Promise.resolve(fn(...args))`.", "With fake timers, use `jest.useFakeTimers()` and `jest.advanceTimersByTime(ms)`."]
+
+[questions.vue-lv014]
+title = "Persist State Plugin with Mock localStorage"
+prompt = '''
+Implement `createPersistPlugin(options)` and return a plugin function.
+- `options.key` (string, required): the storage key.
+- `options.paths` (string array or undefined): persist only these dot-notation paths (for example, `user.profile.name`). If undefined, persist the entire state.
+- `options.serializer` (object `{ serialize, deserialize }` or undefined): defaults to JSON serialization.
+- On initialization, load stored data and patch the store. Subscribe to changes and persist the selected data. Debounce writes by 100 ms.
+- Handle storage or serialization errors without crashing the application. In tests, use `globalThis.__storage` as the storage mock.
+'''
+explanation = "A persistence plugin subscribes to store changes and saves them with a debounce; on initialization it loads and patches stored state. Path selection supports partial persistence, and custom serializers can handle complex data."
+hints = ["`$subscribe(callback)` receives `(mutation, state)`; debounce writes with `setTimeout`/`clearTimeout`.", "For a dot-notation path, split on `.` and traverse the object.", "Wrap storage and serializer calls in `try/catch`; use `globalThis.__storage` as the mock."]
+
+[questions.vue-lv015]
+title = "Virtual List: Calculate Visible Items from scrollTop"
+prompt = '''
+Implement `createVirtualList(items, options)` and return `{ getVisibleItems, scrollTo, setScrollTop }`.
+- `items`: any array.
+- `options`: `{ itemHeight: number, containerHeight: number, buffer?: number }` (`buffer` defaults to 5).
+- `getVisibleItems()` returns an array of `{ index, item, offsetTop }` for items in the viewport plus the buffer, based on the current `scrollTop`.
+- `setScrollTop(value)` updates the current scroll position, clamped to the valid range.
+- `scrollTo(index)` scrolls to that item, with the index clamped to a valid item.
+'''
+explanation = "A virtual list renders only the viewport and a buffer. `scrollTop` drives `getVisibleItems`; the pattern suits very large lists (10,000+ items) and can be adapted to Vue reactivity."
+hints = ["Keep `scrollTop` in a closure, and calculate visible items in `getVisibleItems`.", "Calculate the range with `start = floor(scrollTop/itemHeight) - buffer` and `end = ceil((scrollTop+containerHeight)/itemHeight) + buffer`.", "Clamp `scrollTo` to `[0, (len-1)*itemHeight]`."]
+
+[questions.vue-lv016]
+title = "Type-Safe Provide/Inject for a Pinia Store"
+prompt = '''
+Implement `createStoreInjection(storeKey, storeFactory)` and return `{ provide, useStore }`.
+- `storeKey` is an `InjectionKey<ReturnType<typeof storeFactory>>` (symbol-based).
+- `provide(app)` calls `app.provide(storeKey, storeFactory())` to create and provide a store instance.
+- `useStore()` calls `inject(storeKey)`; if nothing was provided, throw an error with a helpful message.
+- Assume the injection functions are supplied in the implementation environment; focus on the typed key and behavior.
+'''
+explanation = "A type-safe Pinia provide/inject pattern uses an `InjectionKey` and a Symbol so TypeScript can infer the injected store type. This avoids `app.config.globalProperties.$store` and provides IDE autocomplete."
+hints = ["`InjectionKey<T>` is a Symbol associated with type `T` for type-safe injection.", "Use `app.provide(key, value)` from a plugin or app setup and `inject(key)` from a component or composable.", "Fail early with a clear message to make missing providers easier to debug."]
+
+[questions.vue-lv017]
+title = "Codemod: Convert this.$store.dispatch to useStore().action"
+prompt = '''
+Implement `transformVuexDispatch(codeVue2)` to receive Vue 2 Options API code as a string and return a transformed string.
+- Find calls to `this.$store.dispatch('actionName', payload?)` in methods or objects.
+- Replace each with `useStore().actionName(payload?)`, converting the action name to camelCase.
+- Assume `useStore` is already imported: `import { useStore } from '@/stores'`.
+- Handle simple quoted string action names and optional payload expressions; dynamic action names are out of scope.
+- Do not rewrite unrelated code.
+'''
+explanation = "This simple codemod converts Vuex dispatch calls to Pinia action calls. Real migrations should use an AST tool such as jscodeshift for accuracy with dynamic names, spread arguments, and complex syntax."
+hints = ["Capture the action name and optional payload with regex groups.", "Convert snake_case to camelCase by replacing `_([a-z])` with the uppercase letter.", "Limit replacements to the simple pattern; a production codemod should use an AST (for example, jscodeshift)."]
+
+[questions.vue-lv018]
+title = "Feature Flag Hook: Stable Percentage Rollout"
+prompt = '''
+Implement `useFeatureFlag(flagKey, options)` and return `{ enabled, variant }`.
+- `options`: `{ userId: string | ref, percent: number, variants?: string[] }`.
+- `percent` ranges from 0 to 100: `percent <= 0` is always disabled and `percent >= 100` is always enabled.
+- `variants` is an array of variant names (for example, `['control', 'treatment']`); default to `['off', 'on']`.
+- Hash `flagKey:userId` deterministically so the same user and flag always receive the same bucket and variant. Increasing the percentage should only add users to the rollout.
+- Return reactive computed values when `userId` is a ref.
+'''
+explanation = "Deterministic hashing provides stable feature-flag rollouts: the same user and flag get the same variant, and increasing the percentage adds users. This supports canary releases and A/B tests."
+hints = ["FNV-1a: `h = 2166136261; for c in str: h ^= c; h = imul(h, 16777619); return h >>> 0`.", "A `computed` value reacts automatically when `userId` is a ref.", "Use `bucket = hash % 100` and enable when `bucket < percent`."]
 
 [modules.vue-dv-router-data]
 title = "Route Metadata and Data Fetching"

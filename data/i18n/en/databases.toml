@@ -536,3 +536,372 @@ Example: if event_ids is ["a", "b", "a"] and processed_ids is {"b"}, accepted sh
 '''
 hints = ["Copy processed_ids into a new set so you can update it without changing the input.", "Iterate through event_ids in order and add each accepted id to the set immediately to filter duplicates within the batch."]
 explanation = "This exercise simulates consumer-side deduplication; real systems need to persist event ids and side effects reliably."
+
+[modules.databases-lead]
+title = "Tech Lead Perspective"
+description = "Making data storage decisions for the whole team: RPO/RTO, backup & DR, schema evolution, sharding, SQL vs NoSQL, managed vs self-hosted, reviews and ADRs."
+lesson = '''
+### From "the query runs fast" to "a data system the team can operate"
+At Lead level, the question is no longer "which index is right" but: **given this team, budget, timeline and risk level, which storage and operating approach do we pick, and how do we record why?** Data is the hardest part of a system to change: code can be rolled back in minutes, but schemas, data already written and team habits cannot.
+
+### Decision framework
+Before choosing a technology, pin down the constraints with numbers (estimates first, replaced by real measurements when available):
+
+| Constraint | Question to answer | Example |
+|---|---|---|
+| RPO (Recovery Point Objective) | How much data (measured in time) can we afford to lose? | Orders: RPO ≤ 5 minutes; analytics logs: a few hours |
+| RTO (Recovery Time Objective) | How long from the incident until service is restored? | Payments: RTO ≤ 30 minutes |
+| Growth | How many times will data and QPS multiply in 12 months? | 3x data, 5x reads |
+| Team capability | Who is on call, who has operated this technology before? | 4 devs, nobody has run Kafka/Cassandra |
+| Cost | Infrastructure cost and the people cost of operating it | Managed is 30–50% pricier but saves one on-call person |
+
+### Comparing options by criteria
+| Option | Fits when | Risks / hidden costs |
+|---|---|---|
+| Scale up | Not yet at the ceiling, need a quick win | Hard ceiling, downtime when resizing |
+| Read replica | Read-heavy, replication lag acceptable | Breaks read-your-writes, needs routing |
+| Cache (Redis) | Hot data, repeated reads | Invalidation, stampedes, one more system to operate |
+| Partitioning (single node) | Very large time-based tables, need batch deletion/archiving | A wrong partition key means no pruning |
+| Sharding | Writes exceed a single node's limit | Cross-shard joins/transactions, very expensive resharding: do it last |
+| Managed service | Small team, no DBA | Vendor dependence, limits on extensions/tuning |
+
+Principle: pick the **cheapest reversible** option that meets current constraints, and write down the metric thresholds that will trigger the next step.
+
+### Checklist for reviewing data changes
+- Is the migration backward compatible (expand/contract) so old and new code can run side by side?
+- Are there long locks (ALTER on a large table, an index created without CONCURRENTLY)? Is `lock_timeout` set?
+- Is there a rollback plan, and has it been tried on a copy of the data at real size?
+- When was the latest backup **actually test-restored**? What was the measured restore time?
+- Has the new query been run with EXPLAIN on real data, does it have a suitable index and a result limit?
+- Who owns this data, who may access it, is personal data encrypted/masked in logs?
+
+### Sample ADR (condensed)
+**Context:** the `events` table is 1.8 TB, grows 60 GB/month, queries mostly target the last 30 days; team of 5 devs, no DBA. **Decision:** partition by month (PostgreSQL declarative partitioning), archive old partitions to object storage; postpone sharding. **Consequences:** old data is removed with DROP PARTITION instead of DELETE; queries must include a time condition. **Review threshold:** sustained writes > 8,000 rows/second or primary CPU > 70% at peak.
+
+### Team-scale anti-patterns
+- Many services sharing one database and reading/writing each other's tables: the schema freezes because nobody dares to change it.
+- Choosing NoSQL "for scale" when the data is 50 GB and needs joins/transactions.
+- Having backups that were never restored; RPO/RTO exist only on slides.
+- Sharding early while a single node still has 5x headroom.
+- "Big bang" midnight migrations with no way back.
+- Adding an index by gut feeling for every slow query without measuring the write impact.
+'''
+
+[questions.databases-lv001]
+prompt = "Tables customers(id, name) and orders(id, customer_id, total). Which query lists customers who have no orders at all?"
+explanation = "LEFT JOIN keeps every customer; customers without orders have NULL in all orders columns, so filter with o.id IS NULL. INNER JOIN returns only customers with orders. Comparing = NULL always yields unknown, so it returns no rows. CROSS JOIN produces a Cartesian product and cannot express the customer-order relationship."
+
+[questions.databases-lv002]
+prompt = "The email column of the users table must be unique and always have a value. Which declaration is most correct?"
+options = ["email TEXT", "email TEXT UNIQUE NOT NULL", "email TEXT DEFAULT ''", "email TEXT CHECK (email LIKE '%@%') and skip UNIQUE"]
+explanation = "UNIQUE prevents duplicate values, NOT NULL prevents missing values. With no constraints, dirty data slips in; an empty DEFAULT allows many empty emails; CHECK only validates the format and does not guarantee uniqueness."
+
+[questions.databases-lv003]
+prompt = '''Get the 5 newest posts:
+
+    SELECT title FROM posts ORDER BY created_at {{blank}} LIMIT 5
+'''
+explanation = "ORDER BY sorts ascending (ASC) by default; to get the newest first you need DESC."
+
+[questions.databases-lv004]
+prompt = "The posts table has a tags column storing the string 'sql,redis,index'. What is the main problem with this design when you need to find every post tagged redis?"
+options = ["The string is too short to store", "It violates first normal form: each cell holds multiple values, making filtering/indexing and integrity hard", "TEXT cannot be used for tags", "Everything must move to Redis"]
+explanation = "Split it into a tags table and a post_tags join table (many-to-many) so you can filter with JOIN, index and use foreign keys. Comma-separated strings force LIKE '%redis%' (which wrongly matches 'redis-cluster') and cannot use a regular index."
+
+[questions.databases-lv005]
+prompt = "Select the correct statements about a regular B-tree index."
+options = ["It speeds up lookups on the indexed column", "It slows down INSERT/UPDATE/DELETE because the index structure must also be updated", "It uses extra storage", "It is always used for any query that has the column in WHERE"]
+explanation = "An index trades write cost and storage for read speed. The planner uses an index only when it estimates it to be cheaper than a sequential scan; for small tables or conditions matching most rows, a sequential scan can be faster."
+
+[questions.databases-lv006]
+prompt = '''The application concatenates strings: query = "SELECT * FROM users WHERE name = '" + name + "'". What fixes the root cause of this SQL injection?'''
+options = ["Replace single quotes with double quotes in name", "Use parameterized queries (prepared statements) so data is never interpreted as SQL", "Convert name to lowercase", "Limit name to at most 20 characters"]
+explanation = "Parameterization separates the command from the data. Filtering characters, swapping quotes or limiting length are only patches and are often bypassed."
+
+[questions.databases-lv007]
+prompt = '''Count all rows in the orders table, including rows with NULL columns:
+
+    SELECT COUNT({{blank}}) FROM orders
+'''
+explanation = "COUNT(*) counts every row; COUNT(column) skips rows where that column is NULL."
+
+[questions.databases-lv008]
+prompt = "DELETE FROM orders; (without WHERE) was run by mistake on a production table inside a transaction that has not been committed. What is the correct immediate action?"
+options = ["COMMIT it and then re-import the data", "ROLLBACK to cancel the transaction, returning the data to its previous state", "Run the DELETE again to be sure", "Restart the application server"]
+explanation = "Before COMMIT, ROLLBACK undoes every change in the transaction. Only after COMMIT do you need to restore from a backup/point-in-time recovery. Good habits: write the WHERE first, run a SELECT with the same condition to check, and open a transaction when editing data manually."
+
+[questions.databases-lv009]
+prompt = "You want to store a cache value in Redis that expires automatically after 60 seconds, using one atomic command. Which command fits?"
+options = ["SET session:42 data EX 60", "SET session:42 data, then sleep 60 and DEL from the application", "GET session:42 EX 60", "HSET session:42 ttl 60"]
+explanation = "SET with EX assigns the value and the TTL in a single command. A DEL from the application is not guaranteed to run if the process dies; GET does not set a TTL; a hash field named ttl means nothing to Redis."
+
+[questions.databases-lv010]
+prompt = "What does the foreign key orders.customer_id REFERENCES customers(id) give you?"
+options = ["It automatically creates an index on customers", "It prevents orders from pointing to non-existent customers, preserving referential integrity", "It always makes JOIN queries faster", "It allows multiple customers in one order"]
+explanation = "A foreign key is an integrity constraint: you cannot insert an order with a customer_id that does not exist, and (depending on ON DELETE) it controls deleting customers. It does not automatically speed up JOINs; the foreign key column usually needs its own index."
+
+[questions.databases-lv011]
+prompt = '''Undo all changes in the open transaction:
+
+    BEGIN;
+    UPDATE accounts SET balance = balance - 100 WHERE id = 1;
+    {{blank}};
+'''
+explanation = "ROLLBACK discards the uncommitted changes of the current transaction; COMMIT would make them permanent."
+
+[questions.databases-lv012]
+prompt = "Why should you usually avoid SELECT * in production application code?"
+options = ["SELECT * is not valid in standard SQL", "It fetches unneeded columns, wastes bandwidth, makes covering indexes hard to use, and code breaks when the schema adds/changes columns", "SELECT * always fails with JOIN", "SELECT * cannot be used with WHERE"]
+explanation = "Listing the needed columns makes the data contract explicit, reduces transferred data and enables index-only scans. SELECT * is still valid and useful when exploring data manually."
+
+[questions.databases-lv013]
+prompt = "Select the correct statements about NULL in SQL."
+options = ["NULL = NULL yields unknown, not true", "Use IS NULL to check for a missing value", "SUM ignores NULL values", "NULL equals the empty string ''"]
+explanation = "NULL means unknown/no value; every ordinary comparison with NULL yields unknown. Aggregate functions (except COUNT(*)) ignore NULL. NULL differs from the empty string and from 0."
+
+[questions.databases-lv014]
+prompt = "You are building a player score leaderboard and need the top 10 by score quickly. Which Redis data type fits best?"
+options = ["A String holding JSON of the whole leaderboard", "Sorted set (ZADD / ZREVRANGE)", "List with LPUSH", "Plain Set (SADD)"]
+explanation = "A sorted set keeps members ordered by score and queries by rank efficiently. A JSON string must be read/rewritten in full; List and Set are not ordered by score."
+
+[questions.databases-lvc01]
+title = "Customers who never ordered"
+prompt = '''Write customers_without_orders(conn) that takes a sqlite3 connection. The database has tables customers(id, name) and orders(id, customer_id, total).
+Return a list of names of customers with no orders, sorted ascending by name.
+Example: with customers An (has orders) and Binh (no orders), the result is ["Binh"]. If every customer has orders, return an empty list.
+'''
+explanation = "The anti-join pattern: LEFT JOIN + IS NULL. NOT EXISTS also works; pick whichever reads better for the team."
+hints = ["LEFT JOIN from customers to orders, then filter the unmatched rows.", "Unmatched rows have o.id IS NULL; remember ORDER BY c.name."]
+
+[questions.databases-lv015]
+prompt = "An ordering system runs on PostgreSQL. Business requirements: lose at most 5 minutes of data (RPO) and recover within 1 hour (RTO). Currently there is only a nightly pg_dump. Team of 4, no DBA. Which step is most reasonable?"
+options = ["Keep pg_dump but run it every 5 minutes", "Enable periodic base backups with continuous WAL archiving (PITR), and rehearse restores to measure real timing", "Buy a synchronous multi-region cluster so RPO is zero", "Switch to NoSQL because backups are simpler"]
+explanation = "Base backups + WAL archiving allow recovery to any point close to the incident, meeting a few-minute RPO at moderate cost, and must be rehearsed to prove the RTO. pg_dump every 5 minutes causes heavy load and locking and will not meet RTO with large data. Synchronous multi-region is expensive and far beyond the requirement (RPO 0) for a team of 4. Switching to NoSQL does not solve RPO/RTO and adds migration cost."
+
+[questions.databases-lv016]
+prompt = "A 5-dev startup builds a B2B order management app: clearly relational data (customers, orders, invoices), ad-hoc reporting and multi-table transactions, expected 100 GB after 2 years. A team member proposes MongoDB because it scales easily. What is the most reasonable decision?"
+options = ["Use MongoDB and scale horizontally from day one", "Use single-node PostgreSQL with backup/PITR; revisit when writes or storage exceed set thresholds", "Use both MongoDB and PostgreSQL for redundancy", "Write a custom file-based storage layer for full control"]
+explanation = "Relational data + transactions + ad-hoc reporting are the strengths of an RDBMS; 100 GB fits comfortably on one node. Horizontal scaling is a problem that does not exist yet, while MongoDB gives up joins and constraints and adds risk for an inexperienced team. Two systems double operating cost; a custom storage layer is the biggest risk of all."
+
+[questions.databases-lv017]
+prompt = "You need to change the type of a large column on a 1.5 TB table under continuous writes, with at most 2 minutes of downtime, a team of 3 and 3 weeks. Which plan fits best?"
+options = ["Run ALTER TABLE ... TYPE directly on the weekend", "Expand/contract: add a new column, dual-write, backfill in small batches, switch reads, then drop the old column in separate deploys", "Stop the system for 6 hours to export/import", "Create a new database and make users sign up again"]
+explanation = "Expand/contract avoids long locks, allows rollback at each step and fits the 2-minute downtime budget. ALTER TYPE usually rewrites the whole table and holds a strong lock for a very long time. A 6-hour stop breaks the constraint. Rebuilding the database loses data and trust."
+
+[questions.databases-lv018]
+prompt = "Traffic is about to triple in 2 months; 90% of queries are reads, primary CPU is at 55%, data is 200 GB, team of 4. What should the first step be?"
+options = ["Shard by user_id now to prepare for the future", "Measure the heaviest queries, optimize indexes/caching, then add read replicas for reads that tolerate slight lag", "Rewrite as microservices, each with its own database", "Do nothing and wait until the system slows down"]
+explanation = "With mostly reads and spare capacity, query optimization and read replicas/caching are the cheapest and reversible. Early sharding introduces cross-shard joins/transactions and very expensive resharding. Splitting into microservices does not solve read load. Waiting for an incident fails the duty of capacity planning."
+
+[questions.databases-lv019]
+prompt = "The team is writing an ADR for the partitioning strategy of the events table. Select the items that belong in the ADR."
+options = ["Context and constraints with numbers (size, growth rate, query patterns)", "Options considered and why they were rejected", "Consequences and metric thresholds for revisiting the decision", "The name of the proposer so they can be blamed if it goes wrong"]
+explanation = "An ADR records context, options, decision, consequences and revisit conditions so later readers understand why. The proposer's name is not the purpose of an ADR; a blameless culture treats decisions as the team's."
+
+[questions.databases-lv020]
+prompt = "The company has had daily backups showing green for 2 years, but nobody has ever test-restored. A manager asks what the biggest risk is and what to do this week."
+options = ["There is no risk because the backup job reports success", "The backups are not proven usable: schedule regular test restores into a separate environment, measure RTO and verify the data", "Increase backup frequency to every hour", "Buy more backup storage"]
+explanation = "A backup is only valuable if it can be restored within the RTO. A green job does not prove the file is readable, complete or fast enough. More frequency or storage does not address the core risk of being unverified."
+
+[questions.databases-lv021]
+prompt = "A team of 6 is weighing managed PostgreSQL against self-hosting on VMs. Select the factors that favor managed."
+options = ["No DBA and nobody wants to be on call for backups/failover", "Security patches and minor version upgrades are needed regularly with little effort", "A custom extension not on the provider's list is mandatory", "The people cost of operations exceeds the service price difference"]
+explanation = "Managed hands backups, failover and patching to the provider, which suits a small team. If you need extensions or deep tuning that managed does not support, self-hosting makes more sense."
+
+[questions.databases-lv022]
+prompt = "A small bank requires RPO = 0 for an e-wallet within a single region and accepts higher write latency. Which replication setup fits best?"
+options = ["Asynchronous replication to a standby", "Synchronous replication (synchronous_commit with at least one standby confirming) and alerts when the standby disconnects", "Backups every minute", "Read from a replica, write to a primary without replication"]
+explanation = "RPO = 0 requires a commit to succeed only once at least one copy has received the WAL, i.e. synchronous replication; in exchange write latency rises and you must handle a dead standby blocking writes. Asynchronous replication can lose the last transactions when the primary fails; per-minute backups can still lose up to a minute of data."
+
+[questions.databases-lv023]
+prompt = "A SaaS expects 5,000 small tenants (a few MB each), a team of 4, and frequent schema changes. Which data model is most reasonable?"
+options = ["A separate database per tenant", "One shared schema, every table has tenant_id, indexes start with tenant_id, with row-level security or mandatory filtering in the data access layer", "One SQLite file per tenant on the application server", "One PostgreSQL cluster per tenant"]
+explanation = "With many small tenants, a shared schema keeps cost down and migrations run once for everyone. A separate database/cluster for 5,000 tenants multiplies migrations and operations 5,000 times. You need discipline against cross-tenant leaks: RLS or an access layer that always applies tenant_id."
+
+[questions.databases-lv024]
+prompt = '''The abbreviation for the maximum acceptable amount of data loss (measured in time) during an incident (as opposed to RTO, the recovery time) is: {{blank}}
+'''
+explanation = "RPO (Recovery Point Objective) determines backup/WAL archive/replication frequency; RTO (Recovery Time Objective) determines failover and restore speed."
+
+[questions.databases-lv025]
+prompt = "You need a PostgreSQL major version upgrade for an 800 GB database serving 24/7; the business accepts at most 5 minutes of downtime, and the team has 2 weeks to prepare. Which plan is most reasonable?"
+options = ["pg_dump and restore in a 4-hour maintenance window", "Build a new cluster, sync via logical replication, test the application, then switch traffic in a short window, keeping the old cluster for rollback", "Upgrade in place with no standby copy", "Postpone the upgrade indefinitely"]
+explanation = "Logical replication keeps downtime to minutes and provides a way back since the old cluster still exists. A 4-hour dump/restore breaks the constraint. Upgrading in place without a fallback has no rollback. Postponing forever accrues debt and can run into end of security support."
+
+[questions.databases-lv026]
+prompt = "At peak, primary CPU is at 95% and the API is slow. You are the on-call lead. What is the most reasonable order of priorities in the first 30 minutes?"
+options = ["Rewrite the ORM to reduce queries", "Mitigate first (disable heavy features, rate limit, kill long-running queries), find the offending queries using statistics, then fix the root cause and write a postmortem", "Restart the database to clean things up", "Double the instance size and ignore the cause"]
+explanation = "Stabilize the service first, diagnose from data, fix the root cause afterwards. Restarting loses the cache and can make things worse; rewriting the ORM is not incident response; blindly scaling up may cost money without hitting the cause."
+
+[questions.databases-lv027]
+prompt = "Select the data anti-patterns that commonly cause pain as a team grows."
+options = ["Many services reading/writing each other's tables directly in a shared database", "Nobody owns the schema; migrations are run by hand on production", "Every schema change is reviewed, tested on a copy and has a rollback plan", "Adding an index for every slow query without measuring write cost and storage"]
+explanation = "Coupling through a shared database, missing ownership and manual migrations make every change risky. Indiscriminate indexes slow writes and use memory. Reviews and rollback plans are good practice, not an anti-pattern."
+
+[questions.databases-lv028]
+prompt = "A 3 TB logs table, 95% of queries filter on the last 7 days, data older than 90 days must be deleted; the nightly DELETE causes bloat and locking. Team of 4. Reasonable decision?"
+options = ["Shard by log_id across 8 nodes", "Partition by day/week and delete by DROP/DETACH of old partitions", "Run DELETE every hour instead", "Move everything into a Redis cache"]
+explanation = "Time-based partitioning matches the query pattern (partition pruning) and turns deletion into a cheap metadata operation without bloat. Sharding solves writes exceeding one node, not data lifecycle. More frequent DELETEs make it worse. Redis is not suited to storing 3 TB of logs."
+
+[questions.databases-lv029]
+prompt = "The team just had an incident because a migration adding a NOT NULL column with a default locked a large table. Which process is most worth adding to the team's standards?"
+options = ["Ban all migrations on Fridays", "A mandatory migration checklist in PRs: backward compatibility, set lock_timeout, test on a realistic data copy, rollback plan", "Only let the most senior person do migrations", "Drop migrations and edit the schema by hand when needed"]
+explanation = "Standardizing with a checklist and testing on real data addresses the root cause and spreads knowledge across the team. Banning Fridays just moves the risk; relying on one person creates a bottleneck; manual edits lose traceability."
+
+[questions.databases-lv030]
+prompt = "A payment service requires RPO 5 minutes and RTO 30 minutes, team of 5, moderate budget. Propose a backup and disaster recovery plan for the main database, and explain how to prove the plan meets the requirements."
+keywords = [["wal", "point-in-time", "pitr"], ["standby", "replica", "failover"], ["restore", "recover"], ["drill", "rehears", "test"], ["rpo"], ["rto"]]
+model_answer = "Use periodic base backups with continuous WAL archiving to separate storage (point-in-time recovery) so the actual RPO is under 5 minutes; add a standby/replica in another zone for fast failover to meet the 30-minute RTO. Encrypt backups, separate permissions and keep a backup copy outside the main account. Run restore and failover drills every quarter, measure real timing against the RTO, verify data integrity, and monitor WAL archive and replication lag to alert when the RPO is violated. Write a runbook and record the decision in an ADR, revisiting it when data growth makes restores slower than the RTO."
+explanation = "A good answer ties the RPO/RTO constraints to concrete mechanisms, with measurement and drills, instead of just saying that backups exist."
+
+[questions.databases-lv031]
+prompt = "The PostgreSQL primary is at 75% CPU because writes keep growing. Your manager asks whether to shard now. Explain how you would make the decision and the alternative steps before sharding."
+keywords = [["measure", "profil", "metric"], ["partition"], ["index", "query optimization", "query"], ["batch"], ["shard", "sharding"], ["shard key", "cost"]]
+model_answer = "First measure: the heaviest write queries, lock waits, I/O and the growth rate, to know how long until the ceiling. Try cheap, reversible steps: optimize queries and remove redundant indexes, batch writes, partition large tables, scale up, move reads to replicas or a cache. Shard only when writes are forecast to exceed a single node's limit even after those steps; then you must choose a shard key based on access patterns, accept losing cross-shard joins/transactions and the cost of resharding. Record the decision with metric thresholds for revisiting it in an ADR."
+explanation = "The core point: decide from data, prefer cheap and reversible steps, and recognize the real cost of sharding."
+
+[questions.databases-lvc02]
+title = "Check the RPO of a backup schedule"
+prompt = '''Write worst_case_data_loss(backup_times, horizon). backup_times is a list of times (in minutes) of successful backups/WAL archives, possibly unsorted, within [0, horizon]. The system starts at minute 0 with an initial backup, so treat 0 as always being a point, and horizon is the end of the evaluation window.
+Return the largest gap (in minutes) between two consecutive points (including 0 and horizon). That is the maximum amount of data that could be lost if an incident happens just before the next point.
+Example: backup_times [60, 120] and horizon 240 give points 0, 60, 120, 240, so the result is 120. Do not modify the input list; duplicate points have no effect.
+'''
+explanation = "The actual RPO is determined by the largest gap between two recovery points, not the average interval. Monitor this gap, especially when backup/WAL archive jobs fail."
+hints = ["Merge 0 and horizon into the set of points, then sort.", "Use zip(points, points[1:]) to compute differences between consecutive points."]
+
+[questions.databases-lv032]
+prompt = "There is an index on (country, city) on the stores table. Which query is least likely to use this index efficiently?"
+explanation = "A multi-column index follows the leftmost-prefix order: it works well when the condition starts with the first column (country). Filtering only on city skips the first column, so the index cannot be used efficiently (it may need a full index or table scan). With country and then ORDER BY city, the index order also helps avoid a sort."
+
+[questions.databases-lv033]
+prompt = "Select the correct statements about a covering index (an index containing all the columns the query needs)."
+options = ["It can enable an index-only scan without reading the table", "It makes the index larger and writes slower", "It is always better than any other index, so include every column", "It still requires maintenance when data changes"]
+explanation = "A covering index reduces table access but is paid for with storage and write cost, so use it only for hot queries. Including every column is wasteful and counterproductive."
+
+[questions.databases-lv034]
+prompt = "Under READ COMMITTED, transaction A reads an account's balance twice; between the two reads, transaction B commits an update to the balance. What happens?"
+options = ["Both of A's reads see the old value", "The second read may see the new value (non-repeatable read)", "A errors out and rolls back automatically", "B is blocked until A finishes"]
+explanation = "READ COMMITTED sees only data committed as of the start of each statement, so two reads can differ. REPEATABLE READ uses one fixed snapshot for the whole transaction. B's write is not blocked by A's reads (MVCC)."
+
+[questions.databases-lv035]
+prompt = "An API returns 100 posts with author names: the code runs 1 query for the posts and then 100 queries for the authors. What is the best fix?"
+options = ["Increase the connection pool size", "Use one JOIN or one WHERE id IN (...) query to fetch all authors at once", "Cache each author query but still run 100 queries on cache misses", "Run the 100 queries in parallel"]
+explanation = "This is N+1. Collapsing it into 1–2 queries reduces round trips and DB load. A bigger pool or parallelism does not reduce the number of queries; partial caching only hides the problem on misses."
+
+[questions.databases-lv036]
+prompt = "Feed pagination using OFFSET 200000 LIMIT 20 keeps getting slower. What is the most suitable fix for infinite scrolling?"
+options = ["Increase LIMIT to 1000", "Keyset pagination: WHERE (created_at, id) < (:last_created, :last_id) ORDER BY created_at DESC, id DESC LIMIT 20, with a matching index", "Run COUNT(*) before each page", "Use SELECT DISTINCT"]
+explanation = "A large OFFSET forces the DB to read and discard many rows. Keyset uses a condition on the last key plus an index to jump straight to the position, giving stable timing. The (created_at, id) pair keeps the order deterministic when timestamps tie."
+
+[questions.databases-lv037]
+prompt = '''Multiple workers take jobs from the jobs table without blocking on each other's locks:
+
+    SELECT id FROM jobs WHERE status = 'pending' ORDER BY id LIMIT 1 FOR UPDATE {{blank}}
+'''
+explanation = "SKIP LOCKED skips rows locked by other workers, giving a contention-free queue pattern on PostgreSQL."
+
+[questions.databases-lv038]
+prompt = "Cache-aside pattern: when updating a user in the database, what is the most common safe way to handle the cache?"
+options = ["Write to the cache first, then the database", "Update the database, then delete (invalidate) the cache key so the next read reloads it", "Never delete the cache, rely only on a long 24-hour TTL", "Write the database and cache in parallel with no ordering"]
+explanation = "Writing the source of truth first and then deleting the cache shrinks the stale-data window and avoids caching a bad value. Writing the cache first diverges if the DB write fails; a long TTL keeps stale data around; unordered parallel writes invite races."
+
+[questions.databases-lv039]
+prompt = "Select the measures that reduce the chance of deadlocks between transactions."
+options = ["Always lock rows/tables in the same order", "Keep transactions short and do not wait on external I/O while holding locks", "Use long transactions to batch many operations", "Retry with backoff on deadlock errors"]
+explanation = "Consistent lock ordering removes wait cycles; short transactions reduce lock hold time; deadlocks can still happen, so retries are needed. Long transactions make it worse."
+
+[questions.databases-lv040]
+prompt = "The events table has many rows with the same user_id; you need to keep the newest record per user. Which approach is correct?"
+options = ["SELECT DISTINCT user_id, created_at FROM events", "ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY created_at DESC) and keep rows with rn = 1", "GROUP BY user_id while selecting all other columns", "ORDER BY created_at LIMIT 1"]
+explanation = "A window function numbers rows within each user group, then filter rn = 1. DISTINCT does not pick the newest row; GROUP BY is invalid when selecting non-aggregated columns; LIMIT 1 returns only one row for the whole table."
+
+[questions.databases-lv041]
+prompt = "EXPLAIN ANALYZE shows a Seq Scan on a 50,000-row table even though the filtered column is indexed, and the condition matches 60% of rows. Which conclusion is reasonable?"
+options = ["The planner is wrong; disable seq scans system-wide", "When the condition matches most rows, a sequential scan is often cheaper than using the index; this may be the right plan", "The index is corrupted and must be rebuilt", "Add more RAM right away"]
+explanation = "Using an index for a large fraction of rows causes many random accesses, which is more expensive than reading sequentially. Check selectivity and statistics before concluding; do not disable seq scans globally."
+
+[questions.databases-lv042]
+prompt = "You need to store product price history so you can look up the price at any point in the past. Which design is reasonable?"
+options = ["A single price column overwritten on every change", "A product_prices(product_id, price, valid_from, valid_to) table queried by validity range", "Store old prices in a notes column", "Use one table per day"]
+explanation = "A history table with validity ranges supports point-in-time lookups and auditing. Overwriting loses history; a notes column cannot be queried; a table per day bloats the schema."
+
+[questions.databases-lv043]
+prompt = "A reporting query suddenly slowed from 200 ms to 8 seconds after the data tripled. Describe your diagnostic process and possible fixes."
+keywords = [["explain", "execution plan", "query plan"], ["index"], ["statistics", "analyze"], ["seq scan", "sequential scan", "full table scan"], ["join", "selectiv"]]
+model_answer = "Run EXPLAIN (ANALYZE) to see the actual execution plan: is there a seq scan on a large table, how far do the row estimates deviate from reality, which join algorithm was chosen. Check that the planner statistics are up to date (ANALYZE), check whether the filter conditions have high selectivity and a suitable index (possibly a multi-column or covering index). Fix based on evidence: add or adjust an index, rewrite the query, use keyset pagination, or a summary table for reports. Measure again before and after, and watch the impact on writes."
+explanation = "A strong answer follows the measure - hypothesize - fix - re-measure loop instead of adding indexes by guesswork."
+
+[questions.databases-lvc03]
+title = "Keyset pagination"
+prompt = '''Write fetch_page(conn, after_id, limit) that takes a sqlite3 connection and the table posts(id INTEGER PRIMARY KEY, title TEXT). Return a list of (id, title) tuples for at most limit posts with id greater than after_id, sorted ascending by id. If after_id is None, start from the beginning.
+Use a parameterized query, do not use OFFSET.
+Example: posts with ids 1..5, after_id = 2, limit = 2 gives [(3, ...), (4, ...)].
+'''
+explanation = "Keyset pagination has a cost that is stable with respect to page size because it uses the index to jump to the position instead of reading and skipping earlier rows."
+hints = ["Use the condition WHERE id > ? instead of OFFSET.", "When after_id is None you can use a value smaller than any valid id."]
+
+[questions.databases-lv044]
+prompt = "A reporting transaction has been idle in transaction for 6 hours on PostgreSQL. What is the typical effect on the system?"
+options = ["No effect because it only reads", "It holds an old snapshot so VACUUM cannot clean up dead rows newer than it, causing bloat, and it may hold locks", "It speeds up all other queries", "It auto-commits after 1 hour"]
+explanation = "With MVCC, an old snapshot forces the database to keep row versions it might still see, so vacuum cannot reclaim them and tables/indexes bloat. Long transactions can also hold locks and block DDL. Fix: limit them with idle_in_transaction_session_timeout and end transactions early."
+
+[questions.databases-lv045]
+prompt = "Select the correct consequences of reading from an asynchronous replica."
+options = ["A user who just wrote may not see their own data immediately (violating read-your-writes)", "Replication lag can grow sharply when the primary writes heavily or the replica is slow", "An asynchronous replica guarantees zero data loss when the primary fails", "Reads that need consistency can be routed to the primary"]
+explanation = "Asynchronous replicas lag, so you need a routing strategy (read-after-write goes to the primary, or track the LSN). They do not guarantee RPO = 0: transactions not yet shipped are lost when the primary fails."
+
+[questions.databases-lv046]
+prompt = "Running ALTER TABLE ... ADD CONSTRAINT on a large table under write load freezes the whole API, even though the command takes only a few seconds without load. What is the most likely cause?"
+options = ["The ALTER must wait for a long transaction holding a lock; every later query queues up behind it", "The server ran out of disk space", "Indexes were dropped automatically", "The network connection was lost"]
+explanation = "ALTER needs a strong lock; if it waits for a long transaction, queries arriving later are blocked behind the waiting ALTER (lock queue). Reduce the risk with lock_timeout plus retries, running at low traffic and avoiding long transactions."
+
+[questions.databases-lv047]
+prompt = '''Create an index on a table serving writes without blocking writes:
+
+    CREATE INDEX {{blank}} idx_orders_created ON orders (created_at);
+'''
+explanation = "CONCURRENTLY builds the index without blocking writes, at the cost of taking longer, not running inside a transaction block, and possibly leaving an INVALID index if it fails."
+
+[questions.databases-lv048]
+prompt = "Using SERIALIZABLE in PostgreSQL, a transaction occasionally fails with a serialization failure even without a deadlock. How should the application handle it?"
+options = ["Treat it as a database bug and switch to READ UNCOMMITTED", "Catch the error, roll back and retry the whole transaction (with a retry limit and backoff)", "Ignore the error and continue", "Retry only the last statement"]
+explanation = "A serialization failure is the normal mechanism for preserving serializability; the application must be ready to re-run the whole transaction. Retrying only the last statement loses the context already read. PostgreSQL does not truly support READ UNCOMMITTED."
+
+[questions.databases-lv049]
+prompt = "Select the correct statements about declarative partitioning in PostgreSQL."
+options = ["Queries with conditions on the partition key can skip irrelevant partitions (partition pruning)", "Old data can be removed quickly by DETACH/DROP of a partition", "Primary key/unique constraints on a partitioned table must include the partition key columns", "Partitioning automatically makes every query faster, even without filtering on the partition key"]
+explanation = "Partition pruning and dropping partitions are the main benefits. Unique constraints must contain the partition key. Queries that do not filter on the partition key must scan every partition and can even be slower."
+
+[questions.databases-lv050]
+prompt = "Redis is used as a pure cache; when memory is full it must evict less-used keys and not fail writes. Which maxmemory-policy fits?"
+options = ["noeviction", "allkeys-lru (or allkeys-lfu)", "volatile-ttl when no key has a TTL", "Do not set maxmemory"]
+explanation = "allkeys-lru/lfu evicts less-used keys across the whole keyspace, which suits a cache. noeviction returns errors when full; volatile-* evicts only keys with a TTL, so it is ineffective if no key has one; unlimited memory can get the process OOM-killed."
+
+[questions.databases-lv051]
+prompt = "A view counter UPDATE counters SET n = n + 1 WHERE id = 1 running at thousands of requests per second causes lock waits on a single row. What is the most reasonable solution?"
+options = ["Raise the isolation level to SERIALIZABLE", "Split the counter across many rows (sharded counter) or accumulate increments in Redis and flush periodically, accepting some delay", "Add an index on column n", "Use a longer transaction"]
+explanation = "A hot row serializes every write. Spreading across many rows or buffering in a separate layer reduces contention. SERIALIZABLE makes it worse; an index on n adds write cost; long transactions hold the lock longer."
+
+[questions.databases-lv052]
+prompt = "With a connection pooler in transaction pooling mode, the application starts losing session SETs and prepared statements from previous connections. Why?"
+options = ["The pooler drops tables", "In transaction pooling mode, each transaction may use a different server connection, so session-level state is not preserved", "The database changes its password automatically", "Connections are always re-encrypted"]
+explanation = "Transaction pooling shares server connections among many clients, so session SETs, session advisory locks and temp tables are unreliable. Use SET LOCAL inside a transaction, avoid session-level features, or choose session pooling for workloads that need them."
+
+[questions.databases-lv053]
+prompt = "The system needs to shard the events table by tenant. Analyze how to choose the shard key and the main operational risks."
+keywords = [["shard key"], ["hot", "distribution", "uneven", "skew"], ["join", "cross-shard"], ["resharding", "rebalanc"], ["tenant"]]
+model_answer = "The shard key must spread load evenly and match the main query pattern so most queries touch only one shard. With tenant_id, a very large tenant can become a hot shard (skewed distribution), so you need a strategy for large tenants such as a dedicated shard or hashing on an extra key. Risks include cross-shard join/aggregate queries, distributed transactions, resharding when adding nodes (use consistent hashing or a tenant-to-shard mapping table), and the complexity of schema migrations across many shards. Monitor per-shard load skew and have tooling to move tenants."
+explanation = "The key point: the shard key determines load distribution and the cost of cross-shard queries; resharding is a major cost to account for from the start."
+
+[questions.databases-lv054]
+prompt = "EXPLAIN ANALYZE shows the planner estimating 10 rows but actually returning 2 million rows, and it chose a Nested Loop. What is the cause and a reasonable fix?"
+options = ["Stale statistics or misestimated column correlation; run ANALYZE, consider extended statistics, then re-check the plan", "Drop all indexes", "Nested Loop is always optimal for any data", "Move everything to Redis"]
+explanation = "Wrong row estimates lead to an unsuitable join algorithm. Updating statistics or using extended statistics for correlated columns usually fixes the plan; dropping indexes or changing storage systems does not address the cause."
+
+[questions.databases-lvc04]
+title = "Optimistic locking with a version column"
+prompt = '''Table accounts(id INTEGER PRIMARY KEY, balance INTEGER, version INTEGER). Write withdraw(conn, account_id, amount, expected_version) using optimistic locking.
+Run a single UPDATE that subtracts amount from balance and increments version by 1 only when the current version equals expected_version AND balance >= amount. Return True if exactly one row was updated, otherwise return False (stale version, insufficient balance, or the account does not exist). Commit on success. Use a parameterized query.
+'''
+explanation = "Optimistic locking avoids holding locks for long: conflicts are detected at write time via the version condition; the caller reloads the data and retries."
+hints = ["Put both the version and balance conditions in the UPDATE's WHERE.", "cursor.rowcount tells you how many rows were affected."]

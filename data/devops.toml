@@ -224,11 +224,59 @@ Với các resource đặt tên như database hoặc bucket, `for_each` trên ma
 `terraform test` có thể chạy kiểm thử ở chế độ plan hoặc apply; test áp dụng resource thật cần provider, môi trường cô lập, quyền tối thiểu và cleanup rõ ràng vì có thể tốn phí hoặc để lại hạ tầng nếu lỗi. Lỗi thường gặp là biến module thành bản sao cấu hình không có contract, dùng output quá rộng, thay module source mà không review phiên bản, hoặc mặc định rằng thay đổi địa chỉ resource chỉ là refactor vô hại. Hãy giữ giao diện module nhỏ và coi địa chỉ resource cùng state là một phần của kế hoạch migration.
 '''
 
+[[modules]]
+id = "devops-lead"
+title = "Góc nhìn Tech Lead"
+description = "Chiến lược deploy (rolling, blue-green, canary), SLO và error budget, on-call và postmortem, FinOps, GitOps, quản trị IaC và secrets ở quy mô team."
+sources = ["kubernetes/apps/deployment-v1/index", "kubernetes/policy/pod-disruption-budget-v1/index", "kubernetes/autoscaling/horizontal-pod-autoscaler-v2/index", "terraform/language/state/remote", "terraform/tutorials/cli/plan", "git/git-revert"]
+lesson = '''
+### Ra quyết định vận hành cho cả team
+Ở cấp Tech Lead, câu hỏi không còn là "lệnh nào đúng" mà là "phương án nào hợp lý nhất với ràng buộc hiện có": số người, kỹ năng on-call, ngân sách hạ tầng, mức rủi ro nghiệp vụ và tốc độ phát hành mong muốn. Một quyết định tốt luôn ghi rõ bối cảnh, phương án bị loại và cách đo xem quyết định có hiệu quả hay không.
+
+#### 1. Chọn chiến lược deploy
+
+| Chiến lược | Chi phí hạ tầng | Tốc độ rollback | Yêu cầu quan sát | Phù hợp khi |
+|---|---|---|---|---|
+| Recreate | Thấp | Chậm, có downtime | Thấp | Job nội bộ, chấp nhận gián đoạn ngắn |
+| Rolling update | Thấp (thêm `maxSurge`) | Trung bình (`rollout undo`) | Trung bình | Mặc định cho service stateless |
+| Blue-green | Cao (gấp đôi tạm thời) | Rất nhanh (đổi traffic) | Trung bình | Thay đổi lớn, cần cắt chuyển tức thì |
+| Canary | Thấp đến trung bình | Nhanh, ảnh hưởng ít người dùng | Cao: metrics theo version | Service quan trọng, deploy thường xuyên |
+
+Canary chỉ an toàn khi có metrics tách theo phiên bản và tiêu chí go/no-go viết sẵn (error rate, latency p99, lượng traffic tối thiểu). Không có observability thì canary chỉ là rolling update chậm hơn.
+
+#### 2. SLO và error budget
+SLO 99.9% trong 30 ngày nghĩa là error budget khoảng 43 phút (ước lượng) hoặc 0.1% request lỗi. Burn rate = tỉ lệ lỗi quan sát / (1 − SLO); burn rate 1 là tiêu đúng tốc độ bền vững, burn rate 10 sẽ cạn budget sau khoảng 3 ngày. Error budget policy cần được PM và kỹ sư cùng thống nhất *trước* sự cố: còn budget thì ship bình thường, burn nhanh thì giảm nhịp và ưu tiên reliability, hết budget thì đóng băng tính năng rủi ro.
+
+#### 3. On-call và postmortem
+- Alert theo triệu chứng người dùng cảm nhận (SLO burn rate) thay vì mọi chỉ số CPU; mỗi alert phải actionable và có runbook.
+- Mục tiêu tham khảo: dưới khoảng 2 lần bị gọi mỗi ca trực (ước lượng, tuỳ team).
+- Trong sự cố: mitigate trước (rollback, tắt feature flag), tìm root cause sau.
+- Postmortem blameless: timeline dựa trên dữ liệu, nguyên nhân hệ thống, action item có owner và hạn.
+
+#### 4. Checklist review thay đổi hạ tầng
+1. Thay đổi đi qua PR, có `terraform plan` hoặc diff manifest đính kèm.
+2. Có đường rollback rõ và đã thử ít nhất ở staging.
+3. Secrets không nằm trong repo, state hay log; quyền theo least privilege.
+4. Dashboard/alert cho thành phần mới đã có trước khi bật traffic.
+5. Chi phí ước tính (requests/limits, số node, egress) được ghi lại.
+
+#### 5. ADR mẫu ngắn
+**ADR-007: Triển khai bằng GitOps.** Bối cảnh: 3 cluster, CI đang giữ kubeconfig quyền admin, cấu hình thường lệch do sửa tay. Quyết định: dùng agent pull-based đồng bộ từ repo manifest; CI chỉ build image và mở PR cập nhật tag. Hệ quả: giảm credential trong CI, drift được phát hiện tự động, rollback bằng `git revert`; đổi lại team phải học công cụ mới và debug qua thêm một lớp.
+
+#### 6. Anti-pattern ở quy mô team
+- ClickOps: sửa tay trên console production, IaC không còn là nguồn sự thật.
+- Mỗi team tự chế pipeline, chart và cách log; không có golden path nên không ai review được của ai.
+- Cấp quyền admin cluster cho mọi developer "cho nhanh".
+- Mua reserved instance trước khi biết chi phí thuộc về service nào (thiếu tag, thiếu cost per request).
+- Alert không ai xử lý được, khiến người trực bỏ qua cả alert thật.
+'''
+
 [[questions]]
 id = "ops-001"
 module = "ops-git"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Bạn vô tình sửa một file nhưng chưa stage và muốn bỏ toàn bộ thay đổi của file đó về nội dung ở working tree của commit hiện tại. Lệnh nào phù hợp?"
 options = ["git restore path/to/file", "git revert HEAD", "git cherry-pick HEAD", "git reflog"]
 answer = [0]
@@ -240,6 +288,7 @@ id = "ops-002"
 module = "ops-git"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một nhánh release đã được nhiều người dùng chung. Cách hoàn tác commit lỗi nào giữ lịch sử và dễ truy vết nhất?"
 options = ["git reset --hard HEAD~1 rồi force-push", "git revert <commit>", "Xoá thư mục .git", "git restore --source=HEAD~1 ."]
 answer = [1]
@@ -251,6 +300,7 @@ id = "ops-003"
 module = "ops-git"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn các phát biểu đúng về thao tác lịch sử Git."
 options = [
   "Rebase tạo commit mới khi phát lại các commit trên nền khác.",
@@ -268,6 +318,7 @@ id = "ops-004"
 module = "ops-git"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Điền lệnh tạo commit mới để đảo ngược một commit đã được push lên nhánh dùng chung: git {{blank}} <commit>
 '''
@@ -281,6 +332,7 @@ module = "ops-git"
 type = "code"
 lang = "python"
 difficulty = 2
+tags = ["level:middle"]
 title = "Tạo changelog từ git log"
 prompt = '''
 Viết generate_changelog(lines) nhận danh sách dòng theo dạng hash rồi đến subject từ git log --oneline. Phân loại các Conventional Commit hợp lệ vào dict có đủ bốn khóa Breaking Changes, Features, Bug Fixes, Other; mỗi giá trị là danh sách chuỗi theo dạng hash + khoảng trắng + subject, giữ thứ tự đầu vào. feat vào Features, fix vào Bug Fixes, các type hợp lệ khác vào Other. Commit có dấu ! ngay trước dấu hai chấm hoặc có cụm BREAKING CHANGE: trong subject chỉ vào Breaking Changes. Bỏ qua dòng sai định dạng hoặc subject không theo Conventional Commits. Ví dụ a1b2 feat(ui): add theme được đưa vào Features.
@@ -355,6 +407,7 @@ module = "ops-git"
 type = "code"
 lang = "python"
 difficulty = 3
+tags = ["level:senior"]
 title = "Bump phiên bản SemVer"
 prompt = '''
 Viết bump_version(version, commits). version là dạng MAJOR.MINOR.PATCH, có thể có tiền tố v; commits là danh sách subject Conventional Commit. Tăng major nếu có ! ở header hoặc BREAKING CHANGE:, nếu không tăng minor khi có feat, nếu không tăng patch khi có ít nhất một commit Conventional Commit hợp lệ. Nếu danh sách rỗng hoặc không có commit hợp lệ thì giữ nguyên version. Giữ tiền tố v nếu đầu vào có. Số phiên bản không có số 0 thừa ở đầu.
@@ -420,6 +473,7 @@ id = "ops-007"
 module = "ops-linux-bash"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Bạn cần cấp quyền đọc/ghi cho chủ sở hữu, chỉ đọc cho group và không cấp quyền cho others. Giá trị số chmod nào đúng?"
 options = ["777", "755", "640", "600"]
 answer = [2]
@@ -431,6 +485,7 @@ id = "ops-008"
 module = "ops-linux-bash"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Trong lệnh grep ERROR app.log | sort, stdout của grep được đưa đi đâu?"
 options = ["Vào stdin của sort", "Vào file app.log", "Bị bỏ đi", "Vào stderr của sort"]
 answer = [0]
@@ -442,6 +497,7 @@ id = "ops-009"
 module = "ops-linux-bash"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Trong script dùng set -euo pipefail, tác dụng chính của pipefail là gì?"
 options = ["Làm pipeline báo thất bại nếu có lệnh con thất bại", "Tự retry lệnh lỗi", "Tắt stderr", "Chấm dứt mọi process trong máy"]
 answer = [0]
@@ -453,6 +509,7 @@ id = "ops-010"
 module = "ops-linux-bash"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn các thói quen an toàn khi viết script triển khai."
 options = [
   "Quote biến khi đường dẫn có thể chứa khoảng trắng.",
@@ -470,6 +527,7 @@ id = "ops-011"
 module = "ops-linux-bash"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Hoàn thành lệnh để nối thêm stdout vào file mà không ghi đè: command {{blank}} deploy.log
 '''
@@ -483,6 +541,7 @@ module = "ops-linux-bash"
 type = "code"
 lang = "python"
 difficulty = 3
+tags = ["level:senior"]
 title = "Đọc file .env"
 prompt = '''
 Viết parse_env(text) trả về dict từ nội dung file .env. Bỏ dòng trống và dòng bắt đầu bằng #; cho phép khoảng trắng quanh key và dấu =, cùng tiền tố export. Key phải theo dạng chữ cái hoặc _ trước, sau đó là chữ, số hoặc _, sai thì raise ValueError. Giá trị không quote kết thúc tại dấu # nếu dấu này đứng đầu hoặc có khoảng trắng ngay trước. Giá trị trong nháy đơn giữ nguyên ký tự bên trong; giá trị trong nháy kép giải mã \\n, \\r, \\t, \\", \\\\. Sau quote chỉ cho phép khoảng trắng hoặc comment bắt đầu bằng #. Key lặp lại lấy giá trị sau cùng.
@@ -589,6 +648,7 @@ id = "ops-013"
 module = "ops-docker"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Ứng dụng ghi database vào filesystem của container; dữ liệu cần còn sau khi xoá và tạo container mới. Thành phần nào phù hợp?"
 options = ["Writable layer của container", "Docker volume", "Build cache", "Tag latest"]
 answer = [1]
@@ -600,6 +660,7 @@ id = "ops-014"
 module = "ops-docker"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một thay đổi ở lệnh COPY mã nguồn làm các layer phía sau phải build lại. Cách sắp xếp nào thường cải thiện cache dependency?"
 options = ["Đưa COPY toàn bộ mã lên trước bước cài dependency", "Tách file khai báo dependency, cài dependency trước rồi mới COPY mã thường xuyên đổi", "Dùng tag latest cho mọi base image", "Gộp mọi stage thành một container đang chạy"]
 answer = [1]
@@ -611,6 +672,7 @@ id = "ops-015"
 module = "ops-docker"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn các phát biểu đúng về Docker."
 options = [
   "Container có writable layer, nhưng dữ liệu cần bền vững nên đặt trong volume hoặc storage phù hợp.",
@@ -628,6 +690,7 @@ id = "ops-016"
 module = "ops-docker"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Trong Dockerfile, chỉ thị thường dùng để chọn image nền là {{blank}}.
 '''
@@ -640,6 +703,7 @@ id = "ops-017"
 module = "ops-docker"
 type = "essay"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Giải thích vì sao dữ liệu database trong container nên được đặt vào volume, và nêu một đánh đổi cần cân nhắc khi quản lý volume."
 keywords = [["vòng đời container", "lifecycle container"], ["volume", "persistent volume", "lưu trữ bền vững"], ["backup", "sao lưu", "quản lý dữ liệu"]]
 min_keywords = 2
@@ -653,6 +717,7 @@ module = "ops-docker"
 type = "code"
 lang = "python"
 difficulty = 3
+tags = ["level:senior"]
 title = "Cảnh báo best-practice Dockerfile"
 prompt = '''
 Viết dockerfile_warnings(text) trả về danh sách mã cảnh báo theo thứ tự latest_tag, many_run, root_user. Bỏ dòng trống và comment. Cảnh báo latest_tag nếu bất kỳ FROM nào dùng tag latest, không ghi tag, hoặc dùng scratch thì scratch không tính; image có digest @sha256: được xem là đã pin. Cảnh báo many_run khi có từ ba chỉ thị RUN trở lên. Mỗi FROM bắt đầu stage mới; cảnh báo root_user nếu stage cuối không có USER, hoặc USER cuối cùng của stage đó là root, 0, root:root hay 0:0. Chỉ thị không phân biệt hoa thường; FROM có thể có các tùy chọn --platform trước tên image.
@@ -735,6 +800,7 @@ id = "ops-019"
 module = "ops-kubernetes"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Bạn cần giữ tên endpoint ổn định dù các Pod phía sau được thay thế. Object nào phù hợp?"
 options = ["Service", "Pod IP tĩnh", "ConfigMap", "ReplicaSet thủ công"]
 answer = [0]
@@ -746,6 +812,7 @@ id = "ops-020"
 module = "ops-kubernetes"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Readiness probe thất bại nhưng liveness probe vẫn thành công. Hệ quả mong đợi là gì?"
 options = ["Pod không được đưa vào endpoint nhận traffic cho tới khi ready", "Container luôn bị xoá ngay", "Deployment bị xoá", "Node lập tức reboot"]
 answer = [0]
@@ -757,6 +824,7 @@ id = "ops-021"
 module = "ops-kubernetes"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một Deployment cần chuyển image mới mà vẫn duy trì dịch vụ trong lúc thay Pod. Cơ chế nào nên cấu hình và theo dõi?"
 options = ["Rolling update", "Xoá namespace rồi tạo lại", "Chỉ sửa ConfigMap", "Dùng Pod đơn lẻ không controller"]
 answer = [0]
@@ -768,6 +836,7 @@ id = "ops-022"
 module = "ops-kubernetes"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn các phát biểu đúng về cấu hình và truy cập trong Kubernetes."
 options = [
   "ConfigMap dành cho cấu hình không bí mật.",
@@ -785,6 +854,7 @@ id = "ops-023"
 module = "ops-kubernetes"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Object Kubernetes cung cấp endpoint ổn định và định tuyến tới Pod theo selector là {{blank}}.
 '''
@@ -797,6 +867,7 @@ id = "ops-024"
 module = "ops-kubernetes"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Giải thích vai trò khác nhau của readiness probe, liveness probe và resource requests trong một workload được HPA theo dõi."
 keywords = [["readiness", "sẵn sàng nhận traffic"], ["liveness", "khởi động lại", "restart"], ["resource requests", "requests", "cpu request"], ["hpa", "horizontal pod autoscaler"]]
 min_keywords = 3
@@ -810,6 +881,7 @@ module = "ops-kubernetes"
 type = "code"
 lang = "python"
 difficulty = 2
+tags = ["level:middle"]
 title = "Tính replicas mục tiêu cho HPA"
 prompt = '''
 Viết desired_replicas(current_replicas, current_value, target_value, min_replicas, max_replicas). Dùng công thức ceil(current_replicas * current_value / target_value), sau đó giới hạn kết quả trong min_replicas..max_replicas. target_value phải dương, min_replicas không âm và không lớn hơn max_replicas, max_replicas phải ít nhất 1; nếu vi phạm raise ValueError. Hàm mô phỏng phép tính cơ bản, không cần xử lý tolerance, metric thiếu hay stabilization window.
@@ -860,6 +932,7 @@ id = "ops-026"
 module = "ops-nginx"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Trong cấu hình Nginx, location = /health dùng modifier nào?"
 options = ["Khớp chính xác", "Prefix dài nhất", "Regex không phân biệt hoa thường", "Chuyển request sang upstream"]
 answer = [0]
@@ -871,6 +944,7 @@ id = "ops-027"
 module = "ops-nginx"
 type = "single"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "URI /assets/app.js khớp prefix ^~ /assets/ và một regex ~ \\.js$. Nếu không có exact match, lựa chọn nào được ưu tiên?"
 options = ["^~ /assets/ vì prefix này dừng việc kiểm tra regex", "~ \\.js$ vì regex luôn ưu tiên", "Prefix ngắn nhất", "Nginx chọn ngẫu nhiên"]
 answer = [0]
@@ -882,6 +956,7 @@ id = "ops-028"
 module = "ops-nginx"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn các nhận định đúng về reverse proxy."
 options = [
   "Nginx có thể chuyển request tới upstream bằng proxy_pass.",
@@ -899,6 +974,7 @@ id = "ops-029"
 module = "ops-nginx"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Modifier Nginx buộc URI khớp chính xác là {{blank}}.
 '''
@@ -912,6 +988,7 @@ module = "ops-nginx"
 type = "code"
 lang = "python"
 difficulty = 3
+tags = ["level:senior"]
 title = "Mô phỏng chọn Nginx location"
 prompt = '''
 Viết select_location(locations, path). locations là danh sách tuple (modifier, pattern) theo thứ tự cấu hình; modifier thuộc "", "=", "^~", "~", "~*". Trả về tuple location được chọn hoặc None. Khớp exact = lập tức; nếu không, lấy prefix dài nhất trong location "" và ^~, hoà độ dài thì giữ mục xuất hiện trước. Prefix ^~ đã chọn thì không xét regex. Nếu prefix không phải ^~, kiểm tra regex ~ phân biệt hoa thường và ~* không phân biệt hoa thường theo thứ tự cấu hình, trả regex khớp đầu tiên; nếu không regex nào khớp thì trả prefix dài nhất. Pattern regex là cú pháp Python re.
@@ -982,6 +1059,7 @@ id = "ops-031"
 module = "ops-cicd-terraform"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Trong Terraform, lệnh nào hiển thị các thay đổi dự kiến mà chưa áp dụng chúng?"
 options = ["terraform plan", "terraform apply", "terraform destroy", "terraform init"]
 answer = [0]
@@ -993,6 +1071,7 @@ id = "ops-032"
 module = "ops-cicd-terraform"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Vì sao nhóm dùng remote state có locking cho môi trường hạ tầng chung?"
 options = ["Ngăn nhiều thao tác đồng thời làm state lệch, đồng thời chia sẻ state có kiểm soát", "Để không cần review plan", "Để biến state thành file cấu hình công khai", "Để Terraform tự xoá mọi resource cũ"]
 answer = [0]
@@ -1004,6 +1083,7 @@ id = "ops-033"
 module = "ops-cicd-terraform"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một pipeline định deploy artifact nhưng unit test thất bại. Điều kiện nào giúp tránh triển khai bản lỗi?"
 options = ["Đặt gate để deploy chỉ chạy sau khi các bước kiểm tra bắt buộc thành công", "Bỏ qua exit code để pipeline luôn xanh", "Chạy deploy song song trước test", "In toàn bộ secret để debug nhanh"]
 answer = [0]
@@ -1015,6 +1095,7 @@ id = "ops-034"
 module = "ops-cicd-terraform"
 type = "single"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Plan cho thấy sẽ thay thế database production ngoài dự kiến. Hành động phù hợp trước apply là gì?"
 options = ["Dừng apply, kiểm tra diff và nguyên nhân thay thế, sau đó điều chỉnh hoặc xin review", "Apply ngay để đồng bộ state", "Xoá file state rồi chạy lại", "Tắt mọi policy kiểm tra"]
 answer = [0]
@@ -1026,6 +1107,7 @@ id = "ops-035"
 module = "ops-cicd-terraform"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn các thực hành tốt trong quy trình IaC và CI/CD."
 options = [
   "Review plan trước khi apply vào môi trường quan trọng.",
@@ -1043,6 +1125,7 @@ id = "ops-036"
 module = "ops-cicd-terraform"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Lệnh Terraform thực thi thay đổi hạ tầng theo cấu hình/kế hoạch là terraform {{blank}}.
 '''
@@ -1055,6 +1138,7 @@ id = "ops-037"
 module = "ops-cicd-terraform"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Mô tả cách một pipeline CI/CD có thể triển khai hạ tầng Terraform an toàn qua pull request và môi trường production."
 keywords = [["plan", "terraform plan"], ["review", "phê duyệt", "approval"], ["apply", "terraform apply"], ["secret", "credential", "quyền tối thiểu"], ["state", "locking", "remote state"]]
 min_keywords = 4
@@ -1067,6 +1151,7 @@ id = "devops-dv001"
 module = "devops-dv-k8s-rollout"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Một Pod vẫn chạy nhưng chưa nạp xong dữ liệu và chưa nên nhận request. Probe nào nên báo chưa sẵn sàng?"
 options = ["readinessProbe", "livenessProbe", "startupProbe", "Không cần probe nào"]
 answer = [0]
@@ -1078,6 +1163,7 @@ id = "devops-dv002"
 module = "devops-dv-k8s-rollout"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Ứng dụng mất vài phút để khởi động lần đầu. Cách cấu hình nào tránh liveness probe khởi động lại container quá sớm?"
 options = ["Thêm startupProbe với ngưỡng/thời gian phù hợp", "Đặt readinessProbe thành false vĩnh viễn", "Tăng replicas lên rất cao", "Xoá livenessProbe rồi không theo dõi sức khoẻ"]
 answer = [0]
@@ -1089,6 +1175,7 @@ id = "devops-dv003"
 module = "devops-dv-k8s-rollout"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Sự khác nhau quan trọng nhất giữa CPU request và CPU limit của container là gì?"
 options = ["Request phục vụ lập lịch và là mức kỳ vọng cấp phát; limit giới hạn mức CPU tối đa có thể dùng", "Request là mức trần còn limit là mức tối thiểu được bảo đảm", "Cả hai đều chỉ dùng để đặt số replicas", "Limit khiến Pod luôn được xếp lên node có CPU trống"]
 answer = [0]
@@ -1100,6 +1187,7 @@ id = "devops-dv004"
 module = "devops-dv-k8s-rollout"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "PDB hữu ích nhất trong tình huống nào?"
 options = ["Giới hạn số Pod có thể bị gián đoạn tự nguyện khi drain node", "Ngăn mọi Pod lỗi do node mất điện", "Thay thế readiness probe", "Bắt buộc Deployment không bao giờ thay image"]
 answer = [0]
@@ -1111,6 +1199,7 @@ id = "devops-dv005"
 module = "devops-dv-k8s-rollout"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Deployment đang rolling update nhưng replicas mới chưa phục vụ được. Chọn các bước/thiết lập giúp giảm rủi ro phát hành."
 options = [
   "Dùng readiness probe để chỉ đưa Pod sẵn sàng vào traffic.",
@@ -1128,6 +1217,7 @@ id = "devops-dv006"
 module = "devops-dv-k8s-rollout"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Lệnh xem trạng thái tiến trình cập nhật của Deployment là `kubectl rollout {{blank}} deployment/api`.
 '''
@@ -1140,6 +1230,7 @@ id = "devops-dv007"
 module = "devops-dv-k8s-rollout"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 Kubernetes xếp Pod lên node dựa trên tài nguyên khai báo trong `resources.{{blank}}`.
 '''
@@ -1152,6 +1243,7 @@ id = "devops-dv008"
 module = "devops-dv-k8s-rollout"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Trong phỏng vấn, hãy giải thích cách bạn điều tra một Deployment bị kẹt khi rollout phiên bản mới mà vẫn giữ an toàn cho người dùng."
 keywords = [["readiness probe", "readiness"], ["rollout status", "kubectl rollout"], ["events", "describe pod"], ["capacity", "requests", "quota"], ["rollback", "rollout undo"]]
 min_keywords = 3
@@ -1165,6 +1257,7 @@ module = "devops-dv-k8s-rollout"
 type = "code"
 lang = "python"
 difficulty = 2
+tags = ["level:middle"]
 title = "Đếm Pod đã sẵn sàng"
 prompt = '''
 Viết `count_ready_pods(pods)` nhận danh sách object Pod dạng dictionary như JSON Kubernetes và trả về số Pod có ít nhất một condition với `type` là `Ready` và `status` là chuỗi `True`. Bỏ qua phần tử sai kiểu, thiếu `status`/`conditions`, hoặc `conditions` không phải danh sách. Các condition khác và giá trị `True` viết hoa/thường khác không được tính. Ví dụ Pod có `{"status": {"conditions": [{"type": "Ready", "status": "True"}]}}` được tính một lần.
@@ -1232,6 +1325,7 @@ id = "devops-dv009"
 module = "devops-dv-k8s-security"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Một ứng dụng chỉ cần đọc ConfigMap trong namespace `app`. Cặp đối tượng nào phù hợp để cấp quyền theo phạm vi hẹp?"
 options = ["Role và RoleBinding trong namespace app", "ClusterRoleBinding tới cluster-admin", "PodSecurityContext và Secret", "NetworkPolicy và Ingress"]
 answer = [0]
@@ -1243,6 +1337,7 @@ id = "devops-dv010"
 module = "devops-dv-k8s-security"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Pod cần gọi Kubernetes API bằng danh tính riêng của ứng dụng. Cơ chế nào nên gắn vào Pod?"
 options = ["ServiceAccount", "Node name", "IngressClass", "PersistentVolumeClaim"]
 answer = [0]
@@ -1254,6 +1349,7 @@ id = "devops-dv011"
 module = "devops-dv-k8s-security"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một NetworkPolicy default-deny đã được áp dụng nhưng Pod vẫn giao tiếp được như trước. Nguyên nhân hạ tầng nào cần xác minh đầu tiên?"
 options = ["CNI đang dùng có triển khai hỗ trợ NetworkPolicy hay không", "Deployment có image digest hay không", "Cluster có Ingress object hay không", "Pod có dùng volume hay không"]
 answer = [0]
@@ -1265,6 +1361,7 @@ id = "devops-dv012"
 module = "devops-dv-k8s-security"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Nhận định nào chính xác về Kubernetes Secret?"
 options = ["Giá trị thường được mã hóa dạng base64 trong API; cần RBAC và encryption at rest phù hợp", "Base64 mặc định bảo vệ dữ liệu như mã hóa mật mã", "Mọi người dùng cluster đều không thể đọc Secret", "Secret không thể xuất hiện trong backup hoặc log"]
 answer = [0]
@@ -1276,6 +1373,7 @@ id = "devops-dv013"
 module = "devops-dv-k8s-security"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Chọn các biện pháp giảm phạm vi ảnh hưởng nếu một Pod bị chiếm quyền."
 options = [
   "Dùng ServiceAccount riêng và chỉ cấp verbs/resources ứng dụng cần.",
@@ -1293,6 +1391,7 @@ id = "devops-dv014"
 module = "devops-dv-k8s-security"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Đối tượng RBAC gán một Role cho ServiceAccount trong namespace là `{{blank}}`.
 '''
@@ -1305,6 +1404,7 @@ id = "devops-dv015"
 module = "devops-dv-k8s-security"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 API object dùng để khai báo quy tắc ingress/egress cho Pod là `{{blank}}`.
 '''
@@ -1317,6 +1417,7 @@ id = "devops-dv016"
 module = "devops-dv-k8s-security"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Trong phỏng vấn, hãy mô tả cách giảm blast radius khi một ứng dụng trong Kubernetes bị xâm nhập."
 keywords = [["least privilege", "quyền tối thiểu"], ["serviceaccount", "service account"], ["networkpolicy", "network policy"], ["secret encryption", "encryption at rest", "mã hóa khi lưu"], ["automountserviceaccounttoken", "tắt token"]]
 min_keywords = 3
@@ -1330,6 +1431,7 @@ module = "devops-dv-k8s-security"
 type = "code"
 lang = "python"
 difficulty = 2
+tags = ["level:middle"]
 title = "Đánh giá rule RBAC"
 prompt = '''
 Viết `rbac_allows(rules, verb, api_group, resource)` để kiểm tra một yêu cầu đã được gán tới chủ thể có khớp ít nhất một rule trong danh sách hay không. Mỗi rule có thể có các danh sách `verbs`, `apiGroups`, `resources`; ký tự `*` khớp mọi giá trị trong trường đó. API group lõi được truyền bằng chuỗi rỗng. Rule thiếu trường hoặc có trường không phải danh sách không cấp quyền. Hàm chỉ kiểm tra rule đã hiệu lực, không cần mô phỏng binding hay phạm vi namespace. Ví dụ rule `{"verbs": ["get"], "apiGroups": [""], "resources": ["configmaps"]}` cho phép đọc ConfigMap API lõi.
@@ -1381,6 +1483,7 @@ id = "devops-dv017"
 module = "devops-dv-nginx-edge"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Nginx đứng sau load balancer. Cách nào tránh tin địa chỉ client giả mạo trong `X-Forwarded-For`?"
 options = ["Chỉ khai báo CIDR của proxy tin cậy bằng set_real_ip_from", "Tin mọi địa chỉ gửi header này", "Tắt access log", "Dùng client IP làm tên upstream"]
 answer = [0]
@@ -1392,6 +1495,7 @@ id = "devops-dv018"
 module = "devops-dv-nginx-edge"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Trong Nginx rate limiting, mục đích chính của `limit_req_zone` là gì?"
 options = ["Khai báo key, shared-memory zone và tốc độ cho bộ giới hạn request", "Chặn toàn bộ HTTP method ngoài GET", "Tạo upstream server group", "Bắt buộc mọi request dùng TLS"]
 answer = [0]
@@ -1403,6 +1507,7 @@ id = "devops-dv019"
 module = "devops-dv-nginx-edge"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Bạn vừa sửa cấu hình Nginx và cần xác nhận cú pháp trước khi reload. Lệnh nào phù hợp?"
 options = ["nginx -t", "nginx -s stop", "nginx -V", "nginx -T | reload"]
 answer = [0]
@@ -1414,6 +1519,7 @@ id = "devops-dv020"
 module = "devops-dv-nginx-edge"
 type = "single"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Biện pháp nào bảo vệ private key của TLS certificate tốt nhất trong môi trường production?"
 options = ["Giới hạn quyền đọc cho tiến trình/nhóm cần thiết và quản lý key như secret", "Đưa key vào image để mọi replica dùng chung", "Ghi key vào access log khi debug", "Phục vụ nội dung private key cho client cùng certificate"]
 answer = [0]
@@ -1425,6 +1531,7 @@ id = "devops-dv021"
 module = "devops-dv-nginx-edge"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Chọn các cấu hình/vận hành giúp triển khai Nginx reverse proxy an toàn hơn."
 options = [
   "Giới hạn set_real_ip_from vào CIDR của proxy thực sự tin cậy.",
@@ -1442,6 +1549,7 @@ id = "devops-dv022"
 module = "devops-dv-nginx-edge"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Directive khai báo key, zone và rate cho request limiting là `{{blank}}`.
 '''
@@ -1454,6 +1562,7 @@ id = "devops-dv023"
 module = "devops-dv-nginx-edge"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Kiểm tra cú pháp cấu hình Nginx bằng lệnh `nginx {{blank}}` trước khi reload.
 '''
@@ -1466,6 +1575,7 @@ id = "devops-dv024"
 module = "devops-dv-nginx-edge"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Hãy giải thích thiết kế rate limit và xác định client IP đáng tin cậy khi Nginx chạy sau load balancer."
 keywords = [["trusted proxy", "proxy tin cậy", "set_real_ip_from"], ["client ip", "binary_remote_addr", "địa chỉ client"], ["burst", "nodelay"], ["dry run", "limit_req_dry_run", "quan sát"], ["nginx -t", "kiểm tra cấu hình"]]
 min_keywords = 3
@@ -1479,6 +1589,7 @@ module = "devops-dv-nginx-edge"
 type = "code"
 lang = "python"
 difficulty = 3
+tags = ["level:senior"]
 title = "Xác định client qua proxy tin cậy"
 prompt = '''
 Viết `resolve_client_ip(peer_ip, forwarded_for, trusted_cidrs)`. `peer_ip` là địa chỉ kết nối trực tiếp tới Nginx; `forwarded_for` là chuỗi IP phân tách bằng dấu phẩy; `trusted_cidrs` là danh sách CIDR của proxy tin cậy. Nếu peer không thuộc CIDR tin cậy, bỏ qua header và trả về peer. Nếu peer tin cậy, duyệt các địa chỉ trong X-Forwarded-For từ phải sang trái, bỏ qua IP nằm trong trusted CIDRs và trả về IP hợp lệ đầu tiên không tin cậy. Bỏ qua địa chỉ/CIDR lỗi định dạng; nếu peer IP không hợp lệ trả `None`, nếu không tìm được client hợp lệ thì trả peer. Trả địa chỉ chuẩn hóa bằng `str(ipaddress.ip_address(...))`. Chỉ dùng thư viện chuẩn Python.
@@ -1564,6 +1675,7 @@ id = "devops-dv025"
 module = "devops-dv-terraform-modules"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Một module Terraform được gọi từ root module sẽ nhận cấu hình của caller qua cơ chế nào?"
 options = ["Input variables", "Remote state locking", "Provisioner mặc định", "Tên thư mục working directory"]
 answer = [0]
@@ -1575,6 +1687,7 @@ id = "devops-dv026"
 module = "devops-dv-terraform-modules"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Danh sách instance có tên ổn định như `api`, `worker` và `scheduler`; muốn địa chỉ resource dễ đọc và ít phụ thuộc thứ tự danh sách. Cách nào phù hợp?"
 options = ["for_each trên map với key ổn định", "count trên list rồi đổi thứ tự tuỳ ý", "Provisioner local-exec", "Một state file riêng cho từng resource"]
 answer = [0]
@@ -1586,6 +1699,7 @@ id = "devops-dv027"
 module = "devops-dv-terraform-modules"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Bạn đang đổi key `for_each` của một resource production. Điều gì cần được xem xét trước apply?"
 options = ["Terraform có thể xem địa chỉ mới là resource khác; cần đánh giá migration state và plan", "Đổi key chỉ sửa nhãn hiển thị, không ảnh hưởng state", "Terraform luôn giữ nguyên resource mà không cần review", "Chạy apply hai lần sẽ tự ghép địa chỉ cũ và mới"]
 answer = [0]
@@ -1597,6 +1711,7 @@ id = "devops-dv028"
 module = "devops-dv-terraform-modules"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Mục đích chính của `terraform test` trong một repository IaC là gì?"
 options = ["Chạy test files và assertions để kiểm tra cấu hình Terraform", "Thay thế mọi lần review terraform plan", "Tự cấp quyền production cho provider", "Xoá toàn bộ state sau mỗi lần init"]
 answer = [0]
@@ -1608,6 +1723,7 @@ id = "devops-dv029"
 module = "devops-dv-terraform-modules"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Chọn các thực hành giúp module Terraform dễ tái sử dụng và thay đổi an toàn."
 options = [
   "Thiết kế input có kiểu, ý nghĩa rõ và output theo nhu cầu của caller.",
@@ -1625,6 +1741,7 @@ id = "devops-dv030"
 module = "devops-dv-terraform-modules"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Để lặp qua các instance có key ổn định trong block resource, dùng meta-argument `{{blank}}`.
 '''
@@ -1637,6 +1754,7 @@ id = "devops-dv031"
 module = "devops-dv-terraform-modules"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Lệnh chạy các Terraform test files là `terraform {{blank}}`.
 '''
@@ -1649,6 +1767,7 @@ id = "devops-dv032"
 module = "devops-dv-terraform-modules"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Trong phỏng vấn, hãy mô tả cách chuyển các resource lặp lại thành Terraform module dùng chung mà vẫn hạn chế rủi ro cho hạ tầng đang quản lý."
 keywords = [["input variables", "inputs", "giao diện module"], ["outputs", "contract"], ["for_each", "stable keys", "key ổn định"], ["terraform plan", "review plan"], ["state migration", "migration state"], ["terraform test", "kiểm thử"]]
 min_keywords = 4
@@ -1662,6 +1781,7 @@ module = "devops-dv-terraform-modules"
 type = "code"
 lang = "python"
 difficulty = 2
+tags = ["level:middle"]
 title = "Tóm tắt thay đổi trong Terraform plan"
 prompt = '''
 Viết `summarize_plan(plan)` nhận object JSON từ `terraform show -json` và trả về dict có các khóa `create`, `update`, `delete`, `replace`, `read`, `no_op`, ban đầu đều bằng 0. Duyệt `resource_changes`; mỗi entry có `change.actions`. Nếu actions chứa cả `create` và `delete` thì tăng riêng `replace` (không tăng create/delete). Nếu không, nhận diện chính xác các danh sách `['create']`, `['update']`, `['delete']`, `['read']`, `['no-op']`. Bỏ qua entry sai định dạng hoặc action không nhận diện. Ví dụ replacement `['delete', 'create']` chỉ tăng `replace`.
@@ -1733,3 +1853,724 @@ def _():
 hints = ["Khởi tạo đầy đủ các khóa rồi xác thực từng cấp dictionary/list.", "Xử lý replacement trước action đơn để không tính nó thành create hoặc delete."]
 explanation = "Bản tóm tắt giúp reviewer nhận ra replacement riêng vì nó thường có blast radius lớn hơn cập nhật tại chỗ."
 sources = ["terraform/cli/commands/show", "terraform/language/modules/sources"]
+
+[[questions]]
+id = "devops-lv001"
+module = "devops-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "deploy-strategy"]
+prompt = "Team 5 người vận hành service thanh toán trên Kubernetes, deploy mỗi ngày, đã có metrics error rate và latency tách theo version. Ngân sách không cho phép nhân đôi hạ tầng kể cả tạm thời. Chiến lược phát hành nào hợp lý nhất?"
+options = ["Blue-green: dựng đủ một môi trường song song rồi đổi toàn bộ traffic", "Canary theo phần trăm traffic, tự động rollback khi metrics của version mới vượt ngưỡng", "Recreate vào giờ thấp điểm để tránh chạy hai version cùng lúc", "Rolling update mặc định và chỉ kiểm tra Pod đã Running"]
+answer = [1]
+explanation = "Canary tận dụng metrics theo version sẵn có, chỉ ảnh hưởng một phần nhỏ người dùng và không cần gấp đôi hạ tầng. Blue-green vi phạm ràng buộc chi phí; recreate gây downtime cho service thanh toán; rolling update chỉ nhìn trạng thái Running sẽ đẩy lỗi tới toàn bộ người dùng trước khi ai phát hiện."
+sources = ["kubernetes/apps/deployment-v1/index"]
+
+[[questions]]
+id = "devops-lv002"
+module = "devops-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "slo"]
+prompt = "SLO availability 99.9% theo cửa sổ 30 ngày. Sau 12 ngày team đã tiêu 80% error budget. PM muốn phát hành một tính năng lớn tuần này. Error budget policy đã được hai bên ký trước đó. Quyết định hợp lý nhất?"
+options = ["Vẫn phát hành vì SLO chỉ tính vào cuối tháng", "Giảm nhịp: hoãn tính năng rủi ro, ưu tiên việc tăng độ tin cậy, chỉ cho phép bugfix và thay đổi có rollback nhanh theo policy", "Hạ SLO xuống 99% để có thêm budget", "Tắt các alert burn rate cho tới hết tháng"]
+answer = [1]
+explanation = "Error budget tồn tại để biến tranh luận ship hay ổn định thành quy tắc đã thống nhất. Burn nhanh (80% sau 40% thời gian) là tín hiệu giảm rủi ro. Hạ SLO tuỳ tiện hoặc tắt alert phá vỡ cam kết với người dùng; phát hành tiếp có nguy cơ vượt SLO."
+
+[[questions]]
+id = "devops-lv003"
+module = "devops-lead"
+type = "multiple"
+difficulty = 3
+tags = ["level:lead", "postmortem"]
+prompt = "Bạn chuẩn hoá quy trình postmortem cho 4 team. Chọn các thực hành nên đưa vào template."
+options = ["Timeline dựng từ log, metrics và lịch sử deploy thay vì trí nhớ", "Mỗi action item có owner và hạn hoàn thành được theo dõi", "Nêu tên người gây lỗi để rút kinh nghiệm kỷ luật", "Tập trung vào điều kiện hệ thống và quy trình đã cho phép lỗi lọt qua", "Chỉ viết postmortem khi sự cố làm mất doanh thu"]
+answer = [0, 1, 3]
+explanation = "Postmortem blameless nhắm vào hệ thống và quy trình; quy trách nhiệm cá nhân làm người ta giấu thông tin. Action item không owner sẽ không được làm. Ngưỡng viết postmortem nên dựa trên tác động tới SLO/người dùng, không chỉ doanh thu."
+
+[[questions]]
+id = "devops-lv004"
+module = "devops-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "on-call"]
+prompt = "Team 6 người trực luân phiên, pager kêu khoảng 40 lần mỗi tuần và 70% số lần tự hết trong vòng 5 phút. Người trực bắt đầu kiệt sức. Ưu tiên đầu tiên nên là gì?"
+options = ["Thêm người từ team khác vào rotation để chia tải", "Rà soát alert: chuyển sang alert theo triệu chứng và SLO burn rate, xoá hoặc hạ cấp alert không actionable, mỗi alert còn lại có runbook", "Tăng gấp đôi ngưỡng của mọi alert", "Tắt pager ngoài giờ hành chính"]
+answer = [1]
+explanation = "Vấn đề gốc là alert nhiễu, không phải thiếu người. Thêm người chỉ chia đều nhiễu; tăng ngưỡng đồng loạt có thể che sự cố thật; tắt pager ngoài giờ bỏ mặc người dùng. Alert theo SLO burn rate giảm nhiễu mà vẫn bắt được sự cố ảnh hưởng người dùng."
+
+[[questions]]
+id = "devops-lv005"
+module = "devops-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "finops"]
+prompt = "Hoá đơn cloud tăng 40% trong quý trong khi traffic chỉ tăng 10%. Ban giám đốc yêu cầu kế hoạch trong 2 tuần. Bước đầu tiên hợp lý nhất?"
+options = ["Mua reserved instance 3 năm cho toàn bộ máy đang chạy", "Gắn tag chi phí theo team/service/môi trường và lập báo cáo chi phí theo đơn vị (ví dụ cost per 1000 request) để tìm nguồn tăng", "Giảm replica mọi service xuống 1", "Lên kế hoạch chuyển sang nhà cung cấp cloud khác"]
+answer = [1]
+explanation = "Không đo được chi phí thuộc về ai thì mọi tối ưu đều là đoán. Commitment dài hạn trước khi rightsizing có thể khoá chi phí cho tài nguyên lãng phí; giảm replica đồng loạt làm mất HA; đổi cloud tốn kém và không giải quyết nguyên nhân."
+
+[[questions]]
+id = "devops-lv006"
+module = "devops-lead"
+type = "multiple"
+difficulty = 3
+tags = ["level:lead", "finops"]
+prompt = "Bạn soạn hướng dẫn rightsizing workload Kubernetes cho các team. Chọn các nhận định đúng."
+options = ["Scheduler giữ chỗ trên node theo requests, nên requests đặt quá cao làm node trông đầy dù thực tế rảnh và vẫn phải trả tiền", "Nên đặt requests dựa trên mức sử dụng thực tế theo percentile (ví dụ p90-p95) và xem lại định kỳ", "Bỏ hẳn requests để scheduler tự tối ưu", "Node spot/preemptible phù hợp workload stateless chịu được gián đoạn khi có PDB và nhiều replica", "Luôn đặt CPU limit bằng 10 lần request để an toàn"]
+answer = [0, 1, 3]
+explanation = "Requests là cơ sở xếp lịch và thường là cơ sở tính chi phí node; bỏ requests làm Pod thành BestEffort, dễ bị evict và HPA theo utilization không hoạt động. Hệ số limit cố định không có căn cứ; cần dựa trên profile thực tế."
+sources = ["kubernetes/core/pod-v1/index#ResourceRequirements", "kubernetes/policy/pod-disruption-budget-v1/index"]
+
+[[questions]]
+id = "devops-lv007"
+module = "devops-lead"
+type = "essay"
+difficulty = 3
+tags = ["level:lead", "gitops", "adr"]
+prompt = "Viết một ADR ngắn (bối cảnh, quyết định, hệ quả) chọn giữa GitOps pull-based và push kubectl apply từ CI cho 3 cluster Kubernetes, khi CI hiện đang giữ kubeconfig quyền admin và cấu hình thường bị sửa tay."
+keywords = [["gitops", "pull"], ["drift", "lệch cấu hình", "sửa tay"], ["credential", "kubeconfig", "quyền", "rbac"], ["rollback", "hoàn tác", "revert"], ["hệ quả", "đánh đổi", "trade-off"]]
+min_keywords = 3
+model_answer = '''Bối cảnh: 3 cluster, CI giữ kubeconfig quyền admin, cấu hình hay bị sửa tay nên drift liên tục. Quyết định: dùng GitOps pull-based, agent trong cluster đồng bộ từ repo manifest; CI chỉ build image và mở PR cập nhật tag. Hệ quả: CI không còn credential vào cluster, quyền được thu hẹp theo RBAC của agent; drift được phát hiện và tự sửa; rollback bằng git revert. Đánh đổi: team phải học công cụ mới, debug thêm một lớp đồng bộ, cần quy ước cấu trúc repo cho nhiều môi trường.'''
+explanation = "ADR tốt nêu rõ ràng buộc (credential, drift), quyết định và cả cái giá phải trả để người sau hiểu vì sao chọn như vậy."
+sources = ["git/git-revert"]
+
+[[questions]]
+id = "devops-lv008"
+module = "devops-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "terraform"]
+prompt = "Team 8 người quản lý 3 môi trường bằng Terraform, mọi người chạy apply từ laptop với state local, đã từng mất state một lần. Quyết định nào nên làm trước tiên?"
+options = ["Chuyển sang remote backend có locking và mã hoá, chạy plan/apply trong CI, apply chỉ sau khi plan được review", "Commit terraform.tfstate vào git để có lịch sử", "Mỗi người giữ một bản state riêng và đồng bộ qua chat", "Bỏ Terraform, thao tác trên console cho nhanh"]
+answer = [0]
+explanation = "Remote state với locking tránh apply đồng thời và mất state; chạy trong CI cho một luồng thay đổi có review. State trong git dễ lộ secret và vẫn xung đột; state riêng từng người là nguồn drift; bỏ IaC quay về ClickOps."
+sources = ["terraform/language/state/remote", "terraform/tutorials/cli/plan"]
+
+[[questions]]
+id = "devops-lv009"
+module = "devops-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "ci"]
+prompt = "Monorepo có 30 developer, pipeline CI mất 45 phút cho mọi PR nên merge queue nghẽn cả ngày. Bạn có 2 tuần cho việc này. Ưu tiên nào mang lại hiệu quả lớn nhất với rủi ro thấp?"
+options = ["Chỉ build và test các package bị ảnh hưởng bởi thay đổi, kết hợp cache dependency và layer image", "Bỏ toàn bộ integration test khỏi CI", "Tăng timeout pipeline lên 90 phút để bớt fail", "Yêu cầu developer tự chạy test ở máy rồi bỏ qua CI"]
+answer = [0]
+explanation = "Chạy theo phần bị ảnh hưởng cùng cache giảm thời gian mà vẫn giữ quality gate. Bỏ integration test hay bỏ CI đổi tốc độ lấy lỗi production; tăng timeout không giảm thời gian chờ."
+
+[[questions]]
+id = "devops-lv010"
+module = "devops-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "secrets"]
+prompt = "Một file .env chứa khoá API production bị commit nhầm vào repo private và đã nằm đó 3 ngày. Kế hoạch xử lý nào đúng nhất?"
+options = ["Rotate ngay khoá bị lộ, kiểm tra log sử dụng, chuyển secrets sang secret manager inject lúc runtime với quyền tối thiểu, thêm secret scanning ở pre-commit và CI", "Force-push xoá commit là đủ vì không ai thấy", "Mã hoá base64 nội dung rồi commit lại", "Không cần làm gì vì repo là private"]
+answer = [0]
+explanation = "Secret đã vào lịch sử thì coi như đã lộ: bản clone, fork, cache CI đều có thể giữ nó. Phải rotate trước, sau đó sửa quy trình để không lặp lại. Base64 không phải mã hoá; repo private vẫn có nhiều người và công cụ đọc được."
+
+[[questions]]
+id = "devops-lv011"
+module = "devops-lead"
+type = "multiple"
+difficulty = 3
+tags = ["level:lead", "deploy-strategy"]
+prompt = "Bạn viết tiêu chí go/no-go tự động để promote canary lên 100%. Chọn các tiêu chí nên có."
+options = ["Error rate của canary không vượt baseline quá ngưỡng đã định trước", "Latency p99 của canary nằm trong ngưỡng so với baseline", "Canary đã nhận đủ lượng request và thời gian quan sát tối thiểu để so sánh có ý nghĩa", "Mọi Pod canary đã ở trạng thái Running", "CPU của canary thấp hơn baseline"]
+answer = [0, 1, 2]
+explanation = "Tiêu chí phải phản ánh trải nghiệm người dùng và có đủ mẫu. Running chỉ nói process đang chạy; CPU thấp hơn có thể do canary nhận ít traffic hoặc đang trả lỗi nhanh."
+
+[[questions]]
+id = "devops-lv012"
+module = "devops-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "incident"]
+prompt = "Bạn là incident commander. Error rate tăng mạnh ngay sau một lần deploy 20 phút trước; chưa rõ nguyên nhân. Hành động đầu tiên?"
+options = ["Rollback về phiên bản trước để giảm tác động, rồi điều tra root cause", "Debug trực tiếp trên production cho tới khi tìm ra nguyên nhân", "Chờ thêm 30 phút xem lỗi có tự hết", "Viết bản fix nhanh và deploy luôn không qua test"]
+answer = [0]
+explanation = "Ưu tiên trong sự cố là giảm tác động. Thay đổi gần nhất là nghi phạm hàng đầu và rollback là thao tác đã biết, có thể đảo ngược. Debug hay chờ kéo dài thời gian người dùng bị ảnh hưởng; fix forward chưa test có thể làm tệ hơn."
+sources = ["kubernetes/apps/deployment-v1/index"]
+
+[[questions]]
+id = "devops-lv013"
+module = "devops-lead"
+type = "fill"
+difficulty = 3
+tags = ["level:lead", "slo"]
+prompt = '''
+Với SLO 99.9%, phần 0.1% lỗi được phép trong cửa sổ đo gọi là error {{blank}}; team dùng nó để quyết định khi nào giảm nhịp phát hành.
+'''
+blanks = [["budget"]]
+explanation = "Error budget = 1 − SLO, là lượng không tin cậy được phép tiêu cho thay đổi và rủi ro."
+
+[[questions]]
+id = "devops-lv014"
+module = "devops-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "platform"]
+prompt = "12 team đều tự viết Helm chart và pipeline riêng; mỗi lần cần vá bảo mật phải sửa 12 nơi khác nhau. Bạn được giao chuẩn hoá trong một quý. Hướng đi hợp lý nhất?"
+options = ["Xây golden path: template pipeline và chart chuẩn có điểm mở rộng, migrate dần theo team, đo tỉ lệ áp dụng", "Bắt buộc mọi team dùng một chart duy nhất, cấm mọi tuỳ biến từ tuần sau", "Giữ nguyên vì team nào hiểu service của team đó", "Viết một trang wiki hướng dẫn và để team tự làm theo"]
+answer = [0]
+explanation = "Golden path giảm chi phí bảo trì nhưng vẫn cho phép ngoại lệ có kiểm soát; migrate dần giảm rủi ro. Áp đặt tức thì sẽ gặp phản kháng và chặn các trường hợp hợp lệ; wiki không có công cụ đi kèm thường không ai làm theo."
+
+[[questions]]
+id = "devops-lv015"
+module = "devops-lead"
+type = "essay"
+difficulty = 3
+tags = ["level:lead", "incident"]
+prompt = "MTTR trung bình của team là 3 giờ, phần lớn thời gian dành cho việc tìm xem lỗi ở đâu. Trình bày kế hoạch 1 quý để giảm MTTR, nêu thứ tự ưu tiên và cách đo."
+keywords = [["runbook"], ["alert", "cảnh báo"], ["dashboard", "observability", "trace", "quan sát"], ["rollback", "feature flag"], ["postmortem", "game day", "diễn tập"]]
+min_keywords = 3
+model_answer = '''Đầu tiên chuẩn hoá observability: dashboard theo SLO cho từng service, log có request id và trace phân tán để khoanh vùng nhanh. Thứ hai, alert theo triệu chứng kèm runbook nêu bước kiểm tra và cách mitigate. Thứ ba, đảm bảo rollback một lệnh và feature flag cho tính năng rủi ro để giảm tác động trước khi tìm root cause. Cuối cùng chạy game day hằng tháng và theo dõi action item từ postmortem. Đo bằng MTTR, thời gian phát hiện và tỉ lệ sự cố có runbook.'''
+explanation = "Giảm MTTR là giảm thời gian phát hiện, khoanh vùng và mitigate; mỗi bước cần công cụ và thói quen riêng, và phải đo được."
+
+[[questions]]
+id = "devops-lv016"
+module = "devops-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "disaster-recovery"]
+prompt = "Database chính cần RPO 15 phút và RTO 1 giờ; ngân sách hạn chế, team chưa từng thử restore. Phương án hợp lý nhất?"
+options = ["Backup đầy đủ mỗi đêm", "Replica bất đồng bộ sang region khác cộng point-in-time recovery, diễn tập restore định kỳ và đo thời gian thực tế", "Triển khai active-active đa region ngay lập tức", "Chụp snapshot thủ công trước mỗi lần deploy"]
+answer = [1]
+explanation = "Backup hằng đêm có thể mất tới 24 giờ dữ liệu, vượt RPO; snapshot thủ công không có lịch cố định. Active-active đắt và phức tạp vượt nhu cầu. PITR cộng replica đáp ứng RPO/RTO với chi phí vừa phải, và chỉ diễn tập mới chứng minh được RTO."
+
+[[questions]]
+id = "devops-lv017"
+module = "devops-lead"
+type = "multiple"
+difficulty = 3
+tags = ["level:lead", "anti-pattern"]
+prompt = "Khi audit vận hành của một nhóm 20 kỹ sư, những dấu hiệu nào là anti-pattern cần đưa vào kế hoạch khắc phục?"
+options = ["Sửa tay cấu hình production trên console, IaC không phản ánh thực tế", "Mỗi service tự chọn định dạng log và công cụ thu thập riêng", "Mọi thay đổi hạ tầng đi qua PR có kèm kết quả plan", "Nhiều alert không có runbook và không ai biết phải làm gì khi nhận", "Mọi developer đều có quyền cluster-admin cho tiện"]
+answer = [0, 1, 3, 4]
+explanation = "ClickOps tạo drift, log không chuẩn làm chậm điều tra, alert không actionable gây mệt mỏi, quyền rộng tăng bán kính thiệt hại. Thay đổi qua PR có plan là thực hành tốt."
+
+[[questions]]
+id = "devops-lv018"
+module = "devops-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "platform"]
+prompt = "Startup 4 developer, 6 service HTTP stateless, chưa có ai chuyên vận hành, cần ra mắt trong 2 tháng. Chọn nền tảng chạy service nào hợp lý nhất?"
+options = ["Tự dựng Kubernetes trên VM để làm chủ hoàn toàn", "Managed Kubernetes kèm service mesh ngay từ đầu", "Dịch vụ container serverless/PaaS được quản lý, ghi ADR về điều kiện sẽ chuyển sang Kubernetes", "Mỗi service một VM cài tay"]
+answer = [2]
+explanation = "Với team nhỏ không có người vận hành, chi phí học và trực Kubernetes lớn hơn lợi ích. PaaS quản lý cho phép tập trung vào sản phẩm; ADR ghi rõ ngưỡng (số service, nhu cầu tuỳ biến mạng, chi phí) để xem xét lại. VM cài tay khó tái tạo và mở rộng."
+
+[[questions]]
+id = "devops-lvc02"
+module = "devops-lead"
+type = "code"
+lang = "python"
+difficulty = 3
+tags = ["level:lead", "slo"]
+title = "Chính sách phát hành theo error budget"
+prompt = '''
+Viết release_policy(slo, total, failed, days_elapsed, window_days=30) trả về dict có ba khoá burn_rate, budget_remaining, action.
+- burn_rate = (failed / total) / (1 - slo), làm tròn 4 chữ số.
+- Phần budget đã tiêu = burn_rate * days_elapsed / window_days; budget_remaining = 1 - phần đã tiêu, không nhỏ hơn 0, làm tròn 4 chữ số.
+- action là "freeze" nếu budget_remaining bằng 0, ngược lại "slow_down" nếu burn_rate > 1, còn lại "ship".
+- Ném ValueError nếu slo không nằm trong khoảng mở (0, 1), total <= 0, failed < 0 hoặc failed > total, hoặc days_elapsed không nằm trong (0, window_days].
+Ví dụ: release_policy(0.999, 1_000_000, 1500, 10) trả về {"burn_rate": 1.5, "budget_remaining": 0.5, "action": "slow_down"}.
+'''
+starter = '''
+def release_policy(slo, total, failed, days_elapsed, window_days=30):
+    return {"burn_rate": 0.0, "budget_remaining": 1.0, "action": "ship"}
+'''
+solution = '''
+def release_policy(slo, total, failed, days_elapsed, window_days=30):
+    if not (0 < slo < 1):
+        raise ValueError("slo must be in (0, 1)")
+    if total <= 0 or failed < 0 or failed > total:
+        raise ValueError("invalid request counts")
+    if not (0 < days_elapsed <= window_days):
+        raise ValueError("invalid days_elapsed")
+    burn_rate = round((failed / total) / (1 - slo), 4)
+    consumed = burn_rate * days_elapsed / window_days
+    remaining = round(max(0.0, 1 - consumed), 4)
+    if remaining == 0:
+        action = "freeze"
+    elif burn_rate > 1:
+        action = "slow_down"
+    else:
+        action = "ship"
+    return {"burn_rate": burn_rate, "budget_remaining": remaining, "action": action}
+'''
+tests = '''
+@test("burn chậm thì ship")
+def _():
+    result = release_policy(0.999, 1_000_000, 500, 10)
+    expect(result["action"]).to_equal("ship")
+    expect(result["burn_rate"]).to_be_close_to(0.5, 3)
+    expect(result["budget_remaining"]).to_be_close_to(0.8333, 3)
+
+@test("burn nhanh thì slow_down")
+def _():
+    expect(release_policy(0.999, 1_000_000, 1500, 10)).to_equal({"burn_rate": 1.5, "budget_remaining": 0.5, "action": "slow_down"})
+
+@test("hết budget thì freeze và không âm")
+def _():
+    result = release_policy(0.999, 1_000_000, 4000, 10)
+    expect(result["action"]).to_equal("freeze")
+    expect(result["budget_remaining"]).to_equal(0.0)
+
+@test("không có lỗi")
+def _():
+    expect(release_policy(0.99, 200, 0, 30)).to_equal({"burn_rate": 0.0, "budget_remaining": 1.0, "action": "ship"})
+
+@test("đầu vào không hợp lệ")
+def _():
+    expect(lambda: release_policy(1.0, 100, 1, 5)).to_raise(ValueError)
+    expect(lambda: release_policy(0.999, 0, 0, 5)).to_raise(ValueError)
+    expect(lambda: release_policy(0.999, 100, 101, 5)).to_raise(ValueError)
+    expect(lambda: release_policy(0.999, 100, 1, 31)).to_raise(ValueError)
+'''
+hints = ["Burn rate 1 nghĩa là tiêu budget đúng tốc độ để vừa hết ở cuối cửa sổ.", "Kiểm tra freeze trước slow_down."]
+explanation = "Biến error budget policy thành code giúp pipeline tự quyết định chặn hay cho phép phát hành, thay vì tranh luận mỗi lần."
+
+[[questions]]
+id = "devops-lv019"
+module = "ops-docker"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "container-internals"]
+prompt = "Container có memory limit 512Mi. Ứng dụng tăng dần bộ nhớ rồi container dừng với exit code 137, log ứng dụng không có stack trace. Giải thích nào đúng nhất?"
+options = ["Kernel OOM killer kết thúc process khi cgroup vượt giới hạn memory, gửi SIGKILL nên ứng dụng không kịp ghi log", "Docker daemon gặp lỗi và khởi động lại", "Ứng dụng tự gọi exit(137) khi hết heap", "Image bị hỏng layer nên process crash"]
+answer = [0]
+explanation = "Memory limit được thực thi bởi cgroup; khi vượt, OOM killer gửi SIGKILL (128 + 9 = 137). SIGKILL không bắt được nên không có log. Cần xem metrics bộ nhớ và sự kiện OOM, không chỉ log ứng dụng."
+sources = ["docker/engine/reference/commandline/stats/index"]
+
+[[questions]]
+id = "devops-lv020"
+module = "ops-docker"
+type = "multiple"
+difficulty = 3
+tags = ["level:senior", "container-internals"]
+prompt = "Chọn các nhận định đúng về cách container được hiện thực trên Linux."
+options = ["PID namespace cho container một cây process riêng, process đầu tiên có PID 1", "cgroup giới hạn và đo đếm CPU, memory, I/O của nhóm process", "Container dùng chung kernel với host", "Mỗi container chạy một kernel riêng như máy ảo", "Layer của image là chỉ đọc; container ghi vào một lớp copy-on-write phía trên"]
+answer = [0, 1, 2, 4]
+explanation = "Container là process được cô lập bằng namespace và giới hạn bằng cgroup, dùng chung kernel host. Vì dùng chung kernel, lỗ hổng kernel ảnh hưởng mọi container — khác máy ảo."
+sources = ["docker/engine/security/index"]
+
+[[questions]]
+id = "devops-lv021"
+module = "devops-dv-k8s-rollout"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "scheduling"]
+prompt = "Pod mới bị Pending với sự kiện \"0/5 nodes are available: insufficient cpu\", trong khi dashboard cho thấy CPU thực dùng của các node chỉ khoảng 20%. Nguyên nhân hợp lý nhất?"
+options = ["Scheduler xếp Pod theo tổng requests đã cam kết trên node, không theo mức sử dụng thực tế; requests của các Pod hiện tại đặt quá cao", "Metrics server đang báo sai nên scheduler bị nhầm", "CPU limit của Pod mới quá thấp", "Node đang bị taint NoExecute"]
+answer = [0]
+explanation = "Scheduler so requests của Pod mới với phần allocatable còn lại sau khi trừ requests của Pod đang chạy. Usage thấp nhưng requests cao vẫn khiến node bị coi là đầy. Cần rightsizing requests hoặc thêm node."
+sources = ["kubernetes/core/pod-v1/index#ResourceRequirements"]
+
+[[questions]]
+id = "devops-lv022"
+module = "devops-dv-k8s-rollout"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "probes"]
+prompt = "Liveness probe của API gọi tới database. Khi database chậm 1 phút, toàn bộ Pod API bị restart liên tục và sự cố lan rộng hơn. Sửa thế nào?"
+options = ["Để liveness chỉ kiểm tra bản thân process (ví dụ event loop còn phản hồi); phụ thuộc bên ngoài xem xét ở readiness hoặc xử lý bằng timeout/circuit breaker", "Tăng failureThreshold của liveness lên 100", "Bỏ readiness probe, chỉ giữ liveness", "Cho liveness gọi thêm cả cache và message queue"]
+answer = [0]
+explanation = "Restart không chữa được database chậm mà còn gây cold start đồng loạt. Liveness chỉ nên phát hiện process hỏng không tự phục hồi. Tăng threshold quá lớn làm mất tác dụng của probe; thêm dependency vào liveness làm tệ hơn."
+sources = ["kubernetes/core/pod-v1/index"]
+
+[[questions]]
+id = "devops-lv023"
+module = "ops-kubernetes"
+type = "multiple"
+difficulty = 3
+tags = ["level:senior", "graceful-shutdown"]
+prompt = "Mỗi lần rolling update, một ít request trả 502. Chọn các nhận định đúng để thiết kế graceful shutdown."
+options = ["Khi Pod bị xoá, container nhận SIGTERM và có terminationGracePeriodSeconds để kết thúc", "Việc gỡ Pod khỏi endpoints diễn ra song song với SIGTERM, nên request vẫn có thể tới trong vài giây đầu", "Một preStop hook chờ ngắn giúp load balancer kịp ngừng gửi request trước khi ứng dụng đóng", "Ứng dụng nên thoát ngay khi nhận SIGTERM để rollout nhanh hơn", "Nếu process chạy dưới shell script không chuyển tiếp tín hiệu, ứng dụng có thể không nhận SIGTERM"]
+answer = [0, 1, 2, 4]
+explanation = "Cần dừng nhận request mới, xử lý xong request đang chạy rồi mới thoát; thoát ngay làm rơi request đang dở. preStop chờ ngắn che khoảng trễ cập nhật endpoints; PID 1 là shell có thể nuốt tín hiệu."
+sources = ["kubernetes/core/pod-v1/index"]
+
+[[questions]]
+id = "devops-lv024"
+module = "ops-cicd-terraform"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "drift"]
+prompt = "terraform plan bất ngờ muốn xoá một rule security group mà ai đó đã thêm tay trên console để chữa cháy sự cố tuần trước. Cách xử lý đúng?"
+options = ["Tìm hiểu vì sao rule được thêm; nếu cần giữ thì đưa vào code (hoặc import) qua PR, nếu không thì để apply xoá có thông báo; sau đó bổ sung quy trình tránh sửa tay", "Apply luôn vì code là nguồn sự thật", "Sửa trực tiếp file state để Terraform bỏ qua rule", "Thêm lifecycle ignore_changes cho toàn bộ security group"]
+answer = [0]
+explanation = "Drift là tín hiệu có thay đổi ngoài quy trình; apply mù có thể tái hiện sự cố, sửa state tay rất rủi ro, ignore_changes toàn bộ che mọi drift tương lai. Quyết định giữ hay bỏ phải có lý do và đi qua review."
+sources = ["terraform/tutorials/cli/plan", "terraform/language/state/purpose"]
+
+[[questions]]
+id = "devops-lv025"
+module = "devops-dv-terraform-modules"
+type = "fill"
+difficulty = 3
+tags = ["level:senior", "refactoring"]
+prompt = '''
+Bạn đổi tên resource aws_s3_bucket.logs thành aws_s3_bucket.audit_logs và không muốn Terraform xoá rồi tạo lại bucket. Điền tên block khai báo việc chuyển địa chỉ:
+{{blank}} { from = aws_s3_bucket.logs  to = aws_s3_bucket.audit_logs }
+'''
+blanks = [["moved"]]
+explanation = "Block moved ghi lại việc đổi địa chỉ trong code để Terraform cập nhật state thay vì destroy/create; nằm trong code nên được review và áp dụng cho mọi workspace."
+sources = ["terraform/language/modules/syntax"]
+
+[[questions]]
+id = "devops-lv026"
+module = "devops-dv-k8s-security"
+type = "essay"
+difficulty = 3
+tags = ["level:senior", "secrets"]
+prompt = "So sánh việc lưu secret bằng Kubernetes Secret thuần với việc dùng secret manager bên ngoài (đồng bộ qua operator hoặc inject lúc runtime). Nêu rủi ro và điều kiện tối thiểu cho mỗi cách."
+keywords = [["base64"], ["etcd", "encryption at rest", "mã hoá"], ["vault", "secret manager", "external secrets"], ["rotate", "rotation", "xoay vòng"], ["rbac", "quyền"]]
+min_keywords = 3
+model_answer = '''Kubernetes Secret chỉ mã base64, nên cần bật encryption at rest cho etcd và siết RBAC vì ai đọc được Secret hoặc tạo Pod trong namespace là lấy được giá trị. Secret manager bên ngoài như Vault tập trung kiểm soát truy cập, audit và rotation tự động; đổi lại thêm một dependency cần HA và cần cơ chế đồng bộ hoặc inject. Cả hai cách đều phải tránh đưa secret vào git, log và biến môi trường in ra.'''
+explanation = "Điểm mấu chốt: base64 không phải mã hoá, và quyền đọc Secret hay tạo Pod đều là quyền đọc secret."
+sources = ["kubernetes/core/secret-v1/index", "kubernetes/rbac/role-v1/index"]
+
+[[questions]]
+id = "devops-lv027"
+module = "devops-dv-k8s-security"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "network-policy"]
+prompt = "Bạn áp NetworkPolicy deny-all cho namespace payments nhưng Pod ở namespace khác vẫn gọi được vào. Manifest hợp lệ và đã được tạo. Nguyên nhân khả dĩ nhất?"
+options = ["CNI plugin của cluster không thực thi NetworkPolicy, nên object tồn tại nhưng không có tác dụng", "NetworkPolicy chỉ áp dụng cho Service type LoadBalancer", "Phải restart toàn bộ node sau khi tạo NetworkPolicy", "NetworkPolicy chỉ chặn egress, không chặn ingress"]
+answer = [0]
+explanation = "API server chấp nhận NetworkPolicy, nhưng việc chặn do CNI thực hiện. Với CNI không hỗ trợ, policy im lặng không có hiệu lực; cần kiểm chứng bằng test kết nối thực tế."
+sources = ["kubernetes/networking/network-policy-v1/index"]
+
+[[questions]]
+id = "devops-lv028"
+module = "ops-nginx"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "retry"]
+prompt = "Sau khi thêm non_idempotent vào proxy_next_upstream, team thấy một số đơn hàng bị tạo hai lần khi một backend timeout. Giải thích nào đúng?"
+options = ["Nginx đã gửi lại POST sang upstream khác dù backend đầu có thể đã xử lý xong; POST không idempotent nên bị tạo trùng", "Nginx nhân đôi mọi request theo mặc định", "Client tự gửi lại request do header Connection", "Upstream keepalive làm request bị gửi hai lần"]
+answer = [0]
+explanation = "Mặc định nginx không retry request không idempotent sang upstream khác. Bật non_idempotent bỏ bảo vệ đó; timeout không có nghĩa backend chưa xử lý. Cần idempotency key ở ứng dụng nếu muốn retry an toàn."
+sources = ["nginx/http/ngx_http_proxy_module"]
+
+[[questions]]
+id = "devops-lv029"
+module = "devops-dv-k8s-rollout"
+type = "multiple"
+difficulty = 3
+tags = ["level:senior", "autoscaling"]
+prompt = "HPA của một service liên tục scale lên rồi xuống mỗi vài phút (flapping). Chọn các hướng điều tra/khắc phục hợp lý."
+options = ["Cấu hình behavior với stabilization window cho scale down", "Kiểm tra requests CPU có phản ánh mức dùng thực tế không, vì utilization tính theo requests", "Xem thời gian khởi động: Pod mới chưa ready khiến tải dồn lên Pod cũ", "Đặt minReplicas bằng maxReplicas để HPA không làm gì", "Xoá readiness probe để Pod nhận traffic sớm hơn"]
+answer = [0, 1, 2]
+explanation = "Stabilization window làm mượt quyết định scale; requests sai làm phần trăm utilization sai; startup chậm tạo dao động. Cố định replica làm mất tác dụng HPA; bỏ readiness gửi traffic tới Pod chưa sẵn sàng."
+sources = ["kubernetes/autoscaling/horizontal-pod-autoscaler-v2/index#HorizontalPodAutoscalerBehavior"]
+
+[[questions]]
+id = "devops-lv030"
+module = "ops-linux-bash"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "bash"]
+prompt = '''
+Đoạn script sau in ra gì nếu file hosts.txt có 3 dòng?
+```bash
+count=0
+cat hosts.txt | while read -r line; do
+  count=$((count + 1))
+done
+echo "$count"
+```
+'''
+options = ["0, vì vòng while trong pipeline chạy ở subshell nên biến count bên ngoài không đổi", "3", "Lỗi cú pháp vì thiếu dấu chấm phẩy", "Rỗng vì count chưa được export"]
+answer = [0]
+explanation = "Mỗi phần của pipeline chạy trong subshell (trừ khi bật lastpipe). Dùng redirection: while read -r line; do ...; done < hosts.txt để vòng lặp chạy ở shell hiện tại."
+sources = ["bash/pipelines", "bash/redirections"]
+
+[[questions]]
+id = "devops-lv031"
+module = "ops-docker"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "supply-chain"]
+prompt = "Build hôm qua và hôm nay của cùng commit cho ra image khác nhau và bản hôm nay lỗi; nguyên nhân là tag python:3.12-slim của base image đã được cập nhật. Cách làm build tái lập được mà vẫn nhận bản vá bảo mật?"
+options = ["Pin base image bằng digest @sha256 và dùng bot tự mở PR cập nhật digest định kỳ, có CI chạy test", "Luôn dùng tag latest để nhận bản mới nhất", "Không bao giờ cập nhật base image", "Build lại image mỗi giờ để phát hiện sớm"]
+answer = [0]
+explanation = "Digest bất biến nên build tái lập được; cập nhật qua PR tự động giữ được bản vá nhưng có test và review. latest làm vấn đề tệ hơn; đóng băng mãi tích luỹ lỗ hổng."
+sources = ["docker/engine/reference/builder/index"]
+
+[[questions]]
+id = "devops-lv032"
+module = "devops-dv-nginx-edge"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "security"]
+prompt = "Nginx đứng sau load balancer, cấu hình set_real_ip_from 0.0.0.0/0 và real_ip_header X-Forwarded-For; limit_req theo $binary_remote_addr. Kẻ tấn công vượt rate limit dễ dàng. Vì sao và sửa thế nào?"
+options = ["Tin mọi nguồn nên client tự đặt X-Forwarded-For để đổi IP mỗi request; chỉ tin dải IP của load balancer", "limit_req không hoạt động với HTTP/2", "Phải dùng $remote_port làm key", "Cần tăng kích thước zone của limit_req"]
+answer = [0]
+explanation = "set_real_ip_from chỉ nên liệt kê proxy đáng tin. Tin 0.0.0.0/0 cho phép mọi client giả mạo địa chỉ thật, làm rate limit và log theo IP vô nghĩa."
+sources = ["nginx/http/ngx_http_realip_module#set_real_ip_from", "nginx/http/ngx_http_limit_req_module#limit_req_zone"]
+
+[[questions]]
+id = "devops-lv033"
+module = "ops-cicd-terraform"
+type = "multiple"
+difficulty = 3
+tags = ["level:senior", "terraform-state"]
+prompt = "Module Terraform tạo mật khẩu database. Chọn các nhận định đúng về state và dữ liệu nhạy cảm."
+options = ["State có thể chứa giá trị nhạy cảm ở dạng rõ, nên backend cần mã hoá và kiểm soát truy cập", "Đánh dấu output sensitive = true chỉ ẩn giá trị khi hiển thị, không loại nó khỏi state", "Người có quyền đọc state có thể lấy được mật khẩu", "Đặt sensitive = true là đủ để lưu state trong git công khai", "Có thể giảm rủi ro bằng cách để secret manager sinh và giữ mật khẩu, Terraform chỉ tham chiếu"]
+answer = [0, 1, 2, 4]
+explanation = "sensitive chỉ ảnh hưởng hiển thị trong CLI/log. Quyền đọc state tương đương quyền đọc secret, nên phải bảo vệ backend hoặc tránh đưa secret vào state."
+sources = ["terraform/language/state/remote", "terraform/language/values/outputs"]
+
+[[questions]]
+id = "devops-lv034"
+module = "ops-docker"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "build-cache"]
+prompt = '''
+Mỗi lần sửa một dòng code, bước pip install chạy lại từ đầu mất 4 phút. Dockerfile hiện tại:
+```dockerfile
+FROM python:3.12-slim
+WORKDIR /app
+COPY . .
+RUN pip install -r requirements.txt
+```
+Sửa thế nào?
+'''
+options = ["COPY requirements.txt trước, RUN pip install, rồi mới COPY phần còn lại", "Thêm --no-cache vào docker build", "Gộp COPY và RUN vào một dòng", "Đổi sang base image python:latest"]
+answer = [0]
+explanation = "Cache layer bị vô hiệu từ chỉ thị đầu tiên có input thay đổi. Copy riêng file dependency giúp layer pip install chỉ chạy lại khi requirements.txt đổi."
+sources = ["docker/engine/reference/builder/index"]
+
+[[questions]]
+id = "devops-lv035"
+module = "ops-linux-bash"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "bash"]
+prompt = "Script deploy tạo thư mục tạm bằng tmp=$(mktemp -d) và cần xoá nó cả khi script thành công lẫn khi lỗi giữa chừng (có set -e). Cách đúng?"
+options = ["trap 'rm -rf \"$tmp\"' EXIT ngay sau khi tạo thư mục", "Thêm rm -rf \"$tmp\" ở dòng cuối script", "Đặt thư mục tạm trong /tmp vì hệ điều hành sẽ tự xoá ngay", "Dùng set +e để script không bao giờ dừng giữa chừng"]
+answer = [0]
+explanation = "trap EXIT chạy khi shell thoát vì bất kỳ lý do gì, kể cả do set -e. Dòng rm cuối script bị bỏ qua khi lỗi; tắt set -e che lỗi thật."
+sources = ["bash/bourne-shell-builtins#index-trap", "bash/the-set-builtin"]
+
+[[questions]]
+id = "devops-lv036"
+module = "ops-git"
+type = "fill"
+difficulty = 2
+tags = ["level:middle", "debugging"]
+prompt = '''
+Có một regression nằm đâu đó trong 300 commit kể từ tag v2.3. Điền lệnh Git dùng tìm kiếm nhị phân để khoanh commit gây lỗi: git {{blank}} start
+'''
+blanks = [["bisect"]]
+explanation = "git bisect chia đôi khoảng commit, đánh dấu good/bad (hoặc chạy script với bisect run) để tìm commit đầu tiên gây lỗi trong khoảng log2(300) ≈ 9 bước."
+sources = ["git/git-bisect"]
+
+[[questions]]
+id = "devops-lv037"
+module = "ops-kubernetes"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "debugging"]
+prompt = "Pod ở trạng thái CrashLoopBackOff; kubectl logs pod chỉ thấy vài dòng khởi động của lần chạy hiện tại. Lệnh nào giúp xem log của lần chạy vừa crash?"
+options = ["kubectl logs pod --previous", "kubectl get pod -o wide", "kubectl rollout restart deployment/api", "kubectl delete pod rồi xem lại log"]
+answer = [0]
+explanation = "--previous lấy log của container instance trước đó, nơi thường có lỗi gây crash. Xoá Pod làm mất luôn log đó."
+sources = ["kubernetes/core/pod-v1/index"]
+
+[[questions]]
+id = "devops-lv038"
+module = "devops-dv-k8s-rollout"
+type = "multiple"
+difficulty = 2
+tags = ["level:middle", "rolling-update"]
+prompt = "Deployment có 4 replicas, strategy RollingUpdate với maxSurge: 1 và maxUnavailable: 0. Chọn các nhận định đúng."
+options = ["Trong lúc cập nhật có thể có tối đa 5 Pod", "Luôn giữ ít nhất 4 Pod sẵn sàng trong suốt rollout", "Nếu Pod mới không bao giờ ready, rollout dừng lại và các Pod cũ vẫn phục vụ", "Cấu hình này cần ít tài nguyên dư nhất có thể", "Rollout xoá hết Pod cũ trước rồi mới tạo Pod mới"]
+answer = [0, 1, 2]
+explanation = "maxUnavailable 0 giữ đủ capacity, maxSurge 1 cho thêm một Pod tạm thời, nên cần dư tài nguyên cho Pod thứ 5. Xoá hết rồi tạo là hành vi của Recreate."
+sources = ["kubernetes/apps/deployment-v1/index#DeploymentSpec"]
+
+[[questions]]
+id = "devops-lv039"
+module = "ops-nginx"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "reverse-proxy"]
+prompt = '''
+Với cấu hình dưới đây, request GET /api/users được chuyển tới backend với URI nào?
+```nginx
+location /api/ {
+    proxy_pass http://backend/;
+}
+```
+'''
+options = ["/users", "/api/users", "/api//users", "/"]
+answer = [0]
+explanation = "Khi proxy_pass có URI (ở đây là /), phần khớp với location được thay bằng URI đó. Không có dấu / sau tên upstream thì URI gốc /api/users được giữ nguyên."
+sources = ["nginx/http/ngx_http_proxy_module"]
+
+[[questions]]
+id = "devops-lv040"
+module = "ops-cicd-terraform"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "ci"]
+prompt = "Pipeline chạy terraform plan khi mở PR và chạy terraform apply sau khi merge. Giữa hai lúc đó có người khác merge thay đổi hạ tầng. Cách giảm rủi ro apply khác với plan đã review?"
+options = ["Lưu plan ra file (plan -out) ở bước được phê duyệt và apply đúng file plan đó, kết hợp state locking", "Chạy apply -auto-approve ngay khi mở PR", "Bỏ bước plan để pipeline nhanh hơn", "Chạy apply hai lần cho chắc"]
+answer = [0]
+explanation = "Apply một plan file đã lưu đảm bảo chỉ áp dụng đúng thay đổi đã review; nếu state đã đổi, Terraform từ chối plan cũ. Locking ngăn hai apply cùng lúc."
+sources = ["terraform/tutorials/cli/plan", "terraform/tutorials/cli/apply"]
+
+[[questions]]
+id = "devops-lv041"
+module = "devops-dv-k8s-security"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "pod-security"]
+prompt = "Bản quét bảo mật báo container của bạn chạy bằng root và có thể ghi vào filesystem gốc. Cấu hình securityContext nào giải quyết đúng hai vấn đề này?"
+options = ["runAsNonRoot: true (kèm runAsUser khác 0) và readOnlyRootFilesystem: true, mount emptyDir cho thư mục cần ghi", "privileged: true", "hostNetwork: true", "Thêm capability SYS_ADMIN"]
+answer = [0]
+explanation = "runAsNonRoot chặn chạy UID 0; readOnlyRootFilesystem ngăn ghi vào image, thư mục cần ghi dùng volume riêng. Các lựa chọn còn lại đều mở rộng quyền."
+sources = ["kubernetes/core/pod-v1/index#PodSecurityContext"]
+
+[[questions]]
+id = "devops-lv042"
+module = "ops-git"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "git"]
+prompt = "Bạn lỡ git add file config.local.json và muốn bỏ nó khỏi staging nhưng vẫn giữ nội dung đã sửa trong working tree. Lệnh nào?"
+options = ["git restore --staged config.local.json", "git restore config.local.json", "git reset --hard", "git rm config.local.json"]
+answer = [0]
+explanation = "--staged chỉ đưa index về như HEAD, không đụng working tree. Không có --staged thì restore ghi đè nội dung file; reset --hard xoá mọi thay đổi; git rm xoá file."
+sources = ["git/git-restore"]
+
+[[questions]]
+id = "devops-lv043"
+module = "ops-docker"
+type = "fill"
+difficulty = 1
+tags = ["level:junior", "docker"]
+prompt = '''
+Điền lệnh để xem log của container web và tiếp tục theo dõi log mới: docker {{blank}} -f web
+'''
+blanks = [["logs"]]
+explanation = "docker logs in stdout/stderr của container; -f (follow) giữ kết nối để in log mới."
+sources = ["docker/engine/reference/commandline/logs/index"]
+
+[[questions]]
+id = "devops-lv044"
+module = "ops-kubernetes"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "service"]
+prompt = "Service của database chỉ cần các Pod khác trong cluster truy cập, không mở ra Internet. Chọn type nào?"
+options = ["ClusterIP", "LoadBalancer", "NodePort", "ExternalName"]
+answer = [0]
+explanation = "ClusterIP (mặc định) chỉ cấp địa chỉ nội bộ cluster. NodePort và LoadBalancer mở service ra ngoài; ExternalName chỉ trỏ tên DNS ra ngoài."
+sources = ["kubernetes/core/service-v1/index"]
+
+[[questions]]
+id = "devops-lv045"
+module = "ops-linux-bash"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "bash"]
+prompt = "Trong Bash, biến đặc biệt nào chứa exit status của lệnh vừa chạy xong (0 là thành công)?"
+options = ["$?", "$!", "$$", "$#"]
+answer = [0]
+explanation = "$? là exit status lệnh gần nhất; $! là PID tiến trình nền gần nhất; $$ là PID shell; $# là số tham số."
+sources = ["bash/exit-status"]
+
+[[questions]]
+id = "devops-lv046"
+module = "ops-kubernetes"
+type = "fill"
+difficulty = 1
+tags = ["level:junior", "kubectl"]
+prompt = '''
+Điền tài nguyên để liệt kê các Pod trong namespace hiện tại: kubectl get {{blank}}
+'''
+blanks = [["pods", "pod", "po"]]
+explanation = "kubectl get pods (hoặc pod, po) liệt kê Pod cùng trạng thái, số lần restart và tuổi."
+sources = ["kubernetes/core/pod-v1/index"]
+
+[[questions]]
+id = "devops-lv047"
+module = "ops-nginx"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "nginx"]
+prompt = "Bạn vừa sửa file cấu hình nginx trên server đang phục vụ traffic. Trình tự an toàn để áp dụng là gì?"
+options = ["nginx -t để kiểm tra cú pháp, rồi nginx -s reload", "Dừng nginx rồi khởi động lại ngay", "nginx -s reload rồi mới kiểm tra", "Khởi động lại toàn bộ server"]
+answer = [0]
+explanation = "nginx -t phát hiện lỗi cấu hình trước khi áp dụng; reload khởi động worker mới với cấu hình mới trong khi worker cũ phục vụ nốt request, không gây downtime."
+sources = ["nginx/http/ngx_http_core_module#location"]
+
+[[questions]]
+id = "devops-lvc01"
+module = "ops-linux-bash"
+type = "code"
+lang = "python"
+difficulty = 1
+tags = ["level:junior", "config"]
+title = "Đọc file .env"
+prompt = '''
+Viết parse_env(text) đọc nội dung file .env và trả về dict.
+- Bỏ dòng trống và dòng bắt đầu bằng # (sau khi bỏ khoảng trắng đầu dòng).
+- Bỏ tiền tố "export " nếu có.
+- Tách tại dấu = đầu tiên; bỏ khoảng trắng hai bên key và value. Bỏ qua dòng không có = hoặc key rỗng.
+- Nếu value nằm trong một cặp nháy cùng loại (đơn hoặc kép) thì bỏ cặp nháy đó.
+- Key xuất hiện sau ghi đè key trước.
+Ví dụ: 'PORT=8080\nNAME="api"' trả về {"PORT": "8080", "NAME": "api"}.
+'''
+starter = '''
+def parse_env(text):
+    return {}
+'''
+solution = '''
+def parse_env(text):
+    result = {}
+    for raw in text.splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#"):
+            continue
+        if line.startswith("export "):
+            line = line[len("export "):]
+        if "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        key, value = key.strip(), value.strip()
+        if not key:
+            continue
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in ("'", '"'):
+            value = value[1:-1]
+        result[key] = value
+    return result
+'''
+tests = '''
+@test("đọc key và bỏ nháy")
+def _():
+    expect(parse_env('PORT=8080\nNAME="api"')).to_equal({"PORT": "8080", "NAME": "api"})
+
+@test("bỏ comment và dòng trống")
+def _():
+    expect(parse_env("# config\n\n  DEBUG = true  \n")).to_equal({"DEBUG": "true"})
+
+@test("tách tại dấu = đầu tiên và bỏ export")
+def _():
+    expect(parse_env("export URL=postgres://u:p@h/db?a=b")).to_equal({"URL": "postgres://u:p@h/db?a=b"})
+
+@test("bỏ dòng sai và ghi đè key")
+def _():
+    expect(parse_env("JUNK\n=x\nA='1'\nA=2")).to_equal({"A": "2"})
+
+@test("không bỏ nháy lệch cặp")
+def _():
+    expect(parse_env("""Q="abc'""")).to_equal({"Q": "\"abc'"})
+'''
+hints = ["Dùng str.split('=', 1) để chỉ tách một lần.", "Kiểm tra ký tự đầu và cuối của value trước khi bỏ nháy."]
+explanation = "File .env là cấu hình phổ biến cho ứng dụng 12-factor; parser cần xử lý comment, nháy và value chứa dấu =."

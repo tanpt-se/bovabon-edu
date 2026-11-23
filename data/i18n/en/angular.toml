@@ -605,3 +605,327 @@ prompt = "Interview question: How would you separate component and service tests
 keywords = [["testbed"], ["observable behavior", "user-visible behavior"], ["httptestingcontroller"], ["flush"], ["verify"]]
 model_answer = '''I use `TestBed` to configure the component or service with its required dependencies, then test observable behavior instead of private implementation details. For a request, `HttpTestingController.expectOne()` checks it, `flush()` supplies a mock response, and `verify()` detects leftover requests.'''
 explanation = "A strong answer shows the unit-test boundary and the process for controlling mock requests."
+
+[modules.angular-lead]
+title = "Tech Lead Perspective"
+description = "Making decisions on Angular architecture, performance, SSR, reliability, test/release strategy and standardizing practices across the team."
+lesson = '''
+### Making decisions for an Angular application at team scale
+
+A Tech Lead starts from the outcome to protect: which users are affected, which metric is off, what the time/people constraints are and how reversible the decision is. Do not pick an API because it is new or because of a single benchmark. Write down assumptions, establish a baseline, try it on a representative slice, then expand through controlled gates.
+
+| Option | When it makes sense | Costs/risks to measure |
+|---|---|---|
+| Keep the status quo and fix bottlenecks | Small scope, reproducible data | May keep technical debt; set a review date |
+| Migrate gradually by feature/route | Running system, many teams releasing together | A period with two ways of doing things; needs compatibility contracts and owners |
+| Change everything at once | Clear boundaries, good automation, rollback feasible | Large blast radius; depends on tests and release timing |
+
+A minimal evaluation framework covers: user impact; reliability and security; measurability/rollback; total operating cost; complexity for the teams; and how certain the data is. For example, prerendering stable content pages can reduce request-time work, while personalized data needs analysis of caching and server boundaries before enabling SSR. Do not use browser-side guards in place of backend authorization checks. For signals/RxJS, agree on a boundary: signals for synchronous UI state, Observables for asynchronous streams that need cancellation/composition; exceptions must have a reason that is easy to review.
+
+Review checklist before approving a large change:
+- Specific users, flows and baseline metrics; a distinction between public and per-user data.
+- Tests at the right boundaries: pure logic, components/services, mocked HTTP and smoke tests for the release path.
+- Error handling, loading/empty states, request cancellation and behavior when a dependency is slow or failing.
+- A sliced rollout plan, stop gates, rollback, an on-call person and a post-release dashboard.
+- An owner, short documentation, a compatibility plan and criteria for removing transitional code.
+- Accessibility, bundle/performance and dependency checks proportional to the change's risk.
+
+Short sample ADR:
+> **Context:** three teams co-own an Angular application; public guide pages are slow on first load, while the personalized dashboard must keep data private.  
+> **Decision:** prerender stable content routes; evaluate SSR separately for the dashboard with private caching; keep client rendering for areas only shown after sign-in unless SSR brings a measurable benefit.  
+> **Verification:** compare p75/p95, TTFB, hydration errors, server cost and data access errors before/after; trial by route group.  
+> **Rollback:** move trial routes back to client rendering if error or cost thresholds exceed the budget.
+
+The numbers in an ADR are estimates for the trial, not general commitments: you might run a 5–10% traffic canary and observe at least one representative load cycle; the team must choose thresholds from the real baseline and risk level. Do not apply one sample number to every product.
+
+Team-scale anti-patterns include: big-bang migrations with no way back; shared services used as an ownerless global state store; interceptors containing screen-specific logic; blind retries of write requests; huge snapshot tests instead of behavioral contracts; ignoring flaky tests because "CI is sometimes red"; forcing every team onto the same abstraction before there is a shared need; and review standards that live only in seniors' memory. Instead, standardize criteria and examples, not every implementation detail; track exceptions and remove them once their reason is gone.
+'''
+
+[questions.angular-lv001]
+prompt = '''An Angular 15 app uses NgModules, 4 teams release weekly, 40% of routes are lazy-loaded. Leadership wants to "move everything to standalone" this quarter without stopping feature work. What is the most reasonable decision?'''
+options = ["Run the migration schematic per folder/route, gated by CI, letting old modules and standalone coexist until done", "Freeze features for 6 weeks to rewrite everything by hand in one big PR", "Keep NgModules forever because standalone is not needed yet", "Let each team choose its own approach with no shared convention"]
+explanation = "Standalone and NgModules are compatible, so you can migrate gradually in slices, with small PRs that are easy to roll back and do not block features. A one-shot rewrite risks merge conflicts and halts delivery; never migrating accumulates tech debt; one approach per team fragments conventions and raises review cost."
+
+[questions.angular-lv002]
+prompt = "A team of 5 builds a dashboard app with server data (lists, details) and some local UI state (tabs, filters). You must choose a state strategy within 2 weeks, and few people know NgRx. Which choice is reasonable?"
+options = ["Use services + signals for local state and a separate data/HTTP layer for server data; add NgRx only when a clear need appears (time-travel, many complex flows)", "Apply full NgRx (actions, effects, selectors) to everything from the start to be \"by the book\"", "Store everything in window globals for quick access", "Use one big BehaviorSubject for the whole app that every component writes to directly"]
+explanation = "For a small team with little NgRx experience and short time, the boilerplate/learning cost outweighs the benefit. Signals + services are enough for this scope and leave an upgrade path. NgRx from day one slows delivery; globals and a single Subject allow arbitrary writes and become hard to debug as the team grows."
+
+[questions.angular-lv003]
+prompt = "An e-commerce site with 300k products, mobile LCP 4.2 s, SEO is important, infrastructure budget is limited. Select the reasonable rendering decisions."
+options = ["Prerender static pages (landing pages, rarely changing categories)", "SSR for product pages that need fresh data, with CDN/edge caching by TTL", "Prerender all 300k pages on every build", "Keep pure client-side rendering for every page because it is simplest", "Measure before/after with real user data (RUM) on a group of routes before expanding"]
+explanation = "Classify by how often content changes: static gets prerendered, dynamic gets cached SSR. Prerendering 300k pages makes builds too long and costly; pure CSR hurts SEO/LCP. Measuring with RUM proves the benefit before investing broadly."
+
+[questions.angular-lv004]
+prompt = "A large app uses Zone.js, and many third-party libraries may or may not work zoneless. You want to reduce change detection cost. What is a reasonable first step?"
+options = ["Gradually move components to OnPush + signals and try zoneless on a representative route/feature after auditing the libraries", "Enable zoneless globally in production right away and fix bugs if users report them", "Remove Zone.js from polyfills without changing code", "Do nothing because Angular will optimize itself"]
+explanation = "Zoneless requires every UI update to go through mechanisms Angular is aware of (signals, markForCheck, async pipe). The safe path is to prepare with OnPush/signals, audit dependencies and try on a small slice. Enabling it directly in production or removing the polyfill makes the UI fail to update in hard-to-find ways."
+
+[questions.angular-lv005]
+prompt = "Three Angular apps share components and API logic; they are currently copy-pasted so versions drift, and CI takes 25 minutes per PR. Team of 12. Reasonable proposal?"
+options = ["Consolidate into a monorepo (Nx or an Angular workspace), split libs with clear boundaries and use affected/caching for CI", "Publish everything to a private npm registry and let each app upgrade when it remembers", "Merge the three apps into a single app", "Keep copy-pasting but write a guide for manual syncing"]
+explanation = "A monorepo with affected builds and caching addresses both problems: a single source for shared code and shorter CI. Private npm adds release/version-sync cost for a team of 12; merging apps erases product boundaries; manual docs do not prevent drift."
+
+[questions.angular-lv006]
+prompt = "You are writing an Angular code review checklist for the team. Select the items worth making mandatory."
+options = ["Are subscriptions cleaned up (takeUntilDestroyed, async pipe, toSignal)?", "Do new components use OnPush or signals?", "Are there tests for user-visible behavior?", "Do variable names match the reviewer's personal taste?", "Is server data validated/error-handled at the boundary?"]
+explanation = "A checklist should catch recurring mistakes that cause incidents (subscription leaks, change detection, missing tests, boundary errors). Personal preferences belong to the linter/formatter, not manual review, since they waste time and cause friction."
+
+[questions.angular-lv007]
+prompt = "The main page ships 1.8 MB of initial JS; the goal is a 30% reduction in 1 sprint with 2 devs. What should you do first?"
+options = ["Analyze the bundle, lazy-load heavy routes/components with @defer and loadComponent, remove duplicate libraries", "Rewrite the entire UI in another framework", "Disable source maps in production and call it done", "Compress images but leave JS alone"]
+explanation = "Bundle analysis shows what is heavy; splitting by route/@defer gives a large effect at small cost and fits in a sprint. A rewrite is too risky; source maps are not part of the JS users download; images do not address the JS goal."
+
+[questions.angular-lv008]
+prompt = "The team is 2 Angular majors behind the current release, ships weekly and has a decent test suite. Which upgrade strategy is most reasonable?"
+options = ["Upgrade one major at a time with ng update, run tests and try on staging after each step, keeping upgrade PRs separate from feature PRs", "Jump several majors by editing package.json by hand", "Wait until the old version is out of support and upgrade all at once", "Upgrade directly on the production branch to be fast"]
+explanation = "Upgrading one major at a time following the official guide uses the built-in migrations and keeps PRs small and bugs traceable. Jumping several majors or waiting for end of support increases the work and risk, and may miss security patches."
+
+[questions.angular-lv009]
+prompt = "After a release, production JS errors rise but nobody knows the source. Select the observability measures worth investing in."
+options = ["Configure a global ErrorHandler that sends errors with release/version and route to a tracking system", "Upload source maps privately to the error tracking tool, not publicly to users", "Measure Core Web Vitals with RUM per route", "Rely only on console.log in the developer's browser", "Use feature flags/canaries to limit the blast radius of a release"]
+explanation = "Errors need context (release, route), source maps to read stacks, RUM to see real performance, and canaries/flags to limit risk. Local console.log cannot show real users' behavior."
+
+[questions.angular-lv010]
+prompt = "CI takes 40 minutes because of 300 E2E tests; 8% are flaky. The team of 8 often ignores red results. Priority decision?"
+options = ["Keep E2E for a few critical flows, push the rest down to component/integration tests, quarantine and fix/disable flaky tests with an owner", "Re-run all E2E tests until green, then merge", "Delete all E2E tests", "Double the timeout of every test"]
+explanation = "A sensible test pyramid and owned flaky-test handling restore trust in CI. Blind retries or longer timeouts hide the problem and slow CI; deleting all E2E loses coverage of critical flows."
+
+[questions.angular-lv011]
+prompt = "Two new teams propose micro-frontends (Module Federation) for a 10-dev Angular app with one product and one release schedule. They want \"independent deploys\". How do you respond?"
+options = ["Not yet: use a monorepo with lib boundaries and lazy routes; consider micro-frontends only when there is a real need for independent releases and the operating cost is affordable", "Agree immediately because micro-frontends are always faster", "Refuse because micro-frontends can never work with Angular", "Split into 10 micro-frontends, one per dev"]
+explanation = "Micro-frontends add costs: shared versions, runtime contracts, consistent UX, observability. With one product and one release schedule, a monorepo with clear boundaries gives most of the benefit at lower cost. Splitting into 10 pieces or accepting unconditionally both ignore the team's constraints."
+
+[questions.angular-lv012]
+prompt = "Three apps use three different button/form sets, the designer complains, and accessibility is inconsistent. Two FE devs are available half-time. Reasonable decision?"
+options = ["Build a small component library in the workspace (button, input, dialog) with tokens and a11y tests, adopting it gradually starting with new screens", "Rewrite every screen of the three apps with a new library in 1 month", "Buy a UI library and force every app to use it immediately without evaluation", "Let each dev fix styles their own way"]
+explanation = "With limited resources, starting with the highest-impact components and applying them to new code reduces risk. Rewriting everything is overload; forcing an unevaluated library may not meet a11y/brand requirements; ad-hoc fixes fragment things further."
+
+[questions.angular-lv013]
+prompt = "The codebase has many hard-to-read nested RxJS pipelines and subscription leaks. Select the conventions worth adopting for the team."
+options = ["Prefer toSignal/async pipe in templates over manual subscribe", "Use takeUntilDestroyed when you must subscribe in a component/service", "Name complex pipelines and extract them into tested functions/operators", "Ban RxJS entirely and move everything to Promises", "Use switchMap for searches that cancel old requests, exhaustMap for submits to avoid double clicks"]
+explanation = "Conventions should shrink the surface for recurring bugs: automatic unsubscription, flattening operators with the right semantics, logic extracted for testing. Banning RxJS loses the cancellation/composition that HttpClient, the router and forms rely on."
+
+[questions.angular-lv014]
+prompt = "A pentest found the login token stored in localStorage and a place using bypassSecurityTrustHtml with user content. You have 1 sprint. What do you prioritize?"
+options = ["Remove bypassSecurityTrust* for user data (so Angular's sanitizer works), add CSP, then plan moving the token to an HttpOnly cookie with the backend", "Only add a warning message for users", "Base64-encode the token in localStorage", "Ignore it because Angular is secure by default in every case"]
+explanation = "bypassSecurityTrustHtml disables XSS protection, so it must be fixed first since it is directly exploitable; CSP limits damage. Moving the token to an HttpOnly cookie needs backend coordination, so plan it. Base64 is not encryption; Angular is only safe when the sanitizer is not disabled."
+
+[questions.angular-lv015]
+prompt = "A public-sector contract requires WCAG 2.1 AA within 3 months. There are no a11y tests and 120 screens. Reasonable approach?"
+options = ["Rank screens by usage/risk, add a11y linting and automated checks to CI, fix in batches, and add manual screen reader testing for the main flows", "Run an automated tool once and consider it done", "Wait for the customer to report issues", "Randomly fix the easiest screens"]
+explanation = "Automated tools catch only some issues; you need risk-based prioritization, CI to block regressions and manual checks of main flows. A single scan or waiting for reports does not meet the contractual commitment; random fixes provide no coverage."
+
+[questions.angular-lv016]
+prompt = "New junior devs often create singleton services holding global state and subscribe without unsubscribing. You have 30 minutes a week for mentoring. Most effective approach?"
+options = ["Pair-review small PRs against a checklist, add lint rules (e.g. no floating subscribe) and a reference example in the repo", "Write a 50-page document and require reading all of it", "Silently rewrite all their PRs yourself", "Forbid juniors from creating services"]
+explanation = "Concrete feedback on real code, automated linting and a canonical example scale with little time. Long documents are rarely read; silent rewrites do not help them learn; banning services blocks everyday work."
+
+[questions.angular-lv017]
+prompt = "Next sprint has 5 days for tech debt. Candidates: (A) switch every component to OnPush without data, (B) fix the dashboard module causing 60% of production errors and 3 incidents/month, (C) rename folders to look nicer. Pick?"
+options = ["B, because there is evidence of reliability impact and the result can be measured by error/incident counts", "A, because OnPush is always good", "C, because it is easiest", "Split the time evenly among all three"]
+explanation = "Tech debt should be ranked by measurable impact and risk. B has incident data and a verifiable outcome. A lacks evidence and is broad; C has little value; splitting evenly dilutes impact."
+
+[questions.angular-lv018]
+prompt = "You are designing the release process for an Angular app with 200k users/day. Select reasonable risk-reduction measures."
+options = ["Build once and promote the same artifact through environments", "Hash bundle file names with long-term caching, short caching for index.html", "Canary or feature flags for high-risk changes", "Edit files directly on the production server for urgent fixes", "Have a rollback plan and monitor error rates after release"]
+explanation = "Immutable artifacts, hashed files, gradual rollout and rollback are the foundation of safe releases. Editing production directly is untraceable and creates drift between environments."
+
+[questions.angular-lv019]
+prompt = "Write a short ADR: should a large Angular app move from NgModule + Zone.js to standalone + signals + zoneless, or stay as is? Cover context, options, criteria, risks and the implementation plan."
+keywords = [["risk"], ["step by step", "gradual", "incremental", "slice"], ["measure", "metric", "baseline"], ["rollback", "reversible", "revert"], ["standalone"], ["zoneless", "zone.js"]]
+model_answer = "Context: a large app, many teams, the goal is to reduce change detection cost and boilerplate. Options: keep as is, migrate gradually by feature, or rewrite. I choose an incremental migration: use the schematic to move to standalone first (low risk), then OnPush and signals for new code, then try zoneless on one representative route. Criteria: measure a baseline (INP, change detection time, bundle size), error counts and delivery speed. Risks: libraries not yet compatible with zoneless, two approaches coexisting; mitigate with an inventory, owners, CI gates and the ability to rollback/revert per route. The decision is revisited after each milestone based on the metrics."
+explanation = "A good answer has context, alternatives, measurable criteria, an incremental plan, risks and a way back."
+
+[questions.angular-lv020]
+prompt = "After a Friday release, the JS error rate jumps 5x and many users cannot sign in. You are the on-call Tech Lead: describe the response steps and the post-incident work."
+keywords = [["rollback", "roll back", "revert"], ["communicat", "notify", "status update"], ["root cause"], ["postmortem", "retrospective", "blameless"], ["monitor", "alert", "sentry"]]
+model_answer = "Mitigate first: confirm the scope with monitoring, rollback or turn off the feature flag if the release is the main suspect, notify stakeholders (support, product) and communicate status updates regularly. Only after stabilizing, investigate the root cause using logs, source maps and a release comparison. After the incident, write a blameless postmortem with preventive actions such as regression tests, canaries, per-release alerts and runbook updates; assign an owner and a deadline to each action."
+explanation = "A Tech Lead must mitigate first, investigate later, communicate clearly and turn the incident into owned improvements."
+
+[questions.angular-lvc01]
+title = "Choose a render mode per route"
+prompt = '''The team wants clear rendering rules for each route. Write chooseRenderMode(route) returning "csr", "ssr" or "prerender".
+
+route has the shape { requiresAuth: boolean, seo: boolean, personalized: boolean, updatesPerDay: number }.
+
+- A route that requires sign-in (requiresAuth) and does not need SEO: "csr".
+- A route that needs SEO with personalized content or changing 24 or more times per day: "ssr".
+- A route that needs SEO, is not personalized and changes fewer than 24 times per day: "prerender".
+- All other cases (no SEO, no sign-in required): "csr".
+- A route that needs SEO follows the SEO rules even when requiresAuth is true and personalized is true: "ssr".
+'''
+hints = ["Check seo first because it decides whether initial HTML is needed.", "The 24-per-day threshold uses the >= operator."]
+explanation = "Rendering decisions should be explicit rules based on SEO needs, personalization and how often data changes, so the team applies them consistently."
+
+[questions.angular-lvc02]
+title = "Assign users to a canary release"
+prompt = '''Write isInRollout(userId, percent) deciding whether a user belongs to the canary group.
+
+- userId is a string; percent is a number from 0 to 100.
+- The result must be deterministic: the same userId and percent always give the same result.
+- percent = 0: nobody is in the group; percent = 100: everyone is in the group.
+- Monotonic: if a user is in the group at percent p, they stay in the group at every percent greater than p.
+- Hint: hash userId into a bucket from 0 to 99 and compare bucket < percent. Use a simple string hash, no cryptography needed.
+'''
+hints = ["Hash the string with a charCodeAt loop, then take the remainder modulo 100.", "Compare bucket < percent to get monotonicity."]
+explanation = "Deterministic grouping by hashing userId makes each person always see the same version and lets you ramp up the canary percentage without changing who was already selected."
+
+[questions.angular-lv021]
+prompt = '''An OnPush component displays user.name. The parent passes the same user object and mutates user.name = "Lan" directly in a handler. The child view does not update. What is the best explanation?
+
+~~~ts
+@Component({ changeDetection: ChangeDetectionStrategy.OnPush, template: `{{ user.name }}` })
+class Child { @Input() user!: { name: string }; }
+~~~'''
+options = ["OnPush compares input references; mutating the same object does not change the reference, so the component is not marked dirty", "Angular does not support nested property bindings", "Zone.js is disabled so there is no change detection", "The template is rendered only once"]
+explanation = "With OnPush, input changes are detected by reference. In-place mutation does not change the reference. The fix is to create a new object (immutable update), use a signal, or call markForCheck deliberately."
+
+[questions.angular-lv022]
+prompt = "Select the correct statements about signals' computed() and effect()."
+options = ["computed() is lazy and cached until a dependency changes", "computed() should be a pure function that does not write to other signals", "effect() fits side effects such as logging or syncing to the outside world", "Using effect() to copy one signal into another is the best approach", "computed's dependencies are tracked dynamically based on the signals actually read"]
+explanation = "computed is a lazy, cached, pure derived value with dynamic dependency tracking. effect is for side effects; syncing signal to signal with an effect easily causes update loops and should be replaced with computed or linkedSignal."
+
+[questions.angular-lv023]
+prompt = "You have a selectedId signal and need a \"selected index\" value that resets to 0 whenever the items list changes but still lets the user override it manually. Which tool fits best?"
+options = ["linkedSignal", "computed", "an effect writing to a signal", "A BehaviorSubject"]
+explanation = "linkedSignal is a writable signal that is reset from its source when the source changes, suited to derived state that can be overridden. computed is read-only; an effect writing a signal makes data flow hard to follow."
+
+[questions.angular-lv024]
+prompt = "CartService is declared with providers: [CartService] in the ProductCard component. There are 50 ProductCards on the page, expected to share one cart, but each card sees its own cart. Why?"
+options = ["A component-level provider creates one instance per component instance", "inject() always creates a new instance on every call", "The service was tree-shaken", "Angular limits a service to at most 10 components"]
+explanation = "A provider declared in a component is scoped to the element injector, so each component gets its own instance. For a singleton use providedIn: 'root' or an application-level provider."
+
+[questions.angular-lv025]
+prompt = "Select the correct statements about the injector hierarchy and inject() modifiers."
+options = ["optional: true returns null instead of throwing if no provider is found", "self: true looks only in the element/component's own injector", "skipSelf: true skips the current injector and looks up from the parent", "host: true lets you get a provider from any route in the application", "An InjectionToken can include a factory to provide a default value"]
+explanation = "optional, self, skipSelf and host control the lookup scope; host limits the lookup to the host element, not the whole route. An InjectionToken with a factory gives a tree-shakable default value."
+
+[questions.angular-lv026]
+prompt = "A search box calls the API on every keystroke. The user types fast, old responses arrive after newer ones and overwrite the results. What is the correct structure?"
+explanation = "switchMap cancels the old request when a new value arrives, so only the latest result is used; debounce/distinct reduce the number of requests. mergeMap lets responses race; concatMap queues and adds delay; exhaustMap ignores new values while waiting."
+
+[questions.angular-lv027]
+prompt = "A \"Save\" button sends a POST. The user double-clicks, creating two requests and duplicate records. Which operator in the click pipeline fits best on the client side?"
+explanation = "exhaustMap ignores new clicks while a request is in flight, which suits write operations that must avoid duplicates. switchMap cancels on the client but the server may already have processed it; mergeMap still sends both; map does not handle the inner Observable. The server still needs idempotency."
+
+[questions.angular-lv028]
+prompt = "Select common causes of memory leaks or repeated requests in Angular RxJS code."
+options = ["Subscribing in ngOnInit without unsubscribing when the component is destroyed", "Calling the same cold HTTP Observable multiple times with several async pipes", "Using takeUntilDestroyed in the constructor/injection context", "Creating nested subscriptions inside subscribe", "Using a Subject that never completes and holds a reference to the component"]
+explanation = "Unreleased subscriptions, multiple subscriptions to a cold observable (each one is a request), nested subscribes and Subjects holding references are common sources of bugs. takeUntilDestroyed is a fix, not a cause."
+
+[questions.angular-lv029]
+prompt = "After enabling zoneless, a component changes this.count in setTimeout but the view does not update. What is the most appropriate fix?"
+options = ["Turn count into a signal (or call markForCheck deliberately) so Angular knows it needs to update", "Add Zone.js back in every case", "Use document.write", "Call bootstrapApplication again every second"]
+explanation = "Zoneless does not automatically detect changes from setTimeout. Signal-based state (or markForCheck, async pipe) tells Angular to schedule an update. Adding Zone.js back defeats the goal; the other two options are not sensible."
+
+[questions.angular-lv030]
+prompt = "A resolver blocks navigation to a details page until the API responds, so users stare at the old screen for a long time. What is a good UX solution?"
+options = ["Navigate immediately, show a skeleton and load the data with resource/httpResource in the component, keeping resolvers only for mandatory data", "Raise the API timeout to 5 minutes", "Drop the router and use a single component", "Run the resolver twice"]
+explanation = "Navigating early with a loading state gives fast feedback; resolvers should be used only when the page cannot render without the data. Longer timeouts or dropping the router do not fix the UX problem."
+
+[questions.angular-lvc03]
+title = "Keep only the latest result (switchMap-style)"
+prompt = '''Write latestOnly(asyncFn) returning a new function. Each call to the new function calls asyncFn(...args) and returns a Promise.
+
+- If an older call completes after a newer call has been made, the older call's Promise must resolve with undefined (its result is discarded).
+- The latest call resolves with the real result.
+- An error from the latest call must be propagated (reject); errors from older calls are ignored (resolve undefined).
+'''
+hints = ["Keep an increasing counter; each call remembers its own id.", "When the Promise settles, compare its id with the current counter to know whether it is still the latest."]
+explanation = "These are switchMap semantics: only the latest call's result is used, preventing stale responses from overwriting newer results."
+
+[questions.angular-lv031]
+prompt = "A 5000-row list uses @for and every server refresh creates new objects for all rows. The DOM is recreated, focus is lost and it is slow. What is the correct fix?"
+options = ["Use track with a stable key such as id so Angular reuses DOM, combined with virtual scrolling for large lists", "Use track $index when the list can be reordered", "Disable change detection", "Call detectChanges() inside a loop"]
+explanation = "track with a stable identity key lets Angular match and reuse DOM when new objects have the same id. track $index is wrong when the order changes because it ties DOM to position; the other two options do not address the cause."
+
+[questions.angular-lv032]
+prompt = "Select the correct statements about shareReplay and sharing Observable streams."
+options = ["HTTP Observables are cold: each subscribe triggers a separate request", "shareReplay({ bufferSize: 1, refCount: true }) lets many subscribers share one source and replays the latest value", "shareReplay never keeps a reference to the source if refCount is omitted", "Caching with shareReplay needs a refresh/invalidation strategy for stale data", "Subject is a cold Observable"]
+explanation = "A cold observable re-runs its source for every subscriber; shareReplay shares and replays, but you need to decide on refCount and how to invalidate the cache. Without refCount the source may be kept alive after all subscribers leave; Subject is hot."
+
+[questions.angular-lv033]
+prompt = "The console reports a hydration mismatch: the server rendered \"10:05\" while the client rendered \"10:06\" because the template uses new Date(). What is the correct fix?"
+options = ["Compute time/browser-dependent values after hydration (e.g. afterNextRender) or pass the same value from server to client", "Disable hydration for the whole app", "Use setTimeout in the constructor", "Ignore the warning"]
+explanation = "Hydration requires the DOM produced by the server and the client to match. Environment-dependent data should be created after hydration or synchronized via transferred state. Disabling hydration loses its benefits; ignoring the warning can cause UI bugs."
+
+[questions.angular-lv034]
+prompt = "Two interceptors: auth (attaches the token, refreshes on 401) and logging. Many requests hit 401 at once and all call refresh, causing parallel refreshes. Correct design?"
+options = ["Allow only one refresh to run; other requests wait for the same result (shared via shareReplay/a common Promise) and then retry once", "Let each request call refresh itself for simplicity", "Ignore 401 and let the user reload the page", "Retry forever on 401"]
+explanation = "Refresh tokens are often single-use, so parallel refreshes fail; sharing one refresh and retrying at most once avoids loops. Infinite retries can lock accounts or cause request storms."
+
+[questions.angular-lv035]
+prompt = "Tests use fakeAsync/tick or fake timers for debounce. Select the correct statements."
+options = ["You can advance virtual time without real waiting", "Remaining timers must be handled or flushed before the test ends so the test does not leak", "Tests with real timers make the suite slow and flaky", "fakeAsync lets you test real HTTP calls to the production server", "You should check the result after advancing past the debounce time"]
+explanation = "Fake timers make tests deterministic and fast, but remaining timers must be flushed. They have nothing to do with real network calls; requests should use HttpTestingController."
+
+[questions.angular-lv036]
+prompt = "An internal library needs optional configuration (apiUrl, timeout) supplied by the host app, with sensible defaults. What is the cleanest DI design?"
+options = ["An InjectionToken<LibConfig> with a default factory and a provideLib(config) function returning providers", "Read a global window.config in the service", "Pass the configuration as strings via @Input on every component", "Hard-code the values in the service"]
+explanation = "InjectionToken + factory + a provideX function is the standard pattern: clearly typed, tree-shakable and easy to test by overriding the provider. Globals and hard-coding make testing hard; Inputs are not suited to shared configuration."
+
+[questions.angular-lv037]
+prompt = "To show a \"No data\" message when the items array is empty using modern control flow, which syntax should you use?"
+options = ["@for (item of items; track item.id) { ... } @empty { <p>No data</p> }", "*ngFor with else", "@if (items) { ... } without handling the empty array", "Use innerHTML"]
+explanation = "The @empty block of @for renders when the list is empty, which is more concise than a separate check."
+
+[questions.angular-lv038]
+prompt = '''Bind an expression value to the button's disabled DOM property: <button [{{blank}}]="isSaving">Save</button>'''
+explanation = "Property binding uses square brackets around the property name; [disabled] controls the button's state."
+
+[questions.angular-lv039]
+prompt = "What is the modern way to get a service in a class (without constructor injection)?"
+explanation = "inject() retrieves a dependency from the injector within an injection context, such as a field initializer or the constructor."
+
+[questions.angular-lv040]
+prompt = '''To transform each value emitted by an Observable, use an operator in pipe(): source$.pipe({{blank}}(x => x * 2))'''
+explanation = "map applies a function to each value the Observable emits."
+
+[questions.angular-lv041]
+prompt = "Given the route /users/:id, what do you need to read id via the component's input() (with withComponentInputBinding enabled)?"
+options = ["Declare id = input<string>() in the component and enable withComponentInputBinding()", "Read window.location.href and slice the string", "Call fetch('/users/:id')", "Use localStorage"]
+explanation = "With withComponentInputBinding(), route parameters are bound to the component's inputs of the same name."
+
+[questions.angular-lvc04]
+title = "Filter a list by keyword"
+prompt = '''Write filterByName(users, query), like the logic of a filtering pipe.
+
+- users is an array of objects { id, name }.
+- Return a new array containing only users whose name contains query, case-insensitively.
+- Trim leading/trailing whitespace from query. If query is empty, return a copy of the whole array.
+- Do not modify the original array.
+'''
+hints = ["Normalize query with trim() and toLowerCase().", "Use filter; do not use sort or splice on the original array."]
+explanation = "Pure filtering logic that does not mutate its input is the foundation for a filtering pipe or computed in Angular."
+
+[questions.angular-lv042]
+prompt = "You need a filtered list from an items signal and a query signal that updates automatically when either changes. Correct approach?"
+options = ["const filtered = computed(() => items().filter(i => i.name.includes(query())));", "effect(() => { filtered = items().filter(...) });", "Call filter in the template on every change detection without caching", "Use setInterval to update every second"]
+explanation = "computed is a derived value that tracks its dependencies and is cached. Assigning a variable inside an effect easily drifts and is hard to follow; setInterval is wasteful."
+
+[questions.angular-lv043]
+prompt = "Select the correct statements about Reactive Forms."
+options = ["FormGroup combines multiple FormControls into one value/status", "Validators.required is a synchronous validator", "Async validators should avoid calling the server on every keystroke without debounce", "Reactive Forms cannot be tested because they depend on the DOM", "valueChanges is an Observable that emits values when the form changes"]
+explanation = "Reactive Forms define the model in code, so they are easy to test; async validators should reduce the number of calls, and valueChanges emits when the value changes."
+
+[questions.angular-lv044]
+prompt = "An API call fails transiently; you want to retry at most 2 times and then report the error. Reasonable RxJS approach?"
+options = ["http.get(url).pipe(retry(2), catchError(handle))", "Call subscribe inside a while(true) loop", "Remove catchError", "Use debounceTime(2)"]
+explanation = "retry(2) resubscribes to the source at most 2 times on error, and catchError handles the final error. Only retry safe/idempotent operations."
+
+[questions.angular-lv045]
+prompt = "Register HttpClient with functional interceptors in the application config: provideHttpClient(with{{blank}}([authInterceptor]))"
+explanation = "withInterceptors takes a list of functional interceptors for provideHttpClient."
+
+[questions.angular-lvc05]
+title = "Compute retry delay with exponential backoff"
+prompt = '''Write backoffDelay(attempt, baseMs, maxMs) for a retry strategy.
+
+- attempt starts at 1 (the first retry).
+- Delay = baseMs * 2^(attempt - 1), but never more than maxMs.
+- An attempt less than 1 is treated as 1.
+- Return an integer (milliseconds).
+'''
+hints = ["Use Math.pow(2, attempt - 1).", "Combine with Math.min against maxMs."]
+explanation = "Exponential backoff reduces server load during transient failures; the cap prevents waiting too long."

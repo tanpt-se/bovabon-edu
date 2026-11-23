@@ -32,6 +32,7 @@ id = "tst-001"
 module = "testing-principles"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Unit test thường tập trung kiểm tra điều gì?"
 options = ["Một đơn vị nhỏ với các phụ thuộc được kiểm soát", "Toàn bộ luồng qua trình duyệt thật", "Thời gian tải trang của production", "Cấu hình triển khai của mọi môi trường"]
 answer = [0]
@@ -43,6 +44,7 @@ id = "tst-002"
 module = "testing-principles"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một dự án có nhiều E2E test chậm và thường hỏng do selector, trong khi logic thuần chưa có test. Điều chỉnh nào hợp lý nhất?"
 options = ["Thêm test nhỏ cho logic và integration test ở ranh giới quan trọng; giữ E2E cho luồng người dùng cốt lõi", "Chuyển tất cả test thành E2E để giống production hơn", "Xoá toàn bộ test vì có flaky test", "Tăng thời gian chờ cố định trong mọi test"]
 answer = [0]
@@ -54,6 +56,7 @@ id = "tst-003"
 module = "testing-principles"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Trong cấu trúc AAA, bước Act là gì?"
 options = ["Tạo dữ liệu và điều kiện ban đầu", "Gọi hành động hoặc hàm đang được kiểm tra", "Kiểm tra kết quả mong đợi", "Dọn mọi file test khỏi repository"]
 answer = [1]
@@ -65,6 +68,7 @@ id = "tst-004"
 module = "testing-principles"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Theo quy ước trong lộ trình, test double nào phù hợp khi cần kiểm tra một hàm có được gọi với đúng tham số hay không?"
 options = ["Stub", "Mock", "Fake", "Fixture"]
 answer = [1]
@@ -76,6 +80,7 @@ id = "tst-005"
 module = "testing-principles"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Đặc điểm nào giúp một test unit đáng tin cậy và dễ bảo trì? Chọn tất cả đáp án đúng."
 options = ["Có kết quả xác định với cùng đầu vào", "Kiểm tra hành vi quan trọng với người dùng hoặc hợp đồng hàm", "Dựa vào thứ tự chạy của test khác", "Giữ phạm vi nhỏ để lỗi dễ định vị"]
 answer = [0, 1, 3]
@@ -87,6 +92,7 @@ id = "tst-006"
 module = "testing-principles"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Điền ba bước AAA theo thứ tự:
 
@@ -103,6 +109,7 @@ id = "tst-007"
 module = "testing-principles"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Giải thích khi nào nên dùng unit test và khi nào cần integration test; nêu một giới hạn của việc thay mọi phụ thuộc bằng mock."
 keywords = [["unit test", "kiểm thử đơn vị"], ["integration test", "kiểm thử tích hợp"], ["mock", "test double"]]
 min_keywords = 2
@@ -136,6 +143,7 @@ id = "tst-008"
 module = "testing-unit"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Trong Vitest/Jest, khi muốn so sánh hai object khác identity nhưng có cùng cấu trúc lồng nhau, matcher nào thường phù hợp?"
 options = ["toBe", "toEqual", "toHaveBeenCalled", "toThrow"]
 answer = [1]
@@ -147,6 +155,7 @@ id = "tst-009"
 module = "testing-unit"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một hàm gọi SDK thanh toán bên ngoài. Cách dùng mock module hợp lý nhất là gì?"
 options = ["Mock SDK ở ranh giới để xác minh dữ liệu được gửi, đồng thời test logic nghiệp vụ riêng", "Mock mọi hàm trong module nghiệp vụ", "Mock matcher của test runner", "Thay mọi assertion bằng snapshot"]
 answer = [0]
@@ -158,6 +167,7 @@ id = "tst-010"
 module = "testing-unit"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Test một hàm debounce bằng fake timers có lợi ích chính nào?"
 options = ["Có thể tiến clock có kiểm soát mà không chờ thời gian thật", "Tự chứng minh giao diện accessible", "Thay thế mọi assertion", "Đo chính xác tốc độ CPU production"]
 answer = [0]
@@ -169,6 +179,7 @@ id = "tst-011"
 module = "testing-unit"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Khi nào snapshot test có ích nhất?"
 options = ["Đầu ra dạng cấu trúc tương đối ổn định và diff có thể được review", "Mọi logic nghiệp vụ mà không cần assertion", "Đầu ra chứa timestamp ngẫu nhiên nhưng không được chuẩn hoá", "Thay thế kiểm tra accessibility trên browser"]
 answer = [0]
@@ -180,6 +191,7 @@ id = "tst-012"
 module = "testing-unit"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Sau khi dùng mock function trong test, cách nào giúp hạn chế tương tác giữa các test? Chọn tất cả đáp án đúng."
 options = ["Reset hoặc clear trạng thái mock theo mục đích", "Await Promise do test tạo ra", "Chạy test phụ thuộc theo một thứ tự cố định", "Khôi phục fake timers sau khi dùng"]
 answer = [0, 1, 3]
@@ -191,6 +203,7 @@ id = "tst-013"
 module = "testing-unit"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Điền matcher để so sánh sâu object và matcher kiểm tra hàm được gọi đúng 2 lần:
 
@@ -208,6 +221,7 @@ id = "tst-014"
 module = "testing-unit"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một test gọi hàm trả Promise nhưng test kết thúc trước khi Promise settle. Cách sửa đáng tin cậy nhất là gì?"
 options = ["Return hoặc await Promise trong test", "Thêm sleep dài tuỳ ý ở cuối mọi test", "Xoá assertion bất đồng bộ", "Chuyển callback thành snapshot"]
 answer = [0]
@@ -219,6 +233,7 @@ id = "tst-015"
 module = "testing-unit"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 lang = "javascript"
 title = "Tạo spy ghi lại lời gọi"
 prompt = '''
@@ -279,6 +294,7 @@ id = "tst-016"
 module = "testing-unit"
 type = "code"
 difficulty = 3
+tags = ["level:senior"]
 lang = "javascript"
 title = "Mini expect với deepEqual"
 prompt = '''
@@ -361,6 +377,7 @@ id = "tst-017"
 module = "testing-components"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Trong component test, vì sao nên ưu tiên truy vấn button theo role và accessible name?"
 options = ["Nó kiểm tra semantics gần với cách người dùng và công nghệ hỗ trợ tìm điều khiển", "Nó luôn làm test nhanh hơn mọi truy vấn khác", "Nó tránh cần assert kết quả sau tương tác", "Nó tự xác minh toàn bộ logic server"]
 answer = [0]
@@ -372,6 +389,7 @@ id = "tst-018"
 module = "testing-components"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Khi một custom hook quản lý trạng thái form, lựa chọn nào thường cho test bền vững nhất?"
 options = ["Kiểm tra component sử dụng hook qua nhập liệu, hiển thị lỗi và submit; dùng renderHook nếu cần kiểm tra hook độc lập", "Đọc trực tiếp mọi biến private trong closure", "Chỉ snapshot mã nguồn hook", "Gọi hook trực tiếp trong test mà không có renderer"]
 answer = [0]
@@ -383,6 +401,7 @@ id = "tst-019"
 module = "testing-components"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Các lựa chọn nào thường làm component test ít phụ thuộc implementation hơn? Chọn tất cả đáp án đúng."
 options = ["Tìm điều khiển qua role và accessible name", "Assert nội dung hoặc trạng thái người dùng nhìn thấy", "Dựa vào class CSS sinh tự động", "Mô phỏng tương tác phù hợp với luồng sử dụng"]
 answer = [0, 1, 3]
@@ -394,6 +413,7 @@ id = "tst-020"
 module = "testing-components"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Điền hai phần để truy vấn nút theo semantic role và tên hiển thị trong Testing Library:
 
@@ -410,6 +430,7 @@ id = "tst-021"
 module = "testing-components"
 type = "essay"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Nêu vì sao truy vấn theo role/name thường bền hơn truy vấn class nội bộ, và một tình huống hợp lý để dùng test id."
 keywords = [["getByRole", "role"], ["accessible name", "tên truy cập"], ["test id", "data-testid"]]
 min_keywords = 2
@@ -422,6 +443,7 @@ id = "tst-022"
 module = "testing-components"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 lang = "javascript"
 title = "Tìm node theo role và name"
 prompt = '''
@@ -511,6 +533,7 @@ id = "tst-023"
 module = "testing-e2e"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một trang tải dữ liệu bất đồng bộ. Trong Playwright, cách nào thường ổn định hơn để chờ nút xuất hiện?"
 options = ["Tạo locator theo role rồi dùng assertion web-first như `toBeVisible()`", "Chờ cố định 10 giây trước mỗi assertion", "Lấy element một lần rồi giữ reference qua mọi lần render", "Bỏ assertion vì click tự thành công"]
 answer = [0]
@@ -522,6 +545,7 @@ id = "tst-024"
 module = "testing-e2e"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Ưu điểm chính của web-first assertion như `await expect(locator).toHaveText('Done')` là gì?"
 options = ["Nó retry điều kiện trong timeout để UI có thời gian cập nhật", "Nó chạy assertion trên mọi trình duyệt cùng lúc", "Nó bỏ qua timeout", "Nó tự tạo fixture dữ liệu backend"]
 answer = [0]
@@ -533,6 +557,7 @@ id = "tst-025"
 module = "testing-e2e"
 type = "single"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Sau khi submit form, ứng dụng render lại danh sách. Vì sao locator thường phù hợp hơn giữ một element handle cũ?"
 options = ["Locator được phân giải lại khi thao tác, phù hợp DOM có thể thay đổi", "Locator bỏ qua mọi lỗi selector", "Element handle không thể đọc thuộc tính", "Locator tự bảo đảm backend không lỗi"]
 answer = [0]
@@ -544,6 +569,7 @@ id = "tst-026"
 module = "testing-e2e"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một lỗi E2E chỉ xảy ra trên CI. Những biện pháp nào giúp điều tra và giảm nguyên nhân phổ biến? Chọn tất cả đáp án đúng."
 options = ["Thu trace hoặc artifact khi thất bại", "Dùng fixture và dữ liệu cô lập theo test", "Thêm sleep dài mà không xác định điều kiện cần chờ", "Dùng locator và assertion tự chờ phù hợp"]
 answer = [0, 1, 3]
@@ -555,6 +581,7 @@ id = "tst-027"
 module = "testing-e2e"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Trong Cypress, command nào thường dùng để retry assertion về trạng thái của query cho đến khi đạt hoặc hết timeout?
 
@@ -571,6 +598,7 @@ id = "tst-028"
 module = "testing-e2e"
 type = "code"
 difficulty = 3
+tags = ["level:senior"]
 lang = "javascript"
 title = "waitFor có timeout"
 prompt = '''
@@ -687,6 +715,7 @@ id = "tst-029"
 module = "testing-strategy"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Line coverage cao nhất cho biết điều gì?"
 options = ["Nhiều dòng executable đã được chạy, nhưng chưa khẳng định assertion đủ tốt", "Mọi lỗi đều được phát hiện", "Mọi nhánh logic đã được kiểm tra", "Ứng dụng không có bug"]
 answer = [0]
@@ -698,6 +727,7 @@ id = "tst-030"
 module = "testing-strategy"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Trong TDD, vòng lặp Red-Green-Refactor bắt đầu bằng việc nào?"
 options = ["Viết test thể hiện hành vi chưa được hỗ trợ và quan sát test thất bại", "Refactor trước khi có test", "Xoá test cũ để bắt đầu lại", "Tăng coverage bằng test không có assertion"]
 answer = [0]
@@ -709,6 +739,7 @@ id = "tst-031"
 module = "testing-strategy"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Những nguyên nhân nào có thể làm test flaky? Chọn tất cả đáp án đúng."
 options = ["Dựa vào thời gian thật hoặc race condition", "Chia sẻ dữ liệu mutable giữa test", "Phụ thuộc thứ tự thực thi", "Dùng input cố định và test độc lập"]
 answer = [0, 1, 2]
@@ -720,6 +751,7 @@ id = "tst-032"
 module = "testing-strategy"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "CI test suite có thời gian chạy tăng và đôi lúc fail không tái hiện. Biện pháp nào giúp cải thiện chất lượng tín hiệu? Chọn tất cả đáp án đúng."
 options = ["Phân loại và điều tra test flaky thay vì chỉ tăng retry", "Thu artifact hoặc trace hữu ích khi fail", "Chạy mọi test phụ thuộc theo thứ tự cố định mãi mãi", "Tách dữ liệu và trạng thái để test có thể chạy độc lập"]
 answer = [0, 1, 3]
@@ -731,6 +763,7 @@ id = "tst-033"
 module = "testing-strategy"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Nếu 18 trên 24 dòng executable được chạy, line coverage là {{blank}} phần trăm.
 '''
@@ -743,6 +776,7 @@ id = "tst-034"
 module = "testing-strategy"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 Một test chỉ pass khi chạy riêng nhưng fail ngẫu nhiên trong suite do dùng chung biến mutable. Test đó có khả năng là {{blank}}.
 '''
@@ -755,6 +789,7 @@ id = "tst-035"
 module = "testing-strategy"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 lang = "javascript"
 title = "Phát hiện test flaky từ lịch sử"
 prompt = '''
@@ -811,6 +846,7 @@ id = "tst-036"
 module = "testing-strategy"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 lang = "javascript"
 title = "Tính line coverage"
 prompt = '''
@@ -883,6 +919,7 @@ id = "testing-dv001"
 module = "testing-dv-network"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Một unit test kiểm tra hàm xử lý kết quả từ API nhưng không cần xác minh URL hay HTTP. Cách thay phụ thuộc nào thường phù hợp nhất?"
 options = ["Mock API client/module tại ranh giới của hàm", "Khởi chạy production API thật cho từng test", "Chờ cố định vài giây trước khi assert", "Tắt toàn bộ assertion để tránh lỗi mạng"]
 answer = [0]
@@ -894,6 +931,7 @@ id = "testing-dv002"
 module = "testing-dv-network"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Trong Playwright, test cần giả lập API trả lỗi 503 khi trang tải. Khi nào nên đăng ký `page.route`?"
 options = ["Trước khi điều hướng hoặc trước khi thao tác phát request", "Sau khi assertion lỗi đã chạy", "Chỉ sau khi test kết thúc", "Chỉ trong `afterAll`, sau khi browser đóng"]
 answer = [0]
@@ -905,6 +943,7 @@ id = "testing-dv003"
 module = "testing-dv-network"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một test Cypress gọi `cy.intercept(...).as('orders')` trước `cy.visit`. `cy.wait('@orders')` giúp test điều gì trực tiếp nhất?"
 options = ["Đồng bộ với request đã alias và cho phép kiểm tra request/response", "Đảm bảo mọi animation trên trang đã hoàn tất", "Thay thế mọi assertion về UI", "Xác minh database production đã ghi dữ liệu"]
 answer = [0]
@@ -916,6 +955,7 @@ id = "testing-dv004"
 module = "testing-dv-network"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Test luồng danh sách đơn hàng cần ổn định khi API lỗi. Những lựa chọn nào giúp test vừa xác định vừa có ý nghĩa?"
 options = ["Stub response lỗi ở ranh giới request", "Assert thông báo lỗi hoặc hành động phục hồi trên UI", "Dùng delay cố định rồi giả định API đã lỗi", "Mock mọi hàm nội bộ và bỏ qua trạng thái hiển thị"]
 answer = [0, 1]
@@ -927,6 +967,7 @@ id = "testing-dv005"
 module = "testing-dv-network"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Khi dùng network stub cho test E2E, lựa chọn nào là thực hành tốt?"
 options = ["Dùng dữ liệu response rõ ràng và ổn định", "Tách test stub khỏi một số test tích hợp với backend thật", "Xác minh request/response quan trọng khi đó là yêu cầu của test", "Coi test stub là bằng chứng duy nhất rằng backend production hoạt động đúng"]
 answer = [0, 1, 2]
@@ -938,6 +979,7 @@ id = "testing-dv006"
 module = "testing-dv-network"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''Trong callback của `page.route`, gọi phương thức nào để trả response giả cho request?
 ```js
 await page.route('**/api/profile', (route) => route.{{blank}}({ status: 200, body: '{"name":"Sam"}' }));
@@ -951,6 +993,7 @@ id = "testing-dv007"
 module = "testing-dv-network"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''Trong Cypress, tên alias `orders` được chờ bằng lệnh:
 ```js
 cy.wait('@{{blank}}')
@@ -964,6 +1007,7 @@ id = "testing-dv008"
 module = "testing-dv-network"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Trong phỏng vấn, hãy giải thích cách bạn chọn giữa mock API client, mock ở network boundary và gọi backend thật; nêu cách giữ test ổn định mà vẫn phát hiện lỗi tích hợp."
 keywords = [["network boundary", "request boundary", "ranh giới network"], ["deterministic response", "controlled response", "response ổn định"], ["over-mocking", "mock quá sâu", "mock mọi phụ thuộc"], ["integration test", "kiểm thử tích hợp"]]
 min_keywords = 3
@@ -976,6 +1020,7 @@ id = "testing-dvc01"
 module = "testing-dv-network"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 lang = "javascript"
 title = "Chọn response stub theo request"
 prompt = '''Viết `findStub(request, stubs)` để tìm response stub đầu tiên khớp với request.
@@ -1057,6 +1102,7 @@ id = "testing-dv009"
 module = "testing-dv-state"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Trong Playwright, test nhận `{ page }` từ fixture built-in. Lợi ích quan trọng của fixture là gì?"
 options = ["Quản lý setup/teardown của tài nguyên theo scope test", "Tự động làm mọi assertion đúng", "Chia sẻ cùng một DOM giữa toàn bộ test bất kể cấu hình", "Bỏ qua lỗi khi browser đóng"]
 answer = [0]
@@ -1068,6 +1114,7 @@ id = "testing-dv010"
 module = "testing-dv-state"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một bộ E2E cần bắt đầu ở trang đã đăng nhập trong Playwright. Cách nào phù hợp để tái sử dụng browser authentication state?"
 options = ["Lưu state bằng `storageState` rồi cấu hình cho context/project phù hợp", "Dùng cùng một page toàn cục cho mọi worker", "Tắt assertion về quyền truy cập", "Đặt mật khẩu tài khoản vào tên test"]
 answer = [0]
@@ -1079,6 +1126,7 @@ id = "testing-dv011"
 module = "testing-dv-state"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Cypress `cy.session(id, setup, options)` hữu ích nhất trong tình huống nào?"
 options = ["Lưu và khôi phục browser session để tránh lặp lại bước đăng nhập", "Đọc một JSON fixture từ ổ đĩa", "Thay thế mọi test isolation", "Khởi chạy server ứng dụng trong mỗi assertion"]
 answer = [0]
@@ -1090,6 +1138,7 @@ id = "testing-dv012"
 module = "testing-dv-state"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một suite chạy song song thường xuyên lỗi do test sửa cùng một dữ liệu mẫu. Cách nào giúp giảm phụ thuộc chéo?"
 options = ["Tạo record riêng theo test hoặc worker", "Reset trạng thái backend trước/sau test theo hợp đồng rõ", "Giữ fixture bất biến và tạo bản sao khi cần sửa", "Dựa vào thứ tự chạy để test trước khôi phục dữ liệu"]
 answer = [0, 1, 2]
@@ -1101,6 +1150,7 @@ id = "testing-dv013"
 module = "testing-dv-state"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Các nhận định nào đúng về `setupFiles` và `setupFilesAfterEnv` của Jest?"
 options = ["`setupFiles` chạy trước khi framework test được cài trong môi trường test", "`setupFilesAfterEnv` chạy sau khi framework test được cài", "Cả hai loại setup được thực hiện trước nội dung test file", "`setupFiles` tự tạo dữ liệu riêng cho mỗi test case"]
 answer = [0, 1, 2]
@@ -1112,6 +1162,7 @@ id = "testing-dv014"
 module = "testing-dv-state"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''Trong Playwright, tùy chọn nào nhận đường dẫn tới state đã lưu để context bắt đầu ở trạng thái đăng nhập?
 ```js
 test.use({ {{blank}}: 'playwright/.auth/member.json' });
@@ -1125,6 +1176,7 @@ id = "testing-dv015"
 module = "testing-dv-state"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''Cypress dùng lệnh nào để cache và khôi phục browser session theo một id?
 ```js
 cy.{{blank}}('member', setupLogin);
@@ -1138,6 +1190,7 @@ id = "testing-dv016"
 module = "testing-dv-state"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Trong phỏng vấn, hãy mô tả cách thiết kế fixture và trạng thái đăng nhập cho E2E chạy song song; nêu cách tránh test dùng chung dữ liệu mutable."
 keywords = [["test-scoped fixture", "fixture theo test", "fixture scope"], ["storage state", "authentication state", "trạng thái đăng nhập"], ["test isolation", "state isolation", "cô lập test"], ["teardown", "cleanup", "dọn dữ liệu"]]
 min_keywords = 3
@@ -1150,6 +1203,7 @@ id = "testing-dvc02"
 module = "testing-dv-state"
 type = "code"
 difficulty = 1
+tags = ["level:junior"]
 lang = "javascript"
 title = "Ghép dữ liệu fixture mà không mutate"
 prompt = '''Viết `mergeTestData(defaults, overrides)` để tạo object fixture cho một test.
@@ -1228,6 +1282,7 @@ id = "testing-dv017"
 module = "testing-dv-projects"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Trong Playwright, project có `name` và `use` riêng thường được dùng để làm gì?"
 options = ["Chạy suite với cấu hình browser/device khác nhau trong cùng config", "Tạo một database production cho mỗi assertion", "Tắt tự động chờ của mọi locator", "Đổi thứ tự các test thành một hợp đồng bắt buộc"]
 answer = [0]
@@ -1239,6 +1294,7 @@ id = "testing-dv018"
 module = "testing-dv-projects"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một repository có package Node và package browser cần chạy bằng Jest trong cùng lệnh. Tính năng nào phù hợp để gom các cấu hình?"
 options = ["`projects`", "`snapshotFormat`", "`testTimeout`", "`clearMocks`"]
 answer = [0]
@@ -1250,6 +1306,7 @@ id = "testing-dv019"
 module = "testing-dv-projects"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Test dùng `window` thất bại khi chạy trong môi trường Node của Vitest. Hướng xử lý nào đúng nhất?"
 options = ["Chọn môi trường browser-like phù hợp cho test cần DOM", "Thêm retry để Node tự có `window`", "Mock mọi assertion thành pass", "Tăng timeout mà không đổi môi trường"]
 answer = [0]
@@ -1261,6 +1318,7 @@ id = "testing-dv020"
 module = "testing-dv-projects"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Khi nào project matrix thường đem lại giá trị thực tế?"
 options = ["Chạy cùng luồng quan trọng trên các browser được hỗ trợ", "Tách cấu hình Node và DOM khi test cần API khác nhau", "Nhân đôi mọi tổ hợp dù không có khác biệt hoặc rủi ro", "Cho phép chọn một project cụ thể khi debug"]
 answer = [0, 1, 3]
@@ -1272,6 +1330,7 @@ id = "testing-dv021"
 module = "testing-dv-projects"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Một suite có test DOM và test thuần Node. Những lựa chọn nào giúp cấu hình dễ hiểu và đáng tin cậy?"
 options = ["Gán environment phù hợp theo loại test/project", "Đặt tên project để report cho biết cấu hình đã chạy", "Giả định mọi runner cung cấp cùng global/API", "Xác minh lệnh CI không lọc mất project cần kiểm tra"]
 answer = [0, 1, 3]
@@ -1283,6 +1342,7 @@ id = "testing-dv022"
 module = "testing-dv-projects"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''Lệnh Playwright nào chọn riêng project có tên `chromium`?
 ```sh
 npx playwright test --project={{blank}}
@@ -1296,6 +1356,7 @@ id = "testing-dv023"
 module = "testing-dv-projects"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''Trong cấu hình Vitest, thuộc tính nào nhận danh sách cấu hình project con?
 ```js
 test: { {{blank}}: [/* project configs */] }
@@ -1309,6 +1370,7 @@ id = "testing-dv024"
 module = "testing-dv-projects"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Trong phỏng vấn, hãy mô tả cách bạn quyết định project matrix cho CI; cân bằng browser/runtime coverage với thời gian chạy và khả năng điều tra lỗi."
 keywords = [["project matrix", "configuration matrix", "matrix"], ["runtime cost", "execution time", "CI duration"], ["targeted subset", "smoke suite", "focused smoke"], ["browser coverage", "environment coverage", "coverage matrix"]]
 min_keywords = 3
@@ -1321,6 +1383,7 @@ id = "testing-dvc03"
 module = "testing-dv-projects"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 lang = "javascript"
 title = "Tạo project matrix có thứ tự"
 prompt = '''Viết `buildProjectMatrix(browsers, locales)` để tạo các cấu hình cho mọi cặp browser-locale.
@@ -1377,3 +1440,916 @@ test('không sửa các mảng đầu vào', () => {
 hints = ["Dùng vòng lặp lồng nhau để giữ thứ tự browser trước locale.", "Khởi tạo mảng kết quả mới, không push vào input."]
 explanation = "Sinh matrix có thứ tự giúp cấu hình chạy nhất quán và làm rõ số tổ hợp mà suite sẽ kiểm tra."
 sources = ["playwright/test-projects", "vitest/config/projects"]
+
+[[modules]]
+id = "testing-lead"
+title = "Góc nhìn Tech Lead"
+description = "Chiến lược test cho team: pyramid/trophy, quality gate trong CI, chọn luồng E2E, môi trường và dữ liệu test, flaky policy, thời gian pipeline."
+sources = ["playwright/ci", "playwright/test-sharding", "playwright/test-retries", "vitest/guide/coverage", "vitest/guide/improving-performance", "jest/cli#--changedsince"]
+lesson = '''
+### Câu hỏi của Lead không phải "viết test thế nào" mà "đầu tư test vào đâu"
+Ở quy mô team, test là một khoản đầu tư có chi phí (thời gian viết, thời gian CI, công sửa flaky) và lợi ích (bắt lỗi sớm, tự tin refactor, release nhanh). Quyết định tốt luôn gắn với rủi ro sản phẩm: luồng nào mất tiền, mất dữ liệu hoặc mất người dùng khi hỏng thì được bảo vệ dày nhất.
+
+### Khung ra quyết định: chọn hình dạng bộ test
+| Tiêu chí | Pyramid (nhiều unit) | Trophy (nhiều integration) | Nhiều E2E |
+|---|---|---|---|
+| Hợp với | Domain logic phức tạp, thư viện, backend | Frontend gọi API, UI ghép nhiều component | Ít khi là lựa chọn chính |
+| Tốc độ phản hồi | Rất nhanh | Nhanh–vừa | Chậm |
+| Độ tin cậy khi refactor | Dễ vỡ nếu test chi tiết triển khai | Tốt vì test hành vi | Tốt nhưng tốn công giữ ổn định |
+| Chi phí bảo trì | Thấp nếu test hàm thuần | Vừa | Cao (selector, dữ liệu, môi trường) |
+
+Không có tỉ lệ đúng cho mọi team; hình dạng phải phản ánh nơi lỗi thật sự xảy ra (xem lại postmortem và bug report vài tháng gần nhất).
+
+### Quality gate trong CI (ước lượng tham khảo, cần đo lại cho dự án của bạn)
+- **Trên PR (mục tiêu ≤ 10–15 phút):** lint, type check, unit + integration, smoke E2E cho 3–5 luồng cốt lõi, có sharding.
+- **Trên merge queue hoặc nightly:** full E2E, cross-browser matrix, visual/a11y check.
+- **Coverage:** gate theo *diff coverage* (dòng mới/sửa) và ngưỡng riêng cho module trọng yếu; tránh ép một con số toàn cục cao khiến team viết test không assert gì.
+- **Check bắt buộc phải xác định (deterministic):** check hay flaky không nên là required check, vì team sẽ học cách bấm "re-run" thay vì đọc lỗi.
+
+### Chiến lược E2E
+1. Chọn luồng theo tác động × tần suất × lịch sử lỗi (đăng nhập, thanh toán, đăng ký…), không tự động hoá mọi biến thể UI.
+2. Môi trường: preview/ephemeral environment theo PR khi có thể; dịch vụ bên thứ ba (payment, email) thay bằng sandbox hoặc mock ở ranh giới mạng.
+3. Dữ liệu: mỗi test tự tạo dữ liệu qua API/seed, không dùng chung một tài khoản; dọn dẹp hoặc dùng tenant riêng.
+4. Quan sát: lưu trace/video khi retry hoặc fail để điều tra không cần chạy lại.
+
+### Checklist review test (dùng trong PR)
+- Test kiểm tra hành vi người dùng/hợp đồng, không phải chi tiết nội bộ?
+- Không có `sleep`/timeout cố định; dùng assertion tự chờ hoặc fake timer?
+- Dữ liệu độc lập, chạy song song và theo thứ tự bất kỳ đều đúng?
+- Tên test mô tả kịch bản và kết quả mong đợi?
+- Mock đặt ở ranh giới (network, clock, random), không mock module nội bộ tràn lan?
+
+### ADR mẫu ngắn
+**Bối cảnh:** pipeline PR mất 42 phút, flaky rate E2E ~6% (ước lượng từ 30 ngày CI). **Quyết định:** PR chạy unit/integration + smoke E2E shard 4 máy; full E2E chạy trên merge queue; test flaky bị quarantine có owner và hạn sửa 5 ngày làm việc. **Hệ quả:** phản hồi PR nhanh hơn; một số lỗi chỉ bị bắt ở merge queue nên cần người trực xử lý trong ngày.
+
+### Anti-pattern ở quy mô team
+- Retry mặc định 3 lần để "xanh CI", che giấu race condition thật.
+- Coverage 90% toàn cục làm KPI cá nhân → test rỗng, snapshot khổng lồ.
+- Một môi trường staging dùng chung cho mọi team chạy E2E song song.
+- Không ai sở hữu test flaky; danh sách quarantine chỉ tăng không giảm.
+'''
+
+[[questions]]
+id = "testing-lv001"
+module = "testing-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "ci"]
+prompt = "Team 6 dev, pipeline PR mất 40 phút vì chạy toàn bộ 600 E2E test tuần tự; dev bắt đầu gộp PR lớn để đỡ chờ. Ngân sách CI cho phép thêm tối đa 4 runner. Phương án nào hợp lý nhất?"
+options = ["PR chạy unit/integration + smoke E2E cho luồng cốt lõi, shard trên 4 runner; full E2E chạy ở merge queue hoặc nightly", "Bỏ hẳn E2E khỏi CI, chỉ chạy tay trước release", "Giữ nguyên, yêu cầu dev viết PR nhỏ hơn và kiên nhẫn chờ", "Chạy full E2E trên 4 runner cho mọi commit, kể cả commit chỉ sửa tài liệu"]
+answer = [0]
+explanation = "Tách tầng giúp PR có phản hồi nhanh mà vẫn giữ lưới an toàn đầy đủ trước khi merge. Bỏ E2E mất khả năng bắt hồi quy; giữ nguyên không giải quyết nguyên nhân; chạy full suite mọi commit dùng hết runner mà vẫn chậm."
+sources = ["playwright/test-sharding", "playwright/ci"]
+
+[[questions]]
+id = "testing-lv002"
+module = "testing-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "flaky"]
+prompt = "Tỉ lệ flaky của suite E2E khoảng 8%, team đã bật `retries: 3` cho mọi test và mọi môi trường. Bug race condition thật vừa lọt lên production dù CI xanh. Chính sách nào hợp lý nhất?"
+options = ["Giữ retry thấp chỉ trên CI, theo dõi test được đánh dấu flaky, quarantine có owner và hạn sửa; test trong luồng trọng yếu không được quarantine quá hạn", "Tăng retries lên 5 để CI ổn định hơn", "Xoá mọi test từng fail ít nhất một lần", "Tắt CI cho E2E cho tới khi viết lại toàn bộ"]
+answer = [0]
+explanation = "Retry là công cụ thu thập tín hiệu, không phải cách che lỗi. Quarantine có owner/SLA giữ CI dùng được mà không để flaky tích tụ. Tăng retry che race condition nhiều hơn; xoá hoặc tắt test làm mất lưới an toàn."
+sources = ["playwright/test-retries", "vitest/config/retry"]
+
+[[questions]]
+id = "testing-lv003"
+module = "testing-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "coverage"]
+prompt = "Ban giám đốc muốn đặt KPI coverage 90% toàn cục cho repo đang ở 55%, hạn 1 quý. Team lo sẽ phải viết test chỉ để tăng số. Đề xuất nào hợp lý nhất?"
+options = ["Gate diff coverage cho code mới/sửa, đặt ngưỡng riêng cho module trọng yếu (thanh toán, phân quyền) và báo cáo xu hướng coverage thay vì một con số cứng", "Đồng ý 90% và cho phép loại trừ mọi file khó test khỏi báo cáo", "Từ chối mọi chỉ số coverage vì coverage vô nghĩa", "Đặt 90% nhưng chỉ đo statement coverage cho dễ đạt"]
+answer = [0]
+explanation = "Diff coverage ngăn nợ mới mà không bắt viết test bù hàng loạt; ngưỡng theo module tập trung vào rủi ro. Loại trừ tùy tiện hay chọn metric dễ đạt là game số liệu; bỏ hẳn chỉ số làm mất tín hiệu hữu ích."
+sources = ["vitest/guide/coverage", "vitest/config/coverage", "jest/configuration#coveragethreshold-object"]
+
+[[questions]]
+id = "testing-lv004"
+module = "testing-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "e2e-environment"]
+prompt = "E2E chạy trên một staging dùng chung cho 4 team; dữ liệu bị team khác ghi đè, payment gateway sandbox thỉnh thoảng chậm 30 giây. Hạ tầng hỗ trợ tạo preview environment theo PR. Chọn cách nào?"
+options = ["Chạy smoke E2E trên preview environment riêng theo PR với dữ liệu seed, mock/sandbox payment ở ranh giới mạng; giữ vài test thật với sandbox chạy theo lịch", "Chạy E2E thẳng trên production với tài khoản test", "Giữ staging chung, tăng timeout toàn suite lên 2 phút", "Bỏ test luồng thanh toán vì phụ thuộc bên thứ ba"]
+answer = [0]
+explanation = "Môi trường riêng + dữ liệu seed loại bỏ nhiễu chéo team; mock ở ranh giới giúp test xác định, còn test sandbox theo lịch vẫn kiểm tra tích hợp thật. Production rủi ro, tăng timeout chỉ làm chậm, bỏ test thanh toán bỏ luồng rủi ro nhất."
+sources = ["playwright/mock", "playwright/network", "playwright/ci"]
+
+[[questions]]
+id = "testing-lv005"
+module = "testing-lead"
+type = "multiple"
+difficulty = 3
+tags = ["level:lead", "e2e-strategy"]
+prompt = "Team chỉ có thời gian tự động hoá khoảng 15 luồng E2E trong quý này. Tiêu chí nào nên dùng để chọn luồng?"
+options = ["Tác động kinh doanh khi luồng hỏng (doanh thu, dữ liệu, pháp lý)", "Tần suất người dùng đi qua luồng", "Lịch sử hồi quy/bug của khu vực đó", "Mỗi biến thể màu nút và breakpoint của trang marketing"]
+answer = [0, 1, 2]
+explanation = "Ưu tiên theo rủi ro = tác động × xác suất; lịch sử bug là bằng chứng xác suất. Biến thể giao diện nhỏ phù hợp với component/visual test hơn là E2E đắt tiền."
+sources = ["vitest/guide/learn/testing-in-practice", "playwright/locators"]
+
+[[questions]]
+id = "testing-lv006"
+module = "testing-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "contract-testing"]
+prompt = "4 team sở hữu 4 service; mỗi tháng có 2–3 sự cố do một team đổi response API làm vỡ consumer. Môi trường integrated E2E chung rất chậm và khó dựng. Đầu tư nào hợp lý nhất?"
+options = ["Consumer-driven contract test: consumer công bố kỳ vọng, provider xác minh trong CI trước khi deploy", "Dựng thêm một môi trường integrated E2E lớn hơn và chạy mọi test của 4 team ở đó", "Cấm thay đổi API trong 6 tháng", "Yêu cầu mỗi team đọc changelog của team khác mỗi tuần"]
+answer = [0]
+explanation = "Contract test bắt lỗi ở ranh giới ngay trong pipeline của provider, nhanh và không cần dựng toàn hệ thống. Môi trường lớn hơn đắt và chậm; cấm thay đổi hay dựa vào quy trình thủ công không bền."
+sources = ["vitest/guide/mocking/requests", "playwright/mock"]
+
+[[questions]]
+id = "testing-lv007"
+module = "testing-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "test-shape"]
+prompt = "Ứng dụng React chủ yếu hiển thị dữ liệu từ API, ít logic thuần; postmortem cho thấy lỗi thường nằm ở chỗ component ghép với API và routing. Team đang có 800 unit test mock từng hook. Nên dịch chuyển đầu tư ra sao?"
+options = ["Tăng integration test ở mức trang/feature với network mock, giảm unit test mock chi tiết nội bộ; giữ E2E cho vài luồng cốt lõi", "Viết thêm unit test cho từng hook để đạt 100% coverage", "Chuyển toàn bộ sang E2E vì gần thực tế nhất", "Giữ nguyên vì pyramid luôn đúng"]
+answer = [0]
+explanation = "Hình dạng bộ test nên theo nơi lỗi xảy ra; với app nặng UI-API, integration (trophy) cho tỉ lệ tin cậy/chi phí tốt nhất. Unit mock dày dễ vỡ khi refactor; E2E toàn bộ quá chậm; không có hình dạng 'luôn đúng'."
+sources = ["vitest/guide/learn/testing-in-practice", "vitest/guide/mocking/requests"]
+
+[[questions]]
+id = "testing-lv008"
+module = "testing-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "legacy"]
+prompt = "Bạn được giao refactor module tính giá 3.000 dòng chưa có test, deadline 2 tuần, module đang tạo doanh thu chính. Bước đầu tiên hợp lý nhất?"
+options = ["Viết characterization test ở ranh giới module (input/output thực tế, kể cả hành vi lạ hiện có) rồi mới refactor từng bước nhỏ", "Viết lại module từ đầu theo thiết kế mới rồi test sau", "Refactor xong rồi nhờ QA test tay toàn bộ", "Viết unit test cho từng hàm private trước khi đổi bất cứ gì"]
+answer = [0]
+explanation = "Characterization test khóa hành vi hiện tại nên mọi thay đổi ngoài ý muốn lộ ra ngay. Viết lại toàn bộ rủi ro cao với deadline ngắn; test tay không lặp lại được; test hàm private sẽ vỡ ngay khi refactor."
+sources = ["vitest/guide/learn/writing-tests"]
+
+[[questions]]
+id = "testing-lv009"
+module = "testing-lead"
+type = "multiple"
+difficulty = 3
+tags = ["level:lead", "ci"]
+prompt = "Những check nào phù hợp làm *required check* chặn merge trên PR?"
+options = ["Type check và lint", "Unit/integration test có kết quả xác định", "Smoke E2E ổn định cho luồng cốt lõi", "Suite E2E cross-browser đầy đủ đang có flaky rate 10%"]
+answer = [0, 1, 2]
+explanation = "Required check phải nhanh và xác định; check flaky làm team quen bấm re-run và mất niềm tin vào CI. Suite rộng/flaky nên chạy ở merge queue/nightly dưới dạng thông tin cho tới khi ổn định."
+sources = ["playwright/ci", "playwright/test-retries"]
+
+[[questions]]
+id = "testing-lv010"
+module = "testing-lead"
+type = "fill"
+difficulty = 3
+tags = ["level:lead", "ci"]
+prompt = '''Bạn quyết định chia suite Playwright ra 4 máy CI. Máy thứ hai chạy lệnh nào?
+```sh
+npx playwright test --{{blank}}=2/4
+```'''
+blanks = [["shard"]]
+explanation = "`--shard=x/y` chia test thành y phần và chạy phần x; kết hợp với matrix CI để giảm thời gian pipeline."
+sources = ["playwright/test-sharding"]
+
+[[questions]]
+id = "testing-lv011"
+module = "testing-lead"
+type = "fill"
+difficulty = 3
+tags = ["level:lead", "ci"]
+prompt = '''Để PR chỉ chạy các Jest test liên quan tới file thay đổi so với nhánh `main` (full suite vẫn chạy khi merge), dùng cờ nào?
+```sh
+npx jest --{{blank}}=main
+```'''
+blanks = [["changedSince"]]
+explanation = "`--changedSince` chọn test liên quan tới thay đổi so với một ref; nên kèm full run ở bước sau vì phân tích phụ thuộc không phải lúc nào cũng đầy đủ."
+sources = ["jest/cli#--changedsince"]
+
+[[questions]]
+id = "testing-lv012"
+module = "testing-lead"
+type = "multiple"
+difficulty = 3
+tags = ["level:lead", "code-review"]
+prompt = "Bạn soạn checklist review test cho team. Mục nào nên đưa vào?"
+options = ["Test kiểm tra hành vi quan sát được, không phải chi tiết triển khai nội bộ", "Không dùng sleep/timeout cố định để chờ UI", "Dữ liệu test độc lập, chạy song song và theo thứ tự bất kỳ đều đúng", "Mỗi PR phải tăng tổng số test lên ít nhất 10"]
+answer = [0, 1, 2]
+explanation = "Ba mục đầu trực tiếp giảm flaky và chi phí bảo trì. Chỉ tiêu số lượng test khuyến khích test vô nghĩa thay vì test có giá trị."
+sources = ["vitest/guide/learn/writing-tests", "playwright/test-assertions"]
+
+[[questions]]
+id = "testing-lv013"
+module = "testing-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "snapshot"]
+prompt = "Repo có 300 snapshot lớn (toàn bộ HTML trang); dev thường chạy `-u` cập nhật hàng loạt mà không đọc diff, và gần đây một lỗi hiển nhiên giá lọt qua. Chính sách nào hợp lý nhất?"
+options = ["Thay snapshot lớn bằng assertion có chủ đích cho dữ liệu quan trọng; chỉ giữ snapshot nhỏ, ổn định và yêu cầu review diff snapshot trong PR", "Cấm hoàn toàn snapshot trong mọi trường hợp", "Giữ nguyên nhưng chạy `-u` tự động trong CI để luôn xanh", "Tăng số snapshot để phủ thêm trang"]
+answer = [0]
+explanation = "Snapshot chỉ có giá trị khi diff nhỏ và được đọc. Cấm tuyệt đối bỏ luôn trường hợp dùng tốt (serializer, output nhỏ); tự cập nhật trong CI biến test thành vô nghĩa."
+sources = ["vitest/guide/snapshot", "jest/snapshot-testing"]
+
+[[questions]]
+id = "testing-lv014"
+module = "testing-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "test-data"]
+prompt = "Suite E2E 200 test dùng chung một tài khoản admin; bật chạy song song 8 worker thì test fail ngẫu nhiên do dữ liệu bị sửa chéo. Hướng xử lý nào hợp lý nhất với chi phí vừa phải?"
+options = ["Mỗi test/worker tự tạo dữ liệu qua API (fixture), dùng storage state xác thực theo vai trò và dọn dẹp theo tiền tố hoặc tenant riêng", "Chạy lại 1 worker tuần tự vĩnh viễn", "Thêm sleep giữa các test để giảm va chạm", "Reset toàn bộ database trước mỗi test qua UI"]
+answer = [0]
+explanation = "Dữ liệu độc lập là điều kiện để song song hoá; fixture qua API rẻ hơn UI nhiều. Chạy tuần tự bỏ lợi ích tốc độ; sleep không loại bỏ race; reset DB qua UI quá chậm và vẫn va chạm khi song song."
+sources = ["playwright/test-fixtures", "playwright/auth"]
+
+[[questions]]
+id = "testing-lv015"
+module = "testing-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "release"]
+prompt = "Chiều thứ Sáu, release đã lên lịch. Nightly E2E đỏ 2 test: một ở luồng thanh toán (lỗi mới xuất hiện từ commit hôm qua), một ở trang FAQ (đã có ticket flaky từ tuần trước). Quyết định nào hợp lý nhất?"
+options = ["Chặn release cho tới khi điều tra xong test thanh toán (revert commit nếu cần); test FAQ đã quarantine có owner thì không chặn", "Release luôn vì 2 test chỉ chiếm 1% suite", "Chặn release cho tới khi cả 2 test xanh, kể cả test FAQ flaky", "Tắt cả 2 test để release đúng hạn"]
+answer = [0]
+explanation = "Quyết định dựa trên rủi ro: lỗi mới ở luồng tạo doanh thu phải chặn; flaky đã biết ở trang ít rủi ro được xử lý theo chính sách quarantine. Tỉ lệ phần trăm không phản ánh rủi ro; tắt test giấu vấn đề."
+sources = ["playwright/test-retries", "playwright/test-annotations"]
+
+[[questions]]
+id = "testing-lv016"
+module = "testing-lead"
+type = "essay"
+difficulty = 3
+tags = ["level:lead", "ci"]
+prompt = "Viết một ADR ngắn để giảm thời gian pipeline PR từ 45 phút xuống dưới 15 phút cho team 8 người mà không làm tăng lỗi lọt lên production. Nêu bối cảnh, phương án đã cân nhắc, quyết định và hệ quả."
+keywords = [["shard", "song song", "parallel"], ["smoke"], ["merge queue", "nightly"], ["flaky", "quarantine"], ["đo", "metric", "số liệu", "theo dõi"]]
+min_keywords = 3
+model_answer = "Bối cảnh: pipeline PR 45 phút, dev gộp PR lớn, flaky khoảng 5%. Phương án cân nhắc: chỉ tăng runner (đắt, không xử lý flaky), chỉ chạy test liên quan file đổi (nhanh nhưng có thể bỏ sót), tách tầng. Quyết định: PR chạy lint, type check, unit/integration và smoke E2E cho 5 luồng cốt lõi, shard song song trên 4 máy; full E2E và cross-browser chạy ở merge queue và nightly; test flaky được quarantine có owner và hạn sửa. Hệ quả: phản hồi PR dưới 15 phút; một số lỗi chỉ bị bắt ở merge queue nên cần người trực; theo dõi metric thời gian pipeline, flaky rate và số lỗi lọt production hằng tháng để điều chỉnh."
+explanation = "ADR tốt nêu ràng buộc, các phương án bị loại và lý do, quyết định cụ thể (tách tầng, sharding, merge queue), chính sách flaky và cách đo kết quả."
+sources = ["playwright/test-sharding", "playwright/ci", "jest/cli#--changedsince"]
+
+[[questions]]
+id = "testing-lv017"
+module = "testing-lead"
+type = "essay"
+difficulty = 3
+tags = ["level:lead", "strategy"]
+prompt = "Bạn vừa nhận vai trò Lead cho một team 5 người, sản phẩm SaaS chưa có chiến lược test (vài unit test rời rạc, QA test tay trước mỗi release 2 ngày). Trình bày kế hoạch 90 ngày về chiến lược test: ưu tiên gì trước, quality gate nào, đo thành công ra sao."
+keywords = [["rủi ro", "risk"], ["luồng cốt lõi", "critical path", "smoke"], ["integration"], ["quality gate", "required check", "CI"], ["metric", "đo", "lead time", "lỗi lọt"]]
+min_keywords = 3
+model_answer = "Tháng 1: xem bug report và postmortem để lập bản đồ rủi ro, chọn 5 luồng cốt lõi (đăng nhập, thanh toán, tạo dự án…) và viết smoke E2E ổn định cho chúng; đưa lint, type check và test hiện có vào CI làm quality gate. Tháng 2: thêm integration test ở mức feature với network mock cho khu vực hay lỗi, gate diff coverage cho code mới, thống nhất checklist review test. Tháng 3: song song hoá/shard CI để PR dưới 15 phút, chính sách flaky có owner, chuyển QA từ test hồi quy tay sang exploratory test. Đo bằng metric: số lỗi lọt production, thời gian pipeline, flaky rate và thời gian chuẩn bị release giảm từ 2 ngày."
+explanation = "Câu trả lời cần ưu tiên theo rủi ro, bắt đầu từ luồng cốt lõi, có quality gate trong CI, hình dạng bộ test phù hợp và chỉ số đo lường cụ thể."
+sources = ["vitest/guide/learn/testing-in-practice", "playwright/ci", "vitest/guide/coverage"]
+
+[[questions]]
+id = "testing-lvc01"
+module = "testing-lead"
+type = "code"
+difficulty = 3
+tags = ["level:lead", "ci"]
+lang = "javascript"
+title = "Cân bằng shard theo thời gian chạy"
+prompt = '''Để giảm thời gian pipeline, bạn chia test file ra `n` shard dựa trên thời gian chạy lần trước. Viết `balanceShards(tests, n)`:
+- `tests` là mảng `{ name, ms }`; trả về mảng gồm `n` mảng tên file.
+- Thuật toán tham lam: sắp test theo `ms` giảm dần (bằng nhau thì theo `name` tăng dần), lần lượt gán mỗi test vào shard có tổng `ms` nhỏ nhất hiện tại (bằng nhau thì shard có chỉ số nhỏ nhất).
+- Shard không có test là mảng rỗng. Không sửa mảng đầu vào.
+
+Ví dụ `balanceShards([{name:'a',ms:5},{name:'b',ms:3},{name:'c',ms:3}], 2)` → `[['a'], ['b','c']]`.
+'''
+starter = '''
+function balanceShards(tests, n) {
+  return [];
+}
+'''
+solution = '''
+function balanceShards(tests, n) {
+  const shards = [];
+  const totals = [];
+  for (let i = 0; i < n; i++) { shards.push([]); totals.push(0); }
+  const sorted = tests.slice().sort((x, y) => y.ms - x.ms || (x.name < y.name ? -1 : x.name > y.name ? 1 : 0));
+  for (const t of sorted) {
+    let best = 0;
+    for (let i = 1; i < n; i++) if (totals[i] < totals[best]) best = i;
+    shards[best].push(t.name);
+    totals[best] += t.ms;
+  }
+  return shards;
+}
+'''
+tests = '''
+test('ví dụ trong đề', () => {
+  expect(balanceShards([{ name: 'a', ms: 5 }, { name: 'b', ms: 3 }, { name: 'c', ms: 3 }], 2)).toEqual([['a'], ['b', 'c']]);
+});
+
+test('gán vào shard nhẹ nhất, hòa thì chỉ số nhỏ', () => {
+  const tests = [{ name: 'x', ms: 10 }, { name: 'y', ms: 7 }, { name: 'z', ms: 6 }, { name: 'w', ms: 4 }];
+  expect(balanceShards(tests, 3)).toEqual([['x'], ['y'], ['z', 'w']]);
+});
+
+test('thời gian bằng nhau sắp theo tên', () => {
+  expect(balanceShards([{ name: 'b', ms: 2 }, { name: 'a', ms: 2 }], 2)).toEqual([['a'], ['b']]);
+});
+
+test('shard thừa là mảng rỗng', () => {
+  expect(balanceShards([{ name: 'only', ms: 1 }], 3)).toEqual([['only'], [], []]);
+});
+
+test('không sửa đầu vào', () => {
+  const tests = [{ name: 'b', ms: 1 }, { name: 'a', ms: 9 }];
+  balanceShards(tests, 2);
+  expect(tests.map(t => t.name)).toEqual(['b', 'a']);
+});
+'''
+hints = ["Sao chép mảng bằng `slice()` trước khi sort.", "Giữ một mảng `totals` song song với `shards` để tìm shard nhẹ nhất."]
+explanation = "Chia theo thời gian (longest-processing-time first) cân bằng shard tốt hơn chia theo số file, giúp thời gian pipeline bằng shard chậm nhất được rút ngắn."
+sources = ["playwright/test-sharding"]
+
+[[questions]]
+id = "testing-lv018"
+module = "testing-principles"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "test-double"]
+prompt = "Service `OrderService` dùng repository truy vấn phức tạp; test hiện stub từng lời gọi `findById`, `save`, `update` theo thứ tự và vỡ mỗi khi refactor nội bộ. Loại test double nào phù hợp hơn?"
+options = ["Fake repository in-memory có hành vi thật (lưu/đọc theo id) để test assert trên trạng thái kết quả", "Mock chặt từng lời gọi với `toHaveBeenNthCalledWith` cho mọi bước", "Spy lên database thật của môi trường dev", "Không dùng test double, gọi thẳng database production"]
+answer = [0]
+explanation = "Fake cho phép test hành vi qua trạng thái thay vì kịch bản lời gọi, nên bền khi refactor. Mock chặt từng lời gọi chính là nguyên nhân dễ vỡ; dùng database dùng chung khiến test không độc lập."
+sources = ["vitest/guide/learn/testing-in-practice", "vitest/guide/mocking"]
+
+[[questions]]
+id = "testing-lv019"
+module = "testing-principles"
+type = "multiple"
+difficulty = 3
+tags = ["level:senior", "test-double"]
+prompt = "Khi nào việc kiểm tra tương tác bằng mock (`toHaveBeenCalledWith`) là lựa chọn đúng thay vì assert trạng thái?"
+options = ["Side effect ra ngoài hệ thống không có trạng thái để đọc lại, như gửi email hoặc đẩy analytics", "Cần đảm bảo không gọi API thanh toán hai lần cho cùng đơn hàng", "Kiểm tra hàm thuần `calculateTax` trả đúng số", "Kiểm tra thứ tự gọi các hàm private bên trong cùng module"]
+answer = [0, 1]
+explanation = "Mock phù hợp ở ranh giới side effect, nơi tương tác chính là hành vi. Hàm thuần nên assert giá trị trả về; theo dõi hàm private là ràng buộc vào chi tiết triển khai."
+sources = ["vitest/guide/mocking", "jest/mock-function-api"]
+
+[[questions]]
+id = "testing-lv020"
+module = "testing-unit"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "mocking"]
+prompt = '''Vì sao test sau vẫn dùng module thật thay vì mock, dù `vi.mock` được gọi?
+```js
+import { getUser } from './api'
+test('x', async () => {
+  const factory = () => ({ getUser: vi.fn() })
+  if (process.env.CI) vi.mock('./api', factory)
+  // ...
+})
+```'''
+options = ["`vi.mock` được hoist lên đầu file và không được đặt trong khối điều kiện/hàm; factory tham chiếu biến cục bộ nên không hoạt động như mong đợi", "`vi.mock` chỉ chạy được trong `beforeAll`", "`vi.mock` chỉ mock được package trong node_modules", "Phải gọi `vi.mock` sau khi import để có hiệu lực"]
+answer = [0]
+explanation = "Vitest hoist `vi.mock` lên trước các import, nên lời gọi phải ở top-level và factory không được dựa vào biến khai báo sau đó (dùng `vi.hoisted` nếu cần). Đặt trong `if` hay trong test không cho kết quả như mong muốn."
+sources = ["vitest/api/vi", "vitest/guide/mocking"]
+
+[[questions]]
+id = "testing-lv021"
+module = "testing-unit"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "fake-timers"]
+prompt = '''Test debounce sau bị treo/timeout. Nguyên nhân hợp lý nhất?
+```js
+vi.useFakeTimers()
+const p = debouncedSave('x')   // trả Promise resolve sau setTimeout 300ms
+await p
+vi.advanceTimersByTime(300)
+```'''
+options = ["`await p` chờ một Promise chỉ resolve khi timer chạy, nhưng timer giả chưa được tiến; phải tiến timer trước (hoặc dùng `advanceTimersByTimeAsync`) rồi mới await", "Fake timer không hỗ trợ `setTimeout`", "Phải gọi `vi.useRealTimers()` trước `await`", "`debouncedSave` cần được mock bằng `vi.fn()`"]
+answer = [0]
+explanation = "Với fake timer, thời gian chỉ trôi khi test tiến nó. Await trước khi tiến timer tạo deadlock. Phiên bản async của hàm tiến timer còn flush microtask giữa các timer."
+sources = ["vitest/guide/mocking/timers", "vitest/api/vi"]
+
+[[questions]]
+id = "testing-lv022"
+module = "testing-unit"
+type = "multiple"
+difficulty = 3
+tags = ["level:senior", "isolation"]
+prompt = "Suite Vitest xanh khi chạy riêng từng file nhưng đỏ khi chạy cả repo. Những nguyên nhân nào đáng nghi?"
+options = ["State ở module-level (cache, singleton) bị test trước để lại", "Mock/spy không được restore giữa các test", "Fake timer bật ở một test nhưng không tắt", "Assertion dùng `toEqual` thay vì `toStrictEqual`"]
+answer = [0, 1, 2]
+explanation = "Rò rỉ state giữa test là nguyên nhân kinh điển của lỗi phụ thuộc thứ tự. Chênh lệch `toEqual`/`toStrictEqual` cho kết quả như nhau dù chạy riêng hay chung."
+sources = ["vitest/api/vi", "vitest/guide/mocking"]
+
+[[questions]]
+id = "testing-lv023"
+module = "testing-components"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "async-ui"]
+prompt = "Test component đôi khi fail với cảnh báo cập nhật state sau khi test kết thúc. Component gọi fetch trong effect rồi set state. Cách xử lý đúng bản chất là gì?"
+options = ["Await trạng thái cuối cùng mà người dùng thấy (ví dụ chờ text kết quả xuất hiện bằng query tự chờ) và mock network trả kết quả xác định", "Tắt cảnh báo trong console", "Thêm `setTimeout(1000)` trước khi kết thúc test", "Chuyển fetch ra ngoài effect để test không thấy"]
+answer = [0]
+explanation = "Cảnh báo cho biết test kết thúc trước khi luồng async hoàn tất; chờ trạng thái quan sát được và kiểm soát network làm test xác định. Tắt cảnh báo hay sleep chỉ che giấu race."
+sources = ["vitest/guide/browser/component-testing", "vitest/guide/mocking/requests"]
+
+[[questions]]
+id = "testing-lv024"
+module = "testing-components"
+type = "multiple"
+difficulty = 3
+tags = ["level:senior", "locators"]
+prompt = "Những chiến lược chọn phần tử nào giúp component/E2E test bền khi đổi giao diện mà vẫn phản ánh trải nghiệm người dùng?"
+options = ["Locator theo role và accessible name", "Locator theo label của form field", "`data-testid` cho phần tử không có ngữ nghĩa rõ ràng", "Selector CSS theo class sinh tự động của CSS-in-JS"]
+answer = [0, 1, 2]
+explanation = "Role/label vừa bền vừa kiểm tra luôn a11y; test id là phương án dự phòng có chủ đích. Class sinh tự động đổi sau mỗi build/refactor."
+sources = ["playwright/locators"]
+
+[[questions]]
+id = "testing-lv025"
+module = "testing-e2e"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "auto-wait"]
+prompt = '''Test Playwright sau thỉnh thoảng fail dù UI cuối cùng đúng. Sửa thế nào?
+```js
+await page.click('button#save')
+const text = await page.locator('.toast').textContent()
+expect(text).toBe('Đã lưu')
+```'''
+options = ["Dùng web-first assertion `await expect(page.locator('.toast')).toHaveText('Đã lưu')` để tự chờ tới khi khớp", "Thêm `await page.waitForTimeout(2000)` trước khi đọc text", "Tăng `timeout` của toàn test lên 2 phút", "Chuyển sang `page.$eval` để đọc nhanh hơn"]
+answer = [0]
+explanation = "`textContent()` đọc một lần tại thời điểm gọi; assertion web-first retry tới khi điều kiện đúng hoặc hết timeout. Sleep cố định vừa chậm vừa vẫn có thể flaky."
+sources = ["playwright/test-assertions", "playwright/locators"]
+
+[[questions]]
+id = "testing-lv026"
+module = "testing-e2e"
+type = "multiple"
+difficulty = 3
+tags = ["level:senior", "debugging"]
+prompt = "Một test E2E chỉ fail trên CI khoảng 1/30 lần. Những bước nào giúp điều tra hiệu quả?"
+options = ["Bật trace khi retry lần đầu và mở trace để xem DOM, network, console tại thời điểm fail", "Chạy lặp test đó nhiều lần cục bộ với cùng số worker như CI", "So sánh outcome 'flaky' trong report qua nhiều lần chạy để tìm mẫu chung", "Xoá test để CI ổn định rồi tính sau"]
+answer = [0, 1, 2]
+explanation = "Trace, chạy lặp và dữ liệu lịch sử cho bằng chứng về race condition hoặc phụ thuộc dữ liệu. Xoá test bỏ mất tín hiệu và không sửa nguyên nhân."
+sources = ["playwright/trace-viewer", "playwright/test-retries", "playwright/test-cli"]
+
+[[questions]]
+id = "testing-lv027"
+module = "testing-e2e"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "isolation"]
+prompt = "Nhóm test Playwright dùng `test.describe.configure({ mode: 'serial' })` vì test sau phụ thuộc dữ liệu test trước tạo ra. Rủi ro chính của cách làm này là gì?"
+options = ["Một test fail kéo theo các test sau bị bỏ qua, không chạy song song được và khó chạy lại từng test riêng; nên dựng dữ liệu cần thiết trong fixture của từng test", "Serial mode khiến Playwright bỏ qua assertion", "Serial mode chỉ chạy trên Chromium", "Serial mode tự xoá storage state giữa các test"]
+answer = [0]
+explanation = "Chuỗi test phụ thuộc nhau mất tính độc lập: lỗi lan truyền, chậm và khó debug. Fixture tạo dữ liệu riêng cho từng test giữ được isolation."
+sources = ["playwright/test-parallel", "playwright/test-fixtures"]
+
+[[questions]]
+id = "testing-lv028"
+module = "testing-strategy"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "coverage"]
+prompt = "Module có 100% line coverage nhưng một lỗi so sánh `>=` thay vì `>` vẫn lọt. Kỹ thuật nào trả lời trực tiếp câu hỏi \"test có thực sự bắt được lỗi không\"?"
+options = ["Mutation testing: cố ý thay đổi code (đổi toán tử, giá trị) và kiểm tra test có fail không", "Tăng lên 100% branch coverage là đủ chắc chắn", "Chạy coverage với nhiều reporter hơn", "Thêm snapshot cho output của module"]
+answer = [0]
+explanation = "Coverage chỉ cho biết dòng đã chạy, không cho biết assertion có đủ chặt. Mutation testing đo khả năng phát hiện thay đổi; branch coverage vẫn có thể bỏ qua giá trị biên."
+sources = ["vitest/guide/coverage"]
+
+[[questions]]
+id = "testing-lv029"
+module = "testing-strategy"
+type = "multiple"
+difficulty = 3
+tags = ["level:senior", "flaky"]
+prompt = "Những nguồn gây flaky nào thường gặp và có cách loại bỏ tận gốc?"
+options = ["Phụ thuộc thời gian thực (`Date.now`, timezone) → cố định clock/timezone trong test", "Thứ tự trả về không xác định (Set, query không ORDER BY) → sort trước khi assert hoặc assert không phụ thuộc thứ tự", "Gọi dịch vụ ngoài thật → mock ở ranh giới network", "Assertion quá chặt về giá trị → luôn đổi sang `toBeTruthy`"]
+answer = [0, 1, 2]
+explanation = "Ba nguồn đầu là không xác định có thể kiểm soát. Nới assertion thành `toBeTruthy` làm test mất giá trị chứ không sửa flaky."
+sources = ["vitest/guide/mocking/timers", "vitest/guide/mocking/requests"]
+
+[[questions]]
+id = "testing-lv030"
+module = "testing-dv-network"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "contract-testing"]
+prompt = "Frontend mock API bằng dữ liệu viết tay; backend đổi `price` từ number sang string và mọi test frontend vẫn xanh, production hỏng. Cách giảm rủi ro này hiệu quả nhất là gì?"
+options = ["Sinh dữ liệu mock/handler từ schema hoặc contract chung và có bước xác minh contract phía provider", "Xoá mock, test thẳng vào backend staging cho mọi unit test", "Thêm nhiều mock viết tay hơn", "Ép kiểu `Number(price)` ở mọi nơi trong frontend"]
+answer = [0]
+explanation = "Mock viết tay dễ trôi khỏi thực tế; dựa mock vào contract chung và xác minh provider giúp phát hiện thay đổi phá vỡ. Gọi staging cho unit test chậm và flaky; ép kiểu chỉ vá triệu chứng."
+sources = ["vitest/guide/mocking/requests", "playwright/mock"]
+
+[[questions]]
+id = "testing-lv031"
+module = "testing-dv-network"
+type = "multiple"
+difficulty = 3
+tags = ["level:senior", "network"]
+prompt = "Khi mock network trong E2E (route/intercept), những kịch bản nào nên được kiểm tra có chủ đích?"
+options = ["Lỗi 500 và hiển thị thông báo/khả năng thử lại", "Response chậm để kiểm tra trạng thái loading và huỷ request", "Response rỗng hoặc phân trang cuối", "Mọi tổ hợp header HTTP có thể có"]
+answer = [0, 1, 2]
+explanation = "Mock network mạnh nhất ở chỗ tạo ra các trạng thái khó tái hiện với backend thật: lỗi, chậm, rỗng. Liệt kê mọi tổ hợp header không mang lại giá trị tương xứng."
+sources = ["playwright/mock", "playwright/network", "cypress/api/commands/intercept"]
+
+[[questions]]
+id = "testing-lv032"
+module = "testing-dv-state"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "fixtures"]
+prompt = "Fixture Playwright khởi động một server mock mất 3 giây; suite có 400 test chạy trên 4 worker. Đặt scope fixture thế nào hợp lý?"
+options = ["`{ scope: 'worker' }` để mỗi worker dựng một lần, kèm reset state rẻ giữa các test", "Scope mặc định theo test để mỗi test có server riêng", "Dựng trong `beforeAll` của từng file và không reset", "Dùng một server chung khởi động thủ công trước khi chạy CI"]
+answer = [0]
+explanation = "Worker fixture chia sẻ tài nguyên đắt trong một worker mà vẫn cô lập giữa các worker; reset state giữ test độc lập. Theo test tốn ~1200 giây khởi động; server chung thủ công khó tái lập."
+sources = ["playwright/test-fixtures"]
+
+[[questions]]
+id = "testing-lv033"
+module = "testing-dv-state"
+type = "essay"
+difficulty = 3
+tags = ["level:senior", "flaky"]
+prompt = "Phỏng vấn: kể cách bạn chẩn đoán và sửa một test flaky do dữ liệu dùng chung giữa các test chạy song song. Nêu cách tìm nguyên nhân, cách sửa và cách ngăn tái diễn."
+keywords = [["song song", "parallel", "worker"], ["dữ liệu riêng", "isolation", "cô lập", "độc lập"], ["fixture", "seed"], ["trace", "log", "chạy lặp", "repeat"]]
+min_keywords = 3
+model_answer = "Tôi xem trace và log của lần fail, rồi chạy lặp test với cùng số worker như CI để tái hiện. Nếu fail chỉ khi song song, tôi tìm dữ liệu dùng chung như cùng tài khoản hoặc cùng bản ghi. Cách sửa là mỗi test tự tạo dữ liệu riêng qua fixture hoặc seed qua API, đặt tên theo worker để cô lập, và dọn dẹp sau test. Để ngăn tái diễn, thêm checklist review về isolation và chạy định kỳ với thứ tự ngẫu nhiên."
+explanation = "Câu trả lời tốt có bằng chứng (trace, chạy lặp), xác định tài nguyên dùng chung, sửa bằng dữ liệu cô lập qua fixture và có biện pháp phòng ngừa."
+sources = ["playwright/test-fixtures", "playwright/trace-viewer", "playwright/test-parallel"]
+
+[[questions]]
+id = "testing-lv034"
+module = "testing-dv-projects"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "projects"]
+prompt = "Playwright có project `setup` đăng nhập và lưu storage state, các project browser dùng lại state đó. Cách khai báo nào bảo đảm `setup` luôn chạy trước?"
+options = ["Khai báo `dependencies: ['setup']` cho các project browser", "Đặt project `setup` ở đầu mảng `projects` là đủ", "Gọi đăng nhập trong `beforeEach` của mọi test", "Dùng `test.describe.configure({ mode: 'serial' })` toàn suite"]
+answer = [0]
+explanation = "Project dependencies định nghĩa thứ tự rõ ràng và report hiển thị bước setup. Thứ tự trong mảng không đảm bảo thứ tự chạy; đăng nhập mỗi test chậm; serial toàn suite mất song song."
+sources = ["playwright/test-projects", "playwright/auth"]
+
+[[questions]]
+id = "testing-lvc02"
+module = "testing-strategy"
+type = "code"
+difficulty = 3
+tags = ["level:senior", "flaky"]
+lang = "javascript"
+title = "Phân loại test flaky từ lịch sử chạy"
+prompt = '''CI chạy lại cùng một commit nhiều lần. Viết `classifyRuns(runs)` với `runs` là mảng `{ test, passed }`:
+- Test có cả lần pass và lần fail → `flaky`; chỉ fail → `failing`; chỉ pass → `passing`.
+- Trả về `{ flaky, failing, passing }`, mỗi mảng chứa tên test không trùng, sắp xếp tăng dần.
+- `runs` rỗng → cả ba mảng rỗng.
+
+Ví dụ `classifyRuns([{test:'a',passed:true},{test:'a',passed:false},{test:'b',passed:true}])` → `{ flaky: ['a'], failing: [], passing: ['b'] }`.
+'''
+starter = '''
+function classifyRuns(runs) {
+  return { flaky: [], failing: [], passing: [] };
+}
+'''
+solution = '''
+function classifyRuns(runs) {
+  const seen = {};
+  for (const r of runs) {
+    if (!seen[r.test]) seen[r.test] = { pass: false, fail: false };
+    if (r.passed) seen[r.test].pass = true; else seen[r.test].fail = true;
+  }
+  const out = { flaky: [], failing: [], passing: [] };
+  for (const name of Object.keys(seen).sort()) {
+    const s = seen[name];
+    if (s.pass && s.fail) out.flaky.push(name);
+    else if (s.fail) out.failing.push(name);
+    else out.passing.push(name);
+  }
+  return out;
+}
+'''
+tests = '''
+test('ví dụ trong đề', () => {
+  expect(classifyRuns([{ test: 'a', passed: true }, { test: 'a', passed: false }, { test: 'b', passed: true }])).toEqual({ flaky: ['a'], failing: [], passing: ['b'] });
+});
+
+test('test chỉ fail là failing', () => {
+  expect(classifyRuns([{ test: 'x', passed: false }, { test: 'x', passed: false }]).failing).toEqual(['x']);
+});
+
+test('kết quả sắp xếp và không trùng', () => {
+  const runs = [{ test: 'c', passed: true }, { test: 'a', passed: true }, { test: 'c', passed: true }, { test: 'b', passed: false }, { test: 'b', passed: true }];
+  expect(classifyRuns(runs)).toEqual({ flaky: ['b'], failing: [], passing: ['a', 'c'] });
+});
+
+test('đầu vào rỗng', () => {
+  expect(classifyRuns([])).toEqual({ flaky: [], failing: [], passing: [] });
+});
+
+test('nhiều nhóm cùng lúc', () => {
+  const runs = [{ test: 'z', passed: false }, { test: 'y', passed: true }, { test: 'y', passed: false }, { test: 'w', passed: true }];
+  expect(classifyRuns(runs)).toEqual({ flaky: ['y'], failing: ['z'], passing: ['w'] });
+});
+'''
+hints = ["Gom theo tên test: ghi nhận đã từng pass và đã từng fail.", "Sort danh sách tên trước khi phân loại để kết quả có thứ tự."]
+explanation = "Phân biệt flaky với failing là bước đầu của chính sách quarantine: failing cần sửa ngay, flaky cần điều tra nguồn không xác định."
+sources = ["playwright/test-retries", "vitest/config/retry"]
+
+[[questions]]
+id = "testing-lv035"
+module = "testing-principles"
+type = "single"
+difficulty = 1
+tags = ["level:junior"]
+prompt = "Integration test khác unit test ở điểm nào?"
+options = ["Kiểm tra nhiều thành phần phối hợp với nhau qua ranh giới thật", "Luôn chạy trên trình duyệt thật", "Không bao giờ dùng test double", "Chỉ chạy được trên production"]
+answer = [0]
+explanation = "Integration test kiểm tra sự phối hợp giữa các phần (module, router, DB…); có thể vẫn mock một số ranh giới ngoài."
+sources = ["vitest/guide/learn/testing-in-practice"]
+
+[[questions]]
+id = "testing-lv036"
+module = "testing-principles"
+type = "multiple"
+difficulty = 1
+tags = ["level:junior"]
+prompt = "Đặc điểm nào của một test tốt?"
+options = ["Kết quả giống nhau mỗi lần chạy", "Chạy độc lập, không phụ thuộc test khác", "Tên mô tả rõ kịch bản và kết quả mong đợi", "Kiểm tra càng nhiều thứ không liên quan trong một test càng tốt"]
+answer = [0, 1, 2]
+explanation = "Test xác định, độc lập và đặt tên rõ dễ đọc, dễ debug. Gộp nhiều thứ không liên quan làm khó khoanh vùng lỗi."
+sources = ["vitest/guide/learn/writing-tests"]
+
+[[questions]]
+id = "testing-lv037"
+module = "testing-unit"
+type = "single"
+difficulty = 1
+tags = ["level:junior"]
+prompt = '''Assertion nào đúng để so sánh hai object có cùng nội dung?
+```js
+expect({ a: 1 }).???({ a: 1 })
+```'''
+options = ["toEqual", "toBe", "toBeTruthy", "toContain"]
+answer = [0]
+explanation = "`toBe` so sánh bằng `Object.is` (cùng tham chiếu); `toEqual` so sánh đệ quy nội dung."
+sources = ["vitest/api/expect", "jest/expect"]
+
+[[questions]]
+id = "testing-lv038"
+module = "testing-unit"
+type = "fill"
+difficulty = 1
+tags = ["level:junior"]
+prompt = '''Hoàn thành assertion kiểm tra hàm ném lỗi:
+```js
+expect(() => parse('')).{{blank}}('empty input')
+```'''
+blanks = [["toThrow", "toThrowError"]]
+explanation = "`toThrow` nhận một hàm, gọi nó và kiểm tra lỗi được ném ra (có thể so khớp message)."
+sources = ["vitest/api/expect", "jest/expect"]
+
+[[questions]]
+id = "testing-lv039"
+module = "testing-unit"
+type = "fill"
+difficulty = 1
+tags = ["level:junior"]
+prompt = '''Tạo một hàm giả trong Vitest để theo dõi lời gọi:
+```js
+const onSave = vi.{{blank}}()
+```'''
+blanks = [["fn"]]
+explanation = "`vi.fn()` tạo mock function ghi lại số lần gọi và tham số."
+sources = ["vitest/api/vi"]
+
+[[questions]]
+id = "testing-lv040"
+module = "testing-unit"
+type = "single"
+difficulty = 1
+tags = ["level:junior"]
+prompt = '''Test sau có vấn đề gì?
+```js
+test('loads user', () => {
+  fetchUser(1).then(u => expect(u.name).toBe('An'))
+})
+```'''
+options = ["Không return/await Promise nên test kết thúc trước khi assertion chạy", "`toBe` không dùng được với string", "Phải dùng `describe` bao quanh", "`then` không được dùng trong test"]
+answer = [0]
+explanation = "Runner chỉ chờ khi test trả về Promise hoặc là hàm async có `await`; nếu không, assertion có thể chạy sau khi test đã pass."
+sources = ["jest/asynchronous", "vitest/guide/learn/writing-tests"]
+
+[[questions]]
+id = "testing-lv041"
+module = "testing-components"
+type = "single"
+difficulty = 1
+tags = ["level:junior"]
+prompt = "Khi test component, nên tìm nút \"Lưu\" theo cách nào?"
+options = ["Theo role `button` và tên \"Lưu\"", "Theo class CSS `.btn-primary-23x`", "Theo vị trí thứ 3 trong DOM", "Theo màu nền của nút"]
+answer = [0]
+explanation = "Tìm theo role và accessible name giống cách người dùng và công nghệ hỗ trợ nhận biết phần tử, bền khi đổi style."
+sources = ["playwright/locators"]
+
+[[questions]]
+id = "testing-lv042"
+module = "testing-e2e"
+type = "fill"
+difficulty = 1
+tags = ["level:junior"]
+prompt = '''Mở trang chủ trong test Playwright:
+```js
+await page.{{blank}}('/')
+```'''
+blanks = [["goto"]]
+explanation = "`page.goto(url)` điều hướng tới URL (tương đối với `baseURL` nếu đã cấu hình)."
+sources = ["playwright/test-configuration"]
+
+[[questions]]
+id = "testing-lv043"
+module = "testing-e2e"
+type = "single"
+difficulty = 1
+tags = ["level:junior"]
+prompt = "Trong Cypress, lệnh nào chọn phần tử trên trang để thao tác tiếp?"
+options = ["cy.get", "cy.select", "cy.find_element", "cy.query"]
+answer = [0]
+explanation = "`cy.get(selector)` truy vấn phần tử và tự retry tới khi tìm thấy hoặc hết timeout."
+sources = ["cypress/api/commands/get"]
+
+[[questions]]
+id = "testing-lv044"
+module = "testing-strategy"
+type = "single"
+difficulty = 1
+tags = ["level:junior"]
+prompt = "Coverage 80% nghĩa là gì?"
+options = ["80% dòng/nhánh code được thực thi khi chạy test", "80% bug đã được tìm ra", "80% test đang pass", "Ứng dụng chạy đúng 80% thời gian"]
+answer = [0]
+explanation = "Coverage đo phần code đã chạy qua trong lúc test, không đo chất lượng assertion hay số bug còn lại."
+sources = ["vitest/guide/coverage"]
+
+[[questions]]
+id = "testing-lv045"
+module = "testing-dv-network"
+type = "fill"
+difficulty = 1
+tags = ["level:junior"]
+prompt = '''Trong Cypress, lệnh nào chặn và giả lập request mạng?
+```js
+cy.{{blank}}('GET', '/api/users', { fixture: 'users.json' })
+```'''
+blanks = [["intercept"]]
+explanation = "`cy.intercept` theo dõi hoặc stub request khớp với method/URL."
+sources = ["cypress/api/commands/intercept"]
+
+[[questions]]
+id = "testing-lv046"
+module = "testing-dv-state"
+type = "single"
+difficulty = 1
+tags = ["level:junior"]
+prompt = "`beforeEach` dùng để làm gì?"
+options = ["Chạy code chuẩn bị trước mỗi test trong cùng phạm vi", "Chạy một lần trước toàn bộ suite của mọi file", "Bỏ qua test đầu tiên", "Chạy sau khi mọi test kết thúc"]
+answer = [0]
+explanation = "`beforeEach` chạy trước từng test; `beforeAll` chạy một lần trước nhóm test."
+sources = ["jest/api#beforeeachfn-timeout"]
+
+[[questions]]
+id = "testing-lvc03"
+module = "testing-unit"
+type = "code"
+difficulty = 1
+tags = ["level:junior"]
+lang = "javascript"
+title = "Tổng hợp kết quả test"
+prompt = '''Viết `summarize(statuses)` nhận mảng chuỗi `'passed' | 'failed' | 'skipped'` và trả `{ passed, failed, skipped }` là số lượng mỗi loại.
+Ví dụ `summarize(['passed', 'failed', 'passed'])` → `{ passed: 2, failed: 1, skipped: 0 }`.
+'''
+starter = '''
+function summarize(statuses) {
+  return { passed: 0, failed: 0, skipped: 0 };
+}
+'''
+solution = '''
+function summarize(statuses) {
+  const out = { passed: 0, failed: 0, skipped: 0 };
+  for (const s of statuses) out[s]++;
+  return out;
+}
+'''
+tests = '''
+test('ví dụ trong đề', () => {
+  expect(summarize(['passed', 'failed', 'passed'])).toEqual({ passed: 2, failed: 1, skipped: 0 });
+});
+
+test('đếm skipped', () => {
+  expect(summarize(['skipped', 'skipped'])).toEqual({ passed: 0, failed: 0, skipped: 2 });
+});
+
+test('mảng rỗng', () => {
+  expect(summarize([])).toEqual({ passed: 0, failed: 0, skipped: 0 });
+});
+
+test('đủ ba loại', () => {
+  expect(summarize(['failed', 'skipped', 'passed', 'failed'])).toEqual({ passed: 1, failed: 2, skipped: 1 });
+});
+'''
+hints = ["Khởi tạo object đếm với ba khoá bằng 0.", "Duyệt mảng và tăng khoá tương ứng."]
+explanation = "Một vòng lặp với object đếm là cách đơn giản để tổng hợp kết quả như reporter của test runner."
+sources = ["vitest/config/reporters"]
+
+[[questions]]
+id = "testing-lv047"
+module = "testing-unit"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "mocking"]
+prompt = "Sau mỗi test, mock function vẫn giữ số lần gọi của test trước khiến `toHaveBeenCalledTimes(1)` fail. Cách xử lý gọn nhất?"
+options = ["Bật `clearMocks`/`restoreMocks` trong config hoặc gọi `vi.clearAllMocks()` trong `afterEach`", "Tạo file test riêng cho mỗi assertion", "Đổi sang `toHaveBeenCalled()`", "Dùng `test.only` cho test bị lỗi"]
+answer = [0]
+explanation = "Xoá lịch sử gọi giữa các test giữ chúng độc lập. Nới assertion hay tách file chỉ né vấn đề."
+sources = ["vitest/api/vi", "jest/mock-function-api"]
+
+[[questions]]
+id = "testing-lv048"
+module = "testing-unit"
+type = "fill"
+difficulty = 2
+tags = ["level:middle", "mocking"]
+prompt = '''Theo dõi lời gọi `console.error` mà vẫn giữ object gốc, rồi tắt output:
+```js
+const spy = vi.{{blank}}(console, 'error').mockImplementation(() => {})
+```'''
+blanks = [["spyOn"]]
+explanation = "`vi.spyOn(obj, method)` bọc phương thức có sẵn; `mockRestore()` trả lại hàm gốc."
+sources = ["vitest/api/vi"]
+
+[[questions]]
+id = "testing-lv049"
+module = "testing-components"
+type = "multiple"
+difficulty = 2
+tags = ["level:middle"]
+prompt = "Test form đăng ký nên kiểm tra những gì từ góc nhìn người dùng?"
+options = ["Hiển thị lỗi khi email sai định dạng", "Nút gửi bị vô hiệu khi đang submit", "Gọi API với dữ liệu đúng khi submit hợp lệ", "Giá trị state nội bộ `useState` sau mỗi lần gõ phím"]
+answer = [0, 1, 2]
+explanation = "Hành vi quan sát được (thông báo, trạng thái nút, request gửi đi) là thứ người dùng quan tâm; state nội bộ là chi tiết triển khai."
+sources = ["vitest/guide/browser/component-testing"]
+
+[[questions]]
+id = "testing-lv050"
+module = "testing-e2e"
+type = "single"
+difficulty = 2
+tags = ["level:middle"]
+prompt = "Mọi test E2E đều bắt đầu bằng thao tác đăng nhập qua UI, làm suite chậm gấp đôi. Cách cải thiện phổ biến trong Playwright?"
+options = ["Đăng nhập một lần trong setup, lưu `storageState` và dùng lại cho các test", "Bỏ kiểm tra đăng nhập khỏi ứng dụng khi chạy test", "Gộp tất cả test vào một test dài", "Tăng số retry"]
+answer = [0]
+explanation = "Storage state tái sử dụng cookie/localStorage đã xác thực; luồng đăng nhập vẫn được test riêng một lần."
+sources = ["playwright/auth"]
+
+[[questions]]
+id = "testing-lv051"
+module = "testing-e2e"
+type = "fill"
+difficulty = 2
+tags = ["level:middle"]
+prompt = '''Chỉ lưu trace khi test được chạy lại lần đầu (để debug lỗi CI mà không tốn dung lượng):
+```js
+use: { trace: '{{blank}}' }
+```'''
+blanks = [["on-first-retry"]]
+explanation = "`trace: 'on-first-retry'` ghi trace khi retry lần đầu, cân bằng chi phí và khả năng điều tra."
+sources = ["playwright/trace-viewer", "playwright/test-use-options"]
+
+[[questions]]
+id = "testing-lv052"
+module = "testing-strategy"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "coverage"]
+prompt = "Muốn CI fail khi coverage dòng của Vitest dưới 80%, cấu hình ở đâu?"
+options = ["`coverage.thresholds` trong config test", "Biến môi trường `NODE_ENV=coverage`", "Tham số `--retry=80`", "`reporters: ['verbose']`"]
+answer = [0]
+explanation = "Thresholds khiến lệnh test với coverage thoát lỗi khi không đạt ngưỡng, dùng được làm quality gate."
+sources = ["vitest/config/coverage"]
+
+[[questions]]
+id = "testing-lv053"
+module = "testing-dv-network"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "network"]
+prompt = "Component hiển thị danh sách từ `/api/items`. Trong E2E muốn kiểm tra trạng thái \"Không có dữ liệu\" ổn định. Cách nào phù hợp?"
+options = ["Dùng `page.route` trả JSON mảng rỗng cho `/api/items` trong test đó", "Xoá toàn bộ dữ liệu trên staging trước khi chạy", "Chờ đến khi staging tình cờ không có dữ liệu", "Sửa code component để luôn hiển thị trạng thái rỗng khi test"]
+answer = [0]
+explanation = "Route mock tạo trạng thái cụ thể cho riêng test mà không ảnh hưởng môi trường dùng chung."
+sources = ["playwright/mock", "playwright/network"]
+
+[[questions]]
+id = "testing-lv054"
+module = "testing-dv-state"
+type = "multiple"
+difficulty = 2
+tags = ["level:middle", "fixtures"]
+prompt = "Lợi ích của fixture Playwright so với biến dùng chung khai báo ở đầu file?"
+options = ["Chỉ dựng khi test thật sự dùng tới", "Có teardown rõ ràng sau `use`", "Cô lập giữa các test theo scope", "Tự động sửa test flaky"]
+answer = [0, 1, 2]
+explanation = "Fixture dựng theo nhu cầu, có teardown và scope rõ ràng; nó không tự sửa flaky."
+sources = ["playwright/test-fixtures"]

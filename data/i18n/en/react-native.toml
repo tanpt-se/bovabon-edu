@@ -1,4 +1,5 @@
 [modules.rn-core]
+title = "Core Components & Layout"
 description = "View, Text, Image, Pressable, ScrollView; Flexbox defaults in React Native."
 lesson = '''### Core components
 | RN | Web equivalent |
@@ -116,7 +117,179 @@ explanation = "RN uses native components instead of the DOM: strings belong in T
 prompt = "In a controlled TextInput, the callback prop that receives the new string as the user types is `{{blank}}`."
 explanation = "`onChangeText` receives the new text value directly; a controlled input also receives its current value through `value`."
 
+[questions.react-native-lv019]
+prompt = "In React Native, `<View>Xin chào</View>` causes an error. What is the correct fix?"
+options = ["Wrap the string in a Text component: `<View><Text>Xin chào</Text></View>`", "Replace View with div", "Add `style = { color: 'black' }` to View", "Use `innerHTML` to assign the string"]
+explanation = "Text strings must be inside Text; View does not render text directly, and React Native has no div or innerHTML."
+
+[questions.react-native-lv021]
+prompt = "The TextInput prop that is called whenever the text changes and receives the new string as its argument is `{{blank}}`."
+explanation = "onChangeText receives the new string directly, which is more convenient than onChange, which receives an event."
+
+[modules.react-native-lead]
+title = "Tech Lead Perspective"
+description = "Make decisions for a React Native team: native versus cross-platform, OTA/store release strategy, crash monitoring, codebase boundaries, and upgrades."
+lesson = '''### Decision-making framework
+At Tech Lead level, the question is no longer "which API is correct?" but "which option best fits the team's constraints?" Before a major decision, write down four things:
+1. **Measurable goals** — crash-free sessions, startup time, release frequency, maintenance cost.
+2. **Constraints** — team size, native skills, deadline, store rules, and users' devices.
+3. **Options** (at least two) and the cost of reversing each one.
+4. **Signals for revisiting the decision** — for example, "if the camera screen still stutters after optimization, move it to native."
+
+### Common trade-offs
+| Decision | Option A | Option B | When to choose |
+|---|---|---|---|
+| App architecture | Entirely React Native | Native app with embedded RN screens (brownfield) | Brownfield when a large native app already exists and migration should be gradual and lower-risk |
+| Production fix | OTA update (JS/assets only) | Binary distributed through the store | OTA for JS issues when the runtime is compatible; native changes require a new binary |
+| Demanding feature (camera, maps, video) | Community library | Custom native module | Build one when libraries are unmaintained or miss a core requirement |
+| RN upgrade | Skip several versions at once | Upgrade incrementally on a separate branch | Incremental upgrades for apps with many native dependencies |
+| Workflow | Expo + prebuild/EAS | Bare workflow with self-managed native projects | Expo when native experience is limited and speed matters |
+
+### Team-scale review checklist
+- Label PRs that change native files (Podfile, Gradle, manifest, permissions); **never** ship those changes through OTA.
+- Upload source maps/symbols for every release with the matching version so crashes can be read.
+- Add a remote feature flag/kill switch for high-risk features.
+- Roll out by stages (1% → 5% → 20% → 100%) with explicit stop thresholds.
+- Assign owners to native libraries and set an upgrade schedule.
+
+### Short ADR example
+**Context**: a commerce app has 3 RN developers and one part-time iOS developer; JS bugs need same-day fixes. **Decision**: use channel-based OTA updates with `runtimeVersion` tied to the native fingerprint; all native changes go through the store. **Consequences**: JS issues can be fixed quickly, but runtime compatibility checks and an OTA rollback process are required.
+
+### Team-scale anti-patterns
+- Using OTA to bypass store review by substantially changing the app's functionality.
+- Each screen implementing API calls, error handling, and analytics differently, leaving dashboards impossible to interpret.
+- Delaying RN upgrades for years until a rewrite is required; pay down technical debt on a fixed quarterly schedule.
+- Measuring performance only on a new developer device instead of the mid-range Android devices real users have.
+- Only one person knowing how to sign and release the app (bus factor = 1).'''
+
+[questions.react-native-lv001]
+prompt = "Your newly released RN app has a crash on checkout because a JS function handles null incorrectly. The installed binary is compatible with the fix. The team needs to reduce impact within hours. Which strategy is best?"
+options = ["Ship the JS fix as an OTA update to a small group, monitor crash-free metrics, expand gradually, and include the fix in the next binary", "Submit a new binary to the store for expedited review and wait for users to update", "Immediately send the OTA update to 100% of users and skip monitoring because the bug is understood", "Disable the entire app with a kill switch until the new binary is approved"]
+explanation = "The bug is in JS and the runtime is compatible, so OTA is fastest. A staged rollout still matters because an urgent fix can introduce another issue. Store review is too slow; immediate full rollout loses the chance to catch regressions; disabling the whole app causes more harm than the original bug."
+
+[questions.react-native-lv002]
+prompt = "A company has a large native iOS/Android app (8 native developers) and wants to try React Native for frequently changing content screens without slowing the current release schedule. What do you recommend?"
+options = ["Embed React Native in the existing app (brownfield) for a few content screens, measure the results, then decide whether to expand", "Rewrite the entire app in React Native in one quarter", "Stay native and reject React Native because the technologies cannot be combined", "Create a separate React Native app and run it alongside the old app in the stores"]
+explanation = "Brownfield reduces risk through a small, reversible scope and uses the existing native team. A full rewrite creates the greatest release risk; rejecting RN ignores measurable potential benefits; a second app fragments users."
+
+[questions.react-native-lv003]
+prompt = "The app is six minor React Native versions behind, has about 25 native libraries, and a team of four must still ship features every sprint. Which upgrade plan is best?"
+options = ["Upgrade incrementally on a separate branch, inventory native libraries first, run device-based e2e tests at each step, and reserve fixed capacity each sprint", "Jump directly to the latest version in one large PR and fix issues after merging", "Freeze features for two months so the whole team can focus only on the upgrade", "Do not upgrade until the store requires it"]
+explanation = "Incremental upgrades isolate failures while keeping feature work moving. A huge PR is hard to review and debug; a full freeze is costly; waiting for store pressure forces a rushed, high-risk upgrade."
+
+[questions.react-native-lv004]
+prompt = "A new product must launch on iOS and Android in three months. The team has three strong React web developers and no Swift/Kotlin experience. One secondary feature needs real-time video processing. What is the best choice?"
+options = ["Use React Native (possibly with Expo) for most of the app, identify a library or native module for video early, and plan native support for that part", "Build two separate native apps to guarantee video performance", "Build only a responsive website and drop the mobile app requirement", "Use React Native but rewrite every native component to avoid library dependencies"]
+explanation = "The team's skills and deadline favor React Native; the video risk should be investigated early and handled separately. Two native apps exceed the team's capacity; web misses the app requirement; rewriting everything defeats the speed benefit."
+
+[questions.react-native-lv005]
+prompt = "The crash dashboard shows JS stack traces as lines in a minified bundle, making them unreadable. The team has lost two incidents because it could not find the cause. Which process change is most effective?"
+options = ["Add an upload step for source maps/symbols matched to the exact build in the release pipeline, and block release if it fails", "Turn off minification in production", "Ask users to send screenshots when the app crashes", "Add console.log to every function to produce more logs"]
+explanation = "Symbolication works only when the source map matches the exact build, so the upload should be automatic and required. Disabling minification affects performance and does not fix native crashes; screenshots and logs cannot replace a symbolicated stack trace."
+
+[questions.react-native-lv006]
+prompt = "The team needs both a mobile app and a web app. Mobile uses many gestures and native components, while public web pages need SEO. What codebase structure makes the most sense?"
+options = ["Use a monorepo to share business logic, API clients, data types, and design tokens; keep mobile and web UI separate where platform needs differ", "Use one UI codebase for everything and accept that the website has no SEO", "Keep two fully independent repositories and copy logic when needed", "Build web first and wrap it in a WebView for mobile"]
+explanation = "Sharing platform-independent code yields value without forcing UI into a lowest common denominator. One shared UI sacrifices SEO; copied logic drifts; a WebView loses the native experience mobile requires."
+
+[questions.react-native-lv007]
+prompt = "After several features were added, mid-range Android users report slow app startup, but the developers' devices are still fast. What should you ask the team to do first?"
+options = ["Define startup-time metrics on representative mid-range Android hardware and profile a release build before choosing an optimization", "Rewrite the main screens in native code immediately", "Wrap every component in React.memo", "Raise the minimum Android version to exclude slower devices"]
+explanation = "Without measurements on representative hardware and release builds, optimization is guesswork. A native rewrite is expensive without a known cause; memoization does not address startup cost; excluding users is a business decision, not a performance fix."
+
+[questions.react-native-lv008]
+prompt = "An important native mapping library has not been updated for over a year and blocks an RN upgrade. The team has one developer with native skills. What is the best decision?"
+options = ["Evaluate maintained alternatives, run a small spike on a separate branch, compare migration cost with forking and maintaining it, then record the decision in an ADR", "Fork it immediately and assign the native developer to maintain it indefinitely", "Remove maps from the app", "Stay on the current RN version indefinitely"]
+explanation = "Evidence-based comparison avoids an unplanned maintenance burden, especially with only one native developer. An immediate fork creates a bus-factor risk; removing the feature or never upgrading avoids the problem and accumulates technical debt."
+
+[questions.react-native-lv009]
+prompt = "A PR puts a server-side payment API key in the app's JS configuration. The developer says minification makes it safe. How should you respond in review?"
+options = ["Reject it: app bundles can be extracted; server secrets must stay on the backend, and the app should call an authenticated API", "Approve because minification makes the key hard to read", "Approve if the key is encoded with base64", "Approve but ask them to rename the variable to make it harder to guess"]
+explanation = "Anything shipped in an app should be treated as public; minification, base64, and renaming only obscure it. A lead should block this and establish a rule against putting server secrets in clients."
+
+[questions.react-native-lv010]
+prompt = "You are designing releases for a six-person team that ships a binary every two weeks and also uses OTA. Which policies belong in the process?"
+options = ["Label PRs that change native code (Gradle, Podfile, permissions) and ship them only in a new binary", "Use staged rollout with a crash-free threshold that automatically stops rollout", "Automatically upload source maps/symbols for every build", "Let each developer send OTA updates to production at any time for speed", "Use a feature flag to disable high-risk features without a new release"]
+explanation = "Native-change labels, threshold-based rollout, automatic symbols, and feature flags make releases faster while keeping risk controlled. Unrestricted production OTA removes control and makes incidents hard to trace."
+
+[questions.react-native-lv011]
+prompt = "Only one team member knows how to sign and release the app to the stores. Which actions reduce this risk?"
+options = ["Write a release runbook and have at least one other person practice under supervision", "Store and back up the keystore/certificate in an access-controlled secrets vault", "Automate builds and signing in CI to reduce manual steps", "Commit the keystore to the repository so everyone can access it", "Keep all release information on that person's laptop for safety"]
+explanation = "A runbook, backed-up secrets vault, and CI reduce the bus factor while preserving security. Committing the signing key exposes it; keeping it on one laptop preserves the risk."
+
+[questions.react-native-lv012]
+prompt = "You need metrics to assess app health after each release and decide whether to continue or stop rollout. Which metrics are suitable?"
+options = ["Crash-free sessions/users by app version", "Startup time on representative devices", "API error rate in key flows such as login and checkout", "Number of lines changed in the release", "Android ANR/freeze rate"]
+explanation = "Crash-free rates, startup time, key-flow errors, and ANRs reflect user experience. The number of changed lines does not show whether a release is healthy."
+
+[questions.react-native-lv013]
+prompt = "A five-person team has very few tests and sees regressions in every release. The budget allows only about 20% of the team's time for testing next quarter. Which priorities are reasonable?"
+options = ["Add a few e2e tests for the most critical flows (login, checkout) and run them in CI", "Unit-test pure business logic with many branches", "Require each bug fix to include a test that reproduces the bug", "Set a 100% coverage goal for every component before shipping features", "Snapshot-test every screen to catch all changes"]
+explanation = "With limited time, prioritize revenue-critical flows, complex logic, and tests tied to real bugs. Full coverage is unrealistic under this constraint; bulk snapshots are easy to update blindly and often provide little value."
+
+[questions.react-native-lv014]
+prompt = "In Expo/EAS Update, the configuration value that determines whether an OTA update is compatible with an installed binary is `{{blank}}`."
+explanation = "A lead should ensure `runtimeVersion` changes whenever native code changes; otherwise an OTA update may call native code that is absent and crash."
+
+[questions.react-native-lv015]
+prompt = "Write a short ADR for using OTA updates in a commerce app: include context, decision, safety constraints, and consequences."
+model_answer = '''Context: the team needs to fix JS bugs the same day, while store review takes several days. Decision: use channel-based OTA updates with `runtimeVersion` tied to native code; all native changes still ship in a new store binary. Safety constraints: staged rollout starting at 1%, monitor crashes and API errors, provide a rollback to the previous update, and never use OTA to change functionality beyond what passed app review. Consequences: faster JS fixes, with a required runtime compatibility pipeline and monitoring for each OTA release.'''
+explanation = "A useful ADR states runtime compatibility constraints, rollout and rollback plans, the native/binary boundary, and store policy."
+
+[questions.react-native-lv016]
+prompt = "In a Tech Lead interview, leadership asks whether a new app should be built natively or with React Native. How would you assess the choice and present a recommendation?"
+model_answer = '''I would start with product requirements and constraints: the team's current skills, time to market, and hiring budget. Then I would list demanding native features such as camera, video, and Bluetooth to assess native-module needs and performance on target devices. I would compare long-term maintenance costs for one codebase versus two. For high-risk areas, I would run a short spike or prototype to gather evidence, then present a recommendation with conditions for revisiting it.'''
+explanation = "A lead's answer uses real constraints, evidence from experiments, and clear conditions for reversing the decision."
+
+[questions.react-native-lv017]
+prompt = "A release causes crash-free sessions to drop from 99.6% to 97% during its first two hours. Describe how you would coordinate incident response and improve the process afterward."
+model_answer = '''First pause the rollout and, if available, disable the suspected feature with a feature flag or roll back the OTA update. Assign an incident coordinator, someone to analyze the stack trace symbolicated with the matching source map, and someone to communicate with stakeholders. After stabilizing the app, hold a blameless postmortem, identify why testing missed the issue, and set an automatic crash-free threshold to stop future rollouts.'''
+explanation = "Show the right order: contain impact, find the cause using evidence, communicate clearly, and improve the process to prevent recurrence."
+
+[questions.react-native-lvc01]
+title = "Staged Rollout Decision Gate"
+prompt = """Implement `nextRolloutStep(state)` to model the team's rollout policy. `state` contains:
+- `percent`: current rollout percentage, always one of `[1, 5, 20, 50, 100]`.
+- `crashFree`: current crash-free percentage (0–100).
+- `baseline`: crash-free percentage for the previous release.
+- `sessions`: sessions recorded at the current stage.
+
+Apply these rules in order:
+1. If `crashFree < baseline - 0.5`, return `{ action: 'halt', percent }` (keep the current percentage).
+2. If `sessions < 1000`, return `{ action: 'wait', percent }` (not enough data yet).
+3. If `percent === 100`, return `{ action: 'done', percent: 100 }`.
+4. Otherwise, return `{ action: 'advance', percent: <next stage> }`.
+Do not modify the input object.
+"""
+hints = ["Check conditions in this order: halt, wait, done, advance.", "Use an array of rollout stages and `indexOf` to find the next one."]
+explanation = "Making rollout policy explicit helps the team decide consistently and automate stops when a release has problems; choose thresholds based on the app's historical data."
+
+[questions.react-native-lv018]
+prompt = "Each screen calls fetch, handles errors, and sends analytics differently; the error dashboard cannot compare flows. The team of seven cannot pause feature delivery. What should you do?"
+options = ["Define a shared API client and analytics layer with event-naming standards, require it for new code, and migrate old screens gradually when touched", "Schedule a full-app refactor in one sprint", "Let each developer choose an approach but document every variation", "Replace the state management library to solve the problem"]
+explanation = "Standardizing new code and migrating gradually balances quality with delivery speed. A full refactor is risky; documenting each variation preserves fragmentation; changing state management does not address API calls or analytics."
+
+[questions.react-native-lv020]
+prompt = "In React Native, what is the default `flexDirection` for a View?"
+options = ["column", "row", "row-reverse", "There is no default"]
+explanation = "Unlike web CSS (default `row`), React Native lays children out in a column by default."
+
+[questions.react-native-lv022]
+prompt = "Select the props commonly used to render a list with FlatList."
+options = ["data", "renderItem", "keyExtractor", "innerHTML"]
+explanation = "FlatList needs `data` and `renderItem`; `keyExtractor` gives each item a stable key. React Native has no `innerHTML`."
+
+[questions.react-native-lvc02]
+title = "Write a Safe keyExtractor"
+prompt = """Write `keyExtractor(item, index)` for FlatList:
+- If `item.id` is a number or a non-empty string, return `String(item.id)`.
+- Otherwise, return the string `"index-" + index`.
+"""
+hints = ["Check the type of `item.id` with `typeof`.", "An ID of 0 is valid; do not rely on `if (item.id)`." ]
+explanation = "Stable keys help FlatList reuse the correct item when the list changes; using the index is only a fallback."
+
 [modules.rn-styling]
+title = "Styling & Responsive Layout"
 description = "StyleSheet, style arrays, Platform, Dimensions/useWindowDimensions, PixelRatio, dark mode."
 lesson = '''### Key points
 - `StyleSheet.create({...})` declares styles and validates them in development. The `style` prop accepts an **array**: later entries override earlier ones, and falsy values are ignored.
@@ -408,6 +581,7 @@ explanation = "This is a simplified mathematical model of the render window; act
 hints = ["Calculate the visible range first, then add overscan on each side.", "Clamp the scroll offset using total content height minus the viewport height."]
 
 [modules.rn-navigation]
+description = "React Navigation, stack/tab navigation, deep links, state restoration, and authentication flows."
 title = "Navigation"
 lesson = '''### React Navigation
 - `NavigationContainer` wraps the whole app (Expo Router handles this itself).
@@ -802,6 +976,7 @@ explanation = "Deduplicating by ID prevents duplicate rows during pagination/off
 hints = ["Use a Set to track IDs already seen.", "Do not use a truthiness check for IDs; `0` is valid."]
 
 [modules.rn-animation-gesture]
+title = "Animation & Gestures"
 description = "Animated, native driver, Reanimated worklets/shared values, and React Native Gesture Handler."
 lesson = '''### Choose a tool for the motion
 | Tool | Best suited for |
@@ -1049,6 +1224,7 @@ explanation = "Exponential backoff reduces pressure on a server during persisten
 hints = ["Use a power of 2 based on the number of retries already made.", "Use `Math.min` to apply the upper bound."]
 
 [modules.react-native-dv-native]
+title = "Native Modules & Native UI Components"
 description = "Choosing the right native integration, understanding Codegen and Fabric, and designing safe data boundaries."
 lesson = '''### Choosing an extension point
 When JavaScript needs to call an iOS- or Android-specific API, a native module provides behavior rather than UI, such as access to a sensor or operating-system service. If you need a native view that can be laid out in the React tree, use a native UI component. Each platform may need its own implementation even when JavaScript uses a shared API.
@@ -1110,6 +1286,7 @@ explanation = "Event payloads cross the native boundary, so pass only fields exp
 hints = ["Check for an own property rather than simply reading through the prototype chain.", "Create a new result object and iterate over the allowed keys."]
 
 [modules.react-native-dv-testing]
+title = "Testing & Debugging"
 description = "Multi-layer testing, investigating JavaScript/native errors, and tracing production stack traces."
 lesson = '''### Risk-based testing
 React Native tests should cover JavaScript logic, component interactions, and behavior that needs to run on a device. Unit tests stay fast for pure functions; component tests check what users see and do; end-to-end tests validate integrated flows involving navigation, permissions, or native APIs.

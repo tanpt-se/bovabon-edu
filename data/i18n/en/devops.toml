@@ -772,3 +772,325 @@ hints = [
   "Handle replacements before single actions so they are not counted as create or delete."
 ]
 explanation = "A summary helps reviewers identify replacements separately because they often have a larger blast radius than in-place updates."
+
+[modules.devops-lead]
+title = "The Tech Lead Perspective"
+description = "Deployment strategies (rolling, blue-green, canary), SLOs and error budgets, on-call and postmortems, FinOps, GitOps, and governing IaC and secrets at team scale."
+lesson = '''### Making operational decisions for the whole team
+At the Tech Lead level, the question is no longer "which command is right" but "which option fits best with the current constraints": headcount, on-call skills, infrastructure budget, business risk, and the desired release speed. A good decision always records the context, the rejected options, and how to measure whether the decision worked.
+
+#### 1. Choosing a deployment strategy
+
+| Strategy | Infrastructure cost | Rollback speed | Observability needs | Good fit when |
+|---|---|---|---|---|
+| Recreate | Low | Slow, with downtime | Low | Internal jobs, short interruptions acceptable |
+| Rolling update | Low (extra `maxSurge`) | Medium (`rollout undo`) | Medium | Default for stateless services |
+| Blue-green | High (temporarily doubled) | Very fast (switch traffic) | Medium | Big changes that need an instant cutover |
+| Canary | Low to medium | Fast, affects few users | High: per-version metrics | Critical services, frequent deploys |
+
+A canary is only safe when you have metrics split by version and pre-written go/no-go criteria (error rate, p99 latency, minimum traffic). Without observability, a canary is just a slower rolling update.
+
+#### 2. SLOs and error budgets
+A 99.9% SLO over 30 days means an error budget of roughly 43 minutes (estimate) or 0.1% of requests failing. Burn rate = observed error rate / (1 − SLO); a burn rate of 1 consumes the budget at exactly the sustainable pace, while a burn rate of 10 exhausts it in about 3 days. The error budget policy must be agreed by PMs and engineers *before* an incident: with budget left, ship normally; when burning fast, slow down and prioritize reliability; when the budget is gone, freeze risky features.
+
+#### 3. On-call and postmortems
+- Alert on user-facing symptoms (SLO burn rate) rather than every CPU metric; every alert must be actionable and have a runbook.
+- A reference target: fewer than about 2 pages per on-call shift (estimate, team-dependent).
+- During an incident: mitigate first (rollback, turn off the feature flag), find the root cause later.
+- Blameless postmortems: data-driven timeline, systemic causes, action items with owners and deadlines.
+
+#### 4. Checklist for reviewing infrastructure changes
+1. The change goes through a PR with the `terraform plan` output or manifest diff attached.
+2. There is a clear rollback path, tested at least in staging.
+3. Secrets are not in the repo, state, or logs; permissions follow least privilege.
+4. Dashboards/alerts for the new component exist before traffic is turned on.
+5. Estimated cost (requests/limits, node count, egress) is recorded.
+
+#### 5. A short sample ADR
+**ADR-007: Deploy with GitOps.** Context: 3 clusters, CI holds an admin kubeconfig, configuration often drifts due to manual edits. Decision: use a pull-based agent that syncs from the manifest repo; CI only builds images and opens PRs to bump tags. Consequences: fewer credentials in CI, drift is detected automatically, rollback via `git revert`; in exchange the team has to learn a new tool and debug through an extra layer.
+
+#### 6. Team-scale anti-patterns
+- ClickOps: editing production by hand in the console, so IaC is no longer the source of truth.
+- Every team invents its own pipelines, charts, and logging; with no golden path nobody can review anyone else's work.
+- Granting cluster admin to every developer "to move faster".
+- Buying reserved instances before knowing which service the cost belongs to (missing tags, no cost per request).
+- Alerts nobody can act on, so on-call engineers ignore even the real ones.
+'''
+
+[questions.devops-lv001]
+prompt = "A 5-person team runs a payment service on Kubernetes, deploys daily, and already has error rate and latency metrics split by version. The budget does not allow doubling the infrastructure, even temporarily. Which release strategy is most reasonable?"
+options = ["Blue-green: build a full parallel environment and then switch all traffic", "Canary by traffic percentage, with automatic rollback when the new version's metrics exceed thresholds", "Recreate during off-peak hours to avoid running two versions at once", "Default rolling update, only checking that Pods are Running"]
+explanation = "A canary uses the existing per-version metrics, affects only a small share of users, and does not require doubling infrastructure. Blue-green violates the cost constraint; recreate causes downtime for a payment service; a rolling update that only looks at Running status pushes errors to all users before anyone notices."
+
+[questions.devops-lv002]
+prompt = "Availability SLO is 99.9% over a 30-day window. After 12 days the team has consumed 80% of the error budget. The PM wants to release a big feature this week. Both sides signed an error budget policy beforehand. What is the most reasonable decision?"
+options = ["Release anyway because the SLO is only counted at the end of the month", "Slow down: postpone risky features, prioritize reliability work, and allow only bugfixes and changes with fast rollback, per the policy", "Lower the SLO to 99% to get more budget", "Turn off burn-rate alerts until the end of the month"]
+explanation = "Error budgets exist to turn the ship-vs-stability argument into an agreed rule. Burning fast (80% after 40% of the window) is a signal to reduce risk. Arbitrarily lowering the SLO or turning off alerts breaks the commitment to users; continuing to release risks breaching the SLO."
+
+[questions.devops-lv003]
+prompt = "You are standardizing the postmortem process for 4 teams. Choose the practices to include in the template."
+options = ["A timeline built from logs, metrics, and deploy history rather than memory", "Every action item has an owner and a tracked due date", "Name the person who caused the error for disciplinary lessons", "Focus on the system conditions and processes that let the error slip through", "Only write postmortems when an incident loses revenue"]
+explanation = "Blameless postmortems target systems and processes; blaming individuals makes people hide information. Action items without owners do not get done. The threshold for writing a postmortem should be based on impact to the SLO/users, not just revenue."
+
+[questions.devops-lv004]
+prompt = "A 6-person team rotates on-call, the pager fires about 40 times a week, and 70% of the pages resolve themselves within 5 minutes. On-call engineers are burning out. What should the first priority be?"
+options = ["Add people from other teams to the rotation to share the load", "Review alerts: switch to symptom-based and SLO burn-rate alerts, delete or downgrade non-actionable alerts, and give every remaining alert a runbook", "Double the threshold of every alert", "Turn off the pager outside business hours"]
+explanation = "The root problem is noisy alerts, not a lack of people. Adding people only spreads the noise; raising all thresholds can hide real incidents; turning off the pager after hours abandons users. SLO burn-rate alerts reduce noise while still catching incidents that affect users."
+
+[questions.devops-lv005]
+prompt = "The cloud bill rose 40% this quarter while traffic only grew 10%. Leadership wants a plan within 2 weeks. What is the most reasonable first step?"
+options = ["Buy 3-year reserved instances for every running machine", "Tag costs by team/service/environment and build unit-cost reports (e.g. cost per 1000 requests) to find the source of the increase", "Scale every service down to 1 replica", "Plan a migration to another cloud provider"]
+explanation = "If you cannot tell who a cost belongs to, every optimization is a guess. Long-term commitments before rightsizing can lock in spend on wasted resources; cutting replicas across the board loses HA; switching clouds is expensive and does not address the cause."
+
+[questions.devops-lv006]
+prompt = "You are writing rightsizing guidance for Kubernetes workloads for the teams. Choose the correct statements."
+options = ["The scheduler reserves node capacity based on requests, so overly high requests make nodes look full while actually idle, and you still pay for them", "Requests should be based on actual usage percentiles (e.g. p90-p95) and reviewed periodically", "Drop requests entirely so the scheduler optimizes on its own", "Spot/preemptible nodes suit stateless workloads that tolerate interruption, given a PDB and multiple replicas", "Always set the CPU limit to 10 times the request to be safe"]
+explanation = "Requests are the basis for scheduling and often for node cost; removing requests makes Pods BestEffort, easily evicted, and utilization-based HPA stops working. A fixed limit multiplier has no basis; it should come from the real profile."
+
+[questions.devops-lv007]
+prompt = "Write a short ADR (context, decision, consequences) choosing between pull-based GitOps and pushing kubectl apply from CI for 3 Kubernetes clusters, given that CI currently holds an admin kubeconfig and configuration is often edited by hand."
+keywords = [["gitops", "pull"], ["drift", "manual edit", "edited by hand"], ["credential", "kubeconfig", "permission", "rbac"], ["rollback", "revert", "undo"], ["consequence", "trade-off", "tradeoff"]]
+model_answer = '''Context: 3 clusters, CI holds an admin kubeconfig, and configuration is often edited by hand, so drift happens constantly. Decision: use pull-based GitOps, with an in-cluster agent syncing from the manifest repo; CI only builds images and opens PRs to bump tags. Consequences: CI no longer holds credentials to the clusters, and permissions are narrowed to the agent's RBAC; drift is detected and self-healed; rollback is a git revert. Trade-off: the team must learn a new tool, debug an extra sync layer, and agree on a repo structure for multiple environments.'''
+explanation = "A good ADR states the constraints (credentials, drift), the decision, and the price paid, so later readers understand why it was chosen."
+
+[questions.devops-lv008]
+prompt = "An 8-person team manages 3 environments with Terraform; everyone runs apply from their laptop with local state, and state has been lost once. Which decision should come first?"
+options = ["Move to a remote backend with locking and encryption, run plan/apply in CI, and apply only after the plan is reviewed", "Commit terraform.tfstate to git to keep history", "Everyone keeps their own copy of the state and syncs it via chat", "Drop Terraform and use the console to move faster"]
+explanation = "Remote state with locking prevents concurrent applies and lost state; running in CI gives a single reviewed change flow. State in git easily leaks secrets and still conflicts; per-person state is a source of drift; dropping IaC means going back to ClickOps."
+
+[questions.devops-lv009]
+prompt = "A monorepo with 30 developers has a CI pipeline that takes 45 minutes for every PR, so the merge queue is jammed all day. You have 2 weeks for this. Which priority gives the biggest impact at low risk?"
+options = ["Build and test only the packages affected by the change, combined with dependency and image layer caching", "Remove all integration tests from CI", "Raise the pipeline timeout to 90 minutes so it fails less", "Ask developers to run tests locally and skip CI"]
+explanation = "Running only what is affected plus caching cuts time while keeping the quality gate. Dropping integration tests or CI trades speed for production bugs; raising the timeout does not reduce waiting time."
+
+[questions.devops-lv010]
+prompt = "A .env file containing a production API key was accidentally committed to a private repo and has been there for 3 days. Which response plan is most correct?"
+options = ["Rotate the leaked key immediately, check usage logs, move secrets to a secret manager injected at runtime with least privilege, and add secret scanning in pre-commit and CI", "Force-push to remove the commit; that is enough since nobody saw it", "Base64-encode the content and commit it again", "Do nothing because the repo is private"]
+explanation = "Once a secret is in history, treat it as leaked: clones, forks, and CI caches can all hold it. Rotate first, then fix the process so it does not happen again. Base64 is not encryption; a private repo is still readable by many people and tools."
+
+[questions.devops-lv011]
+prompt = "You are writing automated go/no-go criteria to promote a canary to 100%. Choose the criteria to include."
+options = ["The canary's error rate does not exceed the baseline by more than a predefined threshold", "The canary's p99 latency stays within a threshold relative to the baseline", "The canary has received enough requests and a minimum observation time for a meaningful comparison", "All canary Pods are in the Running state", "The canary's CPU is lower than the baseline"]
+explanation = "Criteria must reflect user experience and have enough samples. Running only says the process is up; lower CPU can mean the canary gets little traffic or is failing fast."
+
+[questions.devops-lv012]
+prompt = "You are the incident commander. The error rate spiked right after a deploy 20 minutes ago; the cause is unclear. What is the first action?"
+options = ["Roll back to the previous version to reduce impact, then investigate the root cause", "Debug directly in production until you find the cause", "Wait another 30 minutes to see if the errors go away", "Write a quick fix and deploy it right away without testing"]
+explanation = "The priority in an incident is reducing impact. The most recent change is the prime suspect, and rollback is a known, reversible operation. Debugging or waiting prolongs user impact; an untested fix-forward can make things worse."
+
+[questions.devops-lv013]
+prompt = "With a 99.9% SLO, the 0.1% of errors allowed within the measurement window is called the error {{blank}}; teams use it to decide when to slow down releases.\n"
+explanation = "Error budget = 1 − SLO: the amount of unreliability you are allowed to spend on changes and risk."
+
+[questions.devops-lv014]
+prompt = "12 teams each write their own Helm charts and pipelines; every security patch has to be applied in 12 different places. You have one quarter to standardize. What is the most reasonable direction?"
+options = ["Build a golden path: standard pipeline templates and charts with extension points, migrate team by team, and measure adoption", "Force every team onto a single chart and ban all customization from next week", "Keep things as they are because each team knows its own service", "Write a wiki page with instructions and let teams follow it on their own"]
+explanation = "A golden path lowers maintenance cost while still allowing controlled exceptions; gradual migration reduces risk. Imposing it overnight meets resistance and blocks legitimate cases; a wiki without tooling is usually ignored."
+
+[questions.devops-lv015]
+prompt = "The team's average MTTR is 3 hours, most of it spent finding where the fault is. Present a one-quarter plan to reduce MTTR, with priorities and how to measure it."
+keywords = [["runbook"], ["alert", "alerting"], ["dashboard", "observability", "trace", "tracing"], ["rollback", "feature flag"], ["postmortem", "game day", "drill"]]
+model_answer = '''First, standardize observability: an SLO dashboard per service, logs with a request id, and distributed tracing to localize faults quickly. Second, symptom-based alerts, each with a runbook listing checks and mitigation steps. Third, make sure there is a one-command rollback and a feature flag for risky features, to reduce impact before finding the root cause. Finally, run a monthly game day and track postmortem action items. Measure with MTTR, time to detect, and the share of incidents that had a runbook.'''
+explanation = "Reducing MTTR means reducing time to detect, localize, and mitigate; each step needs its own tools and habits, and must be measurable."
+
+[questions.devops-lv016]
+prompt = "The main database needs an RPO of 15 minutes and an RTO of 1 hour; the budget is limited and the team has never tried a restore. What is the most reasonable option?"
+options = ["A full backup every night", "An asynchronous replica in another region plus point-in-time recovery, with regular restore drills that measure the actual time", "Deploy active-active multi-region right away", "Take manual snapshots before each deploy"]
+explanation = "Nightly backups can lose up to 24 hours of data, exceeding the RPO; manual snapshots have no fixed schedule. Active-active is expensive and more complex than needed. PITR plus a replica meets the RPO/RTO at moderate cost, and only drills can prove the RTO."
+
+[questions.devops-lv017]
+prompt = "When auditing the operations of a 20-engineer group, which signs are anti-patterns that belong in a remediation plan?"
+options = ["Production configuration is edited by hand in the console, so IaC does not reflect reality", "Every service picks its own log format and collection tool", "Every infrastructure change goes through a PR with the plan output attached", "Many alerts have no runbook and nobody knows what to do when they fire", "Every developer has cluster-admin for convenience"]
+explanation = "ClickOps creates drift, non-standard logs slow investigations, non-actionable alerts cause fatigue, and broad permissions widen the blast radius. Changes via PR with a plan are good practice."
+
+[questions.devops-lv018]
+prompt = "A startup with 4 developers, 6 stateless HTTP services, nobody dedicated to operations, needs to launch in 2 months. Which platform for running the services is most reasonable?"
+options = ["Self-host Kubernetes on VMs for full control", "Managed Kubernetes with a service mesh from day one", "A managed serverless container/PaaS service, with an ADR recording the conditions for moving to Kubernetes", "One hand-configured VM per service"]
+explanation = "For a small team without an operations person, the cost of learning and running on-call for Kubernetes outweighs the benefits. A managed PaaS lets them focus on the product; the ADR records the thresholds (service count, networking customization needs, cost) for revisiting. Hand-configured VMs are hard to reproduce and scale."
+
+[questions.devops-lvc02]
+title = "Error Budget Release Policy"
+prompt = '''Write release_policy(slo, total, failed, days_elapsed, window_days=30) that returns a dict with three keys: burn_rate, budget_remaining, action.
+- burn_rate = (failed / total) / (1 - slo), rounded to 4 decimal places.
+- Budget consumed = burn_rate * days_elapsed / window_days; budget_remaining = 1 - consumed, not less than 0, rounded to 4 decimal places.
+- action is "freeze" if budget_remaining is 0, otherwise "slow_down" if burn_rate > 1, otherwise "ship".
+- Raise ValueError if slo is not in the open interval (0, 1), total <= 0, failed < 0 or failed > total, or days_elapsed is not in (0, window_days].
+Example: release_policy(0.999, 1_000_000, 1500, 10) returns {"burn_rate": 1.5, "budget_remaining": 0.5, "action": "slow_down"}.
+'''
+hints = ["A burn rate of 1 means consuming the budget at exactly the pace that runs out at the end of the window.", "Check freeze before slow_down."]
+explanation = "Turning the error budget policy into code lets the pipeline decide automatically whether to block or allow a release, instead of arguing every time."
+
+[questions.devops-lv019]
+prompt = "A container has a 512Mi memory limit. The application's memory grows steadily and then the container stops with exit code 137, with no stack trace in the application logs. Which explanation is most accurate?"
+options = ["The kernel OOM killer terminates the process when the cgroup exceeds its memory limit, sending SIGKILL so the application has no chance to log", "The Docker daemon hit an error and restarted", "The application calls exit(137) itself when the heap runs out", "A corrupted image layer made the process crash"]
+explanation = "The memory limit is enforced by the cgroup; when exceeded, the OOM killer sends SIGKILL (128 + 9 = 137). SIGKILL cannot be caught, so nothing is logged. Look at memory metrics and OOM events, not only application logs."
+
+[questions.devops-lv020]
+prompt = "Choose the correct statements about how containers are implemented on Linux."
+options = ["A PID namespace gives the container its own process tree, where the first process has PID 1", "cgroups limit and account for the CPU, memory, and I/O of a group of processes", "Containers share the kernel with the host", "Each container runs its own kernel like a virtual machine", "Image layers are read-only; the container writes to a copy-on-write layer on top"]
+explanation = "A container is a process isolated with namespaces and limited with cgroups, sharing the host kernel. Because the kernel is shared, a kernel vulnerability affects every container, unlike virtual machines."
+
+[questions.devops-lv021]
+prompt = "A new Pod is Pending with the event \"0/5 nodes are available: insufficient cpu\", while the dashboard shows actual node CPU usage of only about 20%. What is the most likely cause?"
+options = ["The scheduler places Pods based on the total requests committed on each node, not actual usage; the existing Pods' requests are set too high", "The metrics server is reporting wrong values, confusing the scheduler", "The new Pod's CPU limit is too low", "The nodes have a NoExecute taint"]
+explanation = "The scheduler compares the new Pod's requests with the allocatable capacity left after subtracting running Pods' requests. Low usage but high requests still makes a node count as full. Rightsize requests or add nodes."
+
+[questions.devops-lv022]
+prompt = "An API's liveness probe calls the database. When the database is slow for 1 minute, every API Pod restarts repeatedly and the incident spreads. How do you fix it?"
+options = ["Make liveness check only the process itself (e.g. the event loop still responds); handle external dependencies in readiness or with timeouts/circuit breakers", "Raise the liveness failureThreshold to 100", "Remove the readiness probe and keep only liveness", "Make liveness also call the cache and message queue"]
+explanation = "Restarting does not cure a slow database and causes mass cold starts. Liveness should only detect a broken process that cannot recover by itself. A huge threshold defeats the probe; adding dependencies to liveness makes it worse."
+
+[questions.devops-lv023]
+prompt = "Every rolling update, a few requests return 502. Choose the correct statements for designing graceful shutdown."
+options = ["When a Pod is deleted, the container receives SIGTERM and has terminationGracePeriodSeconds to finish", "Removing the Pod from endpoints happens in parallel with SIGTERM, so requests can still arrive in the first few seconds", "A short sleeping preStop hook gives the load balancer time to stop sending requests before the application shuts down", "The application should exit immediately on SIGTERM so the rollout is faster", "If the process runs under a shell script that does not forward signals, the application may never receive SIGTERM"]
+explanation = "Stop accepting new requests, finish in-flight ones, then exit; exiting immediately drops in-flight requests. A short preStop sleep covers the endpoint update delay; a shell as PID 1 can swallow signals."
+
+[questions.devops-lv024]
+prompt = "terraform plan unexpectedly wants to delete a security group rule that someone added by hand in the console to firefight an incident last week. What is the right way to handle it?"
+options = ["Find out why the rule was added; if it must stay, put it into code (or import it) via a PR, otherwise let apply remove it with notice; then add a process to avoid manual edits", "Apply right away because code is the source of truth", "Edit the state file directly so Terraform ignores the rule", "Add lifecycle ignore_changes for the whole security group"]
+explanation = "Drift signals a change made outside the process; applying blindly may reproduce the incident, hand-editing state is very risky, and ignore_changes on everything hides all future drift. Keeping or dropping it needs a reason and must go through review."
+
+[questions.devops-lv025]
+prompt = '''You rename the resource aws_s3_bucket.logs to aws_s3_bucket.audit_logs and do not want Terraform to destroy and recreate the bucket. Fill in the name of the block that declares the address move:
+{{blank}} { from = aws_s3_bucket.logs  to = aws_s3_bucket.audit_logs }
+'''
+explanation = "A moved block records the address change in code so Terraform updates the state instead of destroy/create; since it lives in code, it is reviewed and applied to every workspace."
+
+[questions.devops-lv026]
+prompt = "Compare storing secrets in plain Kubernetes Secrets with using an external secret manager (synced via an operator or injected at runtime). State the risks and the minimum requirements for each approach."
+keywords = [["base64"], ["etcd", "encryption at rest", "encrypt"], ["vault", "secret manager", "external secrets"], ["rotate", "rotation"], ["rbac", "permission", "access control"]]
+model_answer = '''A Kubernetes Secret is only base64-encoded, so you need encryption at rest for etcd and tight RBAC, because anyone who can read the Secret or create a Pod in the namespace can get the value. An external secret manager such as Vault centralizes access control, auditing, and automatic rotation; in exchange it adds a dependency that needs HA and a sync or injection mechanism. Both approaches must keep secrets out of git, logs, and printed environment variables.'''
+explanation = "The key points: base64 is not encryption, and permission to read Secrets or create Pods is effectively permission to read secrets."
+
+[questions.devops-lv027]
+prompt = "You applied a deny-all NetworkPolicy to the payments namespace, but Pods in other namespaces can still call into it. The manifest is valid and was created. What is the most likely cause?"
+options = ["The cluster's CNI plugin does not enforce NetworkPolicy, so the object exists but has no effect", "NetworkPolicy only applies to Services of type LoadBalancer", "All nodes must be restarted after creating a NetworkPolicy", "NetworkPolicy only blocks egress, not ingress"]
+explanation = "The API server accepts NetworkPolicy objects, but enforcement is done by the CNI. With an unsupported CNI, policies silently do nothing; verify with real connectivity tests."
+
+[questions.devops-lv028]
+prompt = "After adding non_idempotent to proxy_next_upstream, the team sees some orders created twice when a backend times out. Which explanation is correct?"
+options = ["Nginx resent the POST to another upstream even though the first backend may have finished processing it; POST is not idempotent, so duplicates are created", "Nginx duplicates every request by default", "The client resends the request because of the Connection header", "Upstream keepalive causes requests to be sent twice"]
+explanation = "By default nginx does not retry non-idempotent requests on another upstream. Enabling non_idempotent removes that protection; a timeout does not mean the backend did not process the request. Use idempotency keys in the application if you want safe retries."
+
+[questions.devops-lv029]
+prompt = "A service's HPA keeps scaling up and down every few minutes (flapping). Choose reasonable directions for investigation/fixes."
+options = ["Configure behavior with a stabilization window for scale down", "Check whether CPU requests reflect actual usage, since utilization is computed against requests", "Look at startup time: new Pods that are not ready yet push load onto old Pods", "Set minReplicas equal to maxReplicas so the HPA does nothing", "Remove the readiness probe so Pods receive traffic sooner"]
+explanation = "A stabilization window smooths scaling decisions; wrong requests make utilization percentages wrong; slow startup creates oscillation. Fixing the replica count defeats the HPA; removing readiness sends traffic to Pods that are not ready."
+
+[questions.devops-lv030]
+prompt = '''What does the following script print if hosts.txt has 3 lines?
+```bash
+count=0
+cat hosts.txt | while read -r line; do
+  count=$((count + 1))
+done
+echo "$count"
+```
+'''
+options = ["0, because the while loop in a pipeline runs in a subshell, so the outer count variable does not change", "3", "A syntax error because of a missing semicolon", "Empty because count was not exported"]
+explanation = "Each part of a pipeline runs in a subshell (unless lastpipe is enabled). Use redirection instead: while read -r line; do ...; done < hosts.txt so the loop runs in the current shell."
+
+[questions.devops-lv031]
+prompt = "Yesterday's and today's builds of the same commit produced different images, and today's is broken; the cause is that the python:3.12-slim base image tag was updated. How do you make builds reproducible while still receiving security patches?"
+options = ["Pin the base image by @sha256 digest and use a bot that regularly opens PRs to update the digest, with CI running tests", "Always use the latest tag to get the newest version", "Never update the base image", "Rebuild the image every hour to detect issues early"]
+explanation = "A digest is immutable, so builds are reproducible; automated update PRs keep patches flowing with tests and review. latest makes the problem worse; freezing forever accumulates vulnerabilities."
+
+[questions.devops-lv032]
+prompt = "Nginx sits behind a load balancer, configured with set_real_ip_from 0.0.0.0/0 and real_ip_header X-Forwarded-For; limit_req is keyed on $binary_remote_addr. An attacker easily bypasses the rate limit. Why, and how do you fix it?"
+options = ["Trusting every source lets clients set X-Forwarded-For themselves and change IP on every request; trust only the load balancer's IP range", "limit_req does not work with HTTP/2", "You must use $remote_port as the key", "The limit_req zone size needs to be increased"]
+explanation = "set_real_ip_from should list only trusted proxies. Trusting 0.0.0.0/0 lets any client spoof its real address, making IP-based rate limiting and logs meaningless."
+
+[questions.devops-lv033]
+prompt = "A Terraform module generates a database password. Choose the correct statements about state and sensitive data."
+options = ["State may contain sensitive values in plain text, so the backend needs encryption and access control", "Marking an output sensitive = true only hides the value in display; it does not remove it from state", "Anyone who can read the state can get the password", "Setting sensitive = true is enough to store state in a public git repo", "You can reduce risk by letting a secret manager generate and hold the password, with Terraform only referencing it"]
+explanation = "sensitive only affects display in the CLI/logs. Read access to state equals read access to secrets, so protect the backend or keep secrets out of state."
+
+[questions.devops-lv034]
+prompt = '''Every time you change one line of code, the pip install step reruns from scratch and takes 4 minutes. Current Dockerfile:
+```dockerfile
+FROM python:3.12-slim
+WORKDIR /app
+COPY . .
+RUN pip install -r requirements.txt
+```
+How do you fix it?
+'''
+options = ["COPY requirements.txt first, RUN pip install, then COPY the rest", "Add --no-cache to docker build", "Merge COPY and RUN into one line", "Switch to the python:latest base image"]
+explanation = "The layer cache is invalidated from the first instruction whose input changed. Copying the dependency file separately means the pip install layer only reruns when requirements.txt changes."
+
+[questions.devops-lv035]
+prompt = "A deploy script creates a temporary directory with tmp=$(mktemp -d) and must delete it both when the script succeeds and when it fails midway (with set -e). What is the right way?"
+options = ["trap 'rm -rf \"$tmp\"' EXIT right after creating the directory", "Add rm -rf \"$tmp\" on the last line of the script", "Put the temp directory in /tmp because the OS deletes it immediately", "Use set +e so the script never stops midway"]
+explanation = "trap EXIT runs when the shell exits for any reason, including set -e. A final rm line is skipped on failure; turning off set -e hides real errors."
+
+[questions.devops-lv036]
+prompt = "A regression is somewhere in the 300 commits since tag v2.3. Fill in the Git command that uses binary search to pinpoint the offending commit: git {{blank}} start\n"
+explanation = "git bisect halves the commit range, marking good/bad (or running a script with bisect run) to find the first bad commit in about log2(300) ≈ 9 steps."
+
+[questions.devops-lv037]
+prompt = "A Pod is in CrashLoopBackOff; kubectl logs pod shows only a few startup lines from the current run. Which command shows the logs of the run that just crashed?"
+options = ["kubectl logs pod --previous", "kubectl get pod -o wide", "kubectl rollout restart deployment/api", "kubectl delete pod and then check the logs again"]
+explanation = "--previous fetches the logs of the previous container instance, where the crash error usually is. Deleting the Pod loses those logs."
+
+[questions.devops-lv038]
+prompt = "A Deployment has 4 replicas and a RollingUpdate strategy with maxSurge: 1 and maxUnavailable: 0. Choose the correct statements."
+options = ["During the update there can be at most 5 Pods", "At least 4 ready Pods are kept throughout the rollout", "If a new Pod never becomes ready, the rollout stalls and the old Pods keep serving", "This configuration needs the least spare capacity possible", "The rollout deletes all old Pods first and then creates new ones"]
+explanation = "maxUnavailable 0 keeps full capacity and maxSurge 1 allows one extra temporary Pod, so you need spare resources for the 5th Pod. Deleting everything then recreating is the Recreate behavior."
+
+[questions.devops-lv039]
+prompt = '''With the configuration below, which URI is the request GET /api/users forwarded to on the backend?
+```nginx
+location /api/ {
+    proxy_pass http://backend/;
+}
+```
+'''
+explanation = "When proxy_pass includes a URI (here /), the part matching the location is replaced by that URI. Without a / after the upstream name, the original URI /api/users is kept as is."
+
+[questions.devops-lv040]
+prompt = "The pipeline runs terraform plan when a PR is opened and terraform apply after merge. In between, someone else merges an infrastructure change. How do you reduce the risk of applying something different from the reviewed plan?"
+options = ["Save the plan to a file (plan -out) at the approved step and apply exactly that plan file, combined with state locking", "Run apply -auto-approve as soon as the PR is opened", "Drop the plan step to make the pipeline faster", "Run apply twice to be sure"]
+explanation = "Applying a saved plan file guarantees only the reviewed changes are applied; if the state has changed, Terraform rejects the stale plan. Locking prevents two applies at the same time."
+
+[questions.devops-lv041]
+prompt = "A security scan reports that your container runs as root and can write to the root filesystem. Which securityContext settings correctly fix both issues?"
+options = ["runAsNonRoot: true (with a non-zero runAsUser) and readOnlyRootFilesystem: true, mounting an emptyDir for directories that need writes", "privileged: true", "hostNetwork: true", "Add the SYS_ADMIN capability"]
+explanation = "runAsNonRoot blocks running as UID 0; readOnlyRootFilesystem prevents writes to the image, with writable directories on separate volumes. The other options all expand privileges."
+
+[questions.devops-lv042]
+prompt = "You accidentally ran git add on config.local.json and want to unstage it while keeping your edits in the working tree. Which command?"
+explanation = "--staged only resets the index to match HEAD without touching the working tree. Without --staged, restore overwrites the file's content; reset --hard discards all changes; git rm deletes the file."
+
+[questions.devops-lv043]
+prompt = "Fill in the command to show the logs of container web and keep following new logs: docker {{blank}} -f web\n"
+explanation = "docker logs prints a container's stdout/stderr; -f (follow) keeps the connection open to print new logs."
+
+[questions.devops-lv044]
+prompt = "A database Service only needs to be reachable by other Pods in the cluster, not from the Internet. Which type should you choose?"
+explanation = "ClusterIP (the default) only provides a cluster-internal address. NodePort and LoadBalancer expose the service externally; ExternalName just points to an external DNS name."
+
+[questions.devops-lv045]
+prompt = "In Bash, which special variable holds the exit status of the command that just finished (0 means success)?"
+explanation = "$? is the exit status of the last command; $! is the PID of the most recent background process; $$ is the shell's PID; $# is the number of arguments."
+
+[questions.devops-lv046]
+prompt = "Fill in the resource to list the Pods in the current namespace: kubectl get {{blank}}\n"
+explanation = "kubectl get pods (or pod, po) lists Pods with their status, restart count, and age."
+
+[questions.devops-lv047]
+prompt = "You just edited the nginx configuration file on a server that is serving traffic. What is the safe sequence to apply it?"
+options = ["nginx -t to check the syntax, then nginx -s reload", "Stop nginx and start it again immediately", "nginx -s reload first, then check", "Restart the whole server"]
+explanation = "nginx -t catches configuration errors before applying; reload starts new workers with the new configuration while old workers finish their requests, with no downtime."
+
+[questions.devops-lvc01]
+title = "Parse a .env File"
+prompt = '''Write parse_env(text) that reads the contents of a .env file and returns a dict.
+- Skip empty lines and lines starting with # (after stripping leading whitespace).
+- Strip the "export " prefix if present.
+- Split at the first =; strip whitespace around the key and value. Skip lines without = or with an empty key.
+- If the value is wrapped in a matching pair of quotes (single or double), remove that pair.
+- A later key overrides an earlier one.
+Example: 'PORT=8080\nNAME="api"' returns {"PORT": "8080", "NAME": "api"}.
+'''
+hints = ["Use str.split('=', 1) to split only once.", "Check the first and last characters of the value before removing quotes."]
+explanation = "A .env file is a common configuration format for 12-factor apps; the parser must handle comments, quotes, and values containing =."

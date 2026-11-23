@@ -176,6 +176,7 @@ id = "next-001"
 module = "next-routing"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Trong App Router, thư mục app/(shop)/products/[id]/page.tsx ứng với URL nào khi id là 42?"
 options = ["/(shop)/products/42", "/shop/products/42", "/products/42", "/products/[id]/42"]
 answer = [2]
@@ -187,6 +188,7 @@ id = "next-002"
 module = "next-routing"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Vai trò chính của layout.tsx trong một nhánh App Router là gì?"
 options = ["Tạo endpoint HTTP cho nhánh", "Bao UI route con và có thể giữ trạng thái khi điều hướng trong nhánh", "Thay mọi page.tsx bằng nội dung tĩnh", "Tự động tạo dynamic segment"]
 answer = [1]
@@ -198,6 +200,7 @@ id = "next-003"
 module = "next-routing"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Route app/docs/[[...slug]]/page.tsx cần nhận được cả /docs và /docs/setup/install. Quy ước này là:"
 options = ["Dynamic segment thường", "Catch-all bắt buộc", "Optional catch-all", "Route group"]
 answer = [2]
@@ -209,6 +212,7 @@ id = "next-004"
 module = "next-routing"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Những nhận định nào đúng về loading.tsx và error.tsx trong App Router?"
 options = ["loading.tsx cung cấp fallback chờ cho segment", "error.tsx là boundary cho lỗi trong nhánh", "error.tsx bắt buộc là Server Component", "error.tsx có thể cung cấp thao tác thử lại bằng reset"]
 answer = [0, 1, 3]
@@ -220,6 +224,7 @@ id = "next-005"
 module = "next-routing"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Một trang tài liệu nằm dưới app/(docs)/guide/[...slug]/page.tsx. URL nào có thể khớp?"
 options = ["/guide/start", "/guide/api/auth", "/docs/guide/start", "/guide"]
 answer = [0, 1]
@@ -231,6 +236,7 @@ id = "next-006"
 module = "next-routing"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Hoàn thành dynamic segment để một route khớp /users/abc với đúng một giá trị động:
 app/users/{{blank}}/page.tsx
@@ -244,6 +250,7 @@ id = "next-007"
 module = "next-routing"
 type = "essay"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Giải thích cách route group và layout giúp tổ chức hai khu vực giao diện khác nhau mà không làm URL chứa tên nhóm."
 keywords = [["route group", "nhóm route"], ["không xuất hiện trong url", "không đổi url", "không tạo url segment"], ["layout riêng", "layout"], ["dùng chung giao diện", "shared ui", "giao diện dùng chung"]]
 min_keywords = 2
@@ -258,6 +265,7 @@ id = "next-008"
 module = "next-routing"
 type = "code"
 difficulty = 3
+tags = ["level:senior"]
 title = "Khớp mẫu route App Router"
 prompt = '''
 Viết matchesAppRoute(pathname, filePattern) trả về boolean.
@@ -326,6 +334,7 @@ id = "next-009"
 module = "next-render-cache"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Một component cần useState và xử lý click trong App Router. Thay đổi phù hợp nhất là gì?"
 options = ["Đánh dấu file component bằng use client ở đầu module", "Đặt use server trong component", "Đổi tên file thành client.tsx", "Chuyển mọi layout thành Client Component"]
 answer = [0]
@@ -337,6 +346,7 @@ id = "next-010"
 module = "next-render-cache"
 type = "single"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Server Action thay đổi hồ sơ người dùng. Biện pháp nào cần thực hiện trong chính action?"
 options = ["Chỉ kiểm tra nút submit đã bị disable", "Xác thực danh tính và quyền trên dữ liệu mục tiêu trước khi ghi", "Tin rằng action chỉ được gọi từ form của trang", "Đưa secret vào module client để action dùng lại"]
 answer = [1]
@@ -348,6 +358,7 @@ id = "next-011"
 module = "next-render-cache"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một request fetch lấy dữ liệu thay đổi liên tục theo từng người dùng. Cách chọn an toàn nhất là gì?"
 options = ["Dùng cache dùng chung cho mọi người", "Không dựa vào cache mặc định; chọn chính sách uncached hoặc phạm vi cache phù hợp", "Đặt staleTime của TanStack Query thành 0 là đủ cho server fetch", "Đổi endpoint thành GET để đảm bảo dữ liệu không cache"]
 answer = [1]
@@ -359,6 +370,7 @@ id = "next-012"
 module = "next-render-cache"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một request đã gắn tag posts cần được làm mới theo profile stale-while-revalidate hiện đại. Lựa chọn nào phù hợp?"
 options = ["revalidateTag('posts', 'max')", "revalidatePath('/posts') dù cần invalidation theo tag", "router.refresh('posts')", "cacheTag('posts', 0)"]
 answer = [0]
@@ -370,6 +382,7 @@ id = "next-013"
 module = "next-render-cache"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Những lựa chọn nào giúp stream giao diện khi một phần dữ liệu tải chậm?"
 options = ["Bọc vùng chậm bằng Suspense có fallback", "Đặt loading.tsx ở segment phù hợp", "Đổi mọi component sang Client Component", "Đợi mọi request hoàn tất rồi mới render toàn trang"]
 answer = [0, 1]
@@ -381,6 +394,7 @@ id = "next-014"
 module = "next-render-cache"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Muốn dùng fetch có thể cache và tái sử dụng thay vì mặc định xem mọi request là uncached, giá trị cache rõ ràng là {{blank}}.
 '''
@@ -393,6 +407,7 @@ id = "next-015"
 module = "next-render-cache"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Directive ở đầu module tạo client boundary cho component dùng state và event handler là {{blank}}.
 '''
@@ -405,6 +420,7 @@ id = "next-016"
 module = "next-render-cache"
 type = "code"
 difficulty = 3
+tags = ["level:senior"]
 title = "Revalidate cache theo tag"
 prompt = '''
 Viết revalidateByTag(entries, tag) cho mô hình cache thuần JavaScript. entries là mảng object có path, tags (mảng chuỗi) và các field khác.
@@ -466,6 +482,7 @@ id = "next-017"
 module = "next-route-platform"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Trong App Router, file nào khai báo HTTP endpoint ở /api/health?"
 options = ["app/api/health/page.tsx", "app/api/health/route.ts", "app/api/health/layout.tsx", "app/route.ts"]
 answer = [1]
@@ -477,6 +494,7 @@ id = "next-018"
 module = "next-route-platform"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Title của trang bài viết cần dựa trên dữ liệu tải từ slug. API nào thích hợp?"
 options = ["Export metadata cố định cho mọi bài", "Export generateMetadata dựa trên params/dữ liệu", "Dùng useEffect để sửa title sau khi render", "Đặt title trong middleware matcher"]
 answer = [1]
@@ -488,6 +506,7 @@ id = "next-019"
 module = "next-route-platform"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Ảnh hero dùng fill trong next/image nhưng trình duyệt tải ảnh quá lớn trên màn hình điện thoại. Field nào giúp mô tả kích thước hiển thị dự kiến?"
 options = ["sizes", "priorityMode", "cacheTag", "fontDisplay"]
 answer = [0]
@@ -499,6 +518,7 @@ id = "next-020"
 module = "next-route-platform"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Những nhận định nào đúng về middleware và bảo vệ route?"
 options = ["config.matcher giới hạn request cần middleware xử lý", "Matcher nên là cấu hình tĩnh để framework phân tích", "Middleware thay thế việc kiểm tra quyền trong Server Action", "Quyền truy cập dữ liệu vẫn cần được xác minh ở điểm đọc/ghi"]
 answer = [0, 1, 3]
@@ -510,6 +530,7 @@ id = "nextjs-dv019"
 module = "nextjs-dv-router-auth"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Router context thường hữu ích nhất cho việc nào trong TanStack Router?"
 options = ["Chia sẻ dependency có kiểu như auth state hoặc QueryClient với route hooks/loaders", "Tự lưu mọi state component vào URL", "Thay thế xác thực ở API server", "Tạo HTML `<head>` cho mỗi route"]
 answer = [0]
@@ -521,6 +542,7 @@ id = "nextjs-dv020"
 module = "nextjs-dv-router-auth"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một route cần chuyển user chưa đăng nhập tới `/login` trước khi loader chạy. Cơ chế phù hợp nhất là gì?"
 options = ["`beforeLoad` kiểm tra context và ném redirect", "`useEffect` trong component con sau khi render dữ liệu", "`validateSearch` tự tạo session", "`Link` tự kiểm tra quyền ở API"]
 answer = [0]
@@ -532,6 +554,7 @@ id = "nextjs-dv021"
 module = "nextjs-dv-router-auth"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Nhiều route con trong `/app` cần cùng kiểm tra đăng nhập. Cách tổ chức nào giảm lặp logic?"
 options = ["Đặt guard tại route cha/layout phù hợp và cho các route con kế thừa context", "Lặp cùng một kiểm tra trong mọi nút Link", "Chỉ kiểm tra query string của từng route", "Ẩn toàn bộ route tree khỏi TypeScript"]
 answer = [0]
@@ -543,6 +566,7 @@ id = "nextjs-dv022"
 module = "nextjs-dv-router-auth"
 type = "single"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Ứng dụng đã redirect khỏi route quản trị ở client khi user thiếu role. API quản trị còn cần làm gì?"
 options = ["Không cần kiểm tra thêm vì route tree đã type-safe", "Tự xác thực và kiểm tra quyền trên mỗi thao tác dữ liệu", "Chỉ kiểm tra referrer của browser", "Tin role do query string gửi lên"]
 answer = [1]
@@ -554,6 +578,7 @@ id = "nextjs-dv023"
 module = "nextjs-dv-router-auth"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Những nhận định nào đúng về context và `beforeLoad`?"
 options = ["Root context có thể khai báo kiểu dependency mà route cần", "Route guard phía client thay thế kiểm tra authorization của server", "`beforeLoad` có thể kiểm tra điều kiện trước khi loader chạy", "Route con có thể dùng context tích luỹ từ nhánh cha"]
 answer = [0, 2, 3]
@@ -565,6 +590,7 @@ id = "nextjs-dv024"
 module = "nextjs-dv-router-auth"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Khi xây nhánh route yêu cầu đăng nhập, lựa chọn nào phù hợp?"
 options = ["Đưa thông tin user cần cho UI vào router context và giới hạn dữ liệu nhạy cảm", "Sau khi login/logout làm context đổi, cân nhắc cập nhật context và invalidate route state", "Chỉ dùng giá trị role trong URL làm nguồn quyền", "Để API kiểm tra lại session và quyền trên resource"]
 answer = [0, 1, 3]
@@ -576,6 +602,7 @@ id = "nextjs-dv025"
 module = "nextjs-dv-router-auth"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Hook route chạy trước loader để kiểm tra điều kiện điều hướng có tên là {{blank}}."
 blanks = [["beforeLoad"]]
 explanation = "`beforeLoad` thích hợp cho logic điều kiện route như kiểm tra context hoặc redirect."
@@ -586,6 +613,7 @@ id = "nextjs-dv026"
 module = "nextjs-dv-router-auth"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Trong phỏng vấn, hãy giải thích cách router context và `beforeLoad` phối hợp để bảo vệ một nhánh route; nêu giới hạn của guard phía client và bước cần có ở server."
 keywords = [["router context", "context của router"], ["beforeLoad", "route guard"], ["redirect", "chuyển hướng"], ["child routes", "route con"], ["server authorization", "authorization phía server", "kiểm tra quyền ở server"]]
 min_keywords = 4
@@ -598,6 +626,7 @@ id = "nextjs-dvc02"
 module = "nextjs-dv-router-auth"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 title = "Quyết định truy cập route"
 lang = "javascript"
 prompt = '''
@@ -648,6 +677,7 @@ id = "nextjs-dv010"
 module = "nextjs-dv-query-ssr"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Trong server process phục vụ nhiều người dùng, vì sao không nên chia sẻ một QueryClient toàn cục giữa các request?"
 options = ["QueryClient chỉ hoạt động trong component", "Cache của một request có thể bị request khác đọc nhầm, kể cả dữ liệu theo user", "Mỗi QueryClient chỉ chứa được một query", "Hydration tự động tạo lỗi nếu có cache"]
 answer = [1]
@@ -659,6 +689,7 @@ id = "nextjs-dv011"
 module = "nextjs-dv-query-ssr"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Trong quy trình SSR, `dehydrate(queryClient)` chủ yếu làm gì?"
 options = ["Xoá query cache sau khi render", "Tạo trạng thái cache có thể chuyển sang cây React để hydrate", "Tắt refetch trên client vĩnh viễn", "Tự xác thực người dùng hiện tại"]
 answer = [1]
@@ -670,6 +701,7 @@ id = "nextjs-dv012"
 module = "nextjs-dv-query-ssr"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Server prefetch `['posts', { page: 2 }]`, nhưng component client gọi `useQuery` với `['posts', { page: 1 }]`. Kết quả có khả năng nhất là gì?"
 options = ["Client dùng cache page 2 vì cùng tên `posts`", "Client tìm một cache entry khác và có thể fetch page 1", "Query key bị tự động sửa thành giống nhau", "Hydration từ chối toàn bộ ứng dụng"]
 answer = [1]
@@ -681,6 +713,7 @@ id = "nextjs-dv013"
 module = "nextjs-dv-query-ssr"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một query được hydrate nhưng dùng `staleTime` mặc định bằng 0. Cách hiểu nào phù hợp?"
 options = ["Dữ liệu được xem là fresh vô thời hạn", "Dữ liệu có thể stale ngay và refetch khi query mount trên client", "Query bị xoá trước khi hydrate", "Mọi request tiếp theo đều dùng cache không revalidate"]
 answer = [1]
@@ -692,6 +725,7 @@ id = "nextjs-dv014"
 module = "nextjs-dv-query-ssr"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Những lựa chọn nào phù hợp khi đưa query cache từ server sang client?"
 options = ["Tạo cache riêng cho từng request server", "Đưa access token hoặc secret vào dehydrated state để client gọi API tiện hơn", "Prefetch bằng query key tương ứng với query phía client", "Chỉ serialize dữ liệu được phép gửi cho trình duyệt"]
 answer = [0, 2, 3]
@@ -703,6 +737,7 @@ id = "nextjs-dv015"
 module = "nextjs-dv-query-ssr"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Cách nào giúp giảm request waterfall khi SSR nhiều query?"
 options = ["Bắt đầu prefetch song song các query độc lập", "Bắt buộc đợi từng query độc lập hoàn tất rồi mới bắt đầu query kế", "Chỉ tuần tự hoá những query thật sự phụ thuộc kết quả của query trước", "Tạo một QueryClient toàn cục để mọi request dùng chung"]
 answer = [0, 2]
@@ -714,6 +749,7 @@ id = "nextjs-dv016"
 module = "nextjs-dv-query-ssr"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Điền helper tạo trạng thái có thể truyền vào `HydrationBoundary`:
 
@@ -730,6 +766,7 @@ id = "nextjs-dv017"
 module = "nextjs-dv-query-ssr"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Hãy mô tả luồng SSR/hydration của TanStack Query cho một route và nêu cách tránh cache dùng chung giữa người dùng, client fetch lại không cần thiết, hoặc lộ dữ liệu nhạy cảm."
 keywords = [["queryclient per request", "fresh queryclient", "request-scoped"], ["prefetch", "prefetchquery"], ["dehydrate", "dehydrated state"], ["hydrationboundary", "hydrate"], ["same query key", "cùng query key"], ["staleTime", "freshness"], ["sensitive data", "secret", "dữ liệu nhạy cảm"]]
 min_keywords = 4
@@ -742,6 +779,7 @@ id = "nextjs-dv018"
 module = "nextjs-dv-query-ssr"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Hai query `profile` và `notifications` không phụ thuộc nhau. Cách prefetch nào giảm thời gian chờ tổng thể tốt hơn?"
 options = ["Chờ profile xong rồi mới bắt đầu notifications", "Bắt đầu cả hai tác vụ prefetch trước khi chờ kết quả", "Gộp hai query vào một key dù dữ liệu khác nhau", "Đặt staleTime bằng 0 cho cả hai"]
 answer = [1]
@@ -753,6 +791,7 @@ id = "nextjs-dv001"
 module = "nextjs-dv-authz"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Authentication và authorization khác nhau thế nào?"
 options = ["Authentication xác định danh tính; authorization quyết định quyền trên hành động hoặc resource", "Authentication kiểm tra quyền; authorization tạo session", "Hai khái niệm chỉ khác tên", "Authorization chỉ áp dụng cho giao diện"]
 answer = [0]
@@ -764,6 +803,7 @@ id = "nextjs-dv002"
 module = "nextjs-dv-authz"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một Server Action nhận `projectId` từ form và cập nhật project. Kiểm tra nào phải xảy ra trước khi ghi?"
 options = ["Tin `userId` gửi kèm trong form nếu kiểu là string", "Đọc session phía server và kiểm tra quyền của user trên project đã tải", "Chỉ kiểm tra nút submit đã bị ẩn với user khác", "Chỉ kiểm tra URL có bắt đầu bằng `/dashboard`"]
 answer = [1]
@@ -775,6 +815,7 @@ id = "nextjs-dv003"
 module = "nextjs-dv-authz"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Vì sao không nên đặt API key bí mật trong biến môi trường có tiền tố `NEXT_PUBLIC_`?"
 options = ["Biến đó chỉ tồn tại trong test", "Next.js đưa giá trị đó ra bundle phía client", "Biến đó chỉ đọc được trong CSS", "Prefix này tự động mã hoá giá trị"]
 answer = [1]
@@ -786,6 +827,7 @@ id = "nextjs-dv004"
 module = "nextjs-dv-authz"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Những thực hành nào giúp bảo vệ thao tác sửa dữ liệu?"
 options = ["Kiểm tra session và quyền trên resource trong server-side action", "Ẩn nút sửa ở client rồi coi đó là kiểm soát quyền đầy đủ", "Xác thực dữ liệu nhận từ form trước khi dùng", "Tin `ownerId` do client gửi nếu khớp kiểu TypeScript"]
 answer = [0, 2]
@@ -797,6 +839,7 @@ id = "nextjs-dv005"
 module = "nextjs-dv-authz"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Thuộc tính nào thường được cân nhắc cho cookie session?"
 options = ["`HttpOnly` để JavaScript phía client không đọc cookie trực tiếp", "`Secure` để chỉ gửi qua HTTPS", "`SameSite` để giảm một số request cross-site không mong muốn", "Lưu session secret trong tên cookie để client tiện khôi phục"]
 answer = [0, 1, 2]
@@ -808,6 +851,7 @@ id = "nextjs-dv006"
 module = "nextjs-dv-authz"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Ngoài xác thực danh tính, server phải kiểm tra {{blank}} trước khi cho phép user sửa một resource."
 blanks = [["authorization", "phân quyền", "quyền truy cập"]]
 explanation = "Đăng nhập chỉ cho biết ai đang gọi; server vẫn cần kiểm tra quyền của họ trên resource cụ thể."
@@ -818,6 +862,7 @@ id = "nextjs-dv007"
 module = "nextjs-dv-authz"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Trong phỏng vấn, hãy giải thích vì sao ẩn nút ở client hoặc redirect bằng Proxy/Middleware chưa đủ để bảo vệ một thao tác cập nhật. Nêu nơi nên kiểm tra quyền và dữ liệu nào không nên tin từ request."
 keywords = [["authorization", "phân quyền"], ["server action", "route handler"], ["data access layer", "lớp truy cập dữ liệu"], ["client", "phía client"], ["input validation", "validate input"]]
 min_keywords = 3
@@ -830,6 +875,7 @@ id = "nextjs-dv008"
 module = "nextjs-dv-authz"
 type = "single"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Proxy/Middleware chuyển khách chưa đăng nhập khỏi `/dashboard`, nhưng Route Handler cập nhật hồ sơ không kiểm tra session. Nhận định nào đúng?"
 options = ["Hồ sơ vẫn được bảo vệ vì mọi request đều phải qua trang dashboard", "Handler còn thiếu kiểm tra; có thể bị gọi độc lập và phải tự xác thực/phân quyền", "Chỉ cần thêm TypeScript vào handler", "Client Component tự xác thực handler khi render"]
 answer = [1]
@@ -841,6 +887,7 @@ id = "nextjs-dvc01"
 module = "nextjs-dv-authz"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 title = "Kiểm tra quyền sửa project"
 lang = "javascript"
 prompt = '''
@@ -892,6 +939,7 @@ id = "next-025"
 module = "tanstack-query"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Query có staleTime: 30_000 và gcTime: 300_000. Cách hiểu nào đúng?"
 options = ["Sau 30 giây data bị xoá khỏi cache", "30 giây là thời gian xem data fresh; gcTime giữ cache không còn observer", "gcTime quyết định lúc request đang bay được dedupe", "Hai tuỳ chọn có cùng ý nghĩa"]
 answer = [1]
@@ -903,6 +951,7 @@ id = "next-026"
 module = "tanstack-query"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Query function lấy danh sách đơn hàng theo userId và status. Query key nào mô tả đầu vào đầy đủ nhất?"
 options = ["['orders']", "['orders', userId, status]", "['orders', Date.now()]", "['orders', queryFn]"]
 answer = [1]
@@ -914,6 +963,7 @@ id = "next-027"
 module = "tanstack-query"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Mutation cập nhật một bài viết thành công. Muốn query danh sách bài viết được xem là stale và đồng bộ lại, API nào phù hợp?"
 options = ["invalidateQueries", "setGcTime", "removeObserver", "resetStaleTime"]
 answer = [0]
@@ -925,6 +975,7 @@ id = "next-028"
 module = "tanstack-query"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Nhận định nào đúng về hashing queryKey?"
 options = ["Object property order không làm đổi hash của key tương đương", "Thứ tự phần tử trong array key vẫn quan trọng", "Nên đưa biến lọc ảnh hưởng kết quả vào key", "Mọi query nên dùng cùng một key để cache dễ tái sử dụng"]
 answer = [0, 1, 2]
@@ -936,6 +987,7 @@ id = "next-029"
 module = "tanstack-query"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Một infinite query dùng cursor. Những phần nào thuộc pattern đúng?"
 options = ["Khai báo initialPageParam", "Dùng getNextPageParam để suy ra cursor kế tiếp", "Dùng hasNextPage để quyết định còn trang", "Tạo một query key khác nhau cho mỗi lần gọi fetchNextPage"]
 answer = [0, 1, 2]
@@ -947,6 +999,7 @@ id = "next-030"
 module = "tanstack-query"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Trong useQuery, field bắt buộc nhận mảng mô tả danh tính dữ liệu được gọi là {{blank}}.
 '''
@@ -959,6 +1012,7 @@ id = "next-031"
 module = "tanstack-query"
 type = "code"
 difficulty = 3
+tags = ["level:senior"]
 title = "Stable hash và Mini QueryClient"
 prompt = '''
 Viết stableQueryKeyHash(key) và MiniQueryClient.
@@ -1104,6 +1158,7 @@ id = "next-032"
 module = "tanstack-query"
 type = "code"
 difficulty = 3
+tags = ["level:senior"]
 title = "Optimistic update có rollback"
 prompt = '''
 Viết optimisticMutation(cache, key, update, mutation) với cache là Map.
@@ -1180,6 +1235,7 @@ id = "next-033"
 module = "tanstack-router"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Lợi ích chính của route tree đã đăng ký kiểu trong TanStack Router là gì?"
 options = ["Tạo API server tự động", "Cho phép suy luận và kiểm tra route, params khi dùng Link/navigate", "Xoá nhu cầu validate input trên server", "Tự thay Next.js App Router trong mọi project"]
 answer = [1]
@@ -1191,6 +1247,7 @@ id = "next-034"
 module = "tanstack-router"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Trang có bộ lọc và số trang cần giữ trong URL, chia sẻ được và kiểm tra kiểu trước khi dùng. Nên đặt logic chính ở đâu?"
 options = ["validateSearch của route", "State cục bộ không đồng bộ URL", "useEffect ở root layout", "Middleware của Next.js"]
 answer = [0]
@@ -1202,6 +1259,7 @@ id = "next-035"
 module = "tanstack-router"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một route cần tải dữ liệu theo path params trước khi component hiển thị. Cơ chế route phù hợp nhất là:"
 options = ["loader", "validateSearch", "Link", "Outlet"]
 answer = [0]
@@ -1213,6 +1271,7 @@ id = "next-036"
 module = "tanstack-router"
 type = "single"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Loader dùng search.page để gọi API. Bước nào nên xảy ra trước khi loader dùng giá trị đó?"
 options = ["Tin mọi giá trị query string là số nguyên hợp lệ", "Validate và chuẩn hoá search params trong route", "Chuyển page vào component state sau render", "Bỏ search khỏi URL"]
 answer = [1]
@@ -1224,6 +1283,7 @@ id = "next-037"
 module = "tanstack-router"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Những việc nào phù hợp với TanStack Router loader và route context?"
 options = ["Đọc path params để tải resource tương ứng", "Dùng validated search params cho bộ lọc", "Dùng context đã cung cấp cho router/route", "Tin rằng loader tự cấp quyền đọc dữ liệu backend"]
 answer = [0, 1, 2]
@@ -1235,6 +1295,7 @@ id = "next-038"
 module = "tanstack-router"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Hook cấu hình để parse, validate và chuẩn hoá query string tại một route có tên {{blank}}.
 '''
@@ -1247,6 +1308,7 @@ id = "next-039"
 module = "tanstack-router"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Giải thích quan hệ giữa search params đã validate và loader trong một trang danh sách có lọc, phân trang."
 keywords = [["validate search", "validatesearch", "xác thực search"], ["kiểu", "type", "typed"], ["loader"], ["lọc", "filter"], ["phân trang", "page"], ["url", "query string"]]
 min_keywords = 3
@@ -1261,6 +1323,7 @@ id = "next-040"
 module = "tanstack-router"
 type = "code"
 difficulty = 3
+tags = ["level:senior"]
 title = "Validate search và gọi route loader"
 prompt = '''
 Viết loadPostRoute(input, fetchPost) để mô phỏng hợp đồng của một route:
@@ -1339,6 +1402,7 @@ id = "next-021"
 module = "next-route-platform"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Để tự host font thông qua cơ chế tối ưu của Next.js, package thường dùng là {{blank}}.
 '''
@@ -1351,6 +1415,7 @@ id = "next-022"
 module = "next-route-platform"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Một Route Handler hỗ trợ đọc dữ liệu HTTP khai báo hàm export theo tên method {{blank}}.
 '''
@@ -1363,6 +1428,7 @@ id = "next-023"
 module = "next-route-platform"
 type = "essay"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Nêu hai việc phù hợp với middleware và giải thích vì sao middleware không nên là nơi duy nhất phân quyền dữ liệu."
 keywords = [["redirect", "chuyển hướng"], ["rewrite", "viết lại"], ["matcher", "lọc route", "giới hạn route"], ["phân quyền", "authorization", "kiểm tra quyền"], ["server action", "route handler", "điểm đọc", "điểm ghi"], ["request", "middleware"]]
 min_keywords = 3
@@ -1377,6 +1443,7 @@ id = "next-024"
 module = "next-route-platform"
 type = "code"
 difficulty = 3
+tags = ["level:senior"]
 title = "Mô phỏng middleware matcher"
 prompt = '''
 Viết matchesMiddleware(pathname, matcher) cho một tập con có chủ đích của matcher:
@@ -1441,3 +1508,937 @@ test('bỏ slash cuối và không khớp segment tĩnh sai', () => {
 hints = ["Chuẩn hoá path thành mảng segment trước khi so sánh.", "Xử lý :path* riêng vì nó chỉ hợp lệ ở cuối và có thể khớp 0 segment."]
 explanation = "Đây là mô phỏng matcher cơ bản; matcher thực tế của Next.js còn hỗ trợ biểu thức và các tuỳ chọn cấu hình khác."
 sources = ["nextjs/app/api-reference/file-conventions/middleware"]
+
+[[modules]]
+id = "nextjs-lead"
+title = "Góc nhìn Tech Lead"
+description = "Chọn rendering strategy theo trang, chi phí hạ tầng, multi-tenant, bảo mật dữ liệu, observability, rollout an toàn và quy chuẩn cho team Next.js."
+sources = ["nextjs/app/building-your-application/caching", "nextjs/app/building-your-application/deploying", "nextjs/app/building-your-application/deploying/production-checklist", "nextjs/app/building-your-application/optimizing/instrumentation", "nextjs/app/building-your-application/rendering/edge-and-nodejs-runtimes", "nextjs/app/building-your-application/upgrading/app-router-migration", "nextjs/pages/building-your-application/deploying/multi-zones"]
+lesson = '''
+### Quyết định ở cấp hệ thống, không ở cấp component
+Ở vai trò Tech Lead, câu hỏi không còn là "API này dùng thế nào" mà là "trang này nên render ở đâu, cache bao lâu, ai trả tiền cho mỗi request, và khi sai thì rollback ra sao". Mỗi quyết định cần ghi lại ràng buộc (traffic, độ tươi dữ liệu, SEO, đội ngũ, ngân sách) để người sau hiểu vì sao.
+
+### Khung chọn rendering strategy theo trang
+| Tiêu chí | SSG / prerender | ISR (revalidate theo thời gian/tag) | SSR động | CSR (client fetch) |
+|---|---|---|---|---|
+| Độ tươi dữ liệu | Theo lần build | Vài giây tới vài giờ | Mỗi request | Mỗi lần client gọi |
+| Cá nhân hoá | Không | Không (trừ phần client) | Có | Có |
+| SEO | Tốt nhất | Tốt | Tốt | Kém nếu nội dung chính tải sau |
+| Chi phí server | Gần như 0 (CDN) | Thấp | Cao, tỉ lệ với traffic | Thấp ở server, dồn sang API |
+| Rủi ro khi backend chết | Thấp | Thấp (phục vụ bản cũ) | Cao | Trung bình |
+
+Quy tắc thực dụng: mặc định tĩnh/ISR, chỉ "đi động" ở phần thực sự phụ thuộc người dùng, và tách phần cá nhân hoá thành Suspense boundary hoặc client island thay vì làm cả trang động. Một `cookies()` đặt ở layout gốc có thể biến toàn bộ site thành động — đó là lỗi tốn tiền nhất hay gặp.
+
+### Chi phí và quy mô (số liệu ước lượng)
+- Trang SSR có p95 300 ms với 200 req/s cần nhiều instance hơn hẳn so với cùng trang phục vụ từ CDN; cache hit 95% thường giảm compute hơn 10 lần (ước lượng, tuỳ hạ tầng).
+- Tối ưu ảnh tính theo số biến thể; giới hạn `sizes`, định dạng và domain được phép để tránh hoá đơn bất ngờ.
+- Edge runtime giảm độ trễ cho logic nhẹ, nhưng không phải mọi thư viện Node chạy được; DB ở một region khiến edge gọi xa còn chậm hơn.
+
+### Multi-tenant
+Phân giải tenant ở middleware/proxy (theo host hoặc path), truyền tenant qua header/param, và **đưa tenant vào mọi cache key và tag**. Quên tenant trong cache key = rò dữ liệu giữa khách hàng, lỗi nghiêm trọng hơn mọi lỗi hiệu năng. Phân quyền luôn kiểm tra lại ở data layer.
+
+### Observability và rollout an toàn
+- `instrumentation.ts` + OpenTelemetry để có trace theo route; theo dõi tỉ lệ cache hit, p95 TTFB, lỗi theo segment.
+- Rollout bằng feature flag và canary theo phần trăm người dùng, chia bucket ổn định theo id; có tiêu chí dừng (error rate, Web Vitals) và rollback một bước.
+- Skew giữa client cũ và server mới (Server Action id, chunk) là rủi ro thật khi deploy; giữ bản build cũ một thời gian hoặc dùng cơ chế deployment-id.
+
+### Checklist review PR Next.js
+1. `use client` đặt ở lá, không kéo cả cây vào bundle.
+2. Không có secret hay dữ liệu nhạy cảm đi qua props sang client.
+3. Mỗi Server Action/Route Handler tự xác thực và phân quyền.
+4. Cache có chủ đích: ghi rõ thời hạn, tag, phạm vi (theo user/tenant hay dùng chung).
+5. Có `loading`/`error` cho segment chậm hoặc dễ lỗi.
+6. Ảnh có `sizes`, font qua next/font, metadata theo route.
+
+### ADR mẫu ngắn
+**Bối cảnh:** trang sản phẩm 50k SKU, giá đổi vài lần/ngày, cần SEO. **Quyết định:** ISR với tag theo SKU, webhook từ CMS gọi revalidateTag; tồn kho hiển thị bằng client island. **Hệ quả:** giá có thể trễ tối đa vài giây sau webhook; build không phải render 50k trang; cần giám sát webhook thất bại.
+
+### Anti-pattern ở quy mô team
+- "Cái gì cũng SSR cho chắc" — trả tiền compute cho nội dung không đổi.
+- Mỗi người một kiểu fetch: nửa dùng TanStack Query, nửa dùng Server Component cho cùng dữ liệu, không ai biết nguồn sự thật.
+- Coi middleware là lớp bảo mật duy nhất.
+- Nâng major version cả monorepo trong một PR khổng lồ, không codemod, không canary.
+'''
+
+[[questions]]
+id = "nextjs-lv001"
+module = "nextjs-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "rendering-strategy"]
+prompt = "Site thương mại điện tử có 40k trang sản phẩm, giá đổi vài lần mỗi ngày qua CMS, cần SEO tốt; build hiện mất 35 phút và team chỉ có 2 người làm hạ tầng. Chiến lược render nào hợp lý nhất cho trang sản phẩm?"
+options = ["Prerender toàn bộ 40k trang ở build, mỗi lần đổi giá thì build lại", "ISR: prerender trang bán chạy, phần còn lại render khi có request đầu tiên; webhook CMS gọi revalidateTag theo SKU", "SSR động cho mọi request để giá luôn đúng tuyệt đối", "CSR: trang rỗng, client gọi API lấy toàn bộ thông tin sản phẩm"]
+answer = [1]
+explanation = "ISR theo tag giữ SEO và chi phí CDN thấp, build ngắn vì không phải render hết, và giá được làm mới gần như ngay sau webhook. Build lại toàn bộ quá chậm với tần suất đổi giá; SSR trả compute cho nội dung ít thay đổi và nhạy cảm khi backend chậm; CSR làm hỏng SEO của nội dung chính."
+sources = ["nextjs/app/building-your-application/caching", "nextjs/app/api-reference/functions/revalidatetag", "nextjs/app/api-reference/functions/generate-static-params"]
+
+[[questions]]
+id = "nextjs-lv002"
+module = "nextjs-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "cost"]
+prompt = "Sau khi một PR thêm banner chào tên người dùng vào root layout bằng cookies(), hoá đơn compute tăng gấp 6 và cache hit gần 0. Hướng xử lý nào tốt nhất cho team?"
+options = ["Tăng số instance và chấp nhận chi phí vì cá nhân hoá quan trọng", "Bỏ hẳn banner", "Đưa phần đọc cookie vào một component nhỏ bọc Suspense (hoặc client island), giữ layout và trang tĩnh; thêm kiểm tra trong review/CI cho API động ở layout gốc", "Chuyển toàn site sang CSR"]
+answer = [2]
+explanation = "Đọc cookie ở layout gốc làm mọi route trở thành động. Cô lập phần cá nhân hoá giữ được lợi ích cache cho phần còn lại, và quy tắc review ngăn tái diễn. Tăng instance chữa triệu chứng; bỏ tính năng là né vấn đề; CSR toàn site đánh đổi SEO và hiệu năng."
+sources = ["nextjs/app/api-reference/functions/cookies", "nextjs/app/building-your-application/caching"]
+
+[[questions]]
+id = "nextjs-lv003"
+module = "nextjs-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "multi-tenant"]
+prompt = "SaaS multi-tenant phân giải tenant theo subdomain trong middleware. Một khách hàng báo thấy logo và bảng giá của tenant khác. Nguyên nhân gốc có khả năng cao nhất và cách sửa ở cấp hệ thống là gì?"
+options = ["CDN chậm; tăng TTL", "Dữ liệu được cache với key/tag không chứa tenant; đưa tenant id vào mọi cache key, tag và route param, thêm test kiểm tra cô lập tenant", "Middleware chạy trên edge; chuyển sang Node runtime", "Trình duyệt cache logo; đổi tên file ảnh"]
+answer = [1]
+explanation = "Rò dữ liệu chéo tenant gần như luôn do cache dùng chung không phân biệt tenant. Sửa bằng cách cho tenant tham gia cache key/tag và kiểm thử cô lập. TTL, runtime hay tên ảnh không giải quyết chuyện hai tenant dùng chung một entry."
+sources = ["nextjs/app/building-your-application/caching", "nextjs/app/api-reference/file-conventions/middleware"]
+
+[[questions]]
+id = "nextjs-lv004"
+module = "nextjs-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "migration"]
+prompt = "App Pages Router 300 trang, team 6 người, phải tiếp tục ra tính năng hàng tuần. Kế hoạch chuyển sang App Router nào hợp lý nhất?"
+options = ["Dừng tính năng 2 tháng, viết lại toàn bộ trong một nhánh dài", "Chuyển dần theo route: hai router cùng tồn tại, bắt đầu từ trang ít rủi ro, đo Web Vitals/lỗi mỗi đợt, có quy ước cho trang mới viết bằng App Router", "Giữ Pages Router vĩnh viễn và cấm dùng App Router", "Để mỗi dev tự chọn router cho trang mình phụ trách, không cần kế hoạch"]
+answer = [1]
+explanation = "Next.js cho phép app/ và pages/ cùng tồn tại, nên migrate từng phần giảm rủi ro và không chặn roadmap. Viết lại toàn bộ tạo nhánh dài khó merge; cấm hẳn bỏ lỡ lợi ích lâu dài; không có kế hoạch tạo codebase nửa vời không ai nắm."
+sources = ["nextjs/app/building-your-application/upgrading/app-router-migration"]
+
+[[questions]]
+id = "nextjs-lv005"
+module = "nextjs-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "runtime"]
+prompt = "Team muốn chuyển toàn bộ Route Handler sang edge runtime để giảm độ trễ. Database Postgres đặt ở một region duy nhất, nhiều handler dùng thư viện Node như ORM và SDK thanh toán. Khuyến nghị của bạn?"
+options = ["Chuyển hết sang edge, edge luôn nhanh hơn", "Giữ Node runtime cho handler truy cập DB/SDK Node; chỉ cân nhắc edge cho logic nhẹ không phụ thuộc DB như redirect theo geo hoặc kiểm tra header, và đo trước/sau", "Chuyển DB sang edge", "Bỏ Route Handler, gọi DB trực tiếp từ client"]
+answer = [1]
+explanation = "Edge gần người dùng nhưng xa DB một region, nên mỗi truy vấn có thể chậm hơn; nhiều thư viện Node không chạy trên edge. Chọn runtime theo từng handler và đo đạc. Gọi DB từ client phá vỡ ranh giới bảo mật."
+sources = ["nextjs/app/building-your-application/rendering/edge-and-nodejs-runtimes", "nextjs/app/api-reference/file-conventions/route-segment-config"]
+
+[[questions]]
+id = "nextjs-lv006"
+module = "nextjs-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "security"]
+prompt = "Audit phát hiện vài Server Action xoá dữ liệu chỉ dựa vào việc trang chứa nút xoá đã được middleware kiểm tra đăng nhập. Biện pháp nào giải quyết gốc rễ cho cả team?"
+options = ["Ẩn nút xoá với người không có quyền", "Thêm một data access layer: mọi action/handler gọi hàm kiểm tra session và quyền trên resource trước khi đọc/ghi; thêm lint/review rule và test cho các action", "Mở rộng matcher của middleware cho mọi route", "Đổi tên action để khó đoán"]
+answer = [1]
+explanation = "Server Action là endpoint có thể được gọi trực tiếp; kiểm tra phải nằm sát dữ liệu. Data access layer tập trung giúp nhất quán và dễ review. Ẩn UI, mở rộng middleware hay đổi tên đều không ngăn request trực tiếp."
+sources = ["nextjs/app/building-your-application/authentication", "nextjs/app/building-your-application/data-fetching/server-actions-and-mutations"]
+
+[[questions]]
+id = "nextjs-lv007"
+module = "nextjs-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "state-management"]
+prompt = "Codebase có cùng dữ liệu đơn hàng được lấy ở Server Component, ở TanStack Query và ở một store Zustand, dẫn tới hiển thị lệch nhau. Quy ước nào nên chuẩn hoá cho team?"
+options = ["Cấm TanStack Query, mọi thứ lấy trong Server Component", "Server Component cho dữ liệu đọc ban đầu và SEO; TanStack Query cho dữ liệu cần tương tác/polling phía client (hydrate từ server khi cần); store client chỉ cho UI state; ghi quy ước vào ADR", "Đưa mọi dữ liệu vào Zustand để có một nơi duy nhất", "Mỗi feature tự chọn, miễn chạy được"]
+answer = [1]
+explanation = "Phân vai rõ server state và client UI state loại bỏ việc có nhiều nguồn sự thật. Cấm hẳn một công cụ bỏ lỡ trường hợp tương tác; nhồi server state vào store client mất cache/revalidate; để tự do chính là nguyên nhân sự cố."
+sources = ["nextjs/app/building-your-application/data-fetching/patterns", "tanstack_query/framework/react/guides/advanced-ssr"]
+
+[[questions]]
+id = "nextjs-lv008"
+module = "nextjs-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "rollout"]
+prompt = "Bạn sắp ra mắt trang checkout viết lại bằng App Router cho 2 triệu người dùng/tháng. Kế hoạch rollout nào an toàn nhất?"
+options = ["Deploy thẳng 100% vào tối thứ Sáu khi traffic thấp", "Feature flag + canary theo bucket ổn định (1% → 10% → 50% → 100%), có tiêu chí dừng dựa trên tỉ lệ lỗi và conversion, rollback bằng tắt flag", "Cho 50% người dùng ngẫu nhiên mỗi request thấy bản mới", "Chỉ test trên staging rồi bật toàn bộ"]
+answer = [1]
+explanation = "Canary theo bucket ổn định giữ trải nghiệm nhất quán cho mỗi người, giới hạn phạm vi ảnh hưởng và có tín hiệu kinh doanh để dừng. Ngẫu nhiên mỗi request làm người dùng nhảy giữa hai phiên bản; deploy tối thứ Sáu và chỉ dựa staging đều thiếu lưới an toàn."
+sources = ["nextjs/app/building-your-application/deploying/production-checklist"]
+
+[[questions]]
+id = "nextjs-lv009"
+module = "nextjs-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "observability"]
+prompt = "Người dùng phàn nàn trang dashboard chậm nhưng log chỉ có access log tổng. Bước đầu tiên hợp lý nhất để team có dữ liệu ra quyết định?"
+options = ["Viết lại dashboard bằng CSR", "Bật instrumentation (OpenTelemetry) để có trace theo route và theo lời gọi dữ liệu, kết hợp đo Web Vitals từ client, rồi tìm segment/fetch chiếm thời gian", "Tăng cấu hình máy", "Thêm loading.tsx cho mọi route"]
+answer = [1]
+explanation = "Không đo thì mọi tối ưu là đoán. Trace theo route và fetch chỉ ra waterfall hoặc API chậm; Web Vitals cho góc nhìn người dùng. Viết lại, tăng máy hay thêm loading đều là hành động trước khi biết nguyên nhân."
+sources = ["nextjs/app/building-your-application/optimizing/instrumentation", "nextjs/app/building-your-application/optimizing/analytics"]
+
+[[questions]]
+id = "nextjs-lv010"
+module = "nextjs-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "deployment"]
+prompt = "Sau mỗi lần deploy, vài phút đầu có lỗi 'Failed to find Server Action' và chunk 404 từ người dùng đang mở tab cũ. Cách tiếp cận nào phù hợp nhất?"
+options = ["Bảo người dùng tải lại trang", "Xử lý version skew: giữ asset của bản build trước một thời gian, dùng deployment id ổn định để client cũ được định tuyến/nhắc tải lại, và theo dõi lỗi theo bản build", "Tắt Server Actions", "Deploy ít hơn, mỗi tháng một lần"]
+answer = [1]
+explanation = "Client cũ tham chiếu action id và chunk của bản build trước; cần chiến lược chống skew thay vì đổ cho người dùng. Tắt tính năng hoặc giảm tần suất deploy làm chậm team mà không loại bỏ nguyên nhân."
+sources = ["nextjs/app/building-your-application/deploying", "nextjs/app/building-your-application/data-fetching/server-actions-and-mutations"]
+
+[[questions]]
+id = "nextjs-lv011"
+module = "nextjs-lead"
+type = "multiple"
+difficulty = 3
+tags = ["level:lead", "code-review"]
+prompt = "Bạn soạn checklist review PR Next.js cho team mới. Những mục nào đáng đưa vào?"
+options = ["use client đặt ở component lá nhỏ nhất cần tương tác", "Mỗi Server Action và Route Handler tự kiểm tra session và quyền", "Mọi fetch phải dùng cache: 'no-store' cho an toàn", "Ghi rõ chính sách cache: thời hạn, tag và phạm vi (theo user/tenant hay dùng chung)", "Không truyền secret hoặc object nhạy cảm qua props sang Client Component"]
+answer = [0, 1, 3, 4]
+explanation = "Các mục đúng nhắm vào bundle size, bảo mật và cache có chủ đích. Ép no-store mọi nơi không làm an toàn hơn mà chỉ bỏ hết lợi ích cache và tăng chi phí; điều cần là chọn cache đúng phạm vi."
+sources = ["nextjs/app/building-your-application/rendering/composition-patterns", "nextjs/app/building-your-application/caching"]
+
+[[questions]]
+id = "nextjs-lv012"
+module = "nextjs-lead"
+type = "multiple"
+difficulty = 3
+tags = ["level:lead", "cost"]
+prompt = "Hoá đơn hosting tăng nhanh sau 3 tháng. Những hành động nào thường giảm chi phí mà không hy sinh trải nghiệm?"
+options = ["Chuyển trang ít thay đổi từ SSR động sang prerender/ISR", "Giới hạn remotePatterns, kích thước và định dạng ảnh được tối ưu", "Thêm cookies() vào layout để mọi trang được tươi", "Đo cache hit theo route và sửa route có hit thấp bất thường", "Chuyển mọi fetch sang client để server nhẹ hơn"]
+answer = [0, 1, 3]
+explanation = "Static/ISR, kiểm soát biến thể ảnh và theo dõi cache hit đều cắt compute thừa. cookies() ở layout làm mọi thứ động và đắt hơn; dồn fetch sang client chỉ chuyển chi phí sang API và làm chậm người dùng."
+sources = ["nextjs/app/building-your-application/optimizing/images", "nextjs/app/api-reference/next-config-js/images"]
+
+[[questions]]
+id = "nextjs-lv013"
+module = "nextjs-lead"
+type = "multiple"
+difficulty = 3
+tags = ["level:lead", "architecture"]
+prompt = "Ba team cùng làm một Next.js app lớn (marketing, shop, tài khoản), thường xuyên đạp chân nhau khi deploy. Những phương án nào đáng cân nhắc?"
+options = ["Multi-zones: tách thành nhiều app Next.js phục vụ dưới cùng domain theo path", "Monorepo với package UI và config dùng chung, CODEOWNERS theo thư mục", "Mỗi team một framework khác nhau để độc lập tối đa", "Giữ một app nhưng tách route group và layout theo team, quy ước ownership rõ ràng"]
+answer = [0, 1, 3]
+explanation = "Multi-zones, monorepo có ownership và route group theo team là các mức tách khác nhau tuỳ độ đau. Mỗi team một framework khiến design system, auth và hiệu năng phân mảnh, chi phí bảo trì vượt lợi ích độc lập."
+sources = ["nextjs/pages/building-your-application/deploying/multi-zones", "nextjs/app/building-your-application/routing/route-groups"]
+
+[[questions]]
+id = "nextjs-lv014"
+module = "nextjs-lead"
+type = "multiple"
+difficulty = 3
+tags = ["level:lead", "upgrade"]
+prompt = "Kế hoạch nâng Next.js lên major mới cho monorepo 5 app. Những bước nào hợp lý?"
+options = ["Đọc upgrade guide, chạy codemod chính thức trên một nhánh", "Nâng một app ít rủi ro trước, chạy E2E và so sánh Web Vitals/lỗi trước-sau", "Nâng cả 5 app và mọi dependency trong một PR duy nhất để làm cho xong", "Ghi lại các breaking change ảnh hưởng (ví dụ đổi tên middleware thành proxy) và cập nhật tài liệu nội bộ"]
+answer = [0, 1, 3]
+explanation = "Codemod, nâng dần có đo đạc và tài liệu hoá breaking change giảm rủi ro. PR khổng lồ khó review, khó tìm nguyên nhân khi lỗi và khó rollback từng phần."
+sources = ["nextjs/app/building-your-application/upgrading/codemods", "nextjs/messages/middleware-upgrade-guide"]
+
+[[questions]]
+id = "nextjs-lv015"
+module = "nextjs-lead"
+type = "multiple"
+difficulty = 3
+tags = ["level:lead", "testing"]
+prompt = "Team 5 người, pipeline CI 25 phút, E2E flaky. Chiến lược test nào cân bằng nhất cho app Next.js?"
+options = ["Unit test cho hàm thuần và data layer (quyền, chuyển đổi dữ liệu)", "E2E chỉ cho vài luồng sống còn (đăng nhập, checkout) với dữ liệu seed riêng", "E2E cho mọi trang và mọi trạng thái", "Test tích hợp cho Route Handler/Server Action với DB test", "Bỏ test vì E2E flaky"]
+answer = [0, 1, 3]
+explanation = "Dồn kiểm thử vào tầng rẻ và ổn định, giữ E2E ít mà chất lượng cho luồng tạo doanh thu. E2E mọi thứ làm pipeline chậm và flaky hơn; bỏ test chuyển rủi ro sang production."
+sources = ["nextjs/app/building-your-application/deploying/production-checklist"]
+
+[[questions]]
+id = "nextjs-lv016"
+module = "nextjs-lead"
+type = "essay"
+difficulty = 3
+tags = ["level:lead", "adr"]
+prompt = "Viết một ADR ngắn chọn rendering strategy cho trang blog công ty (5k bài, cập nhật vài lần/tuần, cần SEO) và trang 'Tài khoản của tôi'. Nêu bối cảnh, quyết định, phương án bị loại và hệ quả."
+keywords = [["bối cảnh", "context"], ["isr", "revalidate", "prerender", "static"], ["ssr", "động", "dynamic"], ["seo"], ["chi phí", "cost"], ["hệ quả", "consequence", "đánh đổi", "trade-off"]]
+min_keywords = 4
+model_answer = '''**Bối cảnh:** blog 5k bài cần SEO, nội dung đổi vài lần/tuần; trang tài khoản phụ thuộc người dùng đăng nhập.
+**Quyết định:** blog dùng prerender + ISR, CMS gọi revalidateTag theo bài khi xuất bản; trang tài khoản render động (SSR) vì cần session, không cache dùng chung.
+**Phương án loại:** SSR cho blog tốn chi phí compute không cần thiết; CSR cho blog hại SEO; prerender trang tài khoản không khả thi vì dữ liệu riêng từng người.
+**Hệ quả:** bài viết có thể trễ vài giây sau khi xuất bản (đánh đổi chấp nhận được), cần giám sát webhook revalidate; trang tài khoản cần theo dõi p95 TTFB.'''
+explanation = "ADR tốt nêu rõ ràng buộc, phương án bị loại và hệ quả để người sau hiểu lý do, không chỉ ghi kết luận."
+sources = ["nextjs/app/building-your-application/caching", "nextjs/app/api-reference/functions/revalidatetag"]
+
+[[questions]]
+id = "nextjs-lv017"
+module = "nextjs-lead"
+type = "essay"
+difficulty = 3
+tags = ["level:lead", "multi-tenant"]
+prompt = "Bạn thiết kế nền tảng Next.js multi-tenant (mỗi khách hàng một subdomain, có custom domain). Trình bày cách phân giải tenant, cô lập cache và dữ liệu, và cách giám sát để phát hiện rò dữ liệu chéo tenant."
+keywords = [["middleware", "proxy"], ["tenant id", "tenant"], ["cache key", "cache tag", "tag"], ["phân quyền", "authorization", "data layer"], ["giám sát", "monitoring", "observability", "trace"], ["test", "kiểm thử"]]
+min_keywords = 4
+model_answer = '''Middleware (proxy) đọc host, tra bảng domain → tenant id, rồi rewrite sang route có tham số tenant để mọi Server Component nhận tenant tường minh. Tenant id luôn nằm trong cache key và cache tag (ví dụ tag tenant:42:products), nên revalidate một tenant không ảnh hưởng tenant khác và không có entry dùng chung. Data layer bắt buộc lọc theo tenant và kiểm tra phân quyền của user trong tenant đó, không tin tham số từ client. Về giám sát: gắn tenant id vào trace/log, cảnh báo khi một request trả dữ liệu có tenant khác tenant của host, và có test tự động truy cập chéo giữa hai tenant mẫu trong CI.'''
+explanation = "Điểm mấu chốt: tenant phải là một phần của mọi khoá cache và mọi truy vấn, đồng thời có cơ chế phát hiện khi giả định bị vi phạm."
+sources = ["nextjs/app/api-reference/file-conventions/middleware", "nextjs/app/building-your-application/caching"]
+
+[[questions]]
+id = "nextjs-lvc01"
+module = "nextjs-lead"
+type = "code"
+lang = "javascript"
+difficulty = 3
+tags = ["level:lead", "rollout"]
+title = "Chia bucket canary ổn định"
+prompt = '''
+Team muốn rollout trang mới theo phần trăm người dùng, mỗi người luôn ở cùng một nhóm qua mọi request. Viết hai hàm:
+
+- `bucketOf(userId)`: băm chuỗi userId thành số nguyên 0–99. Thuật toán: `h = 7`; với từng ký tự, `h = (h * 31 + charCode) % 1000003`; trả về `h % 100`.
+- `isInCanary(userId, percent)`: `percent <= 0` → false; `percent >= 100` → true; còn lại trả `bucketOf(userId) < percent`.
+
+Ví dụ: `bucketOf('a')` = (7·31 + 97) % 1000003 = 314 → 14. Tính chất mong muốn: người đã ở canary 10% thì vẫn ở canary khi tăng lên 25%.
+'''
+starter = '''
+function bucketOf(userId) {
+  return 0;
+}
+function isInCanary(userId, percent) {
+  return Math.random() * 100 < percent;
+}
+'''
+solution = '''
+function bucketOf(userId) {
+  let h = 7;
+  for (let i = 0; i < userId.length; i++) {
+    h = (h * 31 + userId.charCodeAt(i)) % 1000003;
+  }
+  return h % 100;
+}
+function isInCanary(userId, percent) {
+  if (percent <= 0) return false;
+  if (percent >= 100) return true;
+  return bucketOf(userId) < percent;
+}
+'''
+tests = '''
+test('băm đúng công thức', () => {
+  expect(bucketOf('a')).toBe(14);
+  expect(bucketOf('')).toBe(7);
+});
+test('ổn định qua nhiều lần gọi', () => {
+  for (let i = 0; i < 20; i++) expect(isInCanary('user-42', 30)).toBe(isInCanary('user-42', 30));
+});
+test('biên 0% và 100%', () => {
+  expect(isInCanary('a', 0)).toBe(false);
+  expect(isInCanary('a', 100)).toBe(true);
+  expect(isInCanary('a', 15)).toBe(true);
+  expect(isInCanary('a', 14)).toBe(false);
+});
+test('tăng phần trăm không loại người đã ở canary', () => {
+  for (let i = 0; i < 300; i++) {
+    const id = 'u' + i;
+    if (isInCanary(id, 10)) expect(isInCanary(id, 25)).toBe(true);
+  }
+});
+test('phân bố xấp xỉ phần trăm', () => {
+  let n = 0;
+  for (let i = 0; i < 1000; i++) if (isInCanary('user-' + i, 20)) n++;
+  expect(n).toBeGreaterThan(120);
+  expect(n).toBeLessThan(280);
+});
+'''
+hints = ["Dùng charCodeAt và lấy modulo ở mỗi bước để số không quá lớn.", "Không dùng Math.random: cùng userId phải luôn ra cùng bucket."]
+explanation = "Bucket ổn định theo id là nền tảng của canary và A/B test: người dùng không nhảy qua lại giữa hai phiên bản, và tăng phần trăm chỉ thêm người mới vào canary."
+sources = ["nextjs/app/building-your-application/deploying/production-checklist"]
+
+[[questions]]
+id = "nextjs-lvc02"
+module = "next-routing"
+type = "code"
+lang = "javascript"
+difficulty = 1
+tags = ["level:junior", "routing"]
+title = "Phân loại segment thư mục"
+prompt = '''
+Viết `parseSegment(name)` nhận tên một thư mục trong `app/` và trả về object `{ type, name }`:
+
+| Đầu vào | type | name |
+|---|---|---|
+| `(shop)` | `'group'` | `'shop'` |
+| `[id]` | `'dynamic'` | `'id'` |
+| `[...slug]` | `'catchAll'` | `'slug'` |
+| `[[...slug]]` | `'optionalCatchAll'` | `'slug'` |
+| `blog` | `'static'` | `'blog'` |
+
+Kiểm tra dạng dài trước (`[[...` trước `[...` trước `[`).
+'''
+starter = '''
+function parseSegment(name) {
+  return { type: 'static', name: name };
+}
+'''
+solution = '''
+function parseSegment(name) {
+  if (name.startsWith('(') && name.endsWith(')')) return { type: 'group', name: name.slice(1, -1) };
+  if (name.startsWith('[[...') && name.endsWith(']]')) return { type: 'optionalCatchAll', name: name.slice(5, -2) };
+  if (name.startsWith('[...') && name.endsWith(']')) return { type: 'catchAll', name: name.slice(4, -1) };
+  if (name.startsWith('[') && name.endsWith(']')) return { type: 'dynamic', name: name.slice(1, -1) };
+  return { type: 'static', name: name };
+}
+'''
+tests = '''
+test('segment tĩnh', () => {
+  expect(parseSegment('blog')).toEqual({ type: 'static', name: 'blog' });
+});
+test('route group', () => {
+  expect(parseSegment('(shop)')).toEqual({ type: 'group', name: 'shop' });
+});
+test('dynamic segment', () => {
+  expect(parseSegment('[id]')).toEqual({ type: 'dynamic', name: 'id' });
+});
+test('catch-all', () => {
+  expect(parseSegment('[...slug]')).toEqual({ type: 'catchAll', name: 'slug' });
+});
+test('optional catch-all', () => {
+  expect(parseSegment('[[...parts]]')).toEqual({ type: 'optionalCatchAll', name: 'parts' });
+});
+'''
+hints = ["Dùng startsWith/endsWith và slice để cắt ngoặc.", "Thứ tự kiểm tra quan trọng: [[... là trường hợp đặc biệt của [."]
+explanation = "Bài tập giúp nhớ quy ước đặt tên thư mục của App Router: ngoặc tròn là nhóm, ngoặc vuông là tham số động."
+sources = ["nextjs/app/building-your-application/routing/dynamic-routes", "nextjs/app/building-your-application/routing/route-groups"]
+
+[[questions]]
+id = "nextjs-lvc03"
+module = "tanstack-query"
+type = "code"
+lang = "javascript"
+difficulty = 2
+tags = ["level:middle", "query-keys"]
+title = "Lọc query key theo tiền tố"
+prompt = '''
+Mô phỏng cách `invalidateQueries({ queryKey })` khớp từng phần. Viết `matchesQueryKey(queryKey, filterKey)` trả về boolean:
+- `filterKey` khớp nếu nó là **tiền tố** của `queryKey`: mỗi phần tử `filterKey[i]` bằng sâu (deep equal) `queryKey[i]`.
+- `filterKey` rỗng khớp mọi key; `filterKey` dài hơn `queryKey` thì không khớp.
+- Deep equal: số/chuỗi/boolean/null so sánh `===`; mảng so từng phần tử; object so cùng tập key và giá trị bằng sâu (không phụ thuộc thứ tự key).
+
+Ví dụ: `['todos', { status: 'done' }]` khớp với filter `['todos']` và `['todos', { status: 'done' }]`, không khớp `['todos', { status: 'open' }]`.
+'''
+starter = '''
+function matchesQueryKey(queryKey, filterKey) {
+  return queryKey[0] === filterKey[0];
+}
+'''
+solution = '''
+function deepEqual(a, b) {
+  if (a === b) return true;
+  if (a === null || b === null || typeof a !== 'object' || typeof b !== 'object') return false;
+  if (Array.isArray(a) !== Array.isArray(b)) return false;
+  if (Array.isArray(a)) {
+    if (a.length !== b.length) return false;
+    return a.every((v, i) => deepEqual(v, b[i]));
+  }
+  const ka = Object.keys(a);
+  const kb = Object.keys(b);
+  if (ka.length !== kb.length) return false;
+  return ka.every((k) => Object.prototype.hasOwnProperty.call(b, k) && deepEqual(a[k], b[k]));
+}
+function matchesQueryKey(queryKey, filterKey) {
+  if (filterKey.length > queryKey.length) return false;
+  return filterKey.every((part, i) => deepEqual(part, queryKey[i]));
+}
+'''
+tests = '''
+test('tiền tố đơn giản', () => {
+  expect(matchesQueryKey(['todos', 1], ['todos'])).toBe(true);
+  expect(matchesQueryKey(['users', 1], ['todos'])).toBe(false);
+});
+test('filter rỗng và filter dài hơn', () => {
+  expect(matchesQueryKey(['todos'], [])).toBe(true);
+  expect(matchesQueryKey(['todos'], ['todos', 1])).toBe(false);
+});
+test('object so sánh sâu, không phụ thuộc thứ tự key', () => {
+  const key = ['todos', { status: 'done', page: 2 }];
+  expect(matchesQueryKey(key, ['todos', { page: 2, status: 'done' }])).toBe(true);
+  expect(matchesQueryKey(key, ['todos', { status: 'open', page: 2 }])).toBe(false);
+});
+test('object thiếu key không bằng', () => {
+  expect(matchesQueryKey(['todos', { status: 'done', page: 2 }], ['todos', { status: 'done' }])).toBe(false);
+});
+test('mảng lồng và null', () => {
+  expect(matchesQueryKey(['a', [1, 2], null], ['a', [1, 2], null])).toBe(true);
+  expect(matchesQueryKey(['a', [1, 2]], ['a', [2, 1]])).toBe(false);
+});
+'''
+hints = ["Tách hàm deepEqual riêng rồi áp dụng cho từng phần tử của filterKey.", "Xử lý null riêng vì typeof null là 'object'."]
+explanation = "Query key có cấu trúc phân cấp nên invalidate theo tiền tố cho phép làm mới cả một nhóm (mọi danh sách todos) mà không cần biết từng key cụ thể."
+sources = ["tanstack_query/framework/react/guides/query-keys"]
+
+[[questions]]
+id = "nextjs-lvc04"
+module = "next-render-cache"
+type = "code"
+lang = "javascript"
+difficulty = 3
+tags = ["level:senior", "dedup"]
+title = "Gộp request trùng đang chạy"
+prompt = '''
+Trong một lần render, nhiều component có thể cùng xin một dữ liệu. Viết `createDeduper()` trả về object có:
+- `run(key, fn)`: nếu đang có promise chưa xong cho `key` thì trả lại **chính promise đó** (không gọi `fn`); nếu không, gọi `fn()` (trả về promise), lưu lại và trả về.
+- Khi promise xong (resolve **hoặc** reject), xoá key để lần gọi sau chạy lại `fn`.
+- `size()`: số key đang chạy.
+
+Không cache kết quả sau khi xong — đây là request deduplication, không phải cache.
+'''
+starter = '''
+function createDeduper() {
+  return {
+    run(key, fn) { return fn(); },
+    size() { return 0; }
+  };
+}
+'''
+solution = '''
+function createDeduper() {
+  const inflight = new Map();
+  return {
+    run(key, fn) {
+      if (inflight.has(key)) return inflight.get(key);
+      let p;
+      try { p = Promise.resolve(fn()); } catch (e) { p = Promise.reject(e); }
+      const tracked = p.finally(() => { inflight.delete(key); });
+      inflight.set(key, p);
+      tracked.catch(() => {});
+      return p;
+    },
+    size() { return inflight.size; }
+  };
+}
+'''
+tests = '''
+test('gọi trùng key chỉ chạy fn một lần', async () => {
+  const d = createDeduper();
+  const fn = jest.fn(() => Promise.resolve(42));
+  const a = d.run('user:1', fn);
+  const b = d.run('user:1', fn);
+  expect(a).toBe(b);
+  expect(fn).toHaveBeenCalledTimes(1);
+  expect(await a).toBe(42);
+});
+test('key khác nhau chạy riêng', async () => {
+  const d = createDeduper();
+  const fn = jest.fn((x) => Promise.resolve(x));
+  const a = d.run('a', () => fn('A'));
+  const b = d.run('b', () => fn('B'));
+  expect(d.size()).toBe(2);
+  expect(await a).toBe('A');
+  expect(await b).toBe('B');
+});
+test('xong thì xoá key, lần sau chạy lại', async () => {
+  const d = createDeduper();
+  const fn = jest.fn(() => Promise.resolve(1));
+  await d.run('k', fn);
+  await Promise.resolve();
+  expect(d.size()).toBe(0);
+  await d.run('k', fn);
+  expect(fn).toHaveBeenCalledTimes(2);
+});
+test('reject cũng xoá key', async () => {
+  const d = createDeduper();
+  let err;
+  try { await d.run('k', () => Promise.reject(new Error('boom'))); } catch (e) { err = e; }
+  expect(err.message).toBe('boom');
+  await Promise.resolve();
+  expect(d.size()).toBe(0);
+  const v = await d.run('k', () => Promise.resolve('ok'));
+  expect(v).toBe('ok');
+});
+'''
+hints = ["Lưu promise trong Map theo key.", "Dùng finally để xoá key cho cả hai trường hợp resolve và reject; nhớ chặn unhandled rejection của promise phụ."]
+explanation = "Deduplication giảm tải backend khi nhiều component cùng cần một dữ liệu; React cache() và cơ chế memo request của Next.js giải bài toán tương tự trong phạm vi một request."
+sources = ["nextjs/app/building-your-application/data-fetching/patterns", "nextjs/app/building-your-application/caching"]
+
+[[questions]]
+id = "nextjs-lv018"
+module = "next-routing"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "routing"]
+prompt = "File nào làm cho thư mục app/about trở thành route /about có thể truy cập?"
+options = ["app/about/layout.tsx", "app/about/page.tsx", "app/about/index.tsx", "app/about/route.html"]
+answer = [1]
+explanation = "Chỉ page.tsx (hoặc route.ts) làm segment công khai thành route. layout.tsx chỉ bao nội dung con; index.tsx là quy ước của Pages Router; route.html không phải quy ước nào."
+sources = ["nextjs/app/api-reference/file-conventions/page"]
+
+[[questions]]
+id = "nextjs-lv019"
+module = "next-routing"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "navigation"]
+prompt = "Cách nào phù hợp để tạo liên kết điều hướng nội bộ có prefetch giữa các trang trong Next.js?"
+options = ["Thẻ a với href và window.location", "Component Link từ next/link", "Gọi fetch tới trang đích", "Dùng thẻ form với method GET"]
+answer = [1]
+explanation = "Link điều hướng phía client và prefetch route trong viewport; thẻ a thường tải lại toàn trang, còn fetch hay form không phải cách tạo liên kết."
+sources = ["nextjs/app/api-reference/components/link", "nextjs/app/building-your-application/routing/linking-and-navigating"]
+
+[[questions]]
+id = "nextjs-lv020"
+module = "next-routing"
+type = "fill"
+difficulty = 1
+tags = ["level:junior", "routing"]
+prompt = '''
+Tạo trang 404 tuỳ chỉnh cho một segment bằng file:
+app/blog/{{blank}}.tsx
+'''
+blanks = [["not-found"]]
+explanation = "not-found.tsx hiển thị khi gọi notFound() trong segment hoặc khi URL không khớp route nào."
+sources = ["nextjs/app/api-reference/file-conventions/not-found"]
+
+[[questions]]
+id = "nextjs-lv021"
+module = "next-routing"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "routing"]
+prompt = "Với file app/shop/[id]/page.tsx, giá trị id của URL /shop/42 được đọc ở đâu trong page (Server Component)?"
+options = ["Từ prop params của page", "Từ window.location.pathname", "Từ process.env.id", "Từ file layout cha bằng import"]
+answer = [0]
+explanation = "Page nhận params chứa giá trị dynamic segment. Server Component không có window; biến môi trường và import không liên quan tới URL."
+sources = ["nextjs/app/building-your-application/routing/dynamic-routes", "nextjs/app/api-reference/file-conventions/page"]
+
+[[questions]]
+id = "nextjs-lv022"
+module = "next-render-cache"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "server-components"]
+prompt = "Trong App Router, một component không có chỉ thị nào ở đầu file thì mặc định là gì?"
+options = ["Client Component", "Server Component", "Route Handler", "Middleware"]
+answer = [1]
+explanation = "Component trong app/ mặc định là Server Component; muốn dùng state, event handler hay browser API thì thêm use client."
+sources = ["nextjs/app/building-your-application/rendering/server-components"]
+
+[[questions]]
+id = "nextjs-lv023"
+module = "next-render-cache"
+type = "fill"
+difficulty = 1
+tags = ["level:junior", "client-components"]
+prompt = '''
+Component có useState cần đánh dấu ở dòng đầu file:
+```tsx
+'{{blank}}'
+import { useState } from 'react'
+```
+'''
+blanks = [["use client"]]
+explanation = "use client khai báo ranh giới Client Component, cho phép dùng hook và event handler."
+sources = ["nextjs/app/building-your-application/rendering/client-components"]
+
+[[questions]]
+id = "nextjs-lv024"
+module = "next-render-cache"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "client-components"]
+prompt = "Component nào sau đây BẮT BUỘC phải là Client Component?"
+options = ["Component đọc danh sách bài viết từ database", "Component hiển thị nút có onClick tăng bộ đếm bằng useState", "Component chỉ render tiêu đề tĩnh", "Component đọc biến môi trường bí mật để gọi API"]
+answer = [1]
+explanation = "onClick và useState chỉ chạy trên trình duyệt. Đọc DB, render tĩnh và dùng secret nên ở Server Component."
+sources = ["nextjs/app/building-your-application/rendering/client-components"]
+
+[[questions]]
+id = "nextjs-lv025"
+module = "next-route-platform"
+type = "fill"
+difficulty = 1
+tags = ["level:junior", "route-handler"]
+prompt = '''
+Route Handler xử lý request GET tới /api/health:
+```ts
+// app/api/health/route.ts
+export async function {{blank}}() {
+  return Response.json({ ok: true })
+}
+```
+'''
+blanks = [["GET"]]
+explanation = "Route Handler export hàm đặt tên theo HTTP method như GET, POST, PUT, DELETE."
+sources = ["nextjs/app/api-reference/file-conventions/route"]
+
+[[questions]]
+id = "nextjs-lv026"
+module = "next-route-platform"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "metadata"]
+prompt = "Cách đơn giản nhất để đặt title tĩnh cho trang app/about/page.tsx là gì?"
+options = ["Export const metadata = { title: '...' } từ page", "Thêm thẻ title vào thẻ body", "Gọi document.title trong useEffect", "Đặt title trong next.config.js"]
+answer = [0]
+explanation = "Metadata API cho phép export object metadata từ page/layout. document.title chỉ chạy ở client và không có lợi cho SEO; next.config không đặt title từng trang."
+sources = ["nextjs/app/building-your-application/optimizing/metadata"]
+
+[[questions]]
+id = "nextjs-lv027"
+module = "tanstack-query"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "queries"]
+prompt = "Trong useQuery({ queryKey: ['todos'], queryFn: fetchTodos }), queryKey dùng để làm gì?"
+options = ["Định danh dữ liệu trong cache để chia sẻ, refetch và invalidate", "Là URL để TanStack Query tự gọi", "Là token xác thực", "Chỉ để hiển thị trong devtools, không ảnh hưởng gì"]
+answer = [0]
+explanation = "Query key là khoá cache: cùng key thì cùng dữ liệu, đổi key thì fetch lại. Thư viện không tự suy ra URL từ key."
+sources = ["tanstack_query/framework/react/guides/query-keys", "tanstack_query/framework/react/guides/queries"]
+
+[[questions]]
+id = "nextjs-lv028"
+module = "tanstack-router"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "navigation"]
+prompt = "Trong TanStack Router, cách điều hướng bằng code sau khi submit form thành công là gì?"
+options = ["Dùng hook useNavigate rồi gọi navigate({ to: '/done' })", "Gán window.location.href", "Gọi router.reload()", "Render lại component gốc"]
+answer = [0]
+explanation = "useNavigate trả về hàm navigate có kiểm tra kiểu cho route đích. Gán window.location tải lại cả trang và mất state."
+sources = ["tanstack_router/guide/navigation"]
+
+[[questions]]
+id = "nextjs-lv029"
+module = "next-routing"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "parallel-routes"]
+prompt = "Dashboard cần hiển thị đồng thời hai vùng độc lập (thống kê và thông báo), mỗi vùng có loading/error riêng. Quy ước App Router nào phù hợp?"
+options = ["Parallel routes với slot @stats và @notifications nhận qua props của layout", "Hai route group (stats) và (notifications)", "Hai Route Handler rồi fetch từ client", "Catch-all [...slot]"]
+answer = [0]
+explanation = "Parallel routes render nhiều slot trong cùng layout, mỗi slot có loading/error riêng. Route group chỉ tổ chức thư mục, không render song song."
+sources = ["nextjs/app/building-your-application/routing/parallel-routes"]
+
+[[questions]]
+id = "nextjs-lv030"
+module = "next-routing"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "client-components"]
+prompt = "Trang dùng useSearchParams() trong một Client Component và build báo lỗi/khuyến cáo về việc toàn trang bị render phía client. Cách xử lý đúng?"
+options = ["Bọc component dùng useSearchParams trong Suspense để phần còn lại vẫn prerender", "Chuyển toàn trang sang use client", "Đọc window.location.search trong Server Component", "Xoá use client khỏi component"]
+answer = [0]
+explanation = "useSearchParams phụ thuộc request; bọc Suspense giới hạn phần động vào boundary nhỏ. Server Component không có window, còn bỏ use client làm hook không chạy."
+sources = ["nextjs/app/api-reference/functions/use-search-params"]
+
+[[questions]]
+id = "nextjs-lv031"
+module = "next-render-cache"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "server-actions"]
+prompt = "Sau khi Server Action tạo bài viết mới, danh sách ở /posts vẫn hiển thị dữ liệu cũ. Nên làm gì trong action?"
+options = ["Gọi revalidatePath('/posts') (hoặc revalidateTag cho tag của danh sách) sau khi ghi thành công", "Gọi router.refresh() trong action", "Tắt cache của toàn app", "Chờ 60 giây"]
+answer = [0]
+explanation = "revalidatePath/revalidateTag đánh dấu dữ liệu đã cache là cũ để lần render sau lấy bản mới. router.refresh là API client; tắt cache toàn app là quá tay."
+sources = ["nextjs/app/api-reference/functions/revalidatepath", "nextjs/app/building-your-application/data-fetching/server-actions-and-mutations"]
+
+[[questions]]
+id = "nextjs-lv032"
+module = "next-render-cache"
+type = "multiple"
+difficulty = 2
+tags = ["level:middle", "data-fetching"]
+prompt = "Trang chi tiết sản phẩm gọi tuần tự getProduct, rồi getReviews, rồi getRelated, cả ba độc lập nhau. Những cách nào giảm thời gian tải?"
+options = ["Khởi tạo cả ba promise trước rồi await Promise.all", "Tách reviews và related vào component riêng bọc Suspense để stream", "Thêm loading.tsx nhưng giữ await tuần tự trong cùng component", "Chuyển cả ba lời gọi sang useEffect phía client"]
+answer = [0, 1]
+explanation = "Chạy song song và stream phần chậm loại bỏ waterfall. loading.tsx chỉ hiển thị fallback, không rút ngắn tổng thời gian; useEffect tạo waterfall mới ở client."
+sources = ["nextjs/app/building-your-application/data-fetching/patterns", "nextjs/app/building-your-application/routing/loading-ui-and-streaming"]
+
+[[questions]]
+id = "nextjs-lv033"
+module = "next-route-platform"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "environment"]
+prompt = "Biến API_SECRET trong .env có giá trị undefined khi đọc trong Client Component, còn trong Server Component thì đọc được. Giải thích đúng?"
+options = ["Chỉ biến có tiền tố NEXT_PUBLIC_ được nhúng vào bundle client; secret nên giữ ở server và gọi qua Server Action/Route Handler", "Next.js bị lỗi, cần restart", "Phải đặt biến trong next.config.js mới dùng được", "Client Component không đọc được bất kỳ biến môi trường nào"]
+answer = [0]
+explanation = "Biến không có NEXT_PUBLIC_ chỉ tồn tại ở server, đó là tính năng bảo vệ secret. Đổi tên thành NEXT_PUBLIC_ sẽ làm lộ secret."
+sources = ["nextjs/app/building-your-application/configuring/environment-variables"]
+
+[[questions]]
+id = "nextjs-lv034"
+module = "next-route-platform"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "images"]
+prompt = "Ảnh hero dùng next/image với fill nhưng Lighthouse báo tải ảnh quá lớn trên điện thoại. Sửa thế nào?"
+options = ["Thêm thuộc tính sizes mô tả độ rộng hiển thị theo breakpoint, ví dụ (max-width: 768px) 100vw, 50vw", "Bỏ next/image, dùng thẻ img", "Tăng quality lên 100", "Đặt unoptimized"]
+answer = [0]
+explanation = "Không có sizes, trình duyệt giả định ảnh rộng bằng viewport ở mọi breakpoint và chọn biến thể lớn. Các lựa chọn khác làm mất tối ưu hoặc tăng dung lượng."
+sources = ["nextjs/app/api-reference/components/image", "nextjs/app/building-your-application/optimizing/images"]
+
+[[questions]]
+id = "nextjs-lv035"
+module = "tanstack-query"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "important-defaults"]
+prompt = "Người dùng thấy request lặp lại mỗi khi chuyển tab trình duyệt rồi quay lại. Với cấu hình mặc định của TanStack Query, nguyên nhân và cách chỉnh hợp lý?"
+options = ["staleTime mặc định 0 nên query bị coi là cũ và refetchOnWindowFocus chạy; tăng staleTime phù hợp với độ tươi dữ liệu", "Bug của thư viện", "gcTime quá ngắn; đặt gcTime = Infinity", "Phải tắt toàn bộ cache"]
+answer = [0]
+explanation = "Mặc định dữ liệu stale ngay nên refetch khi focus lại. Tăng staleTime giữ dữ liệu tươi trong khoảng hợp lý; gcTime chỉ quyết định khi nào xoá cache không còn dùng."
+sources = ["tanstack_query/framework/react/guides/important-defaults", "tanstack_query/framework/react/guides/window-focus-refetching"]
+
+[[questions]]
+id = "nextjs-lv036"
+module = "tanstack-query"
+type = "multiple"
+difficulty = 2
+tags = ["level:middle", "mutations"]
+prompt = "Sau khi useMutation thêm todo thành công, những cách nào đúng để danh sách hiển thị todo mới?"
+options = ["Trong onSuccess gọi queryClient.invalidateQueries({ queryKey: ['todos'] })", "Dùng setQueryData với dữ liệu trả về từ mutation", "Gọi useQuery lần nữa bên trong onSuccess", "Đổi queryKey của danh sách sang giá trị ngẫu nhiên"]
+answer = [0, 1]
+explanation = "Invalidate để refetch hoặc cập nhật cache trực tiếp đều đúng. Gọi hook trong callback vi phạm rules of hooks; key ngẫu nhiên phá cache."
+sources = ["tanstack_query/framework/react/guides/invalidations-from-mutations", "tanstack_query/framework/react/guides/updates-from-mutation-responses"]
+
+[[questions]]
+id = "nextjs-lv037"
+module = "tanstack-router"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "search-params"]
+prompt = "Trang danh sách nhận ?page=2&sort=price. Trong TanStack Router, cách tốt nhất để có search params đúng kiểu và có giá trị mặc định?"
+options = ["Khai báo validateSearch cho route để parse/validate, rồi đọc bằng Route.useSearch()", "Tự split window.location.search trong mỗi component", "Lưu page và sort trong useState", "Đưa page vào path param /list/$page"]
+answer = [0]
+explanation = "validateSearch biến search params thành dữ liệu có kiểu, có mặc định và được kiểm tra khi điều hướng. useState mất trạng thái khi chia sẻ URL; tự parse lặp code và không có kiểu."
+sources = ["tanstack_router/guide/search-params"]
+
+[[questions]]
+id = "nextjs-lv038"
+module = "next-render-cache"
+type = "multiple"
+difficulty = 3
+tags = ["level:senior", "caching"]
+prompt = "Những nhận định nào đúng về các lớp cache của Next.js App Router?"
+options = ["Request memoization chỉ gộp các lời gọi trùng trong phạm vi một lần render phía server", "Data cache có thể tồn tại qua nhiều request và deploy tuỳ cấu hình", "Router cache phía client có thể hiển thị dữ liệu cũ khi điều hướng back/forward", "revalidateTag xoá cả cache của trình duyệt người dùng ngay lập tức"]
+answer = [0, 1, 2]
+explanation = "Mỗi lớp có phạm vi khác nhau: memo theo request, data cache phía server bền hơn, router cache ở client. revalidateTag tác động phía server, không xoá trực tiếp cache trong trình duyệt."
+sources = ["nextjs/app/building-your-application/caching"]
+
+[[questions]]
+id = "nextjs-lv039"
+module = "next-render-cache"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "serialization"]
+prompt = "Server Component truyền prop onSave={async (d) => db.save(d)} (hàm thường, không có use server) cho một Client Component và bị lỗi. Nguyên nhân và cách sửa?"
+options = ["Hàm thường không serialize được qua ranh giới server→client; khai báo nó là Server Action (use server) hoặc chuyển logic vào Route Handler", "Client Component không nhận được props", "Phải bọc hàm bằng JSON.stringify", "Cần đặt Client Component trong Suspense"]
+answer = [0]
+explanation = "Props qua ranh giới phải serialize được; Server Action là trường hợp đặc biệt được tham chiếu bằng id. JSON.stringify không serialize hàm; Suspense không liên quan."
+sources = ["nextjs/app/building-your-application/rendering/composition-patterns", "nextjs/app/building-your-application/data-fetching/server-actions-and-mutations"]
+
+[[questions]]
+id = "nextjs-lv040"
+module = "next-render-cache"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "hydration"]
+prompt = "Production log nhiều cảnh báo hydration mismatch ở component hiển thị 'Cập nhật 3 phút trước'. Cách khắc phục đúng bản chất?"
+options = ["Render thời gian tương đối chỉ ở client sau khi mount (hoặc render timestamp tuyệt đối giống nhau ở cả hai phía)", "Tắt cảnh báo bằng suppressHydrationWarning cho cả trang", "Chuyển toàn bộ trang sang SSR động", "Tăng revalidate"]
+answer = [0]
+explanation = "Giá trị phụ thuộc thời điểm khác nhau giữa server và client gây mismatch. Đưa phần đó về client hoặc làm output tất định. Tắt cảnh báo diện rộng che giấu lỗi thật; SSR hay revalidate không làm hai thời điểm trùng nhau."
+sources = ["nextjs/app/building-your-application/rendering/client-components"]
+
+[[questions]]
+id = "nextjs-lv041"
+module = "next-route-platform"
+type = "multiple"
+difficulty = 3
+tags = ["level:senior", "security"]
+prompt = "Những biện pháp nào giảm rủi ro bảo mật cho Route Handler nhận webhook thanh toán?"
+options = ["Xác minh chữ ký webhook bằng secret phía server trên raw body", "Xử lý idempotent theo event id để chống gửi lặp", "Tin trường status trong body mà không kiểm tra nguồn", "Chỉ kiểm tra header Referer"]
+answer = [0, 1]
+explanation = "Chữ ký xác minh nguồn gốc; idempotency chống replay và retry. Body không xác minh hay Referer đều giả mạo được."
+sources = ["nextjs/app/building-your-application/routing/route-handlers"]
+
+[[questions]]
+id = "nextjs-lv042"
+module = "next-route-platform"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "middleware"]
+prompt = "Middleware gọi một API xác thực chậm (150 ms) cho mọi request, kể cả ảnh và file tĩnh; TTFB toàn site tăng. Cách tiếp cận tốt nhất?"
+options = ["Thu hẹp config.matcher loại trừ _next/static, ảnh, file công khai; trong middleware chỉ kiểm tra nhẹ (có cookie phiên hợp lệ về định dạng), để kiểm tra quyền đầy đủ ở data layer", "Thêm cache 1 giờ cho kết quả xác thực của mọi người dùng chung một key", "Chuyển middleware sang chạy sau khi render", "Bỏ middleware và không kiểm tra gì"]
+answer = [0]
+explanation = "Matcher hẹp và kiểm tra nhẹ giảm độ trễ, còn quyền thật vẫn được kiểm tra gần dữ liệu. Cache chung một key là lỗi bảo mật; middleware không thể chạy sau render; bỏ hẳn kiểm tra thì mất bảo vệ."
+sources = ["nextjs/app/api-reference/file-conventions/middleware", "nextjs/app/building-your-application/authentication"]
+
+[[questions]]
+id = "nextjs-lv043"
+module = "tanstack-query"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "optimistic-updates"]
+prompt = "Optimistic update cho nút thích: thỉnh thoảng số like nhảy về giá trị cũ rồi mới đúng. Bước nào thường bị thiếu trong onMutate?"
+options = ["await queryClient.cancelQueries cho key liên quan trước khi setQueryData, lưu snapshot để rollback trong onError", "Gọi invalidateQueries ngay đầu onMutate", "Tăng retry của mutation", "Đặt staleTime = 0"]
+answer = [0]
+explanation = "Refetch đang chạy có thể ghi đè dữ liệu optimistic bằng dữ liệu cũ; hủy query trước khi cập nhật và giữ snapshot để rollback. Invalidate ngay đầu còn kích hoạt refetch sớm hơn."
+sources = ["tanstack_query/framework/react/guides/optimistic-updates", "tanstack_query/framework/react/guides/query-cancellation"]
+
+[[questions]]
+id = "nextjs-lv044"
+module = "tanstack-query"
+type = "essay"
+difficulty = 3
+tags = ["level:senior", "ssr"]
+prompt = "Giải thích cách prefetch dữ liệu TanStack Query trong Server Component của Next.js và truyền xuống client mà không fetch lại; nêu một lỗi thường gặp khi tạo QueryClient."
+keywords = [["prefetchQuery", "prefetch"], ["dehydrate"], ["HydrationBoundary", "hydrate"], ["staleTime"], ["QueryClient mới mỗi request", "mỗi request", "per request"]]
+min_keywords = 3
+model_answer = '''Trong Server Component tạo QueryClient, gọi prefetchQuery với cùng queryKey mà client sẽ dùng, rồi dehydrate cache và bọc cây con trong HydrationBoundary với state đó. Client Component gọi useQuery cùng key sẽ nhận dữ liệu đã hydrate. Nên đặt staleTime lớn hơn 0 để client không refetch ngay sau khi hydrate. Lỗi thường gặp: dùng một QueryClient toàn cục ở server, khiến dữ liệu của người dùng này rò sang người dùng khác — phải tạo QueryClient mới mỗi request ở server (và giữ một instance ổn định ở client).'''
+explanation = "Câu trả lời tốt nắm cả luồng prefetch → dehydrate → hydrate và rủi ro chia sẻ cache giữa request."
+sources = ["tanstack_query/framework/react/guides/advanced-ssr"]
+
+[[questions]]
+id = "nextjs-lv045"
+module = "tanstack-router"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "data-loading"]
+prompt = "Route loader của TanStack Router gọi API chậm làm điều hướng bị chặn 2 giây. Muốn hiển thị trang ngay với phần quan trọng, phần chậm hiển thị sau. Cách phù hợp?"
+options = ["Await phần quan trọng trong loader, trả phần chậm dưới dạng promise không await và render bằng Await/Suspense (deferred data loading)", "Chuyển toàn bộ fetch vào useEffect", "Tăng timeout của router", "Bỏ loader và hardcode dữ liệu"]
+answer = [0]
+explanation = "Deferred loading cho phép điều hướng xong khi dữ liệu thiết yếu có, phần chậm stream sau. useEffect tạo waterfall và mất preloading."
+sources = ["tanstack_router/guide/deferred-data-loading", "tanstack_router/guide/data-loading"]
+
+[[questions]]
+id = "nextjs-lv046"
+module = "next-routing"
+type = "multiple"
+difficulty = 3
+tags = ["level:senior", "error-handling"]
+prompt = "Những nhận định nào đúng về error.tsx trong App Router?"
+options = ["error.tsx không bắt lỗi của layout.tsx cùng segment; cần boundary ở segment cha", "global-error.tsx dùng cho lỗi ở root layout", "Lỗi trong Server Action luôn hiển thị nguyên message chi tiết ra client ở production", "reset() thử render lại segment mà không tải lại trang"]
+answer = [0, 1, 3]
+explanation = "Boundary bao page và con của layout, không bao chính layout cùng cấp; root layout cần global-error. Ở production, message lỗi server bị ẩn bớt để tránh lộ thông tin."
+sources = ["nextjs/app/api-reference/file-conventions/error"]
+
+[[questions]]
+id = "nextjs-lv047"
+module = "next-render-cache"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "isr"]
+prompt = "Trang dùng generateStaticParams cho 100 sản phẩm phổ biến. Khi người dùng mở sản phẩm thứ 101 chưa prerender, với dynamicParams mặc định (true) điều gì xảy ra?"
+options = ["Trang được render theo yêu cầu ở request đầu và có thể được cache cho các request sau", "Luôn trả 404", "Build bị lỗi", "Trang render rỗng ở client"]
+answer = [0]
+explanation = "dynamicParams = true cho phép param ngoài danh sách được render khi có request; đặt false mới trả 404 cho param không có trong generateStaticParams."
+sources = ["nextjs/app/api-reference/functions/generate-static-params", "nextjs/app/api-reference/file-conventions/route-segment-config"]
+
+[[questions]]
+id = "nextjs-lv048"
+module = "tanstack-query"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "dependent-queries"]
+prompt = "Query lấy dự án của user cần userId từ một query khác. Cách đúng để không gọi API với userId undefined?"
+options = ["Dùng enabled: !!userId cho query phụ thuộc", "Gọi hai query trong cùng queryFn bằng try/catch", "Đặt retry: 10 để chờ userId", "Dùng setTimeout trước khi gọi useQuery"]
+answer = [0]
+explanation = "enabled tạm dừng query tới khi điều kiện thoả, đó là cách khai báo dependent query. Retry hay setTimeout chỉ che lỗi và tạo request thừa."
+sources = ["tanstack_query/framework/react/guides/dependent-queries"]
+
+[[questions]]
+id = "nextjs-lv049"
+module = "tanstack-router"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "preloading"]
+prompt = "Bật preload='intent' cho Link làm backend nhận gấp 3 lượng request loader khi người dùng rê chuột qua danh sách dài. Điều chỉnh hợp lý nhất?"
+options = ["Đặt preloadStaleTime/staleTime cho loader (hoặc dùng cache của TanStack Query) để dữ liệu preload được tái sử dụng, và chỉ bật preload ở link có xác suất click cao", "Tắt hẳn router", "Chuyển loader sang useEffect", "Tăng số instance backend"]
+answer = [0]
+explanation = "Preload hiệu quả khi kết quả được cache và dùng lại; giới hạn phạm vi preload tránh request lãng phí. Tăng máy chỉ trả tiền cho request thừa."
+sources = ["tanstack_router/guide/preloading", "tanstack_router/guide/external-data-loading"]

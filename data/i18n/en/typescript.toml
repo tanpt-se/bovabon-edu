@@ -615,3 +615,443 @@ prompt = "A JavaScript package has no types, so a TypeScript application cannot 
 keywords = [["declaration file", ".d.ts"], ["runtime api", "implementation"], ["ambient module", "declare module"], ["module specifier"], ["consumer"]]
 model_answer = '''First check the module specifier, exports, and the package's real runtime API. If the package has no types, create a declaration file or ambient module for the exact module name and describe its actual exports instead of using broad `any`. Then test it from a small TypeScript consumer to confirm module resolution finds the declaration and its signatures match the implementation; update the declaration when the runtime API changes.'''
 explanation = "Distinguish a module lookup problem from a missing declaration, then make sure the type contract reflects the actual package."
+[modules.typescript-lead]
+title = "The Tech Lead View"
+description = "Deciding on strictness, migration, monorepos, API contracts, and type conventions at team scale."
+lesson = '''
+### Type-system decisions are decisions about people and cost
+
+In a lead role, the question is rarely "how does this TypeScript feature work" but "for this team, this deadline, this codebase, where do we invest in type checking to remove the most errors at the lowest cost". Every technical choice must come with: who has to learn it, who gets slowed down, the risk if it goes wrong, and how to roll back.
+
+### Decision framework
+
+1. State the real constraints: headcount, TypeScript experience, deadline, tolerance for production errors, existing CI.
+2. List 2-3 feasible options, including "do nothing".
+3. Choose the smallest rollout unit that can be measured (one package, one folder, one compiler flag).
+4. Set success criteria and a stopping point (for example, implicit `any` count dropping weekly).
+5. Record it in an ADR so the next person understands why.
+
+| Decision | Safe option for a large team | Risky option | Signal it is time to change |
+|---|---|---|---|
+| Turning on `strict` for old code | Enable per package/folder, one sub-flag at a time (`noImplicitAny` first), block new code | Turn on repo-wide at once, thousands of errors | The team stops fixing type errors and just adds `any` |
+| Splitting packages in a monorepo | Project references + `composite`, incremental builds | One giant `tsconfig`, type-checking the whole repo on every commit | CI type-check exceeds its time budget |
+| Types for the API | Generate types from OpenAPI/schema, validate at runtime at the boundary | Hand-write interfaces then force them with assertions | The backend changes and the frontend breaks in production |
+| Sharing types across packages | Small, stable, versioned type packages | Cross-importing internal files | A small change triggers rebuilds of many packages |
+| Team conventions | A few rules backed by lint (`no-explicit-any`, `consistent-type-imports`) | A long document nobody reads | Reviews keep re-arguing the same topic |
+
+### Type review checklist at team scale
+
+- Where does data enter from outside (HTTP, storage, message queue)? Does it have runtime validation, or only assertions?
+- Does the package's public API have an explicit return type to avoid accidentally exposing a complex inferred type?
+- Are there new `any` or `@ts-ignore`, and does every `@ts-expect-error` carry a reason?
+- Do complex types (nested conditional, mapped) significantly increase check time, and can anyone maintain them?
+- Does the change break consumers in other packages (a type change is a breaking change too)?
+
+### Short ADR example
+
+```
+Title: Enable noImplicitAny per package
+Context: 400k lines of mixed JS/TS, 12 devs, two-week release cadence.
+Decision: New packages must be strict; existing packages enable noImplicitAny when touched; track error counts weekly.
+Consequences: Slower progress but releases are not blocked; need lint to block new any.
+Rejected: Turn on the whole repo (would freeze features for 2 sprints).
+```
+
+### Anti-patterns at team scale
+
+- Adding `any` or `@ts-ignore` to get CI green and never coming back: type debt compounds with interest.
+- A type so clever only one person understands: bus factor of 1, unreadable error messages.
+- One big migration with no stopping point: the team burns out and the long-lived branch conflicts constantly.
+- Trusting static types as proof that data is correct: TypeScript is erased at runtime, so the system boundary still needs validation.
+- Standardizing by decree instead of tooling: rules not enforced by lint/CI get skipped under deadline pressure.
+
+General principle: changing the tool's default (compiler option, lint, template package) is more effective than relying on people to remember rules; measure before and after to prove value to both the team and management.
+'''
+
+[questions.typescript-lv001]
+prompt = "A 300k-line mixed JS/TS codebase, 10 devs, releasing every two weeks. Turning on `strict: true` repo-wide raises about 4,000 errors. You want to reduce null/undefined-related production errors without stopping feature work. Which approach do you choose?"
+options = ["Turn on sub-flags per package, starting with `strictNullChecks` for low-dependency packages, block new violations in CI, and track error counts weekly", "Turn on `strict` repo-wide and freeze features until all errors are fixed", "Keep the current configuration and only ask devs to be careful during review", "Add `// @ts-nocheck` to every file with errors, then turn on `strict` repo-wide"]
+explanation = "Rolling out in small, measurable units keeps release speed while preventing new debt. A feature freeze costs the business and risks long-branch conflicts; careful review without enforcement is not durable; ts-nocheck hides errors and makes strict meaningless."
+
+[questions.typescript-lv002]
+prompt = "A monorepo with 8 packages: whole-repo CI type-check takes 14 minutes and devs complain. The budget is two weeks of one person's time, and you do not want to change the bundler. Which direction is most reasonable?"
+options = ["Switch to project references with `composite` and incremental builds (`tsc -b`), so only the changed package and its dependents are re-checked", "Remove type-check from CI and run it only on dev machines", "Merge all packages into a single `tsconfig` so the compiler optimizes globally", "Replace every type with `any` in shared packages"]
+explanation = "Project references split the build graph, enabling incremental builds and caching, which fits a small budget. Removing type-check from CI lets errors reach main; one tsconfig is exactly why it is slow; any suppresses errors without reducing cost and loses type safety."
+
+[questions.typescript-lv003]
+prompt = "Frontend and backend are two different teams, and API fields change without notice. The frontend hand-writes interfaces and casts `response.json() as Order`. The backend team already has an OpenAPI spec updated per release. Which decision is most advantageous?"
+options = ["Generate types from the OpenAPI spec in CI and validate responses at the boundary with runtime schema for important endpoints", "Keep writing interfaces by hand but add comments to remind updates", "Use `any` for all responses so the frontend is not blocked when the backend changes", "Ask the backend to import the frontend's interface files directly"]
+explanation = "Generating types from a shared source of truth detects contract mismatches at build time, while runtime validation catches real mismatches at runtime. Comments are not enforced; any drops all protection; making the backend depend on the frontend reverses contract ownership."
+
+[questions.typescript-lv004]
+prompt = "You set type-review conventions for a 15-person team and want to limit emotional arguments. Which measures are appropriate?"
+options = ["Enforce via lint/CI (for example, ban new explicit `any`, use `consistent-type-imports`) instead of only documentation", "Require `@ts-expect-error` to carry a reason and ticket", "Let each dev choose their own conventions within their package", "Keep the convention list short, covering only rules that clearly affect bugs or read time"]
+explanation = "Rules enforced by machines, documented with reasons, and kept short are durable under deadline pressure. Everyone having their own conventions makes the codebase hard to read and turns review into repeated arguments."
+
+[questions.typescript-lv005]
+prompt = "A 5-dev startup needs to ship a customer feature in 6 weeks; the 60k-line JavaScript codebase has no TypeScript yet. Which decision is most reasonable?"
+options = ["Enable `allowJs` and `checkJs` for important areas, write new files in TypeScript, use JSDoc for old code when touched, and do not run a separate migration", "Stop features for 3 weeks to convert everything to TypeScript strict", "Do not use TypeScript because the team is too small", "Outsource the whole conversion and merge it all on the last day"]
+explanation = "Gradual migration along small boundaries suits a small team and a tight deadline. Stopping for 3 weeks eats half the time budget; dropping TypeScript forgoes compounding benefits; one final merge is a large risk and causes conflicts."
+
+[questions.typescript-lv006]
+prompt = "A senior dev writes a 5-level nested conditional/mapped type set for a form builder. It works, but error messages run hundreds of lines, only the author understands them, and the package's check time doubles. How do you handle it?"
+options = ["Simplify the API: keep public types clear, reduce inference layers, add type tests and docs; accept being less 'clever'", "Keep it because correct is enough, measure later", "Delete all the types and use `any`", "Ban all conditional types company-wide"]
+explanation = "Types must be maintainable by the whole team; error-reading cost and compile time are real costs. Keeping it creates a bus factor of 1; any loses safety; an absolute ban overreacts since conditional types have legitimate uses."
+
+[questions.typescript-lv007]
+prompt = "For a package in a monorepo to be referenced by other packages via project references, its tsconfig must enable the `{{blank}}` option."
+blanks = [['composite']]
+explanation = "`composite` enforces the required constraints (declaration, rootDir...) so `tsc -b` can build incrementally and projects can reference each other."
+
+[questions.typescript-lv008]
+prompt = "Two teams share the type package `@acme/types`. Team A often renames fields and releases without notice, breaking team B's build. Which measure fixes the root cause without blocking team A?"
+options = ["Treat public type changes as API changes: semver versioning, a changelog, and breaking-change checks in CI before publishing", "Have team B pin an old version forever", "Copy the types into both repos", "Make every field optional so errors disappear"]
+explanation = "Public types are a contract; versioning and breaking-change checks make changes transparent. Pinning forever leaves team B behind; copying causes drift and duplication; optionalizing hides errors and devalues the types."
+
+[questions.typescript-lv009]
+prompt = "While enabling `strict` gradually, devs start adding `any` and `@ts-ignore` to pass CI. Which lead reactions are reasonable?"
+options = ["Measure the count of `any`/`@ts-ignore` over time and set a decreasing budget", "Block new `@ts-ignore`, allow `@ts-expect-error` with a reason because it reports when the error is gone", "Completely ban type errors and make devs stay until all are fixed", "Find common causes (missing library types, weak type helpers) and fix them at the source"]
+explanation = "Measuring, replacing `@ts-ignore` with reasoned `@ts-expect-error`, and fixing root causes gradually reduce type debt. Making devs stay to fix everything causes burnout and pushes them toward worse workarounds."
+
+[questions.typescript-lv010]
+prompt = "A 12-person team wants to enable `strict` for a 400k-line codebase running in production. Write a short proposal (ADR style): rollout, measurement, risks, and rejected options."
+keywords = [['per package', 'per phase', 'gradual', 'incremental'], ['ci', 'lint', 'block new code'], ['measure', 'track', 'metric'], ['risk', 'freeze', 'rollback']]
+model_answer = "Roll out gradually per package: new packages require `strict`; old packages enable sub-flags such as `noImplicitAny` then `strictNullChecks` as people touch them. CI and lint block new violations so debt does not grow. Track metrics weekly: remaining type errors and the count of `any` and `@ts-expect-error`, to prove progress. The main risk is devs dodging errors with `any`, so set a decreasing budget and allow rolling back flags for packages that block releases. Rejected option: turning on the whole repo at once and freezing features, because the business cost is high and a long-lived branch conflicts constantly."
+explanation = "A good proposal ties the decision to constraints (team, release, risk), includes measurement points, and states clearly why the alternatives are worse in this context."
+
+[questions.typescript-lv011]
+prompt = "A service receives webhooks from a partner and typed the payload as `Payload` using `as Payload`. After an incident the partner sent the `amount` field as a string, causing a wrong payment. Budget: 3 days, no wish to add a large library. Which action comes first?"
+options = ["Receive the body as `unknown`, write a centralized validate function at the boundary (or use an existing schema validator), and return 4xx for bad data", "Change the `amount` type to `string | number` everywhere in the codebase", "Enable the `strictNullChecks` compiler flag", "Catch errors with `try/catch` in every handler and ignore them"]
+explanation = "The bug is at the untrusted data boundary; static types are erased at runtime, so runtime validation is needed in one place. Widening the type spreads the bug everywhere; strictNullChecks does not address value type errors; swallowing errors hides the incident."
+
+[questions.typescript-lv012]
+prompt = "CI type-check for a 200k-line app takes 9 minutes and slows PRs. The team has only 1 day to improve. Which low-risk option gives immediate results?"
+options = ["Enable `incremental` with a `.tsbuildinfo` cache preserved between CI runs, and `skipLibCheck` if not already on", "Turn off all type-checking on PRs and run it only at release", "Rewrite the whole project to project references in one day", "Turn every complex type into `any`"]
+explanation = "incremental and caching are small, low-risk configuration changes that greatly reduce repeated runs. Turning off checks on PRs lets errors reach main; project references is the right long-term direction but too large for one day; any loses checking value."
+
+[questions.typescript-lv013]
+prompt = "The team has many devs new to TypeScript who often use `as` to make errors disappear. The lead wants to reduce this habit without being seen as harsh. Which measure is most reasonable?"
+options = ["Add lint warnings for unnecessary assertions, teach narrowing/type guards through code review with examples, and provide a shared validate helper", "Ban `as` completely in all cases", "Ignore it because working code is enough", "Only the lead may write complex typed code"]
+explanation = "Combining tooling, teaching with real examples, and easy helpers changes behavior without creating barriers. An absolute ban makes devs dodge other ways; ignoring it accumulates debt; monopolizing types creates a bottleneck and bus factor."
+
+[questions.typescript-lv014]
+prompt = "A project depends on a JS library with no types, used in 40 places. Two options: write full declarations (3 days) or declare an empty `declare module 'lib'` (10 minutes). The library handles money calculations. What do you choose?"
+options = ["Write declarations for the API actually used, verify against the real source, and put them in the repo's `types/` folder; extend as needed", "Use an empty `declare module 'lib'` so everything is `any`", "Drop the library and rewrite it entirely", "Cast `as any` at every call site"]
+explanation = "For important functionality like money math, typing the parts actually used is a good cost/safety balance. Empty declarations make everything any; rewriting the library is costly and risky; as any scatters the hole across 40 places."
+
+[questions.typescript-lv015]
+prompt = "You design a shared type package for an 8-package monorepo. Which decisions reduce risk?"
+options = ["Keep the package small, containing only stable types, with a clear owner", "Allow other packages to import internal files directly for convenience", "Set `declaration` and `composite` so consumers use built types", "Check breaking changes of public types in CI"]
+explanation = "A small owned package with built types and breaking-change checks keeps boundaries clear. Importing internal files breaks encapsulation, so even small changes break many places."
+
+[questions.typescript-lv016]
+prompt = "When you must suppress a type error, you should use `// @{{blank}}` with a reason, because the compiler reports an error if that line no longer has an error."
+blanks = [['ts-expect-error']]
+explanation = "`@ts-expect-error` reports itself once the error is fixed, so it does not leave a meaningless stale directive like `@ts-ignore`."
+
+[questions.typescript-lvc01]
+title = "Choose the next package to migrate"
+prompt = '''The team migrates to `strict` package by package. Write a function nextPackage(packages) that chooses the next package to work on.
+Each package has the form { name, errors, deps, done }, where deps is an array of package names it depends on.
+- Only consider packages not done whose every dep is done.
+- Among those, choose the package with the fewest errors; if tied, choose alphabetically by name.
+- Return the package name, or null if no package qualifies.
+'''
+explanation = "Choosing migration order by dependency graph means each step unlocks the next package; prioritizing few errors gives early results and builds team momentum."
+hints = ["Build a Set of done package names for fast dep checks.", "Filter then sort by errors, then by name."]
+
+[questions.typescript-lv017]
+prompt = "The team considers switching from `tsc` to a fast transpiler (esbuild/swc) for builds while keeping `tsc --noEmit` for type checking. What must you confirm before deciding?"
+options = ["Whether the codebase uses TypeScript features that need type information to emit code (like cross-file `const enum`, `isolatedModules`), and that type-check still runs in CI", "A fast transpiler type-checks like tsc, so type-check can be dropped", "Only comparing build speed is needed", "It is guaranteed to be 100% compatible with every tsconfig configuration"]
+explanation = "A transpiler only erases types, does not type-check, and works per-file, so it needs `isolatedModules` and must avoid features depending on cross-file information. Comparing only speed or assuming full compatibility ignores risk."
+
+[questions.typescript-lv018]
+prompt = "Frontend and backend belong to two teams; API fields change frequently causing production errors. Describe how you design a process to keep types in sync on both sides, and state the trade-offs."
+keywords = [['openapi', 'schema', 'contract'], ['codegen', 'generate'], ['validation', 'runtime'], ['ci', 'breaking change', 'version']]
+model_answer = "Take the API contract (OpenAPI or schema) as the shared source of truth. Use codegen to generate frontend types whenever the spec changes, and CI to flag breaking changes when the spec changes incompatibly or generated types break the build. Static types are erased at runtime, so for important endpoints add runtime validation at the boundary to catch drifted data. Trade-offs: maintaining the spec and codegen pipeline costs effort, and runtime validation adds runtime cost; in return, production errors decrease and team arguments are reduced."
+explanation = "A good answer states the shared source of truth, CI automation, and runtime validation, and accepts operational cost instead of relying on verbal convention."
+
+[questions.typescript-lv019]
+prompt = '''~~~ts
+type ElementOf<T> = T extends (infer U)[] ? U : never;
+type A = ElementOf<string[] | number>;
+~~~
+What is type `A`?'''
+options = ["string", "string | number", "string | never, that is string", "never"]
+explanation = "Conditional types distribute over unions when the type parameter is bare: `string[]` yields `string`, `number` does not match so yields `never`; `string | never` simplifies to `string`."
+
+[questions.typescript-lv020]
+prompt = '''~~~ts
+type IsString<T> = [T] extends [string] ? "yes" : "no";
+type R = IsString<string | number>;
+~~~
+What is type `R`, and why is `[T]` wrapped?'''
+options = ["\"no\", because wrapping in a tuple disables distribution so the whole union is compared to string once", "\"yes\" | \"no\", because tuple wrapping still distributes", "\"yes\", because one component is string", "never"]
+explanation = "Without wrapping, a conditional type distributes and yields `\"yes\" | \"no\"`. Wrapping `[T]` makes a non-bare type, so `string | number` is checked once and does not extends string."
+
+[questions.typescript-lv021]
+prompt = '''~~~ts
+interface Animal { name: string }
+interface Dog extends Animal { bark(): void }
+type Handler<T> = (value: T) => void;
+declare let handleAnimal: Handler<Animal>;
+declare let handleDog: Handler<Dog>;
+handleDog = handleAnimal; // (1)
+handleAnimal = handleDog; // (2)
+~~~
+With `strictFunctionTypes` on, which line is valid?'''
+options = ["Only (1): function parameters are contravariant", "Only (2): function parameters are covariant", "Both", "Neither"]
+explanation = "A function accepting Animal can handle any Dog, so assigning it to Handler<Dog> is safe. The reverse is unsafe because handleDog may call bark() on an arbitrary Animal."
+
+[questions.typescript-lv022]
+prompt = '''~~~ts
+type Getters<T> = {
+  [K in keyof T as `get${Capitalize<string & K>}`]: () => T[K];
+};
+type G = Getters<{ id: number; name: string }>;
+~~~
+What keys does `G` have?'''
+options = ["getId and getName", "id and name", "Only one key named get", "No keys because mapped types do not rename keys"]
+explanation = "The `as` clause in mapped types renames keys; `Capitalize` capitalizes the first letter, turning `id` into `getId`."
+
+[questions.typescript-lv023]
+prompt = "The team wants to avoid confusing `UserId` with `OrderId` (both are strings) without runtime cost. Which approach is suitable?"
+options = ["Branded type: `type UserId = string & { readonly __brand: \"UserId\" }` together with a constructor function with checks", "Declare `type UserId = string` and `type OrderId = string`", "Use a string `enum` for all ids", "Use `any` then name variables clearly"]
+explanation = "Two string aliases are still assignable to each other because TypeScript is structural. Branded types create nominal typing that exists only at compile time; the constructor is the only place for coercion and validation."
+
+[questions.typescript-lv024]
+prompt = '''~~~ts
+const scores: Record<string, number> = { ada: 90 };
+const s = scores["bob"];
+s.toFixed(1);
+~~~
+Which compiler flag makes `s` have type `number | undefined` so the compiler catches the last line?'''
+options = ["noUncheckedIndexedAccess", "strictNullChecks (automatically applies to index signatures)", "noImplicitAny", "exactOptionalPropertyTypes"]
+explanation = "By default index signature access returns `number`. `noUncheckedIndexedAccess` adds `undefined` to index access results, forcing a check before use."
+
+[questions.typescript-lv025]
+prompt = '''~~~ts
+const routes = {
+  home: "/",
+  user: "/user/:id",
+} satisfies Record<string, string>;
+~~~
+Which statements about `satisfies` here are correct?'''
+options = ["Checks the object fits `Record<string, string>` without widening the variable's type", "`routes.home` keeps its narrow inferred literal type, not a generic `string`", "A typo like `hmoe` is still accepted because the type is Record<string, string>", "Variable `routes` gets type `Record<string, string>` like a type annotation"]
+explanation = "`satisfies` verifies compatibility while keeping the expression's specific inferred type. A type annotation would make the variable carry the wider type; allowing arbitrary keys comes from the Record type, not from satisfies."
+
+[questions.typescript-lv026]
+prompt = "Which ways make the compiler narrow an `unknown` value correctly into `{ id: string }`?"
+options = ["A type predicate `isIdObject(x: unknown): x is { id: string }` with a real runtime check", "`x as { id: string }` then use it directly", "Check `typeof x === 'object' && x !== null && 'id' in x` then check `typeof x.id === 'string'`", "An assertion function `asserts x is { id: string }` that throws on bad data"]
+explanation = "Type predicate, manual check, and assertion function all tie narrowing to runtime checks. The `as` cast only tells the compiler; it checks nothing."
+
+[questions.typescript-lv027]
+prompt = '''Get the return type of a known function: `type R = {{blank}}<typeof fetchUser>` (built-in utility type).'''
+blanks = [['ReturnType']]
+explanation = "`ReturnType<typeof fn>` uses `infer` internally to extract a function's return type."
+
+[questions.typescript-lv028]
+prompt = '''In `type Unwrap<T> = T extends Promise<{{blank}} U> ? U : T`, what keyword must be filled in to infer the type inside Promise?'''
+blanks = [['infer']]
+explanation = "`infer U` declares an inferred type variable when the extends branch matches."
+
+[questions.typescript-lv029]
+prompt = "A package publishes both ESM and CommonJS. A consumer using `moduleResolution: \"nodenext\"` reports missing types for subpath imports. Which package configuration should be checked first?"
+options = ["The `exports` field in package.json with `types` conditions placed correctly for each import/require condition", "Only the `main` field, because nodenext ignores `exports`", "The `strict` flag in the consumer's tsconfig", "The `node_modules/@types` folder name"]
+explanation = "With nodenext/bundler, TypeScript reads `exports` and `types` conditions; `types` must come before `default` in each branch. `main` is just a fallback; strict does not affect module resolution."
+
+[questions.typescript-lv030]
+prompt = '''~~~ts
+function setKey<T, K extends keyof T>(obj: T, key: K, value: T[K]): void {
+  obj[key] = value;
+}
+setKey({ a: 1, b: "x" }, "b", 2);
+~~~
+Does this call error, and why?'''
+options = ["Yes, because `value` must have type `T[\"b\"]`, which is string", "No, because `2` is a valid number for any key", "Yes, because `K` cannot be inferred from a string literal", "No, because T[K] is always a union of all properties"]
+explanation = "K is inferred as \"b\", so T[K] is string and the number argument is rejected. Linking key and value type via `keyof` plus indexed access is the point."
+
+[questions.typescript-lv031]
+prompt = '''~~~ts
+type Shape = { kind: "circle"; r: number } | { kind: "rect"; w: number; h: number };
+function area(s: Shape) {
+  if (s.kind === "circle") return Math.PI * s.r ** 2;
+  return s.w * s.h;
+}
+~~~
+Why is `s.w` valid on the last line?'''
+options = ["Control-flow analysis eliminates the circle variant, so s is rect", "Because TypeScript skips property checks on unions", "Because `w` is a common property of every variant", "Because the function has no explicit return type"]
+explanation = "After the `if` branch has a `return`, the compiler narrows s to the remaining variant. The literal `kind` discriminant enables precise narrowing."
+
+[questions.typescript-lv032]
+prompt = "Which statements about `unknown` and `any` are correct?"
+options = ["Any value can be assigned to `unknown`", "`unknown` must be narrowed before calling a method on it", "`any` turns off type checking where it flows", "`unknown` can be assigned directly to `string` without checking"]
+explanation = "unknown is the safe top type; any is the escape hatch from the type system. Assigning unknown to string requires narrowing or assertion."
+
+[questions.typescript-lv033]
+prompt = "The code `let count = 0;` followed by `count = \"five\";` errors because?"
+options = ["TypeScript infers `count` as number from the initial value", "`let` always requires a type annotation", "Strings can never be assigned to a variable", "`count` has type `any`"]
+explanation = "Type inference from the initial value assigns number to count; assigning a string later violates the type."
+
+[questions.typescript-lv034]
+prompt = "Which declaration is a valid array-of-numbers type in TypeScript?"
+options = ["number[]", "array<number>[]", "[number]", "number{}"]
+explanation = "`number[]` (or `Array<number>`) is an array of numbers of any length; `[number]` is a tuple with exactly one element."
+
+[questions.typescript-lv035]
+prompt = "What does union type `string | number` mean?"
+options = ["The value can be either string or number", "The value must be both string and number", "The value is always a string containing a number", "Only usable with functions"]
+explanation = "A union expresses one of the types; using a member-specific operation requires narrowing with `typeof`."
+
+[questions.typescript-lv036]
+prompt = "What does the parameter `age?: number` in a function declaration mean?"
+options = ["The parameter may be omitted when calling; inside the function it has type `number | undefined`", "The parameter must be undefined", "The parameter defaults to 0 when omitted", "The parameter only accepts strings"]
+explanation = "The `?` makes the parameter optional; there is no default value, so it may be undefined."
+
+[questions.typescript-lv037]
+prompt = '''~~~ts
+function len(x: string | string[]) {
+  if (typeof x === "string") {
+    return x.length;
+  }
+  return x.length;
+}
+~~~
+Why does the second `x.length` not error even though `x` starts as a union?'''
+options = ["After the `typeof` guard, the compiler knows x is string[] in the remainder", "Because both types are assignable to each other", "Because TypeScript does not check the `length` property", "Because `x` is `any`"]
+explanation = "`typeof x === \"string\"` narrows the type in the true branch, and the remainder is `string[]`."
+
+[questions.typescript-lv038]
+prompt = '''~~~ts
+interface User { id: number; name: string }
+const u: User = { id: 1 };
+~~~
+What happens?'''
+options = ["Compile error because the `name` property is missing", "Runs fine, name is undefined", "Runtime error at execution", "TypeScript adds an empty name automatically"]
+explanation = "The interface describes the required shape; missing non-optional properties are rejected by the compiler before runtime."
+
+[questions.typescript-lv039]
+prompt = "What does the return type `void` of a function mean?"
+options = ["The function does not provide a useful return value to callers", "The function always throws", "The function returns null", "The function cannot be called"]
+explanation = "`void` is for functions performing side effects only; `never` is for functions that never return."
+
+[questions.typescript-lv040]
+prompt = "Which keyword makes a class property accessible only inside that class according to TypeScript checks?"
+options = ["private", "public", "readonly", "static"]
+explanation = "`private` restricts access to inside the class at compile time; `readonly` only prevents reassignment; `static` belongs to the class itself."
+
+[questions.typescript-lv041]
+prompt = "What is the root `tsconfig.json` of a project used for?"
+options = ["To declare which files belong to the project and the compiler options", "To store the npm package list", "To run tests automatically", "To contain compiled JavaScript source"]
+explanation = "tsconfig.json defines the file scope and compilerOptions such as `strict`, `target`, `module`."
+
+[questions.typescript-lv042]
+prompt = "Which types are primitive types in TypeScript?"
+options = ["string", "number", "boolean", "Array"]
+explanation = "string, number, boolean are primitives; Array is an object type."
+
+[questions.typescript-lv043]
+prompt = '''~~~ts
+let ids: {{blank}}[] = [1, 2, 3];
+~~~
+Fill in the array element type.'''
+blanks = [['number']]
+explanation = "`number[]` describes an array containing only numbers."
+
+[questions.typescript-lv044]
+prompt = '''~~~ts
+type Status = "idle" | "loading" | "done";
+let s: Status = "idle";
+~~~
+Each value like `"idle"` in the union above is called a {{blank}} type.'''
+blanks = [['literal']]
+explanation = "Literal types restrict values to exactly one specific string, number, or boolean."
+
+[questions.typescript-lv045]
+prompt = '''~~~ts
+interface Point { {{blank}} x: number; y: number }
+~~~
+Add which keyword before `x` so `x` cannot be reassigned after the object is created?'''
+blanks = [['readonly']]
+explanation = "`readonly` blocks reassignment of the property under compile-time checks."
+
+[questions.typescript-lv046]
+prompt = "To enable the strict check group such as strictNullChecks and noImplicitAny at once, set `\"{{blank}}\": true` in compilerOptions."
+blanks = [['strict']]
+explanation = "`strict` is the master flag that turns on the strict check group."
+
+[questions.typescript-lv047]
+prompt = '''~~~ts
+function greet(name: string): {{blank}} {
+  return "Hi " + name;
+}
+~~~
+Fill in the return type.'''
+blanks = [['string']]
+explanation = "The function returns string concatenation, so the return type is `string`."
+
+[questions.typescript-lv048]
+prompt = '''~~~ts
+function first<{{blank}}>(items: T[]): T | undefined { return items[0]; }
+~~~
+Fill in the type parameter name used by the function body.'''
+blanks = [['T']]
+explanation = "The type parameter `T` preserves the element type between input and output."
+
+[questions.typescript-lv049]
+prompt = "What is the main difference between `let x: any` and `let y: unknown`?"
+options = ["`unknown` requires checking/narrowing before use, `any` does not", "`any` is safer than `unknown`", "The two types are identical", "`unknown` is only for numbers"]
+explanation = "any turns off checking; unknown keeps safety by requiring narrowing."
+
+[questions.typescript-lv050]
+prompt = "Which statements about TypeScript and JavaScript are correct?"
+options = ["TypeScript is compiled (or type-erased) to JavaScript to run", "TypeScript types exist at runtime and can be queried", "Every valid JavaScript is syntactically valid TypeScript", "Type errors are reported by the compiler before the program runs"]
+explanation = "Types are erased during compilation, so they do not exist at runtime; therefore external data still needs validation."
+
+[questions.typescript-lv051]
+prompt = "Which statements about classes in TypeScript are correct?"
+options = ["A class can `implements` an interface to commit to a shape", "A class can `extends` another class to inherit", "`private` prevents access from outside the class under type checks", "Classes automatically validate input data at runtime"]
+explanation = "implements, extends, and scope modifiers are static checks; they do not automatically validate runtime data."
+
+[questions.typescript-lv052]
+prompt = '''~~~ts
+if ({{blank}} value === "number") { value.toFixed(2); }
+~~~
+Fill in the operator used to check a primitive type at runtime.'''
+blanks = [['typeof']]
+explanation = "`typeof` narrows primitive unions inside conditional branches."
+
+[questions.typescript-lvc02]
+title = "Small schema validator at the data boundary"
+prompt = '''Write a function validate(schema, value) that checks untrusted data (similar to making a type guard at the boundary).
+schema is an object mapping field names to one of these strings: 'string', 'number', 'boolean', or the optional form with a '?' suffix (e.g. 'number?').
+Return an array of error messages (empty if valid):
+- value is not an object (or null) -> ['value must be an object'].
+- Missing required field -> `${key} is required`.
+- Wrong type -> `${key} must be ${type}`.
+- Missing or undefined optional field is skipped. Errors are listed in schema key order. NaN is not a valid number.
+'''
+explanation = "This is the core of runtime validation: static types disappear at runtime, so data from the network must be truly checked before narrowing to your type."
+hints = ["Strip the '?' suffix from the type name before comparing.", "Use typeof, and exclude NaN from number."]
+
+[questions.typescript-lvc03]
+title = "Describe the type of a value"
+prompt = '''Write a function describe(value) that returns a string describing the runtime type of value (similar to typeof narrowing):
+- null -> 'null'
+- array -> 'array'
+- finite number -> 'number'; NaN or Infinity -> 'invalid-number'
+- string, boolean, undefined, function -> exactly the typeof result
+- plain object -> 'object'
+'''
+explanation = "Understanding typeof and edge cases (null, array, NaN) is the foundation of narrowing."
+hints = ["typeof null returns 'object', handle null first.", "Use Array.isArray and Number.isFinite."]
+
+[questions.typescript-lvc04]
+title = "Function with optional parameters and defaults"
+prompt = '''Write a function makeUser(name, age, role) that returns the object { name, age, role }:
+- age optional: if missing (undefined) use null.
+- role optional: defaults to 'user'.
+- Keep age = 0 (do not replace with null).
+'''
+explanation = "Optional TypeScript parameters correspond to undefined; distinguishing undefined from 0 avoids the common falsy bug."
+hints = ["Use a default value for role.", "Compare age === undefined instead of a falsy check."]

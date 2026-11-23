@@ -17,7 +17,7 @@ icon = "🟨"
 color = "#d4a017"
 group = "Frontend"
 description = "JavaScript cốt lõi, event loop, DOM và hiệu năng web."
-modules = ["fe-js", "fe-browser"]
+modules = ["fe-js", "fe-browser", "frontend-lead"]
 
 [[categories]]
 id = "typescript"
@@ -26,7 +26,7 @@ icon = "🔷"
 color = "#3178c6"
 group = "Frontend"
 description = "Hệ thống kiểu, narrowing, generics, type-level programming và cấu hình dự án."
-modules = ["fe-ts", "ts-types", "ts-narrowing", "ts-generics", "ts-type-programming", "ts-project", "typescript-dv-objects-functions", "typescript-dv-classes", "typescript-dv-declarations", "frontend-dv-tsconfig"]
+modules = ["fe-ts", "ts-types", "ts-narrowing", "ts-generics", "ts-type-programming", "ts-project", "typescript-dv-objects-functions", "typescript-dv-classes", "typescript-dv-declarations", "frontend-dv-tsconfig", "typescript-lead"]
 
 [[categories]]
 id = "styling"
@@ -45,7 +45,7 @@ color = "#0ea5e9"
 group = "Frontend"
 description = "Component, hooks, hiệu năng, React 19, Server Components và TanStack Query/Router."
 modules = ["react-basics", "react-state", "react-hooks", "react-effects", "react-forms-a11y", "react-perf",
-           "react-patterns", "react-testing-arch", "react-19", "react-server", "tanstack-query", "tanstack-router", "react-dv-rules", "react-dv-compiler", "react-dv-ssr", "nextjs-dv-query-ssr", "nextjs-dv-router-auth"]
+           "react-patterns", "react-testing-arch", "react-19", "react-server", "tanstack-query", "tanstack-router", "react-dv-rules", "react-dv-compiler", "react-dv-ssr", "nextjs-dv-query-ssr", "nextjs-dv-router-auth", "react-lead"]
 
 [[categories]]
 id = "react-native"
@@ -55,7 +55,7 @@ color = "#61dafb"
 group = "Frontend"
 description = "Layout, danh sách, điều hướng, kiến trúc mới, Expo, animation, offline và phát hành app."
 modules = ["rn-core", "rn-styling", "rn-lists", "rn-navigation", "rn-native", "rn-architecture", "rn-expo",
-           "rn-perf", "rn-animation-gesture", "rn-data-offline", "rn-release", "react-native-dv-network", "react-native-dv-native", "react-native-dv-testing", "react-native-dv-accessibility"]
+           "rn-perf", "rn-animation-gesture", "rn-data-offline", "rn-release", "react-native-dv-network", "react-native-dv-native", "react-native-dv-testing", "react-native-dv-accessibility", "react-native-lead"]
 
 [[categories]]
 id = "nextjs"
@@ -64,7 +64,7 @@ icon = "▲"
 color = "#525252"
 group = "Frontend"
 description = "App Router, Server Components & Actions, cache, Route Handler, Middleware và metadata."
-modules = ["next-routing", "next-render-cache", "next-route-platform", "nextjs-dv-authz"]
+modules = ["next-routing", "next-render-cache", "next-route-platform", "nextjs-dv-authz", "nextjs-lead"]
 
 [[categories]]
 id = "vue"
@@ -73,7 +73,7 @@ icon = "🟩"
 color = "#42b883"
 group = "Frontend"
 description = "Template, reactivity, component, Composition API, Vue Router và state."
-modules = ["vue-template", "vue-reactivity", "vue-components", "vue-composables", "vue-router", "vue-performance-state", "vue-dv-render", "vue-dv-router-data", "vue-dv-state", "vue-dv-network"]
+modules = ["vue-template", "vue-reactivity", "vue-components", "vue-composables", "vue-router", "vue-performance-state", "vue-dv-render", "vue-dv-router-data", "vue-dv-state", "vue-dv-network", "vue-lead"]
 
 [[categories]]
 id = "angular"
@@ -83,7 +83,7 @@ color = "#dd0031"
 group = "Frontend"
 description = "Component standalone, signals, dependency injection, router, typed forms và RxJS."
 modules = ["ng-components", "ng-signals", "ng-di", "ng-router-forms", "rxjs-core", "rxjs-angular",
-           "angular-dv-http", "angular-dv-ssr", "angular-dv-testing"]
+           "angular-dv-http", "angular-dv-ssr", "angular-dv-testing", "angular-lead"]
 
 [[categories]]
 id = "testing"
@@ -92,7 +92,7 @@ icon = "🧪"
 color = "#99425b"
 group = "Frontend"
 description = "Jest, Vitest, Testing Library, Playwright/Cypress và chiến lược kiểm thử."
-modules = ["testing-principles", "testing-unit", "testing-components", "testing-e2e", "testing-strategy", "testing-dv-network", "testing-dv-state", "testing-dv-projects"]
+modules = ["testing-principles", "testing-unit", "testing-components", "testing-e2e", "testing-strategy", "testing-dv-network", "testing-dv-state", "testing-dv-projects", "testing-lead"]
 
 [[categories]]
 id = "tooling"
@@ -101,7 +101,7 @@ icon = "🛠"
 color = "#646cff"
 group = "Frontend"
 description = "Vite, webpack, ESLint/Prettier, cache, hiệu năng build và bảo mật frontend."
-modules = ["tool-bundlers", "tool-quality", "tool-performance", "fe-tooling", "frontend-tooling-dv-graph"]
+modules = ["tool-bundlers", "tool-quality", "tool-performance", "fe-tooling", "frontend-tooling-dv-graph", "frontend-tooling-lead"]
 
 # ------------------------------------------------------------------ Backend
 [[categories]]
@@ -111,7 +111,7 @@ icon = "🟢"
 color = "#539e43"
 group = "Backend"
 description = "Event loop, stream & buffer, Express và vận hành."
-modules = ["node-core", "node-io", "node-express", "node-ops", "nodejs-dv-modules", "nodejs-dv-http", "nodejs-dv-express-prod"]
+modules = ["node-core", "node-io", "node-express", "node-ops", "nodejs-dv-modules", "nodejs-dv-http", "nodejs-dv-express-prod", "nodejs-lead"]
 
 [[categories]]
 id = "python"
@@ -121,7 +121,7 @@ color = "#3776ab"
 group = "Backend"
 description = "Flask, FastAPI, async Python, bảo mật API và Django."
 modules = ["py-flask", "py-fastapi", "py-async", "py-security",
-           "django-project", "django-orm", "django-forms", "django-request", "django-api-security", "django-dv-testing", "django-dv-files", "django-dv-tasks", "python-backend-dv-flask-structure", "python-backend-dv-fastapi-deps", "python-backend-dv-sqlite"]
+           "django-project", "django-orm", "django-forms", "django-request", "django-api-security", "django-dv-testing", "django-dv-files", "django-dv-tasks", "python-backend-dv-flask-structure", "python-backend-dv-fastapi-deps", "python-backend-dv-sqlite", "django-lead", "python-backend-lead"]
 
 [[categories]]
 id = "go"
@@ -130,7 +130,7 @@ icon = "🐹"
 color = "#00add8"
 group = "Backend"
 description = "Cú pháp, interface, error handling, concurrency và net/http."
-modules = ["go-basics", "go-errors", "go-concurrency", "go-web", "go-dv-database", "go-dv-testing", "go-dv-io"]
+modules = ["go-basics", "go-errors", "go-concurrency", "go-web", "go-dv-database", "go-dv-testing", "go-dv-io", "go-lead"]
 
 [[categories]]
 id = "php"
@@ -139,7 +139,7 @@ icon = "🐘"
 color = "#777bb4"
 group = "Backend"
 description = "PHP hiện đại, OOP & Composer, Laravel, Eloquent và vận hành."
-modules = ["php-modern", "php-oop", "laravel-core", "laravel-data", "laravel-services", "php-laravel-dv-errors", "php-laravel-dv-api", "php-laravel-dv-http-client", "php-laravel-dv-events"]
+modules = ["php-modern", "php-oop", "laravel-core", "laravel-data", "laravel-services", "php-laravel-dv-errors", "php-laravel-dv-api", "php-laravel-dv-http-client", "php-laravel-dv-events", "php-laravel-lead"]
 
 [[categories]]
 id = "rust"
@@ -148,7 +148,7 @@ icon = "🦀"
 color = "#b7410e"
 group = "Backend"
 description = "Ownership, kiểu dữ liệu, trait, collection, module và concurrency."
-modules = ["rs-ownership", "rs-types", "rs-traits", "rs-collections", "rs-errors-modules", "rs-concurrency", "rust-dv-smart-pointers", "rust-dv-testing-cli", "rust-dv-patterns"]
+modules = ["rs-ownership", "rs-types", "rs-traits", "rs-collections", "rs-errors-modules", "rs-concurrency", "rust-dv-smart-pointers", "rust-dv-testing-cli", "rust-dv-patterns", "rust-lead"]
 
 [[categories]]
 id = "web-api"
@@ -157,7 +157,7 @@ icon = "🌐"
 color = "#0f766e"
 group = "Backend"
 description = "HTTP, REST, caching, xác thực/phân quyền, GraphQL, gRPC và realtime."
-modules = ["api-http", "api-rest", "api-caching", "api-auth", "api-styles", "web-api-dv-representations", "web-api-dv-framing", "web-api-dv-csp"]
+modules = ["api-http", "api-rest", "api-caching", "api-auth", "api-styles", "web-api-dv-representations", "web-api-dv-framing", "web-api-dv-csp", "web-api-lead"]
 
 [[categories]]
 id = "databases"
@@ -166,7 +166,7 @@ icon = "🗄"
 color = "#336791"
 group = "Backend"
 description = "SQL, thiết kế dữ liệu, index, transaction và Redis/NoSQL."
-modules = ["db-sql-basics", "db-sql-advanced", "db-data-model", "db-index-performance", "db-transactions", "db-redis", "databases-dv-pg-search", "databases-dv-pg-recovery", "databases-dv-redis-workflows"]
+modules = ["db-sql-basics", "db-sql-advanced", "db-data-model", "db-index-performance", "db-transactions", "db-redis", "databases-dv-pg-search", "databases-dv-pg-recovery", "databases-dv-redis-workflows", "databases-lead"]
 
 [[categories]]
 id = "devops"
@@ -175,7 +175,20 @@ icon = "🐳"
 color = "#2496ed"
 group = "Backend"
 description = "Git, Linux/Bash, Docker, Kubernetes, Nginx, CI/CD và Terraform."
-modules = ["ops-git", "ops-linux-bash", "ops-docker", "ops-kubernetes", "ops-nginx", "ops-cicd-terraform", "devops-dv-k8s-rollout", "devops-dv-k8s-security", "devops-dv-nginx-edge", "devops-dv-terraform-modules"]
+modules = ["ops-git", "ops-linux-bash", "ops-docker", "ops-kubernetes", "ops-nginx", "ops-cicd-terraform", "devops-dv-k8s-rollout", "devops-dv-k8s-security", "devops-dv-nginx-edge", "devops-dv-terraform-modules", "devops-lead"]
+
+# ------------------------------------------------------------------ Kiến trúc & Lead
+# Lộ trình system-design (docs/se-levels.md mục 5). Module chưa soạn sẽ tự ẩn cho tới khi có dữ liệu.
+[[categories]]
+id = "system-design"
+title = "System Design & Tech Lead"
+icon = "SD"
+color = "#475569"
+group = "Kiến trúc & Lead"
+area = "dev"
+description = "Thiết kế hệ thống, mở rộng, độ tin cậy, observability và kỹ năng ra quyết định của Tech Lead."
+modules = ["sd-fundamentals", "sd-scaling-data", "sd-caching", "sd-async-messaging", "sd-reliability", "sd-api-design",
+           "sd-observability", "sd-security", "sd-case-studies", "system-design-lead"]
 
 # ------------------------------------------------------------------ Tiếng Anh (khu riêng, không có bài code)
 # Lộ trình CEFR A1 → C2 (đề cương: docs/cefr-syllabus.md). Module chưa soạn sẽ tự ẩn cho tới khi có dữ liệu.
@@ -187,7 +200,7 @@ color = "#22c55e"
 group = "Lộ trình CEFR"
 area = "english"
 description = "Giới thiệu bản thân, câu hỏi cơ bản, to be, hiện tại đơn, từ vựng thường ngày."
-modules = ["cefr-a1-be-pronouns", "cefr-a1-present-simple", "cefr-a1-nouns-articles", "cefr-a1-vocab-everyday", "cefr-a1-functions", "cefr-a1-reading-writing"]
+modules = ["gr-a1-foundations", "gr-a1-actions", "cefr-a1-be-pronouns", "cefr-a1-present-simple", "cefr-a1-nouns-articles", "cefr-a1-vocab-everyday", "cefr-a1-functions", "cefr-a1-reading-writing"]
 
 [[categories]]
 id = "cefr-a2"
@@ -237,7 +250,68 @@ color = "#a21caf"
 group = "Lộ trình CEFR"
 area = "english"
 description = "Sắc thái nghĩa, thành ngữ, tu từ, tóm tắt & diễn giải đa nguồn (mediation)."
-modules = ["cefr-c2-grammar-style", "cefr-c2-vocab-idiom", "cefr-c2-discourse", "cefr-c2-reading-writing", "cefr-c2-mediation"]
+modules = ["gr-c2-precision", "gr-c2-register-control", "cefr-c2-grammar-style", "cefr-c2-vocab-idiom", "cefr-c2-discourse", "cefr-c2-reading-writing", "cefr-c2-mediation"]
+
+# Luyện thi IELTS 6.5 (đề cương: docs/ielts-6.5-syllabus.md). Module chưa soạn sẽ tự ẩn.
+[[categories]]
+id = "ielts-grammar"
+title = "Ngữ pháp IELTS"
+icon = "IG"
+color = "#b45309"
+group = "Luyện thi IELTS 6.5"
+area = "english"
+description = "Ngữ pháp cho band 6.5: kiểm soát thì, câu phức, bị động, danh hoá, so sánh số liệu, hedging và lỗi hay gặp."
+modules = ["ig-tense-control", "ig-complex-sentences", "ig-relative-participle", "ig-conditionals-hypothesis", "ig-passive-impersonal", "ig-nominalisation-noun-phrases", "ig-comparison-data", "ig-modals-hedging", "ig-accuracy-errors"]
+
+[[categories]]
+id = "ielts-vocab"
+title = "Từ vựng IELTS"
+icon = "IV"
+color = "#b45309"
+group = "Luyện thi IELTS 6.5"
+area = "english"
+description = "Paraphrase, họ từ và collocation theo 8 chủ đề IELTS thường gặp, kèm từ nối học thuật."
+modules = ["iv-paraphrase-word-formation", "iv-education", "iv-work-economy", "iv-technology-media", "iv-environment-energy", "iv-health-lifestyle", "iv-society-urban", "iv-globalisation-culture", "iv-government-science", "iv-academic-linking"]
+
+[[categories]]
+id = "ielts-reading"
+title = "IELTS Reading"
+icon = "IR"
+color = "#b45309"
+group = "Luyện thi IELTS 6.5"
+area = "english"
+description = "Chiến lược và luyện từng dạng câu Reading Academic, kết thúc bằng bài đọc dài tính giờ."
+modules = ["ir-strategy-paraphrase", "ir-tfng-ynng", "ir-matching-headings", "ir-matching-information-features", "ir-completion", "ir-mcq-short-answer", "ir-full-passages"]
+
+[[categories]]
+id = "ielts-listening"
+title = "IELTS Listening"
+icon = "IL"
+color = "#b45309"
+group = "Luyện thi IELTS 6.5"
+area = "english"
+description = "Bốn phần Listening qua transcript: số và chính tả, form, bản đồ, thảo luận, bài giảng, bẫy thông tin."
+modules = ["il-format-numbers-spelling", "il-section1-forms", "il-section2-maps-plans", "il-section3-discussion", "il-section4-lecture", "il-distractors-signposting"]
+
+[[categories]]
+id = "ielts-writing"
+title = "IELTS Writing"
+icon = "IW"
+color = "#b45309"
+group = "Luyện thi IELTS 6.5"
+area = "english"
+description = "Task 1 (biểu đồ, quy trình, bản đồ) và Task 2 (các dạng bài luận), tự chấm theo 4 tiêu chí."
+modules = ["iw1-format-overview", "iw1-line-bar-trends", "iw1-pie-table-proportions", "iw1-process-diagram", "iw1-maps-change", "iw1-mixed-band-upgrade", "iw2-task-analysis", "iw2-structure-thesis", "iw2-idea-development", "iw2-cohesion-coherence", "iw2-opinion-discussion", "iw2-advantages-problem-solution", "iw2-band-descriptors-editing"]
+
+[[categories]]
+id = "ielts-speaking"
+title = "IELTS Speaking"
+icon = "IS"
+color = "#b45309"
+group = "Luyện thi IELTS 6.5"
+area = "english"
+description = "Part 1–3: mở rộng câu trả lời, dàn ý cue card, thảo luận trừu tượng, độ trôi chảy và phát âm."
+modules = ["isp-format-descriptors", "isp-part1", "isp-part2-long-turn", "isp-part3-discussion", "isp-fluency-discourse", "isp-pronunciation-text"]
 
 # Từ vựng & cụm từ (chủ đề chung, không gắn trình độ)
 [[categories]]

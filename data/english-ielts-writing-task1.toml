@@ -1,0 +1,1194 @@
+id = "english-ielts-writing-task1"
+title = "IELTS Writing Task 1"
+icon = "W1"
+color = "#b45309"
+group = "Tiếng Anh"
+area = "english"
+description = "Luyện IELTS Academic Writing Task 1 tới band 6.5: cấu trúc bài, overview, ngôn ngữ xu hướng, tỉ lệ, quy trình, bản đồ và cách nâng bài từ band 6 lên band 7."
+
+[[modules]]
+id = "iw1-format-overview"
+title = "Cấu trúc bài và overview"
+description = "Bố cục 4 đoạn, paraphrase đề, viết overview và chọn số liệu chính mà không nêu ý kiến cá nhân."
+lesson = '''
+### Lộ trình học gợi ý
+Khu IELTS dành cho người đã xong khoảng B1. Nên học Ngữ pháp IELTS và Từ vựng IELTS song song, rồi tới Writing Task 1 này. App chỉ có chữ và chấm essay bằng từ khoá, nên chỉ kiểm tra được các *thành phần bắt buộc* chứ không cho ra band. Hãy dùng `model_answer` và checklist tự chấm để so bài của bạn.
+
+### Task 1 yêu cầu gì
+Bạn có khoảng 20 phút, viết ít nhất 150 từ để **mô tả và so sánh thông tin** từ biểu đồ, bảng, quy trình hoặc bản đồ. Đây không phải bài bình luận: không nêu nguyên nhân, dự đoán hay ý kiến nếu dữ liệu không nói. Task 1 chiếm khoảng một phần ba tổng điểm Writing, nhưng một bài thiếu overview thường bị kéo xuống band 5 ở tiêu chí Task Achievement.
+
+### Bố cục 4 đoạn
+| Đoạn | Việc cần làm | Độ dài |
+|---|---|---|
+| 1. Introduction | Paraphrase câu đề: đổi động từ và danh từ, giữ nguyên số liệu, đơn vị, thời gian | 1–2 câu |
+| 2. Overview | Nêu 2–3 đặc điểm lớn nhất của toàn bộ dữ liệu, **không có số liệu chi tiết** | 2–3 câu |
+| 3. Body 1 | Mô tả nhóm số liệu thứ nhất, có số liệu dẫn chứng và so sánh | 3–4 câu |
+| 4. Body 2 | Mô tả nhóm còn lại | 3–4 câu |
+
+### Paraphrase đề
+Đề thường có dạng *The chart shows the percentage of households with internet access in four countries between 2000 and 2020.* Cách đổi:
+- *shows* → *illustrates, compares, gives information about*;
+- *the percentage of households with internet access* → *the proportion of homes connected to the internet*;
+- *between 2000 and 2020* → *over a 20-year period / from 2000 to 2020*;
+- *four countries* → *four different nations*.
+Không chép nguyên câu đề, vì phần chép không được tính khi đếm từ vựng. Đừng đổi sai nghĩa: *percentage* không phải là *number*.
+
+### Overview là gì
+Overview là bức tranh tổng thể: xu hướng chung, mục cao nhất/thấp nhất, sự khác biệt lớn nhất, hoặc (với quy trình) số bước và điểm đầu cuối. Mẫu câu: *Overall, X increased while Y declined.* / *It is clear that … was the most popular, whereas … was the least.* / *The process has five main stages, beginning with … and ending with …* Đặt overview ở đoạn riêng, ngay sau introduction, để giám khảo dễ thấy.
+
+### Chọn số liệu: key features
+Không liệt kê mọi con số. Chọn: điểm bắt đầu và kết thúc, đỉnh và đáy, điểm giao nhau, mục nổi bật nhất, mục lệch khỏi quy luật chung. Số liệu nhỏ, ít ý nghĩa có thể bỏ. Mỗi đoạn thân bài nên **nhóm** các mục có xu hướng giống nhau.
+
+### Band 6 và band 7 khác nhau thế nào
+- **Task Achievement:** band 6 có overview nhưng còn mờ hoặc bỏ sót đặc điểm lớn, có chi tiết không cần thiết. Band 7 có overview rõ, chọn đúng đặc điểm chính và hỗ trợ bằng số liệu chính xác.
+- **Coherence & Cohesion:** band 6 sắp xếp theo thứ tự biểu đồ và dùng từ nối cơ bản. Band 7 nhóm theo logic (tăng / giảm) và quy chiếu tự nhiên (*the latter, this figure*).
+- **Lexical Resource:** band 6 lặp *increase / decrease*. Band 7 thay đổi: *climb, surge, dip, plunge*.
+- **Grammar:** band 6 chủ yếu câu đơn, mắc lỗi thì. Band 7 trộn câu phức, mệnh đề *while/whereas*, ít lỗi.
+
+### Lỗi hay gặp của người Việt
+- Quên overview hoặc nhét overview vào cuối bài như kết luận.
+- Viết *In conclusion, I think…* hoặc giải thích nguyên nhân ("because people are richer").
+- Sai thì: dữ liệu 1990–2010 phải dùng past simple.
+- Chép số liệu sai đơn vị: *percent* và *percentage*, *a number of* và *the number of*.
+
+### Mẹo thời gian
+3 phút phân tích đề và gạch chân đặc điểm chính, 15 phút viết, 2 phút soát lỗi thì và số liệu. Luôn dành 20 phút cho Task 1, không hơn, để dành 40 phút cho Task 2.
+'''
+
+[[modules]]
+id = "iw1-line-bar-trends"
+title = "Biểu đồ đường và cột: ngôn ngữ xu hướng"
+description = "Động từ và danh từ xu hướng, trạng từ mức độ, peak, bottom out, plateau và cách chọn số liệu chính."
+lesson = '''
+### Chiến lược theo bước
+1. Đọc tiêu đề, trục và đơn vị (triệu người, %, tấn).
+2. Tìm xu hướng chung của từng đường/cột: tăng, giảm, dao động, giữ nguyên.
+3. Tìm điểm cao nhất, thấp nhất và điểm giao nhau.
+4. Gom các đường có xu hướng giống nhau vào cùng một đoạn thân bài.
+5. Viết overview trước khi mô tả chi tiết.
+
+### Động từ và danh từ xu hướng
+| Hướng | Động từ | Danh từ |
+|---|---|---|
+| Tăng | rise, increase, grow, climb, go up | a rise, an increase, a growth, an upward trend |
+| Tăng mạnh | surge, soar, jump, rocket | a surge, a jump |
+| Giảm | fall, decrease, decline, drop | a fall, a decrease, a decline, a drop |
+| Giảm mạnh | plunge, plummet, collapse | a sharp fall, a plunge |
+| Ổn định | remain stable, stay constant, level off, plateau | a plateau, a period of stability |
+| Dao động | fluctuate, vary | fluctuations |
+| Đạt đỉnh / đáy | peak at, reach a high of / bottom out at, hit a low of | a peak, a low point |
+
+### Trạng từ và tính từ mức độ
+Nhanh: *sharply, dramatically, rapidly, significantly*. Chậm: *gradually, steadily, slightly, marginally*. Cặp tương ứng: *a sharp rise* (tính từ + danh từ) = *rose sharply* (động từ + trạng từ). Chuyển đổi hai dạng này giúp bạn đa dạng cấu trúc.
+
+### Giới từ đi kèm số liệu
+- *rose from 20% to 35%* (điểm đầu và điểm cuối)
+- *rose by 15%* (mức thay đổi)
+- *peaked at 40%* (mức đạt được)
+- *reached a peak of 40%*
+- *stood at 25%* (giữ ở mức)
+- *in 2005 / between 2000 and 2010 / over the period*
+
+### Chọn số liệu chính
+Mỗi đường nên có tối đa 2–3 con số: đầu, cuối và đỉnh hoặc đáy nếu quan trọng. Đừng viết *In 2001 it was 12, in 2002 it was 14, in 2003 it was 15…* Hãy viết *It climbed steadily from 12 to 15 between 2001 and 2003.*
+
+### Thì
+Mốc quá khứ dùng past simple. Dự báo tương lai dùng *is projected to / will*. Mốc kéo đến hiện tại có thể dùng present perfect khi có *since*.
+
+### Ví dụ phân tích
+Đề: số lượng thuê bao của ba hãng, 2010–2020. Câu band 6: *The number of customers of Company A went up. Then it went up again.* Câu band 7: *Company A's customer base climbed steadily from 2 million to 5 million, overtaking Company B in 2016.* Câu band 7 có so sánh, số liệu, giới từ chính xác và đa dạng từ.
+
+### Lỗi hay gặp
+- Nhầm *from … to* với *by*: *rose by 10* (tăng thêm 10) khác *rose to 10* (đạt 10).
+- Dùng *fell down*, *increase up* (thừa).
+- Lặp *increase* ở mọi câu.
+- Mô tả cả 12 điểm dữ liệu thay vì tóm tắt xu hướng.
+- Nêu lý do không có trong biểu đồ (ví dụ "because of the economic crisis").
+
+### Band 6 và band 7
+Band 6 mô tả đúng nhưng đều đều, số liệu đôi khi sai hoặc thừa. Band 7 so sánh giữa các đối tượng, nhóm xu hướng, dùng ít nhất 6–8 từ xu hướng khác nhau và hầu như không sai số liệu. Điều này ảnh hưởng đến cả Task Achievement lẫn Lexical Resource.
+
+### Mẹo thời gian
+Khoanh các điểm cần nhắc ngay trên đề (đỉnh, đáy, điểm giao). Khi viết, mỗi đoạn thân bài chỉ cần 3–4 câu: nếu quá dài tức là bạn đang liệt kê.
+'''
+
+[[modules]]
+id = "iw1-pie-table-proportions"
+title = "Biểu đồ tròn và bảng: tỉ lệ và nhóm dữ liệu"
+description = "Diễn đạt tỉ lệ, phân số, account for / make up, so sánh và nhóm nhiều hạng mục."
+lesson = '''
+### Chiến lược theo bước
+1. Xác định đơn vị: phần trăm, số lượng, tiền.
+2. Tìm hạng mục lớn nhất và nhỏ nhất.
+3. Xem có hai thời điểm hoặc hai nhóm cần so sánh không.
+4. Nhóm hạng mục: nhóm lớn (hơn 30%), nhóm trung bình, nhóm nhỏ.
+5. Viết overview nêu mục nổi bật và điểm khác biệt lớn nhất.
+
+### Cách diễn đạt tỉ lệ
+| Ý nghĩa | Mẫu câu |
+|---|---|
+| Chiếm | *Rent accounted for 35% of spending.* / *Food made up a quarter of the budget.* |
+| Phân số | *a quarter (25%), a third (33%), a half (50%), two-thirds (67%), three-quarters (75%)* |
+| Xấp xỉ | *just over a fifth, nearly half, roughly 30%* |
+| Lớn nhất / nhỏ nhất | *the largest share, the smallest proportion, the highest figure* |
+| Gấp bội | *twice as high as, three times the figure for…* |
+| So sánh | *compared with, whereas, while, in contrast, by comparison* |
+
+### Lưu ý ngữ pháp
+- *The proportion of X* đi với động từ số ít; *a proportion of people* có thể đi với số nhiều tuỳ danh từ sau.
+- *The number of students is…* (số ít) khác *A number of students are…* (số nhiều).
+- Dùng *percentage* chung chung, *percent* hoặc *%* đi sau con số.
+- Không viết ~~the percentage of 20%~~; viết *20% of…* hoặc *the percentage was 20*.
+
+### Nhóm dữ liệu
+Bảng có 8 hạng mục không nên được mô tả từng dòng. Hãy gom: *The three largest categories were housing, food and transport, which together made up over 70%.* Nhóm này tạo cohesion tốt và tiết kiệm từ. Với bảng nhiều năm, chọn hai mốc đối lập nhất để so sánh.
+
+### Biểu đồ tròn hai thời điểm
+Khi có hai biểu đồ tròn (năm 1990 và 2020), overview nên nêu **sự thay đổi lớn nhất**, ví dụ *the share of renewable energy more than doubled while coal fell sharply.* Thân bài 1 nói mục tăng, thân bài 2 nói mục giảm hoặc giữ nguyên.
+
+### Ví dụ phân tích
+Bảng: ngân sách một gia đình, nhà ở 38%, thực phẩm 24%, đi lại 14%, giải trí 9%, khác 15%. Overview tốt: *Housing took the largest share of the household budget, followed by food, while leisure accounted for the smallest.* Thân bài: *Housing accounted for 38%, while food made up 24%...* Không viết "people spend a lot on housing because it is expensive".
+
+### Lỗi hay gặp
+- Quên đơn vị.
+- Nhầm *twice as many as* với *twice more*.
+- Dùng *the majority* cho mục chỉ 30%: *majority* nghĩa là hơn 50%.
+- Cộng tổng sai khi nói *together*.
+
+### Band 6 và band 7
+Band 6: liệt kê hạng mục và số liệu, quan hệ so sánh đơn giản (*higher than*). Band 7: nhóm hạng mục, dùng phân số và xấp xỉ chính xác, đa dạng cách nói *account for / make up / represent / constitute*, dùng cấu trúc so sánh gấp bội mà không sai số.
+
+### Mẹo thời gian
+Tính nhanh phân số trước khi viết: 25% là một phần tư, 33% là một phần ba. Làm tròn khi thích hợp (*just under a third*) giúp tránh viết số lẻ gây nhầm.
+'''
+
+[[modules]]
+id = "iw1-process-diagram"
+title = "Quy trình và chu trình"
+description = "Bị động, từ chỉ trình tự, cách nhóm các bước và overview cho quy trình sản xuất hoặc tự nhiên."
+lesson = '''
+### Chiến lược theo bước
+1. Xác định loại: quy trình sản xuất (có người/máy) hay chu trình tự nhiên (cycle).
+2. Đếm số bước và tìm điểm đầu, điểm cuối.
+3. Đánh số các bước trên đề.
+4. Chia bước thành 2 nhóm (ví dụ: chuẩn bị và hoàn thiện) cho hai đoạn thân bài.
+5. Overview nêu tổng số bước và điểm bắt đầu, kết thúc, hoặc nói đó là chu trình khép kín.
+
+### Ngôn ngữ quy trình
+| Chức năng | Mẫu |
+|---|---|
+| Mở đầu | *First, At the first stage, The process begins with…* |
+| Nối tiếp | *Next, Then, After that, Following this, Subsequently* |
+| Đồng thời | *At the same time, Meanwhile, While this is happening* |
+| Kết thúc | *Finally, In the last stage, The process ends when…* |
+| Liên kết bước | *Once the beans are dried, they are…* / *After being washed, the fruit is cut.* |
+
+### Bị động
+Quy trình dùng chủ yếu **bị động hiện tại đơn**: *The clay is mixed with water and is then shaped into bricks.* Chủ động chỉ dùng khi chủ thể tự hoạt động trong chu trình tự nhiên: *Water evaporates and condenses into clouds.* Tránh *I / we*. Cấu trúc *passive + V-ing* nối hai hành động: *The bricks are heated, producing hard blocks.*
+
+### Quy trình và chu trình
+Quy trình sản xuất có điểm đầu và điểm cuối rõ. Chu trình thì khép kín, nên overview nói *The diagram shows a continuous cycle* và không "kết thúc". Viết thì **present simple** vì quy trình là sự thật tổng quát, không có mốc thời gian.
+
+### Từ vựng cần chính xác
+Giữ đúng tên vật liệu, thiết bị và hành động: *crush, filter, heat, cool, package, store, harvest*. Có thể paraphrase nhẹ nhưng đừng thay đổi nghĩa (*filter* khác *wash*). Đừng thêm bước không có trong hình.
+
+### Ví dụ phân tích
+Quy trình làm giấy tái chế gồm 6 bước. Overview band 7: *Overall, the process of recycling paper has six stages, starting with the collection of used paper and ending with the delivery of new rolls.* Thân bài 1: *First, used paper is collected and transported to a factory, where it is sorted…* Thân bài 2: *After the ink is removed, the pulp is pressed…*
+
+### Lỗi hay gặp
+- Dùng chủ động sai: ~~The machine crushes the paper and then pour into water~~ (lỗi song song và bị động).
+- Sai dạng quá khứ phân từ của động từ bất quy tắc: ~~is cutted~~ (đúng: *is cut*), ~~is putted~~ (đúng: *is put*).
+- Lặp *then* ở mọi câu.
+- Nhầm số bước hoặc bỏ bước.
+- Liệt kê "Step 1, Step 2" như gạch đầu dòng, mất cohesion.
+
+### Band 6 và band 7
+Band 6 mô tả đủ bước nhưng cấu trúc đơn điệu (*Then… Then…*) và vài lỗi bị động. Band 7 trộn trạng từ trình tự và mệnh đề *once / after being / while*, nhóm bước hợp lý, bị động chính xác và có overview rõ số bước.
+
+### Mẹo thời gian
+Dành 2 phút đánh số bước. Viết xong kiểm tra bị động: mỗi câu có *be + V3* chưa. Nếu thiếu thời gian, ưu tiên overview và đủ bước hơn là câu phức.
+'''
+
+[[modules]]
+id = "iw1-maps-change"
+title = "Bản đồ: so sánh hai thời điểm"
+description = "Từ vựng xây dựng và biến đổi, từ chỉ vị trí, thì quá khứ - hiện tại và overview cho bản đồ."
+lesson = '''
+### Chiến lược theo bước
+1. Xác định hai mốc thời gian, ví dụ 1990 và nay (hoặc kế hoạch tương lai).
+2. Chọn một điểm mốc cố định (sông, đường chính, trường học) để định vị.
+3. Liệt kê: cái gì **mới**, cái gì **bị bỏ**, cái gì **giữ nguyên**, cái gì **đổi chức năng**.
+4. Chia bài thân: phần đã có sẵn hoặc đổi nhiều nhất, phần còn lại.
+5. Overview nêu mức thay đổi tổng thể: *The village changed significantly, with farmland replaced by housing.*
+
+### Từ vựng thay đổi
+| Ý nghĩa | Từ/cụm |
+|---|---|
+| Xây mới | *be built, be constructed, be added, appear, a new … was opened* |
+| Phá bỏ | *be demolished, be knocked down, be removed, disappear* |
+| Thay thế | *be replaced by, make way for, be converted into, be turned into* |
+| Mở rộng | *be expanded, be extended, be enlarged, double in size* |
+| Thu nhỏ | *be reduced, shrink* |
+| Giữ nguyên | *remain unchanged, stay the same, be retained* |
+| Di dời | *be relocated, be moved to* |
+
+### Từ chỉ vị trí
+*to the north of, in the south-east, on the eastern side, next to, opposite, between … and …, alongside the river, at the edge of, in the centre.* Dùng la bàn (hướng) và vật làm mốc, tránh *on the left* nếu bản đồ có hướng bắc.
+
+### Thì
+Hai mốc quá khứ dùng past simple (*was built*). Quá khứ so với hiện tại: *In 1995 there was a farm, but today there is a shopping mall.* Mốc tương lai: *will be built, is planned to be*. Cùng một câu có thể đổi thì nếu mốc đổi, nhưng phải rõ ràng.
+
+### Bị động
+Bản đồ dùng bị động rất nhiều vì bạn không biết ai làm: *The farmland was replaced by houses, and a bridge was constructed across the river.* Chủ động dùng cho thành phần xuất hiện: *A new library appears in the north.*
+
+### Ví dụ phân tích
+Đề: bản đồ một thị trấn năm 1980 và 2020. Overview tốt: *Overall, the town became much more developed, with farmland and the old market giving way to housing and a modern shopping centre, while the river and the main road remained unchanged.* Câu này nêu thay đổi lớn và phần giữ nguyên, không có chi tiết nhỏ.
+
+### Lỗi hay gặp
+- Dùng thì hiện tại cho cả hai mốc quá khứ.
+- Nhầm *in the north* với *to the north of*.
+- Dùng *build* chủ động khi không có tác nhân: ~~The council build a school~~ (sai thì).
+- Bỏ sót phần giữ nguyên (cũng là đặc điểm quan trọng).
+- Giải thích nguyên nhân ("because the population grew").
+
+### Band 6 và band 7
+Band 6 liệt kê thay đổi theo thứ tự trong hình, vị trí đôi khi mơ hồ. Band 7 nhóm thay đổi theo chủ đề (nhà ở, giao thông), định vị chính xác bằng hướng, dùng đa dạng từ biến đổi và có overview rõ.
+
+### Mẹo thời gian
+Dành 2 phút vẽ mũi tên trên đề nối các khu vực thay đổi. Mỗi thay đổi một mệnh đề ngắn. Nếu hết thời gian, ưu tiên nêu thay đổi lớn nhất hơn là chi tiết nhỏ.
+'''
+
+[[modules]]
+id = "iw1-mixed-band-upgrade"
+title = "Biểu đồ kết hợp và nâng từ band 6 lên band 7"
+description = "Viết khi có hai biểu đồ, so sánh liên kết dữ liệu và biến bài band 5–6 thành band 7."
+lesson = '''
+### Chiến lược cho biểu đồ kết hợp
+Đề có hai biểu đồ (ví dụ cột + bảng hoặc đường + tròn). Đừng mô tả riêng từng cái như hai bài. Hãy:
+1. Tìm **mối liên hệ**: cùng chủ đề hay bổ sung nhau.
+2. Overview: một câu cho biểu đồ thứ nhất, một câu cho biểu đồ thứ hai, hoặc một câu chung nêu quan hệ.
+3. Thân bài 1 chủ yếu cho biểu đồ thứ nhất; thân bài 2 cho biểu đồ thứ hai, có thể nhắc lại để nối hai nguồn bằng *In contrast, the pie chart reveals…*
+4. Chỉ chọn mỗi biểu đồ 2–3 điểm chính.
+
+### Từ nối giữa hai nguồn
+*While the bar chart shows …, the table indicates …* / *This pattern is also reflected in…* / *By contrast, the second chart reveals…* / *Taken together, the figures suggest…* (nhưng không suy diễn ngoài dữ liệu).
+
+### Từ band 6 lên band 7
+| Band 6 | Band 7 |
+|---|---|
+| *The number went up a lot.* | *The number rose dramatically from 20 to 70.* |
+| *A is high. B is low.* | *A was considerably higher than B.* |
+| *There are many people who use bikes.* | *Cycling was the most popular mode of transport.* |
+| Liệt kê 10 số | Nêu xu hướng + 2 số liệu chính |
+| *Then…, then…* | *Following this, … / Once …* |
+| Thiếu overview | Overview rõ, có so sánh |
+
+### Quy trình tự chấm 4 tiêu chí
+1. **Task Achievement:** có overview? số liệu đúng? có chọn đặc điểm chính? không có ý kiến?
+2. **Coherence & Cohesion:** bố cục 4 đoạn? từ nối đa dạng? quy chiếu (*this, the latter*)?
+3. **Lexical Resource:** đa dạng từ xu hướng, collocation đúng?
+4. **Grammar:** thì đúng? có câu phức (*while, which*)? lỗi số ít/nhiều?
+
+### Ví dụ nâng cấp
+Bài band 5.5: *The chart shows internet users. In 2010 it is 30 and in 2012 it is 40 and in 2014 is 55. It is increase.* Sửa lên band 7: *The chart illustrates changes in the number of internet users between 2010 and 2014. Overall, usage grew steadily, rising from 30 million to 55 million.* Thay đổi: đổi thì, bỏ lặp, thêm overview, dùng đơn vị, giới từ *from … to*.
+
+### Lỗi hay gặp
+- Mô tả hai biểu đồ tách rời không liên hệ.
+- Đưa số liệu của biểu đồ A vào đoạn mô tả biểu đồ B.
+- Quá nhiều chi tiết nên vượt giờ.
+- Không rà lỗi thì khi sửa bài.
+
+### Band 6 và band 7: tóm tắt
+Band 6.5 là ổn định ở band 6 và đạt band 7 ở một số tiêu chí. Muốn lên, tập trung nhanh nhất vào: (1) overview rõ, (2) chọn lọc số liệu, (3) đa dạng từ xu hướng, (4) thêm 2–3 câu phức đúng.
+
+### Mẹo thời gian
+Khi sửa bài, soát theo thứ tự: số liệu và thì (vì ảnh hưởng điểm nhiều nhất), sau đó dùng từ, cuối cùng là chính tả và dấu phẩy.
+'''
+
+[[questions]]
+id = "iw1-001"
+module = "iw1-format-overview"
+type = "single"
+difficulty = 1
+tags = ["band:5.5"]
+prompt = "Task: *The bar chart shows the percentage of households with a car in five cities in 2015.* Which sentence is the best paraphrase for the introduction?"
+options = ["The bar chart shows the percentage of households with a car in five cities in 2015.", "The graph shows the number of cars in five towns in 2015.", "The bar chart compares the proportion of homes that owned a car in five cities in 2015.", "The chart illustrates why people in five cities buy cars."]
+answer = [2]
+explanation = "Câu C đổi động từ (*compares*) và danh từ (*proportion of homes*) mà giữ nguyên nghĩa, số lượng thành phố và năm. Câu A chép nguyên đề. Câu B đổi *percentage* thành *number* nên sai nghĩa. Câu D thêm nguyên nhân không có trong đề."
+
+[[questions]]
+id = "iw1-002"
+module = "iw1-format-overview"
+type = "single"
+difficulty = 1
+tags = ["band:5.5"]
+prompt = "Where should the overview go in a Task 1 report?"
+options = ["At the very end as \"In conclusion, I think…\"", "In a separate paragraph directly after the introduction", "Inside the introduction together with all the numbers", "It is optional, so it can be left out"]
+answer = [1]
+explanation = "Overview nên là đoạn riêng ngay sau introduction để giám khảo thấy rõ. Bỏ overview thường kéo Task Achievement xuống khoảng band 5. Task 1 không có ý kiến cá nhân nên không dùng *I think*."
+
+[[questions]]
+id = "iw1-003"
+module = "iw1-format-overview"
+type = "single"
+difficulty = 1
+tags = ["band:5.5"]
+prompt = "What is the minimum number of words required for IELTS Writing Task 1?"
+options = ["100", "200", "250", "150"]
+answer = [3]
+explanation = "Task 1 cần ít nhất 150 từ trong khoảng 20 phút. Số 250 từ là yêu cầu của Task 2."
+
+[[questions]]
+id = "iw1-004"
+module = "iw1-format-overview"
+type = "fill"
+difficulty = 1
+tags = ["band:5.5"]
+prompt = "Complete the overview opening: *{{blank}}, the number of visitors rose over the whole period.*"
+blanks = [["overall", "in general", "generally", "generally speaking", "on the whole"]]
+explanation = "Overview thường mở bằng *Overall,* hoặc *In general,* để báo hiệu đây là bức tranh chung. Không dùng *In conclusion* vì Task 1 không cần phần kết luận riêng."
+
+[[questions]]
+id = "iw1-005"
+module = "iw1-format-overview"
+type = "single"
+difficulty = 1
+tags = ["band:5.5"]
+prompt = "You have 20 minutes for Task 1. Which plan uses the time best?"
+options = ["15 minutes planning and 5 minutes writing", "About 3 minutes analysing, 15 minutes writing and 2 minutes checking", "Write 300 words and skip the overview", "Spend 35 minutes on Task 1 because the chart is difficult"]
+answer = [1]
+explanation = "Cần phân tích đề ngắn, viết phần lớn thời gian và dành vài phút soát số liệu và thì. Dành quá nhiều giờ cho Task 1 sẽ làm hụt thời gian của Task 2, vốn có trọng số gấp đôi."
+
+[[questions]]
+id = "iw1-006"
+module = "iw1-format-overview"
+type = "single"
+difficulty = 2
+tags = ["band:6.5"]
+prompt = "Look at the table (cinema attendance, millions of visits).\n\n| Country | 2000 | 2020 |\n|---|---|---|\n| Aland | 12 | 20 |\n| Borvia | 18 | 14 |\n| Cestan | 9 | 21 |\n| Dunmark | 15 | 15 |\n\nWhich is the best overview?"
+options = ["In 2000, Aland had 12 million visits and Borvia had 18 million visits.", "Overall, attendance rose in Aland and Cestan, with Cestan growing most, whereas Borvia was the only country to fall and Dunmark stayed the same.", "Attendance rose because films became cheaper and cinemas became more comfortable.", "Overall, attendance fell in all four countries over the 20 years."]
+answer = [1]
+explanation = "Câu B nêu xu hướng chung và đối lập chính của cả bảng mà không sa vào số liệu chi tiết. Câu A chỉ là chi tiết, không phải overview. Câu C thêm nguyên nhân không có trong bảng. Câu D sai: Aland và Cestan tăng, Dunmark giữ nguyên."
+
+[[questions]]
+id = "iw1-007"
+module = "iw1-format-overview"
+type = "multiple"
+difficulty = 2
+tags = ["band:6.5"]
+prompt = "Select all the features that belong in a good Task 1 overview."
+options = ["The general trend or the main contrast", "The highest and lowest categories", "Every figure for every year", "A personal opinion about why the change happened", "The number of stages and the start and end points (for a process)"]
+answer = [0, 1, 4]
+explanation = "Overview gồm xu hướng, đối lập, mục cao/thấp nhất, hoặc số bước của quy trình. Không liệt kê mọi số liệu (thuộc thân bài) và không có ý kiến hay nguyên nhân tự thêm."
+
+[[questions]]
+id = "iw1-008"
+module = "iw1-format-overview"
+type = "single"
+difficulty = 2
+tags = ["band:6.5"]
+prompt = "A student writes this overview: *It is clear that unemployment fell because the government created many new jobs.* What is the main problem?"
+options = ["The tense is wrong because the chart is about the past", "It gives a cause that the data does not show", "It has too many numbers for an overview", "It does not use the word \"overall\""]
+answer = [1]
+explanation = "Task 1 chỉ mô tả dữ liệu. Câu *because the government created many new jobs* là nguyên nhân tự đoán, không có trong biểu đồ, nên mất điểm Task Achievement. Thì *fell* hoàn toàn đúng."
+
+[[questions]]
+id = "iw1-009"
+module = "iw1-format-overview"
+type = "multiple"
+difficulty = 2
+tags = ["band:6.5"]
+prompt = "Select all good paraphrases of: *The table gives information about the average weekly spending of students in four countries.*"
+options = ["The table presents data on how much students in four nations spend per week on average.", "The table compares the mean weekly expenditure of students in four countries.", "The table explains why students in four countries spend money.", "The table shows the total yearly income of students in four countries."]
+answer = [0, 1]
+explanation = "A và B giữ nguyên nghĩa bằng từ đồng nghĩa (*average → mean*, *spending → expenditure*). C thêm ý \"giải thích lý do\", D đổi *spending* thành *income* và *weekly* thành *yearly*."
+
+[[questions]]
+id = "iw1-010"
+module = "iw1-format-overview"
+type = "fill"
+difficulty = 2
+tags = ["band:6.5"]
+prompt = "Complete the introduction: *The chart {{blank}} the proportion of energy produced from different sources in 2010.*"
+blanks = [["illustrates", "shows", "compares", "presents", "displays", "outlines"]]
+explanation = "Cần một động từ chia ở hiện tại đơn, chủ ngữ số ít *the chart*, thêm *-s*. Dùng các từ khác nhau (*illustrates, compares, presents*) giúp Lexical Resource tốt hơn so với lặp *shows*."
+
+[[questions]]
+id = "iw1-011"
+module = "iw1-format-overview"
+type = "single"
+difficulty = 2
+tags = ["band:6.5"]
+prompt = "Look at the table.\n\n| Country | 2000 | 2020 |\n|---|---|---|\n| Aland | 12 | 20 |\n| Borvia | 18 | 14 |\n| Cestan | 9 | 21 |\n| Dunmark | 15 | 15 |\n\nWhich sentence is suitable for a Task 1 body paragraph?"
+options = ["I think Cestan will become the biggest market in future.", "Cestan's attendance more than doubled, from 9 million to 21 million visits.", "Cestan is lucky because films are cheap there.", "Everyone should visit Cestan cinemas."]
+answer = [1]
+explanation = "Câu B mô tả đúng dữ liệu (21 > 2 x 9) và có số liệu kèm giới từ *from … to*. Các câu còn lại là dự đoán, nguyên nhân hoặc lời khuyên, không có trong bảng."
+
+[[questions]]
+id = "iw1-012"
+module = "iw1-format-overview"
+type = "essay"
+difficulty = 2
+tags = ["band:6.5"]
+prompt = "Write an introduction and an overview (2–4 sentences in total) for this chart.\n\nLine chart: average daily time (minutes) spent on social media in Orland.\n\n| Group | 2010 | 2015 | 2020 |\n|---|---|---|---|\n| Teenagers | 40 | 95 | 150 |\n| Adults | 20 | 45 | 70 |"
+keywords = [["teenagers", "teens", "young people", "adolescents"], ["adults"], ["overall", "in general", "it is clear", "generally"], ["rose", "increased", "grew", "climbed", "went up", "upward", "growth", "rise"]]
+min_keywords = 4
+model_answer = "The line chart illustrates how many minutes teenagers and adults in Orland spent on social media each day between 2010 and 2020. Overall, daily usage rose steadily for both groups, and teenagers consistently spent much more time online than adults."
+explanation = "Checklist 4 tiêu chí: (1) Task Achievement: intro paraphrase đề, overview có xu hướng chung (cả hai nhóm tăng) và đối lập (thanh thiếu niên luôn cao hơn), không có số liệu chi tiết, không nêu nguyên nhân; (2) Coherence: intro và overview tách rõ, có từ báo hiệu *Overall*; (3) Lexical Resource: không chép nguyên đề, dùng *illustrates, usage, consistently*; (4) Grammar: past simple đúng, có ít nhất một câu phức với liên từ *and / while*."
+
+[[questions]]
+id = "iw1-013"
+module = "iw1-format-overview"
+type = "single"
+difficulty = 3
+tags = ["band:7"]
+prompt = "The data: online shopping took 4% of retail sales in 2000 and 22% in 2020; in-store sales fell from 96% to 78% over the same years. Which overview is best?"
+options = ["Overall, online shopping was 4% in 2000 and 22% in 2020 while in-store sales were 96% and 78%.", "Overall, online shopping grew faster than in-store sales, which will soon disappear.", "Overall, online shopping's share grew substantially while in-store sales declined, although stores kept the larger share throughout.", "Overall, in-store sales fell by 18% because customers prefer phones."]
+answer = [2]
+explanation = "Câu C nêu cả hai xu hướng và điểm đối lập quan trọng (cửa hàng vẫn chiếm phần lớn) mà không dùng số. Câu A chỉ lặp số liệu. Câu B dự đoán \"will soon disappear\". Câu D nêu nguyên nhân không có trong dữ liệu."
+
+[[questions]]
+id = "iw1-014"
+module = "iw1-format-overview"
+type = "multiple"
+difficulty = 3
+tags = ["band:7"]
+prompt = "Select all sentences that keep the meaning of: *The proportion of households owning two or more cars rose between 1995 and 2015.*"
+options = ["The share of homes with at least two vehicles increased from 1995 to 2015.", "More households owned exactly two cars in 2015 than in 1995.", "Households with two or more cars became more common over the 20 years to 2015.", "The total number of cars in the country doubled between 1995 and 2015."]
+answer = [0, 2]
+explanation = "A và C giữ nguyên nghĩa (*two or more = at least two*, *proportion = share*). B thu hẹp thành *exactly two*. D nói tổng số xe và nêu \"doubled\" không có trong đề."
+
+[[questions]]
+id = "iw1-015"
+module = "iw1-format-overview"
+type = "single"
+difficulty = 3
+tags = ["band:7"]
+prompt = "Which statement about choosing data for a Task 1 report is most accurate?"
+options = ["Describe every number in order so that nothing is missed", "Select the key features, group similar items and accept that small details are left out", "Describe only the first and last years", "Include the reasons for each change to show understanding"]
+answer = [1]
+explanation = "Band cao cần chọn lọc và nhóm số liệu theo đặc điểm chính. Liệt kê tất cả là lỗi phổ biến của band 5–6. Chỉ nói năm đầu và cuối làm mất đỉnh/đáy quan trọng. Nêu nguyên nhân không được phép khi dữ liệu không cho biết."
+
+[[questions]]
+id = "iw1-016"
+module = "iw1-format-overview"
+type = "fill"
+difficulty = 3
+tags = ["band:7"]
+prompt = "Complete with a contrast word: *Cestan's attendance more than doubled, {{blank}} Borvia's fell by four million.*"
+blanks = [["whereas", "while"]]
+explanation = "*Whereas* và *while* nối hai mệnh đề đối lập, đi sau dấu phẩy. Dùng liên từ này để so sánh hai mục là dấu hiệu band 7 ở Grammatical Range. Không dùng *but* và *whereas* cùng lúc."
+
+[[questions]]
+id = "iw1-017"
+module = "iw1-line-bar-trends"
+type = "single"
+difficulty = 1
+tags = ["band:5.5"]
+prompt = "A line goes up quickly from 20 to 60 between 2000 and 2005. Which sentence is correct?"
+options = ["The figure rose sharply from 20 to 60 between 2000 and 2005.", "The figure rose sharp from 20 to 60 between 2000 and 2005.", "The figure had a sharply rise from 20 to 60 between 2000 and 2005.", "The figure rises sharply from 20 to 60 between 2000 and 2005."]
+answer = [0]
+explanation = "Động từ *rose* đi với trạng từ *sharply* (không phải tính từ *sharp*). Cụm danh từ cần tính từ: *a sharp rise*, nên câu C sai. Dữ liệu ở quá khứ (2000–2005) nên dùng past simple, câu D dùng hiện tại là sai thì."
+
+[[questions]]
+id = "iw1-018"
+module = "iw1-line-bar-trends"
+type = "fill"
+difficulty = 1
+tags = ["band:5.5"]
+prompt = "Complete with a noun meaning *the highest point*: *The price of rice reached a {{blank}} of $5 in 2012 and then started to fall.*"
+blanks = [["peak", "high", "high point", "highpoint", "maximum"]]
+explanation = "*Reach a peak of + số liệu* là cụm chuẩn để nói điểm cao nhất. Sau đó giá bắt đầu giảm, nên đây chính là đỉnh của đường biểu đồ."
+
+[[questions]]
+id = "iw1-019"
+module = "iw1-line-bar-trends"
+type = "single"
+difficulty = 1
+tags = ["band:5.5"]
+prompt = "A line stays at about 30% from 2005 to 2010 with almost no change. Which phrase fits best? *The figure ____.*"
+options = ["levelled off at around 30%", "fluctuated wildly around 30%", "peaked at 30%", "plummeted to 30%"]
+answer = [0]
+explanation = "*Level off / plateau / remain stable* dùng khi đường đi ngang. *Fluctuate wildly* là lên xuống thất thường, *peak* là đỉnh rồi giảm, *plummet* là giảm mạnh, đều không khớp đường nằm ngang."
+
+[[questions]]
+id = "iw1-020"
+module = "iw1-line-bar-trends"
+type = "single"
+difficulty = 2
+tags = ["band:6.5"]
+prompt = "Choose the correct word: *There was a ____ increase in sales between 2015 and 2018.*"
+options = ["significant", "significantly", "significance", "signify"]
+answer = [0]
+explanation = "Trước danh từ *increase* cần tính từ *significant*. Trạng từ *significantly* chỉ dùng với động từ: *sales increased significantly*. Biết đổi qua lại hai mẫu câu (động từ + trạng từ / tính từ + danh từ) giúp đa dạng cấu trúc."
+
+[[questions]]
+id = "iw1-021"
+module = "iw1-line-bar-trends"
+type = "multiple"
+difficulty = 2
+tags = ["band:6.5"]
+prompt = "Car sales in Velmar (thousands):\n\n| 2010 | 2012 | 2014 | 2016 |\n|---|---|---|---|\n| 50 | 80 | 65 | 90 |\n\nSelect all accurate sentences."
+options = ["Sales reached their highest point, at 90,000, in 2016.", "Sales dipped to 65,000 in 2014 before recovering.", "Sales rose steadily throughout the period.", "Sales fell by 15,000 between 2012 and 2014.", "Sales doubled between 2010 and 2012."]
+answer = [0, 1, 3]
+explanation = "90 là giá trị lớn nhất (2016); 2014 giảm còn 65 rồi tăng lại; 80 − 65 = 15 nghìn. Câu C sai vì có đợt giảm năm 2014. Câu E sai: 50 → 80 chưa tới gấp đôi (phải là 100)."
+
+[[questions]]
+id = "iw1-022"
+module = "iw1-line-bar-trends"
+type = "fill"
+difficulty = 2
+tags = ["band:6.5"]
+prompt = "Complete with prepositions: *Unemployment fell {{blank}} 8% {{blank}} 5% between 2000 and 2010.*"
+blanks = [["from"], ["to"]]
+explanation = "Cặp *from … to …* nêu điểm đầu và điểm cuối. Đây là lỗi giới từ phổ biến ở band 5–6 (ví dụ viết *fell 8% to 5%* thiếu *from*)."
+
+[[questions]]
+id = "iw1-023"
+module = "iw1-line-bar-trends"
+type = "single"
+difficulty = 2
+tags = ["band:6.5"]
+prompt = "The price went from $10 to $12. Choose the correct preposition: *The price rose ____ 20%.*"
+options = ["to", "by", "at", "of"]
+answer = [1]
+explanation = "*By* chỉ mức chênh lệch (10 → 12 là tăng 20%). *To* chỉ điểm đến (*rose to $12*). Nhầm *by* và *to* làm sai nghĩa số liệu, ảnh hưởng cả Task Achievement."
+
+[[questions]]
+id = "iw1-024"
+module = "iw1-line-bar-trends"
+type = "single"
+difficulty = 2
+tags = ["band:6.5"]
+prompt = "A bar chart shows coffee consumption in three countries from 2000 to 2020: Arvia and Belton both rose, while Corma fell. Which body-paragraph plan is most effective?"
+options = ["Paragraph 1: Arvia and Belton (both rose); Paragraph 2: Corma (fell)", "One short paragraph for each year shown on the chart", "Paragraph 1: the highest numbers; Paragraph 2: your opinion about coffee", "Describe every bar one by one in a single long paragraph"]
+answer = [0]
+explanation = "Nhóm các mục có cùng xu hướng vào một đoạn giúp so sánh rõ và mạch lạc (Coherence and Cohesion). Chia theo từng năm hoặc liệt kê từng cột dễ thành danh sách số liệu; ý kiến cá nhân không thuộc Task 1."
+
+[[questions]]
+id = "iw1-025"
+module = "iw1-line-bar-trends"
+type = "fill"
+difficulty = 2
+tags = ["band:6.5"]
+prompt = "Complete with a noun (the rate went down): *There was a gradual {{blank}} in the birth rate over the decade.*"
+blanks = [["decline", "decrease", "fall", "drop", "reduction", "downturn"]]
+explanation = "Sau tính từ *gradual* cần danh từ chỉ sự giảm: *decline, decrease, fall, drop*. Mẫu *There was a + adj + noun + in + chủ thể* là cách đổi cấu trúc thay cho *The birth rate fell gradually*."
+
+[[questions]]
+id = "iw1-026"
+module = "iw1-line-bar-trends"
+type = "multiple"
+difficulty = 2
+tags = ["band:6.5"]
+prompt = "Select all expressions that describe an irregular up-and-down pattern."
+options = ["fluctuated", "remained stable", "rose and fell erratically", "showed considerable variation", "plateaued"]
+answer = [0, 2, 3]
+explanation = "*Fluctuate*, *rise and fall erratically*, *show considerable variation* đều chỉ dao động lên xuống. *Remain stable* và *plateau* là đi ngang, ngược nghĩa."
+
+[[questions]]
+id = "iw1-027"
+module = "iw1-line-bar-trends"
+type = "essay"
+difficulty = 2
+tags = ["band:6.5"]
+prompt = "Write one body paragraph (3–4 sentences) describing this line graph.\n\nNumber of people cycling to work in Delford (thousands):\n\n| 2000 | 2005 | 2010 | 2015 | 2020 |\n|---|---|---|---|---|\n| 15 | 12 | 25 | 40 | 38 |"
+keywords = [["rose", "increased", "grew", "climbed", "surged", "rise", "increase"], ["fell", "dipped", "dropped", "declined", "decreased", "dip", "fall", "drop"], ["peak", "highest", "peaked"], ["2010"], ["40,000", "40 000", "40000", "40 thousand"]]
+min_keywords = 4
+model_answer = "The number of cyclists dipped slightly from 15,000 in 2000 to 12,000 in 2005. After that, the figure rose sharply, more than doubling to 25,000 in 2010 and reaching a peak of 40,000 in 2015. In the final five years, it fell marginally to 38,000."
+explanation = "Checklist: (1) Task Achievement: nêu đủ đợt giảm đầu, đợt tăng mạnh, đỉnh 2015 và mức giảm nhẹ cuối; số liệu chính xác, có đơn vị nghìn; (2) Coherence: đi theo thời gian, có từ nối *After that, In the final five years*; (3) Lexical: đa dạng *dipped, rose sharply, reaching a peak, fell marginally*; (4) Grammar: past simple đúng, có cụm phân từ *reaching a peak of…*."
+
+[[questions]]
+id = "iw1-028"
+module = "iw1-line-bar-trends"
+type = "single"
+difficulty = 3
+tags = ["band:7"]
+prompt = "Monthly sales (units): Jan 100, Feb 150, Mar 300, Apr 200, May 150, Jun 110. Which sentence shows the best data selection for band 7?"
+options = ["Sales went up and then went down and then went up.", "Sales climbed steadily to a peak of 300 units in March, before falling back to roughly their January level by June.", "Sales were 100 in January, 150 in February, 300 in March, 200 in April, 150 in May and 110 in June.", "Sales increased dramatically sharply in March to the top."]
+answer = [1]
+explanation = "Câu B chọn điểm chính (đỉnh tháng 3) và tóm phần còn lại bằng so sánh (*roughly their January level*), có cấu trúc *before + V-ing*. Câu A mơ hồ và sai (không tăng lại). Câu C liệt kê hết số. Câu D chồng hai trạng từ và không có số liệu."
+
+[[questions]]
+id = "iw1-029"
+module = "iw1-line-bar-trends"
+type = "single"
+difficulty = 3
+tags = ["band:7"]
+prompt = "A figure is 49.6%. Which approximation is most accurate?"
+options = ["just under half", "exactly half", "well over half", "almost a quarter"]
+answer = [0]
+explanation = "49,6% sát dưới 50% nên là *just under half* (hoặc *nearly half*). Ngôn ngữ ước lượng chính xác (*just under, well over, roughly*) là dấu hiệu band 7; ước lượng sai mức độ bị coi là mô tả sai số liệu."
+
+[[questions]]
+id = "iw1-030"
+module = "iw1-pie-table-proportions"
+type = "single"
+difficulty = 1
+tags = ["band:5.5"]
+prompt = "25% is the same as:"
+options = ["a quarter", "a third", "a half", "a fifth"]
+answer = [0]
+explanation = "25% = 1/4 = *a quarter*. Một phần ba là khoảng 33%, một nửa là 50%, một phần năm là 20%. Dùng phân số thay cho phần trăm giúp tránh lặp số."
+
+[[questions]]
+id = "iw1-031"
+module = "iw1-pie-table-proportions"
+type = "fill"
+difficulty = 1
+tags = ["band:5.5"]
+prompt = "Complete with one word: *In 2010, coal {{blank}} for 40% of electricity production.*"
+blanks = [["accounted"]]
+explanation = "Cụm cố định *account for + tỉ lệ*. Năm 2010 là quá khứ nên chia *accounted*. Không viết *accounted 40%* (thiếu *for*)."
+
+[[questions]]
+id = "iw1-032"
+module = "iw1-pie-table-proportions"
+type = "single"
+difficulty = 1
+tags = ["band:5.5"]
+prompt = "Which sentence is grammatically correct?"
+options = ["Gas makes up 30% of the total.", "Gas makes up of 30% of the total.", "Gas accounts 30% of the total.", "Gas is consisted of 30% of the total."]
+answer = [0]
+explanation = "*Make up* đi thẳng với tỉ lệ (không có *of*), còn *account* bắt buộc có *for*. *Consist of* không dùng bị động và có nghĩa \"gồm có\", không phải \"chiếm\"."
+
+[[questions]]
+id = "iw1-033"
+module = "iw1-pie-table-proportions"
+type = "single"
+difficulty = 2
+tags = ["band:6.5"]
+prompt = "Which phrase best describes 67%?"
+options = ["roughly two thirds", "nearly three quarters", "just over half", "exactly two thirds"]
+answer = [0]
+explanation = "2/3 ≈ 66,7% nên 67% là *roughly two thirds*. *Exactly* sai vì không bằng chính xác. Ba phần tư là 75%, quá xa; *just over half* chỉ hợp cho khoảng 51–55%."
+
+[[questions]]
+id = "iw1-034"
+module = "iw1-pie-table-proportions"
+type = "multiple"
+difficulty = 2
+tags = ["band:6.5"]
+prompt = "Household spending in Merit (% of total):\n\n| Category | 2000 | 2020 |\n|---|---|---|\n| Housing | 30 | 38 |\n| Food | 35 | 22 |\n| Transport | 15 | 18 |\n| Leisure | 10 | 14 |\n| Other | 10 | 8 |\n\nSelect all accurate sentences."
+options = ["Food was the largest category in 2000 but was overtaken by housing in 2020.", "The share spent on food fell by 13 percentage points.", "Spending on housing doubled.", "Leisure's share rose to 14%.", "Transport accounted for the smallest proportion in both years."]
+answer = [0, 1, 3]
+explanation = "Food 35% cao nhất năm 2000, năm 2020 housing 38% vượt lên; 35 − 22 = 13 điểm phần trăm; leisure lên 14%. Câu C sai: 30 → 38 không phải gấp đôi. Câu E sai: mục nhỏ nhất là *Other* (và leisure năm 2000), không phải transport."
+
+[[questions]]
+id = "iw1-035"
+module = "iw1-pie-table-proportions"
+type = "single"
+difficulty = 2
+tags = ["band:6.5"]
+prompt = "A share went from 20% to 30%. Which description is accurate?"
+options = ["It rose by 10 percentage points.", "It rose by 10%.", "It rose by 50 percentage points.", "It tripled."]
+answer = [0]
+explanation = "Hiệu giữa hai tỉ lệ là *percentage points* (30 − 20 = 10). Nói *rose by 10%* sai vì tăng tương đối thực ra là 50% (10/20). Phân biệt hai khái niệm này giúp mô tả số liệu chính xác."
+
+[[questions]]
+id = "iw1-036"
+module = "iw1-pie-table-proportions"
+type = "fill"
+difficulty = 2
+tags = ["band:6.5"]
+prompt = "Housing took 38% of spending in 2020, the highest figure. Complete: *Housing made up the {{blank}} share of spending in 2020.*"
+blanks = [["largest", "biggest", "greatest", "highest"]]
+explanation = "Cần tính từ so sánh nhất với *share*: *the largest / biggest / greatest share*. Đây là cách nêu hạng mục đứng đầu thường dùng trong overview."
+
+[[questions]]
+id = "iw1-037"
+module = "iw1-pie-table-proportions"
+type = "single"
+difficulty = 2
+tags = ["band:6.5"]
+prompt = "A table shows the percentage of adults using the internet in eight countries. Which body plan is most effective?"
+options = ["Group the countries with high usage (above 80%) in one paragraph and the lower ones in another", "Describe each country in alphabetical order", "Describe only the country with the highest figure", "Write one sentence for every cell in the table"]
+answer = [0]
+explanation = "Khi có nhiều hạng mục, nhóm theo mức (cao/thấp) hoặc theo xu hướng giúp so sánh và tránh liệt kê. Chỉ nói một nước là thiếu dữ liệu chính; viết từng ô là liệt kê máy móc."
+
+[[questions]]
+id = "iw1-038"
+module = "iw1-pie-table-proportions"
+type = "fill"
+difficulty = 2
+tags = ["band:6.5"]
+prompt = "Complete (5% of students): *Only a small {{blank}} of students walked to school.*"
+blanks = [["minority", "fraction", "proportion", "percentage", "share", "number"]]
+explanation = "5% là phần rất nhỏ nên dùng *a small minority / fraction / proportion*. Các danh từ này giúp không phải lặp lại con số."
+
+[[questions]]
+id = "iw1-039"
+module = "iw1-pie-table-proportions"
+type = "multiple"
+difficulty = 2
+tags = ["band:6.5"]
+prompt = "Select all phrases that mean *more than 50%*."
+options = ["the majority", "over half", "a minority", "more than half", "nearly half"]
+answer = [0, 1, 3]
+explanation = "*The majority, over half, more than half* đều > 50%. *A minority* là < 50%, *nearly half* là hơi dưới 50%."
+
+[[questions]]
+id = "iw1-040"
+module = "iw1-pie-table-proportions"
+type = "essay"
+difficulty = 2
+tags = ["band:6.5"]
+prompt = "Using the table below, write an overview and one body paragraph comparing housing and food (3–4 sentences).\n\nHousehold spending in Merit (% of total):\n\n| Category | 2000 | 2020 |\n|---|---|---|\n| Housing | 30 | 38 |\n| Food | 35 | 22 |\n| Transport | 15 | 18 |\n| Leisure | 10 | 14 |\n| Other | 10 | 8 |"
+keywords = [["housing"], ["food"], ["overall", "in general", "it is clear"], ["largest", "biggest", "main", "greatest", "highest"], ["fell", "fallen", "dropped", "declined", "decreased", "shrank", "fall", "decline"]]
+min_keywords = 4
+model_answer = "Overall, the proportion spent on housing grew while food's share shrank, so housing replaced food as the largest category. In 2000, food accounted for 35% of spending, compared with 30% for housing. By 2020, however, the share for food had fallen to 22%, whereas housing made up 38%."
+explanation = "Checklist: (1) Task Achievement: overview nêu sự đảo chiều food/housing, thân bài có số liệu đúng cả hai năm; (2) Coherence: so sánh theo cặp, dùng *however, whereas*; (3) Lexical: *proportion, share, accounted for, made up* thay vì lặp *percentage*; (4) Grammar: past perfect với *By 2020*, câu phức có *while/whereas*."
+
+[[questions]]
+id = "iw1-041"
+module = "iw1-pie-table-proportions"
+type = "single"
+difficulty = 3
+tags = ["band:7"]
+prompt = "Choose the correct verb form: *By 2020, the share spent on food ____ to 22%.*"
+options = ["had fallen", "has fallen", "falls", "was falling"]
+answer = [0]
+explanation = "*By + mốc quá khứ* chỉ kết quả đã hoàn tất trước mốc đó nên dùng past perfect *had fallen*. *Has fallen* (present perfect) không đi với mốc quá khứ đã kết thúc. Dùng đúng past perfect là điểm cộng Grammatical Range."
+
+[[questions]]
+id = "iw1-042"
+module = "iw1-pie-table-proportions"
+type = "single"
+difficulty = 3
+tags = ["band:7"]
+prompt = "Wind provided 12% of energy and solar 6%. Which comparison is correct and natural?"
+options = ["Wind's share was twice that of solar.", "Wind was double more than solar.", "Wind was twice as solar.", "Solar was two times bigger than wind."]
+answer = [0]
+explanation = "*Twice that of* (hoặc *twice as large as*) là cấu trúc so sánh gấp đôi chuẩn; *that* thay cho *the share* để tránh lặp. B và C sai ngữ pháp; D đảo ngược số liệu."
+
+[[questions]]
+id = "iw1-043"
+module = "iw1-pie-table-proportions"
+type = "fill"
+difficulty = 3
+tags = ["band:7"]
+prompt = "Nuclear power and hydroelectricity both had 15%. Complete: *Nuclear power's share was {{blank}} to that of hydroelectricity.*"
+blanks = [["identical", "equal", "similar", "comparable"]]
+explanation = "*Identical / equal to that of* nói hai tỉ lệ bằng nhau; *similar / comparable to* cũng chấp nhận được. Cấu trúc *that of* tránh lặp danh từ *share*, giúp câu gọn và học thuật hơn."
+
+[[questions]]
+id = "iw1-044"
+module = "iw1-process-diagram"
+type = "single"
+difficulty = 1
+tags = ["band:5.5"]
+prompt = "Choose the correct passive form: *First, the tea leaves ____ by hand.*"
+options = ["are picked", "pick", "are pick", "picking"]
+answer = [0]
+explanation = "Quy trình sản xuất thường dùng bị động hiện tại: *am/is/are + V3*. Lá chè không tự hái nên phải là *are picked*. *Are pick* thiếu dạng phân từ."
+
+[[questions]]
+id = "iw1-045"
+module = "iw1-process-diagram"
+type = "fill"
+difficulty = 1
+tags = ["band:5.5"]
+prompt = "Complete with a sequencing word: *{{blank}} the leaves are dried, they are rolled into small balls.*"
+blanks = [["after", "once", "when"]]
+explanation = "*After / Once / When* + mệnh đề nối hai bước liên tiếp trong một câu. Cách này hay hơn viết hai câu ngắn bắt đầu bằng *Then*."
+
+[[questions]]
+id = "iw1-046"
+module = "iw1-process-diagram"
+type = "single"
+difficulty = 1
+tags = ["band:5.5"]
+prompt = "Which word is best for introducing the last stage of a process?"
+options = ["Finally,", "Firstly,", "Meanwhile,", "For example,"]
+answer = [0]
+explanation = "*Finally* (hoặc *In the final stage*) báo hiệu bước cuối. *Firstly* dùng cho bước đầu, *Meanwhile* là hai việc song song, *For example* để nêu ví dụ, không dùng cho trình tự."
+
+[[questions]]
+id = "iw1-047"
+module = "iw1-process-diagram"
+type = "single"
+difficulty = 2
+tags = ["band:6.5"]
+prompt = "A diagram shows six stages of paper production, from cutting down trees to rolling the finished paper. Which is the best overview?"
+options = ["Overall, there are six main stages in the process, beginning with the felling of trees and ending with the rolling of finished paper.", "First, trees are cut down and then they are transported to the factory.", "Overall, paper is very important for education and business.", "Overall, making paper is a difficult and expensive process."]
+answer = [0]
+explanation = "Overview của quy trình nêu số bước, điểm đầu và điểm cuối. Câu B là chi tiết bước 1 (thuộc thân bài). C và D là ý kiến/đánh giá, sơ đồ không cho biết độ khó hay chi phí."
+
+[[questions]]
+id = "iw1-048"
+module = "iw1-process-diagram"
+type = "multiple"
+difficulty = 2
+tags = ["band:6.5"]
+prompt = "You are describing a natural cycle (the life cycle of a frog). Select all appropriate choices."
+options = ["Active voice is often natural, e.g. *the tadpole develops back legs*.", "The overview can say that the cycle repeats and has a fixed number of stages.", "Every verb must be in the passive voice.", "Stages can be linked with *at the next stage* or *eventually*.", "Add your opinion about whether frogs are useful."]
+answer = [0, 1, 3]
+explanation = "Chu trình tự nhiên do sinh vật tự thực hiện nên chủ động là tự nhiên; bị động dành cho quy trình do con người làm. Overview nêu tính lặp lại và số giai đoạn. Ý kiến cá nhân không có chỗ trong Task 1."
+
+[[questions]]
+id = "iw1-049"
+module = "iw1-process-diagram"
+type = "fill"
+difficulty = 2
+tags = ["band:6.5"]
+prompt = "Complete with the correct form of *heat*: *The mixture is then {{blank}} to 200°C.*"
+blanks = [["heated"]]
+explanation = "Bị động *is + V3*: *is heated*. Hỗn hợp không tự làm nóng, nên không dùng chủ động *heats*."
+
+[[questions]]
+id = "iw1-050"
+module = "iw1-process-diagram"
+type = "single"
+difficulty = 2
+tags = ["band:6.5"]
+prompt = "Complete the relative clause: *The clay, which ____ from the ground, is mixed with sand.*"
+options = ["is dug", "digs", "is digging", "dug"]
+answer = [0]
+explanation = "Đất sét bị đào lên nên mệnh đề quan hệ cũng phải bị động: *which is dug*. Mệnh đề quan hệ không xác định (có dấu phẩy) là cách gộp hai bước thành một câu phức."
+
+[[questions]]
+id = "iw1-051"
+module = "iw1-process-diagram"
+type = "fill"
+difficulty = 2
+tags = ["band:6.5"]
+prompt = "Complete with one adverb of sequence: *The glass bottles are collected and {{blank}} transported to a recycling plant.*"
+blanks = [["then", "subsequently"]]
+explanation = "*Then / subsequently* đứng giữa *are* (được lược) và V3 để chỉ bước kế tiếp. Lặp *then* nhiều lần làm giảm điểm Lexical, nên xen kẽ *subsequently, following this, after that*."
+
+[[questions]]
+id = "iw1-052"
+module = "iw1-process-diagram"
+type = "single"
+difficulty = 2
+tags = ["band:6.5"]
+prompt = "Wine production: 1 grapes harvested → 2 crushed → 3 juice fermented in tanks for two weeks → 4 filtered → 5 bottled. Which sentence describes stages 3 and 4 accurately?"
+options = ["After being fermented in tanks for two weeks, the juice is filtered.", "After fermenting the tanks for two weeks, the juice filters.", "The juice is filtered, and then it is fermented for two weeks.", "The juice was fermented for two months before filtering."]
+answer = [0]
+explanation = "*After being + V3* là bị động rút gọn, đúng thứ tự và số liệu. B sai nghĩa (nước ép lên men \"cái bể\") và thiếu bị động. C đảo thứ tự. D sai thì và sai thời gian (*months*)."
+
+[[questions]]
+id = "iw1-053"
+module = "iw1-process-diagram"
+type = "multiple"
+difficulty = 2
+tags = ["band:6.5"]
+prompt = "Select all expressions that can introduce the next stage of a process."
+options = ["Following this,", "Subsequently,", "In contrast,", "At the next stage,", "Overall,"]
+answer = [0, 1, 3]
+explanation = "*Following this, Subsequently, At the next stage* đều chỉ trình tự. *In contrast* dùng để đối lập, *Overall* mở đầu overview, không nối các bước."
+
+[[questions]]
+id = "iw1-054"
+module = "iw1-process-diagram"
+type = "essay"
+difficulty = 2
+tags = ["band:6.5"]
+prompt = "Write an overview and describe the first four stages (3–4 sentences).\n\nChocolate production: 1 cocoa pods harvested → 2 beans removed and fermented for five days → 3 beans dried in the sun → 4 beans roasted → 5 beans ground into a paste → 6 paste mixed with sugar and milk → 7 liquid chocolate poured into moulds."
+keywords = [["harvested", "picked", "collected"], ["fermented", "fermentation"], ["dried", "drying"], ["roasted", "roasting"], ["overall", "in general", "it is clear"], ["stages", "steps", "phases"]]
+min_keywords = 4
+model_answer = "Overall, there are seven stages in the process, starting with the harvesting of cocoa pods and ending with liquid chocolate being poured into moulds. First, the pods are harvested, and the beans are removed and fermented for five days. After that, they are dried in the sun before being roasted."
+explanation = "Checklist: (1) Task Achievement: overview nêu số bước, điểm đầu và cuối; bốn bước đầu đủ, có chi tiết *five days, in the sun*; (2) Coherence: *First, After that, before being*; (3) Lexical: danh từ hoá *the harvesting of*; (4) Grammar: bị động hiện tại đúng, có *before being + V3*."
+
+[[questions]]
+id = "iw1-055"
+module = "iw1-process-diagram"
+type = "single"
+difficulty = 3
+tags = ["band:7"]
+prompt = "Which version shows the best grammatical range?"
+options = ["The bricks are shaped. Then they are dried. Then they are fired.", "Once shaped, the bricks are left to dry for 48 hours, after which they are fired in a kiln.", "The bricks shaped and dried and fired.", "Shaping, drying, firing are happen to the bricks."]
+answer = [1]
+explanation = "Câu B dùng mệnh đề rút gọn *Once shaped*, *are left to dry* và *after which* — đa dạng và chính xác, đúng tiêu chí band 7. A đúng nhưng đơn điệu; C thiếu trợ động từ bị động; D sai ngữ pháp."
+
+[[questions]]
+id = "iw1-056"
+module = "iw1-process-diagram"
+type = "single"
+difficulty = 3
+tags = ["band:7"]
+prompt = "In a water treatment diagram, some waste water is returned to stage 2 and treated again. What should the overview mention?"
+options = ["That the process is partly cyclical, with some output being reused", "The exact temperature at every stage", "Whether recycling water is good for the environment", "Nothing about the loop, because it is only a detail"]
+answer = [0]
+explanation = "Vòng lặp là đặc điểm chính của sơ đồ nên cần nêu trong overview. Nhiệt độ từng bước là chi tiết cho thân bài; đánh giá môi trường là ý kiến ngoài dữ liệu."
+
+[[questions]]
+id = "iw1-057"
+module = "iw1-process-diagram"
+type = "fill"
+difficulty = 3
+tags = ["band:7"]
+prompt = "Complete with a relative word: *The raw materials are fed into a crusher, {{blank}} they are broken into small pieces.*"
+blanks = [["where", "in which"]]
+explanation = "*Where / in which* thay cho *in the crusher* và nối hai bước thành một câu phức. Không dùng *which* một mình vì sau đó là mệnh đề đầy đủ (*they are broken*)."
+
+[[questions]]
+id = "iw1-058"
+module = "iw1-maps-change"
+type = "single"
+difficulty = 1
+tags = ["band:5.5"]
+prompt = "The car park is outside the school, beyond its northern side. Choose the preposition: *The car park is ____ the north of the school.*"
+options = ["to", "at", "on", "in"]
+answer = [0]
+explanation = "*To the north of X* là nằm ngoài X về phía bắc. *In the north of X* là nằm bên trong X, ở phần phía bắc. Giới từ chỉ vị trí sai làm người đọc hiểu sai bản đồ."
+
+[[questions]]
+id = "iw1-059"
+module = "iw1-maps-change"
+type = "fill"
+difficulty = 1
+tags = ["band:5.5"]
+prompt = "Complete with the correct form of *build*: *In 2010, a new bridge {{blank}} across the river.*"
+blanks = [["was built", "was constructed"]]
+explanation = "Có mốc quá khứ *In 2010* nên dùng past simple bị động *was built*. Bản đồ thường dùng bị động vì người xây không quan trọng."
+
+[[questions]]
+id = "iw1-060"
+module = "iw1-maps-change"
+type = "single"
+difficulty = 1
+tags = ["band:5.5"]
+prompt = "Choose the best verb: *The trees in the north were ____ to make way for housing.*"
+options = ["cleared", "constructed", "extended", "relocated"]
+answer = [0]
+explanation = "*Clear trees / a forest* là chặt bỏ cây để lấy đất. *Construct* là xây, *extend* là mở rộng, *relocate* là di dời — không hợp với cây bị chặt."
+
+[[questions]]
+id = "iw1-061"
+module = "iw1-maps-change"
+type = "single"
+difficulty = 2
+tags = ["band:6.5"]
+prompt = "You compare a map from 1990 with a map of the present day. Which sentence uses the best tense?"
+options = ["Since 1990, the farmland has been converted into a golf course.", "Since 1990, the farmland was converted into a golf course.", "In 1990, the farmland has been converted into a golf course.", "Since 1990, the farmland converts into a golf course."]
+answer = [0]
+explanation = "Từ quá khứ đến hiện tại (*Since 1990*, bản đồ hiện nay) dùng present perfect bị động *has been converted*. Past simple không đi với *since*; *In 1990* là mốc quá khứ nên không dùng present perfect."
+
+[[questions]]
+id = "iw1-062"
+module = "iw1-maps-change"
+type = "multiple"
+difficulty = 2
+tags = ["band:6.5"]
+prompt = "Kelby village.\n\n2000: a main road runs east–west; farmland lies south of the road; a small school is in the centre; a fishing port is in the east.\n\n2020: the road has been widened; the farmland has become a housing estate; the school is larger; the port is now a marina; there is a new supermarket in the west.\n\nSelect all accurate sentences."
+options = ["The farmland south of the road was replaced by a housing estate.", "The school was demolished.", "The port was transformed into a marina.", "A supermarket was built in the west of the village.", "The main road was moved to the north."]
+answer = [0, 2, 3]
+explanation = "A, C, D khớp mô tả 2020. Trường học được mở rộng chứ không bị phá (*demolished*), và con đường chỉ được mở rộng, không dời đi."
+
+[[questions]]
+id = "iw1-063"
+module = "iw1-maps-change"
+type = "fill"
+difficulty = 2
+tags = ["band:6.5"]
+prompt = "Complete with the correct form of *extend*: *The school in the centre {{blank}} between 2000 and 2020.*"
+blanks = [["was extended", "was enlarged", "was expanded"]]
+explanation = "Khoảng thời gian đã đóng (*between 2000 and 2020*) dùng past simple; trường được mở rộng bởi người khác nên bị động *was extended*."
+
+[[questions]]
+id = "iw1-064"
+module = "iw1-maps-change"
+type = "single"
+difficulty = 2
+tags = ["band:6.5"]
+prompt = "For the Kelby maps (farmland → housing, port → marina, new supermarket, wider road, larger school), which is the best overview?"
+options = ["Overall, Kelby became more residential and more oriented towards leisure, losing both its farmland and its fishing function.", "Overall, the school was extended by 50 square metres.", "Overall, Kelby is a better place to live now.", "Overall, the road was widened."]
+answer = [0]
+explanation = "Overview bản đồ nêu thay đổi tổng thể (từ nông nghiệp/đánh cá sang dân cư/giải trí). B có số liệu tự bịa và là chi tiết; C là ý kiến; D chỉ là một thay đổi nhỏ."
+
+[[questions]]
+id = "iw1-065"
+module = "iw1-maps-change"
+type = "multiple"
+difficulty = 2
+tags = ["band:6.5"]
+prompt = "Select all verbs that describe something new being built."
+options = ["constructed", "erected", "demolished", "set up", "knocked down"]
+answer = [0, 1, 3]
+explanation = "*Construct, erect, set up* đều là xây/lập mới. *Demolish* và *knock down* là phá bỏ — nghĩa ngược lại, thường dùng khi công trình biến mất trên bản đồ sau."
+
+[[questions]]
+id = "iw1-066"
+module = "iw1-maps-change"
+type = "fill"
+difficulty = 2
+tags = ["band:6.5"]
+prompt = "Complete: *The old factory was {{blank}} down to make way for a park.*"
+blanks = [["knocked", "pulled", "torn"]]
+explanation = "*Knock down / pull down / tear down* là phá dỡ công trình. *Make way for* nghĩa là dọn chỗ cho công trình mới — cụm rất hữu ích cho dạng bản đồ."
+
+[[questions]]
+id = "iw1-067"
+module = "iw1-maps-change"
+type = "single"
+difficulty = 2
+tags = ["band:6.5"]
+prompt = "How should the body paragraphs of a two-map task usually be organised?"
+options = ["Group the changes by area (e.g. north/south) or by type (removed vs added)", "Describe the first map completely, then the second map completely, with no comparison", "List the buildings in alphabetical order", "Describe only the largest building"]
+answer = [0]
+explanation = "Nhóm theo khu vực hoặc theo loại thay đổi giúp người đọc theo dõi so sánh. Tả riêng hai bản đồ không so sánh làm mất trọng tâm \"thay đổi\"; chỉ tả một toà nhà là thiếu dữ liệu."
+
+[[questions]]
+id = "iw1-068"
+module = "iw1-maps-change"
+type = "essay"
+difficulty = 3
+tags = ["band:7"]
+prompt = "Write one body paragraph (3–4 sentences) describing the main changes in Kelby.\n\n2000: a main road runs east–west; farmland lies south of the road; a small school is in the centre; a fishing port is in the east.\n\n2020: the road has been widened; the farmland has become a housing estate; the school is larger; the port is now a marina; there is a new supermarket in the west."
+keywords = [["housing", "houses", "residential"], ["marina"], ["supermarket"], ["replaced", "converted", "transformed", "made way"], ["extended", "enlarged", "expanded"], ["widened", "wider"]]
+min_keywords = 4
+model_answer = "The most noticeable change took place to the south of the main road, where the farmland was replaced by a large housing estate. In the east, the fishing port was converted into a marina, while a new supermarket was built in the west. Meanwhile, the school in the centre was extended and the main road was widened."
+explanation = "Checklist: (1) Task Achievement: nêu đủ năm thay đổi, đúng vị trí; (2) Coherence: bắt đầu bằng thay đổi lớn nhất, nhóm theo khu vực, có *Meanwhile, while*; (3) Lexical: *replaced by, converted into, extended, widened* thay vì lặp *changed*; (4) Grammar: bị động quá khứ đúng, mệnh đề quan hệ *where…*."
+
+[[questions]]
+id = "iw1-069"
+module = "iw1-maps-change"
+type = "single"
+difficulty = 3
+tags = ["band:7"]
+prompt = "Which sentence about a factory that became a park is most precise and natural?"
+options = ["There is a park now where the factory was before it.", "The area formerly occupied by the factory now houses a public park.", "The factory became to a park.", "The factory changed park."]
+answer = [1]
+explanation = "Câu B dùng cụm phân từ *formerly occupied by* và động từ *houses* — chính xác và học thuật. A lủng củng, C và D sai ngữ pháp (*become to*, *changed park*)."
+
+[[questions]]
+id = "iw1-070"
+module = "iw1-maps-change"
+type = "fill"
+difficulty = 3
+tags = ["band:7"]
+prompt = "Complete with an adverb of degree: *The village centre was {{blank}} transformed: almost every original building was replaced.*"
+blanks = [["completely", "dramatically", "radically", "totally", "entirely", "drastically"]]
+explanation = "Khi gần như mọi công trình đều bị thay, cần trạng từ mức độ mạnh: *completely / radically / dramatically transformed*. Trạng từ mức độ phù hợp với dữ liệu là một dấu hiệu band 7 về Lexical Resource."
+
+[[questions]]
+id = "iw1-071"
+module = "iw1-maps-change"
+type = "single"
+difficulty = 3
+tags = ["band:7"]
+prompt = "Choose the correct word: *A hospital was built ____ the old market used to stand.*"
+options = ["where", "which", "that", "when"]
+answer = [0]
+explanation = "*Where* = *at the place in which*, nối mệnh đề chỉ nơi chốn đầy đủ (*the old market used to stand*). *Which/that* cần một danh từ đứng trước làm tiền ngữ; *when* chỉ thời gian."
+
+[[questions]]
+id = "iw1-072"
+module = "iw1-mixed-band-upgrade"
+type = "single"
+difficulty = 1
+tags = ["band:5.5"]
+prompt = "The task has a line graph and a pie chart. How should you write the overview?"
+options = ["Give the main feature of each chart, and link them if possible", "Describe only the line graph because it has more data", "Write two separate overviews at the end of the report", "Leave out the overview because there are two charts"]
+answer = [0]
+explanation = "Biểu đồ kết hợp vẫn cần một overview, gồm đặc điểm chính của cả hai biểu đồ và nếu được thì nối chúng với nhau. Bỏ một biểu đồ hoặc bỏ overview đều làm giảm Task Achievement."
+
+[[questions]]
+id = "iw1-073"
+module = "iw1-mixed-band-upgrade"
+type = "fill"
+difficulty = 1
+tags = ["band:5.5"]
+prompt = "Correct the mistake in *The number of tourists were increased in 2015.* Write the correct verb: *The number of tourists {{blank}} in 2015.*"
+blanks = [["increased", "rose", "grew", "went up", "climbed"]]
+explanation = "*Increase* nghĩa \"tăng\" là nội động từ, không dùng bị động *were increased*. Chủ ngữ là *The number* (số ít), nên nếu cần *to be* thì phải là *was*, không phải *were*."
+
+[[questions]]
+id = "iw1-074"
+module = "iw1-mixed-band-upgrade"
+type = "single"
+difficulty = 2
+tags = ["band:6.5"]
+prompt = "Which is the best upgrade of the band 5 sentence *Sales went up a lot.* (data: 200 → 450 units)?"
+options = ["Sales rose significantly, from 200 to 450 units.", "Sales went up very very much.", "Sales increased a lot significantly.", "Sales was risen dramatically."]
+answer = [0]
+explanation = "Câu A thay *went up a lot* bằng *rose significantly* và thêm số liệu minh hoạ. B lặp từ không trang trọng; C chồng hai trạng từ; D sai chia động từ và sai bị động."
+
+[[questions]]
+id = "iw1-075"
+module = "iw1-mixed-band-upgrade"
+type = "multiple"
+difficulty = 2
+tags = ["band:6.5"]
+prompt = "A band 5.5 script says: *In 2000 the figure was 10. In 2005 the figure was 15. In 2010 the figure was 25. I think it will keep growing.* Select all the problems."
+options = ["There is no overview of the general trend", "It lists figures without describing the trend", "It makes a personal prediction not supported by the data", "It uses the past simple", "It uses too many linking words"]
+answer = [0, 1, 2]
+explanation = "Bài thiếu overview, chỉ liệt kê số, và có dự đoán cá nhân (*I think it will…*). Past simple là đúng cho dữ liệu quá khứ, và bài gần như không có từ nối — vấn đề là thiếu chứ không phải thừa."
+
+[[questions]]
+id = "iw1-076"
+module = "iw1-mixed-band-upgrade"
+type = "single"
+difficulty = 2
+tags = ["band:6.5"]
+prompt = "Line graph: car exports from Tavia rose from 2 million in 2010 to 5 million in 2020. Pie chart: destinations in 2020 — Asia 45%, Europe 30%, America 20%, other 5%. Which sentence best links the two charts?"
+options = ["By 2020, when exports had reached 5 million cars, Asia was the destination for almost half of them.", "Asia likes cars more than Europe does.", "Exports rose; separately, the pie chart is about destinations.", "Exports were 45% in 2020."]
+answer = [0]
+explanation = "Câu A nối mốc 2020 của đường biểu đồ với tỉ lệ trên biểu đồ tròn, ước lượng 45% là *almost half*. B là ý kiến; C không thực sự liên kết; D nhầm tỉ lệ điểm đến thành tổng xuất khẩu."
+
+[[questions]]
+id = "iw1-077"
+module = "iw1-mixed-band-upgrade"
+type = "fill"
+difficulty = 2
+tags = ["band:6.5"]
+prompt = "Upgrade *Asia was 45%.* Complete: *Asia {{blank}} for 45% of car exports in 2020.*"
+blanks = [["accounted"]]
+explanation = "*Accounted for* nói rõ Asia chiếm 45% của cái gì. Câu gốc *Asia was 45%* mơ hồ (một châu lục không \"là\" một tỉ lệ), đây là lỗi hay gặp ở band 5."
+
+[[questions]]
+id = "iw1-078"
+module = "iw1-mixed-band-upgrade"
+type = "single"
+difficulty = 2
+tags = ["band:6.5"]
+prompt = "Which sentence is correct?"
+options = ["The number of visitors was higher in July.", "The number of visitors were higher in July.", "Number of visitors was higher in July.", "The numbers of visitor was higher in July."]
+answer = [0]
+explanation = "*The number of + danh từ số nhiều* đi với động từ số ít (*was*), vì chủ ngữ chính là *the number*. C thiếu mạo từ *the*; D sai số nhiều/số ít."
+
+[[questions]]
+id = "iw1-079"
+module = "iw1-mixed-band-upgrade"
+type = "multiple"
+difficulty = 2
+tags = ["band:6.5"]
+prompt = "Select all errors that commonly lower the Grammatical Range and Accuracy score in Task 1."
+options = ["Mixing present and past tenses for past data", "Subject–verb agreement errors with *the number of*", "Using *increase* correctly as both a noun and a verb", "Missing prepositions, e.g. *rose 20%* instead of *rose by 20%*", "Using the passive voice to describe a manufacturing process"]
+answer = [0, 1, 3]
+explanation = "Lẫn thì, sai hoà hợp chủ–vị và thiếu giới từ là lỗi phổ biến làm giảm điểm. Dùng *increase* đúng cả danh từ lẫn động từ là điểm cộng; bị động trong quy trình sản xuất là lựa chọn đúng."
+
+[[questions]]
+id = "iw1-080"
+module = "iw1-mixed-band-upgrade"
+type = "single"
+difficulty = 3
+tags = ["band:7"]
+prompt = "Tavia car exports rose from 2 million (2010) to 5 million (2020); in 2020 Asia took 45%, Europe 30%, America 20%, other 5%. Which overview is band 7 quality?"
+options = ["Overall, car exports grew steadily over the decade, and by the end of the period Asia had become by far the largest market.", "Overall, exports were 2 million in 2010 and 5 million in 2020, and Asia was 45%.", "Overall, the line graph shows exports and the pie chart shows destinations.", "Overall, the company should focus more on selling cars to Asia."]
+answer = [0]
+explanation = "Câu A nêu xu hướng chính của đường biểu đồ và điểm nổi bật của biểu đồ tròn, không dùng số. B lặp số liệu; C chỉ nhắc lại đề; D là lời khuyên ngoài dữ liệu."
+
+[[questions]]
+id = "iw1-081"
+module = "iw1-mixed-band-upgrade"
+type = "essay"
+difficulty = 3
+tags = ["band:7"]
+prompt = "Rewrite this band 5 paragraph at band 7 level, keeping all the facts and removing anything not in the data:\n\n*The internet users was 20% in 2005. It go up to 50% in 2010. Then it go up again to 85% in 2020. Mobile internet users was 5% in 2005 and it become 80% in 2020. This is because phone is cheap.*"
+keywords = [["rose", "increased", "grew", "climbed", "surged", "rise", "increase", "growth"], ["internet"], ["mobile"], ["whereas", "while", "by contrast", "in comparison", "compared with"], ["85%"], ["80%"]]
+min_keywords = 4
+model_answer = "The proportion of people using the internet rose steadily from 20% in 2005 to 50% in 2010, and it continued to climb, reaching 85% by 2020. Mobile internet use, by contrast, started from a much lower base of only 5%, but it grew far more rapidly, ending the period at 80%, only slightly below the overall figure."
+explanation = "Checklist: (1) Task Achievement: giữ đủ số liệu, bỏ câu nguyên nhân *because phone is cheap*; (2) Coherence: so sánh hai nhóm bằng *by contrast*; (3) Lexical: *rose steadily, continued to climb, from a much lower base*; (4) Grammar: sửa chia động từ (*go → rose*, *was → rose*), thêm cụm phân từ *reaching…, ending…*."
+
+[[questions]]
+id = "iw1-082"
+module = "iw1-mixed-band-upgrade"
+type = "single"
+difficulty = 3
+tags = ["band:7"]
+prompt = "A script has accurate data and a clear overview, but it repeats *increase* eight times and has very few complex sentences. Which change will most likely raise the score?"
+options = ["Vary the trend vocabulary and add some complex structures (relative clauses, *while*, participle phrases)", "Add more numbers to every sentence", "Add a personal conclusion at the end", "Make the report 350 words long"]
+answer = [0]
+explanation = "Điểm yếu nằm ở Lexical Resource và Grammatical Range, nên đa dạng từ xu hướng và thêm câu phức sẽ nâng điểm. Thêm số thường dẫn tới liệt kê, ý kiến cá nhân bị trừ điểm, và bài dài hơn không tự động được điểm cao hơn."

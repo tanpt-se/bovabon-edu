@@ -527,3 +527,342 @@ prompt = '''Design a background report workflow after a user saves a request. Ex
 keywords = [["enqueue", "queue"], ["worker", "backend"], ["on_commit", "after commit", "commit transaction"], ["idempotent", "idempotency"], ["taskresult", "task result", "status"]]
 model_answer = '''The view saves the request, then uses `transaction.on_commit()` to enqueue the task so the worker cannot run before the transaction commits. The task receives the request ID, and the worker reads durable data and updates the status through the backend or TaskResult. Make updates idempotent so a retry does not create duplicate reports or send duplicate notifications.'''
 explanation = "A durable workflow separates response time from long-running processing and handles the relationship between transactions, workers and retries correctly."
+
+[modules.django-lead]
+title = "Tech Lead Perspective"
+description = "Making decisions for a Django team: structuring large projects, zero-downtime migrations, scaling workers and DB connections, observability, test/release strategy, upgrading LTS versions."
+lesson = '''### The Tech Lead's role in a Django project
+At the Lead level the question is no longer "which API is correct" but "which option best fits the team's constraints": headcount, deadlines, traffic, infrastructure cost, and the risk when incidents happen. A good decision always records the context, the options considered and why they were rejected.
+
+### Decision framework
+1. **Context & constraints**: current/expected traffic, SLA, team size, deadline.
+2. **Options**: at least 2–3 choices, including "keep as is".
+3. **Criteria**: operational complexity, risk, cost, reversibility.
+4. **Decision + review conditions**: when to re-evaluate (for example, traffic x5).
+
+### Comparison: organizing the codebase
+| Option | Pros | Cons | Fits when |
+|---|---|---|---|
+| Monolith with one big app | Simple, single deploy | Blurry boundaries, merge conflicts | Team ≤ 3, new product |
+| Modular monolith (many apps with clear boundaries) | One deploy, clear domain boundaries, gradual refactoring | Requires discipline about imports between apps | Team of 4–15, most projects |
+| Split into microservices | Independent scaling/deploys | Operational cost, distributed transactions | Many teams, very different scaling needs |
+
+### Zero-downtime migrations (expand/contract)
+During a rolling deploy, old and new code run side by side on the same schema. Rules:
+- **Expand**: add nullable columns or columns with a default, add new tables, add indexes concurrently (on PostgreSQL use `AddIndexConcurrently` in a migration with `atomic = False`).
+- **Migrate data**: backfill in batches, separately from schema migrations; `RunPython` should have a reverse function.
+- **Contract**: only drop/rename a column once no code reads it any more (at least one release later).
+- Set `lock_timeout`/`statement_timeout` so a migration does not lock a table for too long.
+
+### Scaling workers and DB connections
+Connections ≈ pods × workers per pod × threads (an estimate). When scaling horizontally, the database usually runs out of connections before CPU. Use a connection pooler (PgBouncer or the backend's pool), and split Celery/task queues by priority so slow jobs do not block important ones.
+
+### PR review checklist (suggested)
+- Is the migration safe under rolling deploys? Does it have a reverse?
+- Are there queries inside loops (N+1)? Do hot endpoints have query-count tests?
+- Do side effects (email, webhooks) run after `transaction.on_commit`?
+- Are secrets, `DEBUG`, `ALLOWED_HOSTS` read from environment variables? Does CI run `check --deploy` and `makemigrations --check`?
+- Do logs carry enough context (request id, user id) without leaking sensitive data?
+
+### Sample ADR (short)
+> **ADR-012: Split task queues by priority.** Context: marketing email (100k jobs/night) delays payment webhooks by 20 minutes. Decision: 3 queues `critical`, `default`, `bulk`, with dedicated workers for `critical`. Consequences: extra deploy configuration; queue-length alerts needed. Revisit when job volume triples.
+
+### Anti-patterns at team scale
+- Using signals to wire core business logic between apps (hidden flow, hard to debug, not triggered by `bulk_create`/`update`).
+- A migration that changes the schema and backfills millions of rows in one transaction.
+- Everyone configuring settings their own way, with no shared source of truth.
+- Optimizing by gut feeling instead of measuring (APM, query count, p95).
+- Jumping several Django versions at once without first fixing deprecation warnings.
+
+Figures in this lesson are rough estimates; always measure on the real system before deciding.
+'''
+
+[questions.django-lv001]
+prompt = '''The orders table has 50 million rows and the app uses rolling deploys across 8 pods. You need to rename the column customer_ref to customer_code. Which plan is most reasonable?'''
+options = ["A single RenameField migration, then deploy right away", "Add a new nullable column, write to both columns, backfill in batches, switch reads to the new column, and drop the old column in a later release", "Take the app down for 2 hours on the weekend to rename safely", "Keep the old name forever and only rename the Python attribute with db_column"]
+explanation = '''Expand/contract keeps both old and new code working during a rolling deploy. RenameField breaks old pods immediately; downtime is an unnecessary cost; db_column only fits when the goal is purely the name in code, not a real schema change.'''
+
+[questions.django-lv002]
+prompt = '''A team of 6 devs, a 4-year-old Django monolith with everything in the core app. Merge conflicts are frequent, but traffic is stable and only one person handles infrastructure. Which direction is most reasonable for the next two quarters?'''
+options = ["Immediately split into 5 microservices by domain", "Gradually move to a modular monolith: split apps by domain, agree on which app may import which, still one deploy", "Rewrite in another framework", "Keep it as is and just ask for smaller commits"]
+explanation = '''The problem is code boundaries, not scale. A modular monolith resolves conflicts without adding operational cost that a single infra person could hardly carry. Microservices and a rewrite are both high-risk; keeping it as is does not address the root cause.'''
+
+[questions.django-lv003]
+prompt = '''You are writing a migration review checklist for the team (PostgreSQL, rolling deploys). Select the items it should include.'''
+options = ["AddField on a large table must be nullable or have a safe default", "Indexes on large tables are created with AddIndexConcurrently in a migration with atomic = False", "RunPython should have a reverse function (or an intentional noop)", "Drop a column in the same release that removes the code reading it", "Merge the backfill of millions of rows into the schema migration so it runs only once"]
+explanation = '''The first three reduce table locking and allow rollback. Dropping a column in the same release breaks old pods during the rollout; merging the backfill into a schema migration holds the transaction/locks for a very long time.'''
+
+[questions.django-lv004]
+prompt = '''Every night a job sending 100k marketing emails shares a queue with the payment-webhook task; webhooks are delayed by up to 20 minutes. The budget only allows a few extra workers. Which decision is most reasonable?'''
+options = ["Double the workers on the shared queue", "Split queues by priority (critical/bulk), give critical its own workers and rate-limit bulk", "Send emails synchronously inside the request", "Send fewer marketing emails"]
+explanation = '''The problem is priority isolation, not total capacity. Splitting queues guarantees webhooks their own workers at small cost. More workers cost money and can still be saturated; synchronous sending slows requests; sending fewer emails is a business decision, not a technical one.'''
+
+[questions.django-lv005]
+prompt = '''After a release, the p95 of the /orders API rose from 180ms to 900ms; there is no APM, only access logs. What is the most reasonable first step for the team?'''
+options = ["Add caching to the whole API right away", "Roll back or disable the new feature if users are affected, while collecting query counts and DB time per endpoint (tracing/logs with request id) to find the cause", "Double the database instance size", "Wait another week to see if it goes away"]
+explanation = '''First reduce the impact, then measure in the right place. Caching or upsizing the DB before knowing the cause can hide an N+1 bug and costs money; waiting prolongs the incident.'''
+
+[questions.django-lv006]
+prompt = '''Write a short ADR: the Django app currently runs on WSGI, 95% of it is CRUD, and a real-time notification feature is coming. Would you move everything to ASGI and async views? State the context, options, decision and consequences.'''
+keywords = [["asgi"], ["wsgi"], ["async"], ["sync_to_async", "thread"], ["realtime", "real-time", "websocket", "sse"], ["risk", "cost", "trade-off", "tradeoff"]]
+model_answer = '''Context: mostly synchronous CRUD on the ORM, with only one realtime feature. Options: (1) keep WSGI and run a separate ASGI/websocket service for realtime; (2) move everything to ASGI and rewrite views as async; (3) run ASGI but keep sync views. Decision: keep WSGI for CRUD and implement the realtime part as a separate ASGI process. Rationale: sync views on ASGI go through sync_to_async/a thread so they are not faster, the async ORM does not support transactions yet, and a full rewrite carries large risk and cost. Consequences: one more process to deploy, auth/session must be shared; revisit when the async share becomes large.'''
+explanation = '''This Lead question assesses weighing trade-offs: async only helps for long I/O waits, while converting the whole app has cost and risk.'''
+
+[questions.django-lv007]
+prompt = '''A 300k-line Django codebase is on an old LTS and must move to the new LTS within one quarter without freezing features. Present your upgrade plan.'''
+keywords = [["deprecation", "warning"], ["test", "ci"], ["step by step", "each version", "lts", "intermediate"], ["dependency", "dependencies", "library", "package"], ["staging", "canary", "rollback"]]
+model_answer = '''Inventory dependencies and confirm the packages support the target version. Turn deprecation warnings into errors in CI (python -W error::DeprecationWarning) and fix them gradually on the current version. Upgrade through each intermediate version instead of jumping straight, running the full test suite and reading the release notes at every step. Work on a short-lived branch merged often so it does not conflict with new features. Deploy to staging, then canary a portion of traffic, watch errors and keep a rollback plan.'''
+explanation = '''A major upgrade should be done in verified steps; addressing warnings first means most changes happen on the old version, reducing risk on switch-over day.'''
+
+[questions.django-lv008]
+prompt = '''Standardize configuration across 3 environments (dev/staging/prod) and 8 devs. Select the decisions to adopt.'''
+options = ["Read secrets, DEBUG, ALLOWED_HOSTS, DATABASES from environment variables or a secret manager", "CI runs manage.py check --deploy with production settings", "Commit a settings_prod.py containing the real SECRET_KEY so everyone can run it easily", "Each dev edits the shared settings.py for their own machine and commits it", "Provide a template file (e.g. .env.example) describing the required variables"]
+explanation = '''Per-environment config, automated checks and documented variables keep the team consistent. Committing secrets is a security risk; a shared settings file edited per machine causes constant conflicts.'''
+
+[questions.django-lv009]
+prompt = '''The product detail page accounts for 70% of traffic; prices change a few times a day and must be correct right after an admin edits them. Small team, Redis already available. Which caching strategy is most reasonable?'''
+options = ["Per-site cache middleware with a 1-hour TTL", "Cache product data with the low-level cache keyed by id, deleting/versioning the key when the product is saved (after commit)", "No caching, just add more pods", "Cache the full HTML on the CDN for 24 hours"]
+explanation = '''Being correct immediately after an edit requires event-based invalidation. Long TTLs (middleware, CDN) serve stale prices; no caching wastes money on 70% read traffic.'''
+
+[questions.django-lv010]
+prompt = '''Scaling from 4 to 20 pods, each with 4 gunicorn workers, PostgreSQL starts reporting too many connections even though DB CPU is only 30%. Which decision is most reasonable?'''
+options = ["Raise PostgreSQL max_connections to 5000", "Put a connection pooler (e.g. PgBouncer or the backend's pool) between the app and the DB, and recompute connections per pod", "Scale back down to 4 pods", "Set CONN_MAX_AGE = None so connections live forever"]
+explanation = '''A pooler multiplexes connections, keeping the real number of DB connections stable as you scale out. Raising max_connections costs RAM per connection; fewer pods abandons the scaling goal; connections that live forever hold even more connections.'''
+
+[questions.django-lv011]
+prompt = '''To make CI fail when someone changes a model but forgets to create a migration, add the step: python manage.py {{blank}} --check --dry-run'''
+explanation = '''makemigrations --check exits non-zero if there are model changes without a migration, catching the mistake before merge.'''
+
+[questions.django-lv012]
+prompt = '''The quality gate before a production deploy runs the security configuration check: python manage.py check {{blank}}'''
+explanation = '''check --deploy enables extra production checks such as DEBUG, secure cookies and HSTS.'''
+
+[questions.django-lv013]
+prompt = '''The test suite takes 40 minutes and devs are starting to skip CI. Analysis shows 60% of the time is spent in tests using TransactionTestCase unnecessarily. What is the most beneficial first action?'''
+options = ["Move those tests to TestCase (transaction rollback) and enable parallel runs with --parallel", "Delete some slow tests", "Only run tests at night", "Buy a CI machine twice as powerful"]
+explanation = '''Fix the measured cause: TestCase is much faster because it does not flush the DB, and --parallel uses multiple cores. Deleting tests reduces safety; nightly runs slow down feedback; bigger machines cost money without fixing the root cause.'''
+
+[questions.django-lv014]
+prompt = '''A B2B SaaS with 200 customers (tenants), little data per tenant, a team of 5 devs, and a need for system-wide aggregate reports. Which multi-tenant model is most reasonable?'''
+options = ["A separate database per tenant", "A separate PostgreSQL schema per tenant", "A shared schema where every table has tenant_id, default managers/querysets filter by tenant, plus tests against data leaks", "A separate app instance deployed per tenant"]
+explanation = '''With many small tenants and cross-tenant reporting, a shared schema is the simplest for migrations and operations; the risk of data leaks is reduced by centralized scoping and tests. Separate DBs/schemas/instances mean 200x migrations and hard cross-tenant reports.'''
+
+[questions.django-lv015]
+prompt = '''Select the anti-patterns that should go into the Django team's guidelines.'''
+options = ["Using a post_save signal to trigger another app's core business logic", "Putting business logic in tested services/model methods, with views only orchestrating", "Sending email/webhooks inside the transaction instead of after commit", "Optimizing queries based on measurement (query count, EXPLAIN)", "Freely importing models across all apps"]
+explanation = '''Signals for core logic create hidden flows and are skipped by bulk_create/update; side effects before commit may fire for data that gets rolled back; free cross-imports break module boundaries. The other two options are good practice.'''
+
+[questions.django-lv016]
+prompt = '''An ALTER TABLE migration waited for a lock and then blocked every query on the users table for 6 minutes at peak time. After recovering, which process change most effectively prevents a repeat?'''
+options = ["Ban all migrations", "Set a short lock_timeout for the migration session so it fails fast instead of queueing, plus a migration review checklist and running risky migrations off-peak", "Only allow seniors to write migrations", "Increase the load balancer timeout"]
+explanation = '''lock_timeout turns lock waiting into a fast, retryable failure, and the checklist catches dangerous operations at review time. Banning migrations or restricting authors is not feasible; a longer timeout just makes users wait longer.'''
+
+[questions.django-lv017]
+prompt = '''The codebase has 120 scattered raw SQL spots, 3 of which have caused SQL injection. The team only has 20% of each sprint for tech debt. What is the most reasonable approach?'''
+options = ["Stop features for a month to rewrite everything in the ORM", "Prioritize by risk: immediately review places concatenating user input, add a lint/review rule banning SQL string concatenation, and migrate the rest as the code is touched", "Ignore it since the 3 bugs are fixed", "Switch to a different database"]
+explanation = '''Handling by risk and preventing new debt fits the 20% budget. A full rewrite is costly and risky; ignoring it leaves similar holes; changing databases has nothing to do with string concatenation.'''
+
+[questions.django-lv018]
+prompt = '''You need to launch a feature that adds a new column and changes the checkout flow, with a requirement to roll back within 5 minutes. Select the steps the plan should include.'''
+options = ["An additive (expand) migration that is compatible with the old code", "Enable the feature via a feature flag, ramping up by % of users", "Watch error rate and checkout time on a dashboard during the rollout", "Drop the old column in the same release to clean up", "Roll back by running the migration backwards on production"]
+explanation = '''An expand-only migration and a feature flag allow rolling back by turning off the flag without touching the schema. Dropping a column in the same release and reverse-migrating production are both slow and risk data loss.'''
+
+[questions.django-lv019]
+prompt = '''The team's average PR is 1,500 lines, review takes 3 days and often misses bugs. As Tech Lead, which change is most effective?'''
+options = ["Require 3 approvals per PR", "Set a small-PR guideline (e.g. under ~400 lines), split migrations/refactors/features into separate PRs, and use feature flags to merge unfinished work safely", "Drop reviews to move faster", "Only review the tests"]
+explanation = '''Small, single-purpose PRs get faster and more thorough reviews; feature flags allow merging early. More approvers increase waiting time; skipping reviews or only looking at tests removes a quality control layer.'''
+
+[questions.django-lvc01]
+title = "Zero-downtime migration gatekeeper"
+prompt = '''The team decides CI should assess migrations automatically according to the rolling-deploy policy. Write review_migration(ops), where ops is a list of dicts, each with an "op" key (operation name) and optionally "null", "default", "concurrently", "reverse".
+Rules for each operation:
+- "unsafe": AddField when null is not True and there is no "default" key; or op is RemoveField, RenameField, RenameModel, DeleteModel.
+- "review": AlterField; AddIndex when concurrently is not True; RunPython when reverse is not True.
+- "safe": everything else.
+Return a dict {"verdict": v, "issues": [...]}. issues is a list of dicts {"index": i, "op": op_name, "level": level} for non-safe operations, in order of appearance. verdict is the most severe level (unsafe > review > safe); for an empty list the verdict is "safe".
+'''
+hints = ["Write a helper that returns the level for one operation, then combine the results.", "Use a ranking table safe < review < unsafe to compute the verdict."]
+explanation = '''Automating the migration policy turns the Lead's experience into a quality gate for the whole team; human review focuses on the flagged cases.'''
+
+[questions.django-lv020]
+prompt = '''Two concurrent money-transfer requests: A locks account 1 then 2, B locks account 2 then 1 using select_for_update(), and deadlocks happen occasionally. What is the cleanest fix?'''
+options = ["Remove transaction.atomic()", "Always lock rows in the same order, e.g. select_for_update().filter(pk__in=[...]).order_by('pk')", "Add a random time.sleep before locking", "Switch to reading without locks and then save()"]
+explanation = '''Deadlocks happen when two transactions hold locks in opposite order; a fixed locking order removes the wait cycle. Removing the transaction or reading without locks corrupts balances; sleeping only lowers the probability.'''
+
+[questions.django-lv021]
+prompt = '''The code post.views = post.views + 1; post.save() loses counts under high traffic. Which approach handles it in the database, without locking at the Python level?'''
+options = ["Post.objects.filter(pk=post.pk).update(views=F('views') + 1)", "Call post.refresh_from_db() before incrementing", "Wrap it in try/except", "Use cache.get then cache.set"]
+explanation = '''F() generates UPDATE views = views + 1, so the increment is atomic in the DB. refresh_from_db still leaves a gap between read and write; cache get/set also races.'''
+
+[questions.django-lv022]
+prompt = '''Select the correct statements about ATOMIC_REQUESTS = True.'''
+options = ["Each view request is wrapped in a transaction", "An exception in the view rolls back that request's DB changes", "Streaming responses are also fully protected by the transaction until they finish sending", "The transaction lasts as long as the view runs, and may hold locks for a long time if the view calls a slow external service", "A view can be excluded with non_atomic_requests"]
+explanation = '''ATOMIC_REQUESTS is convenient but has a cost: the transaction spans the view. The content generation of a streaming response runs after the view returns, so it is outside that transaction.'''
+
+[questions.django-lv023]
+prompt = '''In an async view you need to write Order and OrderLine in one transaction. Which approach is correct?'''
+options = ["async with transaction.atomic(): await Order.objects.acreate(...)", "Write a sync function using transaction.atomic() and call await sync_to_async(fn)()", "Call Order.objects.create() directly in the async view", "Use asyncio.gather to write both tables in parallel"]
+explanation = '''The async ORM does not support transactions yet; put the whole transaction block in a sync function and call it via sync_to_async so it runs on the same thread/connection. Calling the sync ORM directly in an async context is blocked with SynchronousOnlyOperation.'''
+
+[questions.django-lv024]
+prompt = '''You are moving the app to ASGI. Which recommendation about database connections is reasonable?'''
+options = ["Keep CONN_MAX_AGE very large to reuse connections", "Disable persistent connections (CONN_MAX_AGE = 0) and use the backend's connection pool or an external pooler", "Open one global connection shared by all coroutines", "No change needed since ASGI and WSGI manage connections identically"]
+explanation = '''Under ASGI, requests may run on different threads, making persistent connections hard to control; the Django docs recommend disabling them and using pooling.'''
+
+[questions.django-lv025]
+prompt = '''A command exporting 5 million Event rows to CSV makes the process use gigabytes of RAM. Which change reduces memory while still using the ORM?'''
+options = ["Use list(Event.objects.all())", "Iterate over Event.objects.values_list(...).iterator(chunk_size=2000) and write row by row", "Add prefetch_related for every relation", "Call .count() before iterating"]
+explanation = '''iterator() does not keep the QuerySet result cache and reads in chunks; values_list avoids creating model objects. list() and prefetching increase memory.'''
+
+[questions.django-lv026]
+prompt = '''Requirements: each user has at most one address with is_default = True, and lookups by lower(email) must be fast. Select the appropriate Meta declarations.'''
+options = ["UniqueConstraint(fields=['user'], condition=Q(is_default=True), name='one_default_address')", "Index(Lower('email'), name='user_email_lower_idx')", "unique=True on the is_default field", "Checking in save() is enough; no DB constraint needed"]
+explanation = '''A conditional (partial) unique constraint enforces the invariant in the DB even under races; a functional index serves expression-based queries. unique on is_default allows only one True row in the whole table; a check in save() loses races and is bypassed by update().'''
+
+[questions.django-lv027]
+prompt = '''A dashboard cache key takes 8 seconds to compute; when it expires, hundreds of requests recompute it and overload the DB. What is a simple way to reduce cache stampede with Django's cache API?'''
+options = ["Lower the TTL to 1 second", "Use cache.add(lock_key, ...) as a short-lived lock: the request that gets the lock recomputes, others return the stale value or wait", "Clear the cache on every request", "Add more web workers"]
+explanation = '''cache.add only writes when the key does not exist (atomic on supporting backends), making it suitable as a recompute-once lock. Lowering the TTL or clearing the cache makes it worse; more workers mean even more concurrent requests.'''
+
+[questions.django-lv028]
+prompt = '''A post_save receiver on Product updates the search index, but after a bulk import with bulk_create and a price update with queryset.update(), the index did not change. Why?'''
+options = ["The receiver was not imported, so it is not registered", "bulk_create and QuerySet.update() do not call save(), so pre_save/post_save are not sent", "post_save only runs in the admin", "Because transaction.atomic() is missing"]
+explanation = '''Bulk operations bypass save() and per-object signals; update the index explicitly after bulk operations. This is why important logic should not live only in signals.'''
+
+[questions.django-lv029]
+prompt = '''On PostgreSQL with the default isolation level, inside one transaction.atomic() you read Stock.quantity twice, one second apart, and get different values. What is the correct explanation?'''
+options = ["A Django ORM cache bug", "READ COMMITTED: each statement sees data committed as of when that statement runs, so a commit by another transaction in between is visible", "Because autocommit is off", "PostgreSQL defaults to SERIALIZABLE so this cannot happen"]
+explanation = '''PostgreSQL defaults to READ COMMITTED; use select_for_update or a higher isolation level if the logic depends on the value staying the same.'''
+
+[questions.django-lv030]
+prompt = '''Several workers take jobs from a Job table; to make each worker skip rows locked by another worker, use Job.objects.select_for_update({{blank}}=True).filter(status='pending')[:10]'''
+explanation = '''skip_locked=True skips locked rows instead of waiting, a common pattern when using a DB table as a queue.'''
+
+[questions.django-lv031]
+prompt = '''To see the query plan the database chooses for a QuerySet, call print(qs.{{blank}}())'''
+explanation = '''QuerySet.explain() returns the execution plan, helping you check whether an index is used.'''
+
+[questions.django-lv032]
+prompt = '''Compare three ways to prevent concurrent overwrites in Django: F() expressions, select_for_update and optimistic locking with a version column. When would you choose each?'''
+keywords = [["f()", "f expression"], ["select_for_update", "row lock", "pessimistic"], ["version", "optimistic"], ["race", "concurrent", "concurrency"], ["update()", "rows", "row count"]]
+model_answer = '''F() fits when the change is a simple arithmetic operation on one column (increment/decrement): the DB makes it atomic with no lock. select_for_update (pessimistic) takes a row lock inside the transaction when you must read, check complex conditions and then write, at the cost of lower concurrency and a risk of deadlocks. Optimistic locking uses a version column: filter(pk=..., version=v).update(..., version=v+1) and check the number of affected rows; if it is 0 there was a conflict, so raise an error or retry. It suits cases where races are rare, such as a user's long-running edit form.'''
+explanation = '''This senior question checks understanding of race conditions and the trade-off between pessimistic and optimistic locking.'''
+
+[questions.django-lv033]
+prompt = '''The app runs behind a load balancer that terminates TLS. Select the correct configuration.'''
+options = ["Set SECURE_PROXY_SSL_HEADER only if the proxy always overwrites that header from the client", "SESSION_COOKIE_SECURE and CSRF_COOKIE_SECURE = True", "ALLOWED_HOSTS = ['*'] to avoid 400 errors", "Declare CSRF_TRUSTED_ORIGINS for valid HTTPS origins when needed", "Disable CsrfViewMiddleware since HTTPS is in place"]
+explanation = '''A wrong SECURE_PROXY_SSL_HEADER can be spoofed by clients; secure cookies prevent sending over HTTP. ALLOWED_HOSTS '*' opens the door to Host header attacks; HTTPS does not replace CSRF protection.'''
+
+[questions.django-lv034]
+prompt = '''Which snippet is safe against SQL injection when raw SQL needs a user-supplied parameter q?'''
+explanation = '''Pass parameters separately so the driver escapes them. Every form of string building (f-string, %, +) puts the input straight into the SQL.'''
+
+[questions.django-lv035]
+prompt = '''To load less data, a list view uses Article.objects.only('id', 'title'). But the template shows {{ article.body|truncatewords:20 }}. What happens?'''
+options = ["Nothing, body is just empty", "Each article triggers an extra query to load body, causing N+1", "Django raises FieldError", "only() is ignored entirely"]
+explanation = '''Deferred fields are still accessible but loaded lazily per object. Keep the field list in sync with what the template actually uses.'''
+
+[questions.django-lv036]
+prompt = '''You need a list of Posts with the time of their latest comment, ordered by that value, in a single query. Which expression fits?'''
+options = ["Post.objects.annotate(last_comment=Max('comments__created_at')).order_by('-last_comment')", "Loop over each post and call post.comments.latest()", "prefetch_related('comments') then sort in Python", "Post.objects.order_by('-comments')"]
+explanation = '''annotate + aggregate computes in the DB and can be ordered directly. Looping over posts causes N+1; prefetching pulls every comment into memory; order_by('-comments') sorts by comment id and duplicates rows.'''
+
+[questions.django-lv037]
+prompt = '''A view enqueues a task inside transaction.on_commit(). The test uses TestCase but sees no task enqueued. What is the correct way to test it?'''
+options = ["Move all tests to TransactionTestCase", "Use with self.captureOnCommitCallbacks(execute=True): call the view, then assert", "Remove on_commit from the code to make it easier to test", "Mock transaction.atomic"]
+explanation = '''TestCase wraps each test in a transaction that never commits, so on_commit callbacks do not run; captureOnCommitCallbacks captures and can execute them. TransactionTestCase works but is much slower; changing code to ease testing loses the correctness guarantee.'''
+
+[questions.django-lvc02]
+title = "Optimistic locking with a version column"
+prompt = '''Simulate optimistic locking like filter(pk=pk, version=v).update(...). store is a dict pk -> data dict, and each record has a "version" key (int).
+1. update_if_version(store, pk, expected_version, changes): if pk exists and the current version equals expected_version, apply the fields in changes, increment version by 1 and return 1 (rows affected); otherwise change nothing and return 0. changes must not directly overwrite the "version" key (ignore it if present).
+2. save_with_retry(store, pk, mutate, attempts=3): loop at most attempts times: read a copy of the current record, call mutate(copy) which returns a changes dict, and try update_if_version with the version that was read. On success return True; when attempts run out return False. A missing pk returns False immediately.
+'''
+hints = ["update_if_version only writes when the version matches; return the number of rows affected.", "In the retry loop, re-read the latest record on each attempt and compute changes from that copy."]
+explanation = '''This pattern corresponds to filter(pk=..., version=...).update(...) plus checking the returned row count; it fits when conflicts are rare and you do not want to hold locks for long.'''
+
+[questions.django-lv038]
+prompt = '''You just added a phone field to the Customer model. Which command creates the migration file describing this change?'''
+explanation = '''makemigrations compares models with existing migrations and creates a new file; migrate then applies it to the database.'''
+
+[questions.django-lv039]
+prompt = '''Article.objects.get(pk=999) is called when no article has pk 999. What happens?'''
+options = ["Returns None", "Raises Article.DoesNotExist", "Returns an empty QuerySet", "Creates a new article with pk 999"]
+explanation = '''get() requires exactly one result: none raises DoesNotExist, more than one raises MultipleObjectsReturned. filter() is what returns an empty QuerySet.'''
+
+[questions.django-lv040]
+prompt = '''A POST form in a template needs the tag {% {{blank}} %} to pass the CSRF check.'''
+explanation = '''csrf_token inserts a hidden input containing the token; without it, POST requests get a 403 from CsrfViewMiddleware.'''
+
+[questions.django-lv041]
+prompt = '''With user.nickname being an empty string, what does the template {{ user.nickname|default:'Anonymous' }} display?'''
+options = ["An empty string", "Anonymous", "None", "A TemplateSyntaxError"]
+explanation = '''The default filter uses the fallback when the variable is falsy (empty string, None, 0…). default_if_none only replaces None.'''
+
+[questions.django-lv042]
+prompt = '''An article body field is long text with no fixed length limit, so declare it as body = models.{{blank}}()'''
+explanation = '''TextField is for long text; CharField suits short strings with max_length.'''
+
+[questions.django-lv043]
+prompt = '''After successfully handling a POST form, why does a view usually return redirect() instead of rendering directly?'''
+options = ["redirect is faster than render", "So that pressing F5 does not resubmit the form (Post/Redirect/Get)", "Because render cannot be used with POST", "To disable CSRF"]
+explanation = '''Redirecting after POST sends the browser to a new GET request, avoiding duplicate submissions when the page is reloaded.'''
+
+[questions.django-lv044]
+prompt = '''Select the correct statements about Django models.'''
+options = ["Defining __str__ makes objects readable in the admin and shell", "By default each model has an auto-increment id field as primary key unless declared otherwise", "The app containing the model must be in INSTALLED_APPS for migrations to pick it up", "After editing a model the database schema changes automatically without migrations"]
+explanation = '''Model changes only reach the database through makemigrations and migrate.'''
+
+[questions.django-lv045]
+prompt = '''URL /search/?q=django. In the view, what is the safe way to get q, returning an empty string if the parameter is missing?'''
+explanation = '''QueryDict.get returns the default when the key is missing; request.GET['q'] raises MultiValueDictKeyError if q is absent.'''
+
+[questions.django-lv046]
+prompt = '''In a TestCase: response = self.client.get('/'); to check that the page returns 200, write self.assertEqual(response.{{blank}}, 200)'''
+explanation = '''HttpResponse has a status_code attribute; the test client returns a response just like the view.'''
+
+[questions.django-lvc03]
+title = "Write a simple slugify"
+prompt = '''Write slugify(text) that creates a URL slug:
+- Strip accents with unicodedata.normalize("NFKD", ...) and then drop non-ASCII characters.
+- Convert to lowercase.
+- Replace each run of characters that are not letters a-z or digits 0-9 with a single hyphen.
+- Strip leading and trailing hyphens. An empty string returns "".
+Example: "Học Django 6!" -> "hoc-django-6".
+'''
+hints = ["encode('ascii', 'ignore') after NFKD drops the accents.", "re.sub(r'[^a-z0-9]+', '-', ...) then strip('-')."]
+explanation = '''Django ships django.utils.text.slugify; writing your own helps understand Unicode normalization and regex. Note that the Vietnamese letter đ does not decompose, so it is dropped.'''
+
+[questions.django-lv047]
+prompt = '''A detail view must return 404 instead of a 500 error when the Article is not found. What is the cleanest way?'''
+explanation = '''get_object_or_404 raises Http404 when there is no object. first() returns None and the error surfaces elsewhere; catching a generic Exception hides bugs; get_or_create creates junk data.'''
+
+[questions.django-lv048]
+prompt = '''Select the correct statements about validation in Form/ModelForm.'''
+options = ["clean_<field>() must return the field's cleaned value", "clean() is for checks involving multiple fields", "Raising ValidationError in clean_<field>() attaches the error to that field", "clean_<field>() runs before the field is converted to its type", "form.cleaned_data is available even before is_valid() is called"]
+explanation = '''clean_<field> runs after the field's to_python/validate; cleaned_data only exists after calling is_valid() (or full_clean).'''
+
+[questions.django-lv049]
+prompt = '''class ReportView(TemplateView, LoginRequiredMixin) still lets anonymous users view the page. Why?'''
+options = ["LoginRequiredMixin only works with FBVs", "The mixin must come to the left of the base view in the inheritance list so its dispatch runs first", "LOGIN_URL is missing", "TemplateView does not support auth"]
+explanation = '''By the MRO, TemplateView's dispatch is found first, so the mixin has no effect. Write class ReportView(LoginRequiredMixin, TemplateView).'''
+
+[questions.django-lv050]
+prompt = '''You need to mark 10,000 overdue orders as status 'expired'. The current code loops and calls order.save() one by one. What is better?'''
+options = ["Order.objects.filter(due__lt=now, status='open').update(status='expired')", "Call save(update_fields=['status']) in the loop", "Use prefetch_related before the loop", "Run the loop in a separate thread"]
+explanation = '''update() issues a single UPDATE statement. Note it does not call save() or send signals; update_fields only reduces the columns written but is still 10,000 queries.'''
+
+[questions.django-lv051]
+prompt = '''Prefetch only approved comments into a separate attribute: Post.objects.prefetch_related(Prefetch('comments', queryset=Comment.objects.filter(approved=True), {{blank}}='approved_comments'))'''
+explanation = '''to_attr stores the prefetch result as a list on a new attribute, without overriding the comments manager.'''
+
+[questions.django-lvc04]
+title = "Pagination like Paginator.get_page"
+prompt = '''Write paginate(items, page, per_page) simulating Paginator.get_page:
+- num_pages = the number of pages needed to hold items (rounded up), at least 1 even when items is empty.
+- page may be an int or a string; if it cannot be converted to int use page 1; if it is less than 1 use 1; if it is greater than num_pages use the last page.
+- Return a dict {"items": list of the page's items, "number": page number, "num_pages": ..., "has_next": bool, "has_previous": bool}.
+per_page is always a positive integer.
+'''
+hints = ["Round up with -(-n // k) or math.ceil.", "Catch TypeError and ValueError around int(page)."]
+explanation = '''Paginator.get_page handles bad pages gracefully so hand-edited URLs do not cause a 404; page() instead raises EmptyPage/PageNotAnInteger.'''

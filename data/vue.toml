@@ -212,11 +212,23 @@ Ví dụ, `useFetch('/api/profile')` phù hợp cho response hữu hạn; một 
 Clipboard và permission phụ thuộc browser, secure context, user activation hoặc policy của trang; hãy kiểm tra khả năng hỗ trợ và bắt lỗi thay vì giả định luôn thành công. Permission browser cũng không phải authorization của API. Lỗi thường gặp là dùng WebSocket chỉ để tải một lần, không dọn socket/listener, hoặc cho phép response cũ ghi đè kết quả của request mới. Khi request gắn với input thay đổi nhanh, hủy request cũ nếu có thể hoặc so sánh request id trước khi cập nhật state. Trong SSR, không chạm vào API browser ở thời điểm module được import; chỉ sử dụng khi có môi trường phù hợp.
 '''
 
+[[modules]]
+id = "vue-lead"
+title = "Kiến trúc dẫn gu, migration và tối ưu cao cấp"
+description = "State management scale, component architecture, testing strategy, performance optimization, TypeScript integration và migration Vue 2→3."
+sources = ["vue~3/guide/scaling-up/state-management", "vue~3/guide/scaling-up/sfc", "vue~3/guide/scaling-up/testing", "vue~3/guide/best-practices/performance", "vue~3/guide/extras/composition-api-faq"]
+lesson = '''
+### Kiến trúc và tối ưu cao cấp Vue
+
+Quản lý state cho ứng dụng lớn đòi hỏi phân chia theo domain; sử dụng Pinia cho state cần chia sẻ, composable cho logic tái sử dụng, và state local cho giao diện cục bộ. Component theo feature giúp gần gũi logic với mục đích sử dụng, giảm coupling và dễ bảo trì. Testing cần cân nhắc: unit test cho composable/logic, E2E cho flow quan trọng; coverage đồng nhất không phải mục tiêu. Performance tối ưu bắt đầu bằng đo lường, sau đó giảm bundle bằng lazy route và code splitting, hoặc virtualize danh sách lớn. TypeScript giúp catch lỗi compile thời, đặc biệt với defineProps/defineEmits. Migration Vue 2→3 nên dùng @vue/compat để migrate dần component với công cụ tự động.
+'''
+
 [[questions]]
 id = "vue-001"
 module = "vue-template"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Trong template, cú pháp rút gọn nào bind thuộc tính DOM với biểu thức reactive?"
 options = ["`:`", "`@`", "`#`", "`$`"]
 answer = [0]
@@ -228,6 +240,7 @@ id = "vue-002"
 module = "vue-template"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một bảng có vài nghìn dòng, nội dung ít khi đổi nhưng bộ lọc có thể bật tắt thường xuyên. Chọn cách hiển thị nhánh phù hợp khi cần tránh tạo lại node mỗi lần bật tắt."
 options = ["`v-if`", "`v-show`", "`v-html`", "`v-once`"]
 answer = [1]
@@ -239,6 +252,7 @@ id = "vue-003"
 module = "vue-template"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Danh sách task cho phép chèn, xóa và sắp xếp lại. Giá trị nào nên dùng làm `:key`?"
 options = ["Index hiện tại của vòng lặp", "Một id ổn định, duy nhất của task", "Giá trị `Math.random()` mỗi lần render", "Không cần key"]
 answer = [1]
@@ -250,6 +264,7 @@ id = "vue-004"
 module = "vue-template"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn các nhận định đúng về template binding và directive."
 options = ["`@click` là dạng rút gọn của `v-on:click`", "`v-html` chèn nội dung dưới dạng text đã escape", "`.once` có thể giới hạn listener chỉ xử lý một lần", "`v-if` và `v-for` nên đặt cùng một node để Vue lọc từng phần tử", "`v-show` thường giữ node trong DOM khi ẩn"]
 answer = [0, 2, 4]
@@ -261,6 +276,7 @@ id = "vue-005"
 module = "vue-template"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Điền tên directive để hiển thị danh sách và key theo id:
 ```html
@@ -276,6 +292,7 @@ id = "vue-006"
 module = "vue-template"
 type = "single"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Một trang render tên người dùng bằng `v-html` từ nội dung nhập tự do. Rủi ro chính và hướng sửa phù hợp là gì?"
 options = ["Không có rủi ro nếu nội dung là string; giữ nguyên", "HTML injection/XSS; hiển thị bằng interpolation nếu chỉ cần text", "Vue tự loại mọi thẻ nguy hiểm; không cần thay đổi", "Chỉ cần thêm `:key` cho phần tử"]
 answer = [1]
@@ -287,6 +304,7 @@ id = "vue-007"
 module = "vue-reactivity"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Giá trị tạo từ `ref(0)` được đọc trong JavaScript như thế nào?"
 options = ["`count.value`", "`count.current`", "`count.get()`", "`count[0]`"]
 answer = [0]
@@ -298,6 +316,7 @@ id = "vue-008"
 module = "vue-reactivity"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "`computed(() => price.value * quantity.value)` chưa được đọc. Khi dependency đổi nhiều lần trước lần đọc đầu tiên, Vue thường làm gì?"
 options = ["Tính lại ngay sau mỗi lần đổi", "Đánh dấu dirty và tính khi được đọc; sau đó cache tới lần invalidation tiếp theo", "Chạy mỗi frame", "Chỉ tính một lần suốt vòng đời ứng dụng"]
 answer = [1]
@@ -309,6 +328,7 @@ id = "vue-009"
 module = "vue-reactivity"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Vì sao destructure `const { count } = reactiveState` có thể làm `count` mất liên kết reactive với thuộc tính gốc?"
 options = ["Destructure luôn clone mọi object", "`count` là giá trị primitive cục bộ, không còn được đọc qua proxy", "Vue cấm destructuring trong JavaScript", "`reactive` chỉ hoạt động với array"]
 answer = [1]
@@ -320,6 +340,7 @@ id = "vue-010"
 module = "vue-reactivity"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Chọn các nhận định chính xác về watcher và shallow reactivity."
 options = ["`watch` mặc định theo dõi chính xác nguồn được khai báo", "`watchEffect` chạy ngay để thu thập dependency đồng bộ", "`shallowRef` tự proxy sâu mọi thuộc tính của object", "Cleanup giúp hủy timer hoặc request cũ trước lần chạy tiếp theo", "Đọc dependency lần đầu sau `await` trong `watchEffect` luôn được track"]
 answer = [0, 1, 3]
@@ -331,6 +352,7 @@ id = "vue-011"
 module = "vue-reactivity"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Điền API chuyển các thuộc tính của reactive object thành ref liên kết để destructure an toàn:
 ```js
@@ -347,6 +369,7 @@ id = "vue-012"
 module = "vue-reactivity"
 type = "code"
 difficulty = 3
+tags = ["level:senior"]
 title = "Mini reactivity với computed lazy"
 prompt = '''
 Viết `createMiniReactivity()` trả về `{ ref, computed, effect }` bằng JavaScript thuần.
@@ -485,6 +508,7 @@ id = "vue-013"
 module = "vue-reactivity"
 type = "code"
 difficulty = 3
+tags = ["level:senior"]
 title = "Watch với cleanup"
 prompt = '''
 Viết `createSignal(initialValue)` và `watch(source, callback)` để mô phỏng watcher đồng bộ trên một nguồn đơn.
@@ -598,6 +622,7 @@ id = "vue-014"
 module = "vue-components"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Component con muốn yêu cầu component cha cập nhật giá trị `modelValue`. Event mặc định nào tương ứng với `v-model`?"
 options = ["`change:modelValue`", "`update:modelValue`", "`set:modelValue`", "`input:value`"]
 answer = [1]
@@ -609,6 +634,7 @@ id = "vue-015"
 module = "vue-components"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một component con cần báo rằng người dùng đã lưu form. Hợp đồng giao tiếp nào phù hợp nhất?"
 options = ["Con sửa trực tiếp prop `form` rồi hy vọng cha biết", "Con phát event `save` qua `emit`, cha lắng nghe event", "Con tìm component cha qua DOM", "Con ghi dữ liệu vào biến global bất kỳ"]
 answer = [1]
@@ -620,6 +646,7 @@ id = "vue-016"
 module = "vue-components"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn các nhận định đúng về props, slots và provide/inject."
 options = ["Props là đầu vào chỉ đọc của component con", "Scoped slot có thể nhận dữ liệu do component con cung cấp", "Provide/inject chỉ truyền được tới component con trực tiếp", "`defineProps` và `defineEmits` trong `<script setup>` là compiler macro", "Mọi slot đều làm component cha sở hữu state của component con"]
 answer = [0, 1, 3]
@@ -631,6 +658,7 @@ id = "vue-017"
 module = "vue-components"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Điền prop mặc định để component con nhận giá trị của `v-model` không có tên tùy chỉnh:
 ```js
@@ -646,6 +674,7 @@ id = "vue-018"
 module = "vue-components"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Mô tả luồng dữ liệu khi component cha dùng `v-model` với component con và giải thích vì sao con không nên mutate prop trực tiếp."
 keywords = [["modelValue", "prop modelValue"], ["update:modelValue", "event update:modelValue"], ["emit", "phát event"], ["props chỉ đọc", "readonly prop", "không mutate prop"]]
 min_keywords = 3
@@ -658,6 +687,7 @@ id = "vue-019"
 module = "vue-components"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 title = "Mô phỏng emit và v-model"
 prompt = '''
 Viết `createModelBinding(initialValue)` mô phỏng component cha nối `v-model` với component con.
@@ -724,6 +754,7 @@ id = "vue-020"
 module = "vue-composables"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một composable cài `window` listener trong setup. Cần làm gì để tránh rò rỉ khi component bị unmount?"
 options = ["Đăng ký cleanup qua `onUnmounted`", "Lưu listener trong computed", "Gọi listener thêm lần nữa", "Chuyển listener sang `v-memo`"]
 answer = [0]
@@ -735,6 +766,7 @@ id = "vue-021"
 module = "vue-composables"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Ô tìm kiếm phát request sau mỗi ký tự khiến server bị gọi quá nhiều. Tiện ích VueUse nào phù hợp để cung cấp ref chỉ cập nhật sau một khoảng yên lặng?"
 options = ["`refDebounced`", "`refThrottled` chỉ khi cần cập nhật sau khoảng yên lặng", "`useEventListener`", "`useClipboard`"]
 answer = [0]
@@ -746,6 +778,7 @@ id = "vue-022"
 module = "vue-composables"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn các thực hành phù hợp khi viết composable."
 options = ["Đặt tên theo quy ước `use...` để nhận diện logic tái sử dụng", "Gọi composable ổn định trong setup nếu nó đăng ký lifecycle", "Luôn đặt mọi state vào biến module để mọi component dùng chung", "Dọn timer hoặc listener do composable tạo", "Tách composable theo mối quan tâm rõ ràng"]
 answer = [0, 1, 3, 4]
@@ -757,6 +790,7 @@ id = "vue-023"
 module = "vue-composables"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Điền tên hàm VueUse chuyên tạo một function có debounce:
 ```js
@@ -772,6 +806,7 @@ id = "vue-024"
 module = "vue-composables"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Thiết kế composable tìm kiếm có debounce và request bất đồng bộ. Nêu cách tránh response cũ ghi đè kết quả mới và cách dọn tài nguyên."
 keywords = [["debounce", "trì hoãn request"], ["cleanup", "hủy request", "abort"], ["stale", "response cũ", "kết quả cũ"], ["watch", "watcher"]]
 min_keywords = 3
@@ -784,6 +819,7 @@ id = "vue-025"
 module = "vue-composables"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 title = "useDebouncedRef với fake timers"
 prompt = '''
 Viết `useDebouncedRef(initialValue, delayMs)` bằng timer chuẩn, không dùng thư viện.
@@ -887,6 +923,7 @@ id = "vue-026"
 module = "vue-router"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Trong route `/users/:id`, khi URL là `/users/42`, `42` thường nằm ở đâu?"
 options = ["`route.params.id`", "`route.query.id`", "`route.hash.id`", "`route.meta.id`"]
 answer = [0]
@@ -898,6 +935,7 @@ id = "vue-027"
 module = "vue-router"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Guard đăng nhập không cho vào trang cần quyền và muốn đưa người dùng tới `/login`. Guard theo kiểu return-based nên trả gì?"
 options = ["`false`", "`true`", "`'/login'`", "Gọi `next()` hai lần"]
 answer = [2]
@@ -909,6 +947,7 @@ id = "vue-028"
 module = "vue-router"
 type = "single"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Một ứng dụng SPA cần giảm bundle đầu tiên bằng cách chỉ tải trang báo cáo khi người dùng mở route. Cách cấu hình phù hợp là gì?"
 options = ["Khai báo `component: () => import('./Reports.vue')` trong route", "Import đồng bộ component vào mọi entry", "Dùng `v-html` để tải component", "Đặt route bên trong `v-memo`"]
 answer = [0]
@@ -920,6 +959,7 @@ id = "vue-029"
 module = "vue-router"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn các nhận định đúng về Vue Router."
 options = ["`to.params` chứa giá trị segment động như `:id`", "Global guard async được Router chờ trước khi hoàn tất navigation", "Guard trả `false` yêu cầu tiếp tục điều hướng", "Route component dynamic import hỗ trợ lazy loading", "Navigation guard thay thế authorization phía server"]
 answer = [0, 1, 3]
@@ -931,6 +971,7 @@ id = "vue-030"
 module = "vue-router"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Chọn các bước hợp lý khi thêm route động vào router đang chạy."
 options = ["Cập nhật route matcher bằng API thêm route", "Nếu cần, gỡ route cũ bằng hàm disposer trả về", "Giả định sửa mảng cấu hình gốc sẽ tự cập nhật router", "Đặt catch-all trước route cụ thể để route cụ thể được ưu tiên", "Kiểm tra điều kiện để tránh thêm lặp route"]
 answer = [0, 1, 4]
@@ -942,6 +983,7 @@ id = "vue-031"
 module = "vue-router"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 Điền tên route parameter để khớp một segment động:
 ```js
@@ -957,6 +999,7 @@ id = "vue-032"
 module = "vue-router"
 type = "code"
 difficulty = 3
+tags = ["level:senior"]
 title = "Matcher route có param và wildcard"
 prompt = '''
 Viết `createRouteMatcher(routes)` trả về hàm `match(path)`.
@@ -1036,6 +1079,7 @@ id = "vue-033"
 module = "vue-router"
 type = "code"
 difficulty = 3
+tags = ["level:senior"]
 title = "Navigation guard pipeline"
 prompt = '''
 Viết `async runGuards(guards, to, from)` thực thi các guard theo thứ tự.
@@ -1105,6 +1149,7 @@ id = "vue-034"
 module = "vue-performance-state"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Ứng dụng có nhiều màn hình cùng đọc và cập nhật giỏ hàng, cần actions và devtools. Lựa chọn nào phù hợp để tổ chức state chia sẻ?"
 options = ["Pinia store", "Biến local trong một template", "`v-memo`", "`KeepAlive` cho toàn bộ state"]
 answer = [0]
@@ -1116,6 +1161,7 @@ id = "vue-035"
 module = "vue-performance-state"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Tab component đổi qua lại và người dùng cần giữ nguyên state form khi rời tab tạm thời. Cơ chế tích hợp nào phù hợp?"
 options = ["`<KeepAlive>`", "`v-html`", "`watchEffect`", "`shallowRef` cho mọi prop"]
 answer = [0]
@@ -1127,6 +1173,7 @@ id = "vue-036"
 module = "vue-performance-state"
 type = "single"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Một `v-memo` bỏ qua cập nhật subtree, nhưng UI giữ giá trị cũ sau khi `selectedId` thay đổi. Nguyên nhân có khả năng nhất là gì?"
 options = ["Dependency array thiếu `selectedId`", "`v-memo` tự cập nhật state thành immutable", "Pinia chặn mọi render", "Cần đổi mọi ref thành reactive"]
 answer = [0]
@@ -1138,6 +1185,7 @@ id = "vue-037"
 module = "vue-performance-state"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn các nhận định đúng về state và hiệu năng Vue."
 options = ["Pinia phù hợp cho state chia sẻ có cấu trúc", "KeepAlive có thể giữ instance trong bộ nhớ", "`v-memo` nên thêm trước khi đo bất kỳ vấn đề render nào", "Dependency thiếu trong `v-memo` có thể làm giao diện stale", "Cache component không có giới hạn tài nguyên"]
 answer = [0, 1, 3]
@@ -1149,6 +1197,7 @@ id = "vue-038"
 module = "vue-performance-state"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Điền tên component tích hợp để cache component động giữa các lần chuyển màn hình:
 ```html
@@ -1164,6 +1213,7 @@ id = "vue-039"
 module = "vue-performance-state"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Đề xuất cách tối ưu một danh sách Vue lớn đang render chậm. Nêu cách đo, ít nhất hai hướng xử lý và một rủi ro của memoization hoặc cache."
 keywords = [["profile", "đo", "profiling"], ["key", "stable key", "key ổn định"], ["virtual", "virtualization", "ảo hóa"], ["memo", "v-memo", "memoization"], ["cache", "keepalive", "bộ nhớ"]]
 min_keywords = 3
@@ -1176,6 +1226,7 @@ id = "vue-dv001"
 module = "vue-dv-render"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một modal nằm trong component bị cắt bởi `overflow: hidden` của tổ tiên. `Teleport` giải quyết vấn đề nào?"
 options = ["Chuyển vị trí node DOM được render tới target khác nhưng giữ quan hệ component Vue", "Tạo một Vue app độc lập cho modal", "Tự động khóa cuộn và quản lý focus", "Chuyển component sang Web Worker"]
 answer = [0]
@@ -1187,6 +1238,7 @@ id = "vue-dv002"
 module = "vue-dv-render"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "`defineAsyncComponent(() => import('./ReportsPage.vue'))` chủ yếu giúp ích điều gì?"
 options = ["Tải mã component khi cần, hỗ trợ chia nhỏ bundle", "Tự tạo route tương ứng với tên file", "Tự cache instance sau khi unmount", "Biến component thành server component"]
 answer = [0]
@@ -1198,6 +1250,7 @@ id = "vue-dv008"
 module = "vue-dv-router-data"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Trong route cha có `meta: { requiresAuth: true }`, route con khai báo `meta: { requiresAuth: false }`. Giá trị `route.meta.requiresAuth` của route con là gì?"
 options = ["`false`, vì meta được gộp nông và route con ghi đè cùng khóa", "`true`, vì route cha luôn có ưu tiên cao nhất", "Một mảng `[true, false]`", "Lỗi cấu hình route"]
 answer = [0]
@@ -1209,6 +1262,7 @@ id = "vue-dv009"
 module = "vue-dv-router-data"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một màn hình có thể render skeleton rồi mới hiện dữ liệu. Cách tải nào cho phép navigation hoàn tất trước khi request xong?"
 options = ["Tải sau khi vào route và quản lý trạng thái loading trong component", "Chặn navigation bằng guard cho đến khi mọi request xong", "Chỉ tải dữ liệu trong `scrollBehavior`", "Đặt dữ liệu trong `route.meta` để Router tự gọi API"]
 answer = [0]
@@ -1220,6 +1274,7 @@ id = "vue-dv010"
 module = "vue-dv-router-data"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Cần áp dụng `Transition` quanh component route hiện tại. API nào cung cấp component được render bởi `RouterView`?"
 options = ["Slot của `RouterView` với biến `Component`", "`route.matched[0].path`", "`router.currentRoute.component`", "`route.meta.view`"]
 answer = [0]
@@ -1231,6 +1286,7 @@ id = "vue-dv011"
 module = "vue-dv-router-data"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Chọn các cách xử lý hợp lý khi route con phải kế thừa yêu cầu đăng nhập từ mọi route cha."
 options = ["Duyệt `to.matched` và kiểm tra từng record có `meta.requiresAuth`", "Dùng guard để redirect sang trang đăng nhập khi chưa xác thực", "Coi client navigation guard là lớp bảo vệ duy nhất cho dữ liệu", "Giả định `route.meta` gộp sâu mọi object lồng nhau"]
 answer = [0, 1]
@@ -1242,6 +1298,7 @@ id = "vue-dv012"
 module = "vue-dv-router-data"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn các nhận định đúng về tải dữ liệu và cuộn khi điều hướng."
 options = ["Tải sau navigation cho phép component thể hiện loading state", "Tải trước navigation có thể giữ route hiện tại cho đến khi request xong", "`scrollBehavior` chỉ được dùng để gọi API lấy dữ liệu trang", "Có thể khôi phục vị trí cuộn cũ khi điều hướng back/forward"]
 answer = [0, 1, 3]
@@ -1253,6 +1310,7 @@ id = "vue-dv013"
 module = "vue-dv-router-data"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Điền thuộc tính để kiểm tra yêu cầu đăng nhập trên mọi route record trong nhánh đã match:
 ```js
@@ -1268,6 +1326,7 @@ id = "vue-dv014"
 module = "vue-dv-router-data"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Câu hỏi phỏng vấn: thiết kế luồng tải dữ liệu cho route chi tiết có thể mở trực tiếp và có thể điều hướng liên tục giữa các id. So sánh tải trước/sau navigation, giải thích vai trò của metadata và guard, đồng thời nêu cách tránh response cũ làm sai màn hình."
 keywords = [["before navigation", "trước navigation"], ["after navigation", "sau navigation"], ["route.meta", "meta"], ["navigation guard", "guard"], ["stale response", "response cũ", "hủy request"]]
 min_keywords = 3
@@ -1280,6 +1339,7 @@ id = "vue-dvc02"
 module = "vue-dv-router-data"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 title = "Gộp metadata của route records"
 lang = "javascript"
 prompt = '''Viết `mergeRouteMeta(records)` nhận các route record đã match theo thứ tự từ cha đến con.
@@ -1341,6 +1401,7 @@ id = "vue-dv003"
 module = "vue-dv-render"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Danh sách có phần tử được thêm, xóa và sắp xếp cần hiệu ứng di chuyển. Lựa chọn nào phù hợp nhất?"
 options = ["`TransitionGroup` với `key` ổn định cho mỗi phần tử", "`Transition` bao quanh từng node nhưng bỏ `key`", "`Teleport` cho từng hàng", "`KeepAlive` cho toàn bộ danh sách"]
 answer = [0]
@@ -1352,6 +1413,7 @@ id = "vue-dv004"
 module = "vue-dv-render"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn các nhận định đúng về component render tích hợp của Vue."
 options = ["`Transition` phù hợp với một phần tử hoặc component vào/ra", "`TransitionGroup` dùng key ổn định cho các con được lặp", "Teleport làm component mất quan hệ với tổ tiên trong cây Vue", "`TransitionGroup` luôn tự thêm một wrapper DOM"]
 answer = [0, 1]
@@ -1363,6 +1425,7 @@ id = "vue-dv005"
 module = "vue-dv-render"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Khi cấu hình async component cho một trang báo cáo lớn, chọn các cách làm hợp lý."
 options = ["Loader trả Promise, thường lấy từ dynamic import", "Cân nhắc loading component và error component cho trạng thái tải", "Đặt tên component mới bên trong mỗi lần render để ép tải lại", "Dùng async component để thay thế khai báo route và quyền truy cập"]
 answer = [0, 1]
@@ -1374,6 +1437,7 @@ id = "vue-dv006"
 module = "vue-dv-render"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Điền API bọc loader để tạo một async component:
 ```js
@@ -1389,6 +1453,7 @@ id = "vue-dv007"
 module = "vue-dv-render"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Trong phỏng vấn, hãy mô tả cách xây modal có thể render bên ngoài container của trang nhưng vẫn tích hợp với component Vue. Nêu vai trò của Teleport, hiệu ứng đóng/mở và ít nhất hai trách nhiệm accessibility cần tự xử lý."
 keywords = [["Teleport", "đổi vị trí DOM"], ["Transition", "hiệu ứng vào ra"], ["focus", "focus trap"], ["Escape", "keyboard"], ["scroll", "khóa cuộn"]]
 min_keywords = 3
@@ -1401,6 +1466,7 @@ id = "vue-dvc01"
 module = "vue-dv-render"
 type = "code"
 difficulty = 3
+tags = ["level:senior"]
 title = "Async loader dùng chung và retry"
 lang = "javascript"
 prompt = '''Viết `createAsyncLoader(load)` trả về hàm `loadOnce()`.
@@ -1492,6 +1558,7 @@ id = "vue-dv015"
 module = "vue-dv-state"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Một preference cần còn nguyên sau khi người dùng reload trang. API VueUse nào phù hợp nhất?"
 options = ["`useStorage`", "`useRefHistory`", "`createSharedComposable`", "`watchOnce`"]
 answer = [0]
@@ -1503,6 +1570,7 @@ id = "vue-dv016"
 module = "vue-dv-state"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "`useRefHistory` đang theo dõi một ref chứa object. Thay đổi `state.value.profile.name` không được ghi vào history. Cấu hình nào cần xem xét?"
 options = ["Bật theo dõi sâu bằng `deep: true`", "Đổi ref thành `shallowRef`", "Gọi `createGlobalState`", "Tắt serialization"]
 answer = [0]
@@ -1514,6 +1582,7 @@ id = "vue-dv017"
 module = "vue-dv-state"
 type = "single"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Một composable cần dùng chung instance cho nhiều component đang mounted, rồi dọn scope khi consumer cuối cùng rời đi. Helper nào khớp mục tiêu này nhất?"
 options = ["`createSharedComposable`", "`createGlobalState`", "`useStorage`", "`useRefHistory`"]
 answer = [0]
@@ -1525,6 +1594,7 @@ id = "vue-dv018"
 module = "vue-dv-state"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn các nhận định đúng khi dùng VueUse để quản lý state."
 options = ["`useStorage` cần dữ liệu có thể serialize theo định dạng storage đã chọn", "`useRefHistory` có thể hỗ trợ undo/redo bằng snapshot", "`createGlobalState` luôn tạo state riêng cho mỗi component gọi", "`createSharedComposable` có thể chia sẻ kết quả composable cho nhiều consumer"]
 answer = [0, 1, 3]
@@ -1536,6 +1606,7 @@ id = "vue-dv019"
 module = "vue-dv-state"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Một trang có preference lưu qua reload, undo cho chỉnh sửa biểu mẫu và request khởi chạy khi người dùng bấm nút. Chọn các cách ghép phù hợp."
 options = ["Dùng `useStorage` cho preference phù hợp với browser storage", "Dùng `useRefHistory` cho các snapshot cần undo", "Dùng `useAsyncState` để biểu diễn trạng thái tác vụ bất đồng bộ", "Dùng một `createGlobalState` duy nhất cho mọi dữ liệu, kể cả dữ liệu riêng từng người dùng"]
 answer = [0, 1, 2]
@@ -1547,6 +1618,7 @@ id = "vue-dv020"
 module = "vue-dv-state"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Điền composable để lưu preference reactive vào storage:
 ```js
@@ -1562,6 +1634,7 @@ id = "vue-dv021"
 module = "vue-dv-state"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Câu hỏi phỏng vấn: thiết kế state cho preference cần tồn tại sau reload, dữ liệu biểu mẫu cần undo và state dùng chung bởi nhiều component. Nêu cách chọn VueUse API, các ranh giới serialization/vòng đời cần kiểm tra và một vấn đề riêng của SSR."
 keywords = [["useStorage", "storage"], ["useRefHistory", "history", "undo"], ["shared composable", "createSharedComposable", "createGlobalState"], ["serialization", "serialize"], ["SSR", "request scope"]]
 min_keywords = 3
@@ -1574,6 +1647,7 @@ id = "vue-dvc03"
 module = "vue-dv-state"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 title = "Ref lưu trữ với JSON"
 lang = "javascript"
 prompt = '''Viết `createStorageRef(storage, key, initialValue)` dùng một đối tượng `storage` có `getItem(key)` và `setItem(key, value)`.
@@ -1650,6 +1724,7 @@ id = "vue-dv022"
 module = "vue-dv-network"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Một màn hình tải dữ liệu JSON theo request hữu hạn và cần trạng thái reactive cho dữ liệu/loading/lỗi. Composable nào phù hợp nhất?"
 options = ["`useFetch`", "`useWebSocket`", "`useEventSource`", "`useClipboard`"]
 answer = [0]
@@ -1661,6 +1736,7 @@ id = "vue-dv023"
 module = "vue-dv-network"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Server chỉ cần đẩy thông báo một chiều liên tục tới dashboard. API nào thường phù hợp hơn WebSocket nếu client không cần gửi message realtime?"
 options = ["`useEventSource`", "`useClipboard`", "`usePermission`", "`useRefHistory`"]
 answer = [0]
@@ -1672,6 +1748,7 @@ id = "vue-dv024"
 module = "vue-dv-network"
 type = "single"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "`usePermission` cho biết browser hiện cấp quyền clipboard hay không. Kết luận nào an toàn và chính xác?"
 options = ["Đó là tín hiệu capability phía client; API server vẫn phải tự kiểm tra quyền truy cập dữ liệu", "Có quyền clipboard nghĩa là user đã được phép đọc mọi dữ liệu server", "Permission luôn được hỗ trợ và không cần xử lý lỗi", "Có thể bỏ xác thực server nếu client dùng permission composable"]
 answer = [0]
@@ -1683,6 +1760,7 @@ id = "vue-dv025"
 module = "vue-dv-network"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Ghép các nhu cầu với composable VueUse phù hợp. Chọn mọi lựa chọn đúng."
 options = ["HTTP request/response cho dữ liệu hồ sơ: `useFetch`", "Server đẩy sự kiện một chiều: `useEventSource`", "Chat gửi và nhận message realtime: `useWebSocket`", "Sao chép văn bản vào clipboard: `usePermission`"]
 answer = [0, 1, 2]
@@ -1694,6 +1772,7 @@ id = "vue-dv026"
 module = "vue-dv-network"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Một composable có request theo query thay đổi nhanh và một WebSocket sống theo component. Chọn các biện pháp phù hợp."
 options = ["Bỏ qua response request cũ bằng request id hoặc hủy request", "Thể hiện trạng thái lỗi/loading và cho phép retry phù hợp", "Đóng kết nối hoặc gỡ listener khi scope không còn dùng", "Coi trạng thái permission phía browser là quyền truy cập backend"]
 answer = [0, 1, 2]
@@ -1705,6 +1784,7 @@ id = "vue-dv027"
 module = "vue-dv-network"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Điền composable cho server-sent events một chiều:
 ```js
@@ -1720,6 +1800,7 @@ id = "vue-dv028"
 module = "vue-dv-network"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Câu hỏi phỏng vấn: thiết kế một trang hiển thị dữ liệu HTTP ban đầu, sau đó nhận cập nhật realtime và có nút sao chép kết quả. Chọn composable cho từng phần, nêu cách xử lý lỗi/vòng đời và giải thích giới hạn của permission browser."
 keywords = [["useFetch", "http"], ["useEventSource", "server-sent events"], ["useWebSocket", "websocket"], ["loading", "error", "retry"], ["permission", "authorization", "quyền server"]]
 min_keywords = 3
@@ -1732,6 +1813,7 @@ id = "vue-dvc04"
 module = "vue-dv-network"
 type = "code"
 difficulty = 3
+tags = ["level:senior"]
 title = "Chỉ nhận kết quả request mới nhất"
 lang = "javascript"
 prompt = '''Viết `createLatestRequestState()` trả về `{ state, begin, resolve, reject, cancel }`.
@@ -1829,3 +1911,1296 @@ test('cancel vô hiệu token hiện tại và settle lặp bị từ chối', (
 hints = ["Dùng `requestId` tăng dần và chỉ settle khi token còn hiện tại đồng thời loading.", "Hủy request cần vô hiệu token cũ để callback về muộn không thể ghi vào state."]
 explanation = "Mã lượt request là lớp bảo vệ state khi nhiều request cạnh tranh; trong ứng dụng thật hãy ưu tiên hủy công việc cũ nếu transport hỗ trợ."
 sources = ["vueuse/core/usefetch/index"]
+
+[[questions]]
+id = "vue-lv001"
+module = "vue-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "state-management"]
+prompt = "Ứng dụng Vue quy mô lớn có ~50 màn hình, team 8 người. State cần chia sẻ nhiều domain (auth, product, cart, notification). Chọn chiến lược state hợp lý nhất?"
+options = [
+  "Dùng một Pinia store toàn cục chứa mọi state để tránh cross-store import",
+  "Tách store theo domain (authStore, productStore...), dùng composable cho logic tái dùng, state local cho UI cục bộ",
+  "Chỉ dùng ref/reactive ở cấp module-level, không dùng Pinia",
+  "Dùng Vuex 4 vì Pinia chưa sẵn sàng cho quy mô này"
+]
+answer = [1]
+explanation = "Tách store theo domain giảm coupling, dễ test và tree-shake. Composable cho logic tái dùng. State local (ref trong setup) cho UI không cần chia sẻ. Pinia khuyến khích multi-store hơn single store."
+sources = ["vue~3/guide/scaling-up/state-management"]
+
+[[questions]]
+id = "vue-lv002"
+module = "vue-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "state-management"]
+prompt = "Trong Pinia store, action `async fetchProducts()` gọi API. Component A và B cùng gọi action này gần như cùng lúc. Cách nào tránh gọi API trùng lặp hiệu quả nhất?"
+options = [
+  "Dùng biến `isLoading` trong store, return early nếu đang load",
+  "Dùng `Promise` cache: lưu promise đang chạy, các caller sau `await` cùng promise đó",
+  "Dùng `debounce` trên action",
+  "Dùng `watch` trên getter để trigger fetch tự động"
+]
+answer = [1]
+explanation = "Lưu promise đang chạy (request deduplication) cho phép nhiều component cùng await một request duy nhất. `isLoading` có race condition giữa check và set. Debounce chậm phản hồi. Watch getter không phù hợp cho fetch chủ động."
+sources = ["vue~3/guide/scaling-up/state-management", "vue~3/guide/essentials/watchers"]
+
+[[questions]]
+id = "vue-lv003"
+module = "vue-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "component-architecture"]
+prompt = "Team quyết định tổ chức component theo 'feature folder' thay vì 'type folder'. Lợi ích chính là gì?"
+options = [
+  "Giảm số file import vì mọi thứ cùng thư mục",
+  "Gom logic, UI, test của một tính năng gần nhau; giảm coupling giữa feature, dễ xóa/migrate",
+  "Cho phép dùng circular dependency an toàn",
+  "Tự động code-split theo route"
+]
+answer = [1]
+explanation = "Feature folder (colocation) gom component, composable, util, test, story của một feature. Giảm coupling giữa feature, dễ refactor/xóa. Không tự động code-split (cần defineAsyncComponent/lazy route). Circular dependency vẫn tránh."
+sources = ["vue~3/guide/scaling-up/sfc", "vue~3/guide/scaling-up/state-management"]
+
+[[questions]]
+id = "vue-lv004"
+module = "vue-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "testing"]
+prompt = "Chiến lược test cho ứng dụng Vue quy mô lớn: nhận định nào ĐÚNG?"
+options = [
+  "Unit test mọi component (shallowMount) để đạt 100% coverage",
+  "Tập trung unit test cho composable/logic thuần, E2E cho user flow quan trọng, component test ít hơn cho UI phức tạp",
+  "Chỉ test E2E vì unit test không bắt được bug thực tế",
+  "Snapshot test mọi component để phát hiện thay đổi UI vô tình"
+]
+answer = [1]
+explanation = "Testing pyramid: unit test cho logic thuần (composable, store action, util) chạy nhanh, ít flaky. E2E cho critical path (login, checkout). Component test (mount) cho UI có logic phức tạp. 100% coverage không thực tế. Snapshot dễ false positive."
+sources = ["vue~3/guide/scaling-up/testing"]
+
+[[questions]]
+id = "vue-lv005"
+module = "vue-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "performance"]
+prompt = "Trang danh sách 5000 item render chậm. Chỉ đo được: initial render 2.8s, interaction sau đó mượt. Chọn giải pháp THUỆN VIỆN nhất?"
+options = [
+  "Rewrite sang virtual list (vue-virtual-scroller) ngay",
+  "Bật `v-memo` trên item component với dependency `[item.id, item.version]`, kết hợp lazy-load ảnh",
+  "Chia trang (pagination) phía server, bỏ infinite scroll",
+  "Dùng `v-once` trên item vì dữ liệu ít thay đổi"
+]
+answer = [1]
+explanation = "`v-memo` skip re-render item khi dependency không đổi, cost thấp. Virtual list phức tạp hơn, cần khi item rất nhiều (>10k) hoặc chiều cao biến đổi. Pagination đổi UX. `v-once` không cho phép update sau này."
+sources = ["vue~3/guide/best-practices/performance", "vue~3/api/built-in-directives#v-memo"]
+
+[[questions]]
+id = "vue-lv006"
+module = "vue-lead"
+type = "multiple"
+difficulty = 3
+tags = ["level:lead", "performance"]
+prompt = "Chọn các kỹ thuật performance hợp lý cho Vue 3 app quy mô lớn (chọn nhiều):"
+options = [
+  "Route-level code splitting bằng `defineAsyncComponent` + lazy route",
+  "`v-memo` cho list item và subtree ổn định",
+  "Pinia store dùng `mapState`/`mapActions` để tối ưu reactivity",
+  "Tree-shake icon/library dùng ES module import có `sideEffects: false`",
+  "Dùng `shallowRef`/`shallowReactive` cho object lớn không cần deep reactive"
+]
+answer = [0, 1, 3, 4]
+explanation = "Lazy route giảm bundle initial. `v-memo` tránh re-render thừa. ES module tree-shake giảm bundle. `shallowRef`/`shallowReactive` giảm overhead reactivity cho data lớn (vd. canvas, 3D). `mapState`/`mapActions` là Options API pattern, không tối ưu hơn setup store."
+sources = ["vue~3/guide/best-practices/performance", "vue~3/guide/scaling-up/state-management", "vue~3/api/reactivity-advanced#shallowref-and-shallowreactive"]
+
+[[questions]]
+id = "vue-lv007"
+module = "vue-lead"
+type = "multiple"
+difficulty = 3
+tags = ["level:lead", "typescript"]
+prompt = "Khi dùng TypeScript với Vue 3 `<script setup>`, nhận định nào ĐÚNG? (chọn nhiều)"
+options = [
+  "`defineProps<{ msg: string }>()` tự động infer type, không cần runtime declaration",
+  "`defineEmits<{ (e: 'change', id: number): void }>()` cung cấp type-check cho `$emit`",
+  "`withDefaults(defineProps<{ count?: number }>(), { count: 0 })` cho default value có type",
+  "`const props = defineProps([...])` (array syntax) vẫn cho full type inference",
+  "Generic component `<Comp v-slot=\"{ item }\">` infer type từ parent slot scope"
+]
+answer = [0, 1, 2, 4]
+explanation = "Type-based `defineProps`/`defineEmits` là cách khuyến khích (compile-time, ergonomic). `withDefaults` cho default có type. Array syntax (`['msg']`) KHÔNG có type inference. Generic slot scope infer được nhờ TS 4.7+."
+sources = ["vue~3/guide/extras/composition-api-faq", "vue~3/api/sfc-script-setup#defineprops-defineemits"]
+
+[[questions]]
+id = "vue-lv008"
+module = "vue-lead"
+type = "fill"
+difficulty = 3
+tags = ["level:lead", "migration"]
+prompt = '''
+Migration Vue 2 → 3 dùng `@vue/compat`. Package name của compat layer là gì?
+```json
+"devDependencies": { "{{blank}}": "^3.0.0" }
+'''
+blanks = [["@vue/compat"]]
+explanation = "`@vue/compat` là package cung cấp compat layer chạy song song Vue 2 và 3 code. Cài đặt bằng `npm i -D @vue/compat`."
+sources = ["vue~3/guide/scaling-up/tooling"]
+
+[[questions]]
+id = "vue-lv009"
+module = "vue-lead"
+type = "fill"
+difficulty = 3
+tags = ["level:lead", "state-management"]
+prompt = '''
+Trong Pinia store, dùng composition API style. Khai báo state reactive cho `items` là array, `loading` boolean:
+```js
+export const useProductStore = defineStore('product', () => {
+  const items = {{blank}}([])
+  const loading = {{blank}}(false)
+  // ...
+})
+```
+'''
+blanks = [["ref"], ["ref"]]
+explanation = "Pinia composition API dùng `ref`/`reactive`/`computed` như trong `setup()`. `ref` cho primitive và array/object cần replace toàn bộ; `reactive` cho object phẳng."
+sources = ["vue~3/guide/scaling-up/state-management"]
+
+[[questions]]
+id = "vue-lv010"
+module = "vue-lead"
+type = "essay"
+difficulty = 3
+tags = ["level:lead", "architecture"]
+prompt = "Bạn lead team 6 người maintain Vue app 3 năm tuổi, ~80 component, dùng Vue 2 + Vuex + Options API. Kế hoạch migrate sang Vue 3 + Pinia + Composition API trong 6 sprint (2 tuần/sprint). Nêu 3 rủi ro lớn nhất và cách mitigation."
+keywords = [
+  ["migration", "strategy", "chiến lược"],
+  ["@vue/compat", "compat mode"],
+  ["feature flag", "flag", "canary", "rollout"],
+  ["testing", "regression", "e2e"],
+  ["team", "training", "knowledge", "onboarding"],
+  ["bundle", "size", "performance", "bundle size"]
+]
+min_keywords = 3
+model_answer = '''Rủi ro 1: Migration big-bang gây regression rộng. Mitigation: Dùng `@vue/compat` chạy song song Vue 2/3, migrate dần component (leaf → root), mỗi PR nhỏ, có feature flag bật/tắt component mới. Rủi ro 2: Team không quen Composition API/Pinia gây chậm tiến độ. Mitigation: Workshop 2 buổi đầu sprint 1, pair programming, coding standard doc, lint rule cấm Options API mới. Rủi ro 3: Bundle size tăng do compat layer + dual runtime. Mitigation: Chỉ bật compat build dev; production build drop compat khi component đã migrate xong. Theo dõi bundle analyzer mỗi sprint.'''
+explanation = "Cần nêu rủi ro cụ thể (không chung chung) và mitigation actionable. Từ khoá: chiến lược migrate dần (@vue/compat), team readiness, bundle/performance."
+sources = ["vue~3/guide/scaling-up/tooling", "vue~3/guide/scaling-up/state-management", "vue~3/guide/scaling-up/sfc"]
+
+[[questions]]
+id = "vue-lv011"
+module = "vue-lead"
+type = "essay"
+difficulty = 3
+tags = ["level:lead", "testing"]
+prompt = "Thiết kế chiến lược test cho feature 'Real-time dashboard' (WebSocket, Pinia store, 5 component con, chart library). Nêu: unit test scope, integration test scope, E2E scope, tooling khuyến nghị."
+keywords = [
+  ["unit test", "composable", "store", "logic"],
+  ["integration test", "component", "mount", "pinia"],
+  ["e2e", "playwright", "cypress", "websocket"],
+  ["mock", "msw", "mock service worker", "websocket mock"],
+  ["coverage", "critical path", "happy path"]
+]
+min_keywords = 3
+model_answer = '''Unit test: composable WebSocket (reconnect logic, message parse), Pinia action (fetch, optimistic update), util format data cho chart — dùng Vitest, mock WebSocket bằng class giả. Integration test: mount component cha + Pinia testing store, kiểm tra props→store→UI flow, WebSocket mock bằng MSW — dùng `@vue/test-utils` + Vitest. E2E: happy path login→dashboard→nhận realtime update→interaction chart (zoom, filter), error path (mất mạng→reconnect toast) — dùng Playwright, mock WebSocket server. Tooling: Vitest (unit/integration), MSW (network mock), Playwright (E2E), coverage threshold 70% cho logic thuần.'''
+explanation = "Phân tầng test rõ ràng: unit cho logic thuần, integration cho component+store, E2E cho user journey. Cụ thể tooling và mock strategy."
+sources = ["vue~3/guide/scaling-up/testing"]
+
+[[questions]]
+id = "vue-lv012"
+module = "vue-lead"
+type = "essay"
+difficulty = 3
+tags = ["level:lead", "performance"]
+prompt = "Dashboard load 3s (LCP), TBT 450ms, CLS 0.15. Phân tích Chrome DevTools: main thread busy 1.8s (script evaluate), bundle 420KB gzipped (vendor 280KB), 40 request. Nêu 3 tối ưu ưu tiên cao nhất và expected impact."
+keywords = [
+  ["code splitting", "lazy route", "dynamic import"],
+  ["tree shake", "bundle", "vendor", "lodash", "moment"],
+  ["v-memo", "shallowRef", "virtual list", "render"],
+  ["preload", "prefetch", "resource hint"],
+  ["web worker", "offscreen", "heavy compute"]
+]
+min_keywords = 3
+model_answer = '''1. Route-level code splitting: lazy load route dashboard (`defineAsyncComponent` + `() => import(...)`), tách vendor chunk. Expected: giảm initial bundle ~150KB, LCP -0.8s. 2. Tree-shake vendor: thay `lodash` → `lodash-es`/`es-toolkit`, `moment` → `date-fns`/`dayjs`, bật `sideEffects: false` trong package.json. Expected: vendor -80KB, TBT -150ms. 3. `v-memo` cho list item và chart wrapper, `shallowRef` cho dataset lớn. Expected: giảm re-render không cần, TBT -100ms. Preload/prefetch hỗ trợ nhưng không giải quyết root cause. Web worker phù hợp cho compute nặng, không phải render.'''
+explanation = "Ưu tiên tác động lớn nhất: code splitting (bundle), tree-shake (vendor), reactivity optimization (runtime). Cụ thể tool/metric."
+sources = ["vue~3/guide/best-practices/performance", "vue~3/guide/scaling-up/sfc"]
+
+[[questions]]
+id = "vue-lv013"
+module = "vue-lead"
+type = "code"
+difficulty = 3
+tags = ["level:lead", "composable"]
+title = "Debounce function trả về object có run/cancel/pending"
+lang = "javascript"
+prompt = '''
+Viết `createDebounce(fn, ms)` trả về `{ run, cancel, pending }`:
+- `run(...args)` gọi `fn(...args)` sau `ms` ms không có `run` mới. Trả `Promise` resolve với kết quả `fn`.
+- `cancel()` hủy pending call (nếu có), trả `true` nếu đã hủy, `false` nếu không có gì.
+- `pending` (getter) cho biết có call đang chờ không.
+- Multiple `run` liên tiếp: chỉ call cuối cùng được thực thi.
+- `fn` có thể async; `run` trả promise resolve/reject theo `fn`.
+- Dùng `setTimeout`/`clearTimeout` và closure.
+'''
+starter = '''
+function createDebounce(fn, ms) {
+  let timer = null;
+  return {
+    get pending() { return false; },
+    run(...args) { return fn(...args); },
+    cancel() { return false; }
+  };
+}
+'''
+solution = '''
+function createDebounce(fn, ms) {
+  let timer = null;
+  let resolveRef = null;
+  let rejectRef = null;
+
+  function clear() {
+    if (timer) {
+      clearTimeout(timer);
+      timer = null;
+    }
+    if (rejectRef) {
+      rejectRef(new Error('Cancelled'));
+      resolveRef = rejectRef = null;
+    }
+  }
+
+  return {
+    get pending() {
+      return timer !== null;
+    },
+    run(...args) {
+      clear();
+      return new Promise((resolve, reject) => {
+        resolveRef = resolve;
+        rejectRef = reject;
+        timer = setTimeout(() => {
+          timer = null;
+          const resRef = resolveRef;
+          const rejRef = rejectRef;
+          resolveRef = rejectRef = null;
+          try {
+            const result = fn(...args);
+            Promise.resolve(result).then(resRef, rejRef);
+          } catch (e) {
+            rejRef(e);
+          }
+        }, ms);
+      });
+    },
+    cancel() {
+      if (!timer) return false;
+      clear();
+      return true;
+    }
+  };
+}
+'''
+tests = '''test('run sau ms gọi fn và resolve', async () => {
+  const fn = jest.fn((a, b) => a + b);
+  const flag = createDebounce(fn, 50);
+  expect(flag.pending).toBe(false);
+  const p = flag.run(1, 2);
+  expect(flag.pending).toBe(true);
+  jest.advanceTimersByTime(50);
+  expect(await p).toBe(3);
+  expect(fn).toHaveBeenCalledWith(1, 2);
+  expect(flag.pending).toBe(false);
+});
+test('run nhiều lần liên tiếp chỉ gọi fn lần cuối', async () => {
+  const fn = jest.fn((x) => x);
+  const flag = createDebounce(fn, 50);
+  flag.run(1); flag.run(2); flag.run(3);
+  jest.advanceTimersByTime(50);
+  expect(fn).toHaveBeenCalledTimes(1);
+  expect(fn).toHaveBeenCalledWith(3);
+});
+test('cancel hủy pending call', () => {
+  const fn = jest.fn();
+  const flag = createDebounce(fn, 50);
+  flag.run(1);
+  expect(flag.pending).toBe(true);
+  expect(flag.cancel()).toBe(true);
+  expect(flag.pending).toBe(false);
+  jest.advanceTimersByTime(50);
+  expect(fn).not.toHaveBeenCalled();
+});
+test('cancel khi không có pending trả false', () => {
+  const flag = createDebounce(() => {}, 50);
+  expect(flag.cancel()).toBe(false);
+});
+test('fn async: run resolve theo fn', async () => {
+  const ok = jest.fn(() => 'ok');
+  const flag = createDebounce(ok, 10);
+  const p = flag.run();
+  jest.advanceTimersByTime(10);
+  expect(await p).toBe('ok');
+});
+test('fn async reject: run reject theo fn', async () => {
+  const fail = jest.fn(() => { throw new Error('oops'); });
+  const flag = createDebounce(fail, 10);
+  const p = flag.run();
+  jest.advanceTimersByTime(10);
+  let message = '';
+  try { await p; } catch (e) { message = e.message; }
+  expect(message).toBe('oops');
+});'''
+hints = ["Dùng `setTimeout`/`clearTimeout` và closure lưu timer, promise resolver.", "Nhớ handle cả sync và async fn: wrap kết quả bằng `Promise.resolve(fn(...args))`.", "Fake timers: `jest.useFakeTimers()`, `jest.advanceTimersByTime(ms)`."]
+explanation = "Debounce pattern cốt lõi: reset timer mỗi lần gọi, chỉ thực thi call cuối. Trả promise để caller await được kết quả. Cancel cần reject promise đang chờ."
+sources = ["vueuse/shared/usedebouncefn/index", "vue~3/guide/reusability/composables"]
+
+[[questions]]
+id = "vue-lv014"
+module = "vue-lead"
+type = "code"
+difficulty = 3
+tags = ["level:lead", "state-management"]
+title = "Plugin persist state vào storage (mock localStorage)"
+lang = "javascript"
+prompt = '''
+Viết `createPersistPlugin(options)` trả về plugin function:
+- `options.key` (string, bắt buộc): key storage.
+- `options.paths` (string[] | undefined): chỉ persist các path này (dot notation, vd `user.profile.name`). Undefined = persist toàn bộ state.
+- `options.serializer` (object `{ serialize, deserialize }` | undefined): mặc định JSON.
+- `options.storage` (object với `getItem`/`setItem` | undefined): mặc định dùng `globalThis.__storage` (object đơn giản).
+- Plugin nhận `context` có `{ store }` với `$state` và `$subscribe(callback)`.
+- Khi init: đọc storage và patch store (chỉ patch các path trong `paths` nếu có).
+- Subscribe `$subscribe` và sync lên storage khi state thay đổi (debounce 100ms).
+- Xử lý lỗi parse/serialize (try/catch, log warning, không crash).
+'''
+starter = '''
+function createPersistPlugin(options) {
+  return (context) => {
+    // TODO
+  };
+}
+'''
+solution = '''
+function createPersistPlugin(options) {
+  const { key, paths, serializer = { serialize: JSON.stringify, deserialize: JSON.parse }, storage = globalThis.__storage || {} } = options;
+  let saveTimer = null;
+
+  function getNested(obj, path) {
+    const keys = path.split('.');
+    let current = obj;
+    for (const k of keys) {
+      if (current == null || !(k in current)) return undefined;
+      current = current[k];
+    }
+    return current;
+  }
+
+  function setNested(obj, path, value) {
+    const keys = path.split('.');
+    let current = obj;
+    for (let i = 0; i < keys.length - 1; i++) {
+      if (!(keys[i] in current)) current[keys[i]] = {};
+      current = current[keys[i]];
+    }
+    current[keys[keys.length - 1]] = value;
+  }
+
+  function getStateToSave(store) {
+    if (!paths) return store.$state;
+    return paths.reduce((acc, p) => {
+      const val = getNested(store.$state, p);
+      if (val !== undefined) {
+        setNested(acc, p, val);
+      }
+      return acc;
+    }, {});
+  }
+
+  function scheduleSave(store) {
+    if (saveTimer) clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+      try {
+        const state = getStateToSave(store);
+        storage[key] = serializer.serialize(state);
+      } catch (e) {
+        console.warn('[persist] save failed:', e);
+      }
+    }, 100);
+  }
+
+  function loadInitial(store) {
+    try {
+      const raw = storage[key];
+      if (!raw) return;
+      const saved = serializer.deserialize(raw);
+      if (paths) {
+        paths.forEach(p => {
+          const val = getNested(saved, p);
+          if (val !== undefined) {
+            setNested(store.$state, p, val);
+          }
+        });
+      } else {
+        Object.assign(store.$state, saved);
+      }
+    } catch (e) {
+      console.warn('[persist] load failed:', e);
+    }
+  }
+
+  return (context) => {
+    loadInitial(context.store);
+    context.store.$subscribe((mutation, state) => {
+      scheduleSave(context.store);
+    });
+    // Also save initial state immediately to handle sync subscribe calls
+    scheduleSave(context.store);
+  };
+}
+'''
+tests = '''function makeStore(initial, mutator) {
+  const store = { $state: initial, $subscribe: () => {} };
+  if (mutator) mutator(store);
+  return store;
+}
+test('persist toàn bộ state', () => {
+  globalThis.__storage = {};
+  const plugin = createPersistPlugin({ key: 'test-store' });
+  const store = makeStore({ count: 1, user: { name: 'A' } }, (s) => { s.$state.count = 2; s.$state.user = { name: 'B' }; });
+  plugin({ store });
+  jest.runAllTimers();
+  expect(globalThis.__storage['test-store']).toBe(JSON.stringify(store.$state));
+});
+test('persist chỉ paths chỉ định', () => {
+  globalThis.__storage = {};
+  const plugin = createPersistPlugin({ key: 'test-store', paths: ['user.profile.name'] });
+  const store = makeStore({ user: { profile: { name: 'A', age: 20 } }, token: 'secret' }, (s) => { s.$state.user.profile.name = 'B'; });
+  plugin({ store });
+  jest.runAllTimers();
+  const saved = JSON.parse(globalThis.__storage['test-store']);
+  expect(saved.user.profile.name).toBe('B');
+  expect(saved.user.profile.age).toBeUndefined();
+  expect(saved.token).toBeUndefined();
+});
+test('load initial patch state', () => {
+  globalThis.__storage = { 'test-store': JSON.stringify({ count: 5 }) };
+  const plugin = createPersistPlugin({ key: 'test-store' });
+  const store = makeStore({ count: 0 });
+  plugin({ store });
+  expect(store.$state.count).toBe(5);
+});
+test('serializer tùy chỉnh', () => {
+  globalThis.__storage = {};
+  const plugin = createPersistPlugin({ key: 'test-store', serializer: { serialize: (s) => 'CUSTOM:' + JSON.stringify(s), deserialize: (s) => JSON.parse(s.slice(7)) } });
+  const store = makeStore({ v: 2 });
+  plugin({ store });
+  jest.runAllTimers();
+  expect(globalThis.__storage['test-store']).toBe('CUSTOM:{"v":2}');
+});
+test('lỗi parse không crash', () => {
+  globalThis.__storage = { 'test-store': 'invalid json' };
+  const plugin = createPersistPlugin({ key: 'test-store' });
+  const store = makeStore({});
+  expect(() => plugin({ store })).not.toThrow();
+  expect(store.$state).toEqual({});
+});'''
+hints = ["`$subscribe(callback)` nhận `(mutation, state)`. Debounce save bằng `setTimeout`/`clearTimeout`.", "Dot notation path: split('.') rồi traverse object.", "Try/catch quanh storage API và serializer. Dùng `globalThis.__storage` mock."]
+explanation = "Persist plugin pattern: subscribe store changes → debounced save; init → load + patch. Hỗ trợ partial persist (paths) và custom serializer cho dữ liệu nhạy cảm/phức tạp."
+sources = ["vue~3/guide/scaling-up/state-management"]
+
+[[questions]]
+id = "vue-lv015"
+module = "vue-lead"
+type = "code"
+difficulty = 3
+tags = ["level:lead", "performance"]
+title = "Virtual list: tính range item hiển thị từ scrollTop"
+lang = "javascript"
+prompt = '''
+Viết `createVirtualList(items, options)` trả về `{ getVisibleItems, scrollTo, setScrollTop }`:
+- `items`: array bất kỳ.
+- `options`: `{ itemHeight: number, containerHeight: number, buffer?: number }` (buffer mặc định 5).
+- `getVisibleItems()`: trả về array `{ index, item, offsetTop }` cho item trong viewport (+ buffer) dựa trên `scrollTop` hiện tại.
+- `setScrollTop(value)`: cập nhật `scrollTop` nội bộ.
+- `scrollTo(index)`: set `scrollTop = index * itemHeight`.
+- Logic tính range: `start = max(0, floor(scrollTop/itemHeight) - buffer)`, `end = min(len, ceil((scrollTop+containerHeight)/itemHeight) + buffer)`.
+- Không dùng Vue API; chỉ dùng closure và function thuần.
+'''
+starter = '''
+function createVirtualList(items, options) {
+  return {
+    getVisibleItems() { return []; },
+    scrollTo(index) {},
+    setScrollTop(value) {}
+  };
+}
+'''
+solution = '''
+function createVirtualList(items, options) {
+  const { itemHeight, containerHeight, buffer = 5 } = options;
+  let scrollTop = 0;
+
+  function getVisibleItems() {
+    const list = items;
+    const start = Math.max(0, Math.floor(scrollTop / itemHeight) - buffer);
+    const end = Math.min(list.length, Math.ceil((scrollTop + containerHeight) / itemHeight) + buffer);
+    const result = [];
+    for (let i = start; i < end; i++) {
+      result.push({ index: i, item: list[i], offsetTop: i * itemHeight });
+    }
+    return result;
+  }
+
+  function setScrollTop(value) {
+    const maxScroll = Math.max(0, (items.length - 1) * itemHeight);
+    scrollTop = Math.max(0, Math.min(value, maxScroll));
+  }
+
+  function scrollTo(index) {
+    setScrollTop(index * itemHeight);
+  }
+
+  return { getVisibleItems, scrollTo, setScrollTop };
+}
+'''
+tests = '''test('getVisibleItems tính đúng range', () => {
+  const items = Array.from({ length: 100 }, (_, i) => ({ id: i }));
+  const vl = createVirtualList(items, { itemHeight: 50, containerHeight: 200, buffer: 2 });
+  vl.setScrollTop(0);
+  const vis = vl.getVisibleItems();
+  expect(vis.length).toBe(6); // 200/50=4 + 2 buffer
+  expect(vis[0].index).toBe(0);
+  expect(vis[5].index).toBe(5);
+});
+test('scrollTop thay đổi => getVisibleItems cập nhật', () => {
+  const items = Array.from({ length: 100 }, (_, i) => ({ id: i }));
+  const vl = createVirtualList(items, { itemHeight: 50, containerHeight: 200, buffer: 1 });
+  vl.setScrollTop(250); // item 5
+  const vis = vl.getVisibleItems();
+  expect(vis[0].index).toBe(4); // 5 - 1 buffer
+  expect(vis[vis.length - 1].index).toBe(9); // 5 + 4 visible + 1 buffer
+});
+test('scrollTo set scrollTop đúng range', () => {
+  const items = Array.from({ length: 100 }, (_, i) => ({ id: i }));
+  const vl = createVirtualList(items, { itemHeight: 50, containerHeight: 200 });
+  vl.scrollTo(10);
+  const vis = vl.getVisibleItems();
+  expect(vis.some((v) => v.index === 10)).toBe(true);
+  expect(vis[0].offsetTop).toBe(250); // 5 * 50 (buffer 5)
+});
+test('buffer mặc định = 5', () => {
+  const items = Array.from({ length: 100 }, (_, i) => i);
+  const vl = createVirtualList(items, { itemHeight: 50, containerHeight: 200 });
+  vl.setScrollTop(0);
+  expect(vl.getVisibleItems().length).toBe(9); // 4 visible + 5 buffer
+});
+test('scrollTo giới hạn trong phạm vi', () => {
+  const items = Array.from({ length: 10 }, (_, i) => i);
+  const vl = createVirtualList(items, { itemHeight: 50, containerHeight: 200 });
+  vl.scrollTo(-1);
+  expect(vl.getVisibleItems()[0].index).toBe(0);
+  vl.scrollTo(100);
+  expect(vl.getVisibleItems().some((v) => v.index === 9)).toBe(true);
+});'''
+hints = ["`scrollTop` lưu trong closure, `getVisibleItems` tính toán từ đó.", "Index range: `start = floor(scrollTop/itemHeight) - buffer`, `end = ceil((scrollTop+containerHeight)/itemHeight) + buffer`.", "Clamp scrollTo trong [0, (len-1)*itemHeight]."]
+explanation = "Virtual list chỉ render item trong viewport (+ buffer). `scrollTop` điều khiển computed `getVisibleItems`. Pattern này dùng cho list lớn (10k+ item) và có thể adapt cho Vue Reactivity."
+sources = ["vue~3/guide/best-practices/performance", "vue~3/guide/reusability/composables"]
+
+[[questions]]
+id = "vue-lv016"
+module = "vue-lead"
+type = "code"
+difficulty = 3
+tags = ["level:lead", "typescript"]
+title = "Type-safe provide/inject cho Pinia store"
+lang = "javascript"
+prompt = '''
+Viết `createStoreInjection(storeKey, storeFactory)` trả về `{ provide, useStore }`:
+- `storeKey`: `InjectionKey<ReturnType<typeof storeFactory>>` (Symbol-based).
+- `provide(app)`: gọi `app.provide(storeKey, storeFactory())` (storeFactory tạo store instance).
+- `useStore()`: `inject(storeKey)`; nếu không có (chưa provide) throw error có message hướng dẫn.
+- `useStore()` trả về store instance với full type inference.
+- Dùng `import { inject, provide, InjectionKey } from 'vue'`.
+- Store factory pattern: `const useAuthStore = defineStore('auth', () => ({ user: ref(null), login() {...}) })`.
+'''
+starter = '''
+function createStoreInjection(storeKey, storeFactory) {
+  return {
+    provide(app) {},
+    useStore() { return null; }
+  };
+}
+'''
+solution = '''
+function createStoreInjection(storeKey, storeFactory) {
+  const key = typeof storeKey === 'symbol' ? storeKey : Symbol(storeKey);
+  let storeInstance = null;
+
+  return {
+    provide(app) {
+      storeInstance = storeFactory();
+      app.provide(key, storeInstance);
+      return storeInstance;
+    },
+    useStore() {
+      if (!storeInstance) {
+        throw new Error('Store not provided. Call provide(app) before useStore().');
+      }
+      return storeInstance;
+    }
+  };
+}
+'''
+tests = '''test('provide tạo store và inject lấy được', () => {
+  let factoryCalls = 0;
+  const { provide, useStore } = createStoreInjection(Symbol('test'), () => {
+    factoryCalls++;
+    return { count: 0, inc: () => {} };
+  });
+  const app = { provided: null, provide(k, v) { this.provided = v; } };
+  const store = provide(app);
+  expect(factoryCalls).toBe(1);
+  expect(store.count).toBe(0);
+  expect(typeof store.inc).toBe('function');
+  expect(useStore()).toBe(store);
+});
+test('useStore chưa provide throw error', () => {
+  const { useStore } = createStoreInjection(Symbol('test'), () => ({}));
+  let message = '';
+  try { useStore(); } catch (e) { message = e.message; }
+  expect(message).toContain('Store not provided');
+});
+test('string storeKey → Symbol nội bộ', () => {
+  const { provide, useStore } = createStoreInjection('auth', () => ({ user: 'A' }));
+  const app = { provide() {} };
+  provide(app);
+  expect(useStore().user).toBe('A');
+});
+test('multiple stores khác key', () => {
+  const first = createStoreInjection(Symbol('a'), () => ({ a: 1 }));
+  const second = createStoreInjection(Symbol('b'), () => ({ b: 2 }));
+  const app = { provide() {} };
+  first.provide(app);
+  second.provide(app);
+  expect(first.useStore().a).toBe(1);
+  expect(second.useStore().b).toBe(2);
+});
+test('storeFactory chỉ gọi 1 lần per app', () => {
+  let factoryCalls = 0;
+  const { provide, useStore } = createStoreInjection(Symbol('t'), () => {
+    factoryCalls++;
+    return { v: 0 };
+  });
+  const app = { provide() {} };
+  provide(app);
+  useStore();
+  useStore();
+  useStore();
+  expect(factoryCalls).toBe(1);
+});'''
+hints = ["`InjectionKey<T>` là `Symbol` mang type `T` để inject type-safe.", "`app.provide(key, value)` trong plugin/setup app. `inject(key)` trong component/composable.", "Throw error sớm với message rõ ràng giúp debug nhanh."]
+explanation = "Type-safe provide/inject cho Pinia: `InjectionKey` + Symbol đảm bảo type inference. Pattern này tránh `app.config.globalProperties.$store` và cho IDE autocomplete đầy đủ."
+sources = ["vue~3/guide/scaling-up/state-management", "vue~3/guide/extras/composition-api-faq"]
+
+[[questions]]
+id = "vue-lv017"
+module = "vue-lead"
+type = "code"
+difficulty = 3
+tags = ["level:lead", "migration"]
+title = "Codemod: chuyển `this.$store.dispatch` → `useStore().action`"
+lang = "javascript"
+prompt = '''
+Viết hàm `transformVuexDispatch(code)` nhận string code Vue 2 (Options API) và trả về string đã chuyển:
+- Tìm các `this.$store.dispatch('actionName', payload?)` trong methods/object.
+- Thay bằng `useStore().actionName(payload?)` (actionName camelCase).
+- Giả sử `useStore` đã import: `import { useStore } from '@/stores'`.
+- Chỉ xử lý pattern đơn giản: `this.$store.dispatch('actionName')` hoặc `this.$store.dispatch('actionName', payload)`.
+- Không xử lý nested/complex expression.
+- Trả về code đã transform.
+'''
+starter = '''
+function transformVuexDispatch(code) {
+  return code;
+}
+'''
+solution = '''
+function transformVuexDispatch(code) {
+  return code.replace(
+    /this\.\$store\.dispatch\(\s*['"]([a-zA-Z_][a-zA-Z0-9_]*)['"](?:\s*,\s*([^)]+))?\s*\)/g,
+    (match, actionName, payload) => {
+      const camel = actionName.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
+      return payload ? `useStore().${camel}(${payload})` : `useStore().${camel}()`;
+    }
+  );
+}
+'''
+tests = '''test('dispatch không payload', () => {
+  const code = "methods: { load() { this.$store.dispatch('fetch_user') } }";
+  expect(transformVuexDispatch(code)).toBe("methods: { load() { useStore().fetchUser() } }");
+});
+test('dispatch có payload', () => {
+  const code = "this.$store.dispatch('update_profile', { name: 'A' })";
+  expect(transformVuexDispatch(code)).toBe("useStore().updateProfile({ name: 'A' })");
+});
+test('snake_case → camelCase', () => {
+  const code = "this.$store.dispatch('fetch_user_posts', id)";
+  expect(transformVuexDispatch(code)).toBe("useStore().fetchUserPosts(id)");
+});
+test('không match this.$store.commit', () => {
+  const code = "this.$store.commit('SET_USER', user)";
+  expect(transformVuexDispatch(code)).toBe(code);
+});
+test('nhiều dispatch trong một block', () => {
+  const code = "a() { this.$store.dispatch('foo') } b() { this.$store.dispatch('bar', 1) }";
+  const out = transformVuexDispatch(code);
+  expect(out).toContain("useStore().foo()");
+  expect(out).toContain("useStore().bar(1)");
+});'''
+hints = ["Regex capture group: action name và optional payload.", "Snake_case → camelCase: replace `_([a-z])` với uppercase.", "Chỉ replace pattern đơn giản; real codemod dùng AST (jscodeshift)."]
+explanation = "Codemod đơn giản cho migration Vuex → Pinia: dispatch action thành method call trên store. Real-world dùng jscodeshift/AST để chính xác hơn (handle dynamic action name, spread, etc.)."
+sources = ["vue~3/guide/scaling-up/tooling", "vue~3/guide/scaling-up/state-management"]
+
+[[questions]]
+id = "vue-lv018"
+module = "vue-lead"
+type = "code"
+difficulty = 3
+tags = ["level:lead", "architecture"]
+title = "Feature flag hook: rollout theo % user ổn định"
+lang = "javascript"
+prompt = '''
+Viết `useFeatureFlag(flagKey, options)` trả về `{ enabled, variant }`:
+- `options`: `{ userId: string | ref, percent: number, variants?: string[] }`.
+- `percent`: 0-100, % user được bật. `percent <= 0` luôn false, `>= 100` luôn true.
+- `variants`: mảng tên variant (vd `['control', 'treatment']`). Mặc định `['off', 'on']`.
+- Hash `flagKey:userId` bằng FNV-1a 32-bit, `% 100` ra bucket. Bucket < percent → enabled.
+- Variant: bucket % variants.length.
+- Kết quả ổn định: cùng `flagKey` + `userId` → cùng kết quả.
+- `userId` có thể là `ref` (reactive); `enabled`/`variant` là `computed`.
+- Export `hashFnv1a(str)` helper để test.
+'''
+starter = '''
+function hashFnv1a(str) {
+  return 0;
+}
+function useFeatureFlag(flagKey, options) {
+  return { enabled: computed(() => false), variant: computed(() => 'off') };
+}
+'''
+solution = '''
+function hashFnv1a(str) {
+  let h = 2166136261;
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+
+function useFeatureFlag(flagKey, options) {
+  const { userId, percent = 100, variants = ['off', 'on'] } = options;
+
+  function getUserIdValue() {
+    if (userId && typeof userId === 'object' && typeof userId.value !== 'undefined') {
+      return userId.value;
+    }
+    return userId;
+  }
+
+  function getEnabled() {
+    const p = typeof percent === 'function' ? percent() : percent;
+    if (p <= 0) return false;
+    if (p >= 100) return true;
+    const bucket = hashFnv1a(`${flagKey}:${getUserIdValue()}`) % 100;
+    return bucket < p;
+  }
+
+  function getVariant() {
+    if (!getEnabled()) return variants[0];
+    const bucket = hashFnv1a(`${flagKey}:${getUserIdValue()}`) % variants.length;
+    return variants[bucket];
+  }
+
+  return {
+    get enabled() { return getEnabled(); },
+    get variant() { return getVariant(); }
+  };
+}
+'''
+tests = '''test('hashFnv1a deterministic', () => {
+  expect(hashFnv1a('test:user1')).toBe(hashFnv1a('test:user1'));
+  expect(hashFnv1a('test:user1')).not.toBe(hashFnv1a('test:user2'));
+});
+test('percent 0 → disabled, 100 → enabled', () => {
+  const off = useFeatureFlag('flag', { userId: 'u1', percent: 0 });
+  expect(off.enabled).toBe(false);
+  const on = useFeatureFlag('flag', { userId: 'u1', percent: 100 });
+  expect(on.enabled).toBe(true);
+});
+test('kết quả ổn định theo flagKey + userId', () => {
+  const a = useFeatureFlag('flag', { userId: 'u42', percent: 50 });
+  const b = useFeatureFlag('flag', { userId: 'u42', percent: 50 });
+  expect(a.enabled).toBe(b.enabled);
+  expect(a.variant).toBe(b.variant);
+});
+test('variant distribution', () => {
+  const variants = ['control', 'treatment'];
+  const counts = { control: 0, treatment: 0 };
+  for (let i = 0; i < 1000; i++) {
+    const flag = useFeatureFlag('flag', { userId: 'user' + i, percent: 100, variants });
+    counts[flag.variant]++;
+  }
+  expect(counts.control).toBeGreaterThan(450);
+  expect(counts.treatment).toBeGreaterThan(450);
+});
+test('userId object có .value được đọc như ref', () => {
+  const userId = { value: 'user1' };
+  const flag = useFeatureFlag('flag', { userId, percent: 100 });
+  expect(flag.enabled).toBe(true);
+  userId.value = 'user2';
+  expect(typeof flag.enabled).toBe('boolean');
+});'''
+hints = ["FNV-1a: `h = 2166136261; for c in str: h ^= c; h = imul(h, 16777619); return h >>> 0`", "`computed` tự reactive khi `userId` là ref.", "Bucket = `hash % 100`. Percent gating: `bucket < percent`."]
+explanation = "Feature flag rollout ổn định bằng deterministic hashing. Cùng user+flag luôn cùng variant. Tăng percent chỉ thêm user mới (bucket thấp hơn). Dùng cho canary release, A/B test."
+sources = ["vue~3/guide/scaling-up/state-management", "vueuse/shared/createsharedcomposable/index"]
+
+[[questions]]
+id = "vue-lv019"
+module = "vue-template"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "forms"]
+prompt = "Với `const agree = ref(false)` và `<input type=\"checkbox\" v-model=\"agree\">`, khi người dùng tick ô, `agree.value` là gì?"
+options = ["`true`", "`\"on\"`", "`\"checked\"`", "`1`"]
+answer = [0]
+explanation = "Checkbox đơn dùng `v-model` sẽ đồng bộ giá trị boolean (mặc định `true`/`false`), trừ khi khai báo `true-value`/`false-value`."
+sources = ["vue~3/guide/essentials/forms"]
+
+[[questions]]
+id = "vue-lv020"
+module = "vue-template"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "class-binding"]
+prompt = "Template `<div :class=\"{ active: isActive, error: hasError }\">` với `isActive = true`, `hasError = false` sẽ render class nào?"
+options = ["`active`", "`active error`", "`error`", "Không có class nào"]
+answer = [0]
+explanation = "Cú pháp object thêm class khi giá trị tương ứng truthy; `error` bị bỏ vì `hasError` là false."
+sources = ["vue~3/guide/essentials/class-and-style"]
+
+[[questions]]
+id = "vue-lv021"
+module = "vue-template"
+type = "fill"
+difficulty = 1
+tags = ["level:junior", "conditional"]
+prompt = '''
+Điền directive để hiển thị nhánh còn lại khi `loggedIn` là false:
+```html
+<p v-if="loggedIn">Xin chào!</p>
+<p {{blank}}>Vui lòng đăng nhập.</p>
+```
+'''
+blanks = [["v-else"]]
+explanation = "`v-else` phải đứng ngay sau phần tử có `v-if` hoặc `v-else-if`."
+sources = ["vue~3/guide/essentials/conditional"]
+
+[[questions]]
+id = "vue-lv022"
+module = "vue-reactivity"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "reactive"]
+prompt = '''
+Đoạn code sau, sau khi gọi `inc()` thì template hiển thị `{{ state.count }}` là bao nhiêu?
+```js
+const state = reactive({ count: 0 })
+let { count } = state
+function inc() { count++ }
+```
+'''
+options = ["`0` — destructure lấy giá trị thường, mất kết nối reactive", "`1`", "Lỗi vì không thể destructure reactive", "`NaN`"]
+answer = [0]
+explanation = "Destructure một `reactive` lấy ra giá trị nguyên thủy; tăng biến cục bộ không đổi `state.count`. Dùng `toRefs(state)` nếu cần destructure mà giữ reactive."
+sources = ["vue~3/guide/essentials/reactivity-fundamentals", "vue~3/api/reactivity-utilities"]
+
+[[questions]]
+id = "vue-lv023"
+module = "vue-reactivity"
+type = "fill"
+difficulty = 1
+tags = ["level:junior", "computed"]
+prompt = '''
+Điền API tạo giá trị dẫn xuất được cache và tự cập nhật khi `items` đổi:
+```js
+const total = {{blank}}(() => items.value.length)
+```
+'''
+blanks = [["computed"]]
+explanation = "`computed` cache kết quả và chỉ tính lại khi dependency reactive thay đổi."
+sources = ["vue~3/guide/essentials/computed"]
+
+[[questions]]
+id = "vue-lv024"
+module = "vue-reactivity"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "watch"]
+prompt = "Bạn cần gọi API lưu bản nháp mỗi khi `title` thay đổi. API nào phù hợp nhất?"
+options = ["`watch(title, save)`", "`computed(() => save(title.value))`", "Gọi `save()` trực tiếp trong template", "`ref(save)`"]
+answer = [0]
+explanation = "Side effect (gọi API) nên đặt trong watcher; computed phải là hàm thuần chỉ tính giá trị."
+sources = ["vue~3/guide/essentials/watchers", "vue~3/guide/essentials/computed"]
+
+[[questions]]
+id = "vue-lv025"
+module = "vue-components"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "props"]
+prompt = "Trong `<script setup>`, cách nào khai báo prop `title` kiểu string?"
+options = ["`const props = defineProps({ title: String })`", "`const props = useProps('title')`", "`export const title = String`", "`this.props.title = String`"]
+answer = [0]
+explanation = "`defineProps` là compiler macro trong `<script setup>`, không cần import."
+sources = ["vue~3/guide/components/props", "vue~3/api/sfc-script-setup"]
+
+[[questions]]
+id = "vue-lv026"
+module = "vue-components"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "events"]
+prompt = "Component con muốn báo cho cha biết người dùng bấm nút xóa. Cách làm chuẩn trong `<script setup>` là gì?"
+options = ["`const emit = defineEmits(['remove'])` rồi gọi `emit('remove', id)`", "Gán trực tiếp vào prop của cha", "Gọi `window.parent.remove(id)`", "Dùng `document.dispatchEvent` cho mọi sự kiện"]
+answer = [0]
+explanation = "Con giao tiếp lên cha bằng event được khai báo; cha lắng nghe qua `@remove`."
+sources = ["vue~3/guide/components/events"]
+
+[[questions]]
+id = "vue-lv027"
+module = "vue-components"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "slots"]
+prompt = "Component `Card` có `<div class=\"card\"><slot /></div>`. Khi dùng `<Card><p>Hello</p></Card>`, kết quả là gì?"
+options = ["`<p>Hello</p>` được render vào vị trí `<slot />`", "Nội dung bị bỏ qua", "Vue báo lỗi thiếu prop", "`<p>` được render bên ngoài `.card`"]
+answer = [0]
+explanation = "Default slot nhận nội dung đặt giữa thẻ mở và đóng của component."
+sources = ["vue~3/guide/components/slots"]
+
+[[questions]]
+id = "vue-lv028"
+module = "vue-composables"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "lifecycle"]
+prompt = "Bạn cần đo kích thước một phần tử DOM qua template ref. Nên đọc ref trong hook nào?"
+options = ["`onMounted`", "Ngay đầu `<script setup>`", "`onBeforeMount`", "`onUnmounted`"]
+answer = [0]
+explanation = "Template ref chỉ trỏ tới phần tử sau khi component đã mount; trước đó giá trị là `null`."
+sources = ["vue~3/guide/essentials/lifecycle", "vue~3/guide/essentials/template-refs"]
+
+[[questions]]
+id = "vue-lv029"
+module = "vue-router"
+type = "fill"
+difficulty = 1
+tags = ["level:junior", "router"]
+prompt = '''
+Điền tên component dùng để tạo link điều hướng không tải lại trang:
+```html
+<{{blank}} to="/about">Giới thiệu</{{blank}}>
+```
+'''
+blanks = [["RouterLink", "router-link"], ["RouterLink", "router-link"]]
+explanation = "`RouterLink` render thẻ `<a>` và xử lý điều hướng phía client."
+sources = ["vue_router~5/guide/essentials/navigation", "vue_router~5/api/variables/routerlink"]
+
+[[questions]]
+id = "vue-lv030"
+module = "vue-router"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "router"]
+prompt = "Route khai báo `{ path: '/users/:id', component: UserView }`. Trong `UserView` (`<script setup>`), lấy `id` thế nào?"
+options = ["`const route = useRoute(); route.params.id`", "`useRouter().id`", "`window.location.id`", "`defineProps(['params'])`"]
+answer = [0]
+explanation = "`useRoute()` trả route hiện tại; tham số động nằm trong `params`."
+sources = ["vue_router~5/guide/essentials/dynamic-matching", "vue_router~5/api/functions/useroute"]
+
+[[questions]]
+id = "vue-lvc01"
+module = "vue-reactivity"
+type = "code"
+difficulty = 1
+tags = ["level:junior", "computed"]
+title = "Lọc danh sách việc cần làm"
+prompt = '''
+Viết hàm thuần `summarizeTasks(tasks, filter)` — logic thường đặt trong một `computed` của màn hình todo.
+- `tasks`: mảng `{ id, title, done }`.
+- `filter`: `"all"`, `"active"` (chưa xong) hoặc `"done"` (đã xong). Giá trị khác coi như `"all"`.
+- Trả `{ visible, remaining }`: `visible` là mảng **mới** các task khớp filter (giữ thứ tự), `remaining` là số task chưa xong trong **toàn bộ** danh sách.
+- Không được thay đổi mảng đầu vào.
+'''
+starter = '''
+function summarizeTasks(tasks, filter) {
+  return { visible: tasks, remaining: 0 };
+}
+'''
+solution = '''
+function summarizeTasks(tasks, filter) {
+  const visible = tasks.filter(t => filter === 'active' ? !t.done : filter === 'done' ? t.done : true);
+  const remaining = tasks.filter(t => !t.done).length;
+  return { visible, remaining };
+}
+'''
+tests = '''
+const sample = [
+  { id: 1, title: 'A', done: false },
+  { id: 2, title: 'B', done: true },
+  { id: 3, title: 'C', done: false },
+];
+test('all trả mọi task và đếm số chưa xong', () => {
+  const r = summarizeTasks(sample, 'all');
+  expect(r.visible.map(t => t.id)).toEqual([1, 2, 3]);
+  expect(r.remaining).toBe(2);
+});
+test('active chỉ giữ task chưa xong', () => {
+  expect(summarizeTasks(sample, 'active').visible.map(t => t.id)).toEqual([1, 3]);
+});
+test('done chỉ giữ task đã xong, remaining vẫn tính trên toàn bộ', () => {
+  const r = summarizeTasks(sample, 'done');
+  expect(r.visible.map(t => t.id)).toEqual([2]);
+  expect(r.remaining).toBe(2);
+});
+test('filter lạ coi như all và visible là mảng mới', () => {
+  const r = summarizeTasks(sample, 'xyz');
+  expect(r.visible.length).toBe(3);
+  expect(r.visible === sample).toBe(false);
+});
+test('danh sách rỗng', () => {
+  expect(summarizeTasks([], 'active')).toEqual({ visible: [], remaining: 0 });
+});
+'''
+hints = ["`Array.prototype.filter` luôn trả mảng mới.", "Tính `remaining` trên `tasks`, không phải trên `visible`."]
+explanation = "Tách logic lọc thành hàm thuần giúp test dễ; trong component chỉ cần `computed(() => summarizeTasks(tasks.value, filter.value))`."
+sources = ["vue~3/guide/essentials/computed", "vue~3/guide/essentials/list"]
+
+[[questions]]
+id = "vue-lv031"
+module = "vue-reactivity"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "watch"]
+prompt = "Form chỉnh sửa có `const user = ref({ name: '', address: { city: '' } })`. `watch(user, save)` không chạy khi người dùng sửa `user.value.address.city`. Cách sửa phù hợp?"
+options = ["`watch(user, save, { deep: true })` hoặc watch getter cụ thể `() => user.value.address.city`", "Đổi `ref` thành `let` thường", "Dùng `computed` thay cho watch", "Gọi `save` trong `onMounted`"]
+answer = [0]
+explanation = "Watch một ref chứa object chỉ theo dõi việc gán lại `.value`; cần `deep: true` hoặc watch getter tới đúng thuộc tính."
+sources = ["vue~3/guide/essentials/watchers"]
+
+[[questions]]
+id = "vue-lv032"
+module = "vue-reactivity"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "nextTick"]
+prompt = "Sau `items.value.push(x)` bạn muốn cuộn tới phần tử cuối vừa render nhưng `listEl.lastElementChild` vẫn là phần tử cũ. Nên làm gì?"
+options = ["`await nextTick()` rồi mới cuộn", "Gọi `push` hai lần", "Dùng `setTimeout(fn, 5000)`", "Đổi `ref` thành `reactive`"]
+answer = [0]
+explanation = "Vue gom cập nhật DOM và áp dụng bất đồng bộ; `nextTick` chờ lượt cập nhật DOM kế tiếp hoàn tất."
+sources = ["vue~3/api/general", "vue~3/guide/essentials/reactivity-fundamentals"]
+
+[[questions]]
+id = "vue-lv033"
+module = "vue-components"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "provide-inject"]
+prompt = "Component layout `provide('theme', theme)` với `theme` là ref. Bạn muốn con cháu đọc được nhưng không tự ý đổi theme. Cách phù hợp?"
+options = ["`provide('theme', readonly(theme))` và provide kèm hàm `setTheme` nếu cần đổi", "Provide giá trị `theme.value` dạng string", "Dùng biến global `window.theme`", "Truyền prop qua mọi tầng"]
+answer = [0]
+explanation = "`readonly` giữ reactive nhưng chặn ghi; việc đổi đi qua hàm do nơi provide sở hữu. Provide `theme.value` làm mất reactive."
+sources = ["vue~3/guide/components/provide-inject", "vue~3/api/reactivity-core"]
+
+[[questions]]
+id = "vue-lv034"
+module = "vue-components"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "teleport"]
+prompt = "Modal render bên trong một container có `overflow: hidden` và `z-index` thấp nên bị cắt. Giải pháp phù hợp nhất trong Vue?"
+options = ["Bọc nội dung modal bằng `<Teleport to=\"body\">`", "Tăng `z-index` lên 999999", "Dùng `v-show` thay `v-if`", "Đặt modal trong `<KeepAlive>`"]
+answer = [0]
+explanation = "Teleport render DOM ra vị trí khác (vd. `body`) trong khi vẫn giữ quan hệ component logic; z-index không thoát được stacking context của cha."
+sources = ["vue~3/guide/built-ins/teleport"]
+
+[[questions]]
+id = "vue-lv035"
+module = "vue-components"
+type = "multiple"
+difficulty = 2
+tags = ["level:middle", "attrs"]
+prompt = "Component `BaseInput` có root là `<label>` bọc `<input>`. Khi cha dùng `<BaseInput placeholder=\"Email\" @focus=\"f\" />`, nhận định nào đúng?"
+options = ["Mặc định `placeholder` được gắn vào root `<label>` (fallthrough attributes)", "Đặt `inheritAttrs: false` rồi bind `v-bind=\"$attrs\"` lên `<input>` để chuyển attribute xuống input", "Fallthrough attributes không bao giờ chứa listener", "Attribute đã khai báo trong `defineProps` không nằm trong `$attrs`"]
+answer = [0, 1, 3]
+explanation = "Attribute không khai báo là prop/emit sẽ rơi xuống root; listener như `onFocus` cũng nằm trong `$attrs`. Muốn gắn vào phần tử con thì tắt `inheritAttrs` và bind thủ công."
+sources = ["vue~3/guide/components/attrs"]
+
+[[questions]]
+id = "vue-lv036"
+module = "vue-composables"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "composable"]
+prompt = "Composable `useWindowWidth()` gắn `resize` listener trong `onMounted`. Sau khi điều hướng qua lại nhiều lần, handler chạy hàng chục lần cho mỗi resize. Nguyên nhân và cách sửa?"
+options = ["Không gỡ listener; thêm `onUnmounted(() => removeEventListener(...))` hoặc dùng `useEventListener` của VueUse", "Do `resize` là sự kiện bất đồng bộ; bọc trong `nextTick`", "Do dùng `ref`; đổi sang `reactive`", "Do router; tắt history mode"]
+answer = [0]
+explanation = "Mỗi lần mount lại thêm listener mới mà listener cũ không bị gỡ; composable phải tự dọn side effect theo vòng đời component."
+sources = ["vue~3/guide/reusability/composables", "vueuse/core/useeventlistener/index"]
+
+[[questions]]
+id = "vue-lv037"
+module = "vue-composables"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "composable"]
+prompt = "Composable `useUser(id)` cần tải lại khi `id` thay đổi, và người gọi có thể truyền ref hoặc giá trị thường. Cách viết phù hợp?"
+options = ["Nhận `MaybeRefOrGetter`, dùng `watchEffect(() => fetchUser(toValue(id)))`", "Đọc `id.value` một lần ở đầu hàm", "Yêu cầu người gọi tự gọi lại composable khi id đổi", "Lưu id vào `localStorage` rồi đọc lại"]
+answer = [0]
+explanation = "`toValue` chuẩn hoá ref/getter/giá trị; đọc nó bên trong `watchEffect` giúp effect track và chạy lại khi id đổi."
+sources = ["vue~3/guide/reusability/composables", "vue~3/api/reactivity-utilities"]
+
+[[questions]]
+id = "vue-lv038"
+module = "vue-router"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "navigation-guard"]
+prompt = "Trong `router.beforeEach`, bạn muốn chuyển người chưa đăng nhập tới `/login` và tránh vòng lặp vô hạn. Đoạn nào đúng?"
+options = ["`if (to.meta.requiresAuth && !auth.loggedIn) return { path: '/login', query: { redirect: to.fullPath } }`", "`if (!auth.loggedIn) return '/login'` cho mọi route kể cả `/login`", "`router.push('/login')` rồi `return true`", "`window.location = '/login'`"]
+answer = [0]
+explanation = "Chỉ chặn route có `meta.requiresAuth` và trả về location để redirect; redirect mọi route sẽ lặp tại chính `/login`."
+sources = ["vue_router~5/guide/advanced/navigation-guards", "vue_router~5/guide/advanced/meta"]
+
+[[questions]]
+id = "vue-lv039"
+module = "vue-router"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "router"]
+prompt = "Đi từ `/users/1` sang `/users/2`, component `UserView` không tải lại dữ liệu. Vì sao và cách sửa?"
+options = ["Component được tái sử dụng nên `onMounted` không chạy lại; watch `() => route.params.id` hoặc dùng `onBeforeRouteUpdate`", "Router bị lỗi cache; xoá cache trình duyệt", "Phải dùng `v-if` trên `<RouterView>`", "Do thiếu `name` cho route"]
+answer = [0]
+explanation = "Cùng route record chỉ đổi param thì instance được giữ lại; cần phản ứng với thay đổi param."
+sources = ["vue_router~5/guide/essentials/dynamic-matching", "vue_router~5/api/functions/onbeforerouteupdate"]
+
+[[questions]]
+id = "vue-lv040"
+module = "vue-performance-state"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "pinia"]
+prompt = "`const { count, double } = useCounterStore()` rồi template hiển thị `count` nhưng không cập nhật khi store đổi. Cách sửa?"
+options = ["`const { count, double } = storeToRefs(store)`; action thì destructure trực tiếp từ store", "Dùng `JSON.parse(JSON.stringify(store))`", "Gọi `store.$reset()` mỗi lần render", "Đổi store thành biến global"]
+answer = [0]
+explanation = "Store là reactive object; destructure làm mất reactive. `storeToRefs` tạo ref cho state/getter."
+sources = ["vue~3/guide/scaling-up/state-management", "vue~3/api/reactivity-utilities"]
+
+[[questions]]
+id = "vue-lv041"
+module = "vue-performance-state"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "keep-alive"]
+prompt = "Người dùng chuyển giữa tab 'Danh sách' và 'Chi tiết'; mỗi lần quay lại, danh sách mất vị trí lọc và gọi API lại. Giải pháp nhẹ nhất?"
+options = ["Bọc view bằng `<KeepAlive include=\"ListView\">` để giữ instance; refetch có điều kiện trong `onActivated`", "Lưu toàn bộ DOM vào `localStorage`", "Dùng `v-once` cho danh sách", "Tắt router"]
+answer = [0]
+explanation = "KeepAlive cache instance component đã ẩn; `onActivated` cho phép làm mới khi cần. Giới hạn bằng `include`/`max` để tránh tốn bộ nhớ."
+sources = ["vue~3/guide/built-ins/keep-alive"]
+
+[[questions]]
+id = "vue-lv042"
+module = "vue-performance-state"
+type = "essay"
+difficulty = 2
+tags = ["level:middle", "testing"]
+prompt = "Giải thích cách bạn test một component form gọi API khi submit: render thế nào, giả lập API ra sao, chờ cập nhật DOM và kiểm tra điều gì."
+keywords = [["mount", "render"], ["mock", "giả lập", "stub", "jest.fn", "vi.fn"], ["trigger", "setValue", "nhập"], ["await", "nextTick", "flushPromises"], ["emitted", "hiển thị lỗi", "assert", "kiểm tra"]]
+min_keywords = 3
+model_answer = '''Dùng thư viện test để mount component, mock module API bằng vi.fn trả về promise. Nhập dữ liệu bằng setValue, trigger sự kiện submit, sau đó await flushPromises để promise và nextTick chạy xong. Kiểm tra API được gọi đúng payload, DOM hiển thị thông báo thành công hoặc hiển thị lỗi khi mock reject, và event emitted nếu component phát event. Test hành vi người dùng thấy, không kiểm tra state nội bộ.'''
+explanation = "Câu trả lời tốt nêu mount, mock lớp API, thao tác như người dùng, chờ cập nhật bất đồng bộ và assert trên hành vi (DOM, event, lời gọi API)."
+sources = ["vue~3/guide/scaling-up/testing"]
+
+[[questions]]
+id = "vue-lv043"
+module = "vue-reactivity"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "watch-flush"]
+prompt = "Watcher cần đọc kích thước DOM **sau** khi Vue đã cập nhật DOM theo state mới. Mặc định watcher chạy trước khi DOM của component được cập nhật. Tuỳ chọn nào phù hợp?"
+options = ["`{ flush: 'post' }` (hoặc `watchPostEffect`)", "`{ flush: 'sync' }`", "`{ immediate: true }`", "`{ deep: true }`"]
+answer = [0]
+explanation = "`flush: 'post'` hoãn callback tới sau khi DOM cập nhật. `sync` chạy ngay khi state đổi (trước DOM, và tốn kém nếu đổi nhiều lần)."
+sources = ["vue~3/guide/essentials/watchers", "vue~3/api/reactivity-core"]
+
+[[questions]]
+id = "vue-lv044"
+module = "vue-reactivity"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "shallowRef"]
+prompt = "Màn hình nhận 50.000 điểm dữ liệu từ WebSocket mỗi giây, luôn thay cả mảng mới; profile cho thấy thời gian lớn nằm ở việc tạo proxy sâu. Lựa chọn tốt nhất?"
+options = ["Giữ mảng trong `shallowRef` và gán `.value = newArray` mỗi lần", "Dùng `reactive([])` rồi `splice` toàn bộ", "Bọc mảng trong `computed`", "Dùng `ref` sâu như hiện tại nhưng thêm `deep: true` cho watcher"]
+answer = [0]
+explanation = "`shallowRef` chỉ track việc gán `.value`, không biến từng phần tử thành proxy; phù hợp dữ liệu lớn được thay nguyên khối. Nếu mutate tại chỗ cần `triggerRef`."
+sources = ["vue~3/api/reactivity-advanced", "vue~3/guide/best-practices/performance"]
+
+[[questions]]
+id = "vue-lv045"
+module = "vue-reactivity"
+type = "multiple"
+difficulty = 3
+tags = ["level:senior", "reactivity"]
+prompt = "Chọn các nhận định đúng về `markRaw`, `toRaw` và proxy reactive."
+options = ["`markRaw(obj)` khiến obj không bao giờ bị chuyển thành proxy, hợp với instance thư viện bên thứ ba (map, chart)", "`reactive(obj) === obj` luôn đúng", "So sánh `reactive(obj)` với `obj` gốc bằng `===` cho kết quả false, dễ gây bug `includes`/`indexOf`", "`toRaw(proxy)` trả object gốc, đọc/ghi qua nó không trigger effect", "`markRaw` cũng tự làm mọi object con thành raw sau này"]
+answer = [0, 2, 3]
+explanation = "Proxy khác identity với object gốc. `markRaw` chỉ đánh dấu chính object đó; object con lồng vào chỗ reactive khác vẫn có thể bị proxy."
+sources = ["vue~3/api/reactivity-advanced", "vue~3/guide/extras/reactivity-in-depth"]
+
+[[questions]]
+id = "vue-lv046"
+module = "vue-dv-render"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "ssr"]
+prompt = "App SSR báo hydration mismatch ở component hiển thị `new Date().toLocaleTimeString()`. Cách xử lý phù hợp nhất?"
+options = ["Render giá trị ổn định trên server (hoặc placeholder) và cập nhật thời gian thực trong `onMounted` chỉ chạy ở client", "Tắt cảnh báo hydration trong production", "Thêm `:key=\"Math.random()\"`", "Gọi `location.reload()` sau khi load"]
+answer = [0]
+explanation = "HTML server và lần render đầu ở client phải khớp; giá trị phụ thuộc thời điểm/múi giờ nên được tạo sau mount. Tắt cảnh báo không sửa lệch DOM."
+sources = ["vue~3/guide/scaling-up/ssr", "vue~3/api/ssr"]
+
+[[questions]]
+id = "vue-lv047"
+module = "vue-composables"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "effectScope"]
+prompt = "Bạn viết một composable dùng chung (singleton) tạo nhiều `watch` và `computed` bên ngoài component; cần dọn sạch tất cả khi người dùng đăng xuất. API nào phù hợp?"
+options = ["Tạo trong `effectScope()` rồi gọi `scope.stop()` khi đăng xuất", "Gọi `onUnmounted` trong composable", "Đặt mọi watcher vào `setTimeout`", "Không cần dọn vì garbage collector tự xử lý"]
+answer = [0]
+explanation = "Ngoài component không có instance để hook vòng đời; `effectScope` gom effect để dừng cùng lúc. `onUnmounted` ngoài setup không có tác dụng."
+sources = ["vue~3/api/reactivity-advanced", "vueuse/shared/createsharedcomposable/index"]
+
+[[questions]]
+id = "vue-lv048"
+module = "vue-dv-render"
+type = "essay"
+difficulty = 3
+tags = ["level:senior", "performance"]
+prompt = "Danh sách 10.000 dòng trong Vue bị giật khi cuộn và khi một dòng thay đổi. Trình bày cách bạn chẩn đoán và các kỹ thuật tối ưu, kèm đánh đổi."
+keywords = [["profil", "devtools", "đo"], ["virtual", "ảo hoá", "useVirtualList"], ["key"], ["shallowRef", "markRaw"], ["v-memo", "v-once"], ["đánh đổi", "trade-off"]]
+min_keywords = 4
+model_answer = '''Trước hết đo bằng Vue Devtools và Performance profiler để biết thời gian nằm ở render, patch hay tạo proxy. Kỹ thuật: virtual list (ảo hoá, ví dụ useVirtualList) chỉ render dòng trong viewport; dùng key ổn định; dữ liệu lớn để trong shallowRef hoặc markRaw để tránh proxy sâu; v-memo cho dòng chỉ phụ thuộc vài giá trị; tách dòng thành component nhận prop ổn định. Đánh đổi: ảo hoá làm khó tìm kiếm trong trang, chiều cao động và a11y; shallowRef yêu cầu gán lại hoặc triggerRef; v-memo sai dependency gây UI cũ.'''
+explanation = "Cần đo trước khi tối ưu, nêu được ảo hoá, giảm chi phí reactive và patch, cùng đánh đổi của từng kỹ thuật."
+sources = ["vue~3/guide/best-practices/performance", "vueuse/core/usevirtuallist/index", "vue~3/api/built-in-directives"]

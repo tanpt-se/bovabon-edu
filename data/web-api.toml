@@ -166,12 +166,59 @@ Khi triển khai trên ứng dụng cũ, bắt đầu với `Content-Security-Po
 Các header khác giải quyết lớp riêng: `Strict-Transport-Security` yêu cầu browser dùng HTTPS sau khi nhận policy an toàn; `X-Content-Type-Options: nosniff` ngăn một số suy đoán MIME. Thiết lập header đúng giúp giảm rủi ro, nhưng cần kiểm tra trên trang thật để tránh vô tình chặn tài nguyên ứng dụng.
 '''
 
+[[modules]]
+id = "web-api-lead"
+title = "Góc nhìn Tech Lead"
+description = "Quyết định thiết kế API cho cả team: versioning & deprecation, rate limit/quota, caching ở CDN, bảo mật, observability, ADR và review API."
+sources = ["http/reference/status", "http/rfc9111#section-5.2", "http/guides/cors", "http/reference/headers/authorization"]
+lesson = '''
+### Tư duy của Tech Lead khi thiết kế API
+
+Một API công khai là **hợp đồng dài hạn**: sau khi có consumer bên ngoài, mọi thay đổi đều có chi phí phối hợp. Tech Lead không chọn "cách đúng nhất" mà chọn **cách rẻ nhất để sửa sai** trong ràng buộc về team, thời gian, chi phí và rủi ro.
+
+| Quyết định | Phương án | Khi nào hợp lý | Rủi ro chính |
+|---|---|---|---|
+| Versioning | URL `/v2` | Public API, nhiều consumer không kiểm soát được | Nhân đôi bề mặt bảo trì |
+| Versioning | Header/media type | Team hiểu HTTP, consumer là SDK | Khó debug bằng trình duyệt, khó cache nếu quên `Vary` |
+| Versioning | Chỉ thêm field (additive) | API nội bộ, consumer chịu được field lạ | Không sửa được lỗi thiết kế cũ |
+| Rate limit | Theo IP | Endpoint công khai chưa đăng nhập | Sai khi nhiều user chung NAT |
+| Rate limit | Theo API key/tenant | B2B, có gói dịch vụ | Cần lưu counter chia sẻ (Redis) |
+| Cache | `private`, không CDN | Dữ liệu cá nhân | Tải dồn về origin |
+| Cache | `public, s-maxage` + purge | Catalog, nội dung dùng chung | Phải có cơ chế invalidate |
+
+### Checklist review một thay đổi API
+
+1. Thay đổi có **breaking** không (xoá/đổi tên field, đổi kiểu, siết validation, đổi ý nghĩa status code)?
+2. Retry có an toàn không: method nào idempotent, ghi nào cần `Idempotency-Key`?
+3. Lỗi trả theo một định dạng thống nhất (RFC 9457) và không lộ chi tiết nội bộ?
+4. Có giới hạn kích thước body, số phần tử trang, độ sâu query, timeout?
+5. Authz kiểm tra ở **từng object** (chống BOLA/IDOR), không chỉ ở route?
+6. Có metric theo endpoint: tỉ lệ 4xx/5xx, p95/p99, tỉ lệ 429, và log có `request id` để truy vết?
+7. Consumer cũ có kế hoạch chuyển đổi và mốc tắt rõ ràng không?
+
+### ADR mẫu (ngắn)
+
+- **Bối cảnh**: 40 đối tác tích hợp, không ép họ nâng cấp đồng loạt; team 5 người.
+- **Quyết định**: giữ `/v1` thêm field mới theo kiểu additive, ra `/v2` chỉ khi có thay đổi phá vỡ; công bố `Sunset` header trước 6 tháng (ước lượng, tuỳ hợp đồng).
+- **Hệ quả**: tốn công duy trì hai bản trong giai đoạn chuyển; bù lại không có sự cố "đối tác gãy đêm khuya".
+
+### Anti-pattern ở quy mô team
+
+- **Vá nóng contract**: sửa response mà không báo, vì "chỉ là đổi nhỏ".
+- **Một giới hạn cho tất cả**: rate limit cứng như nhau cho client nội bộ và đối tác trả tiền.
+- **Cache cho response có `Set-Cookie` hoặc dữ liệu cá nhân** qua CDN chung.
+- **Retry không backoff** ở client: khi server chậm, retry khuếch đại thành thảm hoạ (retry storm).
+- **Thiếu owner**: API không ai chịu trách nhiệm, deprecation không bao giờ kết thúc.
+- **Quyết định không ghi lại**: sau 6 tháng không ai nhớ vì sao chọn phương án đó.
+'''
+
 # ------------------------------------------------------------ HTTP
 [[questions]]
 id = "api-001"
 module = "api-http"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Người dùng đã đăng nhập nhưng không có quyền xoá bài viết của người khác. API nên trả status nào?"
 options = ["400", "401", "403", "404"]
 answer = [2]
@@ -183,6 +230,7 @@ id = "api-002"
 module = "api-http"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Method nào **idempotent** nhưng **không safe**?"
 options = ["GET", "POST", "PUT", "HEAD"]
 answer = [2]
@@ -194,6 +242,7 @@ id = "api-003"
 module = "api-http"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Sau khi `POST /orders` tạo thành công, response chuẩn nên là:"
 options = [
   "200 kèm body rỗng",
@@ -210,6 +259,7 @@ id = "api-004"
 module = "api-http"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Khác biệt giữa 502 Bad Gateway và 504 Gateway Timeout?"
 options = [
   "Giống nhau",
@@ -226,6 +276,7 @@ id = "api-005"
 module = "api-http"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Ưu điểm của HTTP/2 so với HTTP/1.1?"
 options = [
   "Multiplexing nhiều request song song trên một kết nối TCP",
@@ -242,6 +293,7 @@ id = "api-006"
 module = "api-http"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Hoàn thành bảng status code:
 
@@ -259,6 +311,7 @@ id = "api-020"
 module = "api-rest"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "URL nào đúng phong cách REST để lấy danh sách đơn hàng của user 42?"
 options = ["`GET /getOrders?userId=42`", "`GET /users/42/orders`", "`POST /orders/list`", "`GET /user/42/getOrders`"]
 answer = [1]
@@ -269,6 +322,7 @@ id = "api-021"
 module = "api-rest"
 type = "single"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Vì sao cursor-based pagination tốt hơn offset/limit cho feed lớn thay đổi liên tục?"
 options = [
   "Cursor dễ cài đặt hơn",
@@ -284,6 +338,7 @@ id = "api-022"
 module = "api-rest"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Mục đích của header `Idempotency-Key` trong `POST /payments`?"
 options = [
   "Xác thực người dùng",
@@ -299,6 +354,7 @@ id = "api-023"
 module = "api-rest"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Những thay đổi nào là **breaking change** với client API hiện tại?"
 options = [
   "Thêm một field mới vào response",
@@ -315,6 +371,7 @@ id = "api-024"
 module = "api-rest"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Thiết kế định dạng lỗi thống nhất cho một REST API. Nêu các thành phần và lý do."
 keywords = [
   ["status", "mã http"],
@@ -351,6 +408,7 @@ id = "api-025"
 module = "api-rest"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 title = "Cursor pagination"
 prompt = '''
 Viết `paginate(items, { limit = 10, cursor = null })` cho danh sách `items` **đã sắp xếp tăng dần theo `id`** (id là số):
@@ -427,6 +485,7 @@ id = "api-026"
 module = "api-rest"
 type = "code"
 difficulty = 3
+tags = ["level:senior"]
 title = "Idempotency-Key middleware"
 prompt = '''
 Viết `withIdempotency(handler)` trả về hàm `async (req) => response`:
@@ -524,6 +583,7 @@ id = "api-040"
 module = "api-caching"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Client gửi `If-None-Match: \"abc\"` và ETag hiện tại trên server vẫn là `\"abc\"`. Server trả:"
 options = ["200 kèm toàn bộ body", "304 Not Modified, không body", "204 No Content", "412 Precondition Failed"]
 answer = [1]
@@ -535,6 +595,7 @@ id = "api-041"
 module = "api-caching"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Response chứa dữ liệu riêng của người dùng (`/me`) nên dùng `Cache-Control` nào để CDN **không** cache?"
 options = ["`public, max-age=3600`", "`private, max-age=60` (hoặc `no-store` nếu nhạy cảm)", "`s-maxage=3600`", "`immutable`"]
 answer = [1]
@@ -546,6 +607,7 @@ id = "api-042"
 module = "api-caching"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 Cache asset có hash trong tên file (`app.3f9a1c.js`) vĩnh viễn:
 
@@ -562,6 +624,7 @@ id = "api-043"
 module = "api-caching"
 type = "code"
 difficulty = 3
+tags = ["level:senior"]
 title = "Conditional GET với ETag"
 prompt = '''
 Viết:
@@ -647,6 +710,7 @@ id = "api-060"
 module = "api-auth"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Luồng OAuth 2.0 được khuyến nghị cho SPA và ứng dụng mobile hiện nay là:"
 options = ["Implicit flow", "Resource Owner Password Credentials", "Authorization Code + **PKCE**", "Client Credentials"]
 answer = [2]
@@ -657,6 +721,7 @@ id = "api-061"
 module = "api-auth"
 type = "single"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "`GET /api/invoices/1002` trả về hoá đơn của người khác chỉ vì đổi số id. Đây là lỗ hổng gì?"
 options = ["XSS", "BOLA / IDOR (Broken Object Level Authorization)", "CSRF", "SQL Injection"]
 answer = [1]
@@ -667,6 +732,7 @@ id = "api-062"
 module = "api-auth"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Request nào khiến trình duyệt gửi **preflight** `OPTIONS` trước khi gọi API khác origin?"
 options = [
   "`GET` không header tuỳ chỉnh",
@@ -683,6 +749,7 @@ id = "api-063"
 module = "api-auth"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Thuộc tính cookie nào giúp bảo vệ session cookie?"
 options = ["`HttpOnly`", "`Secure`", "`SameSite=Lax`", "`Domain=.com`", "`Max-Age` hợp lý"]
 answer = [0, 1, 2, 4]
@@ -694,6 +761,7 @@ id = "api-064"
 module = "api-auth"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Gửi access token theo chuẩn OAuth 2.0 Bearer:
 
@@ -709,6 +777,7 @@ id = "api-065"
 module = "api-auth"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "So sánh xác thực bằng **session cookie** và **JWT (stateless token)**."
 keywords = [
   ["stateless", "không lưu", "không trạng thái"],
@@ -731,6 +800,7 @@ id = "api-066"
 module = "api-auth"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 title = "Kiểm tra CORS"
 prompt = '''
 Viết `corsHeaders(req, { origins, methods, credentials })` trả về object header cho response (hoặc `{}` nếu không cho phép):
@@ -808,6 +878,7 @@ id = "api-080"
 module = "api-styles"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Vấn đề **N+1 query** trong GraphQL thường được giải quyết bằng:"
 options = ["Tăng timeout", "DataLoader — gom (batch) và cache các lần load theo key trong một request", "Dùng REST", "Thêm index"]
 answer = [1]
@@ -818,6 +889,7 @@ id = "api-081"
 module = "api-styles"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Dashboard chỉ cần server **đẩy** cập nhật giá một chiều tới trình duyệt. Lựa chọn đơn giản và phù hợp nhất?"
 options = ["Long polling mỗi 100ms", "Server-Sent Events (EventSource)", "gRPC streaming từ trình duyệt", "Webhook"]
 answer = [1]
@@ -829,6 +901,7 @@ id = "api-082"
 module = "api-styles"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Best practice khi **nhận webhook** từ bên thứ ba (Stripe, GitHub)?"
 options = [
   "Xác minh chữ ký HMAC trong header bằng secret",
@@ -845,6 +918,7 @@ id = "web-api-dv001"
 module = "web-api-dv-representations"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Client gửi `Accept: application/json`, còn server trả JSON. Cặp mô tả nào đúng?"
 options = ["Request `Content-Type`, response `Accept`", "Request `Accept`, response `Content-Type`", "Cả hai header đều mô tả định dạng response", "Cả hai header đều mô tả định dạng request"]
 answer = [1]
@@ -856,6 +930,7 @@ id = "web-api-dv002"
 module = "web-api-dv-representations"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Client gửi `POST` với `Content-Type: application/xml`, nhưng endpoint chỉ nhận JSON. Status phù hợp nhất là gì?"
 options = ["406 Not Acceptable", "415 Unsupported Media Type", "416 Range Not Satisfiable", "304 Not Modified"]
 answer = [1]
@@ -867,6 +942,7 @@ id = "web-api-dv003"
 module = "web-api-dv-representations"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một endpoint tạo response JSON hoặc XML tùy theo `Accept`. Chọn các hành vi đúng."
 options = ["Response ghi media type được chọn trong `Content-Type`", "Có thể trả `406` nếu không có kiểu response nào được chấp nhận", "Cache cần `Vary: Accept` khi response cacheable thay đổi theo header này", "`Content-Length` thay thế cho `Content-Type`", "Request bắt buộc phải có cả `Accept` và `Content-Type`"]
 answer = [0, 1, 2]
@@ -878,6 +954,7 @@ id = "web-api-dv004"
 module = "web-api-dv-representations"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 File có tổng cộng 1000 byte; server phục vụ thành công `Range: bytes=100-199`:
 
@@ -894,6 +971,7 @@ id = "web-api-dv005"
 module = "web-api-dv-representations"
 type = "single"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Client gửi `Range` cùng `If-Range`, nhưng validator hiện tại không khớp vì file đã thay đổi. Server nên làm gì?"
 options = ["Trả `206` với một phần của file mới", "Bỏ qua range và trả toàn bộ representation mới với `200`", "Trả `304` dù body đã thay đổi", "Ghép byte của file cũ và file mới"]
 answer = [1]
@@ -905,6 +983,7 @@ id = "web-api-dv006"
 module = "web-api-dv-representations"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "File dài 100 byte nhận `Range: bytes=100-120`. Nếu server không bỏ qua header này, status phù hợp là gì?"
 options = ["200 OK", "206 Partial Content", "304 Not Modified", "416 Range Not Satisfiable"]
 answer = [3]
@@ -916,6 +995,7 @@ id = "web-api-dv007"
 module = "web-api-dv-representations"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Trong buổi phỏng vấn, hãy giải thích cách thiết kế endpoint hỗ trợ JSON/XML và tải tiếp file lớn. Nêu cách client/server thương lượng định dạng, các status/header quan trọng và một rủi ro cần kiểm soát."
 keywords = [["accept", "content negotiation"], ["content-type"], ["406", "not acceptable"], ["415", "unsupported media type"], ["range", "206", "content-range"], ["if-range", "validator"], ["vary"]]
 min_keywords = 4
@@ -930,6 +1010,7 @@ id = "web-api-dvc01"
 module = "web-api-dv-representations"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 title = "Phản hồi byte range đơn"
 lang = "javascript"
 prompt = '''
@@ -1009,6 +1090,7 @@ id = "web-api-dv008"
 module = "web-api-dv-framing"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Trong HTTP/1.1, `Content-Length: 120` cho biết điều gì?"
 options = ["Tổng số header trong message", "Số octet của body message", "Timeout tối đa của kết nối", "Số request được phép trên kết nối"]
 answer = [1]
@@ -1020,6 +1102,7 @@ id = "web-api-dv009"
 module = "web-api-dv-framing"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một server HTTP/1.1 dùng cùng IP để phục vụ nhiều domain. Thông tin nào trong request giúp chọn authority đích?"
 options = ["`Accept-Language`", "`Host`", "`Referer`", "`Content-Encoding`"]
 answer = [1]
@@ -1031,6 +1114,7 @@ id = "web-api-dv010"
 module = "web-api-dv-framing"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn các mô tả đúng về HTTP/2 và HTTP/3."
 options = ["HTTP/2 ghép nhiều stream trên một kết nối TCP", "HTTP/2 dùng HPACK để nén header", "HTTP/3 dùng QUIC", "HTTP/2 dùng UDP làm transport", "HTTP/3 loại bỏ nhu cầu congestion control"]
 answer = [0, 1, 2]
@@ -1042,6 +1126,7 @@ id = "web-api-dv011"
 module = "web-api-dv-framing"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 Trong HTTP/1.1, nếu server stream body mà chưa biết trước tổng độ dài, cơ chế transfer coding phổ biến là `{{blank}}`.
 '''
@@ -1054,6 +1139,7 @@ id = "web-api-dv012"
 module = "web-api-dv-framing"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Mất gói TCP trên một kết nối HTTP/2 có thể ảnh hưởng thế nào tới các stream đang ghép kênh?"
 options = ["Chỉ stream có response lỗi bị ảnh hưởng", "Các byte sau gói mất có thể phải chờ TCP truyền lại, làm chậm nhiều stream trên kết nối", "HTTP/2 tự chuyển sang QUIC", "Không ảnh hưởng vì mỗi stream dùng một TCP connection riêng"]
 answer = [1]
@@ -1065,6 +1151,7 @@ id = "web-api-dv013"
 module = "web-api-dv-framing"
 type = "single"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Reverse proxy phát hiện request có thông tin framing body mâu thuẫn. Cách xử lý an toàn ở biên tin cậy là gì?"
 options = ["Chuyển tiếp nguyên trạng để ứng dụng tự chọn cách hiểu", "Từ chối request mơ hồ và đóng kết nối theo chính sách server", "Chỉ tin header xuất hiện sau cùng", "Xóa body nhưng giữ nguyên các header framing"]
 answer = [1]
@@ -1076,6 +1163,7 @@ id = "web-api-dv014"
 module = "web-api-dv-framing"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Giải thích khác biệt thực tế giữa HTTP/1.1, HTTP/2 và HTTP/3 khi phục vụ nhiều request đồng thời. Nếu người dùng báo các request HTTP/2 cùng chậm khi mạng mất gói, bạn sẽ giải thích và điều tra ra sao?"
 keywords = [["http/2", "http2"], ["tcp"], ["multiplex", "stream"], ["http/3", "http3", "quic"], ["head-of-line", "hol", "mất gói"], ["qpack", "hpack"]]
 min_keywords = 4
@@ -1090,6 +1178,7 @@ id = "web-api-dvc02"
 module = "web-api-dv-framing"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 title = "Quyết định tái sử dụng kết nối HTTP/1.x"
 lang = "javascript"
 prompt = '''
@@ -1142,6 +1231,7 @@ id = "web-api-dv015"
 module = "web-api-dv-csp"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Cần quan sát các vi phạm CSP của ứng dụng cũ trước khi bật chặn. Header nào phù hợp cho giai đoạn đầu?"
 options = ["`Content-Security-Policy-Report-Only`", "`Content-Security-Policy` với `default-src *`", "`Access-Control-Allow-Origin`", "`X-Content-Type-Options: nosniff`"]
 answer = [0]
@@ -1153,6 +1243,7 @@ id = "web-api-dv016"
 module = "web-api-dv-csp"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Policy chỉ khai báo `default-src 'self'` nhưng không khai báo `script-src`. Kết luận nào chính xác nhất?"
 options = ["`script-src` không có fallback và cho phép mọi nguồn", "`default-src` làm fallback cho script; nó không thay cho các directive như `frame-ancestors`", "`default-src` chỉ tác động tới ảnh", "Browser tự chuyển policy sang Report-Only"]
 answer = [1]
@@ -1164,6 +1255,7 @@ id = "web-api-dv017"
 module = "web-api-dv-csp"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn các cấu hình/nhận định giúp xây CSP chặt chẽ hơn cho ứng dụng web."
 options = ["Dùng nonce ngẫu nhiên riêng cho mỗi response để cho phép script tin cậy", "Đặt `object-src 'none'` nếu ứng dụng không cần plugin object", "Dùng `frame-ancestors 'none'` khi trang không được phép nhúng", "Thêm `'unsafe-inline'` vào `script-src` để tránh mọi lỗi CSP", "Cho rằng CSP thay thế việc encode output và sửa lỗi XSS"]
 answer = [0, 1, 2]
@@ -1175,6 +1267,7 @@ id = "web-api-dv018"
 module = "web-api-dv-csp"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Để chỉ định những origin được phép nhúng trang hiện tại trong iframe, dùng directive `{{blank}}`.
 '''
@@ -1187,6 +1280,7 @@ id = "web-api-dv019"
 module = "web-api-dv-csp"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Directive nào giới hạn đích của các kết nối do JavaScript trong trang khởi tạo, như `fetch` hoặc WebSocket?"
 options = ["`connect-src`", "`frame-ancestors`", "`base-uri`", "`form-action`"]
 answer = [0]
@@ -1198,6 +1292,7 @@ id = "web-api-dv020"
 module = "web-api-dv-csp"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Ứng dụng gửi `Content-Security-Policy-Report-Only` và reporting được cấu hình. Browser xử lý tài nguyên vi phạm thế nào?"
 options = ["Luôn chặn ngay lập tức", "Ghi nhận/gửi báo cáo vi phạm nhưng không chặn chỉ vì policy Report-Only", "Tự thêm nonce vào script", "Bỏ qua cả policy lẫn báo cáo"]
 answer = [1]
@@ -1209,6 +1304,7 @@ id = "web-api-dv021"
 module = "web-api-dv-csp"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Bạn cần triển khai CSP cho một ứng dụng lâu năm có nhiều script bên thứ ba. Trình bày cách rollout, cách cho phép script tin cậy và cách phân biệt lỗi CSP với CORS."
 keywords = [["report-only", "chỉ báo cáo"], ["nonce", "hash"], ["script-src"], ["unsafe-inline"], ["cors"], ["connect-src"], ["frame-ancestors"]]
 min_keywords = 4
@@ -1223,6 +1319,7 @@ id = "web-api-dv022"
 module = "web-api-dv-csp"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Điểm khác nhau giữa CSP `frame-src` và `frame-ancestors` là gì?"
 options = ["`frame-src` giới hạn ai được nhúng trang này; `frame-ancestors` giới hạn ảnh", "`frame-src` giới hạn frame trang tải; `frame-ancestors` giới hạn site được phép nhúng trang này", "Hai directive đồng nghĩa", "Cả hai chỉ áp dụng cho WebSocket"]
 answer = [1]
@@ -1234,6 +1331,7 @@ id = "api-083"
 module = "api-styles"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 Mở kết nối WebSocket và gửi tin nhắn từ trình duyệt:
 
@@ -1251,6 +1349,7 @@ id = "api-084"
 module = "api-styles"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Khi nào nên chọn GraphQL thay vì REST, và ngược lại?"
 keywords = [
   ["over-fetching", "under-fetching", "thừa", "thiếu dữ liệu", "chọn field"],
@@ -1266,3 +1365,1419 @@ model_answer = '''
 **REST** phù hợp khi API **đơn giản/CRUD**, **public API** cho bên thứ ba, cần tận dụng **HTTP cache/CDN**, upload file, hoặc đội ngũ muốn vận hành đơn giản. GraphQL đòi hỏi xử lý thêm: N+1 (DataLoader), giới hạn độ sâu/độ phức tạp query, cache phía client.
 '''
 explanation = "Nhiều hệ thống dùng cả hai: REST cho public/webhook, GraphQL (BFF) cho frontend."
+
+# ------------------------------------------------------------ Tech Lead
+[[questions]]
+id = "web-api-lv001"
+module = "web-api-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "versioning"]
+prompt = '''
+Team 5 người vận hành public API có 40 đối tác tích hợp, nhiều đối tác không có dev chủ động bảo trì. Bạn cần đổi cấu trúc trường `price` từ số thành object `{amount, currency}` trong 3 tuần. Lựa chọn nào hợp lý nhất?
+'''
+options = [
+  "Đổi thẳng ở `/v1` và gửi email thông báo trước một ngày",
+  "Giữ `/v1` nguyên trạng, ra `/v2` với cấu trúc mới, thêm header `Deprecation`/`Sunset` cho `/v1` và đặt mốc chuyển đổi dài",
+  "Ép mọi đối tác cập nhật SDK bằng cách trả 400 cho request cũ từ tuần sau",
+  "Chạy song song hai database, mỗi đối tác một schema riêng",
+]
+answer = [1]
+explanation = "Consumer không kiểm soát được nên thay đổi phá vỡ phải đi kèm phiên bản mới và thời gian chuyển đổi. Đổi thẳng hoặc trả 400 sẽ làm gãy tích hợp đối tác, kéo theo sự cố và chi phí hỗ trợ vượt lợi ích. Tách database theo đối tác là quá đắt, không giải quyết vấn đề contract."
+sources = ["http/reference/status"]
+
+[[questions]]
+id = "web-api-lv002"
+module = "web-api-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "rate-limit"]
+prompt = '''
+API có hai nhóm khách hàng: gói miễn phí (~2.000 tenant) và gói doanh nghiệp (~20 tenant, trả tiền theo hợp đồng SLA). Một tenant free chạy script quét làm chậm toàn hệ thống. Bạn có hai tuần và một Redis sẵn có. Giải pháp nào ưu tiên trước?
+'''
+options = [
+  "Rate limit theo IP nguồn cho toàn bộ endpoint",
+  "Tăng số instance API gấp đôi để chịu tải",
+  "Rate limit theo API key/tenant với quota theo gói (counter ở Redis), trả 429 kèm `Retry-After`, và tách hàng đợi/ngân sách cho gói enterprise",
+  "Chặn tài khoản free khi p99 vượt ngưỡng",
+]
+answer = [2]
+explanation = "Giới hạn theo tenant tương ứng với đơn vị thương mại và tận dụng Redis có sẵn. Theo IP sẽ sai khi nhiều user chung NAT hoặc một script dùng nhiều IP. Tăng instance tốn tiền mà không ngăn được một tenant chiếm tài nguyên. Chặn tài khoản là biện pháp thô, gây khiếu nại."
+sources = ["http/reference/status"]
+
+[[questions]]
+id = "web-api-lv003"
+module = "web-api-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "caching"]
+prompt = '''
+Endpoint `GET /catalog` phục vụ 90% traffic, dữ liệu đổi vài lần mỗi giờ và giống nhau với mọi người dùng. Origin đang quá tải vào giờ cao điểm. Team chỉ có thể thay đổi cấu hình HTTP và CDN trong sprint này. Quyết định nào hợp lý nhất?
+'''
+options = [
+  "Đặt `Cache-Control: public, s-maxage=60, stale-while-revalidate=30` cho response catalog và dùng CDN làm lớp cache chính",
+  "Đặt `Cache-Control: no-store` để luôn đúng dữ liệu",
+  "Đặt `private, max-age=3600` để mỗi trình duyệt tự cache",
+  "Viết lại endpoint bằng GraphQL để client chọn trường",
+]
+answer = [0]
+explanation = "Dữ liệu dùng chung và lệch vài chục giây chấp nhận được, nên cache chung ở CDN giảm tải origin đáng kể. `no-store` đẩy toàn bộ tải về origin. `private` không cho CDN cache nên không giải quyết tải. Viết lại bằng GraphQL không nằm trong ràng buộc sprint và còn khó cache hơn."
+sources = ["http/rfc9111#section-5.2"]
+
+[[questions]]
+id = "web-api-lv004"
+module = "web-api-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "idempotency"]
+prompt = '''
+Dịch vụ thanh toán gọi API của đối tác, đôi khi timeout nên client retry và trước đây đã từng trừ tiền hai lần. Team nhỏ, deadline hai tuần, không thể đổi nhà cung cấp. Biện pháp nào xử lý đúng gốc rễ?
+'''
+options = [
+  "Giảm timeout để lỗi hiện nhanh hơn",
+  "Thêm `Idempotency-Key` sinh ổn định cho mỗi thao tác thanh toán, lưu kết quả theo key phía server và client retry với backoff cùng key",
+  "Tắt retry hoàn toàn và để người dùng bấm lại",
+  "Thêm một cron job đối soát mỗi đêm rồi hoàn tiền thủ công",
+]
+answer = [1]
+explanation = "POST không idempotent nên retry sau timeout có thể tạo bản ghi thứ hai. Idempotency key làm retry an toàn. Tắt retry đẩy lỗi sang người dùng và vẫn có thể double-submit. Giảm timeout làm tăng số lần không rõ trạng thái. Đối soát đêm chỉ là lưới an toàn bổ sung, không thay thế."
+sources = ["http/reference/methods"]
+
+[[questions]]
+id = "web-api-lv005"
+module = "web-api-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "security"]
+prompt = '''
+Pentest phát hiện `GET /orders/{id}` trả đơn của người khác nếu đổi `id`. Release quý sau 3 ngày nữa, team 4 người, codebase có 60 endpoint dạng `/{resource}/{id}`. Hành động nào tốt nhất?
+'''
+options = [
+  "Đổi `id` tuần tự thành UUID rồi coi như đã xử lý",
+  "Vá endpoint này, các endpoint khác để quý sau",
+  "Hotfix kiểm tra quyền sở hữu theo object ở endpoint này, rồi rà soát cả 60 endpoint bằng checklist/test authz tự động và đưa kiểm tra vào middleware/policy dùng chung",
+  "Thêm WAF chặn pattern đổi id",
+]
+answer = [2]
+explanation = "Lỗi gốc là thiếu kiểm tra authorization ở cấp object (BOLA/IDOR). UUID chỉ làm khó đoán, không thay cho kiểm tra quyền. Vá một endpoint bỏ sót 59 chỗ cùng mẫu. WAF không biết quy tắc sở hữu dữ liệu. Cần hotfix trước, sau đó chuẩn hoá thành policy chung và test tự động."
+sources = ["http/reference/headers/authorization"]
+
+[[questions]]
+id = "web-api-lv006"
+module = "web-api-lead"
+type = "multiple"
+difficulty = 3
+tags = ["level:lead", "versioning"]
+prompt = "Bạn chuẩn bị deprecate `/v1/reports` sau khi đã có `/v2/reports`. Những việc nào nên nằm trong kế hoạch?"
+options = [
+  "Gửi header `Deprecation` và `Sunset` kèm đường dẫn tài liệu migration trong response của v1",
+  "Đo traffic v1 theo từng consumer để biết ai chưa chuyển",
+  "Tắt v1 ngay khi v2 phát hành để tránh phải bảo trì hai bản",
+  "Thông báo nhiều kênh và có mốc rõ ràng, chỉ tắt khi consumer còn sử dụng đã được liên hệ",
+]
+answer = [0, 1, 3]
+explanation = "Deprecation cần tín hiệu máy đọc được, số liệu theo consumer và giao tiếp có mốc. Tắt ngay khi v2 phát hành làm gãy các consumer chưa kịp chuyển; chi phí bảo trì hai bản là cái giá hợp lý của giai đoạn chuyển đổi."
+sources = ["http/reference/status"]
+
+[[questions]]
+id = "web-api-lv007"
+module = "web-api-lead"
+type = "multiple"
+difficulty = 3
+tags = ["level:lead", "observability"]
+prompt = "Team vận hành API công khai muốn phát hiện sớm sự cố tích hợp từ phía đối tác. Những tín hiệu nào đáng đưa vào dashboard/cảnh báo?"
+options = [
+  "Tỉ lệ 5xx và p95/p99 latency theo endpoint",
+  "Tỉ lệ 429 theo tenant để phát hiện quota đặt sai hoặc client lỗi",
+  "Số lượng dòng code mới mỗi tuần",
+  "Tỉ lệ 4xx tăng đột biến theo phiên bản client/User-Agent (dấu hiệu release client gãy)",
+]
+answer = [0, 1, 3]
+explanation = "Latency/5xx đo sức khoẻ server, 429 theo tenant cho biết chính sách giới hạn, 4xx theo phiên bản client lộ ra release phía đối tác bị sai contract. Số dòng code không phản ánh sức khoẻ vận hành."
+sources = ["http/reference/status"]
+
+[[questions]]
+id = "web-api-lv008"
+module = "web-api-lead"
+type = "fill"
+difficulty = 3
+tags = ["level:lead", "rate-limit"]
+prompt = '''
+Khi chặn tenant vượt quota, API nên trả status **{{blank}}** kèm header **{{blank}}** cho biết số giây client nên đợi trước khi gọi lại.
+'''
+blanks = [["429"], ["Retry-After"]]
+explanation = "429 Too Many Requests là mã chuẩn cho rate limit. `Retry-After` giúp client biết thời điểm thử lại thay vì đoán, giảm retry storm."
+sources = ["http/reference/status"]
+
+[[questions]]
+id = "web-api-lv009"
+module = "web-api-lead"
+type = "essay"
+difficulty = 3
+tags = ["level:lead", "versioning"]
+prompt = "Viết ADR ngắn cho quyết định: public API cần một thay đổi phá vỡ contract, nhưng có 40 đối tác không thể nâng cấp đồng loạt. Nêu bối cảnh, quyết định, hệ quả, phương án đã loại."
+keywords = [
+  ["bối cảnh", "context", "ràng buộc"],
+  ["phiên bản", "version", "v2"],
+  ["sunset", "deprecation", "deprecate", "mốc"],
+  ["hệ quả", "đánh đổi", "trade-off", "chi phí"],
+  ["đo", "metric", "traffic", "consumer"],
+]
+min_keywords = 3
+model_answer = '''
+**Bối cảnh**: 40 đối tác không nâng cấp đồng loạt; team nhỏ; thay đổi phá vỡ contract cần thiết.
+
+**Quyết định**: giữ phiên bản cũ ổn định, ra `v2` có contract mới; gửi header `Deprecation` và `Sunset` cho v1; đo traffic theo từng consumer để biết ai chưa chuyển; đặt mốc tắt có thể gia hạn theo hợp đồng.
+
+**Hệ quả / đánh đổi**: tăng chi phí bảo trì hai bản trong giai đoạn chuyển, cần tài liệu migration và hỗ trợ đối tác; đổi lại không làm gãy tích hợp.
+
+**Phương án đã loại**: sửa thẳng v1 (gãy đối tác), ép nâng cấp bằng 400 (rủi ro uy tín), tách hệ thống riêng cho từng đối tác (quá đắt).
+'''
+explanation = "Câu trả lời tốt nêu ràng buộc, mốc thời gian, cách đo tiến độ và chi phí chấp nhận được."
+
+[[questions]]
+id = "web-api-lvc01"
+module = "web-api-lead"
+type = "code"
+lang = "javascript"
+difficulty = 3
+tags = ["level:lead", "rate-limit"]
+title = "Rate limiter theo gói của tenant"
+prompt = '''
+Viết `createLimiter(plans, now)` trả về hàm `check(tenant)` (cửa sổ cố định 60 giây):
+- `plans` là `{ free: 3, pro: 10 }` (số request/phút); `tenant = { id, plan }`; plan lạ dùng giới hạn của `free`
+- `now()` trả thời gian hiện tại theo mili giây
+- Mỗi tenant có bộ đếm riêng; cửa sổ bắt đầu ở request đầu tiên của tenant và kéo dài 60.000 ms, sau đó bộ đếm reset
+- `check` trả `{ allowed: true, remaining }` (remaining sau khi trừ), hoặc khi vượt quota `{ allowed: false, status: 429, retryAfter }` với `retryAfter` là số giây (làm tròn lên) tới khi cửa sổ kết thúc
+'''
+starter = '''
+function createLimiter(plans, now) {
+  return function check(tenant) {
+    return { allowed: true, remaining: 0 };
+  };
+}
+'''
+solution = '''
+function createLimiter(plans, now) {
+  const state = new Map();
+  return function check(tenant) {
+    const limit = plans[tenant.plan] !== undefined ? plans[tenant.plan] : plans.free;
+    const t = now();
+    let s = state.get(tenant.id);
+    if (!s || t - s.start >= 60000) {
+      s = { start: t, count: 0 };
+      state.set(tenant.id, s);
+    }
+    if (s.count >= limit) {
+      return { allowed: false, status: 429, retryAfter: Math.ceil((s.start + 60000 - t) / 1000) };
+    }
+    s.count++;
+    return { allowed: true, remaining: limit - s.count };
+  };
+}
+'''
+tests = '''
+let clock = 0;
+const plans = { free: 3, pro: 10 };
+const mk = () => { clock = 0; return createLimiter(plans, () => clock); };
+test('trừ dần remaining', () => {
+  const check = mk();
+  expect(check({ id: 'a', plan: 'free' })).toEqual({ allowed: true, remaining: 2 });
+  expect(check({ id: 'a', plan: 'free' }).remaining).toBe(1);
+});
+test('vượt quota trả 429 và retryAfter', () => {
+  const check = mk();
+  for (let i = 0; i < 3; i++) check({ id: 'a', plan: 'free' });
+  clock = 20500;
+  expect(check({ id: 'a', plan: 'free' })).toEqual({ allowed: false, status: 429, retryAfter: 40 });
+});
+test('reset sau 60 giây', () => {
+  const check = mk();
+  for (let i = 0; i < 4; i++) check({ id: 'a', plan: 'free' });
+  clock = 60000;
+  expect(check({ id: 'a', plan: 'free' })).toEqual({ allowed: true, remaining: 2 });
+});
+test('tenant độc lập và plan pro', () => {
+  const check = mk();
+  for (let i = 0; i < 3; i++) check({ id: 'a', plan: 'free' });
+  expect(check({ id: 'b', plan: 'pro' })).toEqual({ allowed: true, remaining: 9 });
+  expect(check({ id: 'a', plan: 'free' }).allowed).toBe(false);
+});
+test('plan lạ dùng giới hạn free', () => {
+  const check = mk();
+  expect(check({ id: 'c', plan: 'unknown' }).remaining).toBe(2);
+});
+'''
+hints = ["Lưu `{ start, count }` cho mỗi tenant trong một `Map`.", "retryAfter = ceil((start + 60000 - now) / 1000)."]
+explanation = "Đây là fixed window theo tenant. Hệ thống thật đặt counter ở Redis (INCR + EXPIRE) và có thể dùng token bucket để mượt hơn ở ranh giới cửa sổ."
+
+[[questions]]
+id = "web-api-lv010"
+module = "web-api-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "api-style"]
+prompt = '''
+Công ty có web app, mobile app và 5 đối tác B2B. Frontend phàn nàn phải gọi 6–8 endpoint cho một màn hình; đối tác chỉ cần vài resource ổn định và muốn cache qua CDN. Team 8 người. Quyết định hợp lý nhất?
+'''
+options = [
+  "Chuyển toàn bộ sang GraphQL, bỏ REST",
+  "Giữ REST công khai cho đối tác, thêm một lớp BFF (có thể GraphQL) riêng cho web/mobile để gộp dữ liệu màn hình",
+  "Gộp mọi resource vào một endpoint `/everything`",
+  "Chuyển toàn bộ sang gRPC-web cho mọi client",
+]
+answer = [1]
+explanation = "Nhu cầu của hai nhóm khác nhau: client nội bộ cần gộp dữ liệu, đối tác cần contract đơn giản và cache được. BFF giải quyết nhóm đầu mà không phá nhóm sau. Bỏ REST làm mất lợi ích CDN cho đối tác; endpoint khổng lồ khó cache và khó versioning; gRPC-web thêm chi phí công cụ cho đối tác."
+sources = ["http/rfc9111#section-5.2"]
+
+[[questions]]
+id = "web-api-lv011"
+module = "web-api-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "auth"]
+prompt = '''
+Hệ thống có web, mobile và 3 service nội bộ gọi nhau. Hiện mỗi service tự quản lý user/password riêng, dẫn tới 4 nơi lưu mật khẩu. Team 6 người, 2 tháng, yêu cầu SSO. Hướng nào hợp lý?
+'''
+options = [
+  "Tự viết thêm một service đăng nhập mới dùng token tự chế",
+  "Dùng OIDC/OAuth2 với một Identity Provider (tự host hoặc managed), service nội bộ xác thực access token bằng khoá công khai (JWKS), lộ trình migrate user dần",
+  "Dùng chung một database user, mọi service đọc trực tiếp bảng user",
+  "Tất cả service dùng chung một JWT secret đối xứng gửi qua biến môi trường",
+]
+answer = [1]
+explanation = "Giao thức chuẩn và IdP trưởng thành giảm rủi ro bảo mật và thời gian phát triển cho team nhỏ. Token tự chế dễ sai về crypto và tốn bảo trì. Chung database tạo coupling chặt. Secret đối xứng dùng chung làm mọi service đều có quyền ký token, một service bị lộ là lộ tất cả."
+sources = ["http/reference/headers/authorization"]
+
+[[questions]]
+id = "web-api-lv012"
+module = "web-api-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "reliability"]
+prompt = '''
+Service A gọi service B qua HTTP. B có sự cố trong 10 phút và A retry ngay 3 lần cho mỗi request, khiến B không hồi phục được. Bạn cần giảm rủi ro cho mọi service trong tuần này với chi phí thấp. Biện pháp nào ưu tiên?
+'''
+options = [
+  "Tăng số lần retry lên 10 để chắc chắn thành công",
+  "Chuẩn hoá thư viện client dùng chung: timeout rõ ràng, retry có backoff + jitter và giới hạn ngân sách retry, circuit breaker, chỉ retry thao tác idempotent",
+  "Bỏ timeout để chờ B trả lời xong",
+  "Mỗi team tự quyết cách retry vì họ hiểu service của mình",
+]
+answer = [1]
+explanation = "Retry không kiểm soát khuếch đại tải (retry storm). Chuẩn hoá thư viện dùng chung cho toàn tổ chức với chi phí thấp. Tăng retry làm xấu hơn; bỏ timeout làm cạn thread/connection; để mỗi team tự quyết dẫn tới cấu hình không nhất quán."
+sources = ["http/reference/status"]
+
+[[questions]]
+id = "web-api-lv013"
+module = "web-api-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "review"]
+prompt = '''
+Một PR đổi response `GET /users/{id}` từ `{"name": "An"}` thành `{"firstName": "An", "lastName": "Le"}`. Tác giả nói "mobile app sẽ cập nhật sau". Bạn là reviewer có quyền duyệt. Bạn nên làm gì?
+'''
+options = [
+  "Approve vì mobile sẽ cập nhật sau",
+  "Từ chối và yêu cầu viết lại toàn bộ bằng GraphQL",
+  "Yêu cầu giữ `name` cùng với field mới (additive), thêm test contract và chỉ xoá `name` sau khi số liệu cho thấy không còn client nào dùng",
+  "Approve nhưng bảo tác giả deploy ngoài giờ cao điểm",
+]
+answer = [2]
+explanation = "Đây là breaking change vì app đã phát hành vẫn gọi trường cũ và người dùng không cập nhật ngay. Giữ trường cũ song song rồi dọn dẹp theo số liệu là cách an toàn rẻ nhất. Deploy ngoài giờ không sửa được vấn đề tương thích; yêu cầu viết lại bằng GraphQL là vượt phạm vi."
+sources = ["http/reference/status"]
+
+[[questions]]
+id = "web-api-lv014"
+module = "web-api-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "caching"]
+prompt = '''
+Sau khi bật CDN cho API, một khách hàng báo thấy dữ liệu của người khác ở endpoint `GET /me/dashboard`. Origin trả `Cache-Control: public, max-age=300`. Phản ứng đầu tiên của bạn?
+'''
+options = [
+  "Giải thích là lỗi trình duyệt của khách và đóng ticket",
+  "Purge cache của route này ngay, đổi thành `Cache-Control: private, no-store` (hoặc `Vary` phù hợp), kiểm tra các route cá nhân khác và viết postmortem",
+  "Giảm `max-age` xuống 60 giây",
+  "Tắt CDN cho toàn bộ hệ thống vĩnh viễn",
+]
+answer = [1]
+explanation = "Rò rỉ dữ liệu là sự cố bảo mật: cần giảm thiểu ngay (purge, sửa header), rà soát phạm vi và học từ sự cố. Giảm max-age chỉ rút ngắn thời gian lộ chứ không loại bỏ. Tắt CDN vĩnh viễn là phản ứng thái quá, mất lợi ích đã có."
+sources = ["http/rfc9111#section-5.2"]
+
+[[questions]]
+id = "web-api-lv015"
+module = "web-api-lead"
+type = "multiple"
+difficulty = 3
+tags = ["level:lead", "review"]
+prompt = "Khi chuẩn hoá quy trình review thay đổi API cho cả tổ chức (20 team), những thực hành nào có lợi hơn chi phí?"
+options = [
+  "Dùng OpenAPI làm nguồn sự thật và chạy công cụ phát hiện breaking change trong CI",
+  "Bắt mọi PR API phải được một người duy nhất ở platform team duyệt thủ công",
+  "Có hướng dẫn API chung (đặt tên, lỗi, phân trang) và linter tự động",
+  "Ghi ADR cho các quyết định khó đảo ngược như versioning, auth, định dạng lỗi",
+]
+answer = [0, 2, 3]
+explanation = "Tự động hoá trong CI và chuẩn chung mở rộng được cho nhiều team. Một người duyệt thủ công cho mọi PR trở thành nút thắt cổ chai và điểm lỗi duy nhất."
+sources = ["http/reference/status"]
+
+[[questions]]
+id = "web-api-lv016"
+module = "web-api-lead"
+type = "essay"
+difficulty = 3
+tags = ["level:lead", "rate-limit"]
+prompt = "Bạn cần thiết kế chính sách rate limit/quota cho public API có gói free và gói trả tiền, team 5 người. Nêu các quyết định chính và đánh đổi."
+keywords = [
+  ["theo tenant", "api key", "per-tenant", "theo khách hàng"],
+  ["429", "retry-after"],
+  ["redis", "counter", "bộ đếm", "token bucket", "sliding window"],
+  ["burst", "đột biến", "cho phép bùng nổ"],
+  ["header", "minh bạch", "ratelimit", "tài liệu"],
+]
+min_keywords = 3
+model_answer = '''
+- **Đơn vị giới hạn**: theo API key/tenant (khớp với gói thương mại), có thể thêm giới hạn theo IP cho endpoint chưa đăng nhập.
+- **Thuật toán**: token bucket cho phép burst ngắn mà vẫn giữ tốc độ trung bình; fixed window đơn giản hơn nhưng bị dồn ở ranh giới cửa sổ. Counter đặt trong Redis để chia sẻ giữa các instance.
+- **Phản hồi**: trả 429 kèm `Retry-After`, header cho biết quota còn lại để client tự điều tiết; tài liệu ghi rõ giới hạn từng gói.
+- **Phân tầng**: quota riêng cho gói trả tiền, endpoint nặng có giới hạn thấp hơn.
+- **Đánh đổi**: độ chính xác tuyệt đối đắt hơn; chấp nhận sai lệch nhỏ để đổi lấy độ trễ thấp.
+'''
+explanation = "Điểm cộng khi nói được vì sao chọn đơn vị giới hạn, cách xử lý burst, và tín hiệu giúp client tự điều chỉnh."
+
+[[questions]]
+id = "web-api-lvc02"
+module = "web-api-lead"
+type = "code"
+lang = "javascript"
+difficulty = 3
+tags = ["level:lead", "versioning"]
+title = "Chính sách deprecation theo phiên bản"
+prompt = '''
+Viết `resolveVersion(headers, policy, now)` để quyết định cách phục vụ một request:
+- `headers` có thể chứa `x-api-version` (khoá viết thường); nếu thiếu dùng `policy.default`
+- `policy.versions` là object, ví dụ `{ '1': { sunset: Date.UTC(2026,5,1) }, '2': {} }`; `sunset` là mốc timestamp (ms) hoặc không có
+- `now` là timestamp hiện tại (ms)
+- Phiên bản không có trong `policy.versions` → `{ status: 400, error: 'unsupported version' }`
+- Phiên bản có `sunset` đã qua (`now >= sunset`) → `{ status: 410, error: 'version sunset' }`
+- Phiên bản có `sunset` chưa tới → `{ status: 200, version, headers: { Deprecation: 'true', Sunset: <chuỗi dạng new Date(sunset).toUTCString()> } }`
+- Phiên bản không có `sunset` → `{ status: 200, version, headers: {} }`
+'''
+starter = '''
+function resolveVersion(headers, policy, now) {
+  return { status: 200, version: policy.default, headers: {} };
+}
+'''
+solution = '''
+function resolveVersion(headers, policy, now) {
+  const version = headers['x-api-version'] !== undefined ? String(headers['x-api-version']) : String(policy.default);
+  const info = policy.versions[version];
+  if (!info) return { status: 400, error: 'unsupported version' };
+  if (info.sunset !== undefined) {
+    if (now >= info.sunset) return { status: 410, error: 'version sunset' };
+    return { status: 200, version, headers: { Deprecation: 'true', Sunset: new Date(info.sunset).toUTCString() } };
+  }
+  return { status: 200, version, headers: {} };
+}
+'''
+tests = '''
+const sunset = Date.UTC(2026, 5, 1);
+const policy = { default: '1', versions: { '1': { sunset }, '2': {} } };
+const before = Date.UTC(2026, 0, 1);
+test('mặc định dùng default và gắn header deprecation', () => {
+  const r = resolveVersion({}, policy, before);
+  expect(r.status).toBe(200);
+  expect(r.version).toBe('1');
+  expect(r.headers.Deprecation).toBe('true');
+  expect(r.headers.Sunset).toBe(new Date(sunset).toUTCString());
+});
+test('v2 không có header', () => {
+  expect(resolveVersion({ 'x-api-version': '2' }, policy, before)).toEqual({ status: 200, version: '2', headers: {} });
+});
+test('phiên bản lạ trả 400', () => {
+  expect(resolveVersion({ 'x-api-version': '9' }, policy, before)).toEqual({ status: 400, error: 'unsupported version' });
+});
+test('quá hạn sunset trả 410', () => {
+  expect(resolveVersion({}, policy, sunset)).toEqual({ status: 410, error: 'version sunset' });
+});
+test('header số được chuẩn hoá về chuỗi', () => {
+  expect(resolveVersion({ 'x-api-version': 2 }, policy, before).version).toBe('2');
+});
+'''
+hints = ["Chuyển version về chuỗi trước khi tra `policy.versions`.", "Kiểm tra `sunset` đã qua trước khi trả header cảnh báo."]
+explanation = "Phản hồi 410 Gone sau mốc sunset cho client biết tài nguyên đã bị gỡ có chủ ý; header Deprecation/Sunset cho họ tín hiệu máy đọc được từ trước."
+
+# ------------------------------------------------------------ Junior
+[[questions]]
+id = "web-api-lv017"
+module = "api-http"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "status"]
+prompt = "Client gửi `POST /users` với JSON body thiếu trường bắt buộc `email`. Server nên trả status nào là hợp lý nhất?"
+options = ["200 OK", "400 Bad Request (hoặc 422)", "404 Not Found", "500 Internal Server Error"]
+answer = [1]
+explanation = "Lỗi do dữ liệu client gửi lên thuộc nhóm 4xx; 400 hoặc 422 đều được dùng cho validation. 200 báo thành công sai sự thật, 404 dành cho tài nguyên không tồn tại, 500 báo lỗi phía server trong khi lỗi nằm ở request."
+sources = ["http/reference/status"]
+
+[[questions]]
+id = "web-api-lv018"
+module = "api-http"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "methods"]
+prompt = "Method nào dùng để **đọc** tài nguyên và không được làm thay đổi dữ liệu trên server?"
+options = ["POST", "GET", "DELETE", "PUT"]
+answer = [1]
+explanation = "GET là method an toàn (safe): chỉ đọc. POST thường tạo mới, DELETE xoá, PUT thay thế tài nguyên."
+sources = ["http/reference/methods"]
+
+[[questions]]
+id = "web-api-lv019"
+module = "api-http"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "status"]
+prompt = "Status code nào cho biết người dùng **chưa xác thực** (thiếu hoặc sai thông tin đăng nhập)?"
+options = ["401 Unauthorized", "403 Forbidden", "404 Not Found", "409 Conflict"]
+answer = [0]
+explanation = "401 nghĩa là chưa xác thực được danh tính. 403 là đã biết bạn là ai nhưng không có quyền. 404 không tìm thấy, 409 xung đột trạng thái."
+sources = ["http/reference/status"]
+
+[[questions]]
+id = "web-api-lv020"
+module = "api-http"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "headers"]
+prompt = "Header nào cho server biết định dạng của body mà client đang gửi, ví dụ `application/json`?"
+options = ["Accept", "Content-Type", "Authorization", "Cache-Control"]
+answer = [1]
+explanation = "`Content-Type` mô tả kiểu của body trong message hiện tại. `Accept` là kiểu client muốn nhận về, `Authorization` chứa thông tin xác thực, `Cache-Control` điều khiển cache."
+sources = ["http/reference/headers/content-type"]
+
+[[questions]]
+id = "web-api-lv021"
+module = "api-rest"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "rest"]
+prompt = "Trong thiết kế REST, URL nào tuân theo quy ước đặt tên resource dạng danh từ số nhiều để lấy danh sách bài viết?"
+options = ["GET /getPosts", "GET /posts", "POST /posts/list", "GET /post/get-all"]
+answer = [1]
+explanation = "REST dùng danh từ cho resource và để method HTTP biểu đạt hành động: `GET /posts`. Tên động từ trong URL như `getPosts` là kiểu RPC."
+sources = ["http/reference/methods"]
+
+[[questions]]
+id = "web-api-lv022"
+module = "api-rest"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "status"]
+prompt = "Tạo thành công một tài nguyên mới bằng `POST /posts`. Status code phù hợp nhất là gì?"
+options = ["200", "201 Created", "204 No Content", "302 Found"]
+answer = [1]
+explanation = "201 Created cho biết tài nguyên mới đã được tạo, thường kèm header `Location` trỏ tới nó. 200 cũng chạy được nhưng kém ngữ nghĩa hơn; 204 không có body; 302 là chuyển hướng."
+sources = ["http/reference/status"]
+
+[[questions]]
+id = "web-api-lv023"
+module = "api-http"
+type = "multiple"
+difficulty = 1
+tags = ["level:junior", "methods"]
+prompt = "Những method HTTP nào **idempotent** theo định nghĩa chuẩn?"
+options = ["GET", "PUT", "DELETE", "POST"]
+answer = [0, 1, 2]
+explanation = "GET, PUT và DELETE idempotent: gọi lặp lại cho kết quả trạng thái giống gọi một lần. POST thì không, gọi lặp có thể tạo nhiều bản ghi."
+sources = ["http/reference/methods"]
+
+[[questions]]
+id = "web-api-lv024"
+module = "api-http"
+type = "multiple"
+difficulty = 1
+tags = ["level:junior", "status"]
+prompt = "Những status code nào thuộc nhóm **lỗi do client** (4xx)?"
+options = ["400", "404", "502", "429"]
+answer = [0, 1, 3]
+explanation = "400, 404 và 429 đều là 4xx. 502 Bad Gateway thuộc nhóm 5xx (lỗi phía server/gateway)."
+sources = ["http/reference/status"]
+
+[[questions]]
+id = "web-api-lv025"
+module = "api-http"
+type = "fill"
+difficulty = 1
+tags = ["level:junior", "status"]
+prompt = '''
+Hoàn thành: tài nguyên không tồn tại trả **{{blank}}**; xoá thành công và không trả body thường trả **{{blank}}**.
+'''
+blanks = [["404"], ["204"]]
+explanation = "404 Not Found cho tài nguyên không tồn tại; 204 No Content cho thao tác thành công mà không có nội dung trả về, ví dụ DELETE."
+sources = ["http/reference/status"]
+
+[[questions]]
+id = "web-api-lv026"
+module = "api-http"
+type = "fill"
+difficulty = 1
+tags = ["level:junior", "headers"]
+prompt = '''
+Để gửi access token kiểu Bearer, client đặt header `{{blank}}: Bearer <token>`.
+'''
+blanks = [["Authorization"]]
+explanation = "Token Bearer đi trong header `Authorization`. Không đặt token trong URL vì URL bị ghi vào log và lịch sử trình duyệt."
+sources = ["http/reference/headers/authorization"]
+
+[[questions]]
+id = "web-api-lvc03"
+module = "api-rest"
+type = "code"
+lang = "javascript"
+difficulty = 1
+tags = ["level:junior", "rest"]
+title = "Dựng query string"
+prompt = '''
+Viết `buildQuery(params)` nhận object phẳng và trả về query string (không có dấu `?` đầu):
+- Bỏ qua giá trị `null` hoặc `undefined`
+- Mã hoá key và value bằng `encodeURIComponent`
+- Các cặp nối bằng `&`, giữ thứ tự khoá như trong object
+- Object rỗng (hoặc toàn giá trị bị bỏ) → chuỗi rỗng `''`
+'''
+starter = '''
+function buildQuery(params) {
+  return '';
+}
+'''
+solution = '''
+function buildQuery(params) {
+  return Object.keys(params)
+    .filter((k) => params[k] !== null && params[k] !== undefined)
+    .map((k) => encodeURIComponent(k) + '=' + encodeURIComponent(params[k]))
+    .join('&');
+}
+'''
+tests = '''
+test('cơ bản', () => {
+  expect(buildQuery({ page: 2, q: 'abc' })).toBe('page=2&q=abc');
+});
+test('bỏ null và undefined', () => {
+  expect(buildQuery({ a: 1, b: null, c: undefined, d: 0 })).toBe('a=1&d=0');
+});
+test('mã hoá ký tự đặc biệt', () => {
+  expect(buildQuery({ q: 'a b&c' })).toBe('q=a%20b%26c');
+});
+test('object rỗng', () => {
+  expect(buildQuery({})).toBe('');
+});
+test('giá trị boolean và chuỗi rỗng', () => {
+  expect(buildQuery({ ok: false, s: '' })).toBe('ok=false&s=');
+});
+'''
+hints = ["Lọc các giá trị null/undefined trước khi map.", "Nhớ mã hoá cả key lẫn value."]
+explanation = "Giá trị 0, false hay chuỗi rỗng vẫn hợp lệ nên chỉ loại null/undefined. Mã hoá bằng `encodeURIComponent` ngăn ký tự như `&` làm vỡ cấu trúc query."
+
+[[questions]]
+id = "web-api-lv027"
+module = "api-caching"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "caching"]
+prompt = "Header `Cache-Control: no-store` có ý nghĩa gì?"
+options = [
+  "Cache được 1 năm",
+  "Không được lưu response ở bất kỳ cache nào",
+  "Chỉ cache ở trình duyệt, không cache ở CDN",
+  "Luôn kiểm tra lại với server trước khi dùng bản cache",
+]
+answer = [1]
+explanation = "`no-store` yêu cầu không lưu response (phù hợp dữ liệu nhạy cảm). Chỉ cache ở trình duyệt là `private`; luôn kiểm tra lại với server là `no-cache`."
+sources = ["http/rfc9111#section-5.2"]
+
+[[questions]]
+id = "web-api-lv028"
+module = "api-caching"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "caching"]
+prompt = "Client gửi request có `If-None-Match` khớp với ETag hiện tại của tài nguyên. Server nên trả status nào?"
+options = ["200 kèm body đầy đủ", "304 Not Modified không kèm body", "404 Not Found", "412 Precondition Failed"]
+answer = [1]
+explanation = "ETag khớp nghĩa là bản client đang giữ vẫn còn mới, server trả 304 để tiết kiệm băng thông. 412 dùng cho `If-Match` thất bại khi cập nhật."
+sources = ["http/rfc9110#section-15.4.5"]
+
+[[questions]]
+id = "web-api-lv029"
+module = "api-auth"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "auth"]
+prompt = "Vì sao không nên đặt access token trong query string của URL, ví dụ `/api/me?token=abc`?"
+options = [
+  "Vì URL có giới hạn 10 ký tự",
+  "Vì URL thường bị ghi vào log, lịch sử trình duyệt và header Referer",
+  "Vì GET không hỗ trợ query string",
+  "Vì token sẽ tự động hết hạn",
+]
+answer = [1]
+explanation = "URL xuất hiện ở nhiều nơi (access log, lịch sử, Referer) nên token dễ bị lộ. Nên đặt token trong header `Authorization`."
+sources = ["http/reference/headers/authorization"]
+
+[[questions]]
+id = "web-api-lv030"
+module = "api-auth"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "auth"]
+prompt = "Mật khẩu của người dùng nên được lưu trong database như thế nào?"
+options = [
+  "Lưu nguyên văn để hỗ trợ khôi phục",
+  "Mã hoá bằng Base64",
+  "Băm bằng thuật toán chuyên dụng cho mật khẩu (bcrypt, scrypt hoặc Argon2) kèm salt",
+  "Băm bằng MD5 một lần",
+]
+answer = [2]
+explanation = "Mật khẩu phải được băm bằng hàm chậm, có salt. Lưu nguyên văn hay Base64 (chỉ là mã hoá có thể đảo ngược) đều lộ ngay khi rò rỉ DB; MD5 quá nhanh nên dễ bị brute-force."
+sources = ["http/reference/headers/authorization"]
+
+[[questions]]
+id = "web-api-lv031"
+module = "api-auth"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "cors"]
+prompt = "CORS là cơ chế của thành phần nào chặn một trang web gọi API khác origin khi server không cho phép?"
+options = ["Server API tự động chặn", "Trình duyệt", "Hệ điều hành", "Router mạng"]
+answer = [1]
+explanation = "CORS do trình duyệt thực thi dựa trên header như `Access-Control-Allow-Origin` mà server trả về. Công cụ như curl hay server-to-server không bị CORS chặn."
+sources = ["http/guides/cors"]
+
+[[questions]]
+id = "web-api-lv032"
+module = "api-styles"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "api-style"]
+prompt = "Trong GraphQL, client chọn chính xác các trường mình cần trong một query. Lợi ích chính của việc này là gì?"
+options = [
+  "Server không cần schema",
+  "Tránh over-fetching/under-fetching",
+  "Mọi request đều được cache bởi CDN",
+  "Không cần xác thực",
+]
+answer = [1]
+explanation = "Client chỉ lấy đúng dữ liệu cần nên giảm dữ liệu thừa và số lượt gọi. GraphQL vẫn có schema và vẫn cần xác thực; cache qua CDN khó hơn so với REST GET."
+sources = ["http/reference/methods"]
+
+[[questions]]
+id = "web-api-lv033"
+module = "api-rest"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "pagination"]
+prompt = "Một endpoint danh sách trả hàng chục nghìn bản ghi trong một response. Cách cải thiện cơ bản nhất là gì?"
+options = ["Tăng timeout của server", "Phân trang (pagination)", "Đổi method sang POST", "Nén ảnh"]
+answer = [1]
+explanation = "Phân trang giới hạn số bản ghi mỗi lần trả về, giảm tải server, mạng và client. Tăng timeout không giải quyết kích thước dữ liệu, đổi method không liên quan."
+sources = ["http/reference/status"]
+
+[[questions]]
+id = "web-api-lv034"
+module = "api-auth"
+type = "multiple"
+difficulty = 1
+tags = ["level:junior", "security"]
+prompt = "Những việc nào giúp bảo vệ API khi truyền dữ liệu qua mạng?"
+options = [
+  "Dùng HTTPS cho mọi endpoint",
+  "Gửi mật khẩu qua query string để dễ debug",
+  "Đặt token trong header `Authorization`",
+  "Bật HSTS để trình duyệt luôn dùng HTTPS",
+]
+answer = [0, 2, 3]
+explanation = "HTTPS bảo vệ khỏi nghe lén, header Authorization tránh lộ token trong log URL, HSTS ép trình duyệt dùng HTTPS. Mật khẩu trong query string bị ghi vào log và lịch sử."
+sources = ["http/reference/headers/strict-transport-security"]
+
+[[questions]]
+id = "web-api-lv035"
+module = "api-rest"
+type = "multiple"
+difficulty = 1
+tags = ["level:junior", "rest"]
+prompt = "Những thành phần nào thường có trong một REST API response lỗi tốt?"
+options = [
+  "Status code phù hợp",
+  "Thông báo lỗi dễ hiểu cho developer",
+  "Stack trace đầy đủ của server",
+  "Mã lỗi ổn định để client xử lý theo chương trình",
+]
+answer = [0, 1, 3]
+explanation = "Status, thông báo và mã lỗi ổn định giúp client xử lý. Stack trace lộ chi tiết nội bộ và là rủi ro bảo mật; nên chỉ ghi vào log phía server."
+sources = ["http/reference/status"]
+
+[[questions]]
+id = "web-api-lv036"
+module = "api-caching"
+type = "fill"
+difficulty = 1
+tags = ["level:junior", "caching"]
+prompt = '''
+Để trình duyệt cache một file tĩnh 1 giờ, server trả `Cache-Control: max-age={{blank}}` (đơn vị giây).
+'''
+blanks = [["3600"]]
+explanation = "`max-age` tính bằng giây; 1 giờ = 60 × 60 = 3600 giây."
+sources = ["http/rfc9111#section-5.2"]
+
+[[questions]]
+id = "web-api-lv037"
+module = "api-rest"
+type = "fill"
+difficulty = 1
+tags = ["level:junior", "rest"]
+prompt = '''
+Sửa **một phần** của tài nguyên (chỉ vài trường) thường dùng method **{{blank}}**; thay thế **toàn bộ** tài nguyên dùng **{{blank}}**.
+'''
+blanks = [["PATCH"], ["PUT"]]
+explanation = "PATCH gửi phần thay đổi, PUT gửi toàn bộ biểu diễn mới của tài nguyên."
+sources = ["http/reference/methods"]
+
+# ------------------------------------------------------------ Middle
+[[questions]]
+id = "web-api-lv038"
+module = "api-rest"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "pagination"]
+prompt = '''
+Feed bài viết có 5 triệu bản ghi, người dùng liên tục thêm bài mới ở đầu danh sách. Phân trang bằng `?page=N&limit=20` bị lặp hoặc sót bài khi người dùng cuộn. Cách khắc phục phù hợp nhất?
+'''
+options = [
+  "Tăng `limit` lên 1000",
+  "Dùng cursor/keyset pagination dựa trên khoá sắp xếp ổn định (ví dụ `created_at, id`)",
+  "Cache toàn bộ danh sách ở client",
+  "Đổi sang `offset` lớn hơn",
+]
+answer = [1]
+explanation = "Offset dịch chuyển khi có bản ghi mới chèn vào nên trang bị lặp/sót, và OFFSET lớn còn chậm. Cursor bám vào giá trị khoá nên ổn định và dùng được index. Tăng limit hay offset không đổi bản chất vấn đề."
+sources = ["http/reference/status"]
+
+[[questions]]
+id = "web-api-lv039"
+module = "api-rest"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "idempotency"]
+prompt = '''
+Mobile app gửi `POST /orders` và bị timeout; app tự retry và đôi khi tạo hai đơn giống nhau. Cách sửa phù hợp nhất ở phía API?
+'''
+options = [
+  "Đổi POST thành GET",
+  "Chấp nhận header `Idempotency-Key` do client sinh, lưu kết quả theo key và trả lại cùng kết quả khi retry",
+  "Tăng timeout lên 5 phút",
+  "Khoá toàn bộ bảng orders trong lúc xử lý",
+]
+answer = [1]
+explanation = "Idempotency key biến POST thành an toàn khi retry. GET không phù hợp cho thao tác ghi, timeout dài làm trải nghiệm tệ mà vẫn có thể retry, khoá bảng gây nghẽn toàn hệ thống."
+sources = ["http/reference/methods"]
+
+[[questions]]
+id = "web-api-lv040"
+module = "api-caching"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "caching"]
+prompt = '''
+Một API trả nội dung khác nhau tuỳ `Accept-Language` nhưng quên `Vary`. CDN cache response tiếng Việt rồi phục vụ cho người dùng cần tiếng Anh. Cách sửa đúng?
+'''
+options = [
+  "Thêm `Vary: Accept-Language` vào response",
+  "Thêm `Cache-Control: max-age=0` cho mọi route",
+  "Đổi `Accept-Language` thành cookie",
+  "Chặn CDN vĩnh viễn",
+]
+answer = [0]
+explanation = "`Vary` bảo cache phân biệt các biến thể theo header đã chọn. `max-age=0` chỉ làm cache kiểm tra lại, tốn công và không phải gốc lỗi; chuyển sang cookie thường còn làm cache chung khó hơn."
+sources = ["http/rfc9111#section-5.2"]
+
+[[questions]]
+id = "web-api-lv041"
+module = "api-auth"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "cors"]
+prompt = '''
+SPA ở `https://app.example.com` gọi `https://api.example.com` bằng `fetch` kèm cookie (`credentials: 'include'`) và bị chặn bởi CORS dù server đã trả `Access-Control-Allow-Origin: *`. Nguyên nhân?
+'''
+options = [
+  "Request có credentials thì server không được dùng `*`; phải trả origin cụ thể và `Access-Control-Allow-Credentials: true`",
+  "Trình duyệt không hỗ trợ cookie cross-origin",
+  "Phải đổi method sang POST",
+  "Thiếu header `Content-Length`",
+]
+answer = [0]
+explanation = "Với request có credentials, wildcard `*` bị trình duyệt từ chối. Server cần echo một origin được phép và thêm `Allow-Credentials: true` (kèm `Vary: Origin`)."
+sources = ["http/guides/cors"]
+
+[[questions]]
+id = "web-api-lv042"
+module = "api-auth"
+type = "multiple"
+difficulty = 2
+tags = ["level:middle", "auth"]
+prompt = "Những nhận định nào đúng về lưu session ở cookie cho web app?"
+options = [
+  "Đặt `HttpOnly` giúp JavaScript không đọc được cookie, giảm tác hại của XSS",
+  "Đặt `Secure` để cookie chỉ gửi qua HTTPS",
+  "`SameSite=Lax/Strict` giúp giảm nguy cơ CSRF",
+  "Cookie session không cần bảo vệ CSRF vì được trình duyệt gửi tự động",
+]
+answer = [0, 1, 2]
+explanation = "HttpOnly, Secure và SameSite là ba thuộc tính cơ bản. Việc trình duyệt tự gửi cookie chính là điều khiến CSRF xảy ra, nên không phải lý do để bỏ biện pháp chống CSRF."
+sources = ["http/reference/headers/set-cookie"]
+
+[[questions]]
+id = "web-api-lv043"
+module = "api-styles"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "api-style"]
+prompt = '''
+Query GraphQL lấy danh sách 50 bài viết kèm tác giả tạo ra 51 truy vấn DB (1 cho danh sách + 50 cho từng tác giả). Hiện tượng này gọi là gì và cách xử lý thường dùng?
+'''
+options = [
+  "Deadlock; thêm lock vào DB",
+  "N+1 query; gom nhóm (batching) bằng DataLoader hoặc join/preload",
+  "Race condition; thêm mutex",
+  "Cache stampede; thêm TTL",
+]
+answer = [1]
+explanation = "Đây là N+1: một truy vấn danh sách kéo theo N truy vấn con. Batching theo request (DataLoader) hoặc join/preload gộp thành vài truy vấn."
+sources = ["http/reference/methods"]
+
+[[questions]]
+id = "web-api-lv044"
+module = "api-http"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "status"]
+prompt = '''
+Client cập nhật `PUT /documents/7` kèm `If-Match: "v3"` nhưng bản hiện tại trên server là `"v4"`. Response phù hợp nhất?
+'''
+options = ["200 OK", "412 Precondition Failed", "304 Not Modified", "401 Unauthorized"]
+answer = [1]
+explanation = "`If-Match` không khớp ETag hiện tại nghĩa là có người sửa trước (lost update). 412 báo điều kiện tiên quyết thất bại để client lấy bản mới và gộp thay đổi."
+sources = ["http/rfc9110#section-15.4.5"]
+
+[[questions]]
+id = "web-api-lv045"
+module = "api-rest"
+type = "essay"
+difficulty = 2
+tags = ["level:middle", "pagination"]
+prompt = "So sánh offset pagination và cursor pagination. Khi nào nên chọn mỗi loại?"
+keywords = [
+  ["offset"],
+  ["cursor", "keyset"],
+  ["ổn định", "lặp", "sót", "chèn", "stable"],
+  ["index", "hiệu năng", "chậm", "performance"],
+  ["nhảy trang", "trang bất kỳ", "random access", "đếm tổng"],
+]
+min_keywords = 3
+model_answer = '''
+- **Offset**: `LIMIT n OFFSET m`, đơn giản, nhảy tới trang bất kỳ và hiển thị tổng số trang dễ. Nhược điểm: dữ liệu bị chèn/xoá khiến trang lặp hoặc sót; offset lớn thì chậm vì DB phải bỏ qua nhiều dòng.
+- **Cursor/keyset**: dùng giá trị khoá của bản ghi cuối (`WHERE id > :last`), hiệu năng ổn định nhờ index, kết quả ổn định khi dữ liệu thay đổi. Nhược điểm: không nhảy trang tuỳ ý, cần khoá sắp xếp ổn định, khó đếm tổng.
+- Chọn **offset** cho bảng nhỏ/admin cần nhảy trang; chọn **cursor** cho feed, dữ liệu lớn hoặc thay đổi liên tục.
+'''
+explanation = "Câu trả lời tốt nêu cả hai mặt: tiện lợi của offset và tính ổn định/hiệu năng của cursor."
+
+[[questions]]
+id = "web-api-lv046"
+module = "api-http"
+type = "fill"
+difficulty = 2
+tags = ["level:middle", "headers"]
+prompt = '''
+Header `{{blank}}` trên response 429/503 cho client biết thời gian nên chờ trước khi thử lại.
+'''
+blanks = [["Retry-After"]]
+explanation = "`Retry-After` có thể là số giây hoặc ngày giờ HTTP; client tôn trọng nó thay vì retry dồn dập."
+sources = ["http/reference/status"]
+
+[[questions]]
+id = "web-api-lvc04"
+module = "api-caching"
+type = "code"
+lang = "javascript"
+difficulty = 2
+tags = ["level:middle", "caching"]
+title = "Parse Cache-Control"
+prompt = '''
+Viết `parseCacheControl(header)` trả về object mô tả directive:
+- Tách theo dấu `,`, bỏ khoảng trắng thừa, tên directive chuyển chữ thường
+- Directive không có giá trị → `true` (ví dụ `public` → `{ public: true }`)
+- Directive dạng `max-age=300` → số `300`; `s-maxage` và `stale-while-revalidate` cũng chuyển thành số
+- Directive khác có giá trị thì giữ nguyên chuỗi, bỏ dấu nháy kép bao quanh nếu có
+- `header` là `null`, `undefined` hoặc rỗng → `{}`
+'''
+starter = '''
+function parseCacheControl(header) {
+  return {};
+}
+'''
+solution = '''
+function parseCacheControl(header) {
+  const out = {};
+  if (!header) return out;
+  const numeric = ['max-age', 's-maxage', 'stale-while-revalidate'];
+  for (const part of header.split(',')) {
+    const p = part.trim();
+    if (!p) continue;
+    const i = p.indexOf('=');
+    if (i === -1) {
+      out[p.toLowerCase()] = true;
+      continue;
+    }
+    const name = p.slice(0, i).trim().toLowerCase();
+    let value = p.slice(i + 1).trim();
+    if (numeric.includes(name)) {
+      out[name] = Number(value);
+    } else {
+      if (value.length >= 2 && value[0] === '"' && value[value.length - 1] === '"') value = value.slice(1, -1);
+      out[name] = value;
+    }
+  }
+  return out;
+}
+'''
+tests = '''
+test('directive đơn giản', () => {
+  expect(parseCacheControl('public, max-age=300')).toEqual({ public: true, 'max-age': 300 });
+});
+test('khoảng trắng và hoa thường', () => {
+  expect(parseCacheControl(' No-Cache ,  S-MaxAge=60 ')).toEqual({ 'no-cache': true, 's-maxage': 60 });
+});
+test('stale-while-revalidate là số', () => {
+  expect(parseCacheControl('max-age=10, stale-while-revalidate=30')['stale-while-revalidate']).toBe(30);
+});
+test('giá trị có nháy kép', () => {
+  expect(parseCacheControl('private="Set-Cookie"')).toEqual({ private: 'Set-Cookie' });
+});
+test('đầu vào rỗng', () => {
+  expect(parseCacheControl(null)).toEqual({});
+  expect(parseCacheControl('')).toEqual({});
+  expect(parseCacheControl(undefined)).toEqual({});
+});
+'''
+hints = ["Tách bằng `split(',')` rồi `trim()` từng phần.", "Dùng `indexOf('=')` để phân biệt directive có giá trị."]
+explanation = "Proxy, CDN và client HTTP đều phải parse header này để biết có được cache và trong bao lâu."
+
+# ------------------------------------------------------------ Senior
+[[questions]]
+id = "web-api-lv047"
+module = "api-auth"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "jwt"]
+prompt = '''
+Service nhận JWT và đọc `alg` từ header của chính token để chọn thuật toán xác minh. Rủi ro nghiêm trọng nhất?
+'''
+options = [
+  "Token sẽ dài hơn",
+  "Kẻ tấn công có thể đặt `alg: none` hoặc đổi sang HS256 dùng public key làm secret để giả mạo token",
+  "Token hết hạn nhanh hơn",
+  "Không thể xoay khoá",
+]
+answer = [1]
+explanation = "Server phải cố định danh sách thuật toán chấp nhận và chọn khoá theo cấu hình (và `kid` đã được whitelist), không tin `alg` do token tự khai. Nếu không, tấn công `none` hay nhầm lẫn RS256/HS256 cho phép giả mạo."
+sources = ["http/reference/headers/authorization"]
+
+[[questions]]
+id = "web-api-lv048"
+module = "api-auth"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "oauth"]
+prompt = '''
+SPA hoặc mobile app (public client, không giữ được secret) dùng Authorization Code flow. Thành phần nào ngăn kẻ chặn được `code` trên đường redirect đổi nó lấy token?
+'''
+options = [
+  "Client secret nhúng trong bundle JavaScript",
+  "PKCE: `code_challenge` gửi khi xin code và `code_verifier` gửi khi đổi token",
+  "Header `Referer`",
+  "Cookie `HttpOnly`",
+]
+answer = [1]
+explanation = "PKCE gắn code với verifier bí mật chỉ client gốc biết, nên code bị chặn trở nên vô dụng. Secret nhúng trong bundle không còn là bí mật; Referer và cookie không có vai trò này."
+sources = ["http/reference/headers/authorization"]
+
+[[questions]]
+id = "web-api-lv049"
+module = "api-caching"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "caching"]
+prompt = '''
+Cache key của một entry nổi tiếng hết hạn đúng lúc 10.000 request/giây đang đến; tất cả cùng lúc đi xuống origin và làm sập nó (cache stampede). Biện pháp nào hiệu quả?
+'''
+options = [
+  "Giảm TTL xuống 1 giây",
+  "Request coalescing (chỉ một request đi lấy dữ liệu), `stale-while-revalidate`/`stale-if-error` và TTL có jitter",
+  "Tăng số lượng origin gấp 10",
+  "Xoá cache khi có lỗi",
+]
+answer = [1]
+explanation = "Gom request trùng và phục vụ bản cũ trong lúc làm mới giữ origin khỏi bị dồn. Jitter tránh nhiều key hết hạn cùng lúc. Giảm TTL còn làm stampede xảy ra thường xuyên hơn."
+sources = ["http/rfc9111#section-5.2"]
+
+[[questions]]
+id = "web-api-lv050"
+module = "api-http"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "security"]
+prompt = '''
+Service nhận webhook từ đối tác, xác minh chữ ký HMAC của body. Cách so sánh chữ ký nào đúng?
+'''
+options = [
+  "So sánh bằng `==` trên chuỗi hex",
+  "Tính HMAC trên **raw body** nhận được rồi so sánh bằng hàm so sánh hằng thời gian (constant-time), kèm kiểm tra timestamp để chống replay",
+  "Parse JSON rồi stringify lại trước khi tính HMAC",
+  "Chỉ kiểm tra IP nguồn",
+]
+answer = [1]
+explanation = "Chữ ký phải tính trên byte gốc: parse rồi stringify lại có thể đổi thứ tự/khoảng trắng. So sánh `==` rò rỉ thông tin qua thời gian. Timestamp trong chữ ký chống replay. IP nguồn dễ đổi và không chứng minh tính toàn vẹn."
+sources = ["http/reference/methods"]
+
+[[questions]]
+id = "web-api-lv051"
+module = "api-http"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "security"]
+prompt = '''
+Endpoint `POST /fetch-preview` nhận `url` từ người dùng rồi server tải nội dung về để dựng link preview. Rủi ro bảo mật chính và biện pháp đúng hướng?
+'''
+options = [
+  "CORS; thêm `Access-Control-Allow-Origin`",
+  "SSRF: server có thể bị lợi dụng gọi vào mạng nội bộ/metadata cloud; dùng allowlist, chặn IP private/loopback sau khi resolve DNS, giới hạn redirect và timeout",
+  "XSS phản chiếu; encode HTML",
+  "CSRF; thêm token CSRF",
+]
+answer = [1]
+explanation = "Cho server tải URL tuỳ ý là kịch bản SSRF kinh điển, đặc biệt nguy hiểm với metadata service. Phải kiểm tra IP sau khi resolve (chống DNS rebinding) và kiểm soát redirect. CORS, CSRF, XSS là lớp khác."
+sources = ["http/reference/methods"]
+
+[[questions]]
+id = "web-api-lv052"
+module = "web-api-dv-framing"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "http2"]
+prompt = '''
+So với HTTP/1.1 qua TCP, HTTP/3 (QUIC) cải thiện điều gì rõ nhất khi mạng di động mất gói thường xuyên?
+'''
+options = [
+  "Bỏ hoàn toàn nhu cầu dùng TLS",
+  "Mỗi stream độc lập khi mất gói nên không bị head-of-line blocking ở tầng transport như HTTP/2 qua TCP",
+  "Tự động nén body bằng gzip",
+  "Biến mọi request thành idempotent",
+]
+answer = [1]
+explanation = "HTTP/2 multiplex nhiều stream trên một kết nối TCP nên mất một gói chặn tất cả stream. QUIC xử lý mất gói theo từng stream. QUIC vẫn mã hoá bằng TLS 1.3 và không đổi ngữ nghĩa idempotent."
+sources = ["http/rfc9114#section-3"]
+
+[[questions]]
+id = "web-api-lv053"
+module = "api-rest"
+type = "multiple"
+difficulty = 3
+tags = ["level:senior", "concurrency"]
+prompt = "Hai người cùng sửa một tài liệu qua `PUT /docs/1`; bản của người đến sau ghi đè mất thay đổi của người trước (lost update). Những biện pháp nào xử lý đúng?"
+options = [
+  "Trả ETag trong GET và yêu cầu `If-Match` trên PUT, 412 khi không khớp",
+  "Dùng cột `version` và `UPDATE ... WHERE id=? AND version=?`, 0 dòng cập nhật thì trả 409",
+  "Tăng timeout của request",
+  "Yêu cầu bắt buộc `If-Match` bằng 428 Precondition Required khi thiếu",
+]
+answer = [0, 1, 3]
+explanation = "Optimistic concurrency bằng ETag/If-Match hoặc cột version phát hiện xung đột; 428 buộc client luôn gửi điều kiện. Timeout dài không liên quan tới ghi đè."
+sources = ["http/rfc9110#section-15.4.5"]
+
+[[questions]]
+id = "web-api-lv054"
+module = "api-caching"
+type = "multiple"
+difficulty = 3
+tags = ["level:senior", "caching"]
+prompt = "Những nhận định nào đúng về validator trong HTTP caching?"
+options = [
+  "Weak ETag (`W/\"v1\"`) chỉ cam kết tương đương về mặt ngữ nghĩa, không phải từng byte",
+  "`If-None-Match` với ETag khớp cho phép server trả 304 không kèm body",
+  "`Last-Modified` có độ phân giải giây nên không phát hiện hai thay đổi trong cùng một giây",
+  "ETag luôn phải là hash của toàn bộ body",
+]
+answer = [0, 1, 2]
+explanation = "ETag là chuỗi mờ do server định nghĩa, không bắt buộc là hash body (có thể là version/revision). Ba phát biểu còn lại phản ánh đúng đặc tả."
+sources = ["http/rfc9110#section-15.4.5"]
+
+[[questions]]
+id = "web-api-lvc05"
+module = "api-http"
+type = "code"
+lang = "javascript"
+difficulty = 3
+tags = ["level:senior", "retry"]
+title = "Tính độ trễ retry"
+prompt = '''
+Viết `retryDelay(attempt, response, opts)` trả về số mili giây cần chờ trước lần thử tiếp theo hoặc `null` nếu không nên retry:
+- `attempt` bắt đầu từ 1 (lần thất bại đầu tiên)
+- `response = { status, headers }` (header key viết thường); `opts = { base, cap, maxAttempts, random }` với `random()` trả số trong `[0, 1)`
+- Chỉ retry khi status là 429, 502, 503 hoặc 504; status khác → `null`
+- `attempt >= maxAttempts` → `null`
+- Nếu có header `retry-after` dạng số giây → trả `seconds * 1000` (không áp dụng jitter, nhưng không vượt `cap`; vượt cap thì trả `cap`)
+- Ngược lại dùng exponential backoff với **full jitter**: `Math.floor(random() * Math.min(cap, base * 2 ** (attempt - 1)))`
+'''
+starter = '''
+function retryDelay(attempt, response, opts) {
+  return null;
+}
+'''
+solution = '''
+function retryDelay(attempt, response, opts) {
+  const retryable = [429, 502, 503, 504];
+  if (!retryable.includes(response.status)) return null;
+  if (attempt >= opts.maxAttempts) return null;
+  const ra = response.headers && response.headers['retry-after'];
+  if (ra !== undefined && ra !== null && ra !== '' && !Number.isNaN(Number(ra))) {
+    return Math.min(opts.cap, Number(ra) * 1000);
+  }
+  const ceiling = Math.min(opts.cap, opts.base * 2 ** (attempt - 1));
+  return Math.floor(opts.random() * ceiling);
+}
+'''
+tests = '''
+const opts = (r) => ({ base: 100, cap: 5000, maxAttempts: 4, random: () => r });
+test('status không retry được', () => {
+  expect(retryDelay(1, { status: 400, headers: {} }, opts(0.5))).toBeNull();
+  expect(retryDelay(1, { status: 500, headers: {} }, opts(0.5))).toBeNull();
+});
+test('hết số lần thử', () => {
+  expect(retryDelay(4, { status: 503, headers: {} }, opts(0.5))).toBeNull();
+});
+test('full jitter theo lần thử', () => {
+  expect(retryDelay(1, { status: 503, headers: {} }, opts(0.5))).toBe(50);
+  expect(retryDelay(3, { status: 502, headers: {} }, opts(0.5))).toBe(200);
+});
+test('retry-after được ưu tiên và bị chặn bởi cap', () => {
+  expect(retryDelay(1, { status: 429, headers: { 'retry-after': '2' } }, opts(0.9))).toBe(2000);
+  expect(retryDelay(1, { status: 429, headers: { 'retry-after': '120' } }, opts(0.9))).toBe(5000);
+});
+test('cap giới hạn ceiling của backoff', () => {
+  const o = { base: 1000, cap: 3000, maxAttempts: 10, random: () => 0.999 };
+  expect(retryDelay(5, { status: 504, headers: {} }, o)).toBe(2997);
+});
+'''
+hints = ["Kiểm tra status và số lần thử trước.", "Ceiling = min(cap, base * 2^(attempt-1)), rồi nhân với random()."]
+explanation = "Full jitter phân tán thời điểm retry của nhiều client để tránh retry đồng bộ; tôn trọng `Retry-After` để không chống lại chỉ dẫn của server."
+
+[[questions]]
+id = "web-api-lv055"
+module = "api-auth"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "jwt"]
+prompt = '''
+Access token JWT sống 24 giờ; người dùng bấm "đăng xuất khỏi mọi thiết bị" nhưng token cũ vẫn dùng được tới hết hạn. Cách cân bằng hợp lý nhất?
+'''
+options = [
+  "Giữ nguyên, JWT không thể thu hồi",
+  "Access token ngắn hạn (5–15 phút) + refresh token xoay vòng lưu phía server để thu hồi; hoặc kiểm tra danh sách thu hồi/`jti` cho thao tác nhạy cảm",
+  "Tăng thời hạn lên 30 ngày để ít phải đăng nhập",
+  "Lưu JWT trong `localStorage` để dễ xoá",
+]
+answer = [1]
+explanation = "Token ngắn hạn thu hẹp cửa sổ rủi ro, còn refresh token có trạng thái cho phép thu hồi. Tăng thời hạn làm rủi ro tệ hơn; `localStorage` không giải quyết thu hồi và còn dễ bị XSS đọc."
+sources = ["http/reference/headers/authorization"]
+
+[[questions]]
+id = "web-api-lv056"
+module = "api-rest"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "rate-limit"]
+prompt = '''
+Fixed window 100 request/phút có điểm yếu gì mà token bucket khắc phục được?
+'''
+options = [
+  "Fixed window không đếm được request",
+  "Tại ranh giới cửa sổ client có thể gửi 100 request cuối cửa sổ cũ và 100 request đầu cửa sổ mới, tạo burst gấp đôi; token bucket làm mượt và cho phép burst có kiểm soát",
+  "Token bucket không cần lưu trạng thái",
+  "Fixed window chỉ dùng được với HTTP/1.1",
+]
+answer = [1]
+explanation = "Hiệu ứng ranh giới cửa sổ cho phép burst gấp đôi trong thời gian ngắn. Token bucket nạp lại token đều đặn nên tốc độ trung bình được kiểm soát. Cả hai đều cần lưu trạng thái."
+sources = ["http/reference/status"]
+
+[[questions]]
+id = "web-api-lv057"
+module = "web-api-dv-csp"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "csp"]
+prompt = '''
+Ứng dụng có nhiều inline script nên team thêm `'unsafe-inline'` vào `script-src`. Vì sao đây là lựa chọn kém, và hướng tốt hơn?
+'''
+options = [
+  "`'unsafe-inline'` làm trang chậm hơn; dùng `defer`",
+  "Cho phép mọi inline script nên XSS chèn script vẫn chạy; dùng nonce hoặc hash cho từng script, bắt đầu với `Content-Security-Policy-Report-Only`",
+  "CSP không hỗ trợ inline script nên cần bỏ CSP",
+  "Chỉ cần thêm `X-Frame-Options`",
+]
+answer = [1]
+explanation = "Giá trị chính của CSP là chặn script không được phép; `'unsafe-inline'` vô hiệu hoá điều đó. Nonce hoặc hash chỉ cho phép đúng script mình tạo. Report-Only giúp triển khai dần mà không làm gãy trang."
+sources = ["http/reference/headers/content-security-policy/script-src"]
+
+[[questions]]
+id = "web-api-lv058"
+module = "web-api-dv-representations"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "http"]
+prompt = '''
+Client tải file 2 GB và mất kết nối ở 1,2 GB. Server hỗ trợ `Accept-Ranges: bytes`. Cách resume đúng?
+'''
+options = [
+  "Tải lại từ đầu vì HTTP không hỗ trợ resume",
+  "Gửi `Range: bytes=1200000000-` kèm `If-Range` với ETag, nhận 206 Partial Content nếu file chưa đổi (hoặc 200 toàn bộ nếu đã đổi)",
+  "Gửi `Content-Length: 1200000000`",
+  "Dùng `Cache-Control: max-age`",
+]
+answer = [1]
+explanation = "Range request cho tải một phần; `If-Range` đảm bảo phần tải tiếp đến từ cùng phiên bản file, nếu file đã đổi server trả 200 với toàn bộ nội dung mới."
+sources = ["http/reference/headers/range"]
+
+[[questions]]
+id = "web-api-lv059"
+module = "api-styles"
+type = "multiple"
+difficulty = 3
+tags = ["level:senior", "api-style"]
+prompt = "Khi đưa GraphQL vào production với client không hoàn toàn tin cậy, những biện pháp nào cần thiết?"
+options = [
+  "Giới hạn độ sâu và độ phức tạp của query",
+  "Tắt hoặc kiểm soát introspection ở môi trường công khai nếu không cần",
+  "Dùng persisted queries/allowlist cho client đã biết",
+  "Cho phép query tuỳ ý vì client là bên mình viết",
+]
+answer = [0, 1, 2]
+explanation = "Query lồng sâu có thể gây DoS; introspection lộ schema; persisted query giảm bề mặt tấn công. Không có client nào hoàn toàn tin cậy vì kẻ tấn công có thể gửi request trực tiếp."
+sources = ["http/reference/methods"]
+
+[[questions]]
+id = "web-api-lv060"
+module = "api-http"
+type = "multiple"
+difficulty = 3
+tags = ["level:senior", "reliability"]
+prompt = "Những nhận định nào đúng về timeout và retry giữa các service?"
+options = [
+  "Chỉ retry tự động các thao tác idempotent hoặc có idempotency key",
+  "Timeout của client nên ngắn hơn timeout của tầng gọi nó để lỗi lan truyền có kiểm soát (deadline propagation)",
+  "Retry ở mọi tầng của chuỗi gọi nhau sẽ nhân số lần gọi (khuếch đại) khi có sự cố",
+  "Retry không giới hạn cho đến khi thành công luôn an toàn",
+]
+answer = [0, 1, 2]
+explanation = "Retry nhân lên theo từng tầng nên cần ngân sách retry và deadline lan truyền. Retry vô hạn khiến hệ thống đang yếu bị đè chết."
+sources = ["http/reference/status"]
+
+[[questions]]
+id = "web-api-lv061"
+module = "api-auth"
+type = "fill"
+difficulty = 3
+tags = ["level:senior", "security"]
+prompt = '''
+Để chống clickjacking, trang nên gửi CSP directive `frame-ancestors {{blank}}` (cấm mọi trang nhúng nó vào frame).
+'''
+blanks = [["'none'", "none"]]
+explanation = "`frame-ancestors 'none'` cấm nhúng; `'self'` chỉ cho cùng origin nhúng. Directive này thay thế `X-Frame-Options` trong trình duyệt hiện đại."
+sources = ["http/reference/headers/content-security-policy/frame-ancestors"]
+
+[[questions]]
+id = "web-api-lvc06"
+module = "api-caching"
+type = "code"
+lang = "javascript"
+difficulty = 3
+tags = ["level:senior", "caching"]
+title = "Xử lý conditional GET"
+prompt = '''
+Viết `handleConditionalGet(req, resource)` với `req = { headers }` (khoá viết thường) và `resource = { body, etag }` (`etag` đã có dấu nháy, ví dụ `'"v1"'`):
+- Nếu không có `if-none-match` → `{ status: 200, headers: { ETag: resource.etag }, body: resource.body }`
+- `if-none-match` có thể là `*` hoặc danh sách ETag phân tách bằng dấu phẩy; so sánh **yếu** (bỏ tiền tố `W/` ở cả hai phía)
+- Có khớp → `{ status: 304, headers: { ETag: resource.etag } }` (không có `body`)
+- Không khớp → như trường hợp 200 ở trên
+'''
+starter = '''
+function handleConditionalGet(req, resource) {
+  return { status: 200, headers: { ETag: resource.etag }, body: resource.body };
+}
+'''
+solution = '''
+function handleConditionalGet(req, resource) {
+  const strip = (t) => t.trim().replace(/^W\//, '');
+  const inm = req.headers['if-none-match'];
+  if (inm) {
+    const wanted = strip(resource.etag);
+    const tags = inm.split(',').map(strip);
+    if (tags.includes('*') || tags.includes(wanted)) {
+      return { status: 304, headers: { ETag: resource.etag } };
+    }
+  }
+  return { status: 200, headers: { ETag: resource.etag }, body: resource.body };
+}
+'''
+tests = '''
+const res = { body: 'hello', etag: '"v1"' };
+test('không có điều kiện → 200', () => {
+  expect(handleConditionalGet({ headers: {} }, res)).toEqual({ status: 200, headers: { ETag: '"v1"' }, body: 'hello' });
+});
+test('khớp → 304 không có body', () => {
+  const r = handleConditionalGet({ headers: { 'if-none-match': '"v1"' } }, res);
+  expect(r.status).toBe(304);
+  expect(r.body).toBeUndefined();
+  expect(r.headers.ETag).toBe('"v1"');
+});
+test('so sánh yếu bỏ tiền tố W/', () => {
+  expect(handleConditionalGet({ headers: { 'if-none-match': 'W/"v1"' } }, res).status).toBe(304);
+});
+test('danh sách và dấu *', () => {
+  expect(handleConditionalGet({ headers: { 'if-none-match': '"a", "v1"' } }, res).status).toBe(304);
+  expect(handleConditionalGet({ headers: { 'if-none-match': '*' } }, res).status).toBe(304);
+});
+test('không khớp → 200', () => {
+  expect(handleConditionalGet({ headers: { 'if-none-match': '"v2"' } }, res).status).toBe(200);
+});
+'''
+hints = ["Tách `if-none-match` bằng dấu phẩy và chuẩn hoá từng phần.", "304 không kèm body nhưng vẫn gửi lại ETag."]
+explanation = "Conditional GET tiết kiệm băng thông: client giữ bản cache và chỉ tải lại khi ETag đổi. Với GET dùng so sánh yếu theo RFC 9110."
+
+[[questions]]
+id = "web-api-lv062"
+module = "api-caching"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "caching"]
+prompt = "API trả danh sách sản phẩm dùng chung cho mọi người, nhưng response có thêm trường `isFavorite` tính theo user đang đăng nhập. Header cache nào hợp lý nhất?"
+options = [
+  "`Cache-Control: public, max-age=300` vì danh sách sản phẩm ít thay đổi",
+  "`Cache-Control: private, max-age=60` (hoặc tách phần cá nhân hoá sang endpoint riêng để phần chung được cache public)",
+  "`Cache-Control: no-store` cho mọi response để tránh mọi rủi ro",
+  "`Vary: *` cùng `public, max-age=300` để CDN tự phân biệt theo user",
+]
+answer = [1]
+explanation = "Response có dữ liệu riêng từng user thì CDN/proxy dùng chung không được lưu (`private`). Cách tốt hơn ở cấp senior là tách phần cá nhân hoá ra để phần chung vẫn cache `public` được. `no-store` an toàn nhưng bỏ phí cache trình duyệt; `Vary: *` khiến response gần như không cache được."
+sources = ["http/reference/headers/cache-control"]

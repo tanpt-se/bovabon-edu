@@ -395,6 +395,7 @@ id = "react-native-dv025"
 module = "react-native-dv-accessibility"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Một Pressable chỉ hiển thị icon giỏ hàng. Điều gì giúp người dùng screen reader hiểu và thao tác với nó?"
 options = ["Thêm accessibilityRole phù hợp và accessibilityLabel mô tả hành động", "Đổi màu icon thành màu nổi bật", "Đặt testID nhưng không thêm label", "Ẩn control khỏi accessibility tree"]
 answer = [0]
@@ -406,6 +407,7 @@ id = "react-native-dv026"
 module = "react-native-dv-accessibility"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một chip lọc đang được chọn nhưng chỉ đổi nền sang màu xanh. Cách bổ sung ngữ nghĩa tốt nhất là gì?"
 options = ["Đặt selected state đồng bộ với trạng thái lọc thật", "Đặt testID bằng selected", "Thêm hint lặp lại tên bộ lọc", "Tắt accessibility trên chip"]
 answer = [0]
@@ -417,6 +419,7 @@ id = "react-native-dv027"
 module = "react-native-dv-accessibility"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Khi nào accessibilityHint hữu ích cho một nút?"
 options = ["Khi cần giải thích ngắn kết quả của thao tác mà label chưa truyền đạt", "Luôn lặp lại nguyên văn accessibilityLabel", "Để chứa toàn bộ nội dung màn hình", "Thay thế accessibilityRole"]
 answer = [0]
@@ -428,6 +431,7 @@ id = "react-native-dv028"
 module = "react-native-dv-accessibility"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn các cách cải thiện accessibility cho một nhóm nút điều khiển."
 options = ["Dùng role và label mô tả mục đích", "Đồng bộ accessibilityState với trạng thái ứng dụng", "Chỉ dùng màu để biểu thị selected hoặc disabled", "Kiểm tra thứ tự focus và cách screen reader đọc nhóm"]
 answer = [0, 1, 3]
@@ -439,6 +443,7 @@ id = "react-native-dv029"
 module = "react-native-dv-accessibility"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Trước khi phát hành một flow mobile có nhiều control tương tác, nên kiểm tra những gì?"
 options = ["Font scaling và tương phản", "VoiceOver trên iOS và TalkBack trên Android", "Chỉ kiểm tra screenshot ở kích thước mặc định", "Label, state và vùng chạm của control"]
 answer = [0, 1, 3]
@@ -450,6 +455,7 @@ id = "react-native-dv030"
 module = "react-native-dv-accessibility"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Prop mô tả loại điều khiển như button hoặc link trong React Native là accessibility{{blank}}."
 blanks = [["role"]]
 explanation = "accessibilityRole giúp assistive technology hiểu loại control."
@@ -460,6 +466,7 @@ id = "react-native-dv031"
 module = "react-native-dv-accessibility"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Với control chỉ có icon, prop chứa tên ngắn gọn được đọc cho người dùng là accessibility{{blank}}."
 blanks = [["label"]]
 explanation = "accessibilityLabel cung cấp tên mà screen reader có thể đọc."
@@ -470,6 +477,7 @@ id = "react-native-dv032"
 module = "react-native-dv-accessibility"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Trong phỏng vấn, hãy trình bày cách rà soát accessibility cho một màn hình mobile có nút icon, chip lọc và nội dung cập nhật."
 keywords = [["accessibility role", "role"], ["accessibility label", "label"], ["accessibility state", "selected state"], ["voiceover", "talkback"], ["focus order", "focus"], ["font scaling", "contrast"]]
 min_keywords = 3
@@ -482,6 +490,7 @@ id = "react-native-dvc04"
 module = "react-native-dv-accessibility"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 lang = "javascript"
 title = "Chuẩn hoá accessibility state"
 prompt = '''Viết buildAccessibilityState(input) trả về object mới chỉ có các key disabled, selected và expanded khi key đó là own property có giá trị boolean trong input. Giữ cả giá trị false; bỏ qua key thiếu, giá trị không phải boolean và các key khác. Không sửa input.'''
@@ -529,6 +538,7 @@ id = "react-native-dv017"
 module = "react-native-dv-testing"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Một component hiển thị nút Lưu và trạng thái đã lưu. Assertion nào thường bền vững nhất khi kiểm thử hành vi?"
 options = ["Kiểm tra tên biến state nội bộ", "Tìm nút theo role hoặc label, nhấn rồi kiểm tra trạng thái người dùng nhìn thấy", "So sánh toàn bộ cây component với snapshot lớn", "Kiểm tra chính xác số lần mọi component render"]
 answer = [1]
@@ -540,6 +550,7 @@ id = "react-native-dv018"
 module = "react-native-dv-testing"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Ứng dụng crash trong mã native chỉ trên Android. Bước điều tra nào có ích nhất?"
 options = ["Chỉ xem console.log của JavaScript trên iOS", "Thu log và tái hiện trên Android device hoặc emulator bằng công cụ nền tảng", "Bật Fast Refresh rồi kết luận đã sửa", "Đổi mọi request sang retry"]
 answer = [1]
@@ -551,6 +562,7 @@ id = "react-native-dv019"
 module = "react-native-dv-testing"
 type = "single"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Stack trace production trỏ đến vị trí khó đọc trong bundle đã minify. Điều gì cần để ánh xạ về mã nguồn?"
 options = ["Source map khớp chính xác với bundle và phiên bản phát hành đó", "Bất kỳ source map nào của nhánh main", "Tắt Hermes sau khi phát hành", "Chỉ bật Fast Refresh trên máy người dùng"]
 answer = [0]
@@ -562,6 +574,7 @@ id = "react-native-dv020"
 module = "react-native-dv-testing"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn các chiến lược giúp bộ test React Native hữu ích và ít mong manh."
 options = ["Test logic thuần bằng unit test", "Kiểm tra component qua hành vi và nội dung người dùng thấy", "Xem mock native module là bằng chứng đủ cho tích hợp trên thiết bị", "Chạy luồng native quan trọng trên thiết bị hoặc simulator phù hợp"]
 answer = [0, 1, 3]
@@ -573,6 +586,7 @@ id = "react-native-dv021"
 module = "react-native-dv-testing"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Khi điều tra lỗi production, những bước nào thường cần thiết?"
 options = ["Xác định phiên bản app và build liên quan", "Dùng source map thuộc đúng bundle để symbolicate", "Đưa token người dùng vào log để dễ đối chiếu", "Tái hiện lỗi trên nền tảng bị ảnh hưởng khi có thể"]
 answer = [0, 1, 3]
@@ -584,6 +598,7 @@ id = "react-native-dv022"
 module = "react-native-dv-testing"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Trong test component, helper thường dùng để bao một thao tác làm React cập nhật state trước khi assertion là {{blank}}."
 blanks = [["act"]]
 explanation = "act giúp test chờ các cập nhật liên quan đến thao tác được xử lý trước khi kiểm tra kết quả."
@@ -594,6 +609,7 @@ id = "react-native-dv023"
 module = "react-native-dv-testing"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Để ánh xạ vị trí trong bundle đã minify về file và dòng mã nguồn gốc, công cụ cần có là {{blank}}."
 blanks = [["source map", "sourcemap"]]
 explanation = "Source map cung cấp ánh xạ giữa mã đã biến đổi và mã nguồn ban đầu."
@@ -604,6 +620,7 @@ id = "react-native-dv024"
 module = "react-native-dv-testing"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Trong phỏng vấn, hãy mô tả cách thiết kế kiểm thử nhiều tầng và điều tra một crash chỉ xuất hiện ở bản production."
 keywords = [["unit test", "unit testing"], ["component test", "component testing"], ["end-to-end", "e2e"], ["device testing", "test on device"], ["source map", "symbolication"], ["native log", "platform log"]]
 min_keywords = 3
@@ -616,6 +633,7 @@ id = "react-native-dvc03"
 module = "react-native-dv-testing"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 lang = "javascript"
 title = "Tổng hợp kết quả kiểm thử"
 prompt = '''Viết summarizeResults(results) với mỗi phần tử có name và status là passed, failed hoặc skipped. Trả object gồm total, passed, failed, skipped và failedNames. failedNames giữ tên các test thất bại theo thứ tự đầu vào. Mảng rỗng hợp lệ; mọi phần tử đầu vào có cấu trúc đã nêu.'''
@@ -675,6 +693,7 @@ id = "react-native-dv009"
 module = "react-native-dv-native"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Ứng dụng cần đọc dữ liệu từ HealthKit trên iOS và Health Connect trên Android, không cần thêm giao diện native. Loại tích hợp nào phù hợp nhất?"
 options = ["Native module", "Native UI component", "StyleSheet", "Route trong Expo Router"]
 answer = [0]
@@ -686,6 +705,7 @@ id = "react-native-dv010"
 module = "react-native-dv-native"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một sản phẩm cần nhúng view bản đồ native vào cây giao diện React và nhận sự kiện khi người dùng chọn marker. Hướng tích hợp nào đúng?"
 options = ["Native module thuần, vì mọi API native đều là module", "Native UI component với props và event", "Gọi Linking để mở URL bản đồ", "Đưa dữ liệu marker vào StyleSheet"]
 answer = [1]
@@ -697,6 +717,7 @@ id = "react-native-dv011"
 module = "react-native-dv-native"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Codegen trong New Architecture hỗ trợ tích hợp native chủ yếu bằng cách nào?"
 options = ["Tự viết toàn bộ logic native từ mô tả tiếng Việt", "Sinh phần kết nối có kiểu dựa trên spec để JS và native khớp API", "Thay Metro khi phát triển", "Chạy JavaScript trực tiếp trên UI thread"]
 answer = [1]
@@ -708,6 +729,7 @@ id = "react-native-dv012"
 module = "react-native-dv-native"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn các thực hành phù hợp khi duy trì native module dùng trên iOS và Android."
 options = ["Kiểm thử phần triển khai trên từng nền tảng được hỗ trợ", "Dùng spec có kiểu để mô tả API công khai", "Giả định cùng tên hàm có nghĩa là hành vi hai nền tảng giống hệt", "Quy định rõ cách biểu diễn lỗi và payload sự kiện"]
 answer = [0, 1, 3]
@@ -719,6 +741,7 @@ id = "react-native-dv013"
 module = "react-native-dv-native"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Một native API phát event về JavaScript. Những điều nào nên được thiết kế rõ?"
 options = ["Kiểu và cấu trúc payload", "Hành vi khi module chưa sẵn sàng hoặc thiếu quyền", "Giả định listener luôn tồn tại khi app ở nền", "Cách gỡ listener khi không còn cần"]
 answer = [0, 1, 3]
@@ -730,6 +753,7 @@ id = "react-native-dv014"
 module = "react-native-dv-native"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Trong New Architecture, công cụ sinh phần kết nối từ spec có kiểu của native module được gọi là {{blank}}."
 blanks = [["Codegen", "code generation"]]
 explanation = "Codegen xử lý spec để tạo phần kết nối có kiểu giữa JavaScript và native."
@@ -740,6 +764,7 @@ id = "react-native-dv015"
 module = "react-native-dv-native"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Renderer mới trong New Architecture dùng để quản lý cây giao diện native được gọi là {{blank}}."
 blanks = [["Fabric"]]
 explanation = "Fabric là renderer của New Architecture; TurboModules đảm nhiệm phần module native."
@@ -750,6 +775,7 @@ id = "react-native-dv016"
 module = "react-native-dv-native"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Trong phỏng vấn, hãy giải thích khi nào chọn native module hay native UI component và cách giảm lỗi ở ranh giới giữa JavaScript với iOS/Android."
 keywords = [["native module", "turbomodule"], ["native ui component", "fabric component"], ["codegen", "typed spec"], ["platform testing", "test both platforms"], ["payload validation", "typed payload"]]
 min_keywords = 3
@@ -762,6 +788,7 @@ id = "react-native-dvc02"
 module = "react-native-dv-native"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 lang = "javascript"
 title = "Lọc payload event native"
 prompt = '''Viết pickNativeEventFields(payload, allowedFields). Hàm trả về object mới chỉ gồm những key nằm trong allowedFields và là own property của payload. Giữ nguyên giá trị false, 0, null và chuỗi rỗng; bỏ key không tồn tại hoặc chỉ được kế thừa. Không sửa payload đầu vào. allowedFields là mảng chuỗi, payload là object.'''
@@ -814,6 +841,7 @@ id = "react-native-dv001"
 module = "react-native-dv-network"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Một request fetch nhận response HTTP 404. Cách hiểu nào đúng?"
 options = ["Promise luôn reject và nhảy vào catch", "Có response nhưng response.ok là false; cần xử lý status", "Body tự động đổi thành JSON lỗi", "React Native tự gửi lại request"]
 answer = [1]
@@ -825,6 +853,7 @@ id = "react-native-dv002"
 module = "react-native-dv-network"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Màn hình gửi request A rồi nhanh chóng gửi request B. A hoàn tất sau B và ghi dữ liệu cũ vào state. Cách sửa phù hợp nhất là gì?"
 options = ["Bỏ qua mọi response có status 200", "Huỷ request cũ nếu phù hợp hoặc kiểm tra request ID trước khi cập nhật state", "Tăng timeout cho request A", "Chuyển toàn bộ response vào AsyncStorage"]
 answer = [1]
@@ -836,6 +865,7 @@ id = "react-native-dv003"
 module = "react-native-dv-network"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "API trả 429 cho một thao tác đọc có thể retry. Hành vi nào hợp lý nhất?"
 options = ["Retry không giới hạn ngay lập tức", "Tôn trọng Retry-After nếu có, dùng backoff và giới hạn lần thử", "Đổi sang HTTP thay cho HTTPS", "Xem 429 như thành công"]
 answer = [1]
@@ -847,6 +877,7 @@ id = "react-native-dv004"
 module = "react-native-dv-network"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn các thực hành tốt khi gọi API từ ứng dụng mobile."
 options = ["Phân biệt lỗi giao tiếp với status HTTP không thành công", "Giữ loading, success và error state rõ ràng", "Ghi access token vào log để hỗ trợ debug", "Giới hạn retry và dùng idempotency cho thao tác có tác dụng phụ"]
 answer = [0, 1, 3]
@@ -858,6 +889,7 @@ id = "react-native-dv005"
 module = "react-native-dv-network"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Một ứng dụng cần tải lại dữ liệu khi người dùng quay lại app sau thời gian dài ở nền. Các lựa chọn nào phù hợp?"
 options = ["Dùng AppState để nhận biết app trở lại active rồi kiểm tra dữ liệu", "Giả định JavaScript chạy liên tục trong nền trên cả iOS và Android", "Dùng timestamp hoặc version đồng bộ để quyết định cần làm mới", "Chỉ kiểm tra Wi-Fi; nếu có Wi-Fi thì bỏ qua lỗi API"]
 answer = [0, 2]
@@ -869,6 +901,7 @@ id = "react-native-dv006"
 module = "react-native-dv-network"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Sau khi nhận response, thuộc tính boolean nên kiểm tra để biết status thuộc nhóm thành công là response.{{blank}}."
 blanks = [["ok"]]
 explanation = "response.ok cho biết status nằm trong khoảng 200–299."
@@ -879,6 +912,7 @@ id = "react-native-dv007"
 module = "react-native-dv-network"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Với response JSON hợp lệ, đọc body bất đồng bộ bằng await response.{{blank}}()."
 blanks = [["json"]]
 explanation = "response.json() parse body thành giá trị JavaScript."
@@ -889,6 +923,7 @@ id = "react-native-dv008"
 module = "react-native-dv-network"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Trong phỏng vấn, hãy mô tả cách xây màn hình tải dữ liệu ổn định khi API chậm, trả lỗi HTTP hoặc người dùng rời màn hình."
 keywords = [["response.ok", "http status"], ["loading and error state", "loading state"], ["cancel stale request", "request cancellation", "ignore stale response"], ["retry backoff", "exponential backoff"], ["idempotency key", "idempotent"]]
 min_keywords = 3
@@ -901,6 +936,7 @@ id = "react-native-dvc01"
 module = "react-native-dv-network"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 lang = "javascript"
 title = "Tính thời gian exponential backoff"
 prompt = '''Viết retryDelay(attempt, baseDelay, maxDelay) trả thời gian chờ cho lần retry thứ attempt. attempt bắt đầu từ 1; delay tăng gấp đôi mỗi lần và không vượt maxDelay. Ví dụ với baseDelay = 500, maxDelay = 3000, các lần đầu là 500, 1000, 2000, 3000 ms. Các đầu vào luôn là số nguyên hợp lệ và không âm, riêng attempt tối thiểu là 1.'''
@@ -942,13 +978,14 @@ prompt = "Giá trị mặc định của `flexDirection` trong React Native là 
 options = ["`row`", "`column`", "`row-reverse`", "Không có mặc định"]
 answer = [1]
 explanation = "Khác với web (`row`), RN mặc định `column` vì màn hình điện thoại dạng dọc."
-tags = ["flexbox"]
+tags = ["level:junior", "flexbox"]
 
 [[questions]]
 id = "rn-002"
 module = "rn-core"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Đoạn code nào gây lỗi trong React Native?"
 options = [
   "`<View><Text>Xin chào</Text></View>`",
@@ -964,6 +1001,7 @@ id = "rn-003"
 module = "rn-core"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Vì sao không nên dùng `ScrollView` để hiển thị danh sách 5.000 phần tử?"
 options = [
   "ScrollView không cuộn được quá 1000 phần tử",
@@ -979,6 +1017,7 @@ id = "rn-004"
 module = "rn-core"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Ảnh từ URL mạng trong `<Image>` cần gì để hiển thị?"
 options = [
   "Chỉ cần `source={{ uri }}`",
@@ -994,6 +1033,7 @@ id = "rn-005"
 module = "rn-core"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Đơn vị số trong style RN (`width: 100`) là gì?"
 options = ["pixel vật lý", "density-independent pixels (dp/pt)", "rem", "phần trăm"]
 answer = [1]
@@ -1004,6 +1044,7 @@ id = "rn-006"
 module = "rn-core"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Những phát biểu nào đúng về style trong React Native?"
 options = [
   "Style **không kế thừa** từ View cha xuống con",
@@ -1020,6 +1061,7 @@ id = "rn-007"
 module = "rn-core"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "`Pressable` có ưu điểm gì so với `TouchableOpacity`?"
 options = [
   "Chỉ chạy trên Android",
@@ -1035,6 +1077,7 @@ id = "rn-008"
 module = "rn-core"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Cho phần tử con chiếm toàn bộ không gian còn lại của cha:
 
@@ -1050,6 +1093,7 @@ id = "rn-009"
 module = "rn-core"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 Xếp các phần tử con theo hàng ngang, căn giữa theo trục dọc (cross axis):
 
@@ -1067,6 +1111,7 @@ id = "rn-010"
 module = "rn-core"
 type = "essay"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Nêu ít nhất 3 điểm khác nhau giữa Flexbox trong React Native và CSS Flexbox trên web."
 keywords = [
   ["column"],
@@ -1091,6 +1136,7 @@ id = "rn-020"
 module = "rn-styling"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Màu nền cuối cùng của View là gì?
 
@@ -1108,6 +1154,7 @@ id = "rn-021"
 module = "rn-styling"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Vì sao nên dùng `useWindowDimensions()` thay vì `Dimensions.get('window')` trong component?"
 options = [
   "Nhanh hơn 10 lần",
@@ -1123,6 +1170,7 @@ id = "rn-022"
 module = "rn-styling"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "`Platform.select({ ios: 'A', android: 'B', default: 'C' })` trả về gì khi chạy trên **web**?"
 options = ["'A'", "'B'", "'C'", "undefined"]
 answer = [2]
@@ -1133,6 +1181,7 @@ id = "rn-023"
 module = "rn-styling"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Cách tạo code riêng cho từng nền tảng **theo file**?"
 options = [
   "`Button.ios.js` và `Button.android.js`, import bằng `./Button`",
@@ -1148,6 +1197,7 @@ id = "rn-024"
 module = "rn-styling"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Những thuộc tính shadow nào chỉ có hiệu lực trên **iOS** (trước New Architecture `boxShadow`)?"
 options = ["`shadowColor`", "`shadowOffset`", "`elevation`", "`shadowOpacity`", "`shadowRadius`"]
 answer = [0, 1, 3, 4]
@@ -1158,6 +1208,7 @@ id = "rn-025"
 module = "rn-styling"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Phát hiện dark mode của hệ thống:
 
@@ -1173,6 +1224,7 @@ id = "rn-026"
 module = "rn-styling"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 title = "Cài đặt StyleSheet.flatten"
 prompt = '''
 Viết `flattenStyle(style)` mô phỏng `StyleSheet.flatten`:
@@ -1225,6 +1277,7 @@ id = "rn-027"
 module = "rn-styling"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 title = "Platform.select"
 prompt = '''
 Viết `createPlatform(os)` trả về object `{ OS, select(spec) }` mô phỏng `Platform` của RN.
@@ -1286,6 +1339,7 @@ id = "rn-028"
 module = "rn-styling"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 title = "Responsive scale"
 prompt = '''
 Thiết kế Figma dựa trên màn hình chuẩn **375 × 812**. Viết hàm `createScaler(width, height)` trả về:
@@ -1333,6 +1387,7 @@ id = "rn-040"
 module = "rn-lists"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "`getItemLayout` trong FlatList giúp gì?"
 options = [
   "Đổi layout từ dọc sang ngang",
@@ -1348,6 +1403,7 @@ id = "rn-041"
 module = "rn-lists"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "FlatList không render lại khi `selectedId` (state ngoài `data`) thay đổi. Cách sửa?"
 options = [
   "Thêm `key={Math.random()}` cho FlatList",
@@ -1363,6 +1419,7 @@ id = "rn-042"
 module = "rn-lists"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "`onEndReachedThreshold={0.5}` có nghĩa là:"
 options = [
   "Gọi `onEndReached` khi còn 50 item",
@@ -1378,6 +1435,7 @@ id = "rn-043"
 module = "rn-lists"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Hermes mang lại lợi ích chính nào?"
 options = [
   "Hỗ trợ CSS",
@@ -1393,6 +1451,7 @@ id = "rn-044"
 module = "rn-lists"
 type = "single"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Vì sao animation dùng `Animated` với `useNativeDriver: true` (hoặc Reanimated worklet) mượt hơn khi JS thread bận?"
 options = [
   "Vì dùng GPU để chạy JS",
@@ -1408,6 +1467,7 @@ id = "rn-045"
 module = "rn-lists"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Kỹ thuật nào giúp FlatList dài cuộn mượt hơn?"
 options = [
   "Bọc item component bằng `React.memo`",
@@ -1425,6 +1485,7 @@ id = "rn-046"
 module = "rn-lists"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Hoàn thành FlatList:
 
@@ -1444,6 +1505,7 @@ id = "rn-047"
 module = "rn-lists"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Mô tả cách triển khai **infinite scroll** (phân trang) với FlatList và các lỗi cần tránh."
 keywords = [
   ["onEndReached"],
@@ -1466,6 +1528,7 @@ id = "rn-048"
 module = "rn-lists"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 title = "getItemLayout cho item cố định"
 prompt = '''
 Viết `makeGetItemLayout(itemHeight, separatorHeight = 0, headerHeight = 0)` trả về hàm
@@ -1509,6 +1572,7 @@ id = "rn-049"
 module = "rn-lists"
 type = "code"
 difficulty = 3
+tags = ["level:senior"]
 title = "Paginator chống gọi trùng"
 prompt = '''
 Viết `createPaginator(fetchPage)` cho infinite scroll. `fetchPage(page)` trả về Promise `{ items, hasMore }` (page bắt đầu từ **1**).
@@ -1638,6 +1702,7 @@ id = "rn-060"
 module = "rn-navigation"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Khác nhau giữa `navigation.navigate('Detail')` và `navigation.push('Detail')` trong Stack?"
 options = [
   "Không khác",
@@ -1653,6 +1718,7 @@ id = "rn-061"
 module = "rn-navigation"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Màn hình A trong stack đã push sang B. Khi quay lại A, `useEffect(() => {...}, [])` của A có chạy lại không?"
 options = [
   "Có, vì A mount lại",
@@ -1668,6 +1734,7 @@ id = "rn-062"
 module = "rn-navigation"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Hook nào để truy cập `navigation` trong một component **không phải** screen?"
 options = ["`useRoute`", "`useNavigation`", "`useNavigationState`", "`useLinking`"]
 answer = [1]
@@ -1678,6 +1745,7 @@ id = "rn-063"
 module = "rn-navigation"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Trong Expo Router, file `app/user/[id].tsx` tương ứng với:"
 options = ["Route tĩnh `/user/[id]`", "Route động `/user/:id`, đọc bằng `useLocalSearchParams()`", "Layout cho thư mục user", "Route bị bỏ qua"]
 answer = [1]
@@ -1688,6 +1756,7 @@ id = "rn-064"
 module = "rn-navigation"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 Truyền và đọc params:
 
@@ -1707,6 +1776,7 @@ id = "rn-065"
 module = "rn-navigation"
 type = "code"
 difficulty = 3
+tags = ["level:senior"]
 title = "Stack navigation reducer"
 prompt = '''
 Mô phỏng state của Stack Navigator. State: `{ routes: [{ name, params }], index }` (index = màn hình đang hiển thị = phần tử cuối).
@@ -1814,6 +1884,7 @@ id = "rn-080"
 module = "rn-native"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "JSI (JavaScript Interface) trong New Architecture giải quyết vấn đề gì của Bridge cũ?"
 options = [
   "Cho phép viết UI bằng C++",
@@ -1829,6 +1900,7 @@ id = "rn-081"
 module = "rn-native"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Fabric là gì?"
 options = ["Thư viện UI", "Hệ thống render mới của React Native (New Architecture)", "Công cụ build iOS", "Một JS engine"]
 answer = [1]
@@ -1839,6 +1911,7 @@ id = "rn-082"
 module = "rn-native"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Nên lưu **access token** của người dùng ở đâu trong app RN?"
 options = [
   "AsyncStorage",
@@ -1854,6 +1927,7 @@ id = "rn-083"
 module = "rn-native"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "OTA update (EAS Update) **không thể** cập nhật được thứ gì?"
 options = ["Code JavaScript", "Ảnh/asset trong bundle", "Native code (thêm native module mới, đổi Info.plist)", "Text hiển thị"]
 answer = [2]
@@ -1864,6 +1938,7 @@ id = "rn-084"
 module = "rn-native"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Khi nào cần **development build** thay vì Expo Go?"
 options = [
   "Khi dùng `useState`",
@@ -1879,6 +1954,7 @@ id = "rn-085"
 module = "rn-native"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Thành phần nào thuộc **New Architecture** của React Native?"
 options = ["JSI", "Fabric", "TurboModules", "Codegen", "Bridge (MessageQueue)", "Bridgeless mode"]
 answer = [0, 1, 2, 3, 5]
@@ -1889,6 +1965,7 @@ id = "rn-086"
 module = "rn-native"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 Lưu và đọc dữ liệu với AsyncStorage (chỉ lưu được **chuỗi**):
 
@@ -1905,6 +1982,7 @@ id = "rn-087"
 module = "rn-native"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "So sánh kiến trúc cũ (Bridge) và New Architecture của React Native."
 keywords = [
   ["bridge", "cầu nối"],
@@ -1932,6 +2010,7 @@ id = "rn-088"
 module = "rn-native"
 type = "code"
 difficulty = 3
+tags = ["level:senior"]
 title = "Cache có hạn dùng trên AsyncStorage"
 prompt = '''
 Viết `createCache(storage, ttlMs)` — `storage` có API giống AsyncStorage: `getItem(key)`, `setItem(key, value)`, `removeItem(key)` đều trả về **Promise**, chỉ lưu **chuỗi**.
@@ -2026,6 +2105,7 @@ id = "rn-dd01"
 module = "rn-core"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Form đăng nhập nằm cuối màn hình bị bàn phím che mất ô mật khẩu trên iOS. Component dựng sẵn nào giải quyết việc này?"
 options = ["`SafeAreaView`", "`KeyboardAvoidingView` với `behavior=\"padding\"` (iOS)", "`Modal`", "`StatusBar`"]
 answer = [1]
@@ -2037,6 +2117,7 @@ id = "rn-dd02"
 module = "rn-native"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Dùng `AppState` để làm gì là hợp lý?"
 options = [
   "Tạm dừng polling / video khi app chuyển sang `background`",
@@ -2053,6 +2134,7 @@ id = "rn-dd03"
 module = "rn-styling"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Hook trả về kích thước màn hình và **tự cập nhật** khi xoay máy:
 
@@ -2076,6 +2158,7 @@ id = "rn-dd04"
 module = "rn-native"
 type = "essay"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Làm thế nào để một nút tuỳ biến (`Pressable` chứa icon) dùng tốt với VoiceOver/TalkBack?"
 keywords = [
   ["accessible"],
@@ -2102,6 +2185,7 @@ id = "rn-dd05"
 module = "rn-navigation"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 title = "Phân tích deep link"
 prompt = '''
 Ứng dụng nhận deep link qua `Linking`. Viết `parseDeepLink(url, routes)`:
@@ -2177,6 +2261,7 @@ id = "rn-x001"
 module = "rn-core"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Khi một `View` cần hiển thị chuỗi có một đoạn in đậm, cách nào đúng trong React Native?"
 options = ["Đặt chuỗi trực tiếp trong `View`", "Bọc chuỗi và đoạn lồng bên trong `Text`", "Dùng `span` bên trong `View`", "Đặt `innerHTML` cho `View`"]
 answer = [1]
@@ -2188,6 +2273,7 @@ id = "rn-x002"
 module = "rn-core"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Một màn hình chỉ có 4 lựa chọn cố định, luôn hiển thị cùng lúc. Khi nào `ScrollView` là lựa chọn hợp lý?"
 options = ["Luôn dùng cho danh sách dài", "Khi nội dung nhỏ, giới hạn và cần render toàn bộ", "Chỉ khi có hơn 1.000 item", "Khi cần tự động tái sử dụng native view"]
 answer = [1]
@@ -2199,6 +2285,7 @@ id = "rn-x003"
 module = "rn-styling"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Trong `style={[base, selected && active]}`, nếu `selected` là `false` thì điều gì xảy ra?"
 options = ["Mảng style báo lỗi", "`false` bị bỏ qua và `base` vẫn có hiệu lực", "`base` bị xoá", "`false` chuyển thành `{ display: 'none' }`"]
 answer = [1]
@@ -2210,6 +2297,7 @@ id = "rn-x004"
 module = "rn-styling"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Layout chọn breakpoint từ `width` lấy một lần bằng `Dimensions.get('window')` bị sai sau khi xoay/fold màn hình. Cách sửa phù hợp nhất?"
 options = ["Tăng `flexShrink`", "Dùng `useWindowDimensions()` trong component", "Đọc `window.innerWidth`", "Gọi `StyleSheet.create` lại trong render"]
 answer = [1]
@@ -2221,6 +2309,7 @@ id = "rn-x005"
 module = "rn-lists"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Danh sách có thể được sắp xếp lại. `keyExtractor` nên trả về giá trị nào?"
 options = ["`String(index)`", "ID ổn định duy nhất của item", "`Math.random()` mỗi lần render", "Vị trí pixel của item"]
 answer = [1]
@@ -2232,6 +2321,7 @@ id = "rn-x006"
 module = "rn-lists"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Tăng `windowSize` của FlatList thường tạo ra đánh đổi nào?"
 options = ["Ít view render hơn và dùng ít RAM hơn", "Nhiều vùng viewport được giữ sẵn, giảm vùng trống khi cuộn nhanh nhưng dùng thêm bộ nhớ", "Tắt `keyExtractor`", "Làm item có chiều cao cố định"]
 answer = [1]
@@ -2243,6 +2333,7 @@ id = "rn-x007"
 module = "rn-lists"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một số hàng biến mất hoặc bị vẽ sai khi bật `removeClippedSubviews`. Cách xử lý đầu tiên hợp lý nhất?"
 options = ["Tăng `initialNumToRender` vô hạn", "Tắt tùy chọn để xác nhận nguyên nhân, rồi kiểm tra layout/transform và nền tảng", "Đổi key thành index", "Chuyển mọi row sang `ScrollView`"]
 answer = [1]
@@ -2254,6 +2345,7 @@ id = "rn-x008"
 module = "rn-lists"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "FlashList khác FlatList chủ yếu ở ý tưởng nào?"
 options = ["FlashList thay React Native bằng DOM", "FlashList tái sử dụng view qua cơ chế recycling để giảm tạo/hủy view trong danh sách dài", "FlashList luôn tải dữ liệu từ mạng", "FlashList loại bỏ yêu cầu key"]
 answer = [1]
@@ -2265,6 +2357,7 @@ id = "rn-x009"
 module = "rn-navigation"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Screen A vẫn nằm trong stack khi screen B được push lên. Muốn làm mới dữ liệu mỗi khi A được focus, nên dùng gì?"
 options = ["Chỉ `useEffect(..., [])`", "`useFocusEffect` với callback được giữ ổn định", "`setTimeout` trong render", "Xoá `NavigationContainer`"]
 answer = [1]
@@ -2276,6 +2369,7 @@ id = "rn-x010"
 module = "rn-navigation"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Ứng dụng cần xử lý liên kết khi đang mở và khi được khởi chạy từ một URL. Mô hình nào cần được cấu hình?"
 options = ["Chỉ đọc `route.params` một lần", "Xử lý initial URL và đăng ký sự kiện URL đến khi app đang chạy", "Chỉ bật `onEndReached`", "Lưu URL vào `StyleSheet`"]
 answer = [1]
@@ -2287,6 +2381,7 @@ id = "rn-x011"
 module = "rn-native"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn nơi lưu access token lâu dài cho ứng dụng RN."
 options = ["AsyncStorage không mã hóa", "SecureStore/Keychain/Keystore wrapper", "Hằng số trong bundle", "`console.log` rồi đọc lại"]
 answer = [1]
@@ -2298,6 +2393,7 @@ id = "rn-x012"
 module = "rn-native"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Ứng dụng chuyển sang `background`. Giả định nào an toàn nhất về JavaScript?"
 options = ["JS chắc chắn tiếp tục chạy vô hạn", "Hệ điều hành có thể tạm dừng app; không dựa vào JS để hoàn tất tác vụ nền dài", "JS tự chạy trên server", "Hermes bỏ qua giới hạn pin"]
 answer = [1]
@@ -2309,6 +2405,7 @@ id = "rn-x013"
 module = "rn-architecture"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "JSI khác cách gọi qua Bridge legacy ở điểm cốt lõi nào?"
 options = ["JSI bắt buộc serialize mọi lời gọi thành JSON", "JSI cho phép tương tác với host object qua giao diện C++ mà không cần tuyến message JSON legacy", "JSI là một CSS engine", "JSI thay Metro bundler"]
 answer = [1]
@@ -2320,6 +2417,7 @@ id = "rn-x014"
 module = "rn-architecture"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Fabric đảm nhiệm phần nào trong New Architecture?"
 options = ["JavaScript engine", "Renderer của React Native, phối hợp React với native view", "Dịch vụ OTA", "Công cụ ký ứng dụng"]
 answer = [1]
@@ -2331,6 +2429,7 @@ id = "rn-x015"
 module = "rn-architecture"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Codegen hỗ trợ TurboModules chủ yếu bằng cách nào?"
 options = ["Tạo ảnh cho app", "Sinh phần kết nối native từ spec có kiểu để JS và native dùng hợp đồng nhất quán", "Thay thế Hermes", "Tự viết toàn bộ UI bằng C++"]
 answer = [1]
@@ -2342,6 +2441,7 @@ id = "rn-x016"
 module = "rn-architecture"
 type = "single"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Bridgeless mode có nghĩa gì?"
 options = ["Ứng dụng không còn native module", "Ứng dụng New Architecture không phụ thuộc Bridge legacy; vẫn có luồng JS/native và module", "JS chạy hoàn toàn trên GPU", "Không cần build native binary"]
 answer = [1]
@@ -2353,6 +2453,7 @@ id = "rn-x017"
 module = "rn-expo"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Ứng dụng dùng một native module không có trong Expo Go. Lựa chọn phát triển phù hợp là gì?"
 options = ["Dùng Expo Go và hy vọng module xuất hiện", "Tạo development build chứa module cần dùng", "Chuyển module vào CSS", "Tắt Metro"]
 answer = [1]
@@ -2364,6 +2465,7 @@ id = "rn-x018"
 module = "rn-expo"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Vai trò của `_layout.tsx` trong Expo Router là gì?"
 options = ["File ảnh mặc định", "Định nghĩa layout và navigator chung cho route trong nhánh thư mục", "Tạo native module", "Chỉ xử lý request HTTP"]
 answer = [1]
@@ -2375,6 +2477,7 @@ id = "rn-x019"
 module = "rn-perf"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "`getItemLayout` đem lại lợi ích lớn nhất khi nào?"
 options = ["Item có chiều cao thay đổi theo nội dung", "Kích thước item và separator đã biết trước", "Danh sách chưa có dữ liệu", "Cần nạp ảnh từ mạng"]
 answer = [1]
@@ -2386,6 +2489,7 @@ id = "rn-x020"
 module = "rn-perf"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "`React.memo(Row)` không giảm render. Props `item` là object mới được tạo lại cho mọi row trong mỗi render. Nguyên nhân gần nhất?"
 options = ["`memo` so sánh props nông nên tham chiếu mới vẫn được xem là thay đổi", "`memo` chỉ chạy trên web", "FlatList cấm object", "Hermes xoá memo"]
 answer = [0]
@@ -2397,6 +2501,7 @@ id = "rn-x021"
 module = "rn-perf"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Vì sao `getItemLayout` sai có thể làm `scrollToIndex` lệch?"
 options = ["FlatList dùng số index làm màu", "Offset phải tính đủ header, item và separator thực tế", "`scrollToIndex` chỉ hoạt động với ScrollView", "Nó vô hiệu hóa `keyExtractor`"]
 answer = [1]
@@ -2408,6 +2513,7 @@ id = "rn-x022"
 module = "rn-perf"
 type = "single"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Muốn tìm nguyên nhân khựng trong release build, quy trình nào đáng tin hơn?"
 options = ["Đo duy nhất trong development rồi suy ra release", "Profile trên build/cấu hình gần production, tìm thời gian JS/UI và thay đổi một yếu tố mỗi lần", "Bật mọi tối ưu cùng lúc", "Đếm số component trong source"]
 answer = [1]
@@ -2419,6 +2525,7 @@ id = "rn-x023"
 module = "rn-animation-gesture"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "`useNativeDriver: true` phù hợp với nhóm thuộc tính nào của Animated?"
 options = ["`opacity` và `transform`", "`height` và `padding`", "Mọi style tùy ý", "Nội dung text và state React"]
 answer = [0]
@@ -2430,6 +2537,7 @@ id = "rn-x024"
 module = "rn-animation-gesture"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Worklet trong Reanimated có ích gì khi chạy animation?"
 options = ["Đưa toàn app sang web", "Cho phép tính logic animation trên UI runtime mà không cần JS gửi từng frame", "Thay `StyleSheet`", "Tự cấp quyền gesture"]
 answer = [1]
@@ -2441,6 +2549,7 @@ id = "rn-x025"
 module = "rn-animation-gesture"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Vì sao Gesture Handler thường phù hợp hơn tự cập nhật React state trong từng sự kiện pan?"
 options = ["Nó dùng DOM", "Gesture được nhận biết bằng native handler, giảm phụ thuộc vào render JS cho từng chuyển động", "Nó thay thế navigation", "Nó tự lưu gesture vào AsyncStorage"]
 answer = [1]
@@ -2452,6 +2561,7 @@ id = "rn-x026"
 module = "rn-data-offline"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "NetInfo báo `isConnected: true` nhưng `isInternetReachable` là `false`. Kết luận nào phù hợp?"
 options = ["Chắc chắn API server truy cập được", "Có kết nối mạng cục bộ nhưng chưa xác nhận Internet reachable", "App đang ở background", "Token đã hết hạn"]
 answer = [1]
@@ -2463,6 +2573,7 @@ id = "rn-x027"
 module = "rn-data-offline"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một thao tác tạo đơn được gửi lại sau khi mạng chập chờn. Cần gì để tránh tạo hai đơn?"
 options = ["Gửi lại vô hạn với ID mới", "ID/idempotency key ổn định và xử lý kết quả đã áp dụng", "Lưu request trong biến component", "Tắt retry"]
 answer = [1]
@@ -2474,6 +2585,7 @@ id = "rn-x028"
 module = "rn-data-offline"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Push notification nên được xem như thế nào trong thiết kế đồng bộ dữ liệu?"
 options = ["Nguồn dữ liệu duy nhất, luôn đến đúng thứ tự", "Tín hiệu có thể trễ/mất; khi mở app cần tải lại trạng thái quan trọng từ server", "Thay thế deep link", "Bảo đảm app chạy vô hạn nền"]
 answer = [1]
@@ -2485,6 +2597,7 @@ id = "rn-x029"
 module = "rn-release"
 type = "single"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Bản OTA thêm native module mới nhưng giữ cùng `runtimeVersion` với binary cũ. Rủi ro chính là gì?"
 options = ["Không có rủi ro vì OTA cập nhật native binary", "JS mới có thể gọi native API không tồn tại trong binary đã cài", "OTA tự ký lại app", "Store review tự cài module"]
 answer = [1]
@@ -2496,6 +2609,7 @@ id = "rn-x030"
 module = "rn-core"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn các phát biểu đúng về nội dung văn bản và style trong RN."
 options = ["Chuỗi hiển thị cần nằm trong `Text`", "`Text` lồng trong `Text` có thể kế thừa style văn bản", "`View` tự áp dụng CSS cascade", "Thuộc tính style thường viết camelCase", "Có thể dùng `innerHTML` trên View"]
 answer = [0, 1, 3]
@@ -2507,6 +2621,7 @@ id = "rn-x031"
 module = "rn-styling"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Với style mảng trong RN, những hành vi nào đúng?"
 options = ["Style sau ghi đè thuộc tính trùng", "`false`/`null` có thể dùng trong mảng điều kiện và bị bỏ qua", "Style đầu luôn có ưu tiên cao nhất", "`StyleSheet.flatten` trả object gộp", "Selector CSS được áp dụng sau cùng"]
 answer = [0, 1, 3]
@@ -2518,6 +2633,7 @@ id = "rn-x032"
 module = "rn-lists"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Những thay đổi nào thường giúp FlatList dài ổn định hơn khi có bằng chứng bottleneck?"
 options = ["Dùng key ổn định theo ID", "Dùng `getItemLayout` khi kích thước cố định", "Đưa object/hàm mới vào mọi row mỗi render", "Dùng `extraData` cho dữ liệu phụ thuộc ngoài `data`", "Tăng ảnh lên độ phân giải tối đa"]
 answer = [0, 1, 3]
@@ -2529,6 +2645,7 @@ id = "rn-x033"
 module = "rn-navigation"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Khi cấu hình deep link, những việc nào nên làm?"
 options = ["Xử lý URL mở app và URL đến khi app đang chạy", "Kiểm tra/chuẩn hóa tham số trước khi dùng", "Truyền callback tùy ý trong URL", "Ánh xạ path tới route rõ ràng", "Coi mọi URL ngoài là đáng tin"]
 answer = [0, 1, 3]
@@ -2540,6 +2657,7 @@ id = "rn-x034"
 module = "rn-native"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn các thực hành phù hợp cho quyền và dữ liệu nhạy cảm."
 options = ["Giải thích lý do xin quyền gần thời điểm cần tính năng", "Lưu refresh token trong AsyncStorage vì API bất đồng bộ", "Dùng secure storage cho token", "Có nhánh xử lý khi người dùng từ chối quyền", "Ghi token vào crash log để tiện debug"]
 answer = [0, 2, 3]
@@ -2551,6 +2669,7 @@ id = "rn-x035"
 module = "rn-architecture"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Những thành phần nào thuộc New Architecture hoặc chế độ chạy liên quan của RN?"
 options = ["JSI", "Fabric", "TurboModules", "Codegen", "Hermes", "Bridge legacy là renderer mới"]
 answer = [0, 1, 2, 3, 4]
@@ -2562,6 +2681,7 @@ id = "rn-x036"
 module = "rn-expo"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Những phát biểu nào đúng về config plugin và prebuild?"
 options = ["Config plugin mô tả thay đổi native có thể tái tạo", "Prebuild có thể sinh lại thư mục native từ app config/plugin", "Sửa file native sinh ra luôn được giữ qua mọi lần prebuild", "Cần development build nếu thay đổi native không có trong Expo Go", "Config plugin là CSS selector"]
 answer = [0, 1, 3]
@@ -2573,6 +2693,7 @@ id = "rn-x037"
 module = "rn-perf"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn các bước profiling danh sách hợp lý."
 options = ["Tái hiện trên build và thiết bị đại diện", "Dùng React Profiler/Hermes profiler để xác định thời gian", "Đo trên web rồi suy ra chính xác native", "Thay một cấu hình mỗi lần và đo lại", "Bật đồng thời mọi prop tối ưu mà không ghi số liệu"]
 answer = [0, 1, 3]
@@ -2584,6 +2705,7 @@ id = "rn-x038"
 module = "rn-animation-gesture"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Chọn các phát biểu đúng về animation và gesture trong RN."
 options = ["Native driver phù hợp với opacity/transform", "Mọi thuộc tính layout đều được `useNativeDriver` hỗ trợ", "Reanimated shared value có thể đổi mà không render lại toàn cây React mỗi frame", "Gesture Handler cung cấp native gesture recognition", "Gọi JS nặng mỗi frame sẽ luôn mượt"]
 answer = [0, 2, 3]
@@ -2595,6 +2717,7 @@ id = "rn-x039"
 module = "rn-data-offline"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một hàng đợi offline an toàn nên có đặc điểm nào?"
 options = ["Thao tác có ID ổn định/idempotency key", "Retry có giới hạn và backoff", "Xóa thao tác ngay khi request vừa bắt đầu", "Xử lý lỗi/xung đột khi đồng bộ", "Lưu token trong bản ghi queue không mã hóa"]
 answer = [0, 1, 3]
@@ -2606,6 +2729,7 @@ id = "rn-x040"
 module = "rn-release"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Chọn các bước phù hợp trước khi phát hành ứng dụng mobile."
 options = ["Kiểm tra permission và privacy disclosure khớp với tính năng", "Giữ khóa ký ngoài repository và quản lý sao lưu", "Xác nhận OTA tương thích runtime của binary", "Xóa source map/symbol trước khi upload crash symbols", "Xem crash reporting là nơi an toàn để gửi token"]
 answer = [0, 1, 2]
@@ -2617,6 +2741,7 @@ id = "rn-x041"
 module = "rn-core"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Trong TextInput có kiểm soát, prop callback nhận chuỗi mới khi người dùng nhập là `{{blank}}`.
 '''
@@ -2629,6 +2754,7 @@ id = "rn-x042"
 module = "rn-styling"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Gộp một mảng style lồng nhau thành object thường bằng API `StyleSheet.{{blank}}`.
 '''
@@ -2641,6 +2767,7 @@ id = "rn-x043"
 module = "rn-lists"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 Trong FlatList, hàm đổi item thành React key ổn định được truyền qua prop `{{blank}}`.
 '''
@@ -2653,6 +2780,7 @@ id = "rn-x044"
 module = "rn-navigation"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 React Native API nhận URL ban đầu khi app được mở từ deep link là `Linking.{{blank}}()`.
 '''
@@ -2665,6 +2793,7 @@ id = "rn-x045"
 module = "rn-native"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 Lưu access token bằng thư viện Expo chuyên dùng cho dữ liệu nhạy cảm: `expo-{{blank}}-store`.
 '''
@@ -2677,6 +2806,7 @@ id = "rn-x046"
 module = "rn-architecture"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 Trong New Architecture, native module mới nạp theo nhu cầu dùng cơ chế `{{blank}}`; spec có kiểu được xử lý bởi `{{blank}}`.
 '''
@@ -2689,6 +2819,7 @@ id = "rn-x047"
 module = "rn-expo"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 App cần native module riêng ngoài tập có sẵn trong Expo Go, vì vậy hãy tạo một `{{blank}}`.
 '''
@@ -2701,6 +2832,7 @@ id = "rn-x048"
 module = "rn-perf"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 FlatList nhận hàm cung cấp `{ length, offset, index }` cho item qua prop `{{blank}}`.
 '''
@@ -2713,6 +2845,7 @@ id = "rn-x049"
 module = "rn-animation-gesture"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 Trong Reanimated, giá trị có thể cập nhật trên UI runtime mà không cần state React mỗi frame thường gọi là `{{blank}}`; hàm chạy trên UI runtime là `{{blank}}`.
 '''
@@ -2725,6 +2858,7 @@ id = "rn-x050"
 module = "rn-data-offline"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 Thư viện cộng đồng phổ biến để quan sát trạng thái kết nối trong React Native là `@react-native-{{blank}}/netinfo`.
 '''
@@ -2737,6 +2871,7 @@ id = "rn-x051"
 module = "rn-release"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 EAS Update dùng trường phiên bản runtime để giới hạn update tương thích với binary: `{{blank}}`.
 '''
@@ -2749,6 +2884,7 @@ id = "rn-x052"
 module = "rn-lists"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Mô tả cách điều tra danh sách bị khựng và giải thích vì sao cần đo trên build gần production."
 keywords = [["profiling", "profile"], ["release", "bản phát hành"], ["hermes"], ["js thread", "javascript thread"], ["đo", "measure"], ["render lại", "re-render"]]
 min_keywords = 4
@@ -2763,6 +2899,7 @@ id = "rn-x053"
 module = "rn-native"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Nêu cách kết hợp quyền nền tảng và lưu trữ an toàn khi ứng dụng dùng camera và access token."
 keywords = [["quyền", "permission"], ["từ chối", "denied"], ["securestore", "keychain", "keystore"], ["asyncstorage"], ["không log", "log"], ["giải thích", "just in time"]]
 min_keywords = 4
@@ -2777,6 +2914,7 @@ id = "rn-x054"
 module = "rn-architecture"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Giải thích vai trò của JSI, Fabric, TurboModules/Codegen và JS/UI thread trong New Architecture."
 keywords = [["jsi"], ["fabric"], ["turbomodule", "turbo module"], ["codegen"], ["js thread"], ["ui thread"], ["bridge", "bridgeless"]]
 min_keywords = 4
@@ -2791,6 +2929,7 @@ id = "rn-x055"
 module = "rn-expo"
 type = "essay"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "So sánh Expo Go, development build, prebuild, EAS Build và EAS Update trong vòng đời phát triển."
 keywords = [["expo go"], ["development build", "dev client"], ["prebuild"], ["config plugin"], ["eas build"], ["eas update"], ["runtimeversion"]]
 min_keywords = 4
@@ -2805,6 +2944,7 @@ id = "rn-x056"
 module = "rn-animation-gesture"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Khi nào chọn Animated native driver, Reanimated và Gesture Handler cho một tương tác kéo-thả?"
 keywords = [["animated"], ["useNativeDriver"], ["reanimated"], ["worklet"], ["shared value"], ["gesture handler"], ["ui thread"]]
 min_keywords = 4
@@ -2819,6 +2959,7 @@ id = "rn-x057"
 module = "rn-data-offline"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Thiết kế đồng bộ offline cho thao tác tạo dữ liệu khi mạng chập chờn, có retry và xử lý xung đột."
 keywords = [["offline"], ["queue", "hàng đợi"], ["retry"], ["exponential backoff"], ["idempotency"], ["xung đột", "conflict"], ["netinfo"]]
 min_keywords = 4
@@ -2833,6 +2974,7 @@ id = "rn-x058"
 module = "rn-release"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Nêu các cổng kiểm tra trước khi phát hành binary và OTA update cho ứng dụng RN."
 keywords = [["ký", "signing"], ["permission", "quyền"], ["runtimeversion"], ["ota"], ["crash", "symbol"], ["store review", "review"], ["privacy"]]
 min_keywords = 4
@@ -2847,6 +2989,7 @@ id = "rn-xc01"
 module = "rn-styling"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 lang = "javascript"
 title = "Chọn số cột theo kích thước màn hình"
 prompt = '''
@@ -2893,6 +3036,7 @@ id = "rn-xc02"
 module = "rn-styling"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 lang = "javascript"
 title = "Mô phỏng Platform.select"
 prompt = '''
@@ -2945,6 +3089,7 @@ id = "rn-xc03"
 module = "rn-lists"
 type = "code"
 difficulty = 3
+tags = ["level:senior"]
 lang = "javascript"
 title = "Ước lượng vùng FlatList đang giữ"
 prompt = '''
@@ -2999,6 +3144,7 @@ id = "rn-xc04"
 module = "rn-expo"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 lang = "javascript"
 title = "Chọn Expo Go hay development build"
 prompt = '''
@@ -3045,6 +3191,7 @@ id = "rn-xc05"
 module = "rn-expo"
 type = "code"
 difficulty = 3
+tags = ["level:senior"]
 lang = "javascript"
 title = "Kiểm tra EAS Update tương thích"
 prompt = '''
@@ -3083,6 +3230,7 @@ id = "rn-xc06"
 module = "rn-perf"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 lang = "javascript"
 title = "So sánh props của row đã memo"
 prompt = '''
@@ -3125,6 +3273,7 @@ id = "rn-xc07"
 module = "rn-perf"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 lang = "javascript"
 title = "Gộp các trang danh sách không trùng ID"
 prompt = '''
@@ -3176,6 +3325,7 @@ id = "rn-xc08"
 module = "rn-animation-gesture"
 type = "code"
 difficulty = 3
+tags = ["level:senior"]
 lang = "javascript"
 title = "Mô phỏng Animated.interpolate"
 prompt = '''
@@ -3238,6 +3388,7 @@ id = "rn-xc09"
 module = "rn-animation-gesture"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 lang = "javascript"
 title = "Throttle sự kiện cuộn"
 prompt = '''
@@ -3305,6 +3456,7 @@ id = "rn-xc10"
 module = "rn-data-offline"
 type = "code"
 difficulty = 3
+tags = ["level:senior"]
 lang = "javascript"
 title = "Hàng đợi offline có retry"
 prompt = '''
@@ -3423,6 +3575,7 @@ id = "rn-xc11"
 module = "rn-data-offline"
 type = "code"
 difficulty = 3
+tags = ["level:senior"]
 lang = "javascript"
 title = "Phân tích deep link"
 prompt = '''
@@ -3507,6 +3660,7 @@ id = "rn-xc12"
 module = "rn-release"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 lang = "javascript"
 title = "Liệt kê điều kiện còn thiếu trước release"
 prompt = '''
@@ -3551,6 +3705,7 @@ id = "rn-xc13"
 module = "rn-release"
 type = "code"
 difficulty = 3
+tags = ["level:senior"]
 lang = "javascript"
 title = "Ẩn dữ liệu nhạy cảm khỏi crash payload"
 prompt = '''
@@ -3606,3 +3761,422 @@ test('array kết quả là array mới', () => {
 hints = ["Phân nhánh array trước object.", "Khi tạo object mới, chỉ thay value của key nhạy cảm; đệ quy các key còn lại."]
 explanation = "Redaction giảm nguy cơ lộ bí mật trong crash report; hệ thống thực tế cần danh sách dữ liệu nhạy cảm theo schema."
 sources = ["react_native/performance"]
+
+# ============================================================ LEAD
+
+[[modules]]
+id = "react-native-lead"
+title = "Góc nhìn Tech Lead"
+description = "Ra quyết định cho cả team React Native: native hay cross-platform, chiến lược release OTA/store, crash monitoring, chia codebase và nâng cấp phiên bản."
+sources = ["react_native/publishing-to-app-store", "react_native/signed-apk-android", "react_native/integration-with-existing-apps", "react_native/upgrading", "react_native/symbolication", "react_native/performance", "react_native/platform-specific-code", "react_native/native-modules-intro"]
+lesson = '''
+### Khung ra quyết định
+Ở cấp Tech Lead, câu hỏi không còn là "API nào đúng" mà là "phương án nào hợp lý nhất với ràng buộc của team". Trước mỗi quyết định lớn, ghi rõ bốn thứ:
+1. **Mục tiêu đo được** — crash-free sessions, thời gian khởi động, tần suất phát hành, chi phí bảo trì.
+2. **Ràng buộc** — số người, kỹ năng native trong team, deadline, quy định store, thiết bị người dùng.
+3. **Các phương án** (ít nhất hai) và chi phí đảo ngược của từng phương án.
+4. **Tín hiệu để xem lại** — ví dụ "nếu màn hình camera vẫn giật sau khi tối ưu thì tách thành màn native".
+
+### So sánh phương án thường gặp
+| Quyết định | Phương án A | Phương án B | Khi nào chọn |
+|---|---|---|---|
+| Kiến trúc app | Toàn bộ React Native | App native + nhúng màn RN (brownfield) | Brownfield khi đã có app native lớn và muốn chuyển dần, giảm rủi ro |
+| Sửa lỗi production | OTA update (chỉ JS/asset) | Phát binary qua store | OTA khi lỗi nằm ở JS và runtime tương thích; native change bắt buộc binary |
+| Tính năng nặng (camera, map, video) | Thư viện cộng đồng | Native module tự viết | Tự viết khi thư viện không được bảo trì hoặc thiếu yêu cầu cốt lõi |
+| Nâng cấp RN | Nhảy nhiều version một lần | Nâng từng bậc, có nhánh riêng | Từng bậc khi app có nhiều native dependency |
+| Workflow | Expo + prebuild/EAS | Bare workflow tự quản lý native | Expo khi team ít kinh nghiệm native và cần tốc độ |
+
+### Checklist review ở quy mô team
+- PR có thay đổi native (Podfile, Gradle, manifest, permission) được gắn nhãn và **không** được phát bằng OTA.
+- Mỗi bản phát hành có source map/symbol được upload đúng phiên bản để đọc được crash.
+- Feature mới có cờ tắt từ xa (feature flag/kill switch) cho phần rủi ro cao.
+- Rollout theo tỉ lệ (1% → 5% → 20% → 100%) kèm ngưỡng dừng rõ ràng.
+- Danh sách thư viện native có người chịu trách nhiệm và lịch nâng cấp.
+
+### ADR mẫu ngắn
+**Bối cảnh**: app thương mại 3 dev RN, 1 dev iOS bán thời gian; lỗi JS cần sửa trong ngày. **Quyết định**: dùng OTA update theo channel, gắn `runtimeVersion` theo fingerprint native; mọi thay đổi native đi qua store. **Hệ quả**: sửa nhanh lỗi JS, nhưng phải có pipeline kiểm tra tương thích runtime và quy trình rollback bản OTA.
+
+### Anti-pattern ở quy mô team
+- Dùng OTA để "lách" review store bằng cách đổi hẳn chức năng của app.
+- Mỗi màn hình tự viết cách gọi API, xử lý lỗi và analytics khác nhau — không ai đọc được dashboard.
+- Trì hoãn nâng cấp RN nhiều năm rồi phải viết lại; nợ kỹ thuật nên trả theo lịch cố định mỗi quý.
+- Chỉ đo hiệu năng trên máy dev đời mới thay vì thiết bị Android tầm trung mà người dùng thật dùng.
+- Một người duy nhất biết cách ký và phát hành app (bus factor = 1).
+'''
+
+[[questions]]
+id = "react-native-lv001"
+module = "react-native-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "release"]
+prompt = "App RN của bạn vừa phát hành có lỗi crash ở màn thanh toán do một hàm JS xử lý null sai. Binary hiện tại đã có runtime tương thích với bản sửa. Team cần giảm thiệt hại trong vài giờ. Chiến lược nào hợp lý nhất?"
+options = ["Phát OTA update chứa bản sửa JS cho một nhóm nhỏ, theo dõi crash-free rồi mở rộng, đồng thời đưa bản sửa vào binary kế tiếp", "Gửi binary mới lên store với yêu cầu review nhanh và chờ người dùng cập nhật", "Phát OTA ngay cho 100% người dùng và bỏ qua theo dõi vì lỗi đã rõ", "Tắt toàn bộ app bằng kill switch cho tới khi binary mới được duyệt"]
+answer = [0]
+explanation = "Lỗi nằm ở JS và runtime tương thích nên OTA là đường nhanh nhất; rollout theo tỉ lệ vẫn cần vì bản sửa vội có thể gây lỗi khác. Chờ store review quá chậm; phát 100% ngay bỏ mất cơ hội phát hiện lỗi mới; tắt cả app gây thiệt hại lớn hơn lỗi gốc."
+sources = ["react_native/publishing-to-app-store"]
+
+[[questions]]
+id = "react-native-lv002"
+module = "react-native-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "architecture"]
+prompt = "Công ty có app iOS/Android native lớn (team native 8 người) và muốn thử React Native cho các màn hình nội dung thay đổi thường xuyên, không được làm chậm lịch phát hành hiện tại. Bạn đề xuất gì?"
+options = ["Nhúng React Native vào app có sẵn (brownfield) cho vài màn hình nội dung, đo kết quả rồi mới quyết định mở rộng", "Viết lại toàn bộ app bằng React Native trong một quý", "Giữ native và từ chối React Native vì hai công nghệ không dùng chung được", "Tạo app React Native riêng biệt chạy song song với app cũ trên store"]
+answer = [0]
+explanation = "Brownfield giảm rủi ro: phạm vi nhỏ, đảo ngược được và tận dụng team native. Viết lại toàn bộ là rủi ro lớn nhất với ràng buộc lịch phát hành; từ chối thẳng bỏ qua lợi ích có thể đo; app thứ hai làm phân mảnh người dùng."
+sources = ["react_native/integration-with-existing-apps"]
+
+[[questions]]
+id = "react-native-lv003"
+module = "react-native-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "upgrade"]
+prompt = "App đang ở React Native cũ hơn hiện tại 6 minor version, có ~25 thư viện native, team 4 người vẫn phải ra tính năng hằng sprint. Kế hoạch nâng cấp nào hợp lý nhất?"
+options = ["Nâng từng bậc version trên nhánh riêng, kiểm kê thư viện native trước, chạy e2e trên thiết bị thật ở mỗi bậc và dành cố định một phần capacity mỗi sprint", "Nhảy thẳng lên version mới nhất trong một PR lớn rồi sửa lỗi dần sau khi merge", "Đóng băng tính năng hai tháng để cả team chỉ nâng cấp", "Không nâng cấp cho tới khi store bắt buộc"]
+answer = [0]
+explanation = "Nâng từng bậc giúp khoanh vùng lỗi và giữ tiến độ tính năng. PR khổng lồ khó review và khó tìm nguyên nhân; đóng băng toàn bộ tốn chi phí kinh doanh; chờ store ép thì sẽ phải nâng gấp với rủi ro cao nhất."
+sources = ["react_native/upgrading"]
+
+[[questions]]
+id = "react-native-lv004"
+module = "react-native-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "native-vs-cross-platform"]
+prompt = "Sản phẩm mới cần ra iOS và Android trong 3 tháng với team 3 dev web giỏi React, chưa ai viết Swift/Kotlin. Một tính năng phụ cần xử lý video thời gian thực. Lựa chọn nào hợp lý nhất?"
+options = ["Dùng React Native (có thể với Expo) cho phần lớn app, xác định sớm thư viện hoặc native module cho phần video và có phương án thuê hỗ trợ native cho phần đó", "Viết hai app native riêng để đảm bảo hiệu năng video", "Chỉ làm web responsive và bỏ ứng dụng mobile", "Dùng React Native nhưng tự viết lại mọi thành phần native để không phụ thuộc thư viện"]
+answer = [0]
+explanation = "Kỹ năng team và deadline nghiêng về React Native; rủi ro duy nhất là phần video nên cần xử lý riêng và sớm. Hai app native vượt khả năng team; web không đáp ứng yêu cầu app; tự viết lại mọi thứ phá vỡ lợi ích về tốc độ."
+sources = ["react_native/native-modules-intro"]
+
+[[questions]]
+id = "react-native-lv005"
+module = "react-native-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "observability"]
+prompt = "Dashboard crash cho thấy stack trace JS chỉ có dòng trong bundle đã minify, không đọc được. Team đã mất hai sự cố vì không tìm ra nguyên nhân. Thay đổi quy trình nào hiệu quả nhất?"
+options = ["Đưa bước upload source map/symbol gắn đúng phiên bản build vào pipeline phát hành và chặn release nếu bước này thất bại", "Tắt minify cho bản production", "Yêu cầu người dùng gửi ảnh chụp màn hình khi bị crash", "Thêm console.log ở mọi hàm để log nhiều hơn"]
+answer = [0]
+explanation = "Symbolication chỉ hoạt động khi source map khớp chính xác bản build, nên phải tự động và bắt buộc trong pipeline. Tắt minify ảnh hưởng hiệu năng và vẫn không giải quyết native crash; ảnh chụp và console.log không thay thế stack trace đã symbolicate."
+sources = ["react_native/symbolication"]
+
+[[questions]]
+id = "react-native-lv006"
+module = "react-native-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "codebase"]
+prompt = "Team muốn có cả app mobile và web cho cùng sản phẩm. Màn hình mobile dùng nhiều cử chỉ và component native, còn web cần SEO cho trang công khai. Cách chia codebase nào hợp lý nhất?"
+options = ["Monorepo chia sẻ logic nghiệp vụ, API client, kiểu dữ liệu và design token; UI mobile và web tách riêng ở những chỗ khác biệt về nền tảng", "Dùng một codebase UI duy nhất cho tất cả và chấp nhận trang web không có SEO", "Tách hai repo hoàn toàn độc lập, copy logic khi cần", "Viết web trước rồi bọc web bằng WebView cho mobile"]
+answer = [0]
+explanation = "Chia sẻ phần ít phụ thuộc nền tảng mang lại lợi ích lớn mà không ép UI vào mẫu số chung. Một UI cho tất cả hy sinh yêu cầu SEO; hai repo copy logic gây lệch hành vi; WebView mất trải nghiệm native mà mobile đang cần."
+sources = ["react_native/platform-specific-code"]
+
+[[questions]]
+id = "react-native-lv007"
+module = "react-native-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "performance"]
+prompt = "Sau khi thêm nhiều tính năng, người dùng Android tầm trung phản ánh app khởi động chậm, nhưng trên máy của dev vẫn nhanh. Bước đầu tiên bạn yêu cầu team làm là gì?"
+options = ["Đặt chỉ số thời gian khởi động đo trên thiết bị Android tầm trung đại diện, profile bản release để tìm phần tốn thời gian rồi mới chọn cách tối ưu", "Viết lại các màn hình chính bằng native ngay", "Bọc mọi component bằng React.memo", "Tăng phiên bản minSdk để loại bỏ máy yếu"]
+answer = [0]
+explanation = "Không đo trên thiết bị đại diện và bản release thì mọi tối ưu chỉ là đoán. Viết lại native tốn kém khi chưa biết nguyên nhân; memo hàng loạt không xử lý chi phí khởi động; loại bỏ người dùng là quyết định kinh doanh, không phải tối ưu."
+sources = ["react_native/performance", "react_native/profiling"]
+
+[[questions]]
+id = "react-native-lv008"
+module = "react-native-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "dependencies"]
+prompt = "Một thư viện native quan trọng (bản đồ) không được cập nhật hơn một năm và chặn việc nâng cấp RN. Team có 1 dev biết native. Quyết định nào hợp lý nhất?"
+options = ["Đánh giá các thư viện thay thế còn bảo trì, làm spike nhỏ trên nhánh riêng, ước lượng chi phí chuyển đổi so với fork và tự duy trì, rồi ghi quyết định thành ADR", "Fork ngay thư viện và giao dev native duy trì vô thời hạn", "Bỏ tính năng bản đồ khỏi app", "Ở lại phiên bản RN hiện tại vô thời hạn"]
+answer = [0]
+explanation = "So sánh có dữ liệu giữa thay thế và fork giúp tránh gánh nặng bảo trì không lường trước, đặc biệt khi chỉ có một dev native. Fork ngay tạo bus factor = 1; bỏ tính năng hay đứng yên là né tránh vấn đề và tích nợ kỹ thuật."
+sources = ["react_native/native-modules-intro", "react_native/upgrading"]
+
+[[questions]]
+id = "react-native-lv009"
+module = "react-native-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "security"]
+prompt = "Một PR đưa API key của dịch vụ thanh toán phía server vào file cấu hình JS của app. Dev giải thích rằng code đã được minify nên an toàn. Bạn phản hồi thế nào khi review?"
+options = ["Từ chối: bundle trong app có thể bị trích xuất; mọi bí mật phía server phải nằm ở backend và app chỉ gọi qua API có xác thực", "Chấp nhận vì minify làm key khó đọc", "Chấp nhận nếu key được mã hoá base64", "Chấp nhận nhưng yêu cầu đổi tên biến cho khó đoán"]
+answer = [0]
+explanation = "Mọi thứ đóng gói trong app đều coi như công khai; minify, base64 hay đổi tên chỉ là che mắt. Ở vai trò lead, cần chặn và chuẩn hoá quy tắc 'không đặt secret phía server trong client'."
+sources = ["react_native/security"]
+
+[[questions]]
+id = "react-native-lv010"
+module = "react-native-lead"
+type = "multiple"
+difficulty = 3
+tags = ["level:lead", "release"]
+prompt = "Bạn thiết kế quy trình phát hành cho team 6 người, phát binary 2 tuần/lần và có OTA. Chọn các quy tắc nên đưa vào quy trình."
+options = ["PR thay đổi native (Gradle, Podfile, permission) phải gắn nhãn và chỉ phát qua binary mới", "Rollout theo tỉ lệ kèm ngưỡng crash-free để tự dừng", "Upload source map/symbol tự động cho mỗi bản build", "Cho phép mỗi dev tự phát OTA lên production bất cứ lúc nào để nhanh hơn", "Có feature flag để tắt tính năng rủi ro cao mà không cần phát hành lại"]
+answer = [0, 1, 2, 4]
+explanation = "Gắn nhãn native change, rollout có ngưỡng, symbol tự động và feature flag giúp phát hành nhanh nhưng kiểm soát được rủi ro. Cho mọi người tự phát OTA production phá vỡ kiểm soát và khó truy vết khi có sự cố."
+sources = ["react_native/publishing-to-app-store", "react_native/signed-apk-android"]
+
+[[questions]]
+id = "react-native-lv011"
+module = "react-native-lead"
+type = "multiple"
+difficulty = 3
+tags = ["level:lead", "team"]
+prompt = "Chỉ có một người trong team biết cách ký và phát hành app lên store. Chọn các hành động giảm rủi ro này."
+options = ["Viết runbook phát hành và cho ít nhất một người khác thực hiện thử dưới sự giám sát", "Lưu keystore/certificate trong kho bí mật có kiểm soát truy cập và sao lưu", "Tự động hoá build và ký trên CI để giảm thao tác thủ công", "Commit keystore vào repository để ai cũng lấy được", "Để người đó giữ toàn bộ thông tin trên máy cá nhân cho an toàn"]
+answer = [0, 1, 2]
+explanation = "Runbook, kho bí mật có sao lưu và CI giảm bus factor mà vẫn bảo mật. Commit keystore làm lộ khoá ký; giữ trên máy cá nhân chính là rủi ro cần loại bỏ."
+sources = ["react_native/signed-apk-android", "react_native/security"]
+
+[[questions]]
+id = "react-native-lv012"
+module = "react-native-lead"
+type = "multiple"
+difficulty = 3
+tags = ["level:lead", "observability"]
+prompt = "Bạn cần chọn chỉ số theo dõi sức khoẻ app sau mỗi bản phát hành để quyết định tiếp tục hay dừng rollout. Chọn các chỉ số phù hợp."
+options = ["Tỉ lệ crash-free sessions/users theo phiên bản", "Thời gian khởi động trên thiết bị đại diện", "Tỉ lệ lỗi API ở các luồng chính như đăng nhập và thanh toán", "Số dòng code thay đổi trong bản phát hành", "Tỉ lệ ANR/treo ứng dụng trên Android"]
+answer = [0, 1, 2, 4]
+explanation = "Crash-free, khởi động, lỗi luồng chính và ANR phản ánh trải nghiệm người dùng. Số dòng code thay đổi không cho biết bản phát hành có khoẻ hay không."
+sources = ["react_native/performance", "react_native/debugging"]
+
+[[questions]]
+id = "react-native-lv013"
+module = "react-native-lead"
+type = "multiple"
+difficulty = 3
+tags = ["level:lead", "testing"]
+prompt = "Team 5 người có rất ít test, mỗi bản phát hành đều có regression. Ngân sách chỉ cho phép đầu tư khoảng 20% thời gian vào test trong quý tới. Chọn các ưu tiên hợp lý."
+options = ["Viết vài e2e test cho luồng quan trọng nhất (đăng nhập, thanh toán) chạy trên CI", "Unit test cho logic nghiệp vụ thuần có nhiều nhánh", "Yêu cầu mỗi bug fix kèm test tái hiện lỗi", "Đặt mục tiêu 100% coverage cho mọi component trước khi ra tính năng mới", "Snapshot test toàn bộ màn hình để bắt mọi thay đổi"]
+answer = [0, 1, 2]
+explanation = "Với ngân sách hạn chế, ưu tiên luồng doanh thu, logic nhiều nhánh và test theo bug thật mang lại hiệu quả cao. 100% coverage không khả thi trong ràng buộc này; snapshot hàng loạt dễ bị cập nhật mù và ít giá trị."
+sources = ["react_native/testing-overview"]
+
+[[questions]]
+id = "react-native-lv014"
+module = "react-native-lead"
+type = "fill"
+difficulty = 3
+tags = ["level:lead", "release"]
+prompt = "Trong Expo/EAS Update, giá trị cấu hình quyết định một bản OTA có tương thích với binary đã cài hay không là {{blank}}."
+blanks = [["runtimeVersion", "runtime version"]]
+explanation = "Lead cần đảm bảo runtimeVersion thay đổi mỗi khi phần native thay đổi; nếu không, bản OTA có thể gọi tới native code không tồn tại và gây crash."
+sources = ["react_native/publishing-to-app-store"]
+
+[[questions]]
+id = "react-native-lv015"
+module = "react-native-lead"
+type = "essay"
+difficulty = 3
+tags = ["level:lead", "release"]
+prompt = "Viết một ADR ngắn cho quyết định dùng OTA update trong một app thương mại: bối cảnh, quyết định, các ràng buộc an toàn và hệ quả."
+keywords = [["runtime", "runtimeversion"], ["rollout", "staged"], ["rollback", "roll back"], ["native", "binary"], ["store", "app review"], ["crash", "monitoring"]]
+min_keywords = 4
+model_answer = '''Bối cảnh: team cần sửa lỗi JS trong ngày, trong khi store review mất vài ngày. Quyết định: dùng OTA update theo channel, gắn runtimeVersion theo phần native; mọi thay đổi native vẫn đi qua binary mới trên store. Ràng buộc an toàn: staged rollout 1% rồi mở rộng, theo dõi crash và lỗi API, có quy trình rollback về bản trước, và không dùng OTA để thay đổi chức năng vượt quá nội dung đã qua app review. Hệ quả: sửa lỗi nhanh hơn nhưng phải duy trì pipeline kiểm tra tương thích runtime và monitoring cho từng bản OTA.'''
+explanation = "Một ADR tốt nêu rõ ràng buộc tương thích runtime, rollout, rollback, ranh giới native/binary và chính sách store."
+sources = ["react_native/publishing-to-app-store"]
+
+[[questions]]
+id = "react-native-lv016"
+module = "react-native-lead"
+type = "essay"
+difficulty = 3
+tags = ["level:lead", "native-vs-cross-platform"]
+prompt = "Trong phỏng vấn Tech Lead: ban lãnh đạo hỏi nên viết app mới bằng native hay React Native. Bạn sẽ đánh giá và trình bày đề xuất như thế nào?"
+keywords = [["kỹ năng team", "team skill", "nhân sự"], ["thời gian", "deadline", "time to market"], ["hiệu năng", "performance"], ["native module", "tính năng native"], ["bảo trì", "maintenance", "chi phí"], ["spike", "prototype", "thử nghiệm"]]
+min_keywords = 4
+model_answer = '''Tôi bắt đầu từ yêu cầu sản phẩm và ràng buộc: kỹ năng team hiện có, deadline ra thị trường, ngân sách tuyển dụng. Tiếp theo liệt kê tính năng native nặng như camera, video, Bluetooth để xem có cần native module hay không và đánh giá yêu cầu hiệu năng trên thiết bị mục tiêu. Tôi so sánh chi phí bảo trì dài hạn của một codebase so với hai codebase. Với phần rủi ro cao, làm spike hoặc prototype ngắn để có số liệu, rồi trình bày đề xuất kèm điều kiện xem lại quyết định.'''
+explanation = "Câu trả lời lead dựa vào ràng buộc thực tế, có dữ liệu từ thử nghiệm và nêu rõ điều kiện đảo ngược quyết định."
+sources = ["react_native/native-modules-intro", "react_native/performance"]
+
+[[questions]]
+id = "react-native-lv017"
+module = "react-native-lead"
+type = "essay"
+difficulty = 3
+tags = ["level:lead", "incident"]
+prompt = "Bản phát hành mới làm crash-free sessions giảm từ 99,6% xuống 97% trong 2 giờ đầu. Mô tả cách bạn điều phối xử lý sự cố và cải tiến quy trình sau đó."
+keywords = [["dừng rollout", "halt", "pause rollout", "tạm dừng"], ["rollback", "kill switch", "feature flag"], ["symbol", "source map", "stack trace"], ["postmortem", "post-mortem", "rút kinh nghiệm"], ["giao tiếp", "communication", "thông báo"], ["ngưỡng", "threshold"]]
+min_keywords = 4
+model_answer = '''Đầu tiên tạm dừng rollout và, nếu có, tắt tính năng nghi vấn bằng feature flag hoặc rollback bản OTA. Phân công một người điều phối, một người phân tích stack trace đã symbolicate bằng source map đúng phiên bản và một người lo giao tiếp với các bên liên quan. Sau khi ổn định, tổ chức postmortem không đổ lỗi, xác định vì sao lỗi lọt qua test, và đặt ngưỡng crash-free tự động dừng rollout cho các bản sau.'''
+explanation = "Cần thể hiện thứ tự ưu tiên: cầm máu trước, tìm nguyên nhân bằng dữ liệu, giao tiếp rõ và cải tiến quy trình để không lặp lại."
+sources = ["react_native/symbolication", "react_native/debugging"]
+
+[[questions]]
+id = "react-native-lvc01"
+module = "react-native-lead"
+type = "code"
+difficulty = 3
+tags = ["level:lead", "release"]
+lang = "javascript"
+title = "Cổng quyết định staged rollout"
+prompt = '''
+Viết `nextRolloutStep(state)` mô phỏng chính sách rollout của team. `state` gồm:
+- `percent`: tỉ lệ hiện tại, luôn là một trong các bậc `[1, 5, 20, 50, 100]`.
+- `crashFree`: tỉ lệ crash-free hiện tại (0–100).
+- `baseline`: crash-free của bản trước.
+- `sessions`: số phiên đã ghi nhận ở bậc hiện tại.
+
+Quy tắc theo thứ tự:
+1. Nếu `crashFree < baseline - 0.5` → `{ action: 'halt', percent }` (giữ nguyên tỉ lệ).
+2. Nếu `sessions < 1000` → `{ action: 'wait', percent }` (chưa đủ dữ liệu).
+3. Nếu `percent === 100` → `{ action: 'done', percent: 100 }`.
+4. Ngược lại → `{ action: 'advance', percent: <bậc kế tiếp> }`.
+Không sửa object đầu vào.
+'''
+starter = '''
+function nextRolloutStep(state) {
+  return null;
+}
+'''
+solution = '''
+function nextRolloutStep(state) {
+  const steps = [1, 5, 20, 50, 100];
+  const { percent, crashFree, baseline, sessions } = state;
+  if (crashFree < baseline - 0.5) return { action: 'halt', percent };
+  if (sessions < 1000) return { action: 'wait', percent };
+  if (percent === 100) return { action: 'done', percent: 100 };
+  return { action: 'advance', percent: steps[steps.indexOf(percent) + 1] };
+}
+'''
+tests = '''
+test('dừng khi crash-free giảm quá ngưỡng', () => {
+  expect(nextRolloutStep({ percent: 5, crashFree: 98.9, baseline: 99.5, sessions: 5000 })).toEqual({ action: 'halt', percent: 5 });
+});
+test('halt được ưu tiên hơn thiếu dữ liệu', () => {
+  expect(nextRolloutStep({ percent: 1, crashFree: 90, baseline: 99.5, sessions: 10 })).toEqual({ action: 'halt', percent: 1 });
+});
+test('chờ khi chưa đủ phiên', () => {
+  expect(nextRolloutStep({ percent: 20, crashFree: 99.4, baseline: 99.5, sessions: 999 })).toEqual({ action: 'wait', percent: 20 });
+});
+test('tiến lên bậc kế tiếp', () => {
+  expect(nextRolloutStep({ percent: 1, crashFree: 99.5, baseline: 99.5, sessions: 1000 })).toEqual({ action: 'advance', percent: 5 });
+  expect(nextRolloutStep({ percent: 50, crashFree: 99.7, baseline: 99.5, sessions: 20000 })).toEqual({ action: 'advance', percent: 100 });
+});
+test('đúng ngưỡng 0.5 vẫn không dừng', () => {
+  expect(nextRolloutStep({ percent: 5, crashFree: 99, baseline: 99.5, sessions: 2000 })).toEqual({ action: 'advance', percent: 20 });
+});
+test('hoàn tất ở 100%', () => {
+  const state = { percent: 100, crashFree: 99.6, baseline: 99.5, sessions: 50000 };
+  expect(nextRolloutStep(state)).toEqual({ action: 'done', percent: 100 });
+  expect(state.percent).toBe(100);
+});
+'''
+hints = ["Kiểm tra các điều kiện đúng thứ tự: halt, wait, done, advance.", "Dùng mảng bậc và `indexOf` để tìm bậc kế tiếp."]
+explanation = "Mã hoá chính sách rollout thành quy tắc rõ ràng giúp team ra quyết định nhất quán và tự động hoá việc dừng khi bản phát hành có vấn đề; ngưỡng cụ thể cần chọn theo dữ liệu lịch sử của app."
+sources = ["react_native/publishing-to-app-store"]
+
+[[questions]]
+id = "react-native-lv018"
+module = "react-native-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "standards"]
+prompt = "Mỗi màn hình trong app tự gọi fetch, tự xử lý lỗi và tự gửi analytics theo cách khác nhau; dashboard lỗi không thể so sánh giữa các luồng. Team 7 người, không thể dừng ra tính năng. Bạn làm gì?"
+options = ["Định nghĩa một API client và lớp analytics chung có chuẩn đặt tên sự kiện, áp dụng bắt buộc cho code mới và chuyển dần các màn hình cũ khi chạm tới", "Tổ chức refactor toàn bộ app trong một sprint", "Để từng dev tự chọn cách làm nhưng viết tài liệu mô tả từng cách", "Thay thư viện state management để giải quyết vấn đề"]
+answer = [0]
+explanation = "Chuẩn hoá cho code mới và chuyển dần cân bằng giữa chất lượng và tốc độ. Refactor toàn bộ trong một sprint rủi ro cao; tài liệu cho từng cách không giải quyết sự phân mảnh; đổi thư viện state không liên quan tới gọi API và analytics."
+sources = ["react_native/performance"]
+
+# ============================================================ JUNIOR BỔ SUNG
+
+[[questions]]
+id = "react-native-lv019"
+module = "rn-core"
+type = "single"
+difficulty = 1
+tags = ["level:junior"]
+prompt = "Trong React Native, đoạn `<View>Xin chào</View>` gây lỗi. Cách sửa đúng là gì?"
+options = ["Bọc chuỗi trong component Text: `<View><Text>Xin chào</Text></View>`", "Đổi View thành div", "Thêm style `{ color: 'black' }` cho View", "Dùng `innerHTML` để gán chuỗi"]
+answer = [0]
+explanation = "Chuỗi văn bản phải nằm trong Text; View không hiển thị text trực tiếp, và React Native không có div hay innerHTML."
+sources = ["react_native/text", "react_native/view"]
+
+[[questions]]
+id = "react-native-lv020"
+module = "rn-styling"
+type = "single"
+difficulty = 1
+tags = ["level:junior"]
+prompt = "Trong React Native, giá trị mặc định của `flexDirection` cho một View là gì?"
+options = ["column", "row", "row-reverse", "Không có giá trị mặc định"]
+answer = [0]
+explanation = "Khác với CSS trên web (mặc định row), React Native mặc định xếp con theo cột."
+sources = ["react_native/flexbox"]
+
+[[questions]]
+id = "react-native-lv021"
+module = "rn-core"
+type = "fill"
+difficulty = 1
+tags = ["level:junior"]
+prompt = "Prop của TextInput được gọi mỗi khi nội dung chữ thay đổi, nhận chuỗi mới làm tham số, là {{blank}}."
+blanks = [["onChangeText"]]
+explanation = "onChangeText nhận thẳng chuỗi mới, tiện hơn onChange vốn nhận event."
+sources = ["react_native/textinput"]
+
+[[questions]]
+id = "react-native-lv022"
+module = "rn-lists"
+type = "multiple"
+difficulty = 1
+tags = ["level:junior"]
+prompt = "Chọn các prop thường dùng khi hiển thị một danh sách bằng FlatList."
+options = ["data", "renderItem", "keyExtractor", "innerHTML"]
+answer = [0, 1, 2]
+explanation = "FlatList cần data và renderItem; keyExtractor giúp mỗi item có key ổn định. innerHTML không tồn tại trong React Native."
+sources = ["react_native/flatlist"]
+
+[[questions]]
+id = "react-native-lvc02"
+module = "rn-lists"
+type = "code"
+difficulty = 1
+tags = ["level:junior"]
+lang = "javascript"
+title = "Viết keyExtractor an toàn"
+prompt = '''
+Viết `keyExtractor(item, index)` cho FlatList:
+- Nếu `item.id` là số hoặc chuỗi không rỗng → trả `String(item.id)`.
+- Ngược lại → trả chuỗi `"index-" + index`.
+'''
+starter = '''
+function keyExtractor(item, index) {
+  return '';
+}
+'''
+solution = '''
+function keyExtractor(item, index) {
+  const id = item && item.id;
+  if (typeof id === 'number' || (typeof id === 'string' && id !== '')) return String(id);
+  return 'index-' + index;
+}
+'''
+tests = '''
+test('dùng id dạng số', () => {
+  expect(keyExtractor({ id: 42 }, 0)).toBe('42');
+});
+test('dùng id dạng chuỗi', () => {
+  expect(keyExtractor({ id: 'abc' }, 3)).toBe('abc');
+});
+test('fallback khi thiếu id', () => {
+  expect(keyExtractor({ name: 'An' }, 2)).toBe('index-2');
+});
+test('fallback khi id rỗng', () => {
+  expect(keyExtractor({ id: '' }, 5)).toBe('index-5');
+});
+test('id bằng 0 vẫn hợp lệ', () => {
+  expect(keyExtractor({ id: 0 }, 7)).toBe('0');
+});
+'''
+hints = ["Kiểm tra kiểu của `item.id` bằng `typeof`.", "Chú ý id bằng 0 vẫn là id hợp lệ, đừng dùng `if (item.id)`."]
+explanation = "Key ổn định giúp FlatList tái sử dụng đúng item khi danh sách thay đổi; dùng index chỉ là phương án dự phòng."
+sources = ["react_native/flatlist"]

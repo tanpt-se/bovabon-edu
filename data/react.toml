@@ -464,6 +464,53 @@ Với streaming, server có thể gửi phần vỏ trang khi sẵn sàng rồi 
 So sánh props và dữ liệu đầu vào của server với lần render đầu trên client; kiểm tra timezone/locale, giá trị ngẫu nhiên và điều kiện phụ thuộc `window`; kiểm tra cấu trúc HTML sau khi browser parse; sau đó dùng callback lỗi phục hồi của root để thu thập chẩn đoán phù hợp.
 '''
 
+[[modules]]
+id = "react-lead"
+title = "Góc nhìn Tech Lead"
+description = "Quyết định ở quy mô team: kiến trúc state, boundary & lỗi, rendering strategy, micro-frontend, migrate React 19, chiến lược test UI, performance budget, review & ADR."
+sources = ["react/learn/thinking-in-react", "react/reference/react/suspense", "react/reference/react/strictmode", "react/reference/react-compiler/compilationmode"]
+lesson = '''
+### Từ "code đúng" sang "quyết định đúng"
+Tech Lead không chọn công nghệ hay nhất mà chọn phương án **hợp lý nhất với ràng buộc**: số người, thời gian, mức rủi ro chấp nhận được, chi phí vận hành và kỹ năng sẵn có của team. Mỗi quyết định nên ghi lại ngắn gọn (ADR) để người đến sau hiểu *vì sao*, không chỉ *cái gì*.
+
+### Khung ra quyết định
+1. Nêu vấn đề và ràng buộc cứng (deadline, traffic, SLA, ngân sách, số người).
+2. Liệt kê 2–3 phương án thực tế, kể cả "không làm gì".
+3. Chấm theo tiêu chí: độ phức tạp vận hành, chi phí đổi ý (reversibility), rủi ro, learning curve, hiệu năng.
+4. Chọn phương án rẻ nhất để **đổi ý**, trừ khi rủi ro bắt buộc phải đầu tư sớm.
+5. Đặt chỉ số/ngày xem lại quyết định.
+
+### Bảng so sánh tham khảo cho React
+| Chủ đề | Phương án nhẹ | Phương án nặng | Chọn nặng khi |
+|---|---|---|---|
+| Server state | Thư viện query (cache, dedupe, retry) | Tự viết `useEffect` + store | Gần như không bao giờ nên tự viết |
+| Client state | `useState` + context cục bộ | Store toàn cục | State thật sự dùng chéo nhiều vùng xa nhau |
+| Rendering | CSR + CDN | SSR/streaming/RSC | SEO, LCP trên mạng yếu, nội dung cá nhân hoá trên server |
+| Chia ứng dụng | Monorepo, một bundle chia route | Micro-frontend | Nhiều team deploy độc lập thật sự, không chỉ "cho gọn" |
+| Test UI | Test hành vi qua Testing Library | Snapshot/E2E tràn lan | E2E chỉ cho luồng sinh tiền (đăng nhập, thanh toán) |
+| Tối ưu render | Đo bằng Profiler, sửa chỗ chậm | `memo` khắp nơi | Có số đo chứng minh; cân nhắc React Compiler |
+
+### Checklist review code React ở quy mô team
+- State có đặt đúng nơi thấp nhất cần thiết, và có phải state dẫn xuất không?
+- Effect chỉ dùng để đồng bộ với hệ thống ngoài? Có cleanup, có xử lý race condition?
+- Ranh giới `Suspense` và error boundary có đặt theo trải nghiệm người dùng (không cả trang trắng vì một widget lỗi)?
+- Có đo trước khi tối ưu? Có budget cho bundle và Web Vitals trong CI?
+- Test kiểm hành vi người dùng thấy, không kiểm chi tiết cài đặt?
+
+### ADR mẫu (ngắn)
+**Bối cảnh:** 3 team, dashboard 40 màn hình, API chậm, người dùng hay quay lại màn cũ. **Quyết định:** dùng thư viện query cho server state, `useState`/context cho UI state, không thêm store toàn cục. **Hệ quả:** giảm code đồng bộ dữ liệu (ước lượng 30–40%), phải thống nhất quy ước query key. **Xem lại:** sau 2 sprint hoặc khi có state chéo trang không tự nhiên cache được.
+
+### Anti-pattern ở quy mô team
+- Chọn công nghệ vì CV hoặc xu hướng, không vì ràng buộc.
+- Viết lại toàn bộ ("big bang") thay vì migrate từng phần có feature flag.
+- Tối ưu sớm: `useMemo`/`useCallback` không đo, bundle splitting cực nhỏ.
+- Quy ước chỉ nằm trong đầu một người: không có lint rule, template, tài liệu.
+- Bỏ qua observability: không có error tracking, không đo Web Vitals thực tế (RUM).
+- Review chỉ bắt lỗi style, bỏ qua rủi ro kiến trúc và bảo mật.
+
+Số liệu trong bài chỉ là ước lượng để lập luận; luôn thay bằng số đo của chính hệ thống.
+'''
+
 # ============================================================ BASICS
 [[questions]]
 id = "react-001"
@@ -479,13 +526,14 @@ options = [
 ]
 answer = [1]
 explanation = "JSX được Babel/TS/SWC chuyển thành lời gọi hàm `jsx()` (từ `react/jsx-runtime`) trả về **React element** — một object mô tả UI, không phải DOM node."
-tags = ["jsx"]
+tags = ["level:junior", "jsx"]
 
 [[questions]]
 id = "react-002"
 module = "react-basics"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Vì sao tên component trong JSX phải **viết hoa chữ cái đầu** (`<MyButton />`)?"
 options = [
   "Đó chỉ là quy ước, viết thường vẫn chạy như nhau",
@@ -511,13 +559,14 @@ prompt = '''
 options = ["Không hiển thị gì", "Hiển thị số `0`", "Hiển thị `false`", "Lỗi runtime"]
 answer = [1]
 explanation = "`0 && X` trả về `0`, và React **render số 0** (chỉ bỏ qua `false`, `null`, `undefined`, `true`). Sửa: `messages.length > 0 && ...`."
-tags = ["conditional-rendering"]
+tags = ["level:middle", "conditional-rendering"]
 
 [[questions]]
 id = "react-004"
 module = "react-basics"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "`key` trong danh sách cần thoả điều kiện nào?"
 options = [
   "Duy nhất trên toàn ứng dụng",
@@ -533,6 +582,7 @@ id = "react-005"
 module = "react-basics"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Thuộc tính nào là cách đúng để gán class CSS trong JSX?"
 options = ["`class`", "`className`", "`cssClass`", "`styleName`"]
 answer = [1]
@@ -543,6 +593,7 @@ id = "react-006"
 module = "react-basics"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Những giá trị nào **không render ra gì** khi đặt trong JSX `{value}`? (chọn nhiều)"
 options = ["`null`", "`false`", "`0`", "`undefined`", "`''` (chuỗi rỗng)", "`true`"]
 answer = [0, 1, 3, 4, 5]
@@ -553,6 +604,7 @@ id = "react-007"
 module = "react-basics"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Hoàn thành code trả về nhiều phần tử mà **không** thêm thẻ DOM bao ngoài:
 
@@ -575,6 +627,7 @@ id = "react-008"
 module = "react-basics"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Render danh sách với key đúng:
 
@@ -592,6 +645,7 @@ id = "react-009"
 module = "react-basics"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Điều gì đúng về `props.children`?"
 options = [
   "Luôn là một mảng",
@@ -607,6 +661,7 @@ id = "react-010"
 module = "react-basics"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Inline style nào hợp lệ trong React DOM?"
 options = [
   "`style=\"color: red; font-size: 14px\"`",
@@ -622,6 +677,7 @@ id = "react-011"
 module = "react-basics"
 type = "essay"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Giải thích ngắn gọn **vì sao không nên dùng index của mảng làm `key`** khi danh sách có thể thêm/xoá/sắp xếp."
 keywords = [
   ["state", "trạng thái"],
@@ -639,6 +695,7 @@ id = "react-012"
 module = "react-basics"
 type = "code"
 difficulty = 3
+tags = ["level:senior"]
 title = "Mini createElement & renderToString"
 prompt = '''
 Hiểu JSX bằng cách tự viết nó! Hãy cài đặt:
@@ -745,13 +802,14 @@ function Counter() {
 options = ["1", "3", "0", "Lỗi vòng lặp vô hạn"]
 answer = [0]
 explanation = "Trong lần render đó `count` là snapshot = 0, nên cả 3 lần đều đặt state = 1. Muốn ra 3 dùng updater `setCount(c => c + 1)`."
-tags = ["state", "snapshot"]
+tags = ["level:middle", "state", "snapshot"]
 
 [[questions]]
 id = "react-021"
 module = "react-state"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Cách nào cập nhật state mảng `items` một cách **đúng** (bất biến) khi thêm phần tử?"
 options = [
   "`items.push(x); setItems(items)`",
@@ -767,6 +825,7 @@ id = "react-022"
 module = "react-state"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Trong React 18, hai lời gọi `setA(1); setB(2);` bên trong một `setTimeout` sẽ gây ra bao nhiêu lần render?"
 options = ["2 lần", "1 lần (automatic batching)", "0 lần", "Tuỳ trình duyệt"]
 answer = [1]
@@ -777,6 +836,7 @@ id = "react-023"
 module = "react-state"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Một input là **controlled component** khi:"
 options = [
   "Có thuộc tính `ref`",
@@ -792,6 +852,7 @@ id = "react-024"
 module = "react-state"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "`useState(expensiveCompute())` và `useState(() => expensiveCompute())` khác nhau thế nào?"
 options = [
   "Không khác nhau",
@@ -807,6 +868,7 @@ id = "react-025"
 module = "react-state"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Những thao tác nào **mutate** state (nên tránh) khi state là mảng/object?"
 options = [
   "`arr.sort()`",
@@ -824,6 +886,7 @@ id = "react-026"
 module = "react-state"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Tăng bộ đếm an toàn dựa trên giá trị trước đó:
 
@@ -839,6 +902,7 @@ id = "react-027"
 module = "react-state"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 Cập nhật bất biến thuộc tính lồng nhau `user.address.city`:
 
@@ -857,6 +921,7 @@ id = "react-028"
 module = "react-state"
 type = "essay"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "\"Lifting state up\" là gì và khi nào nên dùng?"
 keywords = [
   ["cha", "parent", "tổ tiên", "ancestor"],
@@ -872,6 +937,7 @@ id = "react-029"
 module = "react-state"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 title = "todoReducer bất biến"
 prompt = '''
 Viết reducer `todoReducer(state, action)` quản lý danh sách todo **không mutate** state cũ.
@@ -943,6 +1009,7 @@ id = "react-040"
 module = "react-hooks"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Câu nào vi phạm **Rules of Hooks**?"
 options = [
   "Gọi `useState` ở đầu function component",
@@ -958,6 +1025,7 @@ id = "react-041"
 module = "react-hooks"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Khi nào hàm cleanup của `useEffect` chạy?"
 options = [
   "Chỉ khi component unmount",
@@ -973,6 +1041,7 @@ id = "react-042"
 module = "react-hooks"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Thay đổi `ref.current` của `useRef` có gây render lại không?"
 options = [
   "Có, giống setState",
@@ -988,6 +1057,7 @@ id = "react-043"
 module = "react-hooks"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Khác biệt chính giữa `useMemo(fn, deps)` và `useCallback(fn, deps)`?"
 options = [
   "`useMemo` cache **kết quả** của `fn()`, `useCallback` cache **chính hàm** `fn`",
@@ -1021,13 +1091,14 @@ options = [
 ]
 answer = [1]
 explanation = "Closure bắt `count` của lần render đầu. Sửa: `setCount(c => c + 1)` hoặc thêm `count` vào deps."
-tags = ["stale-closure"]
+tags = ["level:senior", "stale-closure"]
 
 [[questions]]
 id = "react-045"
 module = "react-hooks"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Khi nào nên dùng `useLayoutEffect` thay cho `useEffect`?"
 options = [
   "Khi fetch dữ liệu",
@@ -1043,6 +1114,7 @@ id = "react-046"
 module = "react-hooks"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Những trường hợp nào **không cần** `useEffect` (theo tài liệu \"You Might Not Need an Effect\")?"
 options = [
   "Tính giá trị dẫn xuất từ props/state (ví dụ `fullName = first + ' ' + last`)",
@@ -1059,6 +1131,7 @@ id = "react-047"
 module = "react-hooks"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 Hoàn thành effect đăng ký sự kiện resize kèm cleanup, chỉ chạy 1 lần sau mount:
 
@@ -1078,6 +1151,7 @@ id = "react-048"
 module = "react-hooks"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 Tạo context và đọc nó:
 
@@ -1098,6 +1172,7 @@ id = "react-049"
 module = "react-hooks"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Giải thích **stale closure** trong React hooks và nêu cách khắc phục."
 keywords = [
   ["closure"],
@@ -1122,6 +1197,7 @@ id = "react-050"
 module = "react-hooks"
 type = "code"
 difficulty = 1
+tags = ["level:junior"]
 title = "Custom hook useToggle"
 prompt = '''
 Viết custom hook `useToggle(initial = false)` trả về mảng `[value, toggle, setValue]`:
@@ -1184,6 +1260,7 @@ id = "react-051"
 module = "react-hooks"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 title = "useCounter có min/max"
 prompt = '''
 Viết `useCounter(initial = 0, { min = -Infinity, max = Infinity, step = 1 } = {})` trả về object:
@@ -1257,6 +1334,7 @@ id = "react-052"
 module = "react-hooks"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 title = "usePrevious"
 prompt = '''
 Viết hook `usePrevious(value)` trả về giá trị của `value` ở **lần render trước** (lần đầu trả về `undefined`).
@@ -1309,6 +1387,7 @@ id = "react-053"
 module = "react-hooks"
 type = "code"
 difficulty = 3
+tags = ["level:senior"]
 title = "useDebouncedValue"
 prompt = '''
 Viết hook `useDebouncedValue(value, delay)` trả về giá trị chỉ cập nhật sau khi `value` **ngừng thay đổi** `delay` ms (dùng cho ô tìm kiếm).
@@ -1374,6 +1453,7 @@ id = "react-054"
 module = "react-hooks"
 type = "code"
 difficulty = 3
+tags = ["level:senior"]
 title = "useAsync — trạng thái tải dữ liệu"
 prompt = '''
 Viết hook `useAsync(asyncFn, deps)` gọi `asyncFn()` trong effect và trả về `{ status, data, error }`:
@@ -1443,6 +1523,7 @@ id = "react-060"
 module = "react-perf"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Mặc định, khi component cha render lại thì component con (không dùng `memo`) sẽ:"
 options = [
   "Chỉ render lại nếu props đổi",
@@ -1458,6 +1539,7 @@ id = "react-061"
 module = "react-perf"
 type = "single"
 difficulty = 3
+tags = ["level:senior"]
 prompt = '''
 `Child` được bọc `React.memo`. Vì sao nó vẫn render lại mỗi khi `Parent` render?
 
@@ -1483,6 +1565,7 @@ id = "react-062"
 module = "react-perf"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "\"Reconciliation\" trong React là gì?"
 options = [
   "Quá trình đồng bộ state với server",
@@ -1498,6 +1581,7 @@ id = "react-063"
 module = "react-perf"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "`useTransition` dùng để làm gì?"
 options = [
   "Tạo hiệu ứng CSS transition",
@@ -1513,6 +1597,7 @@ id = "react-064"
 module = "react-perf"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Cách đúng để lazy-load một trang bằng React?"
 options = [
   "`const Page = require('./Page')`",
@@ -1528,6 +1613,7 @@ id = "react-065"
 module = "react-perf"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Những kỹ thuật nào giúp giảm render thừa hoặc chi phí render?"
 options = [
   "Đặt state ở gần nơi dùng nhất (state colocation)",
@@ -1545,6 +1631,7 @@ id = "react-066"
 module = "react-perf"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 Bọc component để bỏ qua render khi props không đổi:
 
@@ -1562,6 +1649,7 @@ id = "react-067"
 module = "react-perf"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Khi nào **không nên** dùng `useMemo`/`useCallback`? Giải thích ngắn."
 keywords = [
   ["rẻ", "đơn giản", "cheap", "nhẹ", "không tốn"],
@@ -1578,6 +1666,7 @@ id = "react-068"
 module = "react-perf"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 title = "shallowEqual cho React.memo"
 prompt = '''
 `React.memo` mặc định so sánh props bằng **shallow equal**. Hãy tự cài đặt `shallowEqual(a, b)`:
@@ -1629,6 +1718,7 @@ id = "react-080"
 module = "react-patterns"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Error Boundary **không** bắt được lỗi nào sau đây?"
 options = [
   "Lỗi khi render component con",
@@ -1644,6 +1734,7 @@ id = "react-081"
 module = "react-patterns"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Khi `value` của một Context Provider thay đổi, điều gì xảy ra?"
 options = [
   "Chỉ Provider render lại",
@@ -1659,6 +1750,7 @@ id = "react-082"
 module = "react-patterns"
 type = "single"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Điều nào đúng về **React Server Components**?"
 options = [
   "Có thể dùng `useState` và `useEffect`",
@@ -1674,6 +1766,7 @@ id = "react-083"
 module = "react-patterns"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "`createPortal` thường được dùng để:"
 options = [
   "Gọi API",
@@ -1689,6 +1782,7 @@ id = "react-084"
 module = "react-patterns"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Theo triết lý của React Testing Library, query nào **ưu tiên** nhất?"
 options = ["`getByTestId`", "`container.querySelector('.btn')`", "`getByRole('button', { name: /lưu/i })`", "`getByClassName`"]
 answer = [2]
@@ -1699,6 +1793,7 @@ id = "react-085"
 module = "react-patterns"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Những API nào **mới** trong React 19?"
 options = ["`useActionState`", "`useOptimistic`", "`use()`", "`useEffect`", "`useFormStatus` (react-dom)", "`componentWillMount`"]
 answer = [0, 1, 2, 4]
@@ -1709,6 +1804,7 @@ id = "react-086"
 module = "react-patterns"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 Đánh dấu file là Client Component trong Next.js App Router (dòng đầu file):
 
@@ -1725,6 +1821,7 @@ id = "react-087"
 module = "react-patterns"
 type = "essay"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "So sánh **Context API** và một thư viện state management (Redux Toolkit / Zustand). Khi nào dùng cái nào?"
 keywords = [
   ["render lại", "re-render", "rerender"],
@@ -1746,6 +1843,7 @@ id = "react-088"
 module = "react-patterns"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 title = "classNames (cx) utility"
 prompt = '''
 Viết hàm `cx(...args)` giống thư viện `clsx` dùng để ghép className có điều kiện:
@@ -1789,6 +1887,7 @@ id = "rx-dd01"
 module = "react-perf"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Ô tìm kiếm lọc một danh sách 10.000 phần tử khiến việc gõ phím bị giật. Cách nào giữ input phản hồi tức thì mà không cần debounce thủ công?"
 options = [
   "Bọc phần cập nhật danh sách bằng `startTransition` (từ `useTransition`) để React coi đó là cập nhật không khẩn cấp, có thể bị ngắt",
@@ -1805,6 +1904,7 @@ id = "rx-dd02"
 module = "react-perf"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Phát biểu nào **đúng** về `useDeferredValue(value)`?"
 options = [
   "Trả về một bản \"trễ\" của giá trị; trong lần render khẩn cấp nó vẫn giữ giá trị cũ",
@@ -1821,6 +1921,7 @@ id = "rx-dd03"
 module = "react-hooks"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 Tạo id ổn định giữa server và client để nối `<label>` với `<input>`:
 
@@ -1849,6 +1950,7 @@ id = "rx-dd04"
 module = "react-patterns"
 type = "single"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Trong React 19, form gửi bình luận muốn hiển thị bình luận mới **ngay lập tức** trước khi server phản hồi, và tự quay về trạng thái thật khi request xong. Hook phù hợp nhất là:"
 options = ["`useOptimistic`", "`useMemo`", "`useImperativeHandle`", "`useDebugValue`"]
 answer = [0]
@@ -1860,6 +1962,7 @@ id = "rx-dd05"
 module = "react-hooks"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Khi nào **không cần** `useEffect`? Nêu ít nhất 3 tình huống hay bị lạm dụng và cách làm đúng."
 keywords = [
   ["tính toán trong render", "derived", "suy ra", "tính trực tiếp", "biến thường"],
@@ -1886,6 +1989,7 @@ id = "rx-dd06"
 module = "react-hooks"
 type = "code"
 difficulty = 3
+tags = ["level:senior"]
 title = "Store ngoài cho useSyncExternalStore"
 prompt = '''
 `useSyncExternalStore(subscribe, getSnapshot)` cần một store có 2 hàm ổn định. Viết `createStore(initial)` trả về:
@@ -1977,6 +2081,7 @@ id = "react-x001"
 module = "react-basics"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 Danh sách `users` được sắp xếp theo tên. Khi dùng `key={index}`, người dùng mở rộng hàng thứ hai rồi đổi thứ tự danh sách. Rủi ro chính là gì?
 '''
@@ -1990,6 +2095,7 @@ id = "react-x002"
 module = "react-state"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 Trong một event handler, `count` đang là `4`:
 
@@ -2010,6 +2116,7 @@ id = "react-x003"
 module = "react-hooks"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Một component chỉ gọi `useEffect` khi `if (enabled)`. Vì sao đây là lỗi thiết kế?"
 options = ["Effect chỉ được gọi trong class component", "Số thứ tự hook có thể thay đổi giữa các render", "Deps bắt buộc phải là object", "Hook phải được gọi sau return"]
 answer = [1]
@@ -2021,6 +2128,7 @@ id = "react-x004"
 module = "react-perf"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "`React.memo(Row)` thường bỏ qua render nào?"
 options = ["Mọi render kể cả khi state của Row đổi", "Render do props so sánh nông bằng nhau, khi cha render lại", "Render do context mà Row đọc đổi", "Render do Row tự gọi setter"]
 answer = [1]
@@ -2032,6 +2140,7 @@ id = "react-x005"
 module = "react-patterns"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một lỗi ném ra trong `onClick` của nút. Kết luận nào đúng về Error Boundary?"
 options = ["Boundary cha luôn bắt lỗi event handler", "Boundary chỉ bắt lỗi nếu có `componentDidCatch` ở function component", "Boundary không tự bắt lỗi event handler thông thường; handler cần tự xử lý lỗi", "React tự retry handler đến khi không lỗi"]
 answer = [2]
@@ -2043,6 +2152,7 @@ id = "react-x006"
 module = "react-19"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Trong React 19, function component muốn chuyển tiếp `ref` tới input DOM thì cách nào phù hợp?"
 options = ["Nhận `ref` như prop thông thường rồi gắn lên input", "Chỉ có thể dùng `createRef` trong class", "Đổi tên prop thành `key`", "Bọc component bằng `React.memo` để ref tự truyền"]
 answer = [0]
@@ -2054,6 +2164,7 @@ id = "react-x007"
 module = "react-19"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một component React DOM render `<title>Account</title>`. Hành vi nào React 19 hỗ trợ?"
 options = ["`title` luôn nằm trong body như một thẻ thường", "React có thể hoist metadata phù hợp lên document head", "React đổi title thành aria-label", "Chỉ Server Component mới render được title"]
 answer = [1]
@@ -2065,6 +2176,7 @@ id = "react-x008"
 module = "react-19"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Nhóm bật React Compiler trong build. Kỳ vọng nào hợp lý?"
 options = ["Compiler tự tối ưu mọi thư viện bên thứ ba", "Compiler có thể tự memo hóa code tương thích; cần cấu hình và kiểm tra build", "Tất cả hook trở thành đồng bộ", "Không còn cần đo hiệu năng hoặc kiểm thử"]
 answer = [1]
@@ -2076,6 +2188,7 @@ id = "react-x009"
 module = "react-19"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "`const [state, dispatchAction, isPending] = useActionState(action, initialState)` — giá trị thứ ba biểu thị điều gì?"
 options = ["Action đã bị hủy", "Action đang được xử lý", "Có lỗi validation", "Component đang unmount"]
 answer = [1]
@@ -2087,6 +2200,7 @@ id = "react-x010"
 module = "react-19"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "`useFormStatus()` trả `pending: true` không như mong đợi. Hook đang được gọi ngay trong component sở hữu thẻ `<form>`. Cách sửa phù hợp là gì?"
 options = ["Chuyển hook vào component con được render bên trong form", "Gọi hook sau khi submit", "Thêm `useMemo` quanh form", "Chuyển `<form>` thành `<div>`"]
 answer = [0]
@@ -2098,6 +2212,7 @@ id = "react-x011"
 module = "react-19"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một component gọi `use(userPromise)` khi Promise còn pending. Điều gì có thể xảy ra?"
 options = ["React hiển thị Promise thành chuỗi", "Render có thể suspend tới khi Promise hoàn tất; cần boundary phù hợp", "React tự chuyển Promise thành state local", "Promise bị hủy ngay lập tức"]
 answer = [1]
@@ -2109,6 +2224,7 @@ id = "react-x012"
 module = "react-server"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Server Component cần đọc dữ liệu server trước khi trả JSX. Nhận định nào đúng?"
 options = ["Có thể dùng async/await, nhưng không dùng state/effect client như `useState`", "Bắt buộc phải thêm `'use client'`", "Mọi component server đều được gửi JavaScript source xuống browser", "Chỉ class component chạy được trên server"]
 answer = [0]
@@ -2120,6 +2236,7 @@ id = "react-x013"
 module = "react-server"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một file có `'use client'` ở đầu module rồi import `SearchBox`. Ý nghĩa chính của directive là gì?"
 options = ["Chỉ component đầu tiên trong file trở thành client", "Module trở thành client boundary và các dependency được đưa vào phía client", "Component chạy độc quyền trên server", "Directive bật hydration cho toàn site"]
 answer = [1]
@@ -2131,6 +2248,7 @@ id = "react-x014"
 module = "react-server"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một file có `'use server'` trên hàm lưu đơn hàng. Cách hiểu nào đúng?"
 options = ["Mọi component trong file trở thành Server Component", "Hàm được đánh dấu là Server Function có thể được gọi từ client qua tích hợp framework", "File chuyển thành Client Component", "React bỏ qua kiểm tra đầu vào hàm"]
 answer = [1]
@@ -2142,6 +2260,7 @@ id = "react-x015"
 module = "react-server"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Trong SSR streaming, một vùng con còn chờ dữ liệu bên trong `<Suspense>`. Hành vi nào boundary cho phép?"
 options = ["Chặn toàn bộ response tới khi mọi vùng sẵn sàng", "Gửi fallback trước rồi stream nội dung khi vùng đó sẵn sàng", "Bỏ qua hydration cho toàn trang", "Tự retry vô hạn nếu dữ liệu lỗi"]
 answer = [1]
@@ -2153,6 +2272,7 @@ id = "react-x016"
 module = "react-server"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Trang SSR hiển thị thời gian khác nhau ở server và lần render client đầu, gây hydration mismatch. Hướng sửa nào tốt nhất?"
 options = ["Làm output ban đầu deterministic rồi đọc thời gian client sau hydration", "Tắt toàn bộ React Strict Mode", "Thêm `key={Date.now()}` cho root", "Bọc mọi component bằng `React.memo`"]
 answer = [0]
@@ -2164,6 +2284,7 @@ id = "react-x017"
 module = "react-effects"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "`fullName` chỉ là nối `firstName` và `lastName`. Component đang lưu thêm `fullName` bằng state rồi cập nhật trong effect. Cách đơn giản và đúng hơn là gì?"
 options = ["Tính `fullName` trực tiếp trong render", "Thêm effect thứ hai để đồng bộ", "Dùng ref thay state", "Dùng `useLayoutEffect` để chạy nhanh hơn"]
 answer = [0]
@@ -2175,6 +2296,7 @@ id = "react-x018"
 module = "react-effects"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Trong development với Strict Mode, effect có `connect()` và cleanup `disconnect()` có thể log theo thứ tự nào ở lần mount đầu?"
 options = ["connect", "connect rồi disconnect", "connect, disconnect, connect", "disconnect rồi connect rồi disconnect"]
 answer = [2]
@@ -2186,6 +2308,7 @@ id = "react-x019"
 module = "react-forms-a11y"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Input có `value={email}` nhưng không có `onChange`; người dùng không sửa được. Vì sao?"
 options = ["`value` tạo controlled input nên React giữ giá trị cố định nếu không cập nhật state", "React chỉ cho nhập bằng `defaultValue`", "Input phải nằm trong portal", "`value` chỉ dùng cho checkbox"]
 answer = [0]
@@ -2197,6 +2320,7 @@ id = "react-x020"
 module = "react-testing-arch"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Bạn cần kiểm tra nút lưu có tên truy cập được là “Save” và gọi handler khi nhấn. Truy vấn nào ưu tiên trong Testing Library?"
 options = ["`container.querySelector('.blue')`", "`getByRole('button', { name: 'Save' })`", "`getByTestId('save-1')`", "Tìm node thứ ba trong body"]
 answer = [1]
@@ -2207,6 +2331,7 @@ id = "react-x021"
 module = "react-effects"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Popover cần đo kích thước DOM rồi đặt vị trí đúng trước khi người dùng nhìn thấy frame đầu. Hook nào phù hợp hơn?"
 options = ["`useEffect`, vì luôn chạy trước paint", "`useLayoutEffect`, vì chạy sau commit nhưng trước paint", "`useMemo`, vì đọc DOM", "`useDeferredValue`, vì chặn layout"]
 answer = [1]
@@ -2218,6 +2343,7 @@ id = "react-x022"
 module = "react-effects"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Effect tạo connection theo `roomId`, còn callback ghi log cần đọc `theme` mới nhất nhưng đổi theme không nên reconnect. React 19 nên cân nhắc gì?"
 options = ["Đưa `theme` vào dependency và chấp nhận reconnect", "Dùng `useEffectEvent` cho logic log được gọi từ effect", "Đọc theme từ biến global", "Bỏ dependency `roomId`"]
 answer = [1]
@@ -2229,6 +2355,7 @@ id = "react-x023"
 module = "react-patterns"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Provider truyền `value={{ theme, setTheme }}`. Parent render vì state không liên quan, khiến consumer đọc context cập nhật. Nguyên nhân gần nhất là gì?"
 options = ["Context luôn cập nhật ở mọi lần render dù value giữ nguyên", "Object value mới có identity khác; có thể ổn định hoặc tách context nếu đo thấy vấn đề", "React.memo tự chặn mọi context update", "Context chỉ nhận primitive"]
 answer = [1]
@@ -2240,6 +2367,7 @@ id = "react-x024"
 module = "react-forms-a11y"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Thông báo “Email không hợp lệ” nên gắn với input bằng thuộc tính nào để người dùng công nghệ hỗ trợ nhận ra mô tả lỗi?"
 options = ["`aria-describedby` trỏ tới id của thông báo", "`data-error` trỏ tới class CSS", "`tabIndex=-1` trên input", "`aria-hidden=true` trên thông báo"]
 answer = [0]
@@ -2250,6 +2378,7 @@ id = "react-x025"
 module = "react-testing-arch"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Bộ lọc được dùng bởi `FilterPanel` và `Results`, hai component là anh em. Nơi hợp lý đầu tiên để đặt state là đâu?"
 options = ["Một biến global ngoài React", "Cha chung gần nhất cần phối hợp hai component", "Mỗi component giữ state riêng rồi đồng bộ bằng effect", "Một store toàn ứng dụng bất kể phạm vi"]
 answer = [1]
@@ -2260,6 +2389,7 @@ id = "react-x026"
 module = "react-testing-arch"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Module `Chart` chỉ export named export. Cách dùng `lazy` nào tạo đúng shape mà React mong đợi?"
 options = ["`lazy(() => import('./Chart'))` dù module không có default", "`lazy(() => import('./Chart').then(m => ({ default: m.Chart })))`", "`lazy(Chart)`", "`lazy(() => Promise.resolve(Chart))`"]
 answer = [1]
@@ -2271,6 +2401,7 @@ id = "react-x027"
 module = "react-perf"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "`useTransition` giúp cập nhật bộ lọc lớn phản hồi tốt hơn. Điều gì nó không đảm bảo?"
 options = ["Cập nhật được đánh dấu không khẩn cấp", "Có thể đọc trạng thái pending", "Một vòng lặp JavaScript đồng bộ nặng tự chạy nhanh hơn", "React có thể ưu tiên cập nhật khẩn cấp"]
 answer = [2]
@@ -2282,6 +2413,7 @@ id = "react-x028"
 module = "react-19"
 type = "single"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Khác với hook thông thường, `use(promise)` có thể được gọi trong trường hợp nào?"
 options = ["Trong component hoặc hook, kể cả nhánh điều kiện/loop; Promise vẫn cần identity ổn định", "Trong bất kỳ hàm JavaScript nào ngoài React", "Sau khi component đã unmount", "Chỉ bên trong `useEffect`"]
 answer = [0]
@@ -2293,6 +2425,7 @@ id = "react-x029"
 module = "react-19"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Những vai trò nào phù hợp với `useActionState`? (chọn nhiều)"
 options = ["Giữ state kết quả trả về từ action", "Cung cấp trạng thái pending của action", "Tự động biến mọi handler click thành Server Function", "Có thể dùng action làm form action", "Thay thế hoàn toàn validation phía server"]
 answer = [0, 1, 3]
@@ -2304,6 +2437,7 @@ id = "react-x030"
 module = "react-19"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn các nhận định đúng về `useOptimistic`. (chọn nhiều)"
 options = ["Có thể hiển thị state dự đoán trong lúc action đang xử lý", "State chuẩn vẫn cần cập nhật khi server trả kết quả", "Nếu action thất bại, UI có thể quay về state chuẩn", "Optimistic state bảo đảm request server thành công", "Nên tạo key tạm ổn định cho item mới"]
 answer = [0, 1, 2, 4]
@@ -2315,6 +2449,7 @@ id = "react-x041"
 module = "react-19"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Hook React DOM cho phép component con đọc `pending`, `data`, `method` và `action` của form cha là `{{blank}}`."
 blanks = [["useFormStatus"]]
 explanation = "`useFormStatus` được export từ React DOM và phải gọi trong component con nằm dưới form cần theo dõi."
@@ -2325,6 +2460,7 @@ id = "react-x042"
 module = "react-19"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "API React 19 đọc Promise hoặc Context trong lúc render, có thể suspend khi Promise pending, là `{{blank}}`."
 blanks = [["use"]]
 explanation = "`use(value)` đọc Promise hoặc Context; Promise pending có thể kích hoạt Suspense."
@@ -2335,6 +2471,7 @@ id = "react-x043"
 module = "react-effects"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Hàm được trả về từ `useEffect` để dọn subscription hoặc timer được gọi là hàm `{{blank}}`."
 blanks = [["cleanup", "clean-up"]]
 explanation = "Cleanup dọn tài nguyên của setup trước lần đồng bộ tiếp theo và khi component unmount."
@@ -2345,6 +2482,7 @@ id = "react-x044"
 module = "react-effects"
 type = "fill"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "React 19 API giúp effect gọi logic cần đọc state/props mới nhất mà không thêm chúng thành dependency của subscription là `{{blank}}`."
 blanks = [["useEffectEvent"]]
 explanation = "`useEffectEvent` tách logic effect event khỏi việc thiết lập lại subscription; chỉ gọi nó trong effect hoặc callback do effect tạo."
@@ -2355,6 +2493,7 @@ id = "react-x045"
 module = "react-effects"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Hook effect chạy sau commit nhưng trước khi browser paint, phù hợp với phép đo layout cần tránh nháy, là `{{blank}}`."
 blanks = [["useLayoutEffect"]]
 explanation = "`useLayoutEffect` chạy trước paint và có thể chặn paint; ưu tiên `useEffect` nếu không cần đo layout đồng bộ."
@@ -2365,6 +2504,7 @@ id = "react-x046"
 module = "react-forms-a11y"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Thuộc tính ARIA liên kết mô tả hoặc thông báo lỗi với input thông qua id là `{{blank}}`."
 blanks = [["aria-describedby"]]
 explanation = "`aria-describedby` trỏ tới id của phần tử mô tả input, thường gồm hướng dẫn hoặc lỗi validation."
@@ -2374,6 +2514,7 @@ id = "react-x047"
 module = "react-testing-arch"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Trong test React cần tự bọc thao tác gây cập nhật state và đợi cập nhật được áp dụng trước khi assert, API của React là `{{blank}}`."
 blanks = [["act"]]
 explanation = "`act` gom các cập nhật React phát sinh từ thao tác test trước khi assertion chạy; Testing Library thường đã bọc sẵn các tương tác phổ biến."
@@ -2384,6 +2525,7 @@ id = "react-x048"
 module = "react-perf"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "API tạo component được tải bất đồng bộ từ một module khi cần là `{{blank}}`; thường đặt trong `Suspense`."
 blanks = [["lazy"]]
 explanation = "`lazy` tải component từ Promise; `Suspense` hiển thị fallback trong thời gian tải."
@@ -2394,6 +2536,7 @@ id = "react-x049"
 module = "react-effects"
 type = "essay"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Giải thích cách quyết định có cần `useEffect` không. Nêu ít nhất một trường hợp nên tính trong render hoặc xử lý trong event handler, và một trường hợp effect phù hợp."
 keywords = [["derived state", "giá trị dẫn xuất", "tính trực tiếp"], ["event handler", "trình xử lý sự kiện"], ["external system", "hệ thống bên ngoài", "subscription", "timer"]]
 min_keywords = 2
@@ -2408,6 +2551,7 @@ id = "react-x050"
 module = "react-effects"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Mô tả cách tránh race condition khi fetch theo `userId` đổi nhanh. Phân biệt hủy request với bỏ qua kết quả cũ."
 keywords = [["AbortController", "abort", "hủy request"], ["cleanup", "dọn dẹp"], ["ignore flag", "cờ ignore", "stale result", "kết quả cũ"], ["race condition", "điều kiện tranh chấp"]]
 min_keywords = 3
@@ -2422,6 +2566,7 @@ id = "react-x051"
 module = "react-server"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Giải thích khác nhau giữa `'use client'`, `'use server'`, Server Component và Server Function; nêu ràng buộc props qua ranh giới."
 keywords = [["use client", "client boundary"], ["use server", "Server Function", "server function"], ["Server Component", "server component"], ["serializable", "tuần tự hóa"]]
 min_keywords = 3
@@ -2436,6 +2581,7 @@ id = "react-x052"
 module = "react-19"
 type = "essay"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Mô tả cách phối hợp `useActionState`, `useOptimistic` và `useFormStatus` khi gửi form cập nhật hồ sơ."
 keywords = [["useActionState"], ["useOptimistic"], ["useFormStatus"], ["pending", "đang xử lý"], ["rollback", "quay lại", "state chuẩn"]]
 min_keywords = 4
@@ -2450,6 +2596,7 @@ id = "react-x053"
 module = "react-server"
 type = "essay"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Nêu nguyên nhân phổ biến của hydration mismatch và cách chẩn đoán/sửa trường hợp UI phụ thuộc thời gian hoặc browser API."
 keywords = [["hydration mismatch", "lệch hydration"], ["deterministic", "xác định", "ổn định"], ["initial render", "render đầu", "lần render đầu"], ["browser-only", "window", "browser api"]]
 min_keywords = 3
@@ -2464,6 +2611,7 @@ id = "react-x054"
 module = "react-forms-a11y"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Thiết kế phản hồi validation accessible cho form nhiều field: label, liên kết lỗi, trạng thái invalid, focus sau submit và yêu cầu cho modal portal."
 keywords = [["label", "nhãn"], ["aria-describedby", "describedby"], ["aria-invalid", "invalid"], ["focus", "focus field", "đưa focus"], ["portal", "modal"]]
 min_keywords = 4
@@ -2477,6 +2625,7 @@ id = "react-x055"
 module = "react-testing-arch"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Giải thích cách tổ chức test và state cho một trang có filter, kết quả tải lazy và vùng có thể lỗi. Nêu query Testing Library phù hợp."
 keywords = [["getByRole", "role"], ["state colocation", "colocation", "state gần nơi dùng"], ["Context", "context"], ["Error Boundary", "error boundary"], ["lazy", "code splitting"], ["Suspense", "fallback"]]
 min_keywords = 4
@@ -2490,6 +2639,7 @@ id = "react-xc01"
 module = "react-basics"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 lang = "javascript"
 title = "useSelection"
 prompt = '''
@@ -2548,6 +2698,7 @@ id = "react-xc02"
 module = "react-state"
 type = "code"
 difficulty = 3
+tags = ["level:senior"]
 lang = "javascript"
 title = "Task reducer"
 prompt = '''
@@ -2626,6 +2777,7 @@ id = "react-xc03"
 module = "react-hooks"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 lang = "javascript"
 title = "useDebouncedValue"
 prompt = '''
@@ -2685,6 +2837,7 @@ id = "react-xc04"
 module = "react-perf"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 lang = "javascript"
 title = "Memoized todo selector"
 prompt = '''
@@ -2744,6 +2897,7 @@ id = "react-xc05"
 module = "react-patterns"
 type = "code"
 difficulty = 3
+tags = ["level:senior"]
 lang = "javascript"
 title = "Memoized context selector"
 prompt = '''
@@ -2815,6 +2969,7 @@ id = "react-xc06"
 module = "react-perf"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 lang = "javascript"
 title = "Virtual list range"
 prompt = '''
@@ -2859,6 +3014,7 @@ id = "react-xc07"
 module = "react-19"
 type = "code"
 difficulty = 3
+tags = ["level:senior"]
 lang = "javascript"
 title = "Optimistic list state"
 prompt = '''
@@ -2940,6 +3096,7 @@ id = "react-xc08"
 module = "react-19"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 lang = "javascript"
 title = "Profile action reducer"
 prompt = '''
@@ -2989,6 +3146,7 @@ id = "react-xc09"
 module = "react-server"
 type = "code"
 difficulty = 3
+tags = ["level:senior"]
 lang = "javascript"
 title = "Suspense resource reader"
 prompt = '''
@@ -3062,6 +3220,7 @@ id = "react-xc10"
 module = "react-effects"
 type = "code"
 difficulty = 3
+tags = ["level:senior"]
 lang = "javascript"
 title = "useFetch with cancellation and race guard"
 prompt = '''
@@ -3169,6 +3328,7 @@ id = "react-xc11"
 module = "react-effects"
 type = "code"
 difficulty = 3
+tags = ["level:senior"]
 lang = "javascript"
 title = "useThrottledValue"
 prompt = '''
@@ -3246,6 +3406,7 @@ id = "react-xc12"
 module = "react-effects"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 lang = "javascript"
 title = "useIntervalCounter cleanup"
 prompt = '''
@@ -3305,6 +3466,7 @@ id = "react-xc13"
 module = "react-forms-a11y"
 type = "code"
 difficulty = 3
+tags = ["level:senior"]
 lang = "javascript"
 title = "useFormValidation"
 prompt = '''
@@ -3386,6 +3548,7 @@ id = "react-xc14"
 module = "react-forms-a11y"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 lang = "javascript"
 title = "First invalid field"
 prompt = '''
@@ -3429,6 +3592,7 @@ id = "react-xc15"
 module = "react-testing-arch"
 type = "code"
 difficulty = 3
+tags = ["level:senior"]
 lang = "javascript"
 title = "Undo and redo history hook"
 prompt = '''
@@ -3537,6 +3701,7 @@ id = "react-x031"
 module = "react-server"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Khi truyền dữ liệu từ Server Component sang Client Component, quy tắc nào cần nhớ? (chọn nhiều)"
 options = ["Props qua ranh giới cần tuần tự hóa được", "Có thể giữ tương tác trong một client subtree nhỏ", "Server Function là ngoại lệ có thể chuyển tham chiếu gọi được", "Truyền callback JavaScript thông thường luôn an toàn", "`'use client'` đặt ở đầu module tạo boundary"]
 answer = [0, 1, 2, 4]
@@ -3548,6 +3713,7 @@ id = "react-x032"
 module = "react-server"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Lợi ích hoặc yêu cầu nào gắn với Suspense và streaming SSR? (chọn nhiều)"
 options = ["Boundary có thể gửi fallback trước nội dung chậm", "Các vùng độc lập có thể hoàn tất theo thời điểm khác nhau", "Hydration mismatch vẫn cần được xử lý riêng", "Suspense tự sửa mọi khác biệt giữa server và client", "Fallback nên mô tả trạng thái chờ có ích"]
 answer = [0, 1, 2, 4]
@@ -3559,6 +3725,7 @@ id = "react-x033"
 module = "react-effects"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Effect tạo subscription theo `roomId`. Chọn các thực hành đúng. (chọn nhiều)"
 options = ["Cleanup subscription cũ trước khi đồng bộ với room mới", "Đặt mọi dependency cần thiết để effect không đọc closure cũ", "Đảm bảo setup-cleanup-setup vẫn cho một subscription đang hoạt động", "Bỏ cleanup vì Strict Mode chỉ chạy development", "Dùng Effect Event cho logic callback cần giá trị mới nhất nhưng không đổi subscription"]
 answer = [0, 1, 2, 4]
@@ -3570,6 +3737,7 @@ id = "react-x034"
 module = "react-forms-a11y"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một form có validation phía client. Những bước nào giúp field lỗi dễ nhận biết và sửa? (chọn nhiều)"
 options = ["Có label gắn với input", "Gắn thông báo qua `aria-describedby`", "Đặt `aria-invalid` khi field có lỗi", "Sau submit lỗi, focus field lỗi đầu tiên", "Dùng màu đỏ duy nhất để báo lỗi"]
 answer = [0, 1, 2, 3]
@@ -3580,6 +3748,7 @@ id = "react-x035"
 module = "react-forms-a11y"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Một modal được render bằng portal. Những điều nào vẫn cần xử lý? (chọn nhiều)"
 options = ["Accessible name cho dialog", "Đưa focus vào dialog và quản lý focus bên trong", "Trả focus về nút mở dialog khi đóng", "Cho phép đóng bằng Escape nếu phù hợp", "Cho rằng portal tự tạo focus trap"]
 answer = [0, 1, 2, 3]
@@ -3591,6 +3760,7 @@ id = "react-x036"
 module = "react-testing-arch"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn cách truy vấn Testing Library phù hợp. (chọn nhiều)"
 options = ["`getByRole` cho phần tử cần có ngay", "`findByRole` khi phần tử sẽ xuất hiện bất đồng bộ", "`queryByRole` khi muốn kiểm tra phần tử hiện chưa có", "`getByTestId` luôn ưu tiên hơn role", "Dùng accessible name để phân biệt các nút cùng role"]
 answer = [0, 1, 2, 4]
@@ -3601,6 +3771,7 @@ id = "react-x037"
 module = "react-patterns"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn các nhận định hợp lý về state colocation và Context. (chọn nhiều)"
 options = ["Đặt state gần nơi dùng thường giảm số consumer phụ thuộc", "Lifting state up phù hợp khi vài component cần cùng một state", "Context value đổi có thể render lại consumer đang đọc context", "Context tự chọn field và chỉ notify đúng consumer field đó", "External store có selector hữu ích khi cần subscription chọn lọc"]
 answer = [0, 1, 2, 4]
@@ -3612,6 +3783,7 @@ id = "react-x038"
 module = "react-perf"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Bạn viết selector dùng `useMemo` để lọc 20.000 hàng. Những thực hành nào đúng? (chọn nhiều)"
 options = ["Liệt kê đủ `items` và `filter` trong dependency", "Đo bằng Profiler trước/sau để kiểm tra lợi ích", "Giữ `items` identity ổn định nếu nội dung không đổi", "Bỏ dependency `filter` để cache lâu hơn", "Nhớ rằng `useMemo` là tối ưu hiệu năng, không phải nơi giữ state chuẩn"]
 answer = [0, 1, 2, 4]
@@ -3623,6 +3795,7 @@ id = "react-x039"
 module = "react-19"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Hook nhận action và initial state, trả về state, hàm dispatch cùng trạng thái pending là `{{blank}}`."
 blanks = [["useActionState"]]
 explanation = "`useActionState(action, initialState)` trả về `[state, dispatchAction, isPending]`."
@@ -3633,6 +3806,7 @@ id = "react-x040"
 module = "react-19"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Trong React 19, hook dùng để hiện state tạm trong lúc action đang xử lý là `{{blank}}`."
 blanks = [["useOptimistic"]]
 explanation = "`useOptimistic` tạo optimistic state trong thời gian chờ kết quả action/server."
@@ -3643,6 +3817,7 @@ id = "react-dv001"
 module = "react-dv-rules"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một component cần hiển thị danh sách theo thứ tự tên. Vì sao nên tránh gọi `items.sort(compareByName)` trực tiếp trên prop trong lúc render?"
 options = ["`sort` sửa mảng đầu vào, làm render gây side effect và có thể ảnh hưởng component khác", "React chỉ cho phép sort trong event handler", "`sort` luôn chạy bất đồng bộ", "Mảng đã sort sẽ không thể có `key`"]
 answer = [0]
@@ -3654,6 +3829,7 @@ id = "react-dv002"
 module = "react-dv-rules"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Một component chỉ cần dùng `useState` khi `enabled` là true. Cách sửa nào giữ đúng Rules of Hooks?"
 options = ["Gọi `useState` vô điều kiện ở đầu component rồi dùng `enabled` để quyết định phần UI", "Gọi `useState` bên trong `if (enabled)`", "Gọi `useState` trong callback của nút bật", "Gọi `useState` trong một vòng lặp chỉ khi enabled"]
 answer = [0]
@@ -3665,6 +3841,7 @@ id = "react-dv003"
 module = "react-dv-rules"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một component gọi `setTotal(total + 1)` ngay trong thân hàm render để tự cập nhật dữ liệu. Vấn đề chính là gì?"
 options = ["Cập nhật state trong render có thể tạo vòng lặp render và vi phạm tính thuần", "Setter chỉ hoạt động trong class component", "React tự bỏ qua mọi setter trong function component", "`total + 1` luôn trả về chuỗi"]
 answer = [0]
@@ -3676,6 +3853,7 @@ id = "react-dv004"
 module = "react-dv-rules"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Đoạn `useMemo(() => items.sort(compare).filter(item => item.name.includes(query)), [items])` có thể vi phạm hoặc gây lỗi nào? (chọn nhiều)"
 options = ["`sort` mutate mảng `items`", "`query` bị thiếu trong dependency nên kết quả có thể dùng query cũ", "`filter` luôn làm mất identity của component", "Compiler không hỗ trợ mọi lời gọi `filter`", "`useMemo` không được gọi trong component"]
 answer = [0, 1]
@@ -3687,6 +3865,7 @@ id = "react-dv005"
 module = "react-dv-rules"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Hành vi nào làm render không còn thuần hoặc không an toàn nếu React gọi lại component? (chọn nhiều)"
 options = ["Gọi `Date.now()` để đưa thời gian hiện tại vào JSX", "Gọi `window.addEventListener` trực tiếp trong render", "Gọi `items.push(newItem)` trên props", "Tạo mảng mới bằng `items.filter(...)`", "Hiển thị `count + 1` từ props"]
 answer = [0, 1, 2]
@@ -3698,6 +3877,7 @@ id = "react-dv006"
 module = "react-dv-rules"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Để sort một prop array mà không mutate mảng gốc, hãy tạo bản sao trước bằng `{{blank}}`."
 blanks = [["items.slice()", "[...items]"]]
 explanation = "`slice()` hoặc spread tạo array mới; có thể gọi sort trên bản sao đó thay vì sửa prop."
@@ -3708,6 +3888,7 @@ id = "react-dv007"
 module = "react-dv-rules"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Trong phỏng vấn, hãy giải thích vì sao React khuyến khích component thuần và cập nhật state bất biến. Liên hệ điều đó với việc React có thể render lại hoặc thử lại component."
 keywords = [["pure", "purity", "thuần"], ["same inputs", "same output", "cùng đầu vào"], ["retry", "interrupted", "render lại"], ["immutable", "immutability", "bất biến"]]
 min_keywords = 3
@@ -3720,6 +3901,7 @@ id = "react-dvc01"
 module = "react-dv-rules"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 lang = "javascript"
 title = "Cập nhật todo bất biến"
 prompt = '''Viết `updateTodo(todos, id, patch)` trả về một **array mới**. Với todo có `id` trùng khớp, tạo object mới bằng cách gộp các field của `patch` lên todo cũ. Giữ nguyên thứ tự; không sửa array hoặc object đầu vào. Các todo không khớp phải giữ nguyên identity. Nếu không có id khớp, vẫn trả về array mới với các phần tử cũ.'''
@@ -3768,6 +3950,7 @@ id = "react-dv008"
 module = "react-dv-compiler"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "React Compiler chủ yếu phân tích component và thêm tối ưu ở giai đoạn nào?"
 options = ["Trong lúc build ứng dụng", "Khi người dùng bấm lần đầu", "Khi server nhận request đầu tiên", "Trong một Effect sau mỗi render"]
 answer = [0]
@@ -3779,6 +3962,7 @@ id = "react-dv009"
 module = "react-dv-compiler"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Mục đích của directive `'use no memo'` trong code được React Compiler xử lý là gì?"
 options = ["Yêu cầu compiler bỏ qua phạm vi được đánh dấu", "Xóa mọi cache của trình duyệt", "Tắt `useMemo` trong toàn bộ ứng dụng khi runtime", "Bắt React render component đúng một lần"]
 answer = [0]
@@ -3790,6 +3974,7 @@ id = "react-dv010"
 module = "react-dv-compiler"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Sau khi bật React Compiler, lựa chọn nào hợp lý khi đánh giá một component vẫn render nhiều?"
 options = ["Kiểm tra compiler diagnostics và đo bằng Profiler thay vì giả định mọi component đều được cache", "Thêm `useMemo` vào mọi biểu thức", "Xóa dependency của các Effect để giảm render", "Bỏ kiểm thử vì compiler đảm bảo code không lỗi"]
 answer = [0]
@@ -3801,6 +3986,7 @@ id = "react-dv011"
 module = "react-dv-compiler"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Một nhóm muốn áp dụng React Compiler vào ứng dụng đang chạy ổn định. Những bước nào giúp giảm rủi ro? (chọn nhiều)"
 options = ["Đọc hướng dẫn cấu hình cho toolchain đang dùng", "Dùng lint/diagnostics để tìm code không tương thích", "Có thể giới hạn phạm vi hoặc dùng gating khi rollout", "Giả định compiler sẽ sửa mutation trong component", "So sánh hành vi và hiệu năng trước/sau trên luồng đại diện"]
 answer = [0, 1, 2, 4]
@@ -3812,6 +3998,7 @@ id = "react-dv012"
 module = "react-dv-compiler"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn các nhận định đúng về memoization khi dùng React Compiler. (chọn nhiều)"
 options = ["Compiler có thể tự thêm cache cho phép tính/component phù hợp", "Code chưa được compiler tối ưu vẫn cần trả kết quả đúng", "`useMemo` và `useCallback` vẫn có thể được giữ khi có lý do cụ thể", "Compiler bảo đảm component không bao giờ render lại", "Mọi giá trị được tạo trong render cần bọc `useMemo` thủ công"]
 answer = [0, 1, 2]
@@ -3823,6 +4010,7 @@ id = "react-dv013"
 module = "react-dv-compiler"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Một tối ưu chính React Compiler có thể tự thêm vào code phù hợp là `{{blank}}`."
 blanks = [["memoization"]]
 explanation = "Compiler phân tích code rồi có thể thêm memoization để tái sử dụng giá trị hoặc kết quả render."
@@ -3833,6 +4021,7 @@ id = "react-dv014"
 module = "react-dv-compiler"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Trong phỏng vấn, hãy nêu cách đưa React Compiler vào một ứng dụng lớn và cách xác định nó đang giúp ích mà không ảnh hưởng correctness."
 keywords = [["build time", "build-time", "compiler configuration"], ["lint", "diagnostic", "compiler report"], ["gating", "incremental", "gradual"], ["profile", "measure", "performance"]]
 min_keywords = 3
@@ -3845,6 +4034,7 @@ id = "react-dvc02"
 module = "react-dv-compiler"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 lang = "javascript"
 title = "Selector sản phẩm thuần"
 prompt = '''Viết `filterProducts(products, query)` trả về các sản phẩm có `name` chứa query, không phân biệt hoa thường. Bỏ khoảng trắng ở đầu/cuối query, giữ nguyên thứ tự đầu vào và không sửa array hoặc object sản phẩm. Query rỗng phải trả về tất cả sản phẩm.'''
@@ -3886,6 +4076,7 @@ id = "react-dv015"
 module = "react-dv-ssr"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Server đã gửi HTML cho `<App />`. Client nên gọi API nào để gắn React vào markup đó?"
 options = ["`hydrateRoot(container, <App />)`", "`createRoot(container).render(<App />)`", "`renderToString(<App />)`", "`prerender(<App />)`"]
 answer = [0]
@@ -3897,6 +4088,7 @@ id = "react-dv016"
 module = "react-dv-ssr"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một trang client-only mount vào container rỗng. API nào phù hợp?"
 options = ["`createRoot`", "`hydrateRoot`", "`renderToPipeableStream`", "`prerender`"]
 answer = [0]
@@ -3908,6 +4100,7 @@ id = "react-dv017"
 module = "react-dv-ssr"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Server Node muốn stream HTML React qua Node writable stream. API nào được thiết kế cho trường hợp đó?"
 options = ["`renderToPipeableStream`", "`renderToReadableStream`", "`renderToString`", "`createRoot`"]
 answer = [0]
@@ -3919,6 +4112,7 @@ id = "react-dv018"
 module = "react-dv-ssr"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Hydration warning xuất hiện vì markup client ban đầu khác HTML server. Hướng xử lý đúng nhất là gì?"
 options = ["Tìm và làm đồng nhất dữ liệu/logic của hai lần render đầu", "Luôn bọc component trong `suppressHydrationWarning`", "Gọi `createRoot` thay `hydrateRoot` để giữ markup", "Tắt Strict Mode trong production"]
 answer = [0]
@@ -3930,6 +4124,7 @@ id = "react-dv019"
 module = "react-dv-ssr"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Những khác biệt nào có thể làm markup server và lần render đầu của client không khớp? (chọn nhiều)"
 options = ["Dùng `Date.now()` để tạo nội dung", "Dùng số ngẫu nhiên trong render", "Dựa vào timezone/locale khác nhau giữa server và browser", "Đọc `window.innerWidth` trực tiếp để chọn markup client", "Tạo một object mới trong render nhưng không hiển thị nội dung của nó"]
 answer = [0, 1, 2, 3]
@@ -3941,6 +4136,7 @@ id = "react-dv020"
 module = "react-dv-ssr"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Chọn các mô tả đúng về server rendering API. (chọn nhiều)"
 options = ["`renderToPipeableStream` dùng Node streams", "`renderToReadableStream` dùng Web Streams", "`hydrateRoot` tiếp tục từ HTML server đã tạo", "`createRoot` hydrate HTML server có sẵn", "`renderToString` gửi dần từng chunk khi Suspense hoàn tất"]
 answer = [0, 1, 2]
@@ -3952,6 +4148,7 @@ id = "react-dv021"
 module = "react-dv-ssr"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Để hydrate markup server, dùng `{{blank}}(container, <App />)`."
 blanks = [["hydrateRoot"]]
 explanation = "`hydrateRoot` nhận container chứa HTML server và cây React phía client."
@@ -3962,9 +4159,581 @@ id = "react-dv022"
 module = "react-dv-ssr"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Giải thích nguyên nhân thường gặp của hydration mismatch và nêu thứ tự bạn sẽ dùng để tìm lỗi trong ứng dụng SSR."
 keywords = [["server", "client"], ["same", "match", "khớp"], ["date", "random", "locale", "timezone", "browser"], ["deterministic", "đồng nhất", "initial render"]]
 min_keywords = 3
 model_answer = '''Hydration cần markup server và lần render đầu của client khớp. Tôi sẽ so sánh dữ liệu/props hai phía, rồi tìm giá trị không deterministic như Date.now, random, locale/timezone hoặc nhánh đọc browser API. Sau đó kiểm tra HTML browser đã parse và sửa nguồn đầu vào để hai môi trường tạo cùng markup ban đầu.'''
 explanation = "Câu trả lời cần kết nối yêu cầu markup khớp với các nguồn khác biệt theo môi trường và cách kiểm tra có thứ tự."
 sources = ["react/reference/react-dom/client/hydrateroot", "react/reference/react-dom/server/rendertostring"]
+
+# ============================================================ LEVELS (junior → lead)
+[[questions]]
+id = "react-lv001"
+module = "react-basics"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "events"]
+prompt = '''
+Đoạn code sau có vấn đề gì?
+
+```jsx
+function Save({ onSave }) {
+  return <button onClick={onSave()}>Lưu</button>;
+}
+```
+'''
+options = [
+  "Không vấn đề, `onSave` sẽ chạy khi bấm nút",
+  "`onSave()` bị gọi ngay trong lúc render và kết quả của nó mới được gán cho `onClick`",
+  "`onClick` phải viết thường là `onclick`",
+  "Nút `button` không nhận được sự kiện click trong React",
+]
+answer = [1]
+explanation = "Cần truyền **tham chiếu hàm** (`onClick={onSave}`) hoặc bọc `() => onSave(arg)`. Viết `onSave()` thực thi hàm ngay khi render, thường gây side effect hoặc vòng lặp render."
+
+[[questions]]
+id = "react-lv002"
+module = "react-state"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "state"]
+prompt = '''
+`count` đang là `0`. Sau một lần bấm nút, `count` ở lần render kế tiếp là bao nhiêu?
+
+```jsx
+function handleClick() {
+  setCount(count + 1);
+  setCount(count + 1);
+  setCount(count + 1);
+}
+```
+'''
+options = ["0", "1", "3", "Báo lỗi vì gọi setState nhiều lần"]
+answer = [1]
+explanation = "Trong một lần render, `count` là giá trị cố định `0`, nên cả ba lần đều đặt state thành `1`. Muốn cộng dồn phải dùng updater: `setCount(c => c + 1)`."
+
+[[questions]]
+id = "react-lv003"
+module = "react-state"
+type = "fill"
+difficulty = 1
+tags = ["level:junior", "forms"]
+prompt = '''
+Hoàn thành controlled input:
+
+```jsx
+const [text, setText] = useState('');
+return <input value={text} {{blank}}={e => setText(e.target.value)} />;
+```
+'''
+blanks = [["onChange"]]
+explanation = "Controlled input có `value` do state điều khiển và `onChange` cập nhật state từ `e.target.value`. Thiếu `onChange`, ô nhập sẽ bị đóng băng (chỉ đọc)."
+
+[[questions]]
+id = "react-lv004"
+module = "react-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "server-state"]
+prompt = '''
+Team 4 người, deadline 2 tuần, làm dashboard gọi ~30 endpoint. Yêu cầu: dữ liệu cache khi quay lại màn cũ, tự refetch khi tab được focus lại, retry khi mạng lỗi, tránh gọi trùng cùng một request. Ai trong team cũng từng tự viết `useEffect` + `fetch`. Bạn chọn gì?
+'''
+options = [
+  "Tự viết hook `useFetch` dùng `useEffect` và thêm dần cache, retry, dedupe khi cần",
+  "Dùng một thư viện quản lý server state (cache, dedupe, retry, refetch có sẵn) và chuẩn hoá quy ước query key",
+  "Đưa toàn bộ response vào store toàn cục bằng reducer và action thủ công",
+  "Viết lại ứng dụng bằng React Server Components để khỏi cần cache phía client",
+]
+answer = [1]
+explanation = "Bốn yêu cầu đều là tính năng của thư viện query sẵn có; tự viết lại trong 2 tuần với 4 người tốn công và dễ lỗi race condition. Store thủ công buộc tự làm cache/invalidation. RSC là thay đổi kiến trúc lớn, rủi ro cao so với deadline và không giải quyết refetch khi focus."
+
+[[questions]]
+id = "react-lv005"
+module = "react-lead"
+type = "multiple"
+difficulty = 3
+tags = ["level:lead", "rendering"]
+prompt = "Bạn quyết định chiến lược render cho một **công cụ nội bộ phía sau đăng nhập**, 200 người dùng, không cần SEO, team 3 người chuyên SPA. Những nhận định nào hợp lý? (chọn nhiều)"
+options = [
+  "CSR phục vụ qua CDN là điểm xuất phát hợp lý vì đơn giản và rẻ để vận hành",
+  "Nên triển khai SSR streaming ngay từ đầu để \"phòng xa\", vì SSR luôn nhanh hơn",
+  "Chi phí vận hành server render (scale, cache, lỗi hydration) cần được đối chiếu với lợi ích thực tế, ở đây lợi ích nhỏ",
+  "Có thể đổi sang SSR/RSC sau nếu có số liệu LCP kém, nên chọn phương án dễ đổi ý",
+  "SEO là lý do bắt buộc phải có SSR cho mọi ứng dụng",
+]
+answer = [0, 2, 3]
+explanation = "Không có SEO, ít người dùng và team nhỏ, CSR giảm chi phí và độ phức tạp; chiến lược rẻ để đổi ý là ưu tiên. SSR không \"luôn nhanh hơn\" (thêm TTFB và tải server) và SEO không áp dụng cho trang sau đăng nhập."
+
+[[questions]]
+id = "react-lv006"
+module = "react-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "error-handling"]
+prompt = "Trang chủ có 6 widget độc lập (tin tức, biểu đồ, thông báo…). Hiện một widget ném lỗi render làm trắng cả trang. Bạn muốn giảm tác động mà không thêm nhiều code. Phương án nào hợp lý nhất?"
+options = [
+  "Chỉ đặt một error boundary ở gốc ứng dụng với trang lỗi chung",
+  "Bọc mỗi widget độc lập bằng error boundary có UI dự phòng và nút thử lại, kèm báo lỗi lên hệ thống giám sát; giữ thêm một boundary ở gốc",
+  "Bọc mọi hàm trong `try/catch` để bắt lỗi render",
+  "Dùng `window.onerror` để reload trang khi có lỗi",
+]
+answer = [1]
+explanation = "Boundary theo vùng giới hạn \"bán kính nổ\" của lỗi: widget hỏng chỉ ảnh hưởng chính nó, phần còn lại vẫn dùng được. Boundary gốc duy nhất vẫn làm mất cả trang. `try/catch` trong thân component không bắt được lỗi do con render ra, và reload tự động che giấu sự cố, có thể gây vòng lặp."
+
+[[questions]]
+id = "react-lv007"
+module = "react-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "architecture"]
+prompt = "Một thành viên đề xuất micro-frontend cho ứng dụng hiện tại: 8 dev trong 2 team, cùng một repo, cùng pipeline deploy, release 1 lần/tuần, codebase build 4 phút. Nên làm gì?"
+options = [
+  "Áp dụng micro-frontend ngay để các team \"độc lập\"",
+  "Giữ monorepo một ứng dụng; chia theo route/feature với ranh giới module rõ (lint rule về import), chỉ xem micro-frontend khi có nhiều team cần deploy độc lập thật sự",
+  "Tách mỗi trang thành một repo riêng",
+  "Chuyển sang iframe cho từng phần để cô lập hoàn toàn",
+]
+answer = [1]
+explanation = "Micro-frontend đem lại độc lập deploy nhưng trả giá bằng phức tạp: chia sẻ dependency, trải nghiệm không đồng nhất, routing/state chéo, thêm hạ tầng. Với 8 dev, một pipeline và build nhanh, lợi ích gần như bằng 0; ranh giới module trong monorepo cho 80% lợi ích với chi phí thấp."
+
+[[questions]]
+id = "react-lv008"
+module = "react-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "migration"]
+prompt = "Ứng dụng React 18 có 200+ component, release hằng tuần, bạn có 6 tuần để lên React 19 mà không làm gián đoạn sản phẩm. Kế hoạch nào an toàn nhất?"
+options = [
+  "Đóng băng tính năng 6 tuần, nâng cấp một lượt rồi phát hành",
+  "Lên bản 18 mới nhất, xử lý các cảnh báo deprecated, chạy codemod chính thức, nâng từng phần với test và canary/feature flag, có kế hoạch rollback",
+  "Bỏ qua cảnh báo và nâng thẳng, sửa lỗi khi người dùng báo",
+  "Giữ nguyên React 18 vì \"đang chạy ổn\", không bao giờ nâng cấp",
+]
+answer = [1]
+explanation = "Xử lý cảnh báo ở bản 18 giúp tách rủi ro: thay đổi gỡ bỏ API cũ gặp trước khi đổi major. Nâng dần và có rollback giữ nhịp release. \"Big bang\" dồn rủi ro, còn nâng mù khiến người dùng thành tester; không nâng cũng tích tụ nợ và mất vá lỗi."
+
+[[questions]]
+id = "react-lv009"
+module = "react-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "testing"]
+prompt = "Pipeline CI của team 5 người mất 40 phút vì 120 bài E2E, trong đó nhiều bài flaky; dev đã bắt đầu chạy lại cho đến khi xanh. Bạn xử lý thế nào?"
+options = [
+  "Tăng số lần retry tự động lên 5 để pipeline luôn xanh",
+  "Giữ E2E cho khoảng 10–15 luồng quan trọng nhất, chuyển phần còn lại xuống test hành vi cấp component/integration, cách ly và sửa/loại test flaky, chạy song song",
+  "Xoá toàn bộ E2E và chỉ dùng unit test",
+  "Chỉ chạy E2E thủ công trước khi phát hành",
+]
+answer = [1]
+explanation = "Mục tiêu là lấy lại niềm tin vào tín hiệu CI: ít E2E nhưng ổn định, kiểm các luồng sinh tiền, còn lại chạy ở tầng rẻ hơn. Retry nhiều che giấu lỗi thật; xoá hết E2E bỏ mất bảo vệ luồng quan trọng; chạy thủ công chậm và không lặp lại được."
+
+[[questions]]
+id = "react-lv010"
+module = "react-lead"
+type = "multiple"
+difficulty = 3
+tags = ["level:lead", "performance"]
+prompt = "Bạn muốn đưa hiệu năng thành KPI của team frontend. Những việc nào hợp lý? (chọn nhiều)"
+options = [
+  "Đặt performance budget (kích thước bundle, LCP/INP mục tiêu) và để CI cảnh báo/chặn khi vượt",
+  "Đo dữ liệu thực tế từ người dùng (RUM) bên cạnh số liệu lab như Lighthouse",
+  "Yêu cầu bọc mọi component bằng `memo` để \"cho chắc\"",
+  "Ưu tiên sửa theo trang/luồng có lưu lượng và ảnh hưởng doanh thu lớn nhất",
+  "Chỉ chạy Lighthouse trên máy dev có cấu hình mạnh và coi đó là sự thật",
+]
+answer = [0, 1, 3]
+explanation = "Budget trong CI biến hiệu năng thành tiêu chí chấp nhận; RUM phản ánh thiết bị/mạng thật; ưu tiên theo tác động. `memo` đại trà tốn chi phí so sánh mà không có số đo, còn số liệu từ máy mạnh sai lệch với người dùng thật."
+
+[[questions]]
+id = "react-lv011"
+module = "react-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "state"]
+prompt = "Team vừa chuyển sang một store toàn cục và đang nhét mọi thứ vào đó: trạng thái mở/đóng modal, nội dung ô nhập của form, danh sách dữ liệu từ API. Màn hình nào cũng re-render nhiều, PR nào cũng đụng vào store. Hướng sửa hợp lý nhất?"
+options = [
+  "Chuyển sang một store toàn cục khác nhanh hơn",
+  "Phân loại state: dữ liệu từ server giao cho thư viện cache, state UI/form đặt cục bộ (`useState`), chỉ giữ trong store phần thật sự dùng chéo nhiều vùng xa nhau",
+  "Bọc mọi selector bằng `useMemo` để giảm re-render",
+  "Chia store thành 30 store nhỏ nhưng vẫn để mọi loại state trong đó",
+]
+answer = [1]
+explanation = "Gốc vấn đề là trộn ba loại state có vòng đời khác nhau. Đổi công cụ hay chia nhỏ store không giải quyết việc đặt sai chỗ. Đặt state gần nơi dùng nhất vừa giảm re-render vừa giảm xung đột khi review."
+
+[[questions]]
+id = "react-lv012"
+module = "react-lead"
+type = "multiple"
+difficulty = 3
+tags = ["level:lead", "adr"]
+prompt = "Bạn viết ADR cho quyết định \"chọn thư viện form cho cả công ty\". Những mục nào nên có trong ADR? (chọn nhiều)"
+options = [
+  "Bối cảnh và ràng buộc (số team, loại form, yêu cầu a11y, hiệu năng)",
+  "Các phương án đã xét, kể cả giữ nguyên hiện trạng, cùng lý do loại bỏ",
+  "Hệ quả và rủi ro chấp nhận được, cách rút lui nếu quyết định sai",
+  "Tên người đã bỏ phiếu phản đối để mọi người biết",
+  "Thời điểm hoặc chỉ số để xem lại quyết định",
+]
+answer = [0, 1, 2, 4]
+explanation = "ADR ghi lý do và đánh đổi, không phải biên bản chính trị. Cần bối cảnh, phương án thay thế, hệ quả/đường lui và điều kiện xem lại để người đến sau đánh giá được quyết định còn hợp lệ hay không."
+
+[[questions]]
+id = "react-lv013"
+module = "react-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "compiler"]
+prompt = "Codebase 5 năm tuổi, hàng trăm `useMemo`/`useCallback` viết tay, vài component vi phạm Rules of React. Bạn muốn thử React Compiler nhưng không được phép gây regression. Cách tiếp cận nào hợp lý?"
+options = [
+  "Bật compiler cho toàn bộ codebase ngay và xoá mọi `useMemo`/`useCallback` trong cùng PR",
+  "Bật theo kiểu opt-in (`compilationMode: 'annotation'` và directive `\"use memo\"`) hoặc theo từng thư mục, chạy lint của compiler để tìm vi phạm, giữ nguyên memo cũ, đo hiệu năng rồi mở rộng dần",
+  "Không bao giờ dùng compiler vì nó là thử nghiệm",
+  "Chỉ bật trên môi trường production để người dùng thật kiểm tra",
+]
+answer = [1]
+explanation = "Compiler giả định code tuân thủ Rules of React; rollout từng phần cho phép phát hiện vi phạm sớm và đo tác động. Xoá memo cũ ồ ạt có thể đổi hành vi (memo còn dùng làm dependency ổn định cho effect). Thử thẳng trên production là chuyển rủi ro sang người dùng."
+
+[[questions]]
+id = "react-lv014"
+module = "react-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "review"]
+prompt = "Mỗi PR đều có tranh cãi về cách viết hook (thiếu dependency, effect đồng bộ state dẫn xuất…). Review kéo dài, người mới ngại ý kiến. Bạn làm gì để giảm ma sát hiệu quả nhất?"
+options = [
+  "Tự review mọi PR và quyết định cuối cùng",
+  "Đưa quy ước vào công cụ: ESLint (`react-hooks`, rule của compiler), template component/hook, tài liệu \"cách chúng ta làm\" ngắn; reviewer tập trung vào thiết kế và rủi ro",
+  "Cấm viết custom hook",
+  "Họp cả team mỗi tuần để bỏ phiếu từng quy ước",
+]
+answer = [1]
+explanation = "Quy ước tự động hoá thì không phụ thuộc người, cho phản hồi tức thì và công bằng với người mới. Một người review hết là nút thắt cổ chai; cấm custom hook mất khả năng tái sử dụng; họp bỏ phiếu chậm và không thực thi được."
+
+[[questions]]
+id = "react-lv015"
+module = "react-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "suspense"]
+prompt = "Trang sản phẩm SSR: thông tin chính lấy từ DB mất 80ms, khối \"gợi ý\" gọi dịch vụ ML đôi khi mất 2s. Chỉ số TTFB/LCP xấu vì chờ khối gợi ý. Bạn có 1 sprint. Phương án nào hợp lý nhất?"
+options = [
+  "Cache khối gợi ý 1 giờ trên CDN cho mọi người dùng",
+  "Bọc khối gợi ý trong `Suspense` có skeleton để stream phần chính trước, đặt timeout/fallback cho dịch vụ ML",
+  "Loại bỏ khối gợi ý khỏi trang",
+  "Chuyển cả trang sang CSR để tránh chờ server",
+]
+answer = [1]
+explanation = "Streaming + Suspense tách phần chậm khỏi đường găng nên LCP không phụ thuộc dịch vụ ML, thay đổi nhỏ trong 1 sprint. Cache 1 giờ cho mọi người làm mất cá nhân hoá, bỏ khối làm mất giá trị kinh doanh, còn CSR thường làm LCP tệ hơn."
+
+[[questions]]
+id = "react-lv016"
+module = "react-lead"
+type = "fill"
+difficulty = 3
+tags = ["level:lead", "compiler"]
+prompt = '''
+Với `compilationMode: 'annotation'`, React Compiler chỉ biên dịch những hàm có directive. Hoàn thành để opt-in một component:
+
+```jsx
+function Cart({ items }) {
+  "use {{blank}}";
+  const total = items.reduce((sum, i) => sum + i.price, 0);
+  return <p>{total}</p>;
+}
+```
+'''
+blanks = [["memo"]]
+explanation = "Directive `\"use memo\"` đánh dấu hàm cần được compiler tối ưu khi dùng chế độ annotation, giúp rollout từng component thay vì cả codebase."
+
+[[questions]]
+id = "react-lv017"
+module = "react-lead"
+type = "essay"
+difficulty = 3
+tags = ["level:lead", "server-state"]
+prompt = "Bạn dẫn dắt team 6 người xây ứng dụng React mới. Hãy trình bày cách phân loại và quản lý state (server state, client state, URL, form) và lý do, kèm những gì bạn **không** làm."
+keywords = [
+  ["server state", "dữ liệu server", "cache"],
+  ["cục bộ", "local", "useState", "gần nơi dùng"],
+  ["url", "search params", "router"],
+  ["store toàn cục", "global", "context"],
+]
+min_keywords = 3
+model_answer = '''Tôi chia state theo vòng đời. Server state (dữ liệu từ API) giao cho thư viện cache có dedupe, retry, invalidate thay vì tự viết useEffect. State UI và form đặt cục bộ bằng useState/useReducer ở component gần nơi dùng nhất. Thứ cần chia sẻ hoặc deep link như bộ lọc, trang hiện tại đặt trong URL (search params). Chỉ khi state thật sự dùng chéo nhiều vùng xa nhau mới dùng context hoặc store toàn cục nhỏ. Tôi không đưa mọi thứ vào một store toàn cục vì gây re-render rộng, khó review và phải tự làm cache/invalidation. Quy ước query key và lint được ghi vào ADR để cả team theo.'''
+explanation = "Ý chính: phân loại theo vòng đời, đặt thấp nhất có thể, URL cho state chia sẻ được, store toàn cục là ngoại lệ có lý do."
+
+[[questions]]
+id = "react-lv018"
+module = "react-lead"
+type = "essay"
+difficulty = 3
+tags = ["level:lead", "migration"]
+prompt = "Ứng dụng React lớn cần thay thư viện UI cốt lõi (hàng trăm màn hình), sản phẩm vẫn phát hành hằng tuần. Nêu kế hoạch migration, cách giảm rủi ro và cách bạn đo tiến độ."
+keywords = [
+  ["từng phần", "incremental", "dần", "strangler", "từng màn"],
+  ["feature flag", "canary", "rollout", "cờ"],
+  ["rollback", "quay lại", "đường lui", "rút lui"],
+  ["codemod", "tự động", "lint", "adapter", "wrapper", "tương thích"],
+  ["đo", "metric", "tiến độ", "dashboard", "tỷ lệ"],
+]
+min_keywords = 3
+model_answer = '''Tôi không viết lại một lần mà migrate từng phần: dựng lớp adapter/wrapper để hai thư viện cùng tồn tại, dùng codemod cho phần thay đổi cơ học và lint rule cấm import thư viện cũ ở code mới. Màn hình quan trọng được phát hành sau feature flag hoặc canary cho một phần người dùng, luôn có đường rollback bằng cách tắt cờ. Tiến độ đo bằng số import còn lại của thư viện cũ và số màn đã chuyển trên dashboard, kèm theo dõi lỗi và Web Vitals trước/sau để phát hiện regression sớm.'''
+explanation = "Câu trả lời tốt nêu migrate dần, giảm rủi ro bằng flag/canary và rollback, tự động hoá phần cơ học và có số đo tiến độ."
+
+[[questions]]
+id = "react-lvc01"
+module = "react-lead"
+type = "code"
+difficulty = 3
+tags = ["level:lead", "rollout"]
+title = "Feature flag theo phần trăm người dùng"
+prompt = '''
+Bạn rollout một tính năng React mới dần dần (5% → 25% → 100%). Viết `isEnabled(flag, userId, percent)`:
+
+- Trả `true` nếu người dùng thuộc nhóm được bật, **ổn định**: cùng `flag` + `userId` luôn cho cùng kết quả.
+- Băm chuỗi `` `${flag}:${userId}` `` thành số nguyên không âm (gợi ý: FNV-1a 32-bit), lấy `% 100` làm "bucket"; bật khi `bucket < percent`.
+- `percent <= 0` luôn `false`, `percent >= 100` luôn `true`.
+- Tăng `percent` chỉ **thêm** người dùng, không bỏ người đang được bật.
+'''
+starter = '''
+function isEnabled(flag, userId, percent) {
+  // TODO
+}
+'''
+solution = '''
+function hash(str) {
+  let h = 2166136261;
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+
+function isEnabled(flag, userId, percent) {
+  if (percent <= 0) return false;
+  if (percent >= 100) return true;
+  return hash(`${flag}:${userId}`) % 100 < percent;
+}
+'''
+tests = '''
+test('0% luôn tắt, 100% luôn bật', () => {
+  for (let i = 0; i < 50; i++) {
+    expect(isEnabled('new-ui', 'u' + i, 0)).toBe(false);
+    expect(isEnabled('new-ui', 'u' + i, 100)).toBe(true);
+  }
+});
+test('ổn định theo người dùng', () => {
+  const a = isEnabled('new-ui', 'alice', 30);
+  for (let i = 0; i < 5; i++) expect(isEnabled('new-ui', 'alice', 30)).toBe(a);
+});
+test('phân bố gần với phần trăm', () => {
+  let on = 0;
+  for (let i = 0; i < 2000; i++) if (isEnabled('new-ui', 'user' + i, 50)) on++;
+  expect(on > 800 && on < 1200).toBe(true);
+});
+test('tăng phần trăm chỉ thêm người dùng', () => {
+  for (let i = 0; i < 500; i++) {
+    const id = 'user' + i;
+    if (isEnabled('new-ui', id, 20)) expect(isEnabled('new-ui', id, 60)).toBe(true);
+  }
+});
+test('flag khác nhau cho nhóm khác nhau', () => {
+  let diff = 0;
+  for (let i = 0; i < 500; i++) {
+    const id = 'user' + i;
+    if (isEnabled('flag-a', id, 50) !== isEnabled('flag-b', id, 50)) diff++;
+  }
+  expect(diff > 100).toBe(true);
+});
+'''
+hints = ["FNV-1a: bắt đầu `2166136261`, mỗi ký tự `h ^= code; h = Math.imul(h, 16777619)`, cuối cùng `h >>> 0`.", "Ngưỡng `bucket < percent` làm các nhóm lồng nhau nên tăng phần trăm không bỏ ai."]
+explanation = "Băm ổn định giúp mỗi người dùng có trải nghiệm nhất quán giữa các lần tải và các thiết bị; đưa tên flag vào chuỗi băm để các flag khác nhau không luôn chọn cùng một nhóm người dùng."
+
+[[questions]]
+id = "react-lvc02"
+module = "react-lead"
+type = "code"
+difficulty = 3
+tags = ["level:lead", "server-state"]
+title = "Query cache: dedupe và staleTime"
+prompt = '''
+Mô phỏng lõi của thư viện server state. Viết `createQueryCache({ now })` trả về `{ fetchQuery, invalidate }`:
+
+- `fetchQuery(key, fetcher, { staleTime = 0 } = {})` trả Promise dữ liệu.
+- Nếu có dữ liệu trong cache và `now() - fetchedAt < staleTime` → trả dữ liệu cache, **không** gọi `fetcher`.
+- Nếu đang có request cùng `key` chưa xong → dùng lại cùng Promise (dedupe), `fetcher` chỉ chạy một lần.
+- Lỗi **không** được cache và không để lại request treo; lần gọi sau gọi lại `fetcher`.
+- `invalidate(key)` xoá dữ liệu cache của `key`.
+- `now` là hàm trả thời gian hiện tại (mặc định `Date.now`) để test điều khiển được đồng hồ.
+'''
+starter = '''
+function createQueryCache({ now = Date.now } = {}) {
+  // TODO
+  return {
+    fetchQuery(key, fetcher, options) {},
+    invalidate(key) {},
+  };
+}
+'''
+solution = '''
+function createQueryCache({ now = Date.now } = {}) {
+  const entries = new Map();
+  const inflight = new Map();
+
+  function fetchQuery(key, fetcher, { staleTime = 0 } = {}) {
+    const entry = entries.get(key);
+    if (entry && now() - entry.at < staleTime) return Promise.resolve(entry.data);
+    if (inflight.has(key)) return inflight.get(key);
+    const promise = Promise.resolve()
+      .then(fetcher)
+      .then(
+        (data) => {
+          entries.set(key, { data, at: now() });
+          inflight.delete(key);
+          return data;
+        },
+        (err) => {
+          inflight.delete(key);
+          throw err;
+        }
+      );
+    inflight.set(key, promise);
+    return promise;
+  }
+
+  function invalidate(key) {
+    entries.delete(key);
+  }
+
+  return { fetchQuery, invalidate };
+}
+'''
+tests = '''
+test('dedupe request đang chạy', async () => {
+  const cache = createQueryCache();
+  const fetcher = jest.fn(() => Promise.resolve('data'));
+  const [a, b] = await Promise.all([cache.fetchQuery('k', fetcher), cache.fetchQuery('k', fetcher)]);
+  expect(a).toBe('data');
+  expect(b).toBe('data');
+  expect(fetcher).toHaveBeenCalledTimes(1);
+});
+test('dữ liệu còn tươi thì không gọi lại', async () => {
+  let t = 1000;
+  const cache = createQueryCache({ now: () => t });
+  const fetcher = jest.fn(() => Promise.resolve(1));
+  await cache.fetchQuery('k', fetcher, { staleTime: 500 });
+  t = 1400;
+  await cache.fetchQuery('k', fetcher, { staleTime: 500 });
+  expect(fetcher).toHaveBeenCalledTimes(1);
+});
+test('hết hạn thì gọi lại', async () => {
+  let t = 1000;
+  const cache = createQueryCache({ now: () => t });
+  let n = 0;
+  const fetcher = jest.fn(() => Promise.resolve(++n));
+  await cache.fetchQuery('k', fetcher, { staleTime: 500 });
+  t = 1600;
+  const v = await cache.fetchQuery('k', fetcher, { staleTime: 500 });
+  expect(v).toBe(2);
+  expect(fetcher).toHaveBeenCalledTimes(2);
+});
+test('invalidate buộc tải lại', async () => {
+  const cache = createQueryCache();
+  const fetcher = jest.fn(() => Promise.resolve('x'));
+  await cache.fetchQuery('k', fetcher, { staleTime: 10000 });
+  cache.invalidate('k');
+  await cache.fetchQuery('k', fetcher, { staleTime: 10000 });
+  expect(fetcher).toHaveBeenCalledTimes(2);
+});
+test('lỗi không bị cache', async () => {
+  const cache = createQueryCache();
+  let fail = true;
+  const fetcher = jest.fn(() => (fail ? Promise.reject(new Error('boom')) : Promise.resolve('ok')));
+  let caught = null;
+  try { await cache.fetchQuery('k', fetcher, { staleTime: 10000 }); } catch (e) { caught = e; }
+  expect(caught.message).toBe('boom');
+  fail = false;
+  const v = await cache.fetchQuery('k', fetcher, { staleTime: 10000 });
+  expect(v).toBe('ok');
+  expect(fetcher).toHaveBeenCalledTimes(2);
+});
+test('key khác nhau độc lập', async () => {
+  const cache = createQueryCache();
+  const a = jest.fn(() => Promise.resolve('A'));
+  const b = jest.fn(() => Promise.resolve('B'));
+  expect(await cache.fetchQuery('a', a, { staleTime: 1000 })).toBe('A');
+  expect(await cache.fetchQuery('b', b, { staleTime: 1000 })).toBe('B');
+});
+'''
+hints = ["Dùng hai `Map`: `entries` cho dữ liệu đã xong, `inflight` cho Promise đang chạy.", "Xoá khỏi `inflight` ở cả nhánh thành công lẫn lỗi."]
+explanation = "Đây là phần lõi mà thư viện query làm sẵn: cache theo key, dedupe request trùng, cửa sổ \"còn tươi\" và không cache lỗi. Biết nó giúp lead biện luận vì sao không tự viết lại trong `useEffect`."
+
+[[questions]]
+id = "react-lvc03"
+module = "react-lead"
+type = "code"
+difficulty = 3
+tags = ["level:lead", "performance"]
+title = "Kiểm tra performance budget trong CI"
+prompt = '''
+Viết `checkBudget(metrics, budget)` để CI chặn PR làm hiệu năng tệ đi.
+
+- `metrics` và `budget` là object `{ tên: số }`, ví dụ `{ lcp: 2300, bundleKb: 180 }` và `{ lcp: 2500, bundleKb: 170 }`.
+- Với mỗi tên trong `budget`: nếu `metrics[tên]` **lớn hơn** giới hạn → vi phạm `{ metric, actual, limit }`.
+- Nếu `metrics` thiếu tên đó (undefined) → vi phạm với `actual: null` (không đo được cũng coi là lỗi).
+- Giá trị đúng bằng giới hạn là đạt.
+- Trả `{ ok, violations }`; `ok = true` khi không có vi phạm; `violations` sắp xếp theo `metric` tăng dần.
+'''
+starter = '''
+function checkBudget(metrics, budget) {
+  // TODO
+}
+'''
+solution = '''
+function checkBudget(metrics, budget) {
+  const violations = [];
+  for (const metric of Object.keys(budget)) {
+    const limit = budget[metric];
+    const actual = metrics[metric];
+    if (actual === undefined) {
+      violations.push({ metric, actual: null, limit });
+    } else if (actual > limit) {
+      violations.push({ metric, actual, limit });
+    }
+  }
+  violations.sort((a, b) => (a.metric < b.metric ? -1 : a.metric > b.metric ? 1 : 0));
+  return { ok: violations.length === 0, violations };
+}
+'''
+tests = '''
+test('tất cả đạt', () => {
+  const r = checkBudget({ lcp: 2300, bundleKb: 150 }, { lcp: 2500, bundleKb: 170 });
+  expect(r.ok).toBe(true);
+  expect(r.violations).toEqual([]);
+});
+test('đúng bằng giới hạn là đạt', () => {
+  expect(checkBudget({ lcp: 2500 }, { lcp: 2500 }).ok).toBe(true);
+});
+test('vượt giới hạn', () => {
+  const r = checkBudget({ lcp: 3000, bundleKb: 150 }, { lcp: 2500, bundleKb: 170 });
+  expect(r.ok).toBe(false);
+  expect(r.violations).toEqual([{ metric: 'lcp', actual: 3000, limit: 2500 }]);
+});
+test('thiếu số đo là vi phạm', () => {
+  const r = checkBudget({}, { inp: 200 });
+  expect(r.ok).toBe(false);
+  expect(r.violations).toEqual([{ metric: 'inp', actual: null, limit: 200 }]);
+});
+test('sắp xếp theo tên metric', () => {
+  const r = checkBudget({ lcp: 9, inp: 9, bundleKb: 9 }, { lcp: 1, inp: 1, bundleKb: 1 });
+  expect(r.violations.map(v => v.metric)).toEqual(['bundleKb', 'inp', 'lcp']);
+});
+test('metric không có trong budget bị bỏ qua', () => {
+  expect(checkBudget({ lcp: 100, extra: 99999 }, { lcp: 200 }).ok).toBe(true);
+});
+'''
+hints = ["Duyệt `Object.keys(budget)`, không duyệt `metrics`.", "Phân biệt `undefined` (không đo được) với `0` (giá trị hợp lệ)."]
+explanation = "Performance budget biến mục tiêu hiệu năng thành tiêu chí tự động trong CI. Coi \"không đo được\" là lỗi tránh trường hợp công cụ đo hỏng mà pipeline vẫn xanh."

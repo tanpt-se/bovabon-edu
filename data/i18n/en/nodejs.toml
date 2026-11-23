@@ -614,3 +614,720 @@ options = [
   '''A health endpoint does not need content limits because it has no user data''',
 ]
 explanation = '''An overly detailed public health endpoint creates another information exposure surface; probes only need the required status.'''
+
+[modules.nodejs-lead]
+title = "Tech Lead Perspective"
+description = "Making architecture and operations decisions for Node.js at team scale: ADRs, trade-offs, rollout, incidents, cost."
+lesson = '''
+### A Tech Lead doesn't pick the "best technology" but the option that fits the team's constraints
+
+A good decision answers four questions: **what the constraints are** (headcount, time, budget, acceptable risk), **which options are feasible**, **the trade-offs of each option**, and **how we will know we were wrong so we can back out**. An answer like "use X because X is modern" almost always leaves out the constraints.
+
+#### Decision framework
+
+1. Write down the problem and the criteria (P99 latency, delivery time, operating cost, team skills).
+2. List 2–3 options, including "do nothing" or "do the smallest thing".
+3. Score them against the criteria, noting risks and how to mitigate them.
+4. Choose, write an ADR, set a review date.
+5. Roll out small, with metrics and a way back.
+
+| Situation | Commonly wrong choice | More reasonable choice in a small context |
+|---|---|---|
+| 5-person team, 3-month MVP | Microservices from day one | Modular monolith, clear module boundaries, one deploy pipeline |
+| CPU-bound API blocking the event loop | Rewrite in another language | Move heavy work to a worker pool or queue, measure first |
+| Flaky downstream | Infinite retries, no jitter | Timeout + retry budget + backoff with jitter + circuit breaker |
+| Node major upgrade across many services | Upgrade everything in one night | Canary per service, CI on 2 versions, rollback ready |
+
+#### Short sample ADR
+
+```md
+# ADR-014: Send invoice emails via a queue
+Status: Accepted (2026-03)
+Context: synchronous SMTP calls push /checkout P99 to 4s when the provider is slow.
+Decision: write an outbox in the same transaction, a worker sends asynchronously, idempotency key = invoiceId.
+Consequences: one more component to operate; emails may be delayed by a few minutes; need a dead-letter queue and alerts.
+Review: after 2 quarters or when volume > 10k/day.
+```
+
+#### Team-level review checklist
+
+- Is there a timeout on every outbound call? Are body size and connection count limited?
+- Are errors classified (retryable / not) and do logs carry a correlation id without secrets?
+- Is the change backward compatible (additive), behind a feature flag, with a rollback path?
+- Are there metrics for the new flow (rate, error, duration) and alerts linked to a runbook?
+- Do tests cover the error branches, not just the happy path?
+
+#### Common anti-patterns at team scale
+
+- **Resume-driven architecture**: choosing technology to learn it rather than to solve the problem.
+- **Hero culture**: one person holds all operational knowledge; no runbooks.
+- **Big-bang migration**: rewriting everything with no checkpoints along the way.
+- **Alert fatigue**: non-actionable alerts make on-call engineers ignore real ones.
+- **Optimizing before measuring**: spending weeks on something that is not the bottleneck.
+
+When in doubt, remember: decide quickly on reversible decisions; for hard-to-reverse ones (data schema, public API contract, service boundaries) take the time to write an ADR and ask for review.
+'''
+
+[questions.nodejs-lv001]
+prompt = '''A 5-person team must ship an MVP in 3 months and doesn't yet know which business domain will grow. Which proposal is most reasonable for the Node.js backend?'''
+options = [
+  '''Modular monolith: one deploy, modules with clear boundaries and internal APIs, split into services when there are measurable signals''',
+  '''Microservices per database table from the start so it scales easily later''',
+  '''One big server.js file with no modules to be as fast as possible''',
+  '''A separate serverless function per endpoint, each function in its own repo''',
+]
+explanation = '''With 5 people and 3 months, the operating cost of many services (deploys, tracing, contracts, on-call) eats all the feature time. A modular monolith keeps clear module boundaries, so it can still be split once there is data. Microservices from the start draw boundaries before the domain is understood; "quickly write one blob with no boundaries" creates debt that is hard to pay back.'''
+
+[questions.nodejs-lv002]
+prompt = '''An API that exports a 50,000-row CSV report blocks the event loop for ~3 seconds, and P99 of other endpoints spikes. The team has 4 people and no time for a big project. Which step should come first?'''
+options = [
+  '''Confirm with profiling/event loop delay, then move report generation to a worker pool or queue and return 202 with a job status''',
+  '''Rewrite the whole service in Go''',
+  '''Double the number of instances and hope the load spreads evenly''',
+  '''Raise the load balancer timeout to 60 seconds''',
+]
+explanation = '''Measure to confirm the cause is synchronous CPU work, then move the heavy work off the event loop (worker_threads/piscina or a job queue). This is small and reversible. Rewriting in another language costs a lot; more instances only mask the symptom because each instance still blocks; a longer timeout does not fix the blocking.'''
+
+[questions.nodejs-lv003]
+prompt = '''Which sections should a useful ADR (Architecture Decision Record) contain?'''
+options = [
+  '''Context and constraints''',
+  '''The options considered and their trade-offs''',
+  '''The full implementation source code''',
+  '''Consequences, risks and conditions for revisiting the decision''',
+  '''The name of the person to blame if the decision is wrong''',
+]
+explanation = '''An ADR records why, not just what: context/constraints, options considered, the decision, consequences and a review date. Full source code or the name of someone to blame is not core ADR content.'''
+
+[questions.nodejs-lv004]
+prompt = '''The company has 40 Node.js services on an old Node version nearing end of support. The CTO wants to upgrade all of them to the new LTS in one weekend night. What should the Tech Lead's approach be?'''
+options = [
+  '''Upgrade in waves: a two-version CI matrix, canary a few low-risk services, watch metrics, keep a rollback path''',
+  '''Upgrade all 40 services in one night to finish early''',
+  '''Don't upgrade until end-of-support day, then deal with it''',
+  '''Only change the engines line in package.json and skip the tests''',
+]
+explanation = '''Upgrade in waves: CI runs a two-version matrix, canary starting with low-risk services, watch errors/latency/memory, roll back with the old image. A big bang concentrates risk in one moment and makes it hard to tell which service broke; waiting until end of support wastes the safe window.'''
+
+[questions.nodejs-lv005]
+prompt = '''A payment service calls a third-party provider; when the provider is slow, the service immediately retries 5 times with no wait and the whole system cascades into failure (retry storm). Which change is most effective?'''
+options = [
+  '''Short timeout + exponential backoff with jitter + retry budget + circuit breaker''',
+  '''Increase retries to 10 to make sure it succeeds''',
+  '''Retry at exactly 1-second intervals for every client''',
+  '''Remove the timeout to wait for the provider to respond''',
+]
+explanation = '''You need timeouts, exponential backoff with jitter, a cap on total retries (retry budget) and a circuit breaker to stop calling when failures persist. More retries make the storm worse; fixed retries without jitter make clients hit at the same moment in sync; removing timeouts piles up hanging connections.'''
+
+[questions.nodejs-lv006]
+prompt = '''A 200-route Express codebase runs well and the 8-person team knows it. A member proposes rewriting everything in another framework because a benchmark is 20% faster. P99 currently meets the SLO at 3x the current load. What is the reasonable decision?'''
+options = [
+  '''Keep Express and keep improving incrementally; revisit when data shows the framework is the bottleneck''',
+  '''Rewrite everything in one quarter to gain the 20% performance''',
+  '''Freeze all new features until the rewrite is done''',
+  '''Let each person pick their own framework for the routes they write''',
+]
+explanation = '''There is no measured problem to solve; a rewrite costs months, regression risk and training. Keep Express, record the proposal, and only use a new framework for new services if there is a clear reason. Rewriting "because it's faster" when the SLO is already met is optimizing in the wrong place.'''
+
+[questions.nodejs-lv007]
+prompt = '''Review checklist for a PR that adds a new write endpoint. Which items should be checked?'''
+options = [
+  '''Body validation and size limits''',
+  '''Per-resource authorization checks''',
+  '''Handling of duplicate submissions (idempotency key or unique constraint)''',
+  '''Whether local variable names match the reviewer's taste''',
+  '''Logs carry a correlation id but no tokens/PII''',
+]
+explanation = '''A write endpoint needs input validation at the boundary, authorization, idempotency/duplicate handling, timeouts/limits, and logs/metrics that do not leak secrets. Naming variables to personal taste is not an operational risk.'''
+
+[questions.nodejs-lv008]
+prompt = '''A public API needs rate limiting. Many enterprise customers come through the same NAT IP, and the system runs 6 instances. Which design is reasonable?'''
+options = [
+  '''Per API key/tenant with a shared counter such as Redis, returning 429 with Retry-After''',
+  '''Per IP with an in-memory counter on each instance''',
+  '''No rate limiting; just add instances when overloaded''',
+  '''Rate limit only in the client SDK''',
+]
+explanation = '''Limit per API key/tenant (the real identity) and use a shared store (Redis) so quotas are correct across instances. Per-IP limits make customers behind NAT block each other; in-RAM counters per instance give the wrong total quota and reset on restart.'''
+
+[questions.nodejs-lv009]
+prompt = '''A mobile app cannot force users to update; you need to change the response shape of an API with millions of users. Which versioning strategy is reasonable?'''
+options = [
+  '''Add new fields backward-compatibly, ship breaking changes as a parallel /v2, announce deprecation, measure v1 usage before turning it off''',
+  '''Change the response now and ask users to update the app''',
+  '''Keep every version forever and never measure usage''',
+  '''Rename fields in /v1 whenever needed''',
+]
+explanation = '''Additive changes don't break clients; breaking changes go into a new version running in parallel, with a deprecation notice and a long enough window, and the old version is turned off only after measuring its usage. Changing in place breaks old apps; keeping every version forever bloats maintenance cost.'''
+
+[questions.nodejs-lv010]
+prompt = '''Which HTTP header tells the client when an API/endpoint will stop working (RFC 8594)? Fill in the header name: {{blank}}'''
+explanation = '''The Sunset header gives the expected shutdown time; it is usually paired with Deprecation and a link to migration docs.'''
+
+[questions.nodejs-lv011]
+prompt = '''At 02:00 an alert fires: a Node service's memory grows steadily and the pod is OOMKilled every ~2 hours; customers are affected. You are the incident coordinator. Which order of actions is correct?'''
+options = [
+  '''Mitigate impact (controlled rollback/restart), save a heap snapshot and metrics, investigate the cause afterwards, write a postmortem''',
+  '''Keep searching for the root cause until done, letting customers suffer''',
+  '''Delete old logs to save space and wait and see''',
+  '''Disable the OOM alert to reduce noise''',
+]
+explanation = '''Mitigate first (roll back the latest release or add instances/restart in a controlled way), preserve evidence (heap snapshot/metrics), then investigate the cause and write a blameless postmortem. Deep investigation before mitigation prolongs the incident; deleting logs destroys evidence.'''
+
+[questions.nodejs-lv012]
+prompt = '''Incidents are increasing because every service logs the full request body; log cost has grown 5x and errors are hard to find. What is a reasonable improvement?'''
+options = [
+  '''Structured logs with a correlation id, sampled detailed logs, masked PII, details pushed to traces/metrics''',
+  '''Keep it as is and buy more storage''',
+  '''Turn off all logging in production''',
+  '''Use only unformatted console.log''',
+]
+explanation = '''Structured logs, sensible levels, a correlation id across services, sampling for detailed logs, masking sensitive data. Logging every body costs money and leaks PII; turning off all logs removes the ability to investigate.'''
+
+[questions.nodejs-lv013]
+prompt = '''Which signs suggest a part of the monolith should be split into its own service?'''
+options = [
+  '''The module needs very different scaling/resources from the rest''',
+  '''A separate team owns it and needs independent releases''',
+  '''Wanting to try a new framework for fun''',
+  '''Fault/security isolation is needed for a sensitive domain''',
+  '''Having many services looks more modern''',
+]
+explanation = '''Split when there is a measurable reason: very different scaling/resources, an independent release cadence owned by another team, or a need for fault or security isolation. "Wanting to use new tech" or "many services look modern" are not reasons.'''
+
+[questions.nodejs-lv014]
+prompt = '''Sending invoice emails calls SMTP synchronously inside the /checkout request; when the provider is slow, checkout slows down too. Which solution fits a small budget?'''
+options = [
+  '''An outbox in the same transaction + a worker sending asynchronously, idempotency key, retries and a dead-letter queue''',
+  '''Raise the SMTP timeout to 60 seconds''',
+  '''Swallow email errors and treat them as success''',
+  '''Send the email first, then save the order''',
+]
+explanation = '''Write an outbox in the same transaction, then a worker sends asynchronously with an idempotency key, retries and a dead-letter queue; checkout no longer depends on SMTP. A synchronous call with a long timeout or ignoring send errors either loses emails or blocks payment.'''
+
+[questions.nodejs-lv015]
+prompt = '''Describe how you would lead the team in extracting a payment module from a Node.js monolith (strangler): state the criteria for deciding to split, the rollout steps, how you measure, and the way back.'''
+keywords = [
+  ["strangler", "incrementally", "step by step"],
+  ["boundary", "internal api", "contract"],
+  ["feature flag", "canary"],
+  ["metric", "measure", "slo", "latency"],
+  ["rollback", "roll back", "way back"],
+  ["data", "database", "schema", "dual write"],
+]
+model_answer = '''First I establish the reason for splitting with data (release cadence, load, risk) and write an ADR. I clarify the boundary and contract of the payment module inside the monolith, then apply the strangler pattern: move one flow at a time to the new service behind a facade, using a feature flag/canary to ramp up traffic. The data is split according to a plan (dual write or outbox, no long-term shared tables). I track metrics such as latency, error rate and the SLO on both sides; if a threshold is exceeded I roll back by turning off the flag. Only when things are stable do I clean up the old code.'''
+explanation = '''A good answer starts from a measurable reason, splits incrementally through boundaries/APIs, runs both in parallel, and has a rollback; no big bang.'''
+
+[questions.nodejs-lv016]
+prompt = '''Describe a dependency and supply-chain management policy for a 15-person Node.js team: cover the lockfile, installs in CI, regular updates, vulnerability checks, and review of new dependencies.'''
+keywords = [
+  ["lockfile", "package-lock"],
+  ["npm ci", "reproducible"],
+  ["renovate", "dependabot", "regular updates"],
+  ["audit", "sca", "vulnerab"],
+  ["review", "approval"],
+  ["provenance", "ignore-scripts", "install script", "permission"],
+]
+model_answer = '''Every repo commits its lockfile; CI uses npm ci for reproducible installs and fails when the lockfile is out of sync. A bot such as Renovate or Dependabot opens small PRs on a schedule and auto-merges patches when tests are green. The pipeline runs npm audit/SCA and blocks severe vulnerabilities that have a fix. New dependencies go through review: purpose, popularity, maintenance, license, number of transitive dependencies. For high risk, disable unnecessary install scripts (ignore-scripts), pin versions and verify provenance/signatures where available.'''
+explanation = '''Key points: lockfile + npm ci for reproducibility, a bot for small frequent updates, audit/SCA, review of new dependencies, reduced permissions for install scripts.'''
+
+[questions.nodejs-lv017]
+prompt = '''P99 latency of a Node.js API quadruples at peak. Write an investigation and mitigation runbook: the order of checks, tools, temporary decisions and post-incident actions.'''
+keywords = [
+  ["dashboard", "metric", "apm"],
+  ["event loop", "event loop lag", "eventloop delay"],
+  ["cpu", "memory", "gc"],
+  ["database", "downstream", "dependency", "pool"],
+  ["rollback", "scale", "shed load", "temporary"],
+  ["postmortem", "post-incident", "runbook"],
+]
+model_answer = '''Start with the dashboard: compare rate/error/duration and check for any recent deploy or config change. I check the process's event loop delay, CPU and memory/GC, then move on to dependencies: an exhausted database pool, a slow downstream, the cache hit rate. If a deploy is suspected, roll back; if overloaded, scale out or shed load (turn off heavy features) as a temporary measure. I capture profiles/traces during the incident as evidence. Afterwards I write a blameless postmortem, update the runbook, and add alerts and load tests.'''
+explanation = '''A good runbook goes from symptom to cause, cheapest and fastest checks first, with mitigations and post-incident work.'''
+
+[questions.nodejs-lv018]
+prompt = '''Should a slow task (generating an invoice PDF) be handled with synchronous HTTP or an asynchronous queue? Analyze it against UX, reliability and operating-cost constraints, and describe the design if you choose a queue.'''
+keywords = [
+  ["synchronous", "sync"],
+  ["asynchronous", "queue"],
+  ["idempotency", "idempotent", "duplicate"],
+  ["retry", "dead-letter", "dlq"],
+  ["status", "202", "polling", "webhook"],
+  ["operating cost", "operations", "monitor"],
+]
+model_answer = '''If the task takes under a few hundred ms and the user needs the result immediately, handling it synchronously is the simplest. When the task is slow, variable or depends on external services, a queue lets the request return 202 quickly and decouples the load from the API, at the price of higher operating cost. The design needs an idempotency key because messages can be delivered more than once (duplicate delivery), retry with backoff, a dead-letter queue for poison messages, and an endpoint/webhook/polling to report job status. Queue-depth metrics and alerts are needed so the team can monitor it.'''
+explanation = '''The answer must state the trade-offs and the requirements when using a queue: idempotency, retries, dead-letter, status tracking.'''
+
+[questions.nodejs-lv019]
+title = "Circuit breaker with an injected clock"
+prompt = '''Write `createCircuitBreaker({ failureThreshold, cooldownMs, now })` returning a function `exec(fn)` (fn returns a Promise). When the number of consecutive failures reaches `failureThreshold`, the breaker OPENS: `exec` rejects immediately with `Error('circuit open')` without calling `fn`. After `cooldownMs` (measured with the injected `now()`) the breaker allows one trial (half-open): success closes and resets it, failure opens it again. A success resets the failure counter.'''
+explanation = '''A circuit breaker helps avoid retry storms: it stops calling a failing dependency, gives it time to recover, then probes gently.'''
+hints = [
+  '''Store `openedAt` (when it opened) and `failures`.''',
+  '''If it is open and the cooldown has not elapsed, throw `circuit open` before calling fn.''',
+  '''A failure in half-open must reset `openedAt = now()`.''',
+]
+
+[questions.nodejs-lv020]
+prompt = '''Within one event loop iteration, what order does the following code print when run from a CommonJS module?
+```js
+setTimeout(() => console.log('timeout'), 0);
+setImmediate(() => console.log('immediate'));
+process.nextTick(() => console.log('tick'));
+Promise.resolve().then(() => console.log('promise'));
+```
+'''
+options = [
+  '''tick, promise, then timeout/immediate (the order of the last two is not guaranteed)''',
+  '''timeout, immediate, tick, promise''',
+  '''promise, tick, immediate, timeout''',
+  '''immediate, timeout, tick, promise''',
+]
+explanation = '''The nextTick queue runs first, then the promise microtasks, and only then the event loop phases. The order of timeout and immediate in the main module is not guaranteed (it depends on process performance), so only the first two lines are fixed.'''
+
+[questions.nodejs-lv021]
+prompt = '''Inside an I/O callback (e.g. within an fs.readFile callback), setTimeout(fn, 0) and setImmediate(fn) are called together. Which statement is true?'''
+options = [
+  '''setImmediate always runs first''',
+  '''setTimeout always runs first''',
+  '''The order is random, as in the main module''',
+  '''Both are ignored inside an I/O callback''',
+]
+explanation = '''Inside an I/O callback, the poll phase ends and moves on to the check phase, so setImmediate always runs before a 0ms timer of the next iteration.'''
+
+[questions.nodejs-lv022]
+prompt = '''Which work should be moved to worker_threads (or a separate process) instead of running on the HTTP server's main thread?'''
+options = [
+  '''Hashing passwords with a heavy algorithm synchronously''',
+  '''Parsing tens of MB of JSON on every request''',
+  '''Calling fetch to an external API''',
+  '''Resizing images in pure JS''',
+  '''Reading a small file with fs/promises''',
+]
+explanation = '''Synchronous CPU-bound work (compression, heavy hashing, parsing large payloads, image processing) blocks the event loop. Network/disk I/O is already asynchronous thanks to libuv, so moving it to a worker usually brings no benefit.'''
+
+[questions.nodejs-lv023]
+prompt = '''Which worker_threads function lets a worker send data back to the parent thread? Fill in: parentPort.{{blank}}(result)'''
+explanation = '''parentPort.postMessage sends a message (structured clone; ArrayBuffers can be transferred via transferList) to the parent thread.'''
+
+[questions.nodejs-lv024]
+prompt = '''A pipeline reads a large file → gzip → writes the destination file with `src.pipe(gzip).pipe(dest)`. When gzip fails, why does manual pipe() easily cause leaks?'''
+options = [
+  '''pipe() does not close/destroy the remaining streams on error; pipeline() does that and reports the error in one place''',
+  '''pipe() always reads the entire file into RAM''',
+  '''pipeline() only works with files under 64KB''',
+  '''Gzip streams never emit errors''',
+]
+explanation = '''pipe() does not destroy the other streams when one stream errors, so file descriptors may be held open. stream.pipeline (or stream/promises) propagates the error, destroys everything and calls the callback once.'''
+
+[questions.nodejs-lv025]
+prompt = '''Writable.write() returns false. What is the correct action for the producer?'''
+options = [
+  '''Stop writing and wait for the 'drain' event before continuing''',
+  '''Keep writing because data will be dropped if overloaded''',
+  '''Call end() immediately''',
+  '''Raise highWaterMark to infinity''',
+]
+explanation = '''false means the internal buffer exceeded highWaterMark; pause writing until the 'drain' event to apply backpressure. Ignoring it makes RAM balloon.'''
+
+[questions.nodejs-lv026]
+prompt = '''Which function in `node:stream/promises` connects streams, propagates errors and destroys them on failure? Fill in: await {{blank}}(readable, transform, writable)'''
+explanation = '''pipeline from stream/promises returns a Promise and handles cleanup on error.'''
+
+[questions.nodejs-lv027]
+prompt = '''You want to read a 5GB log file and count lines containing 'ERROR' with only 512MB of RAM. Which approaches are suitable?'''
+options = [
+  '''fs.createReadStream combined with readline.createInterface''',
+  '''for await (const line of rl) with a counter''',
+  '''fs.readFileSync then split('\n')''',
+  '''fs.promises.readFile then filter''',
+  '''Read chunks with a stream and handle line boundaries yourself''',
+]
+explanation = '''Use streams (createReadStream + readline, or for await over an async iterable) to process in chunks. readFile loads everything into RAM and can exceed the limit.'''
+
+[questions.nodejs-lv028]
+prompt = '''A Node.js pod is OOMKilled after a few hours, and the heap grows steadily after each GC. What does this suggest and what is the first diagnostic step?'''
+options = [
+  '''A memory leak; take and compare heap snapshots to find the retainers''',
+  '''The event loop is too fast; add setTimeout''',
+  '''You need to call global.gc() every second''',
+  '''Just double the pod memory limit''',
+]
+explanation = '''A heap that keeps growing after GC is a sign of a leak (objects still referenced). Take two heap snapshots some time apart and compare them (retainers) to find the growing objects. More RAM only delays it; manual GC does not fix live references.'''
+
+[questions.nodejs-lv029]
+prompt = '''A Map used as a cache keyed by userId has no size limit and no TTL. What is the long-term problem and how do you fix it?'''
+options = [
+  '''Memory grows without bound; use an LRU/TTL with a max size or an external cache''',
+  '''Map automatically deletes old keys when GC runs''',
+  '''It only fails with Map; a plain object is fine''',
+  '''No problem, because V8 compresses memory''',
+]
+explanation = '''An unbounded cache is a logical leak: the number of keys keeps growing. Use an LRU/TTL with a max size or an external cache such as Redis. WeakMap doesn't help when keys are strings/numbers.'''
+
+[questions.nodejs-lv030]
+prompt = '''How does Express 5+ handle async handlers when the Promise rejects?'''
+options = [
+  '''The error is automatically forwarded to the error-handling middleware''',
+  '''The process always crashes immediately''',
+  '''The error is swallowed and the request hangs forever''',
+  '''It only works with the express-async-errors library''',
+]
+explanation = '''Since Express 5, if a handler/middleware returns a rejected Promise (or an async function throws), the error is passed to next(err) automatically, so you don't need try/catch just to call next. In Express 4 you had to catch it yourself.'''
+
+[questions.nodejs-lv031]
+prompt = '''Middleware registration order in Express: where should the 4-argument error handler (err, req, res, next) go?'''
+options = [
+  '''After the routes and other middleware''',
+  '''Before every route''',
+  '''Anywhere, because Express reorders them''',
+  '''Only in the app.listen file''',
+]
+explanation = '''Error-handling middleware must be registered after the routes/middleware whose errors it should catch; Express recognizes it by its 4 parameters.'''
+
+[questions.nodejs-lv032]
+prompt = '''Which measures help an Express API resist overly large or slow requests that exhaust resources?'''
+options = [
+  '''express.json({ limit: '100kb' })''',
+  '''Setting sensible server.requestTimeout/headersTimeout''',
+  '''Rate limiting by client identity''',
+  '''Disabling all validation to process faster''',
+  '''Allowing unlimited bodies''',
+]
+explanation = '''Limit body size, set server/request timeouts, and rate limit. Disabling validation or removing limits makes things worse.'''
+
+[questions.nodejs-lv033]
+prompt = '''On SIGTERM in Kubernetes, `server.close()` is called but the pod still receives new requests for the first few seconds. What is the common cause?'''
+options = [
+  '''Removing the pod from the load balancer is asynchronous; fail readiness and wait before draining''',
+  '''server.close() doesn't work with HTTP''',
+  '''Node can't handle SIGTERM''',
+  '''Kubernetes always sends SIGKILL first''',
+]
+explanation = '''Removing the endpoint from the Service/LB is not instantaneous; mark readiness as failed, wait a few seconds (preStop/sleep) and only then close the listener. Keep-alive connections must also be closed after draining.'''
+
+[questions.nodejs-lv034]
+prompt = '''Node's `--max-old-space-size` flag sets V8's old-space heap limit. What is the unit of `1024` in `node --max-old-space-size=1024 server.js`? Fill in: {{blank}}'''
+explanation = '''The value is in megabytes (MB).'''
+
+[questions.nodejs-lv035]
+prompt = '''You use cluster/PM2 with 4 workers, but each worker keeps its own rate-limit counter in RAM. What is the consequence?'''
+options = [
+  '''The effective quota is about 4x the configured one and inconsistent; a shared store is needed''',
+  '''The quota is exact because cluster shares memory''',
+  '''Only the first worker counts''',
+  '''Node automatically syncs global variables between workers''',
+]
+explanation = '''Each worker counts separately, so the effective total quota is N times higher and inconsistent; you need a shared store (Redis) or limiting at the LB layer.'''
+
+[questions.nodejs-lv036]
+prompt = '''A fetch to an external API often hangs when the network is flaky. What is the safest way to bound the wait time?'''
+options = [
+  '''Pass a signal: AbortSignal.timeout(5000) to fetch''',
+  '''Wait forever because TCP will report the error itself''',
+  '''Use setInterval to check every second''',
+  '''Wrapping fetch in try/catch is enough''',
+]
+explanation = '''AbortSignal.timeout(ms) (or an AbortController) cancels the request when the deadline passes; always set a timeout on outbound calls.'''
+
+[questions.nodejs-lv037]
+prompt = '''Which headers are directly involved in conditional HTTP caching (conditional requests)?'''
+explanation = '''ETag/If-None-Match and Last-Modified/If-Modified-Since enable 304 Not Modified. Content-Length and Host are not validator mechanisms.'''
+
+[questions.nodejs-lv038]
+prompt = '''An API accepts POST to create orders; the network causes the client to resend the same request. What is the most standard way to prevent duplicate orders?'''
+options = [
+  '''An Idempotency-Key stored with the result, returning the earlier result on repeats''',
+  '''Block every second POST within 1 hour per IP''',
+  '''Trust that the client never resends''',
+  '''Use GET instead of POST''',
+]
+explanation = '''The client sends an Idempotency-Key; the server stores the result per key (or uses a unique constraint) so a repeated request returns the same result instead of creating another order.'''
+
+[questions.nodejs-lv039]
+title = "Keyed serializer"
+prompt = '''Write `createKeyedSerializer()` returning a function `run(key, task)`: tasks with the same `key` run sequentially in call order (a later task starts only after the previous one finishes, even if the previous one rejects), tasks with different keys run in parallel. `run` returns a Promise with the task's result/error. No leaks: when a key's queue is empty, remove the key from the Map.'''
+explanation = '''This pattern serializes operations per account/order within a process without a global lock.'''
+hints = [
+  '''Keep a Map key → last promise in the queue (with errors swallowed).''',
+  '''Chain the new task with `prev.then(() => task())`.''',
+  '''Delete the key when the current tail is still the latest tail.''',
+]
+
+[questions.nodejs-lv040]
+prompt = '''What is Node.js?'''
+options = [
+  '''A server-side JavaScript runtime built on V8 and libuv''',
+  '''A CSS framework''',
+  '''A relational database''',
+  '''A Java compiler''',
+]
+explanation = '''Node.js is a JavaScript runtime that runs outside the browser, built on the V8 engine and libuv for asynchronous I/O.'''
+
+[questions.nodejs-lv041]
+prompt = '''Why can Node.js handle many concurrent connections with only one main JavaScript thread?'''
+options = [
+  '''Asynchronous I/O and the event loop; the JS thread is not blocked while waiting''',
+  '''Each connection creates its own JS thread''',
+  '''Node runs every request on the GPU''',
+  '''Node ignores the second connection''',
+]
+explanation = '''I/O operations are handed to the operating system/libuv and results come back via the event loop; the JS thread is not blocked while waiting.'''
+
+[questions.nodejs-lv042]
+prompt = '''Which command installs the dependencies declared in package.json? Fill in: npm {{blank}}'''
+explanation = '''`npm install` (short: `npm i`) installs dependencies; in CI use `npm ci` to reproduce from the lockfile.'''
+
+[questions.nodejs-lv043]
+prompt = '''Which statement imports Node's built-in `fs` module as ESM, using the recommended `node:` prefix?'''
+explanation = '''The `node:` prefix makes it clear this is a core module, avoiding confusion with an npm package of the same name.'''
+
+[questions.nodejs-lv044]
+prompt = '''Which of these are part of Node's `process` object?'''
+explanation = '''process.argv, process.env and process.exit are standard APIs; window and document belong to the browser.'''
+
+[questions.nodejs-lv045]
+prompt = '''What is the purpose of `const PORT = process.env.PORT || 3000;`?'''
+options = [
+  '''Read the port from the environment, falling back to 3000 if missing''',
+  '''Always force port 3000''',
+  '''Open 3000 ports at once''',
+  '''Delete the PORT variable''',
+]
+explanation = '''It reads the port from an environment variable with 3000 as the default, allowing different configuration per environment without changing code.'''
+
+[questions.nodejs-lv046]
+prompt = '''What is the difference between fs.readFileSync and fs.promises.readFile?'''
+options = [
+  '''readFileSync blocks the event loop; promises.readFile does not''',
+  '''The two functions behave exactly the same''',
+  '''readFileSync is faster on a multi-user server, so it is always better''',
+  '''promises.readFile can only read text files''',
+]
+explanation = '''The Sync version blocks the event loop until it finishes; the promises version does not block and returns a Promise. On a server, avoid Sync calls in request handlers.'''
+
+[questions.nodejs-lv047]
+prompt = '''Which path module function joins path segments correctly for the operating system? Fill in: path.{{blank}}('a','b','c.txt')'''
+explanation = '''path.join joins segments and normalizes separators.'''
+
+[questions.nodejs-lv048]
+prompt = '''How do streams help when processing very large files?'''
+options = [
+  '''They process data chunk by chunk, saving memory''',
+  '''They automatically compress the file''',
+  '''They require reading the whole file first''',
+  '''They only work for JSON files''',
+]
+explanation = '''Streams process data in chunks, so memory use stays low and processing starts early, instead of loading everything into RAM.'''
+
+[questions.nodejs-lv049]
+prompt = '''What is a Buffer used for in Node?'''
+options = [
+  '''Storing a sequence of binary bytes''',
+  '''Storing callback functions''',
+  '''Storing CSS configuration''',
+  '''Buffering for console.log''',
+]
+explanation = '''A Buffer represents a raw byte sequence (binary data) such as file contents, TCP packets or images.'''
+
+[questions.nodejs-lv050]
+prompt = '''Which JSON methods convert between strings and objects?'''
+explanation = '''JSON.parse converts string → object, JSON.stringify converts object → string.'''
+
+[questions.nodejs-lv051]
+prompt = '''In Express, what does `app.get('/users', handler)` mean?'''
+options = [
+  '''Handle GET requests to /users''',
+  '''Handle every method to /users''',
+  '''Fetch the app variable from the database''',
+  '''Create the users table''',
+]
+explanation = '''It registers a handler for HTTP GET requests to the /users path.'''
+
+[questions.nodejs-lv052]
+prompt = '''Which Express middleware parses JSON request bodies? Fill in: app.use(express.{{blank}}())'''
+explanation = '''express.json() parses bodies with Content-Type application/json into req.body.'''
+
+[questions.nodejs-lv053]
+prompt = '''Which HTTP status code is appropriate when the client sends data missing a required field?'''
+explanation = '''400 Bad Request (or 422) for invalid data; 500 is for server-side errors.'''
+
+[questions.nodejs-lv054]
+prompt = '''What does the `next()` function do in Express middleware?'''
+options = [
+  '''Passes control to the next middleware/route''',
+  '''Terminates the process''',
+  '''Restarts the server''',
+  '''Clears the response''',
+]
+explanation = '''next() passes control to the next middleware/route; if you neither call it nor send a response, the request hangs.'''
+
+[questions.nodejs-lv055]
+prompt = '''Which res methods end and send the response in Express?'''
+explanation = '''res.json, res.send and res.sendStatus send a response; req.body is just request data.'''
+
+[questions.nodejs-lv056]
+prompt = '''Why shouldn't you commit a `.env` file containing secrets to git?'''
+options = [
+  '''The secrets can be exposed permanently in git history''',
+  '''Git can't read .env files''',
+  '''Node can't read .env''',
+  '''It slows down npm install''',
+]
+explanation = '''A .env file usually contains passwords/API keys; exposing them in git history is a security risk. Use a secret manager or the runtime environment's variables instead.'''
+
+[questions.nodejs-lv057]
+prompt = '''What does `node --watch server.js` do (modern Node)?'''
+options = [
+  '''Restarts automatically when files change''',
+  '''Runs the server in production mode''',
+  '''Opens a remote debugger''',
+  '''Clears the npm cache''',
+]
+explanation = '''--watch restarts the process automatically when watched files change; it is meant for development.'''
+
+[questions.nodejs-lv058]
+prompt = '''Which Node versions should be used in production?'''
+options = [
+  '''A supported LTS release''',
+  '''An odd-numbered Current release for critical production''',
+  '''An end-of-life release as long as it runs fine''',
+  '''An Active LTS release''',
+]
+explanation = '''Use a supported LTS release (Active or Maintenance); odd-numbered Current releases are not LTS.'''
+
+[questions.nodejs-lv059]
+prompt = '''When a Promise rejects with no catch, what does modern Node (>=15) do by default?'''
+options = [
+  '''Throws and terminates the process''',
+  '''Silently ignores it''',
+  '''Retries automatically''',
+  '''Turns it into a console warning''',
+]
+explanation = '''By default an unhandled rejection makes the process exit with an error (--unhandled-rejections=throw); handle errors, or log and exit in a controlled way.'''
+
+[questions.nodejs-lv060]
+prompt = '''In CommonJS, how do you export a function?'''
+options = [
+  '''module.exports = fn''',
+  '''export default fn (only in .cjs)''',
+  '''return fn at the top of the file''',
+  '''global.fn = fn is the standard way''',
+]
+explanation = '''module.exports = fn exports a value from a CommonJS module; consumers use require.'''
+
+[questions.nodejs-lv061]
+prompt = '''What is the difference between status codes 401 and 403?'''
+options = [
+  '''401 is unauthenticated, 403 is insufficient permissions''',
+  '''The two codes are the same''',
+  '''401 is a server error, 403 is a client network error''',
+  '''403 means not found''',
+]
+explanation = '''401 means not authenticated / invalid authentication; 403 means authenticated but not permitted.'''
+
+[questions.nodejs-lv062]
+title = "Read an integer from an environment variable"
+prompt = '''Write `readIntEnv(env, name, fallback)`: read the environment variable `name` from the object `env` and return an integer. If it is missing, empty, or not a valid integer (e.g. 'abc', '12.5', '3000x'), return `fallback`. Accept negative numbers. Trim leading/trailing whitespace.'''
+explanation = '''Strict config parsing avoids silent bugs such as parseInt('3000x') === 3000.'''
+hints = [
+  '''Check with the regex `^-?\\d+$` after trimming.''',
+  '''`parseInt` accepts '3000x', so it is not suitable.''',
+]
+
+[questions.nodejs-lv063]
+prompt = '''How does `await Promise.all([a(), b()])` differ from `await a(); await b();`?'''
+options = [
+  '''Promise.all runs both in parallel; the sequential version runs them one after another''',
+  '''Both always take the same time''',
+  '''Promise.all always waits for both even if one rejects''',
+  '''Sequential is faster because there are fewer Promises''',
+]
+explanation = '''Promise.all runs in parallel and waits for both (rejecting as soon as one fails); sequential awaits wait for a to finish before starting b, so it is slower when the two tasks are independent.'''
+
+[questions.nodejs-lv064]
+prompt = '''You need to wait for all Promises to finish and know which failed and which succeeded without stopping midway. What do you use?'''
+explanation = '''Promise.allSettled returns the status of each Promise; Promise.all stops early on an error.'''
+
+[questions.nodejs-lv065]
+prompt = '''Which API lets you cancel a fetch or an asynchronous task? Fill in: new {{blank}}()'''
+explanation = '''AbortController creates a signal for cancellation; attach the signal to fetch, timers/promises, events.once...'''
+
+[questions.nodejs-lv066]
+prompt = '''To run thousands of I/O tasks with at most 10 in parallel, which approach is reasonable?'''
+options = [
+  '''Use a concurrency limiter (limit/semaphore) processing in batches or a queue''',
+  '''Promise.all over all 1000 tasks''',
+  '''A random setTimeout per task''',
+  '''Run them one by one; it can't be faster''',
+]
+explanation = '''You need a concurrency limiter (pool/semaphore). Promise.all over everything opens thousands of connections at once and can exhaust resources.'''
+
+[questions.nodejs-lv067]
+prompt = '''When do you use PUT and when do you use PATCH?'''
+options = [
+  '''PUT replaces the whole resource, PATCH updates part of it''',
+  '''PATCH deletes the resource''',
+  '''PUT is used to read data''',
+  '''The two methods differ only in name''',
+]
+explanation = '''PUT replaces the whole resource (idempotent); PATCH updates part of it.'''
+
+[questions.nodejs-lv068]
+prompt = '''What should request validation at the Express boundary do?'''
+options = [
+  '''Validate the schema of body/query/params''',
+  '''Return 400 with an error message that doesn't leak internal details''',
+  '''Validate only on the frontend''',
+  '''Normalize/limit string lengths''',
+  '''Trust every header from the client''',
+]
+explanation = '''Validate types/lengths/enums, reject early with 400, never trust the client; checking only on the frontend is not enough.'''
+
+[questions.nodejs-lv069]
+prompt = '''How do Pino or Winston differ from `console.log` for production?'''
+options = [
+  '''Structured, leveled logs that are easy to aggregate and query''',
+  '''They only run on Windows''',
+  '''Faster because they write nothing''',
+  '''They can't write to stdout''',
+]
+explanation = '''A structured logger (JSON) with levels and destinations allows filtering/aggregation; console.log has no structure or levels.'''
+
+[questions.nodejs-lv070]
+prompt = '''A request spans several services. How do you link their logs together?'''
+options = [
+  '''Generate and propagate a correlation id via a header, writing it into every log line''',
+  '''Rely on the timestamp order of the logs''',
+  '''Use the client IP as the id''',
+  '''It can't be done''',
+]
+explanation = '''Propagate a correlation/trace id via a header (e.g. traceparent) and include it in every log line.'''
+
+[questions.nodejs-lv071]
+prompt = '''Why should you use a `keepAlive` agent when calling internal APIs at high frequency?'''
+options = [
+  '''To reuse connections, reducing handshakes and latency''',
+  '''To encrypt data''',
+  '''To increase the maximum body size''',
+  '''To make requests always sequential''',
+]
+explanation = '''Reusing TCP/TLS connections reduces handshakes and latency; opening a new connection per request wastes resources.'''
+
+[questions.nodejs-lv072]
+prompt = '''The project has `"type": "module"` and you need __dirname. What is the standard way in ESM?'''
+options = [
+  '''import.meta.dirname or fileURLToPath(import.meta.url)''',
+  '''require('__dirname')''',
+  '''process.__dirname''',
+  '''There's no way to get the current directory''',
+]
+explanation = '''ESM has no __dirname; use import.meta.dirname (recent Node) or fileURLToPath(new URL('.', import.meta.url)).'''
+
+[questions.nodejs-lv073]
+title = "Limit parallel tasks"
+prompt = '''Write `limitConcurrency(tasks, limit)`: `tasks` is an array of functions returning Promises. Run at most `limit` tasks at a time and return a Promise of the results array **in the same order** as `tasks`. If a task rejects, the overall promise rejects with that error.'''
+explanation = '''Limiting concurrency is a common skill to avoid exhausting sockets/database connections.'''
+hints = [
+  '''Use a shared index `next` and `limit` workers that loop to pick up work.''',
+  '''`Promise.all` over the workers.''',
+]

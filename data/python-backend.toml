@@ -78,6 +78,7 @@ id = "py-001"
 module = "py-flask"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Route Flask nào khớp với URL `/users/42` và truyền `42` dạng **int** vào hàm?"
 options = ["`@app.route('/users/:id')`", "`@app.route('/users/<int:user_id>')`", "`@app.route('/users/{user_id}')`", "`@app.get('/users/*')`"]
 answer = [1]
@@ -89,6 +90,7 @@ id = "py-002"
 module = "py-flask"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Đối tượng `flask.g` dùng để làm gì?"
 options = [
   "Lưu dữ liệu toàn cục vĩnh viễn giữa các request",
@@ -105,6 +107,7 @@ id = "py-003"
 module = "py-flask"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Gọi `current_app.config` trong một script CLI (ngoài request) báo lỗi \"Working outside of application context\". Cách sửa?"
 options = [
   "Dùng biến global",
@@ -121,6 +124,7 @@ id = "py-004"
 module = "py-flask"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Dữ liệu trong `flask.session` (mặc định) được lưu ở đâu?"
 options = [
   "Trong RAM của server",
@@ -136,6 +140,7 @@ id = "py-005"
 module = "py-flask"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Lợi ích của **application factory** `create_app()`?"
 options = [
   "Tạo nhiều instance app với cấu hình khác nhau (test, dev, prod)",
@@ -153,6 +158,7 @@ id = "py-006"
 module = "py-flask"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Hoàn thành route nhận JSON và trả về 201:
 
@@ -174,6 +180,7 @@ module = "py-flask"
 type = "code"
 lang = "python"
 difficulty = 3
+tags = ["level:senior"]
 title = "Route matcher kiểu Flask"
 prompt = '''
 Viết `match_route(rule, path)` mô phỏng cách Flask khớp URL:
@@ -256,6 +263,7 @@ id = "py-020"
 module = "py-fastapi"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 Với endpoint sau, `skip` được lấy từ đâu?
 
@@ -274,6 +282,7 @@ id = "py-021"
 module = "py-fastapi"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Gửi `GET /items/abc` tới endpoint có `item_id: int`. FastAPI trả về status nào?"
 options = ["200", "400", "404", "422"]
 answer = [3]
@@ -285,6 +294,7 @@ id = "py-022"
 module = "py-fastapi"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Tác dụng của `response_model=UserOut` trong `@app.post('/users', response_model=UserOut)`?"
 options = [
   "Validate request body",
@@ -301,6 +311,7 @@ id = "py-023"
 module = "py-fastapi"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Dependency viết dạng generator có `yield` (vd. `get_db`) dùng để:"
 options = [
   "Trả nhiều giá trị",
@@ -316,6 +327,7 @@ id = "py-024"
 module = "py-fastapi"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Những điều nào đúng về FastAPI?"
 options = [
   "Tự sinh tài liệu OpenAPI/Swagger tại `/docs`",
@@ -333,6 +345,7 @@ id = "py-025"
 module = "py-fastapi"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 Inject dependency xác thực vào endpoint:
 
@@ -351,6 +364,7 @@ id = "py-026"
 module = "py-fastapi"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 Khai báo model Pydantic cho request body:
 
@@ -373,6 +387,7 @@ module = "py-fastapi"
 type = "code"
 lang = "python"
 difficulty = 2
+tags = ["level:middle"]
 title = "Validate dữ liệu kiểu Pydantic"
 prompt = '''
 Không dùng thư viện, viết `validate(schema, data)` trả về `(clean, errors)`:
@@ -482,6 +497,7 @@ module = "py-fastapi"
 type = "code"
 lang = "python"
 difficulty = 3
+tags = ["level:senior"]
 title = "Mini Dependency Injection (Depends)"
 prompt = '''
 Mô phỏng hệ thống `Depends` của FastAPI:
@@ -583,6 +599,7 @@ id = "py-040"
 module = "py-async"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Trong FastAPI, gọi `time.sleep(5)` bên trong endpoint `async def` sẽ gây ra gì?"
 options = [
   "Chỉ request đó chờ 5 giây",
@@ -599,6 +616,7 @@ id = "py-041"
 module = "py-async"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Khác biệt chính giữa WSGI và ASGI?"
 options = [
   "ASGI chỉ dành cho Django",
@@ -615,6 +633,7 @@ id = "py-042"
 module = "py-async"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 Gọi 3 API đồng thời và đợi tất cả:
 
@@ -631,6 +650,7 @@ module = "py-async"
 type = "code"
 lang = "python"
 difficulty = 3
+tags = ["level:senior"]
 title = "gather có giới hạn đồng thời"
 prompt = '''
 Viết `async def gather_limited(funcs, limit)`:
@@ -714,6 +734,7 @@ id = "py-044"
 module = "py-async"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Khi nào nên khai báo endpoint FastAPI là `async def` và khi nào là `def`?"
 keywords = [
   ["await", "thư viện async", "httpx", "asyncpg", "async driver"],
@@ -736,6 +757,7 @@ id = "py-060"
 module = "py-security"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Phát biểu nào đúng về JWT (JWS, HS256)?"
 options = [
   "Payload được mã hoá nên an toàn để chứa mật khẩu",
@@ -752,6 +774,7 @@ id = "py-061"
 module = "py-security"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Cách lưu mật khẩu người dùng đúng?"
 options = ["Plaintext", "`hashlib.md5(password)`", "Hash chậm có salt như **bcrypt/argon2** (passlib, pwdlib)", "Mã hoá AES và lưu key cạnh DB"]
 answer = [2]
@@ -762,6 +785,7 @@ id = "py-062"
 module = "py-security"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Cấu hình CORS nào **không an toàn / không hợp lệ**?"
 options = [
   "`allow_origins=[\"https://app.bovabon.edu\"]`",
@@ -778,6 +802,7 @@ id = "py-063"
 module = "py-security"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 So sánh chữ ký an toàn trước timing attack:
 
@@ -796,6 +821,7 @@ module = "py-security"
 type = "code"
 lang = "python"
 difficulty = 3
+tags = ["level:senior"]
 title = "Ký & xác minh JWT HS256"
 prompt = '''
 Chỉ dùng thư viện chuẩn (`hmac`, `hashlib`, `base64`, `json`), viết:
@@ -964,6 +990,7 @@ id = "python-backend-dv001"
 module = "python-backend-dv-flask-structure"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Một Blueprint Flask được hiểu đúng nhất là gì?"
 options = ["Một app Flask độc lập tự lắng nghe cổng riêng", "Một nhóm route và hook có thể đăng ký vào app", "Một kết nối cơ sở dữ liệu dùng chung", "Một test client giả lập HTTP"]
 answer = [1]
@@ -975,6 +1002,7 @@ id = "python-backend-dv002"
 module = "python-backend-dv-flask-structure"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Vì sao application factory hữu ích khi test cùng ứng dụng với nhiều cấu hình?"
 options = ["Mỗi lần gọi có thể tạo app mới với cấu hình riêng", "Factory tự tạo một database production", "Factory bỏ qua toàn bộ middleware", "Factory biến Flask thành ASGI"]
 answer = [0]
@@ -986,6 +1014,7 @@ id = "python-backend-dv003"
 module = "python-backend-dv-flask-structure"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Flask test client phù hợp với trường hợp nào?"
 options = ["Gửi request qua app trong test mà không mở server mạng", "Đo độ trễ từ trình duyệt thật qua Internet", "Khởi chạy Gunicorn trong production", "Tạo migration cho database"]
 answer = [0]
@@ -997,6 +1026,7 @@ id = "python-backend-dv004"
 module = "python-backend-dv-flask-structure"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Đăng ký Blueprint tên api với prefix /v1 bằng cách nào?"
 options = ["app.register_blueprint(api, url_prefix=\"/v1\")", "api.run(prefix=\"/v1\")", "app.config[\"BLUEPRINT\"] = api", "Blueprint(\"/v1\", app)"]
 answer = [0]
@@ -1008,6 +1038,7 @@ id = "python-backend-dv005"
 module = "python-backend-dv-flask-structure"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Những lợi ích nào thường đạt được khi chia ứng dụng Flask bằng Blueprint?"
 options = ["Nhóm route theo miền chức năng", "Có thể gắn prefix khi đăng ký", "Blueprint tự trở thành process độc lập", "Có thể đăng ký cùng Blueprint vào nhiều app phù hợp"]
 answer = [0, 1, 3]
@@ -1019,6 +1050,7 @@ id = "python-backend-dv006"
 module = "python-backend-dv-flask-structure"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Một test cần kiểm tra endpoint /api/health và session. Chọn các thực hành phù hợp."
 options = ["Tạo app bằng factory với TESTING=True", "Dùng app.test_client() để gửi request", "Dùng session_transaction() nếu cần chuẩn bị session", "Chạy app.run() trên cổng công khai trong mỗi test"]
 answer = [0, 1, 2]
@@ -1030,6 +1062,7 @@ id = "python-backend-dv007"
 module = "python-backend-dv-flask-structure"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Hoàn tất đăng ký Blueprint:
 
@@ -1046,6 +1079,7 @@ id = "python-backend-dv008"
 module = "python-backend-dv-flask-structure"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Trong một codebase Flask có nhiều khu vực chức năng, hãy giải thích cách application factory, Blueprint và test client phối hợp để giữ ứng dụng dễ mở rộng và dễ kiểm thử."
 keywords = [["application factory", "create_app"], ["blueprint"], ["test client", "testing"], ["isolated configuration", "cấu hình riêng", "test configuration"]]
 min_keywords = 3
@@ -1058,6 +1092,7 @@ id = "python-backend-dvc01"
 module = "python-backend-dv-flask-structure"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 lang = "python"
 title = "Ghép cấu hình cho app factory"
 prompt = '''Viết build_config(defaults, environment, overrides) trả về dict cấu hình mới. Hợp nhất theo thứ tự: giá trị trong defaults, sau đó ghi đè bằng environment, cuối cùng ghi đè bằng overrides. Không được sửa bất kỳ dict đầu vào nào.'''
@@ -1144,6 +1179,7 @@ id = "python-backend-dv009"
 module = "python-backend-dv-fastapi-deps"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Một endpoint cần dùng chung hàm lấy user hiện tại và kiểm tra quyền. FastAPI thường khai báo sự phụ thuộc đó bằng cách nào?"
 options = ["Đặt Depends(get_current_user) trong chữ ký endpoint", "Tạo biến global rồi sửa trong mỗi request", "Gọi app.run() từ endpoint", "Truyền dependency qua query string"]
 answer = [0]
@@ -1155,6 +1191,7 @@ id = "python-backend-dv010"
 module = "python-backend-dv-fastapi-deps"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Vì sao dependency quản lý database session thường dùng try/finally quanh yield?"
 options = ["Để đóng session sau khi dùng, kể cả khi có exception", "Để tự biến endpoint đồng bộ thành bất đồng bộ", "Để bỏ qua validation của request", "Để lưu session vào cookie"]
 answer = [0]
@@ -1166,6 +1203,7 @@ id = "python-backend-dv011"
 module = "python-backend-dv-fastapi-deps"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Cùng một dependency được tham chiếu nhiều lần trong một request thường được FastAPI xử lý thế nào?"
 options = ["Cache kết quả trong request theo mặc định", "Gọi dependency đúng một lần cho toàn bộ vòng đời process", "Lưu kết quả vào cookie", "Từ chối request vì dependency trùng"]
 answer = [0]
@@ -1177,6 +1215,7 @@ id = "python-backend-dv012"
 module = "python-backend-dv-fastapi-deps"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Cách phù hợp để endpoint test dùng fake repository thay cho dependency repository thật là gì?"
 options = ["Gán hàm fake vào app.dependency_overrides theo dependency gốc", "Sửa trực tiếp hàm endpoint trong production", "Đổi mọi response thành status 204", "Tạo token ngẫu nhiên trong query string"]
 answer = [0]
@@ -1188,6 +1227,7 @@ id = "python-backend-dv013"
 module = "python-backend-dv-fastapi-deps"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Những lý do nào khiến dependency overrides hữu ích trong test API?"
 options = ["Tránh kết nối tới database thật", "Cấp user test có quyền xác định", "Giữ endpoint dùng cùng chữ ký như production", "Tự kiểm chứng hiệu năng production chính xác"]
 answer = [0, 1, 2]
@@ -1199,6 +1239,7 @@ id = "python-backend-dv014"
 module = "python-backend-dv-fastapi-deps"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Chọn các phát biểu đúng về dependency có yield."
 options = ["Có thể dùng để quản lý vòng đời tài nguyên", "Đặt cleanup trong finally giúp chạy khi luồng xử lý phát sinh lỗi", "Mỗi request luôn dùng chung một object dependency với mọi request khác", "Có thể lồng dependency để chia nhỏ các bước chuẩn bị"]
 answer = [0, 1, 3]
@@ -1210,6 +1251,7 @@ id = "python-backend-dv015"
 module = "python-backend-dv-fastapi-deps"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 Điền thuộc tính dùng để ánh xạ dependency gốc sang dependency fake trong test:
 
@@ -1226,6 +1268,7 @@ id = "python-backend-dv016"
 module = "python-backend-dv-fastapi-deps"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Giải thích cách dependency có yield và dependency override giúp một endpoint dùng tài nguyên an toàn trong production nhưng vẫn kiểm thử được độc lập."
 keywords = [["dependency injection", "depends"], ["yield"], ["cleanup", "finally"], ["dependency overrides", "override"], ["isolated tests", "test isolation"]]
 min_keywords = 3
@@ -1238,6 +1281,7 @@ id = "python-backend-dvc02"
 module = "python-backend-dv-fastapi-deps"
 type = "code"
 difficulty = 3
+tags = ["level:senior"]
 lang = "python"
 title = "Override registry có phạm vi"
 prompt = '''Viết context manager override_scope(registry, replacements). Khi vào with, cập nhật registry bằng replacements. Khi thoát, luôn khôi phục giá trị ban đầu của các khóa đã có và xóa các khóa mới được thêm, kể cả khi khối with phát sinh exception. Hỗ trợ phạm vi lồng nhau. Chỉ dùng thư viện chuẩn.'''
@@ -1343,6 +1387,7 @@ id = "python-backend-dv017"
 module = "python-backend-dv-sqlite"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Cách an toàn để đưa địa chỉ email do người dùng nhập vào điều kiện SQL là gì?"
 options = ["Dùng placeholder ? rồi truyền email riêng trong tuple", "Ghép email trực tiếp bằng f-string", "Dùng repr(email) để tạo câu SQL", "Xóa dấu nháy đơn rồi ghép chuỗi"]
 answer = [0]
@@ -1354,6 +1399,7 @@ id = "python-backend-dv018"
 module = "python-backend-dv-sqlite"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một thao tác cập nhật gồm trừ tiền từ A rồi cộng cho B. Nếu bước cộng thất bại, yêu cầu nào quan trọng nhất?"
 options = ["Rollback để hoàn tác cả bước trừ", "Commit bước trừ trước rồi bỏ qua lỗi", "Đóng cursor để tự khôi phục dữ liệu", "Retry riêng bước cộng mà không kiểm tra trạng thái"]
 answer = [0]
@@ -1365,6 +1411,7 @@ id = "python-backend-dv019"
 module = "python-backend-dv-sqlite"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Với connection context manager của sqlite3, điều nào đúng?"
 options = ["Có thể commit khi khối kết thúc bình thường và rollback khi có lỗi nếu transaction đang mở", "Luôn đóng connection khi thoát khỏi khối", "Tự mở một server SQLite riêng", "Tự chuyển mọi dữ liệu thành JSON"]
 answer = [0]
@@ -1376,6 +1423,7 @@ id = "python-backend-dv020"
 module = "python-backend-dv-sqlite"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Cột balance lưu số tiền theo cent nên dùng kiểu nào trong ứng dụng để tránh sai số số thực?"
 options = ["INTEGER chứa số cent", "REAL cho mọi phép tính tiền", "Chuỗi đã định dạng có dấu phẩy", "BLOB chứa biểu diễn float"]
 answer = [0]
@@ -1387,6 +1435,7 @@ id = "python-backend-dv021"
 module = "python-backend-dv-sqlite"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Những thực hành nào giúp truy vấn SQLite an toàn và dễ bảo trì?"
 options = ["Bind input bằng placeholder", "Dùng transaction cho cập nhật nhiều bước có liên hệ", "Đưa tên cột từ người dùng trực tiếp vào placeholder giá trị", "Đóng connection theo đúng vòng đời ứng dụng"]
 answer = [0, 1, 3]
@@ -1398,6 +1447,7 @@ id = "python-backend-dv022"
 module = "python-backend-dv-sqlite"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Khi transaction chuyển tiền thất bại sau khi đã trừ nguồn, chọn các xử lý đúng."
 options = ["Rollback toàn bộ transaction", "Kiểm tra cả số dư nguồn và việc cập nhật đích", "Bắt lỗi rồi commit phần thay đổi còn dang dở", "Giữ hai cập nhật trong cùng một transaction"]
 answer = [0, 1, 3]
@@ -1409,6 +1459,7 @@ id = "python-backend-dv023"
 module = "python-backend-dv-sqlite"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Hoàn tất truy vấn bind giá trị an toàn:
 
@@ -1428,6 +1479,7 @@ id = "python-backend-dv024"
 module = "python-backend-dv-sqlite"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Mô tả cách triển khai một thao tác chuyển tiền an toàn bằng sqlite3, từ bind tham số đến xử lý lỗi giao dịch."
 keywords = [["parameter binding", "placeholder"], ["transaction"], ["rollback"], ["atomic", "all-or-nothing"], ["commit"]]
 min_keywords = 3
@@ -1440,6 +1492,7 @@ id = "python-backend-dvc03"
 module = "python-backend-dv-sqlite"
 type = "code"
 difficulty = 3
+tags = ["level:senior"]
 lang = "python"
 title = "Chuyển tiền nguyên tử"
 prompt = '''Viết transfer(connection, source_id, target_id, amount) cho bảng accounts(id INTEGER PRIMARY KEY, balance INTEGER NOT NULL). amount là số cent nguyên dương và hai id phải khác nhau. Trả về True nếu chuyển thành công. Trả về False nếu amount không hợp lệ, nguồn không tồn tại hoặc không đủ tiền, hay đích không tồn tại. Nếu bất kỳ bước cập nhật nào thất bại, không được để lại thay đổi một phần. Dùng placeholder cho mọi giá trị SQL.'''
@@ -1528,3 +1581,1455 @@ def _():
 hints = ["Dùng UPDATE có điều kiện balance >= amount và kiểm tra rowcount.", "Nếu cập nhật nguồn hoặc đích không đúng một dòng, ném exception bên trong with để SQLite rollback."]
 explanation = "Hai UPDATE trong cùng transaction bảo đảm thao tác atomic; parameter binding giữ input tách khỏi cú pháp SQL."
 sources = ["python~3.14/library/sqlite3#sqlite3.Connection.execute", "python~3.14/library/sqlite3#sqlite3.Connection.rollback"]
+
+# ------------------------------------------------------------ LEVEL: TECH LEAD
+[[modules]]
+id = "python-backend-lead"
+title = "Góc nhìn Tech Lead"
+description = "Chọn framework & mô hình sync/async, cấu trúc dự án lớn, migration DB không downtime, scaling worker, hàng đợi tác vụ, observability, rollout an toàn, quy chuẩn review cho team Python backend."
+sources = ["fastapi/deployment/concepts/index", "fastapi/deployment/server-workers/index", "fastapi/tutorial/bigger-applications/index", "fastapi/advanced/settings/index", "flask/deploying/index", "flask/patterns/celery/index"]
+lesson = '''
+### Vai trò của Tech Lead trong dự án Python backend
+Senior trả lời "làm thế nào cho đúng"; Lead trả lời "**nên làm gì, với team này, trong ràng buộc này**". Mọi quyết định cần nêu rõ: bối cảnh (người, thời gian, tải, chi phí), các phương án, tiêu chí so sánh, rủi ro và cách lùi lại (rollback).
+
+### Khung ra quyết định nhanh
+1. **Ràng buộc trước, công nghệ sau**: team quen gì, deadline, SLO (vd. p95 < 300 ms), ngân sách hạ tầng.
+2. **Liệt kê ≥ 2 phương án**, luôn có phương án "giữ nguyên + cải tiến nhỏ".
+3. **Chấm theo tiêu chí** (bảng dưới), ghi rõ con số là ước lượng hay đo được.
+4. **Thử nhỏ trước** (spike, canary, feature flag), đặt điểm dừng nếu chỉ số xấu đi.
+5. **Ghi ADR** để người sau hiểu vì sao.
+
+| Tiêu chí | Flask (WSGI) | FastAPI (ASGI) | Django |
+|---|---|---|---|
+| Đường cong học của team | thấp | trung bình (async, Pydantic) | trung bình |
+| I/O đồng thời cao, WebSocket | kém (cần gevent/ASGI riêng) | tốt | trung bình (ASGI + channels) |
+| Admin/CRUD nội bộ có sẵn | không | không | rất tốt |
+| Hợp đồng API (OpenAPI) | thêm extension | sinh tự động | thêm DRF/ninja |
+| Rủi ro lớn nhất | tự lắp ghép, thiếu chuẩn | gọi code blocking trong `async def` | ORM nặng, khó tách service |
+
+### Số liệu tham khảo (ước lượng, phải đo lại trên hệ thống thật)
+- Worker Gunicorn/Uvicorn: khởi điểm ~1 process mỗi vCPU (sync worker có thể 2×vCPU + 1), rồi chỉnh theo bộ nhớ và load test.
+- Sync worker bị chặn bởi I/O: throughput ≈ số worker ÷ thời gian chờ trung bình mỗi request.
+- Pool kết nối DB: tổng `pool_size × số process × số instance` phải nhỏ hơn `max_connections` của DB.
+
+### Migration DB không downtime (expand → migrate → contract)
+1. **Expand**: thêm cột/bảng mới dạng nullable, không khoá bảng lâu.
+2. **Migrate**: code ghi cả cũ lẫn mới; backfill theo lô nhỏ, có thể dừng/tiếp tục.
+3. **Contract**: khi mọi bản deploy đã đọc cột mới, thêm ràng buộc NOT NULL, rồi xoá cột cũ ở bản phát hành sau.
+Mỗi bước phải tương thích với cả phiên bản code đang chạy song song khi rolling deploy.
+
+### Checklist review PR backend (đưa vào template)
+- [ ] Endpoint có schema vào/ra rõ ràng (`response_model`), không lộ field nhạy cảm.
+- [ ] Không gọi thư viện blocking trong `async def`; gọi ra ngoài luôn có **timeout**.
+- [ ] Có test cho nhánh lỗi (4xx) chứ không chỉ happy path.
+- [ ] Log có cấu trúc kèm `request_id`, không log mật khẩu/token.
+- [ ] Migration tương thích ngược, có kế hoạch rollback.
+- [ ] Tác vụ chạy nền quan trọng đi qua hàng đợi bền, có retry và idempotency.
+
+### ADR mẫu (rút gọn)
+> **ADR-007: Tách tính năng chat realtime sang service ASGI riêng**
+> *Bối cảnh*: monolith Flask 4 năm tuổi, team 5 người, cần WebSocket trong 1 quý.
+> *Quyết định*: giữ Flask cho phần còn lại; viết service chat bằng FastAPI, dùng chung auth qua JWT, đứng sau cùng reverse proxy.
+> *Hệ quả*: thêm 1 pipeline deploy và dashboard; tránh viết lại toàn bộ; xem lại sau 6 tháng.
+
+### Anti-pattern ở quy mô team
+- **Viết lại toàn bộ (big-bang rewrite)** chỉ vì framework mới nhanh hơn trên benchmark.
+- Business logic nhét trong route handler → không test được, không tái sử dụng cho worker/CLI.
+- Biến global ở module dùng làm cache/state → mỗi worker process thấy một bản khác nhau.
+- Mỗi người tự đặt cách đọc cấu hình, tự chọn thư viện HTTP → onboarding chậm, lỗi khó đoán.
+- Alert trên từng exception thay vì trên SLO → team "mù" vì quá nhiều cảnh báo.
+- Sửa thay junior mà không giải thích, không biến bài học thành lint rule hay guideline.
+'''
+
+[[questions]]
+id = "python-backend-lv001"
+module = "python-backend-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "architecture"]
+prompt = "Team 5 người duy trì monolith Flask ổn định. Quý tới cần thêm tính năng chat realtime (WebSocket) cho một nhóm nhỏ người dùng, deadline 10 tuần, không được làm chậm roadmap khác. Phương án hợp lý nhất?"
+options = [
+  "Viết lại toàn bộ monolith sang FastAPI để có ASGI cho mọi endpoint",
+  "Giữ Flask; viết một service chat nhỏ bằng FastAPI/Starlette (ASGI), dùng chung cơ chế auth, đặt sau cùng reverse proxy",
+  "Bật gevent monkey-patch cho toàn bộ monolith để Flask tự xử lý WebSocket",
+  "Cho client polling REST mỗi 100 ms để khỏi cần WebSocket",
+]
+answer = [1]
+explanation = "Tách phần cần ASGI thành service nhỏ giới hạn rủi ro trong phạm vi tính năng mới. Viết lại toàn bộ vượt deadline và rủi ro cao; monkey-patch toàn app có thể phá thư viện đang dùng; polling 100 ms tốn tài nguyên gấp nhiều lần so với lợi ích."
+sources = ["fastapi/advanced/websockets/index", "fastapi/deployment/concepts/index"]
+
+[[questions]]
+id = "python-backend-lv002"
+module = "python-backend-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "migration"]
+prompt = "Cần thêm cột `tenant_id NOT NULL` vào bảng `orders` 50 triệu dòng. Hệ thống deploy rolling (code cũ và mới chạy song song vài phút), không được downtime. Kế hoạch nào phù hợp?"
+options = [
+  "Một migration duy nhất: `ADD COLUMN tenant_id ... NOT NULL DEFAULT` rồi deploy code mới",
+  "Thêm cột nullable → deploy code ghi cột mới → backfill theo lô → khi mọi bản deploy đã ghi, thêm ràng buộc NOT NULL → dọn code cũ",
+  "Tạo bảng `orders_v2`, copy dữ liệu trong đêm, đổi tên bảng",
+  "Dừng ghi 30 phút vào giờ thấp điểm để chạy migration",
+]
+answer = [1]
+explanation = "Mẫu expand → migrate → contract giữ cho từng bước tương thích với cả code cũ lẫn mới và có thể dừng giữa chừng. Migration một bước có thể khoá bảng lâu hoặc làm code cũ (không biết cột mới) lỗi khi insert; copy sang bảng mới bỏ lỡ dữ liệu ghi trong lúc copy; dừng ghi vi phạm yêu cầu không downtime."
+sources = ["fastapi/deployment/concepts/index"]
+
+[[questions]]
+id = "python-backend-lv003"
+module = "python-backend-lead"
+type = "multiple"
+difficulty = 3
+tags = ["level:lead", "code-review"]
+prompt = "Bạn soạn checklist review PR cho team FastAPI. Những mục nào đáng đưa vào checklist (mang lại giá trị so với chi phí review)?"
+options = [
+  "Endpoint khai báo `response_model`/schema ra rõ ràng, không lộ field nhạy cảm",
+  "Mọi lời gọi HTTP/DB ra ngoài đều có timeout",
+  "Không gọi thư viện blocking bên trong `async def`",
+  "Bắt buộc coverage 100% cho từng PR, nếu thiếu thì chặn merge",
+  "Reviewer tự kiểm tra thủ công thụt lề và thứ tự import",
+  "Có test cho nhánh lỗi 4xx chứ không chỉ happy path",
+]
+answer = [0, 1, 2, 5]
+explanation = "Các mục 0, 1, 2, 5 bắt lỗi production thường gặp mà công cụ khó tự phát hiện. Coverage 100% tạo test vô nghĩa để đạt chỉ số; định dạng và thứ tự import nên giao cho formatter/linter chạy trong CI, không tốn công reviewer."
+sources = ["fastapi/tutorial/response-model/index", "fastapi/async/index", "fastapi/tutorial/testing/index"]
+
+[[questions]]
+id = "python-backend-lv004"
+module = "python-backend-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "queue"]
+prompt = "Service FastAPI phải gửi ~10.000 email báo cáo mỗi ngày. Yêu cầu: không mất việc khi deploy/restart, tự retry khi nhà cung cấp email lỗi tạm thời, không gửi trùng. Chọn thiết kế."
+options = [
+  "`BackgroundTasks` của FastAPI trong endpoint tạo báo cáo",
+  "Tạo `threading.Thread` trong process API cho mỗi email",
+  "Hàng đợi bền (Celery/RQ/Arq với broker như Redis/RabbitMQ), task có retry + backoff và idempotency key theo email",
+  "Cron mỗi phút gọi một endpoint nội bộ quét bảng và gửi tất cả",
+]
+answer = [2]
+explanation = "Chỉ hàng đợi bền tách khỏi vòng đời process API mới giữ được việc qua restart; retry + idempotency key xử lý lỗi tạm thời mà không gửi trùng. BackgroundTasks và thread mất việc khi process tắt; cron gọi endpoint dễ chạy chồng và thiếu cơ chế retry từng việc."
+sources = ["fastapi/tutorial/background-tasks/index", "flask/patterns/celery/index"]
+
+[[questions]]
+id = "python-backend-lv005"
+module = "python-backend-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "scaling"]
+prompt = "Mỗi instance có 4 vCPU và 2 GB RAM; một worker Uvicorn của service FastAPI (chủ yếu I/O async) chiếm ~300 MB khi chạy. Bạn chọn cấu hình worker khởi điểm nào trước khi load test?"
+options = [
+  "1 worker duy nhất vì async đã xử lý được nhiều request đồng thời",
+  "~4 worker (khoảng 1 mỗi vCPU, ~1,2 GB RAM), sau đó điều chỉnh theo kết quả load test và bộ nhớ thực tế",
+  "16 worker để tối đa throughput",
+  "Số worker bằng số request đồng thời dự kiến lúc cao điểm",
+]
+answer = [1]
+explanation = "Một process Python chỉ dùng hiệu quả ~1 core cho phần CPU (GIL), nên 1 worker bỏ phí 3 vCPU. 16 worker cần ~4,8 GB, vượt RAM. Async cho phép mỗi worker phục vụ nhiều request, nên không cần worker bằng số request đồng thời. Con số chỉ là điểm xuất phát, phải đo lại."
+sources = ["fastapi/deployment/server-workers/index", "fastapi/deployment/concepts/index"]
+
+[[questions]]
+id = "python-backend-lv006"
+module = "python-backend-lead"
+type = "multiple"
+difficulty = 3
+tags = ["level:lead", "observability"]
+prompt = "Đặt mức observability tối thiểu bắt buộc cho mọi service Python mới trước khi lên production. Chọn các yêu cầu hợp lý."
+options = [
+  "Log có cấu trúc (JSON) kèm `request_id` truyền xuyên các service",
+  "Metric RED theo endpoint: rate, error, duration (p50/p95/p99)",
+  "Tracing cho lời gọi DB và HTTP ra ngoài",
+  "Log toàn bộ body request (kể cả mật khẩu) để dễ debug",
+  "Gửi alert cho từng exception ngay khi xảy ra",
+  "Alert dựa trên SLO (vd. tỉ lệ lỗi/độ trễ vượt ngưỡng trong cửa sổ thời gian)",
+]
+answer = [0, 1, 2, 5]
+explanation = "Log có cấu trúc, metric RED, tracing và alert theo SLO cho phép phát hiện và khoanh vùng sự cố. Log mật khẩu là lỗi bảo mật; alert từng exception gây quá tải cảnh báo khiến team bỏ qua cả alert quan trọng."
+sources = ["flask/logging/index", "python~3.14/library/logging"]
+
+[[questions]]
+id = "python-backend-lv007"
+module = "python-backend-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "architecture"]
+prompt = "Dự án mới: back-office nội bộ với ~40 màn hình CRUD, phân quyền theo nhóm, 6 tuần, team 4 người đều đã làm Django nhiều năm, tải thấp (< 20 req/s). Chọn framework."
+options = [
+  "FastAPI vì benchmark nhanh nhất",
+  "Flask + tự ghép extension cho admin, auth, form",
+  "Django (admin, auth, ORM, migration có sẵn) và thêm API khi cần",
+  "Viết bằng Go để chuẩn bị cho tương lai",
+]
+answer = [2]
+explanation = "Với tải thấp, yếu tố quyết định là tốc độ giao hàng và kinh nghiệm của team: Django admin giải quyết phần lớn màn hình CRUD. Lợi thế hiệu năng của FastAPI không có giá trị ở 20 req/s; Flask phải tự lắp ghép nhiều; đổi ngôn ngữ tăng rủi ro deadline."
+sources = ["fastapi/deployment/concepts/index"]
+
+[[questions]]
+id = "python-backend-lv008"
+module = "python-backend-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "tech-debt"]
+prompt = "Codebase Flask có ~40% endpoint chưa có test. Quý này phải thay cơ chế auth (session cookie → JWT) mà vẫn giao tính năng. Chiến lược nào cân bằng nhất?"
+options = [
+  "Đóng băng tính năng 2 tháng để viết test cho toàn bộ codebase",
+  "Viết characterization test cho các luồng auth hiện tại, thay cơ chế theo từng bước sau feature flag, bật dần theo nhóm người dùng",
+  "Thay toàn bộ auth trong một PR lớn và test thủ công kỹ",
+  "Giữ cả hai cơ chế vĩnh viễn để khỏi rủi ro",
+]
+answer = [1]
+explanation = "Test khoá hành vi hiện tại đúng vùng sắp thay, kết hợp feature flag cho phép rollout dần và rollback nhanh. Đóng băng tính năng tốn chi phí kinh doanh; PR lớn khó review và khó lùi lại; giữ hai cơ chế vĩnh viễn nhân đôi bề mặt tấn công và chi phí bảo trì."
+sources = ["flask/testing/index"]
+
+[[questions]]
+id = "python-backend-lv009"
+module = "python-backend-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "upgrade"]
+prompt = "Bạn phụ trách nâng 12 service từ Python 3.10 lên 3.13. Hai service xử lý thanh toán, còn lại là service nội bộ. Kế hoạch nào hợp lý?"
+options = [
+  "Nâng cả 12 service trong cùng một đợt release cho đồng bộ",
+  "Chờ tới khi 3.10 hết hỗ trợ rồi mới tính",
+  "Thêm CI matrix chạy test trên cả 3.10 và 3.13; nâng các service nội bộ ít rủi ro trước, theo dõi chỉ số; cuối cùng canary cho service thanh toán",
+  "Nâng service thanh toán trước vì quan trọng nhất",
+]
+answer = [2]
+explanation = "Matrix CI phát hiện vấn đề tương thích sớm; đi từ service ít rủi ro giúp team học và hoàn thiện playbook trước khi chạm phần quan trọng. Nâng đồng loạt khó khoanh vùng lỗi; chờ EOL dồn rủi ro vào phút chót; bắt đầu từ thanh toán đặt rủi ro lớn nhất lên đầu."
+sources = ["fastapi/deployment/versions/index"]
+
+[[questions]]
+id = "python-backend-lv010"
+module = "python-backend-lead"
+type = "essay"
+difficulty = 3
+tags = ["level:lead", "adr"]
+prompt = "Viết ADR ngắn: service mới (FastAPI) mỗi request gọi 3 API bên ngoài và PostgreSQL; team chưa quen async. Bạn chọn endpoint `def` hay `async def`, kèm điều kiện và cách kiểm chứng quyết định."
+keywords = [["async"], ["blocking", "chặn"], ["driver"], ["threadpool", "thread pool"], ["load test", "benchmark", "đo"], ["trade-off", "đánh đổi"]]
+min_keywords = 4
+model_answer = '''Bối cảnh: mỗi request chờ 3 API ngoài và PostgreSQL, team chưa quen async. Quyết định: dùng async def với httpx.AsyncClient và driver async (asyncpg/SQLAlchemy async) để gọi 3 API đồng thời, vì thời gian chờ I/O chiếm phần lớn. Điều kiện: không có thư viện blocking nào trong đường xử lý; chỗ bắt buộc dùng thư viện đồng bộ thì để endpoint def (FastAPI chạy trong threadpool) hoặc to_thread. Trade-off: async cho throughput cao hơn nhưng tăng độ khó debug và cần đào tạo team, thêm lint rule chặn gọi blocking. Kiểm chứng: load test so sánh p95 và throughput của hai phương án trên một endpoint mẫu trước khi áp dụng toàn service; xem lại sau 3 tháng.'''
+explanation = "Câu trả lời tốt nêu bối cảnh, phương án được chọn, điều kiện để nó đúng (không có blocking, driver async), đánh đổi về kỹ năng team và cách đo để kiểm chứng."
+sources = ["fastapi/async/index"]
+
+[[questions]]
+id = "python-backend-lv011"
+module = "python-backend-lead"
+type = "essay"
+difficulty = 3
+tags = ["level:lead", "security"]
+prompt = "Secret ký JWT (HS256) bị nghi lộ. Lập kế hoạch thay khoá mà không bắt toàn bộ người dùng đăng nhập lại cùng lúc, đồng thời hạn chế thiệt hại."
+keywords = [["kid"], ["song song", "hai khóa", "hai khoá", "hai key"], ["exp", "thời hạn"], ["revoke", "thu hồi"], ["giám sát", "monitor", "metric"]]
+min_keywords = 3
+model_answer = '''Tạo khoá mới và gắn kid vào header token để biết token ký bằng khoá nào. Trong giai đoạn chuyển tiếp chạy song song hai khoá: ký token mới bằng khoá mới, vẫn chấp nhận xác minh token cũ đến khi hết exp (rút ngắn thời hạn access token, vd. 15 phút). Nếu bằng chứng cho thấy khoá đã bị dùng trái phép thì revoke ngay khoá cũ và các refresh token liên quan, chấp nhận buộc đăng nhập lại. Giám sát metric số token ký bằng khoá cũ, lỗi xác minh bất thường; khi về 0 thì gỡ khoá cũ. Sau sự cố: chuyển secret vào secret manager, đặt lịch xoay khoá định kỳ.'''
+explanation = "Điểm chính: định danh khoá (kid), giai đoạn chạy song song có giới hạn bởi exp, quyết định thu hồi theo mức độ lộ, và giám sát để biết khi nào gỡ khoá cũ."
+sources = ["fastapi/tutorial/security/index"]
+
+[[questions]]
+id = "python-backend-lv012"
+module = "python-backend-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "rate-limit"]
+prompt = "Public API chạy 6 instance sau load balancer (round-robin). Cần giới hạn 100 request/phút cho mỗi API key, sai số chấp nhận được vài phần trăm. Chọn cách hiện thực."
+options = [
+  "Mỗi process giữ dict đếm trong bộ nhớ, giới hạn 100/phút",
+  "Mỗi process giới hạn 100/6 ≈ 17 request/phút",
+  "Đếm tập trung: token bucket trên Redis dùng chung (hoặc giới hạn tại API gateway)",
+  "Ghi log mọi request vào PostgreSQL rồi `COUNT(*)` trước mỗi request",
+]
+answer = [2]
+explanation = "Bộ đếm phải dùng chung giữa mọi instance/worker. Dict trong process cho phép tới 6 × số worker lần giới hạn; chia đều 17/phút sai khi LB không chia đều hoặc số instance thay đổi; COUNT(*) trên PostgreSQL mỗi request tạo tải lớn lên DB chính."
+sources = ["python~3.14/library/time#time.monotonic"]
+
+[[questions]]
+id = "python-backend-lv013"
+module = "python-backend-lead"
+type = "multiple"
+difficulty = 3
+tags = ["level:lead", "anti-pattern"]
+prompt = "Những thực hành nào là anti-pattern khi codebase Python backend phát triển lên 10+ người?"
+options = [
+  "Business logic viết thẳng trong route handler, gọi DB trực tiếp ở đó",
+  "Biến global ở module dùng làm cache/state chung giữa các request",
+  "Mỗi module tự đọc biến môi trường theo cách riêng",
+  "Dùng Pydantic schema để validate dữ liệu ở biên (request/response)",
+  "Inject DB session qua dependency để dễ thay bằng fake trong test",
+]
+answer = [0, 1, 2]
+explanation = "Logic trong handler không tái sử dụng được cho worker/CLI và khó test; state global khác nhau giữa các worker process; cấu hình phân tán khó kiểm soát. Validate ở biên và inject dependency là thực hành tốt."
+sources = ["fastapi/tutorial/bigger-applications/index", "fastapi/advanced/settings/index"]
+
+[[questions]]
+id = "python-backend-lv014"
+module = "python-backend-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "incident"]
+prompt = "10 phút sau deploy, p99 latency tăng gấp 5, CPU thấp, log báo `QueuePool limit ... timed out`. Bản deploy trước đó chạy ổn 2 tuần. Với vai trò người điều phối sự cố, bước đầu tiên?"
+options = [
+  "Rollback về bản trước để khôi phục dịch vụ, sau đó điều tra nguyên nhân trên staging/log",
+  "Tăng `pool_size` lên 500 ngay trên production",
+  "Restart database",
+  "Gắn debugger vào process production để xem request nào giữ kết nối",
+]
+answer = [0]
+explanation = "Có thay đổi gần nhất trùng thời điểm sự cố và có bản ổn định trước đó → khôi phục trước, điều tra sau. Tăng pool có thể vượt `max_connections` của DB và làm sập DB; restart DB ảnh hưởng mọi service; debug trên production kéo dài thời gian sự cố."
+sources = ["fastapi/deployment/concepts/index"]
+
+[[questions]]
+id = "python-backend-lv015"
+module = "python-backend-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "api-contract"]
+prompt = "Backend FastAPI phục vụ 3 team client (web, iOS, Android). Thay đổi API hay làm vỡ app mobile đã phát hành. Biện pháp hệ thống nào hiệu quả nhất?"
+options = [
+  "Gửi Postman collection mới mỗi khi đổi API",
+  "Sinh OpenAPI từ FastAPI, so sánh schema với bản trước trong CI để chặn breaking change, sinh client từ schema, versioning khi buộc phải phá vỡ",
+  "Viết tài liệu wiki và nhắc mọi người đọc",
+  "Cấm thay đổi API",
+]
+answer = [1]
+explanation = "Hợp đồng máy đọc được cùng kiểm tra tự động trong CI bắt lỗi trước khi merge; app mobile cũ còn chạy lâu nên cần versioning. Tài liệu thủ công nhanh lỗi thời; cấm thay đổi làm tắc sản phẩm."
+sources = ["fastapi/tutorial/path-operation-configuration/index", "fastapi/tutorial/response-model/index"]
+
+[[questions]]
+id = "python-backend-lv016"
+module = "python-backend-lead"
+type = "fill"
+difficulty = 3
+tags = ["level:lead", "release"]
+prompt = '''
+Điền thuật ngữ:
+
+- Mẫu migration DB không downtime gồm ba pha: `{{blank}}` → migrate → contract.
+- Bật tính năng mới cho 5% → 25% → 100% người dùng mà không cần deploy lại, nhờ feature `{{blank}}`.
+'''
+blanks = [["expand"], ["flag", "flags", "toggle"]]
+explanation = "Expand/contract giữ tương thích ngược khi rolling deploy; feature flag tách việc deploy khỏi việc phát hành và cho phép tắt nhanh khi có sự cố."
+
+[[questions]]
+id = "python-backend-lv017"
+module = "python-backend-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "multi-tenant"]
+prompt = "SaaS có 200 tenant nhỏ và 2 tenant lớn chiếm 60% tải; team hạ tầng 2 người. Thiết kế dữ liệu nào hợp lý?"
+options = [
+  "Mỗi tenant một database riêng ngay từ đầu",
+  "Dùng chung schema với cột `tenant_id` (index, lọc bắt buộc qua dependency), chuẩn bị khả năng tách 2 tenant lớn sang DB/pool riêng khi cần",
+  "Dùng chung bảng nhưng không có cột tenant, phân biệt bằng subdomain ở tầng ứng dụng",
+  "Mỗi tenant một service riêng",
+]
+answer = [1]
+explanation = "Shared schema tối ưu chi phí vận hành cho số đông tenant nhỏ; lọc `tenant_id` tập trung qua dependency giảm rủi ro lộ dữ liệu chéo; tách riêng tenant lớn giải quyết vấn đề noisy neighbor. 200 database riêng quá nặng cho team 2 người; thiếu cột tenant khiến không thể cô lập dữ liệu."
+sources = ["fastapi/tutorial/dependencies/index"]
+
+[[questions]]
+id = "python-backend-lv018"
+module = "python-backend-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "mentoring"]
+prompt = "Đây là lần thứ ba trong tháng có PR gọi `requests.get(...)` bên trong `async def`, gây nghẽn event loop. Cách xử lý bền vững nhất?"
+options = [
+  "Lead tự sửa lại các PR đó cho nhanh",
+  "Cấm dùng `async def` trong toàn codebase",
+  "Giải thích nguyên nhân trong review, bật lint rule phát hiện gọi blocking trong async (vd. nhóm rule ASYNC của Ruff) trong CI, bổ sung guideline có ví dụ thay thế (httpx.AsyncClient)",
+  "Nhắc nhở trong buổi họp team",
+]
+answer = [2]
+explanation = "Biến bài học thành kiểm tra tự động giúp lỗi bị chặn trước khi tới review, còn giải thích và guideline giúp người mới hiểu lý do. Tự sửa không truyền được kiến thức; cấm async bỏ lợi ích hợp lý; nhắc miệng dễ bị quên."
+sources = ["fastapi/async/index"]
+
+[[questions]]
+id = "python-backend-lv019"
+module = "python-backend-lead"
+type = "multiple"
+difficulty = 3
+tags = ["level:lead", "risk"]
+prompt = "Team đề xuất chuyển service đang chạy từ SQLAlchemy đồng bộ sang SQLAlchemy async + asyncpg. Những rủi ro nào cần đưa vào đánh giá trước khi đồng ý?"
+options = [
+  "Lazy loading quan hệ không còn chạy ngầm như trước, truy cập thuộc tính có thể lỗi nếu chưa load",
+  "Vòng đời session/transaction phải review lại cho từng request",
+  "Bộ test và fixture phải chạy được với event loop",
+  "Hiệu năng chắc chắn tăng gấp nhiều lần nên không cần đo",
+  "Không cần xem lại cấu hình pool kết nối",
+]
+answer = [0, 1, 2]
+explanation = "Chuyển sang async đổi cách load quan hệ, cách quản lý session và cách viết test. Lợi ích hiệu năng phụ thuộc workload và phải đo; số kết nối đồng thời thường thay đổi nên pool cần được xem lại."
+sources = ["fastapi/async/index", "fastapi/tutorial/sql-databases/index"]
+
+[[questions]]
+id = "python-backend-lvc04"
+module = "python-backend-lead"
+type = "code"
+difficulty = 3
+tags = ["level:lead", "release"]
+lang = "python"
+title = "Rollout theo phần trăm"
+prompt = '''Bạn chuẩn hoá cách rollout tính năng cho cả team. Viết in_rollout(flag, user_id, percent) trả về True nếu user thuộc nhóm được bật tính năng.
+
+Yêu cầu:
+- percent là số nguyên 0..100; ngoài khoảng (hoặc không phải int) thì ném ValueError.
+- Kết quả **ổn định** giữa các process và các lần khởi động lại: dùng hashlib (vd. sha256 của "flag:user_id"), không dùng hash() có salt ngẫu nhiên.
+- **Đơn điệu**: user đã ở trong nhóm 10% thì vẫn ở trong nhóm khi tăng lên 30%.
+- Mỗi flag chia nhóm độc lập (cùng user có thể vào flag này nhưng không vào flag khác).
+- 0% không ai được bật, 100% mọi người được bật.'''
+starter = '''import hashlib
+
+def in_rollout(flag, user_id, percent):
+    return False
+'''
+solution = '''import hashlib
+
+def in_rollout(flag, user_id, percent):
+    if type(percent) is not int or not 0 <= percent <= 100:
+        raise ValueError("percent phải là số nguyên 0..100")
+    digest = hashlib.sha256(f"{flag}:{user_id}".encode("utf-8")).hexdigest()
+    bucket = int(digest[:8], 16) % 100
+    return bucket < percent
+'''
+tests = '''
+@test("0% và 100%")
+def _():
+    users = range(500)
+    expect(any(in_rollout("new-ui", u, 0) for u in users)).to_be_false()
+    expect(all(in_rollout("new-ui", u, 100) for u in users)).to_be_true()
+
+@test("kết quả ổn định khi gọi lại")
+def _():
+    first = [in_rollout("search-v2", u, 37) for u in range(300)]
+    second = [in_rollout("search-v2", u, 37) for u in range(300)]
+    expect(first).to_equal(second)
+
+@test("đơn điệu khi tăng phần trăm")
+def _():
+    for u in range(1000):
+        if in_rollout("checkout", u, 10):
+            expect(in_rollout("checkout", u, 30)).to_be_true()
+
+@test("tỉ lệ xấp xỉ phần trăm yêu cầu")
+def _():
+    hits = sum(1 for u in range(4000) if in_rollout("pricing", u, 20))
+    expect(600 <= hits <= 1000).to_be_true()
+
+@test("các flag chia nhóm độc lập")
+def _():
+    a = [in_rollout("flag-a", u, 50) for u in range(400)]
+    b = [in_rollout("flag-b", u, 50) for u in range(400)]
+    expect(a == b).to_be_false()
+
+@test("percent không hợp lệ")
+def _():
+    expect(lambda: in_rollout("x", 1, -1)).to_raise(ValueError)
+    expect(lambda: in_rollout("x", 1, 101)).to_raise(ValueError)
+    expect(lambda: in_rollout("x", 1, 12.5)).to_raise(ValueError)
+'''
+hints = ["Băm chuỗi f\"{flag}:{user_id}\" bằng hashlib.sha256 rồi lấy một phần hexdigest làm số nguyên.", "Đưa số đó về bucket 0..99 bằng % 100; user được bật khi bucket < percent — điều kiện này tự nhiên đơn điệu."]
+explanation = "Bucket cố định cho mỗi cặp (flag, user) làm rollout ổn định và đơn điệu; đưa flag vào chuỗi băm để các thử nghiệm không luôn rơi vào cùng một nhóm người dùng."
+sources = ["python~3.14/library/hashlib"]
+
+# ------------------------------------------------------------ LEVEL: SENIOR
+[[questions]]
+id = "python-backend-lv020"
+module = "py-async"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "asyncio"]
+prompt = '''
+Một trong ba coroutine ném `TimeoutError` sau 1 giây, hai cái còn lại chạy 10 giây. Khác biệt hành vi giữa hai cách sau?
+
+```python
+# A
+await asyncio.gather(a(), b(), c())
+
+# B
+async with asyncio.TaskGroup() as tg:
+    tg.create_task(a()); tg.create_task(b()); tg.create_task(c())
+```
+'''
+options = [
+  "Giống hệt nhau: cả hai huỷ các task còn lại",
+  "A ném lỗi ngay nhưng hai task kia vẫn tiếp tục chạy ngầm; B huỷ các task còn lại rồi ném `ExceptionGroup`",
+  "A đợi đủ 10 giây rồi mới ném lỗi; B ném ngay sau 1 giây",
+  "B bỏ qua lỗi, A ném lỗi",
+]
+answer = [1]
+explanation = "`gather` (mặc định `return_exceptions=False`) truyền lỗi đầu tiên ra ngoài nhưng không huỷ các awaitable khác; `TaskGroup` (3.11+) huỷ các task anh em và gom lỗi vào `ExceptionGroup`, tránh task mồ côi tiếp tục dùng tài nguyên."
+sources = ["python~3.14/library/asyncio-task#asyncio.gather", "python~3.14/library/asyncio-task#asyncio.TaskGroup"]
+
+[[questions]]
+id = "python-backend-lv021"
+module = "py-async"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "gil"]
+prompt = "Endpoint `async def` phải tính hash perceptual cho ảnh tải lên (thuần Python, ~800 ms CPU). Cách nào không chặn event loop và thực sự dùng được nhiều core trên CPython có GIL?"
+options = [
+  "Gọi trực tiếp hàm trong `async def`",
+  "`await asyncio.to_thread(compute, data)`",
+  "`await loop.run_in_executor(process_pool, compute, data)` với `ProcessPoolExecutor` tạo sẵn (hoặc đẩy sang worker queue)",
+  "Thêm `await asyncio.sleep(0)` giữa các bước tính",
+]
+answer = [2]
+explanation = "Process pool chạy mã CPU-bound ở process khác, không bị GIL giới hạn và không chặn loop. `to_thread` giải phóng loop nhưng code thuần Python vẫn tranh GIL với loop; `sleep(0)` chỉ chia nhỏ thời gian chặn chứ không giảm tổng CPU."
+sources = ["python~3.14/library/asyncio-eventloop#asyncio.loop.run_in_executor", "python~3.14/library/concurrent.futures"]
+
+[[questions]]
+id = "python-backend-lv022"
+module = "py-async"
+type = "multiple"
+difficulty = 3
+tags = ["level:senior", "gil"]
+prompt = "Chọn các nhận định đúng về GIL trong CPython."
+options = [
+  "Thread vẫn hữu ích cho tác vụ I/O-bound vì GIL được nhả khi chờ I/O",
+  "Code CPU-bound thuần Python chạy nhiều thread không nhanh hơn đáng kể trên bản CPython có GIL",
+  "Thư viện C (vd. numpy, hashlib với dữ liệu lớn) có thể nhả GIL trong lúc tính toán",
+  "Từ Python 3.13 có bản build free-threaded tuỳ chọn có thể tắt GIL",
+  "Có GIL nên code nhiều thread không bao giờ gặp race condition",
+]
+answer = [0, 1, 2, 3]
+explanation = "GIL chỉ bảo vệ trạng thái nội bộ của interpreter, không làm thao tác nhiều bước (đọc–sửa–ghi) của bạn trở thành nguyên tử; vẫn cần `Lock` cho dữ liệu dùng chung."
+sources = ["python~3.14/library/threading#threading.Lock", "python~3.14/library/concurrent.futures"]
+
+[[questions]]
+id = "python-backend-lv023"
+module = "py-async"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "contextvars"]
+prompt = "Bạn muốn mọi dòng log trong service FastAPI async tự kèm `request_id` của request hiện tại. Nên lưu `request_id` ở đâu?"
+options = [
+  "Biến global của module",
+  "`threading.local()`",
+  "`contextvars.ContextVar` đặt giá trị trong middleware",
+  "Thuộc tính của `app`",
+]
+answer = [2]
+explanation = "Mỗi task asyncio có bản sao context riêng, nên `ContextVar` cách ly giá trị giữa các request chạy xen kẽ trên cùng thread. `threading.local` bị dùng chung bởi mọi coroutine trên thread event loop; global và thuộc tính app bị request khác ghi đè."
+sources = ["python~3.14/library/contextvars", "fastapi/tutorial/middleware/index"]
+
+[[questions]]
+id = "python-backend-lv024"
+module = "python-backend-dv-sqlite"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "transaction"]
+prompt = '''
+Hai request đồng thời chạy đoạn sau cho cùng một tài khoản và đôi khi số dư bị âm. Sửa thế nào là chắc chắn nhất?
+
+```python
+balance = db.execute("SELECT balance FROM accounts WHERE id = ?", (aid,)).fetchone()[0]
+if balance >= amount:
+    db.execute("UPDATE accounts SET balance = ? WHERE id = ?", (balance - amount, aid))
+    db.commit()
+```
+'''
+options = [
+  "Thêm `time.sleep(0.01)` giữa SELECT và UPDATE",
+  "Gộp kiểm tra và cập nhật vào một câu: `UPDATE accounts SET balance = balance - ? WHERE id = ? AND balance >= ?` rồi kiểm tra `rowcount`",
+  "Đọc lại balance lần nữa trước UPDATE",
+  "Dùng `threading.Lock` trong process",
+]
+answer = [1]
+explanation = "Đây là lost update/check-then-act. Câu UPDATE có điều kiện để DB làm kiểm tra và ghi một cách nguyên tử (hoặc khoá dòng bằng `SELECT ... FOR UPDATE` trên PostgreSQL). Lock trong process không bảo vệ khi có nhiều worker/instance; đọc lại vẫn còn khe hở."
+sources = ["python~3.14/library/sqlite3#sqlite3.Connection.execute"]
+
+[[questions]]
+id = "python-backend-lv025"
+module = "py-fastapi"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "orm"]
+prompt = '''
+Endpoint trả 50 đơn hàng kèm tên khách. Log SQL cho thấy 51 câu truy vấn mỗi request.
+
+```python
+orders = session.scalars(select(Order).limit(50)).all()
+return [{"id": o.id, "customer": o.customer.name} for o in orders]
+```
+
+Cách khắc phục đúng?
+'''
+options = [
+  "Thêm cache trước endpoint",
+  "Load trước quan hệ: `select(Order).options(selectinload(Order.customer))` (hoặc `joinedload`)",
+  "Tăng pool kết nối",
+  "Chuyển endpoint sang `async def`",
+]
+answer = [1]
+explanation = "Đây là N+1: mỗi `o.customer` gây một truy vấn lazy. Eager loading gom về 1–2 truy vấn. Cache che triệu chứng; pool và async không giảm số truy vấn."
+sources = ["fastapi/tutorial/sql-databases/index"]
+
+[[questions]]
+id = "python-backend-lv026"
+module = "py-security"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "jwt"]
+prompt = "Service xác minh JWT ký RS256 bằng public key. Cách gọi thư viện nào an toàn nhất trước tấn công đổi thuật toán (vd. token giả có `alg: HS256` hoặc `none`)?"
+options = [
+  "Đọc `alg` từ header token rồi truyền vào hàm decode",
+  "`jwt.decode(token, public_key, algorithms=[\"RS256\"])` — cố định danh sách thuật toán phía server",
+  "Bỏ kiểm tra chữ ký, chỉ kiểm tra `exp`",
+  "Thử lần lượt mọi thuật toán thư viện hỗ trợ",
+]
+answer = [1]
+explanation = "Thuật toán phải do server quyết định. Tin `alg` từ token cho phép kẻ tấn công dùng public key (công khai) làm secret HMAC hoặc bỏ chữ ký."
+sources = ["fastapi/tutorial/security/index"]
+
+[[questions]]
+id = "python-backend-lv027"
+module = "py-security"
+type = "multiple"
+difficulty = 3
+tags = ["level:senior", "ssrf"]
+prompt = "Endpoint cho người dùng đăng ký URL webhook, server sẽ POST tới URL đó. Những biện pháp nào giúp chống SSRF?"
+options = [
+  "Chỉ cho phép scheme `https`",
+  "Resolve hostname và chặn địa chỉ private/loopback/link-local (vd. 127.0.0.1, 10.0.0.0/8, 169.254.169.254)",
+  "Không tự động theo redirect, hoặc kiểm tra lại đích sau mỗi redirect",
+  "Đặt timeout và giới hạn kích thước phản hồi",
+  "Chỉ cần kiểm tra chuỗi URL không chứa chữ `localhost` là đủ",
+]
+answer = [0, 1, 2, 3]
+explanation = "Kiểm tra chuỗi dễ bị vượt qua (IP dạng số, DNS trỏ về 127.0.0.1, redirect). Cần kiểm tra địa chỉ thật sau khi resolve và kiểm soát redirect, timeout."
+sources = ["flask/web-security/index"]
+
+[[questions]]
+id = "python-backend-lv028"
+module = "py-flask"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "deploy"]
+prompt = "Flask chạy sau một nginx duy nhất làm TLS termination. `url_for(..., _external=True)` sinh ra `http://` và `request.remote_addr` luôn là IP của nginx. Cách sửa đúng?"
+options = [
+  "Đọc trực tiếp header `X-Forwarded-For` ở mọi nơi cần IP",
+  "`app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)` — số đúng bằng số proxy tin cậy",
+  "`ProxyFix(app.wsgi_app, x_for=10)` cho chắc",
+  "Bật `PREFERRED_URL_SCHEME = 'https'` là đủ cho cả IP",
+]
+answer = [1]
+explanation = "ProxyFix chỉ tin đúng số proxy khai báo. Đặt lớn hơn số proxy thật cho phép client giả mạo `X-Forwarded-For`; đọc header thủ công ở mọi nơi dễ sai và cũng bị giả mạo."
+sources = ["flask/deploying/proxy_fix/index"]
+
+[[questions]]
+id = "python-backend-lv029"
+module = "python-backend-dv-fastapi-deps"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "transaction"]
+prompt = "Dependency `get_session()` dùng `yield session`. Nên đặt commit/rollback ở đâu để request lỗi không để lại thay đổi một phần?"
+options = [
+  "Commit ngay trước `yield`",
+  "Bọc `yield` trong `try/except/finally`: lỗi thì rollback rồi raise lại, `finally` đóng session; commit trong service khi nghiệp vụ hoàn tất (hoặc sau `yield` khi không có lỗi)",
+  "Không cần commit vì session tự commit khi đóng",
+  "Commit trong middleware cho mọi request kể cả GET",
+]
+answer = [1]
+explanation = "Phần sau `yield` chạy khi endpoint đã xong, nên là nơi dọn dẹp và rollback khi có exception. Commit trước `yield` vô nghĩa; session SQLAlchemy không tự commit khi đóng; commit đại trà trong middleware che giấu ranh giới transaction."
+sources = ["fastapi/tutorial/dependencies/dependencies-with-yield/index"]
+
+[[questions]]
+id = "python-backend-lv030"
+module = "py-fastapi"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "lifespan"]
+prompt = "Mỗi request, endpoint tạo `httpx.AsyncClient()` mới để gọi API đối tác. Dưới tải cao thấy nhiều TLS handshake và cạn file descriptor. Thiết kế tốt hơn?"
+options = [
+  "Tạo một `AsyncClient` dùng chung trong `lifespan` của app (đóng khi tắt), cấu hình timeout và giới hạn kết nối, inject qua dependency",
+  "Dùng `requests` đồng bộ thay thế",
+  "Tạo client ở mức module và không bao giờ đóng",
+  "Thêm `await asyncio.sleep(0.1)` sau mỗi request",
+]
+answer = [0]
+explanation = "Client dùng chung giữ connection pool và keep-alive; `lifespan` gắn vòng đời client với app để đóng gọn khi tắt. `requests` chặn event loop; client global không đóng khó test và rò tài nguyên khi reload."
+sources = ["fastapi/advanced/events/index"]
+
+[[questions]]
+id = "python-backend-lv031"
+module = "py-async"
+type = "multiple"
+difficulty = 3
+tags = ["level:senior", "debugging"]
+prompt = "Những dấu hiệu nào cho thấy event loop của một worker FastAPI bị chặn bởi code blocking?"
+options = [
+  "Mọi endpoint trên worker đó cùng chậm, kể cả `/health` vốn không làm gì",
+  "Bật asyncio debug mode thấy cảnh báo kiểu `Executing <Task ...> took 1.2 seconds`",
+  "Một core CPU 100% trong khi số request xử lý xong mỗi giây giảm",
+  "Chỉ đúng endpoint gọi DB bị chậm, các endpoint khác vẫn nhanh",
+]
+answer = [0, 1, 2]
+explanation = "Loop bị chặn thì mọi coroutine trên loop đó phải chờ, nên độ trễ tăng đồng loạt. Nếu chỉ một endpoint chậm thì nhiều khả năng là phụ thuộc bên ngoài chậm chứ không phải loop bị chặn."
+sources = ["fastapi/async/index"]
+
+[[questions]]
+id = "python-backend-lv032"
+module = "py-security"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "idempotency"]
+prompt = "Mobile app retry `POST /payments` khi mạng chập chờn, đôi khi tạo hai giao dịch. Giải pháp phía server?"
+options = [
+  "Chặn client retry",
+  "Yêu cầu header `Idempotency-Key`; lưu key (unique constraint) cùng kết quả xử lý, request trùng key trả lại kết quả đã lưu",
+  "So sánh số tiền và thời gian trong vòng 5 giây để đoán trùng",
+  "Đổi sang `PUT /payments`",
+]
+answer = [1]
+explanation = "Idempotency key do client sinh cho mỗi thao tác và unique constraint ở DB bảo đảm chỉ xử lý một lần kể cả khi hai request tới đồng thời. Đoán theo thời gian/số tiền sẽ chặn nhầm giao dịch hợp lệ; đổi method không tự tạo idempotency."
+sources = ["fastapi/tutorial/header-params/index"]
+
+[[questions]]
+id = "python-backend-lv033"
+module = "python-backend-dv-flask-structure"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "capacity"]
+prompt = "Flask chạy Gunicorn 4 sync worker (1 thread mỗi worker). Mỗi request gọi API ngoài mất ~2 giây, CPU gần như rảnh. Throughput tối đa ước lượng của một instance?"
+options = [
+  "Khoảng 2 request/giây",
+  "Khoảng 4 request/giây",
+  "Khoảng 400 request/giây vì CPU rảnh",
+  "Không giới hạn vì I/O không tốn CPU",
+]
+answer = [0]
+explanation = "Mỗi sync worker chỉ xử lý một request tại một thời điểm: 4 worker ÷ 2 giây ≈ 2 req/s. Muốn tăng cần thêm thread (gthread), worker hoặc mô hình async, và đặt timeout cho lời gọi ngoài."
+sources = ["flask/deploying/gunicorn/index"]
+
+[[questions]]
+id = "python-backend-lv034"
+module = "py-fastapi"
+type = "essay"
+difficulty = 3
+tags = ["level:senior", "caching"]
+prompt = "Dữ liệu cấu hình sản phẩm đọc rất nhiều, thay đổi vài lần mỗi ngày; service chạy 8 worker trên 3 instance. So sánh cache trong process (`functools.lru_cache`/dict) với Redis và nêu lựa chọn của bạn."
+keywords = [["process", "worker"], ["invalidat", "vô hiệu"], ["ttl", "hết hạn"], ["network", "mạng", "latency"], ["nhất quán", "consisten"]]
+min_keywords = 3
+model_answer = '''Cache trong process nhanh nhất (không đi qua network) nhưng mỗi worker giữ một bản riêng: 8 worker × 3 instance là 24 bản, invalidate khi dữ liệu đổi rất khó, dữ liệu kém nhất quán giữa các request và tốn RAM nhân lên. lru_cache còn không có TTL. Redis dùng chung nên invalidate một chỗ, nhất quán hơn, nhưng thêm latency mạng và một phụ thuộc cần vận hành. Với dữ liệu đổi vài lần mỗi ngày, có thể kết hợp: cache trong process với TTL ngắn (vd. 30–60 giây) phía trước Redis hoặc DB, chấp nhận dữ liệu cũ trong khoảng TTL; nếu cần thay đổi có hiệu lực ngay thì publish sự kiện invalidation.'''
+explanation = "Câu trả lời cần nêu số bản cache theo worker/process, bài toán invalidation và TTL, chi phí latency mạng của Redis, và mức nhất quán chấp nhận được."
+sources = ["python~3.14/library/functools#functools.lru_cache", "flask/patterns/caching/index"]
+
+[[questions]]
+id = "python-backend-lv035"
+module = "py-async"
+type = "fill"
+difficulty = 3
+tags = ["level:senior", "asyncio"]
+prompt = '''
+Python 3.11+: giới hạn tổng thời gian và chạy các task có cấu trúc (lỗi một task thì huỷ các task còn lại):
+
+```python
+async with asyncio.{{blank}}(2.0):
+    async with asyncio.{{blank}}() as tg:
+        tg.create_task(fetch_price())
+        tg.create_task(fetch_stock())
+```
+'''
+blanks = [["timeout"], ["TaskGroup"]]
+explanation = "`asyncio.timeout()` huỷ khối bên trong khi quá hạn và ném `TimeoutError`; `TaskGroup` bảo đảm không task nào bị bỏ chạy ngầm khi thoát khối."
+sources = ["python~3.14/library/asyncio-task#asyncio.timeout", "python~3.14/library/asyncio-task#asyncio.TaskGroup"]
+
+[[questions]]
+id = "python-backend-lv036"
+module = "python-backend-dv-sqlite"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "sqlite"]
+prompt = "Ứng dụng nhỏ dùng SQLite, chạy 4 worker Gunicorn, thỉnh thoảng gặp `sqlite3.OperationalError: database is locked` khi ghi. Hướng xử lý hợp lý?"
+options = [
+  "Bật WAL (`PRAGMA journal_mode=WAL`), đặt `timeout`/busy timeout khi connect, giữ transaction ghi ngắn; nếu ghi đồng thời tăng mạnh thì chuyển sang PostgreSQL",
+  "Mở một connection global dùng chung giữa các worker process",
+  "Bắt lỗi và bỏ qua thao tác ghi",
+  "Tăng số worker để ghi nhanh hơn",
+]
+answer = [0]
+explanation = "SQLite chỉ cho một writer tại một thời điểm; WAL cho phép đọc song song với ghi, busy timeout để chờ thay vì lỗi ngay. Connection không thể dùng chung giữa các process; bỏ qua lỗi làm mất dữ liệu; thêm worker làm tranh chấp nhiều hơn."
+sources = ["python~3.14/library/sqlite3#sqlite3.Connection.commit"]
+
+[[questions]]
+id = "python-backend-lvc03"
+module = "py-async"
+type = "code"
+difficulty = 3
+tags = ["level:senior", "resilience"]
+lang = "python"
+title = "Retry với exponential backoff"
+prompt = '''Viết retry(fn, attempts, base_delay, sleep, retry_on=(Exception,)) gọi fn() và trả về kết quả.
+
+- Nếu fn() ném exception thuộc retry_on và còn lượt, gọi sleep(base_delay * 2**i) (i là chỉ số lần thử vừa thất bại, bắt đầu từ 0) rồi thử lại.
+- Exception không thuộc retry_on được ném ra ngay, không sleep.
+- Hết lượt thì ném lại exception cuối cùng (không sleep sau lần thử cuối).
+- attempts < 1 thì ném ValueError.
+- sleep được truyền vào để test không phải chờ thật.'''
+starter = '''def retry(fn, attempts, base_delay, sleep, retry_on=(Exception,)):
+    return fn()
+'''
+solution = '''def retry(fn, attempts, base_delay, sleep, retry_on=(Exception,)):
+    if attempts < 1:
+        raise ValueError("attempts phải >= 1")
+    for i in range(attempts):
+        try:
+            return fn()
+        except retry_on:
+            if i == attempts - 1:
+                raise
+            sleep(base_delay * (2 ** i))
+'''
+tests = '''
+def _flaky(n_fail, exc=ConnectionError):
+    state = {"calls": 0}
+    def fn():
+        state["calls"] += 1
+        if state["calls"] <= n_fail:
+            raise exc("boom")
+        return "ok"
+    return fn, state
+
+@test("thành công ngay không sleep")
+def _():
+    fn, state = _flaky(0)
+    delays = []
+    expect(retry(fn, 3, 0.1, delays.append)).to_be("ok")
+    expect(state["calls"]).to_be(1)
+    expect(delays).to_equal([])
+
+@test("thành công ở lần thứ ba với backoff tăng gấp đôi")
+def _():
+    fn, state = _flaky(2)
+    delays = []
+    expect(retry(fn, 5, 0.5, delays.append)).to_be("ok")
+    expect(state["calls"]).to_be(3)
+    expect(delays).to_equal([0.5, 1.0])
+
+@test("hết lượt thì ném lại lỗi cuối")
+def _():
+    fn, state = _flaky(10)
+    delays = []
+    expect(lambda: retry(fn, 3, 1, delays.append)).to_raise(ConnectionError)
+    expect(state["calls"]).to_be(3)
+    expect(delays).to_equal([1, 2])
+
+@test("lỗi không nằm trong retry_on ném ngay")
+def _():
+    fn, state = _flaky(1, exc=KeyError)
+    delays = []
+    expect(lambda: retry(fn, 3, 1, delays.append, retry_on=(ConnectionError,))).to_raise(KeyError)
+    expect(state["calls"]).to_be(1)
+    expect(delays).to_equal([])
+
+@test("attempts không hợp lệ")
+def _():
+    fn, _state = _flaky(0)
+    expect(lambda: retry(fn, 0, 1, lambda s: None)).to_raise(ValueError)
+'''
+hints = ["Dùng vòng for i in range(attempts) với try/except retry_on.", "Ở lần thử cuối dùng raise trơn để ném lại đúng exception, các lần trước thì sleep(base_delay * 2 ** i)."]
+explanation = "Backoff tăng dần giảm áp lực lên dịch vụ đang lỗi; chỉ retry lỗi tạm thời (retry_on) và truyền sleep vào để test nhanh, xác định. Trong production nên thêm jitter ngẫu nhiên và chỉ retry thao tác idempotent."
+sources = ["python~3.14/library/random#random.uniform", "python~3.14/library/time#time.monotonic"]
+
+# ------------------------------------------------------------ LEVEL: MIDDLE
+[[questions]]
+id = "python-backend-lv037"
+module = "py-fastapi"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "validation"]
+prompt = '''
+Với endpoint sau, request `GET /items?limit=500` nhận được gì?
+
+```python
+@app.get("/items")
+def list_items(limit: int = Query(default=20, ge=1, le=100)):
+    ...
+```
+'''
+options = [
+  "200 với 100 phần tử (tự cắt về `le`)",
+  "422 kèm chi tiết lỗi vì `limit` vượt `le=100`",
+  "400 Bad Request không có chi tiết",
+  "200 với 500 phần tử vì `Query` chỉ dùng cho tài liệu",
+]
+answer = [1]
+explanation = "Ràng buộc `ge`/`le` được Pydantic kiểm tra; vi phạm trả 422 như mọi lỗi validate. FastAPI không tự cắt giá trị."
+sources = ["fastapi/tutorial/query-params/index"]
+
+[[questions]]
+id = "python-backend-lv038"
+module = "py-flask"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "errors"]
+prompt = "API Flask trả trang HTML mặc định khi gặp 404, nhưng client mobile cần JSON. Cách làm gọn nhất?"
+options = [
+  "Bọc mọi view trong try/except",
+  "Đăng ký `@app.errorhandler(404)` (hoặc cho `HTTPException`) trả `{\"error\": ...}, 404`",
+  "Kiểm tra `request.path` tồn tại trước mỗi route",
+  "Đổi mọi 404 thành 200 kèm `ok: false`",
+]
+answer = [1]
+explanation = "Error handler tập trung chuyển mọi lỗi HTTP sang JSON thống nhất; trả 200 cho lỗi làm hỏng ngữ nghĩa HTTP và cache."
+sources = ["flask/errorhandling/index"]
+
+[[questions]]
+id = "python-backend-lv039"
+module = "python-backend-dv-fastapi-deps"
+type = "multiple"
+difficulty = 2
+tags = ["level:middle", "testing"]
+prompt = "Viết test dùng `app.dependency_overrides[get_db] = fake_db`. Những điều nào đúng?"
+options = [
+  "Override áp dụng cho mọi endpoint phụ thuộc `get_db`, kể cả qua sub-dependency",
+  "Nên xoá override sau test (vd. `app.dependency_overrides.clear()` trong fixture) để không rò sang test khác",
+  "Key của dict là chính hàm dependency gốc, không phải tên chuỗi",
+  "Override chỉ có tác dụng khi chạy uvicorn thật, không có tác dụng với `TestClient`",
+]
+answer = [0, 1, 2]
+explanation = "`dependency_overrides` là dict toàn cục trên app, key là hàm gốc; `TestClient` đi qua cùng cơ chế nên override hoạt động trong test."
+sources = ["fastapi/advanced/testing-dependencies/index"]
+
+[[questions]]
+id = "python-backend-lv040"
+module = "py-fastapi"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "middleware"]
+prompt = "Muốn thêm header `X-Process-Time` cho mọi response FastAPI. Cách đúng?"
+options = [
+  "Thêm code đo thời gian vào từng endpoint",
+  "`@app.middleware(\"http\")` nhận `(request, call_next)`, đo thời gian quanh `await call_next(request)` rồi gắn header vào response",
+  "Dùng `BackgroundTasks` để gắn header",
+  "Đặt header trong `response_model`",
+]
+answer = [1]
+explanation = "Middleware HTTP bao quanh mọi request; `call_next` trả về response để chỉnh header trước khi gửi. BackgroundTasks chạy sau khi response đã gửi."
+sources = ["fastapi/tutorial/middleware/index"]
+
+[[questions]]
+id = "python-backend-lv041"
+module = "py-security"
+type = "fill"
+difficulty = 2
+tags = ["level:middle", "tokens"]
+prompt = '''
+Sinh token đặt lại mật khẩu an toàn (không dùng module `random`):
+
+```python
+import {{blank}}
+token = {{blank}}.token_urlsafe(32)
+```
+'''
+blanks = [["secrets"], ["secrets"]]
+explanation = "`secrets` dùng nguồn ngẫu nhiên an toàn mật mã của hệ điều hành; `random` dự đoán được nên không dùng cho token."
+sources = ["python~3.14/library/secrets#generating-tokens"]
+
+[[questions]]
+id = "python-backend-lv042"
+module = "python-backend-dv-sqlite"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "performance"]
+prompt = "Import 50.000 dòng CSV vào SQLite mất vài phút vì mỗi dòng `execute(...)` rồi `commit()`. Cải thiện hợp lý nhất?"
+options = [
+  "Ghép tất cả thành một chuỗi SQL bằng f-string",
+  "Dùng `executemany` với placeholder trong một transaction, commit một lần (hoặc theo lô lớn)",
+  "Mở connection mới cho mỗi dòng",
+  "Chạy 8 thread ghi song song",
+]
+answer = [1]
+explanation = "Mỗi commit buộc ghi xuống đĩa; gom vào một transaction giảm chi phí đáng kể và vẫn an toàn nhờ placeholder. SQLite chỉ có một writer nên thread song song không giúp."
+sources = ["python~3.14/library/sqlite3#sqlite3.Connection.execute", "python~3.14/library/sqlite3#sqlite3.Connection.commit"]
+
+[[questions]]
+id = "python-backend-lv043"
+module = "py-security"
+type = "essay"
+difficulty = 2
+tags = ["level:middle", "auth"]
+prompt = "Giải thích khác biệt giữa HTTP 401 và 403, và cách trả hai mã này đúng trong một API FastAPI có OAuth2 bearer token."
+keywords = [["401"], ["403"], ["xác thực", "authentication"], ["phân quyền", "authorization", "quyền"], ["WWW-Authenticate"]]
+min_keywords = 3
+model_answer = '''401 Unauthorized nghĩa là chưa xác thực (authentication) được: thiếu token, token sai hoặc hết hạn; nên kèm header WWW-Authenticate: Bearer để client biết cần đăng nhập lại. 403 Forbidden nghĩa là đã biết người dùng là ai nhưng không có quyền (authorization) thực hiện thao tác. Trong FastAPI, dependency get_current_user ném HTTPException(401, headers={"WWW-Authenticate": "Bearer"}) khi token không hợp lệ; một dependency kiểm tra vai trò ném HTTPException(403) khi user không đủ quyền.'''
+explanation = "Cần tách rõ xác thực (401, kèm WWW-Authenticate) và phân quyền (403), và chỉ ra nơi ném lỗi trong dependency."
+sources = ["fastapi/tutorial/security/index", "fastapi/tutorial/handling-errors/index"]
+
+[[questions]]
+id = "python-backend-lv044"
+module = "python-backend-dv-flask-structure"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "config"]
+prompt = "Trong `create_app()`, bạn muốn đọc cấu hình từ biến môi trường dạng `FLASK_SECRET_KEY`, `FLASK_DATABASE_URL` mà không viết `os.environ` cho từng khoá. Dùng gì?"
+options = [
+  "`app.config.from_prefixed_env()`",
+  "`app.config.from_pyfile('.env')`",
+  "`app.run(env=True)`",
+  "`app.config.update(os.environ)` để nạp toàn bộ biến môi trường",
+]
+answer = [0]
+explanation = "`from_prefixed_env()` (Flask 2.1+) nạp các biến có tiền tố `FLASK_` vào config với tên đã bỏ tiền tố. Nạp toàn bộ `os.environ` đưa cả biến không liên quan vào config."
+sources = ["flask/config/index"]
+
+[[questions]]
+id = "python-backend-lvc02"
+module = "py-security"
+type = "code"
+difficulty = 2
+tags = ["level:middle", "auth"]
+lang = "python"
+title = "Tách bearer token từ header"
+prompt = '''Viết parse_bearer(header) nhận giá trị header Authorization (có thể là None) và trả về token, hoặc None nếu không hợp lệ.
+
+- Hợp lệ khi có đúng hai phần cách nhau bởi khoảng trắng: scheme "Bearer" (không phân biệt hoa thường) và token không rỗng.
+- Bỏ khoảng trắng thừa ở đầu/cuối.
+- Scheme khác (vd. "Basic"), thiếu token, hoặc có nhiều hơn hai phần → None.'''
+starter = '''def parse_bearer(header):
+    return header
+'''
+solution = '''def parse_bearer(header):
+    if not header:
+        return None
+    parts = header.split()
+    if len(parts) != 2 or parts[0].lower() != "bearer":
+        return None
+    return parts[1]
+'''
+tests = '''
+@test("header hợp lệ")
+def _():
+    expect(parse_bearer("Bearer abc.def.ghi")).to_be("abc.def.ghi")
+
+@test("scheme không phân biệt hoa thường và bỏ khoảng trắng thừa")
+def _():
+    expect(parse_bearer("  bearer   tok123  ")).to_be("tok123")
+    expect(parse_bearer("BEARER x")).to_be("x")
+
+@test("thiếu header hoặc thiếu token")
+def _():
+    expect(parse_bearer(None)).to_be_none()
+    expect(parse_bearer("")).to_be_none()
+    expect(parse_bearer("Bearer")).to_be_none()
+    expect(parse_bearer("Bearer   ")).to_be_none()
+
+@test("scheme khác")
+def _():
+    expect(parse_bearer("Basic dXNlcjpwYXNz")).to_be_none()
+
+@test("quá nhiều phần")
+def _():
+    expect(parse_bearer("Bearer a b")).to_be_none()
+'''
+hints = ["str.split() không tham số tách theo mọi khoảng trắng và bỏ phần rỗng.", "Kiểm tra len(parts) == 2 và parts[0].lower() == 'bearer'."]
+explanation = "Parse header ở biên hệ thống phải chặt: chấp nhận đúng một dạng, mọi dạng khác trả None để dependency trả 401."
+sources = ["fastapi/tutorial/security/index"]
+
+# ------------------------------------------------------------ LEVEL: JUNIOR
+[[questions]]
+id = "python-backend-lv045"
+module = "py-flask"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "request"]
+prompt = "Với URL `/search?q=python&page=2`, lấy giá trị `q` trong view Flask bằng cách nào?"
+options = ["`request.form.get('q')`", "`request.args.get('q')`", "`request.json['q']`", "`request.path['q']`"]
+answer = [1]
+explanation = "`request.args` chứa query string; `request.form` chứa dữ liệu form trong body; `request.json` là body JSON."
+sources = ["flask/quickstart/index"]
+
+[[questions]]
+id = "python-backend-lv046"
+module = "py-flask"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "routing"]
+prompt = "Route khai báo `@app.route('/login')` (không có `methods`). Gửi `POST /login` nhận được gì?"
+options = ["200", "404 Not Found", "405 Method Not Allowed", "500"]
+answer = [2]
+explanation = "Mặc định route chỉ nhận GET (kèm HEAD, OPTIONS). Cần `methods=['GET', 'POST']` hoặc dùng `@app.post`."
+sources = ["flask/quickstart/index"]
+
+[[questions]]
+id = "python-backend-lv047"
+module = "py-flask"
+type = "fill"
+difficulty = 1
+tags = ["level:junior", "routing"]
+prompt = '''
+Khai báo route chỉ nhận POST bằng decorator rút gọn của Flask 2.0+:
+
+```python
+@app.{{blank}}("/todos")
+def create_todo():
+    ...
+```
+'''
+blanks = [["post"]]
+explanation = "Flask có `@app.get`, `@app.post`, `@app.put`, `@app.delete`, `@app.patch` tương đương `route(..., methods=[...])`."
+sources = ["flask/quickstart/index"]
+
+[[questions]]
+id = "python-backend-lv048"
+module = "py-fastapi"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "params"]
+prompt = '''
+Trong endpoint dưới đây, `q` là loại tham số gì?
+
+```python
+@app.get("/items/{item_id}")
+def read_item(item_id: int, q: str | None = None):
+    ...
+```
+'''
+options = ["Path parameter", "Query parameter, không bắt buộc", "Request body", "Header"]
+answer = [1]
+explanation = "`item_id` xuất hiện trong path nên là path param; `q` kiểu đơn, không có trong path, có giá trị mặc định → query param tuỳ chọn."
+sources = ["fastapi/tutorial/query-params/index"]
+
+[[questions]]
+id = "python-backend-lv049"
+module = "py-fastapi"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "params"]
+prompt = "Endpoint `def list_users(skip: int = 0, limit: int = 10)`. Gọi `GET /users?limit=5` thì giá trị nhận được là?"
+options = ["skip=0, limit=5", "skip=5, limit=10", "skip=None, limit=5", "Lỗi 422 vì thiếu skip"]
+answer = [0]
+explanation = "Tham số có giá trị mặc định là tuỳ chọn; giá trị truyền qua query string được chuyển sang `int`."
+sources = ["fastapi/tutorial/query-params/index"]
+
+[[questions]]
+id = "python-backend-lv050"
+module = "py-fastapi"
+type = "fill"
+difficulty = 1
+tags = ["level:junior", "errors"]
+prompt = '''
+Trả 404 khi không tìm thấy:
+
+```python
+from fastapi import FastAPI, {{blank}}
+
+@app.get("/items/{item_id}")
+def read_item(item_id: int):
+    if item_id not in items:
+        raise {{blank}}(status_code=404, detail="Item not found")
+    return items[item_id]
+```
+'''
+blanks = [["HTTPException"], ["HTTPException"]]
+explanation = "`raise HTTPException(...)` dừng xử lý và trả JSON `{\"detail\": ...}` với mã trạng thái tương ứng."
+sources = ["fastapi/tutorial/handling-errors/index"]
+
+[[questions]]
+id = "python-backend-lv051"
+module = "py-fastapi"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "docs"]
+prompt = "Sau khi chạy app FastAPI ở `http://127.0.0.1:8000`, mở đường dẫn nào để thấy Swagger UI tự sinh?"
+options = ["`/swagger`", "`/docs`", "`/api`", "`/openapi.html`"]
+answer = [1]
+explanation = "FastAPI tự sinh `/docs` (Swagger UI), `/redoc` và schema JSON tại `/openapi.json`."
+sources = ["fastapi/tutorial/path-params/index"]
+
+[[questions]]
+id = "python-backend-lv052"
+module = "py-fastapi"
+type = "multiple"
+difficulty = 1
+tags = ["level:junior", "pydantic"]
+prompt = '''
+Với model dưới đây làm request body, những JSON nào hợp lệ?
+
+```python
+class User(BaseModel):
+    email: str
+    age: int | None = None
+```
+'''
+options = [
+  "`{\"email\": \"a@b.com\"}`",
+  "`{\"email\": \"a@b.com\", \"age\": 30}`",
+  "`{\"age\": 30}`",
+  "`{\"email\": \"a@b.com\", \"age\": \"ba mươi\"}`",
+]
+answer = [0, 1]
+explanation = "`email` bắt buộc; `age` tuỳ chọn nhưng nếu có phải chuyển được sang `int` — chuỗi chữ sẽ trả 422."
+sources = ["fastapi/tutorial/body/index"]
+
+[[questions]]
+id = "python-backend-lv053"
+module = "py-async"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "asyncio"]
+prompt = "Trong `async def`, câu `data = await fetch()` làm gì?"
+options = [
+  "Tạo thread mới chạy `fetch`",
+  "Tạm dừng coroutine hiện tại cho tới khi `fetch()` xong, trong lúc đó event loop chạy việc khác",
+  "Chặn toàn bộ chương trình cho tới khi xong",
+  "Chạy `fetch` ở process khác",
+]
+answer = [1]
+explanation = "`await` nhường quyền điều khiển cho event loop; nhờ vậy một thread phục vụ được nhiều request đang chờ I/O."
+sources = ["fastapi/async/index"]
+
+[[questions]]
+id = "python-backend-lv054"
+module = "py-async"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "asyncio"]
+prompt = '''
+Đoạn code sau in ra gì?
+
+```python
+async def get_number():
+    return 42
+
+result = get_number()
+print(type(result).__name__)
+```
+'''
+options = ["`int`", "`coroutine`", "`NoneType`", "`Future`"]
+answer = [1]
+explanation = "Gọi hàm `async` không `await` chỉ tạo đối tượng coroutine, chưa chạy thân hàm; Python còn cảnh báo `coroutine ... was never awaited`."
+sources = ["python~3.14/library/asyncio-task#asyncio.gather"]
+
+[[questions]]
+id = "python-backend-lv055"
+module = "py-security"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "secrets"]
+prompt = "Dự án có file `.env` chứa `SECRET_KEY` và mật khẩu DB. Làm gì là đúng?"
+options = [
+  "Commit `.env` để đồng đội dùng chung",
+  "Thêm `.env` vào `.gitignore`, commit file mẫu `.env.example` không chứa giá trị thật",
+  "Đặt secret thẳng trong code cho dễ deploy",
+  "Gửi `.env` qua chat nhóm",
+]
+answer = [1]
+explanation = "Secret không được nằm trong git (lịch sử git giữ mãi). File mẫu cho biết cần biến nào; giá trị thật lấy từ biến môi trường hoặc secret manager."
+sources = ["flask/config/index"]
+
+[[questions]]
+id = "python-backend-lv056"
+module = "py-security"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "http"]
+prompt = "Endpoint tạo tài nguyên mới thành công (vd. `POST /users`) nên trả mã trạng thái nào?"
+options = ["200 OK", "201 Created", "204 No Content", "302 Found"]
+answer = [1]
+explanation = "201 cho biết đã tạo tài nguyên mới; 204 dùng khi thành công nhưng không có body."
+sources = ["fastapi/tutorial/response-status-code/index"]
+
+[[questions]]
+id = "python-backend-lv057"
+module = "py-security"
+type = "fill"
+difficulty = 1
+tags = ["level:junior", "config"]
+prompt = '''
+Đọc secret từ biến môi trường, trả `None` nếu chưa đặt (không ném `KeyError`):
+
+```python
+import os
+secret = os.environ.{{blank}}("SECRET_KEY")
+```
+'''
+blanks = [["get"]]
+explanation = "`os.environ.get(name)` trả `None` khi thiếu; `os.environ[name]` ném `KeyError` — hữu ích khi muốn app dừng sớm nếu thiếu cấu hình bắt buộc."
+sources = ["flask/config/index"]
+
+[[questions]]
+id = "python-backend-lv058"
+module = "python-backend-dv-sqlite"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "sql-injection"]
+prompt = "Câu nào truy vấn SQLite an toàn với `name` do người dùng nhập?"
+options = [
+  "`db.execute(f\"SELECT * FROM users WHERE name = '{name}'\")`",
+  "`db.execute(\"SELECT * FROM users WHERE name = ?\", (name,))`",
+  "`db.execute(\"SELECT * FROM users WHERE name = '\" + name + \"'\")`",
+  "`db.execute(\"SELECT * FROM users WHERE name = '%s'\" % name)`",
+]
+answer = [1]
+explanation = "Placeholder `?` để driver truyền giá trị tách khỏi câu SQL. Ghép chuỗi theo mọi cách đều mở đường cho SQL injection."
+sources = ["python~3.14/library/sqlite3#how-to-guides"]
+
+[[questions]]
+id = "python-backend-lv059"
+module = "python-backend-dv-sqlite"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "transaction"]
+prompt = "Script chạy `INSERT` bằng sqlite3 không lỗi, nhưng mở DB bằng công cụ khác lại không thấy dòng mới. Nguyên nhân thường gặp nhất?"
+options = [
+  "SQLite không hỗ trợ INSERT",
+  "Quên gọi `connection.commit()` (hoặc không dùng `with connection:`) trước khi đóng",
+  "Phải gọi `cursor.close()` hai lần",
+  "Tên bảng phải viết hoa",
+]
+answer = [1]
+explanation = "sqlite3 mở transaction ngầm trước câu ghi; không commit thì thay đổi bị huỷ khi đóng connection."
+sources = ["python~3.14/library/sqlite3#sqlite3.Connection.commit"]
+
+[[questions]]
+id = "python-backend-lv060"
+module = "python-backend-dv-flask-structure"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "deploy"]
+prompt = "Lệnh `flask --app app run --debug` phù hợp cho mục đích nào?"
+options = [
+  "Chạy production vì có tự reload",
+  "Phát triển trên máy cá nhân: tự reload khi sửa code và hiện debugger khi lỗi; production dùng WSGI server như gunicorn",
+  "Chạy test tự động",
+  "Build file thực thi",
+]
+answer = [1]
+explanation = "Debugger tương tác cho phép chạy code tuỳ ý trên server, tuyệt đối không bật ở production."
+sources = ["flask/quickstart/index", "flask/deploying/index"]
+
+[[questions]]
+id = "python-backend-lv061"
+module = "python-backend-dv-flask-structure"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "testing"]
+prompt = '''
+Test sau kiểm tra điều gì?
+
+```python
+def test_home(client):
+    response = client.get("/")
+    assert response.status_code == 200
+```
+'''
+options = [
+  "Server thật đang chạy ở cổng 5000",
+  "Gửi request GET `/` tới app qua test client (không cần mở cổng mạng) và kiểm tra mã trạng thái 200",
+  "Trình duyệt hiển thị trang chủ",
+  "Database có dữ liệu",
+]
+answer = [1]
+explanation = "`app.test_client()` gọi thẳng ứng dụng WSGI trong process test, nhanh và không cần server."
+sources = ["flask/testing/index"]
+
+[[questions]]
+id = "python-backend-lv062"
+module = "python-backend-dv-fastapi-deps"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "dependencies"]
+prompt = '''
+Hai endpoint cùng cần tham số phân trang. Cách viết nào dùng đúng dependency injection của FastAPI?
+
+```python
+def pagination(skip: int = 0, limit: int = 10):
+    return {"skip": skip, "limit": limit}
+```
+'''
+options = [
+  "`def list_items(p = pagination()):`",
+  "`def list_items(p: dict = Depends(pagination)):`",
+  "`def list_items(p: pagination):`",
+  "Gọi `pagination()` ở đầu mỗi endpoint",
+]
+answer = [1]
+explanation = "`Depends(pagination)` để FastAPI gọi hàm cho mỗi request và tự đọc `skip`, `limit` từ query. Gọi `pagination()` làm giá trị mặc định chỉ chạy một lần lúc định nghĩa hàm."
+sources = ["fastapi/tutorial/dependencies/index"]
+
+[[questions]]
+id = "python-backend-lv063"
+module = "py-flask"
+type = "multiple"
+difficulty = 1
+tags = ["level:junior", "response"]
+prompt = "Những giá trị nào một view Flask được phép return?"
+options = [
+  "Chuỗi `\"Hello\"`",
+  "Dict `{\"ok\": True}` (tự chuyển thành JSON)",
+  "Tuple `({\"id\": 1}, 201)`",
+  "Số nguyên `42` một mình",
+]
+answer = [0, 1, 2]
+explanation = "Flask chấp nhận str, dict/list (JSON), tuple (body, status[, headers]) hoặc Response; số nguyên trần gây `TypeError`."
+sources = ["flask/quickstart/index"]
+
+[[questions]]
+id = "python-backend-lv064"
+module = "py-fastapi"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "http"]
+prompt = "Làm sao để endpoint FastAPI `POST /items` trả mã 201 thay vì 200 mặc định?"
+options = [
+  "`@app.post(\"/items\", status_code=201)`",
+  "`return 201`",
+  "`@app.post(\"/items\", code=201)`",
+  "Đổi tên hàm thành `create_201`",
+]
+answer = [0]
+explanation = "Tham số `status_code` trên decorator đặt mã mặc định và cũng hiện trong tài liệu OpenAPI."
+sources = ["fastapi/tutorial/response-status-code/index"]
+
+[[questions]]
+id = "python-backend-lvc01"
+module = "py-fastapi"
+type = "code"
+difficulty = 1
+tags = ["level:junior", "pagination"]
+lang = "python"
+title = "Phân trang danh sách"
+prompt = '''Viết paginate(items, page, size) cho endpoint danh sách. page bắt đầu từ 1.
+
+Trả về dict {"items": <phần tử của trang>, "page": page, "total_pages": <số trang>}.
+- total_pages = số trang cần để chứa hết items (danh sách rỗng → 0).
+- page lớn hơn total_pages → items là danh sách rỗng.
+- page < 1 hoặc size < 1 → ném ValueError.'''
+starter = '''def paginate(items, page, size):
+    return {"items": items, "page": page, "total_pages": 1}
+'''
+solution = '''def paginate(items, page, size):
+    if page < 1 or size < 1:
+        raise ValueError("page và size phải >= 1")
+    start = (page - 1) * size
+    return {
+        "items": items[start:start + size],
+        "page": page,
+        "total_pages": (len(items) + size - 1) // size,
+    }
+'''
+tests = '''
+@test("trang đầu")
+def _():
+    expect(paginate(list(range(10)), 1, 3)).to_equal({"items": [0, 1, 2], "page": 1, "total_pages": 4})
+
+@test("trang cuối thiếu phần tử")
+def _():
+    expect(paginate(list(range(10)), 4, 3)).to_equal({"items": [9], "page": 4, "total_pages": 4})
+
+@test("trang vượt quá")
+def _():
+    expect(paginate([1, 2], 5, 2)["items"]).to_equal([])
+
+@test("danh sách rỗng")
+def _():
+    expect(paginate([], 1, 10)).to_equal({"items": [], "page": 1, "total_pages": 0})
+
+@test("tham số không hợp lệ")
+def _():
+    expect(lambda: paginate([1], 0, 10)).to_raise(ValueError)
+    expect(lambda: paginate([1], 1, 0)).to_raise(ValueError)
+'''
+hints = ["Vị trí bắt đầu là (page - 1) * size; slicing ngoài phạm vi trả list rỗng.", "Làm tròn lên phép chia: (n + size - 1) // size."]
+explanation = "Slicing của Python không lỗi khi vượt phạm vi nên trang vượt quá tự trả rỗng; validate page/size ở biên để endpoint trả 422/400 thay vì kết quả lạ."
+sources = ["fastapi/tutorial/query-params/index"]

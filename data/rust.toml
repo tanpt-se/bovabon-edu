@@ -175,6 +175,7 @@ id = "rs-001"
 module = "rs-ownership"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Sau phép gán `let alias = name;` với `name: String`, điều gì đúng nếu không dùng clone()?"
 options = ["Cả hai biến cùng sở hữu một String", "Ownership được move sang alias nên không thể dùng name tiếp", "String luôn được copy như i32", "Compiler tự tạo một bản sao sâu"]
 answer = [1]
@@ -186,6 +187,7 @@ id = "rs-002"
 module = "rs-ownership"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một hàm đang giữ `&mut values`. Điều kiện nào đúng để vẫn đảm bảo an toàn bộ nhớ?"
 options = ["Có thể đồng thời đọc values qua bao nhiêu reference cũng được", "Không có reference nào khác được dùng để đọc hoặc sửa cùng dữ liệu trong khoảng mượn mutable đang hoạt động", "Mọi mutable reference đều có static lifetime", "Mượn mutable tự động chuyển ownership"]
 answer = [1]
@@ -197,6 +199,7 @@ id = "rs-003"
 module = "rs-ownership"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Hàm chỉ cần đọc chuỗi và không cần sở hữu nó. Kiểu tham số nào linh hoạt, idiomatic hơn `&String`?"
 options = ["String", "&str", "&mut String", "Box<String>"]
 answer = [1]
@@ -208,6 +211,7 @@ id = "rs-004"
 module = "rs-ownership"
 type = "single"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Vì sao `fn longest<'a>(x: &'a str, y: &'a str) -> &'a str` cần lifetime parameter?"
 options = ["Để cấp phát hai chuỗi trên heap", "Để mô tả rằng reference trả về hợp lệ không lâu hơn các input reference liên quan", "Để compiler kéo dài lifetime của input", "Để bắt buộc hai chuỗi có cùng nội dung"]
 answer = [1]
@@ -219,6 +223,7 @@ id = "rs-005"
 module = "rs-types"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Khi thêm một variant mới vào enum được xử lý bằng `match`, compiler buộc bạn làm gì?"
 options = ["Thêm nhánh cho variant mới hoặc nhánh bao phủ như _", "Thêm default sau match", "Đổi enum thành struct", "Bọc mọi nhánh trong Option"]
 answer = [0]
@@ -230,6 +235,7 @@ id = "rs-006"
 module = "rs-types"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Kiểu nào phù hợp để biểu diễn kết quả tìm kiếm có thể không tìm thấy mà không có lỗi?"
 options = ["Result<T, E>", "Option<T>", "Box<T>", "String"]
 answer = [1]
@@ -241,6 +247,7 @@ id = "rs-007"
 module = "rs-types"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Trong hàm trả `Result<User, AppError>`, `load_user(id)?` trả Err thì điều gì xảy ra?"
 options = ["Hàm panic ngay lập tức", "Err được trả sớm, có thể chuyển đổi sang AppError nếu có From phù hợp", "Err bị bỏ qua và tạo User mặc định", "Toán tử ? chỉ hợp lệ với Option"]
 answer = [1]
@@ -252,6 +259,7 @@ id = "rs-008"
 module = "rs-traits"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một hàm generic gọi `item.area()`. Cần khai báo điều gì để compiler biết phép gọi hợp lệ?"
 options = ["Trait bound yêu cầu T triển khai trait có method area", "Thêm mut trước T", "Dùng Box<T> trong mọi trường hợp", "Bỏ generic và dùng Any"]
 answer = [0]
@@ -263,6 +271,7 @@ id = "rs-009"
 module = "rs-traits"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một Vec<Box<dyn Shape>> chứa Circle và Rectangle. Cách gọi area qua `dyn Shape` thường dùng cơ chế nào?"
 options = ["Dispatch tĩnh bằng cách tạo một kiểu mới tại mỗi phần tử", "Dispatch động qua vtable", "Macro chạy lúc runtime", "Pattern matching tự sinh enum"]
 answer = [1]
@@ -274,6 +283,7 @@ id = "rs-010"
 module = "rs-traits"
 type = "single"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Đâu là lợi ích thường có của hàm generic với trait bound so với `&dyn Trait`?"
 options = ["Compiler thường đơn hình hoá từng kiểu cụ thể, cho phép dispatch tĩnh", "Generic luôn dùng ít bộ nhớ hơn", "Generic cho phép mọi kiểu kể cả không triển khai trait", "Generic loại bỏ kiểm tra kiểu"]
 answer = [0]
@@ -285,6 +295,7 @@ id = "rs-011"
 module = "rs-collections"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Khi đếm tần suất từ trong HashMap, vì sao `*counts.entry(word).or_insert(0) += 1` hữu ích?"
 options = ["Tạo hoặc lấy giá trị cho key rồi cập nhật tại chỗ", "Giữ HashMap theo thứ tự chèn", "Tự chuẩn hoá chữ hoa thường", "Cho phép key trùng lặp"]
 answer = [0]
@@ -296,6 +307,7 @@ id = "rs-012"
 module = "rs-collections"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Đoạn `values.iter().map(|x| x * 2);` không dùng kết quả. Điều gì đúng?"
 options = ["map chạy ngay và thay đổi values", "Iterator adapter lazy nên chưa có phép biến đổi nào được consume", "values bị move khỏi scope", "Rust báo lỗi vì map chỉ dùng với Vec"]
 answer = [1]
@@ -307,6 +319,7 @@ id = "rs-013"
 module = "rs-collections"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Closure tăng biến total bên ngoài mỗi lần được gọi. Trait nào thường được yêu cầu?"
 options = ["Fn", "FnMut", "FnOnce duy nhất", "Copy"]
 answer = [1]
@@ -318,6 +331,7 @@ id = "rs-014"
 module = "rs-errors-modules"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Trong cây module Rust, item thường private theo mặc định. Từ khoá nào mở item cho phần code bên ngoài scope được phép truy cập?"
 options = ["export", "public", "pub", "global"]
 answer = [2]
@@ -329,6 +343,7 @@ id = "rs-015"
 module = "rs-errors-modules"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Vai trò phù hợp của `cargo check` trong vòng lặp phát triển là gì?"
 options = ["Kiểm tra biên dịch nhanh mà thường không tạo binary cuối", "Chạy toàn bộ benchmark release", "Tự cập nhật mọi dependency lên phiên bản mới nhất", "Thay thế kiểm thử hành vi"]
 answer = [0]
@@ -340,6 +355,7 @@ id = "rs-016"
 module = "rs-concurrency"
 type = "single"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Ý nghĩa chính xác của Send và Sync là gì?"
 options = ["Send cho phép chia sẻ reference; Sync cho phép move ownership", "Send cho phép chuyển giá trị giữa thread; Sync cho phép chia sẻ `&T` giữa thread an toàn", "Cả hai đều tự khóa mọi dữ liệu", "Chúng chỉ áp dụng cho async function"]
 answer = [1]
@@ -351,6 +367,7 @@ id = "rs-017"
 module = "rs-ownership"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn các phát biểu đúng về borrowing."
 options = ["Có thể có nhiều immutable reference cùng lúc", "Không thể đồng thời dùng mutable reference và reference khác tới cùng dữ liệu", "Reference không được sống lâu hơn dữ liệu nó trỏ tới", "Mọi reference đều chuyển ownership"]
 answer = [0, 1, 2]
@@ -362,6 +379,7 @@ id = "rs-018"
 module = "rs-types"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn các cách xử lý Option/Result tường minh mà không cần panic khi không có giá trị."
 options = ["Dùng match để xử lý các nhánh", "Dùng if let khi chỉ quan tâm một variant", "Dùng map để biến đổi giá trị bên trong khi có Some/Ok", "Gọi unwrap trên mọi dữ liệu bên ngoài"]
 answer = [0, 1, 2]
@@ -373,6 +391,7 @@ id = "rs-019"
 module = "rs-traits"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Chọn phát biểu đúng về generic, trait bound và trait object."
 options = ["Trait bound giới hạn kiểu generic theo hành vi", "Generic thường được monomorphize khi biên dịch", "Box<dyn Shape> có thể giữ giá trị của nhiều kiểu triển khai Shape", "Trait object luôn dispatch tĩnh"]
 answer = [0, 1, 2]
@@ -384,6 +403,7 @@ id = "rs-020"
 module = "rs-collections"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn các phát biểu đúng về iterator và closure."
 options = ["Iterator adapter như map thường lazy", "collect tiêu thụ iterator để tạo collection", "move closure buộc capture theo giá trị", "map luôn chạy song song"]
 answer = [0, 1, 2]
@@ -395,6 +415,7 @@ id = "rs-021"
 module = "rs-errors-modules"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn các phát biểu đúng về lỗi và module."
 options = ["Result<T, E> biểu diễn thành công hoặc lỗi có kiểu", "? có thể chuyển lỗi qua From phù hợp", "pub điều khiển visibility theo cây module", "panic là cách phù hợp cho mọi lỗi input dự kiến"]
 answer = [0, 1, 2]
@@ -406,6 +427,7 @@ id = "rs-022"
 module = "rs-concurrency"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Chọn các phát biểu đúng về concurrency trong Rust."
 options = ["Channel hỗ trợ truyền message giữa thread", "Arc tự làm mọi kiểu bên trong thread-safe dù kiểu đó không có trait phù hợp", "Mutex bảo vệ truy cập mutable được đồng bộ", "async Future cần được executor poll để tiến triển"]
 answer = [0, 2, 3]
@@ -417,6 +439,7 @@ id = "rs-023"
 module = "rs-ownership"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Nếu cần mượn một giá trị để sửa qua reference, khai báo reference với cú pháp {{blank}}."
 blanks = [["&mut"]]
 explanation = "Mutable borrow dùng &mut T và phải tuân thủ quy tắc exclusive access."
@@ -427,6 +450,7 @@ id = "rs-024"
 module = "rs-types"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Kiểu enum chuẩn biểu diễn giá trị có thể vắng mặt là {{blank}}."
 blanks = [["Option<T>", "Option"]]
 explanation = "Option<T> có hai variant Some(T) và None."
@@ -437,6 +461,7 @@ id = "rs-025"
 module = "rs-types"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Trong Rust, kiểu trả về chuẩn để diễn tả thành công T hoặc lỗi E là {{blank}}."
 blanks = [["Result<T, E>", "Result"]]
 explanation = "Result<T, E> buộc caller xử lý nhánh Ok hoặc Err."
@@ -447,6 +472,7 @@ id = "rs-026"
 module = "rs-collections"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Hoàn tất chuỗi iterator để thu các giá trị đã nhân đôi vào Vec: `values.iter().map(|x| x * 2).{{blank}}::<Vec<_>>()`."
 blanks = [["collect"]]
 explanation = "collect là consumer chuyển iterator thành collection được suy luận hoặc chỉ định kiểu."
@@ -457,6 +483,7 @@ id = "rs-027"
 module = "rs-collections"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Trong `counts.entry(word).{{blank}}(0)`, method lấy value hiện có hoặc chèn giá trị mặc định là gì?"
 blanks = [["or_insert"]]
 explanation = "or_insert trả về mutable reference tới value hiện có hoặc value vừa được chèn."
@@ -467,6 +494,7 @@ id = "rs-028"
 module = "rs-traits"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Điền từ khoá để khai báo trait object: `Box<dyn {{blank}}>`."
 blanks = [["Shape"]]
 explanation = "dyn Shape biểu diễn một kiểu cụ thể chưa biết tại compile time nhưng triển khai trait Shape."
@@ -477,6 +505,7 @@ id = "rs-029"
 module = "rs-ownership"
 type = "essay"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Giải thích ownership, borrowing và lifetime phối hợp thế nào để ngăn dangling reference khi một hàm trả về reference."
 keywords = [["ownership", "quyền sở hữu"], ["borrow", "mượn"], ["lifetime", "vòng đời"], ["dangling", "tham chiếu treo"]]
 min_keywords = 3
@@ -489,6 +518,7 @@ id = "rs-030"
 module = "rs-concurrency"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "So sánh thread dùng channel với chia sẻ trạng thái Arc<Mutex<T>>, rồi nêu quan hệ của hai cách này với async."
 keywords = [["channel", "message passing"], ["mutex", "lock"], ["send", "chuyển giá trị"], ["sync", "chia sẻ reference"], ["future", "async"]]
 min_keywords = 3
@@ -501,6 +531,7 @@ id = "rs-031"
 module = "rs-ownership"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 lang = "rust"
 title = "Chọn chuỗi dài hơn với lifetime"
 prompt = '''Viết hàm longest<'a>(left: &'a str, right: &'a str) -> &'a str. Trả về chuỗi có độ dài byte lớn hơn; nếu bằng nhau, trả về left. Không cấp phát chuỗi mới.'''
@@ -537,6 +568,7 @@ id = "rs-032"
 module = "rs-types"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 lang = "rust"
 title = "Parse và kiểm tra điểm"
 prompt = '''Định nghĩa enum InputError có các variant Missing, InvalidInteger, OutOfRange. Viết parse_score(input: Option<&str>) -> Result<u8, InputError>: None trả Missing; chuỗi số nguyên từ 0 đến 100 trả Ok; chuỗi không parse được trả InvalidInteger; số nguyên ngoài khoảng trả OutOfRange. Bỏ khoảng trắng đầu/cuối trước khi parse.'''
@@ -585,6 +617,7 @@ id = "rs-033"
 module = "rs-traits"
 type = "code"
 difficulty = 3
+tags = ["level:senior"]
 lang = "rust"
 title = "Shape trait object và Stack generic"
 prompt = '''Định nghĩa trait Shape với area(&self) -> f64, rồi triển khai cho Circle { radius: f64 } và Rectangle { width: f64, height: f64 }. Viết total_area(shapes: &[Box<dyn Shape>]) -> f64. Đồng thời định nghĩa Stack<T> có new, push, pop, len, is_empty; pop theo LIFO. Circle dùng πr².'''
@@ -740,6 +773,7 @@ id = "rs-034"
 module = "rs-collections"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 lang = "rust"
 title = "Đếm tần suất từ"
 prompt = '''Viết word_frequency(text: &str) -> HashMap<String, usize>. Tách theo whitespace, bỏ dấu câu ở đầu/cuối mỗi token, chuyển thành chữ thường, bỏ token rỗng, rồi đếm số lần xuất hiện. Không dùng crate ngoài.'''
@@ -791,6 +825,7 @@ id = "rs-035"
 module = "rs-collections"
 type = "code"
 difficulty = 3
+tags = ["level:senior"]
 lang = "rust"
 title = "LRU cache với HashMap và VecDeque"
 prompt = '''Cài LruCache<K, V> với new(capacity), put(key, value), get(&key) -> Option<V> và len(). Key yêu cầu Eq + Hash + Clone, value Clone. get thành công và put key đang có đều đưa key thành mới dùng nhất. Khi vượt capacity, loại key ít dùng nhất; capacity 0 luôn để cache rỗng.'''
@@ -929,6 +964,7 @@ id = "rs-036"
 module = "rs-concurrency"
 type = "code"
 difficulty = 3
+tags = ["level:senior"]
 lang = "rust"
 title = "Gộp tổng từ các thread qua channel"
 prompt = '''Viết parallel_sums(chunks: Vec<Vec<i32>>) -> Vec<i32>. Chạy một thread cho mỗi chunk, tính tổng chunk đó, gửi (index, tổng) về qua std::sync::mpsc, rồi trả tổng theo thứ tự chunk ban đầu dù thread hoàn tất khác thứ tự. Chunk rỗng có tổng 0; input rỗng trả Vec rỗng.'''
@@ -976,6 +1012,7 @@ id = "rust-dv001"
 module = "rust-dv-smart-pointers"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một cấu trúc cây có thể chứa node con cùng kiểu, khiến kích thước trực tiếp không xác định tại compile time. Kiểu nào thường tạo indirection và ownership đơn phù hợp?"
 options = ["Box<Node>", "Rc<Node>", "RefCell<Node>", "Mutex<Node>"]
 answer = [0]
@@ -987,6 +1024,7 @@ id = "rust-dv002"
 module = "rust-dv-smart-pointers"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một graph bất biến cần nhiều node cùng sở hữu một giá trị trong một thread. Lựa chọn nào phù hợp nhất?"
 options = ["Rc<T>", "Arc<Mutex<T>>", "Box<T>", "RefCell<T>"]
 answer = [0]
@@ -998,6 +1036,7 @@ id = "rust-dv003"
 module = "rust-dv-smart-pointers"
 type = "single"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Một method nhận `&self` nhưng cần cập nhật bộ đếm nội bộ trong chương trình đơn luồng. Thành phần nào cho phép kiểm tra borrow lúc chạy?"
 options = ["RefCell<T>", "Rc<T>", "Box<T>", "Cell<T> chỉ khi T không Copy"]
 answer = [0]
@@ -1009,6 +1048,7 @@ id = "rust-dv004"
 module = "rust-dv-smart-pointers"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn các phát biểu đúng về `Rc<T>` và `Weak<T>`."
 options = [
   "Rc<T> cho phép nhiều owner trong một thread",
@@ -1025,6 +1065,7 @@ id = "rust-dv005"
 module = "rust-dv-smart-pointers"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Một service chia sẻ trạng thái mutable giữa nhiều OS thread. Những nhận định nào phù hợp?"
 options = [
   "Arc<T> có thể chia sẻ ownership giữa thread khi T đáp ứng các trait cần thiết",
@@ -1041,6 +1082,7 @@ id = "rust-dv006"
 module = "rust-dv-smart-pointers"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Điền smart pointer cho phép nhiều owner trong một thread: `std::rc::{{blank}}<T>`."
 blanks = [["Rc"]]
 explanation = "Rc viết tắt của reference counting; nó không thể dùng như cơ chế chia sẻ thread-safe."
@@ -1051,6 +1093,7 @@ id = "rust-dv007"
 module = "rust-dv-smart-pointers"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Trong phỏng vấn, hãy giải thích khi nào chọn Box, Rc/Weak, RefCell, hoặc Arc<Mutex<T>>; nêu trade-off và một lỗi cần tránh."
 keywords = [["box", "boxed"], ["rc", "reference counted"], ["refcell", "interior mutability"], ["single thread", "single-threaded"], ["arc", "arc mutex"], ["weak", "reference cycle"]]
 min_keywords = 4
@@ -1063,6 +1106,7 @@ id = "rust-dvc01"
 module = "rust-dv-smart-pointers"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 lang = "rust"
 title = "Bộ đếm dùng chung trong một thread"
 prompt = '''Cài `SharedCounter` bằng `Rc<RefCell<i32>>`. `new(value)` tạo bộ đếm; `clone_handle(&self)` trả về handle mới cùng trỏ tới bộ đếm; `increment(&self)` tăng giá trị một đơn vị; `get(&self)` đọc giá trị hiện tại. Clone handle phải quan sát cùng trạng thái. Chỉ dùng thư viện chuẩn.'''
@@ -1168,6 +1212,7 @@ id = "rust-dv008"
 module = "rust-dv-testing-cli"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một integration test trong `tests/` thường tương tác với library của crate qua phạm vi nào?"
 options = ["Chỉ API public", "Mọi item private trong từng module", "Biến cục bộ của binary đang chạy", "Macro test nội bộ không được export"]
 answer = [0]
@@ -1179,6 +1224,7 @@ id = "rust-dv009"
 module = "rust-dv-testing-cli"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''Một test dùng `#[should_panic(expected = "invalid length")]` thành công khi nào?'''
 options = ["Bất kỳ panic nào xảy ra", "Test panic với thông điệp khớp chuỗi mong đợi", "Hàm trả về Err", "Test kết thúc trước timeout"]
 answer = [1]
@@ -1190,6 +1236,7 @@ id = "rust-dv010"
 module = "rust-dv-testing-cli"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Parser nhận đối số CLI thiếu giá trị cho `--file`. Cách thiết kế nào giúp ứng dụng báo lỗi thân thiện và kiểm thử được?"
 options = ["Gọi unwrap() để process panic", "Trả Result từ parser và để tầng CLI in lỗi ra stderr rồi đặt exit code phù hợp", "Bỏ qua flag và dùng file rỗng", "Ghi lỗi ra stdout rồi tiếp tục xử lý"]
 answer = [1]
@@ -1201,6 +1248,7 @@ id = "rust-dv011"
 module = "rust-dv-testing-cli"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn các phát biểu đúng về Rust test."
 options = [
   "Unit test có thể đặt trong module con `tests` của file nguồn",
@@ -1217,6 +1265,7 @@ id = "rust-dv012"
 module = "rust-dv-testing-cli"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Chọn cách làm phù hợp khi xây CLI nhận tên file từ người dùng."
 options = [
   "Tách parse đối số khỏi xử lý nghiệp vụ để test parser trực tiếp",
@@ -1233,6 +1282,7 @@ id = "rust-dv013"
 module = "rust-dv-testing-cli"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Điền thuộc tính đánh dấu một hàm là test: `#[{{blank}}]`."
 blanks = [["test"]]
 explanation = "Test harness nhận diện hàm có thuộc tính #[test]."
@@ -1243,6 +1293,7 @@ id = "rust-dv014"
 module = "rust-dv-testing-cli"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Giải thích cách chia unit test và integration test cho một CLI library; nêu cách xử lý input lỗi và giữ test ổn định khi chạy song song."
 keywords = [["unit test", "unit tests"], ["integration test", "integration tests"], ["public api", "api public"], ["result", "error handling"], ["parallel", "song song"], ["stderr", "exit code"]]
 min_keywords = 4
@@ -1255,6 +1306,7 @@ id = "rust-dvc02"
 module = "rust-dv-testing-cli"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 lang = "rust"
 title = "Phân tích tùy chọn tìm kiếm CLI"
 prompt = '''Cài `parse_search_args(args: &[&str]) -> Result<SearchConfig, String>`. Slice chỉ chứa tùy chọn, không có tên chương trình. Bắt buộc nhận đúng một `--query <text>` và một `--file <path>` với giá trị không rỗng; `--ignore-case` là cờ tùy chọn, xuất hiện tối đa một lần. Trả Err nếu thiếu/lặp tùy chọn, thiếu giá trị, gặp cờ lạ hoặc giá trị bắt buộc rỗng. `SearchConfig` có các field `query: String`, `file: String`, `ignore_case: bool`. Không đọc filesystem hay environment.'''
@@ -1371,6 +1423,7 @@ id = "rust-dv015"
 module = "rust-dv-patterns"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Vì sao `let Some(value) = maybe_value;` không hợp lệ khi `maybe_value: Option<T>`?"
 options = ["`Some(value)` là pattern refutable nên có thể không khớp", "let không cho phép tạo binding mới", "Option<T> chỉ dùng trong match", "value bắt buộc phải là mutable"]
 answer = [0]
@@ -1382,6 +1435,7 @@ id = "rust-dv016"
 module = "rust-dv-patterns"
 type = "single"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Trong `Some(code) if code >= 500 => retry()`, match guard có vai trò gì?"
 options = ["Thêm điều kiện sau khi pattern khớp; compiler không xem guard là bằng chứng exhaustiveness", "Đánh dấu code là mutable", "Thay thế mọi nhánh còn thiếu trong match", "Buộc code có kiểu u32"]
 answer = [0]
@@ -1393,6 +1447,7 @@ id = "rust-dv017"
 module = "rust-dv-patterns"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Điều kiện nào bắt buộc với nhánh `else` của `let Some(value) = input else { ... }`?"
 options = ["Nhánh phải diverge, chẳng hạn return hoặc panic", "Nhánh phải gán giá trị cho value", "Nhánh phải trả về Option<T>", "Nhánh không được chứa biểu thức"]
 answer = [0]
@@ -1404,6 +1459,7 @@ id = "rust-dv018"
 module = "rust-dv-patterns"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn các phát biểu đúng về `match` và pattern."
 options = [
   "Các nhánh match phải bao phủ mọi giá trị có thể xảy ra",
@@ -1420,6 +1476,7 @@ id = "rust-dv019"
 module = "rust-dv-patterns"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Ở những vị trí nào pattern có thể được dùng trong Rust?"
 options = ["Tham số hàm", "Nhánh for", "if let / while let", "Chỉ trong match"]
 answer = [0, 1, 2]
@@ -1431,6 +1488,7 @@ id = "rust-dv020"
 module = "rust-dv-patterns"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Trong match, pattern nào khớp mọi giá trị nhưng không tạo binding mới? `{{blank}} => fallback()`"
 blanks = [["_"]]
 explanation = "Wildcard pattern bỏ qua giá trị và thường dùng cho trường hợp còn lại."
@@ -1441,6 +1499,7 @@ id = "rust-dv021"
 module = "rust-dv-patterns"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "So sánh refutable và irrefutable pattern trong review code. Nêu khi nào dùng match, if let hoặc let-else, và giải thích vai trò của exhaustiveness."
 keywords = [["refutable", "có thể không khớp"], ["irrefutable", "luôn khớp"], ["let-else", "let else"], ["if let"], ["exhaustive", "exhaustiveness", "đầy đủ nhánh"], ["match guard", "guard"]]
 min_keywords = 4
@@ -1453,6 +1512,7 @@ id = "rust-dvc03"
 module = "rust-dv-patterns"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 lang = "rust"
 title = "Lọc số đo trong ngưỡng hợp lệ"
 prompt = '''Viết `valid_readings(readings: &[Option<i32>]) -> Vec<i32>`. Trả về theo thứ tự ban đầu các số đo hiện diện và nằm trong khoảng đóng 0..=100. Bỏ qua `None`, số âm và số lớn hơn 100. Dùng pattern matching để tách giá trị và kiểm tra khoảng.'''
@@ -1487,3 +1547,1241 @@ tests = '''bovabon_tests! {
 hints = ["Duyệt từng `&Option<i32>` và match sau khi dereference vì i32 là Copy.", "Dùng binding `value @ 0..=100` để vừa ràng buộc khoảng vừa giữ số đo."]
 explanation = "Pattern có range kiểm tra ngưỡng ngay khi destructure; wildcard bỏ qua None và các giá trị ngoài phạm vi."
 sources = ["rust/book/ch19-03-pattern-syntax", "rust/book/ch19-01-all-the-places-for-patterns"]
+
+[[modules]]
+id = "rust-lead"
+title = "Góc nhìn Tech Lead"
+description = "Chọn Rust cho phần nào của hệ thống, chiến lược FFI & unsafe boundary, workspace và thời gian build, quy ước lỗi, async runtime, code review an toàn bộ nhớ và mentoring team."
+sources = ["rust/book/ch14-03-cargo-workspaces", "rust/book/ch14-01-release-profiles", "rust/book/ch20-01-unsafe-rust", "rust/book/ch16-04-extensible-concurrency-sync-and-send", "rust/book/ch17-06-futures-tasks-threads", "rust/book/ch09-03-to-panic-or-not-to-panic"]
+lesson = '''
+### Vai trò của Tech Lead trong một codebase Rust
+Ở cấp Lead, câu hỏi không còn là "viết hàm này thế nào" mà là "đặt Rust ở đâu, với chi phí nào, và làm sao để cả team giữ được chất lượng". Rust mang lại an toàn bộ nhớ, hiệu năng dự đoán được và hệ kiểu mạnh, nhưng đổi lại là đường cong học tập, thời gian biên dịch dài hơn và hệ sinh thái async còn phân mảnh. Quyết định tốt luôn gắn với ràng buộc cụ thể: số người, kinh nghiệm, deadline, yêu cầu độ trễ, chi phí hạ tầng.
+
+### Khung ra quyết định: có nên dùng Rust cho thành phần này?
+
+| Tiêu chí | Hợp với Rust | Chưa nên dùng Rust |
+|---|---|---|
+| Đặc tính tải | CPU-bound, độ trễ p99 thấp, bộ nhớ hạn chế | CRUD đơn giản, I/O-bound thuần |
+| Rủi ro an toàn | Parser dữ liệu không tin cậy, crypto, xử lý nhị phân | Script nội bộ, prototype |
+| Đội ngũ | Có ít nhất 1–2 người vững ownership/async | Không ai có kinh nghiệm, deadline gấp |
+| Phạm vi | Một hot path có thể tách (extension, sidecar) | Viết lại cả hệ thống đang ổn định |
+
+Chiến lược an toàn nhất thường là **từng phần**: đo trước (profiling), tách hot path thành thư viện Rust gọi qua FFI hoặc service nhỏ, có benchmark và đường lui (fallback), rồi mới mở rộng.
+
+### Ranh giới unsafe và FFI
+- Gom `extern` và con trỏ thô vào crate `-sys` hoặc module riêng; phía trên là wrapper **safe** quản lý ownership (Drop gọi hàm giải phóng của C), chuyển đổi `CString`/`CStr` rõ ràng.
+- Mỗi khối `unsafe` có comment `// SAFETY:` mô tả invariant mà caller/implementation đảm bảo.
+- Chạy Miri hoặc sanitizer trong CI cho module có unsafe; review bắt buộc 2 người.
+
+### Workspace, thời gian build và dependency
+- Dùng Cargo workspace với `Cargo.lock` chung và `[workspace.dependencies]` để thống nhất version.
+- Đo trước khi tối ưu: `cargo build --timings` chỉ ra crate nào chiếm thời gian; cache thư mục `target` và registry trong CI; tắt `default-features` không cần.
+- Mỗi dependency mới là bề mặt tấn công và chi phí build: kiểm tra số crate kéo theo, license, advisory (cargo-audit / cargo-deny) — đây là công cụ cộng đồng, không có sẵn trong Cargo.
+
+### Quy ước team
+- **Lỗi**: library dùng enum lỗi có kiểu, implement `std::error::Error`; binary gom lỗi bằng `Box<dyn Error>` kèm ngữ cảnh. Không `unwrap()` trên dữ liệu bên ngoài.
+- **Async**: chuẩn hóa một runtime cho toàn workspace; tác vụ CPU nặng hoặc I/O đồng bộ chuyển sang thread pool riêng; không giữ `MutexGuard` qua `.await`.
+- **API public**: tuân semver; đổi signature bằng cách thêm hàm mới + `#[deprecated]`, xóa ở major tiếp theo.
+
+### Checklist review PR
+1. `unwrap`/`expect`/index trực tiếp trên input ngoài?
+2. `clone()` để né borrow checker trong vòng lặp nóng?
+3. Khối `unsafe` có `// SAFETY:` và test?
+4. Kiểu dùng chung giữa thread có `Send`/`Sync` đúng ý, không dựa vào `unsafe impl`?
+5. Thay đổi public API có phá semver?
+6. Clippy sạch, có test cho nhánh lỗi?
+
+### ADR mẫu (rút gọn)
+> **Bối cảnh**: hàm resize ảnh chiếm ~70% CPU (ước lượng từ profiling), service viết bằng Python. **Phương án**: (A) thêm máy, (B) viết lại toàn bộ bằng Rust, (C) tách hàm thành extension Rust. **Quyết định**: C, có cờ bật/tắt và benchmark so sánh. **Hệ quả**: thêm bước build Rust trong CI, cần 1 người ownership module; rủi ro thấp vì có fallback Python.
+
+### Anti-pattern ở quy mô team
+- Viết lại "big bang" một hệ thống ổn định chỉ vì thích Rust.
+- `Rc<RefCell<T>>` / `Arc<Mutex<T>>` khắp nơi để "cho qua" borrow checker, che giấu thiết kế ownership kém.
+- Trộn nhiều async runtime trong một tiến trình.
+- Cấm tuyệt đối `clone()` khiến junior mất nhiều ngày cho code không nóng — tối ưu khi profiling chỉ ra điểm nóng.
+'''
+
+[[questions]]
+id = "rust-lv001"
+module = "rust-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "adoption"]
+prompt = "Team 6 người vận hành service Python xử lý ảnh; profiling cho thấy một hàm resize chiếm phần lớn CPU. Chưa ai vững Rust, deadline 6 tuần. Chiến lược nào hợp lý nhất?"
+options = [
+  "Tách riêng hàm hot path thành extension Rust có benchmark và cờ fallback về bản Python, giữ phần còn lại",
+  "Viết lại toàn bộ service bằng Rust trong 6 tuần để tận dụng hiệu năng",
+  "Không đổi code, chỉ tăng gấp đôi số máy chủ vô thời hạn",
+  "Viết lại bằng Rust nhưng dùng unsafe ở mọi chỗ để kịp deadline",
+]
+answer = [0]
+explanation = "Tách đúng điểm nóng giới hạn phạm vi học Rust và rủi ro, có số đo và đường lui. Viết lại toàn bộ quá rủi ro với team chưa có kinh nghiệm và deadline ngắn; tăng máy chỉ là giải pháp tạm và tốn chi phí lâu dài; unsafe tràn lan làm mất chính lý do chọn Rust."
+sources = ["rust/book/ch20-01-unsafe-rust"]
+
+[[questions]]
+id = "rust-lv002"
+module = "rust-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "build"]
+prompt = "Workspace 40 crate, pipeline CI mất 25 phút và dev phàn nàn. Bước đầu tiên hợp lý nhất của Tech Lead là gì?"
+options = [
+  "Đo bằng `cargo build --timings`, cache `target`/registry trong CI, rồi xử lý crate chiếm thời gian nhiều nhất (feature thừa, proc-macro nặng)",
+  "Bật `opt-level = 3` cho profile dev để code chạy nhanh hơn",
+  "Gộp 40 crate thành một crate duy nhất",
+  "Bỏ chạy test trong CI để pipeline ngắn lại",
+]
+answer = [0]
+explanation = "Cần số đo trước khi tối ưu; cache và loại bỏ feature/dependency thừa thường giảm thời gian nhiều nhất. opt-level cao làm build chậm hơn; gộp crate phá incremental/parallel build; bỏ test đổi tốc độ lấy rủi ro."
+sources = ["rust/book/ch14-01-release-profiles", "rust/book/ch14-03-cargo-workspaces"]
+
+[[questions]]
+id = "rust-lv003"
+module = "rust-lead"
+type = "multiple"
+difficulty = 3
+tags = ["level:lead", "unsafe"]
+prompt = "Bạn soạn chính sách dùng `unsafe` cho team. Chọn các quy tắc hợp lý."
+options = [
+  "Mỗi khối unsafe có comment `// SAFETY:` nêu invariant được đảm bảo",
+  "Gói unsafe sau một API safe nhỏ trong module riêng, review bắt buộc 2 người",
+  "Chạy Miri hoặc sanitizer trong CI cho các module có unsafe",
+  "Cấm mọi dependency có chứa unsafe, kể cả thư viện chuẩn",
+  "Cho phép unsafe để tạm tắt borrow checker khi deadline gấp",
+]
+answer = [0, 1, 2]
+explanation = "Ghi rõ invariant, cô lập và kiểm tra tự động giúp unsafe có thể kiểm soát. Cấm tuyệt đối là không khả thi vì std cũng dùng unsafe bên trong; unsafe không tắt borrow checker và dùng để né lỗi biên dịch là nguồn undefined behavior."
+sources = ["rust/book/ch20-01-unsafe-rust"]
+
+[[questions]]
+id = "rust-lv004"
+module = "rust-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "async"]
+prompt = "Workspace đã dùng tokio, driver DB cũng phụ thuộc tokio. Một dev muốn crate mới dùng runtime async khác vì thích API. Quyết định nào hợp lý?"
+options = [
+  "Chuẩn hóa một runtime cho toàn workspace và ghi ADR; chỉ xem xét đổi khi có lý do đo được",
+  "Để mỗi crate tự chọn runtime theo sở thích",
+  "Chạy cả hai runtime và gọi `block_on` lồng nhau khi cần",
+  "Bỏ async, tạo một thread cho mỗi trong 10.000 kết nối",
+]
+answer = [0]
+explanation = "Trộn runtime gây lỗi khó debug (panic khi không có reactor, block lẫn nhau) và tăng dependency. block_on lồng trong runtime có thể deadlock; thread cho mỗi kết nối tốn bộ nhớ ở quy mô lớn."
+sources = ["rust/book/ch17-06-futures-tasks-threads"]
+
+[[questions]]
+id = "rust-lv005"
+module = "rust-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "errors"]
+prompt = "Team cần quy ước xử lý lỗi cho workspace gồm vài library crate nội bộ và 2 binary. Quy ước nào cân bằng nhất?"
+options = [
+  "Library trả enum lỗi có kiểu implement `std::error::Error`; binary gom lỗi bằng `Box<dyn Error>` kèm ngữ cảnh khi log",
+  "Mọi nơi dùng `String` làm kiểu lỗi cho đơn giản",
+  "Mọi nơi `unwrap()`, panic sẽ được log ở main",
+  "Library trả `Box<dyn Error>` để caller khỏi phải match",
+]
+answer = [0]
+explanation = "Caller của library cần phân biệt loại lỗi để xử lý; binary chủ yếu báo cáo lỗi nên kiểu gom chung tiện hơn. String mất cấu trúc; unwrap biến lỗi có thể phục hồi thành crash; Box<dyn Error> ở library buộc caller downcast."
+sources = ["rust/book/ch09-03-to-panic-or-not-to-panic", "rust/book/ch09-02-recoverable-errors-with-result"]
+
+[[questions]]
+id = "rust-lv006"
+module = "rust-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "ffi"]
+prompt = "Sản phẩm phải gọi một thư viện C đã được kiểm định bảo mật. Chiến lược ranh giới FFI nào hợp lý cho team?"
+options = [
+  "Crate `-sys` chứa binding thô, crate wrapper safe quản lý ownership (Drop gọi hàm free của C) và chuyển đổi chuỗi qua CString/CStr, test tập trung ở ranh giới",
+  "Gọi hàm `extern` trực tiếp rải rác trong business code",
+  "Viết lại thư viện mã hóa bằng Rust ngay trong sprint này",
+  "Truyền con trỏ của `String` Rust trực tiếp sang C mà không thêm ký tự kết thúc",
+]
+answer = [0]
+explanation = "Cô lập unsafe giúp phần lớn code dùng API safe và dễ review. Gọi extern rải rác nhân bản rủi ro; tự viết lại crypto bỏ đi lợi ích đã kiểm định; String Rust không kết thúc bằng NUL nên C có thể đọc tràn."
+sources = ["rust/book/ch20-01-unsafe-rust"]
+
+[[questions]]
+id = "rust-lv007"
+module = "rust-lead"
+type = "multiple"
+difficulty = 3
+tags = ["level:lead", "code-review"]
+prompt = "Chọn các mục đáng đưa vào checklist review PR Rust của team."
+options = [
+  "`unwrap()`/`expect()` trên dữ liệu đến từ bên ngoài",
+  "`clone()` trong vòng lặp nóng chỉ để né borrow checker",
+  "Giữ `MutexGuard` qua điểm `.await`",
+  "Tên biến có dài hơn 8 ký tự hay không",
+  "Thay đổi public API có phá semver hay không",
+]
+answer = [0, 1, 2, 4]
+explanation = "Các mục được chọn ảnh hưởng độ tin cậy, hiệu năng, deadlock và tương thích. Độ dài tên biến là chuyện style, nên để rustfmt/clippy và quy ước đặt tên xử lý chứ không tốn thời gian review."
+sources = ["rust/book/ch16-03-shared-state", "rust/book/ch14-02-publishing-to-crates-io"]
+
+[[questions]]
+id = "rust-lv008"
+module = "rust-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "dependencies"]
+prompt = "Một PR thêm crate phổ biến kéo theo ~120 crate phụ, trong khi chỉ dùng một hàm định dạng nhỏ. Quyết định hợp lý?"
+options = [
+  "Cân nhắc tự viết hàm nhỏ hoặc chọn crate nhẹ/tắt default-features; đồng thời kiểm tra license và advisory bằng công cụ như cargo-deny trong CI",
+  "Chấp nhận ngay vì crate nhiều lượt tải là đủ an toàn",
+  "Vendor toàn bộ mã nguồn và sửa tay khi cần",
+  "Cấm mọi dependency ngoài trong toàn công ty",
+]
+answer = [0]
+explanation = "Mỗi dependency tăng thời gian build và bề mặt chuỗi cung ứng; với nhu cầu nhỏ thường có phương án rẻ hơn. Độ phổ biến không thay cho kiểm tra; vendor và sửa tay tạo fork khó cập nhật; cấm tuyệt đối làm chậm team vô lý."
+sources = ["rust/book/ch14-03-cargo-workspaces"]
+
+[[questions]]
+id = "rust-lv009"
+module = "rust-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "release"]
+prompt = "Binary Rust chạy production thỉnh thoảng panic và team không có đủ thông tin để debug. Cấu hình release nào hợp lý?"
+options = [
+  "Build release nhưng giữ debug symbols (có thể tách file riêng), cài panic hook ghi log kèm backtrace và ngữ cảnh request",
+  "Deploy bản build debug lên production cho dễ debug",
+  "Strip toàn bộ symbol và tắt log để binary nhỏ nhất",
+  "Đặt `opt-level = 0` trong profile release",
+]
+answer = [0]
+explanation = "Symbols không làm chậm code đã tối ưu và giúp đọc backtrace; panic hook đảm bảo thông tin được ghi lại. Bản debug chậm và khác hành vi (overflow check); strip hết khiến không đọc được crash; opt-level 0 mất hiệu năng."
+sources = ["rust/book/ch14-01-release-profiles", "rust/book/ch09-01-unrecoverable-errors-with-panic"]
+
+[[questions]]
+id = "rust-lv010"
+module = "rust-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "mentoring"]
+prompt = "Team vừa chuyển sang Rust; junior mất nhiều thời gian với borrow checker và hay dùng `clone()`. Cách mentoring hợp lý nhất?"
+options = [
+  "Chấp nhận clone ở code không nóng giai đoạn đầu, dùng profiling chỉ ra điểm nóng, pair review về ownership và viết tài liệu pattern nội bộ",
+  "Chặn mọi PR có `clone()`",
+  "Khuyến khích dùng `Rc<RefCell<T>>` ở mọi nơi để hết lỗi biên dịch",
+  "Để junior tự học, không review cho nhanh",
+]
+answer = [0]
+explanation = "Ưu tiên tính đúng và tốc độ học, tối ưu dựa trên số đo. Cấm clone làm tắc team; Rc<RefCell> tràn lan chuyển lỗi biên dịch thành panic lúc chạy; bỏ review khiến thói quen xấu lan rộng."
+sources = ["rust/book/ch04-00-understanding-ownership", "rust/book/ch15-05-interior-mutability"]
+
+[[questions]]
+id = "rust-lv011"
+module = "rust-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "semver"]
+prompt = "Crate nội bộ được 5 team dùng; bạn cần đổi signature một hàm public. Chiến lược nào ít gây gián đoạn nhất?"
+options = [
+  "Thêm hàm mới, đánh `#[deprecated]` hàm cũ kèm hướng dẫn chuyển đổi, phát hành minor; gỡ hàm cũ ở bản major kế tiếp",
+  "Đổi trực tiếp và chỉ tăng số patch",
+  "Copy toàn bộ crate thành crate mới tên `crate2`",
+  "Đổi trực tiếp rồi nhắn tin từng team tự sửa",
+]
+answer = [0]
+explanation = "Deprecation cho các team thời gian chuyển đổi và compiler cảnh báo đúng chỗ, phù hợp semver. Đổi phá vỡ ở patch vi phạm semver; fork crate tạo hai nguồn sự thật; nhắn tin không thay cho công cụ."
+sources = ["rust/book/ch14-02-publishing-to-crates-io"]
+
+[[questions]]
+id = "rust-lv012"
+module = "rust-lead"
+type = "multiple"
+difficulty = 3
+tags = ["level:lead", "async", "observability"]
+prompt = "Service async có p99 latency tăng vọt khi tải cao; nghi ngờ có code chặn (blocking) trong runtime. Chọn các hành động đúng."
+options = [
+  "Tìm I/O đồng bộ hoặc tính toán CPU nặng trong task async và chuyển sang thread pool riêng (ví dụ spawn_blocking)",
+  "Thêm tracing/metrics đo thời gian xử lý của từng task để xác nhận giả thuyết",
+  "Tăng số worker thread lên thật lớn là giải pháp gốc",
+  "Giới hạn số tác vụ nặng chạy đồng thời bằng semaphore",
+]
+answer = [0, 1, 3]
+explanation = "Task chặn worker khiến các task khác chờ; cần đo, tách khỏi runtime và giới hạn concurrency. Tăng worker chỉ che triệu chứng và tăng chi phí context switch."
+sources = ["rust/book/ch17-06-futures-tasks-threads"]
+
+[[questions]]
+id = "rust-lv013"
+module = "rust-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "architecture"]
+prompt = "Hệ thống plugin cho 3 team khác cắm vào; danh sách plugin được nạp lúc runtime từ file cấu hình. Thiết kế nào phù hợp?"
+options = [
+  "Định nghĩa trait `Plugin` và lưu `Vec<Box<dyn Plugin>>`, chấp nhận chi phí dispatch động nhỏ",
+  "Dùng generic `<P: Plugin>` cho từng plugin để monomorphize",
+  "Viết `match` cứng liệt kê mọi plugin trong core",
+  "Ép kiểu con trỏ hàm bằng `transmute` cho nhanh",
+]
+answer = [0]
+explanation = "Khi tập plugin chỉ biết lúc runtime, trait object là lựa chọn tự nhiên. Generic cần biết kiểu lúc biên dịch; match cứng buộc core đổi mỗi khi team khác thêm plugin; transmute là unsafe không cần thiết."
+sources = ["rust/book/ch18-02-trait-objects"]
+
+[[questions]]
+id = "rust-lv014"
+module = "rust-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "workspace"]
+prompt = "Ba service Rust dùng chung model dữ liệu và hay lệch version dependency. Cách tổ chức nào hợp lý?"
+options = [
+  "Một Cargo workspace với crate `domain` dùng chung, `Cargo.lock` chung và version thống nhất qua `[workspace.dependencies]`",
+  "Copy model vào từng service để độc lập",
+  "Publish model lên crates.io công khai rồi mỗi service tự kéo về",
+  "Gộp ba service vào một binary chung `main.rs`",
+]
+answer = [0]
+explanation = "Workspace cho phép chia sẻ code và khóa version mà vẫn deploy riêng từng binary. Copy gây lệch model; publish công khai lộ code nội bộ; gộp binary làm mất khả năng deploy độc lập."
+sources = ["rust/book/ch14-03-cargo-workspaces"]
+
+[[questions]]
+id = "rust-lv015"
+module = "rust-lead"
+type = "fill"
+difficulty = 3
+tags = ["level:lead", "workspace"]
+prompt = "Trong `Cargo.toml` gốc của workspace, bảng khai báo version dependency dùng chung cho mọi member là `[workspace.{{blank}}]`."
+blanks = [["dependencies"]]
+explanation = "Member khai báo `serde = { workspace = true }` để kế thừa version từ `[workspace.dependencies]`, tránh lệch version giữa các crate."
+sources = ["rust/book/ch14-03-cargo-workspaces"]
+
+[[questions]]
+id = "rust-lv016"
+module = "rust-lead"
+type = "essay"
+difficulty = 3
+tags = ["level:lead", "adr"]
+prompt = "Viết một ADR ngắn trả lời: có nên viết lại một service Go đang chạy ổn định sang Rust không? Nêu bối cảnh, các phương án, tiêu chí đánh giá, quyết định và hệ quả."
+keywords = [["bối cảnh", "context"], ["phương án", "lựa chọn", "option"], ["chi phí", "cost"], ["rủi ro", "risk"], ["benchmark", "số liệu", "đo"], ["hệ quả", "consequence"], ["từng phần", "pilot", "thử nghiệm", "incremental"]]
+min_keywords = 5
+model_answer = '''Bối cảnh: service Go ổn định, team 5 người chỉ 1 người biết Rust, chưa có số liệu cho thấy Go là nút thắt. Phương án: (A) giữ Go và tối ưu bằng profiling, (B) viết lại toàn bộ sang Rust, (C) pilot từng phần một thành phần CPU-bound bằng Rust. Tiêu chí: chi phí phát triển và đào tạo, rủi ro gián đoạn production, lợi ích đo được qua benchmark p99 và bộ nhớ. Quyết định: chọn A, chỉ làm C khi benchmark chứng minh lợi ích rõ. Hệ quả: không tốn chi phí viết lại, giữ ổn định; cần lịch xem lại khi tải tăng.'''
+explanation = "ADR tốt dựa trên số liệu và ràng buộc team, so sánh nhiều phương án và nói rõ hệ quả thay vì chọn công nghệ theo cảm tính."
+sources = ["rust/book/ch17-06-futures-tasks-threads"]
+
+[[questions]]
+id = "rust-lv017"
+module = "rust-lead"
+type = "essay"
+difficulty = 3
+tags = ["level:lead", "code-review", "safety"]
+prompt = "Đề xuất chính sách review an toàn bộ nhớ và concurrency cho team Rust 8 người: xử lý unsafe, Send/Sync, panic, lint và kiểm tra tự động trong CI."
+keywords = [["unsafe"], ["safety:", "invariant"], ["send"], ["sync"], ["clippy", "lint"], ["panic", "unwrap"], ["miri", "sanitizer"], ["ci"]]
+min_keywords = 5
+model_answer = '''Mọi khối unsafe nằm trong module riêng, có comment SAFETY: nêu invariant và cần 2 reviewer. Không viết unsafe impl Send hoặc Sync nếu chưa chứng minh được kiểu an toàn khi chia sẻ giữa thread; ưu tiên Arc, Mutex, channel. Cấm unwrap và expect trên input bên ngoài, panic chỉ dùng cho lỗi lập trình. CI chạy cargo clippy với cảnh báo là lỗi, test, và Miri hoặc sanitizer cho module có unsafe.'''
+explanation = "Chính sách cần cụ thể, có thể kiểm tra tự động và tập trung review thủ công vào phần thực sự rủi ro."
+sources = ["rust/book/ch20-01-unsafe-rust", "rust/book/ch16-04-extensible-concurrency-sync-and-send"]
+
+[[questions]]
+id = "rust-lvc01"
+module = "rust-lead"
+type = "code"
+difficulty = 3
+tags = ["level:lead", "reliability"]
+lang = "rust"
+title = "Circuit breaker cho lời gọi dịch vụ ngoài"
+prompt = '''Cài đặt `Breaker` để bảo vệ lời gọi tới dịch vụ ngoài (thời gian `now` truyền vào dạng số giây, không đọc đồng hồ hệ thống):
+
+- `Breaker::new(threshold: u32, cooldown: u64)`.
+- `allow(&self, now: u64) -> bool`: khi đóng (closed) luôn trả `true`. Khi đã mở (open) tại thời điểm `t`, trả `false` nếu `now < t + cooldown`; ngược lại trả `true` (half-open, cho một lời gọi thử).
+- `record(&mut self, ok: bool, now: u64)`: thành công thì reset số lỗi về 0 và đóng breaker. Thất bại thì tăng số lỗi liên tiếp; khi số lỗi `>= threshold` thì mở breaker tại `now` (một lỗi ở trạng thái half-open mở lại ngay).'''
+starter = '''struct Breaker {
+    threshold: u32,
+    cooldown: u64,
+}
+
+impl Breaker {
+    fn new(threshold: u32, cooldown: u64) -> Self {
+        Breaker { threshold, cooldown }
+    }
+
+    fn allow(&self, _now: u64) -> bool {
+        let _ = (self.threshold, self.cooldown);
+        true
+    }
+
+    fn record(&mut self, _ok: bool, _now: u64) {}
+}'''
+solution = '''struct Breaker {
+    threshold: u32,
+    cooldown: u64,
+    failures: u32,
+    opened_at: Option<u64>,
+}
+
+impl Breaker {
+    fn new(threshold: u32, cooldown: u64) -> Self {
+        Breaker { threshold, cooldown, failures: 0, opened_at: None }
+    }
+
+    fn allow(&self, now: u64) -> bool {
+        match self.opened_at {
+            None => true,
+            Some(t) => now >= t + self.cooldown,
+        }
+    }
+
+    fn record(&mut self, ok: bool, now: u64) {
+        if ok {
+            self.failures = 0;
+            self.opened_at = None;
+        } else {
+            self.failures += 1;
+            if self.failures >= self.threshold {
+                self.opened_at = Some(now);
+            }
+        }
+    }
+}'''
+tests = '''bovabon_tests! {
+    "ban đầu cho phép gọi" => {
+        let b = Breaker::new(3, 10);
+        assert!(b.allow(0));
+    },
+    "mở sau đủ số lỗi liên tiếp" => {
+        let mut b = Breaker::new(2, 10);
+        b.record(false, 1);
+        assert!(b.allow(1));
+        b.record(false, 2);
+        assert!(!b.allow(3));
+    },
+    "thành công reset bộ đếm lỗi" => {
+        let mut b = Breaker::new(2, 10);
+        b.record(false, 1);
+        b.record(true, 2);
+        b.record(false, 3);
+        assert!(b.allow(4));
+    },
+    "half-open sau cooldown" => {
+        let mut b = Breaker::new(1, 5);
+        b.record(false, 10);
+        assert!(!b.allow(14));
+        assert!(b.allow(15));
+    },
+    "lỗi ở half-open mở lại ngay" => {
+        let mut b = Breaker::new(1, 5);
+        b.record(false, 10);
+        assert!(b.allow(15));
+        b.record(false, 15);
+        assert!(!b.allow(16));
+        assert!(b.allow(20));
+    },
+    "thành công ở half-open đóng breaker" => {
+        let mut b = Breaker::new(1, 5);
+        b.record(false, 0);
+        b.record(true, 5);
+        assert!(b.allow(6));
+    },
+}'''
+hints = ["Lưu thêm `failures: u32` và `opened_at: Option<u64>`.", "`allow` chỉ cần so sánh `now` với `opened_at + cooldown`; không cần trạng thái half-open riêng vì lỗi kế tiếp sẽ đặt lại `opened_at`."]
+explanation = "Circuit breaker ngăn hệ thống tiếp tục dội tải vào dịch vụ đang lỗi; truyền `now` từ ngoài giúp logic xác định và dễ test."
+sources = ["rust/book/ch05-03-method-syntax", "rust/book/ch06-02-match"]
+
+[[questions]]
+id = "rust-lv018"
+module = "rs-ownership"
+type = "single"
+difficulty = 1
+tags = ["level:junior"]
+prompt = '''Đoạn code sau có biên dịch được không?
+
+```rust
+let s1 = String::from("hi");
+let s2 = s1;
+println!("{}", s1);
+```'''
+options = ["Không, vì `s1` đã bị move sang `s2`", "Có, in ra `hi`", "Có, nhưng in ra chuỗi rỗng", "Không, vì thiếu `mut`"]
+answer = [0]
+explanation = "Gán String chuyển ownership; sau đó `s1` không còn hợp lệ. Dùng `s1.clone()` hoặc mượn `&s1` nếu cần cả hai."
+sources = ["rust/book/ch04-01-what-is-ownership"]
+
+[[questions]]
+id = "rust-lv019"
+module = "rs-ownership"
+type = "single"
+difficulty = 1
+tags = ["level:junior"]
+prompt = '''Kết quả của đoạn code sau?
+
+```rust
+let x = 5;
+let y = x;
+println!("{} {}", x, y);
+```'''
+options = ["In `5 5` vì i32 là kiểu Copy", "Lỗi biên dịch vì x đã bị move", "In `5 0`", "Panic lúc chạy"]
+answer = [0]
+explanation = "Các kiểu số nguyên nằm trên stack và implement Copy nên phép gán sao chép giá trị, x vẫn dùng được."
+sources = ["rust/book/ch04-01-what-is-ownership"]
+
+[[questions]]
+id = "rust-lv020"
+module = "rs-ownership"
+type = "fill"
+difficulty = 1
+tags = ["level:junior"]
+prompt = "Để có thể thay đổi giá trị sau khi khai báo, biến cần từ khóa: `let {{blank}} count = 0;`"
+blanks = [["mut"]]
+explanation = "Biến trong Rust mặc định bất biến; `mut` cho phép gán lại hoặc sửa giá trị."
+sources = ["rust/book/ch03-01-variables-and-mutability"]
+
+[[questions]]
+id = "rust-lv021"
+module = "rs-ownership"
+type = "single"
+difficulty = 1
+tags = ["level:junior"]
+prompt = '''Đoạn code in ra gì?
+
+```rust
+let x = 5;
+let x = x + 1;
+{
+    let x = x * 2;
+    println!("{}", x);
+}
+println!("{}", x);
+```'''
+options = ["`12` rồi `6`", "`12` rồi `12`", "`6` rồi `6`", "Lỗi biên dịch vì x không có mut"]
+answer = [0]
+explanation = "Shadowing tạo biến mới cùng tên; biến trong block chỉ che biến ngoài đến hết block."
+sources = ["rust/book/ch03-01-variables-and-mutability"]
+
+[[questions]]
+id = "rust-lv022"
+module = "rs-ownership"
+type = "single"
+difficulty = 1
+tags = ["level:junior"]
+prompt = "Kiểu tham số nào linh hoạt nhất cho hàm chỉ cần đọc văn bản, nhận được cả `String` lẫn chuỗi literal?"
+options = ["`&str`", "`String`", "`&mut String`", "`Vec<char>`"]
+answer = [0]
+explanation = "`&String` tự deref thành `&str` và literal đã là `&str`, nên `&str` nhận được cả hai mà không lấy ownership."
+sources = ["rust/book/ch04-03-slices"]
+
+[[questions]]
+id = "rust-lv023"
+module = "rs-types"
+type = "single"
+difficulty = 1
+tags = ["level:junior"]
+prompt = "Kiểu nào Rust dùng cho chỉ số (index) và độ dài của `Vec`?"
+options = ["`usize`", "`i32`", "`u8`", "`f64`"]
+answer = [0]
+explanation = "`usize` có kích thước bằng con trỏ của nền tảng; `len()` trả về và index nhận `usize`."
+sources = ["rust/book/ch03-02-data-types"]
+
+[[questions]]
+id = "rust-lv024"
+module = "rs-types"
+type = "single"
+difficulty = 1
+tags = ["level:junior"]
+prompt = '''Giá trị của `label`?
+
+```rust
+let n = 7;
+let label = if n % 2 == 0 { "even" } else { "odd" };
+```'''
+options = ["`\"odd\"`", "`\"even\"`", "Lỗi biên dịch vì if không trả giá trị", "`()`"]
+answer = [0]
+explanation = "`if` là biểu thức; hai nhánh cùng kiểu `&str` nên có thể gán trực tiếp."
+sources = ["rust/book/ch03-05-control-flow"]
+
+[[questions]]
+id = "rust-lv025"
+module = "rs-types"
+type = "fill"
+difficulty = 1
+tags = ["level:junior"]
+prompt = "Từ khóa khai báo một kiểu dữ liệu có nhiều biến thể như `Ok`/`Err` là: `{{blank}} Status { Active, Banned }`"
+blanks = [["enum"]]
+explanation = "`enum` định nghĩa kiểu có một trong nhiều variant; `struct` gom nhiều field cùng lúc."
+sources = ["rust/book/ch06-01-defining-an-enum"]
+
+[[questions]]
+id = "rust-lv026"
+module = "rs-types"
+type = "single"
+difficulty = 1
+tags = ["level:junior"]
+prompt = "Vì sao compiler báo lỗi khi một `match` trên `Option<i32>` chỉ có nhánh `Some(n)`?"
+options = ["`match` phải exhaustive, còn thiếu nhánh `None`", "`Option` không dùng được với match", "Phải viết `Some(mut n)`", "Thiếu dấu `;` sau match"]
+answer = [0]
+explanation = "Compiler buộc xử lý mọi variant; thêm `None => ...` hoặc dùng `if let` nếu chỉ quan tâm một nhánh."
+sources = ["rust/book/ch06-02-match"]
+
+[[questions]]
+id = "rust-lv027"
+module = "rs-types"
+type = "multiple"
+difficulty = 1
+tags = ["level:junior"]
+prompt = "Chọn các phát biểu đúng về `struct` trong Rust."
+options = [
+  "Phương thức được định nghĩa trong khối `impl`",
+  "Tham số `&self` cho phép phương thức đọc field mà không lấy ownership",
+  "Hàm liên kết không có `self` (như `new`) gọi bằng `Type::new()`",
+  "Field của struct mặc định public với module khác",
+]
+answer = [0, 1, 2]
+explanation = "Field và phương thức mặc định private ngoài module; cần `pub` để lộ ra."
+sources = ["rust/book/ch05-03-method-syntax", "rust/book/ch07-03-paths-for-referring-to-an-item-in-the-module-tree"]
+
+[[questions]]
+id = "rust-lv028"
+module = "rs-collections"
+type = "single"
+difficulty = 1
+tags = ["level:junior"]
+prompt = '''Lỗi gì xảy ra?
+
+```rust
+let v = Vec::new();
+v.push(1);
+```'''
+options = ["Lỗi biên dịch: `v` không khai báo `mut`", "Panic vì Vec rỗng", "Không lỗi gì", "Lỗi vì Vec phải có kích thước cố định"]
+answer = [0]
+explanation = "`push` cần `&mut self`, nên biến phải là `let mut v`. Kiểu phần tử được suy ra từ lần push."
+sources = ["rust/book/ch08-01-vectors"]
+
+[[questions]]
+id = "rust-lv029"
+module = "rs-collections"
+type = "single"
+difficulty = 1
+tags = ["level:junior"]
+prompt = "Với `let v = vec![1, 2, 3];`, cách nào truy cập phần tử thứ 10 mà không panic?"
+options = ["`v.get(9)` trả về `Option<&i32>`", "`v[9]`", "`v.at(9)`", "`v.index(9).unwrap_or(0)`"]
+answer = [0]
+explanation = "`get` trả `None` khi vượt biên; indexing `v[9]` panic khi ngoài phạm vi."
+sources = ["rust/book/ch08-01-vectors"]
+
+[[questions]]
+id = "rust-lv030"
+module = "rs-collections"
+type = "single"
+difficulty = 1
+tags = ["level:junior"]
+prompt = '''Vòng lặp in những số nào?
+
+```rust
+for i in 1..4 {
+    print!("{} ", i);
+}
+```'''
+options = ["`1 2 3`", "`1 2 3 4`", "`0 1 2 3`", "`2 3 4`"]
+answer = [0]
+explanation = "Range `a..b` không gồm `b`; dùng `1..=4` để gồm cả 4."
+sources = ["rust/book/ch03-05-control-flow"]
+
+[[questions]]
+id = "rust-lv031"
+module = "rs-collections"
+type = "fill"
+difficulty = 1
+tags = ["level:junior"]
+prompt = "Macro tạo nhanh một Vec có sẵn phần tử: `let nums = {{blank}}[1, 2, 3];`"
+blanks = [["vec!"]]
+explanation = "`vec!` tạo Vec với giá trị khởi tạo; `Vec::new()` tạo Vec rỗng."
+sources = ["rust/book/ch08-01-vectors"]
+
+[[questions]]
+id = "rust-lv032"
+module = "rs-errors-modules"
+type = "single"
+difficulty = 1
+tags = ["level:junior"]
+prompt = "Lệnh Cargo nào chỉ kiểm tra code biên dịch được mà không tạo binary, thường nhanh nhất khi đang code?"
+options = ["`cargo check`", "`cargo build --release`", "`cargo run`", "`cargo new`"]
+answer = [0]
+explanation = "`cargo check` bỏ bước sinh mã nên nhanh hơn `build`; `--release` còn tối ưu nên chậm hơn nữa."
+sources = ["rust/book/ch01-03-hello-cargo"]
+
+[[questions]]
+id = "rust-lv033"
+module = "rs-errors-modules"
+type = "single"
+difficulty = 1
+tags = ["level:junior"]
+prompt = "`\"42a\".parse::<i32>()` trả về gì?"
+options = ["`Err(...)` vì chuỗi không phải số hợp lệ", "`Ok(42)`", "`0`", "Panic ngay lập tức"]
+answer = [0]
+explanation = "`parse` trả `Result`; chuỗi có ký tự không hợp lệ cho `Err(ParseIntError)`. Chỉ panic nếu gọi `unwrap()` trên nó."
+sources = ["rust/book/ch09-02-recoverable-errors-with-result"]
+
+[[questions]]
+id = "rust-lv034"
+module = "rs-errors-modules"
+type = "fill"
+difficulty = 1
+tags = ["level:junior"]
+prompt = "Từ khóa đưa một item vào scope để dùng tên ngắn: `{{blank}} std::collections::HashMap;`"
+blanks = [["use"]]
+explanation = "`use` tạo đường tắt tới item trong module tree."
+sources = ["rust/book/ch07-04-bringing-paths-into-scope-with-the-use-keyword"]
+
+[[questions]]
+id = "rust-lv035"
+module = "rust-dv-testing-cli"
+type = "single"
+difficulty = 1
+tags = ["level:junior"]
+prompt = "Attribute nào đánh dấu một hàm là unit test để `cargo test` chạy?"
+options = ["`#[test]`", "`#[derive(Test)]`", "`#[cfg(debug)]`", "`#[inline]`"]
+answer = [0]
+explanation = "`#[test]` đánh dấu hàm test; module test thường đặt dưới `#[cfg(test)]` để chỉ biên dịch khi test."
+sources = ["rust/book/ch11-01-writing-tests"]
+
+[[questions]]
+id = "rust-lv036"
+module = "rs-traits"
+type = "single"
+difficulty = 1
+tags = ["level:junior"]
+prompt = "Muốn in struct bằng `println!(\"{:?}\", user)`, cách nhanh nhất là gì?"
+options = ["Thêm `#[derive(Debug)]` lên struct", "Implement trait `Display` thủ công", "Đổi struct thành tuple", "Gọi `user.to_string()`"]
+answer = [0]
+explanation = "`{:?}` dùng trait Debug, có thể derive tự động; `{}` mới cần Display."
+sources = ["rust/book/ch05-02-example-structs", "rust/book/appendix-03-derivable-traits"]
+
+[[questions]]
+id = "rust-lvc02"
+module = "rs-collections"
+type = "code"
+difficulty = 1
+tags = ["level:junior"]
+lang = "rust"
+title = "Lấy chữ cái đầu của tên"
+prompt = '''Viết `initials(name: &str) -> String` trả về chữ cái đầu của mỗi từ (từ cách nhau bởi khoảng trắng, có thể nhiều khoảng trắng), viết hoa, nối liền nhau. Ví dụ `"nguyen van an"` → `"NVA"`. Chuỗi rỗng hoặc chỉ có khoảng trắng trả `""`.'''
+starter = '''fn initials(name: &str) -> String {
+    name.to_string()
+}'''
+solution = '''fn initials(name: &str) -> String {
+    let mut out = String::new();
+    for word in name.split_whitespace() {
+        if let Some(c) = word.chars().next() {
+            out.extend(c.to_uppercase());
+        }
+    }
+    out
+}'''
+tests = '''bovabon_tests! {
+    "ba từ" => { assert_eq!(initials("nguyen van an"), "NVA"); },
+    "một từ" => { assert_eq!(initials("rust"), "R"); },
+    "nhiều khoảng trắng" => { assert_eq!(initials("  ada   lovelace "), "AL"); },
+    "chuỗi rỗng" => { assert_eq!(initials(""), ""); },
+    "chỉ có khoảng trắng" => { assert_eq!(initials("   "), ""); },
+}'''
+hints = ["`split_whitespace()` tách từ và bỏ qua khoảng trắng thừa.", "`word.chars().next()` lấy ký tự đầu; `to_uppercase()` trả về iterator nên dùng `extend`."]
+explanation = "Bài tập luyện duyệt iterator trên &str, Option từ `next()` và xây dựng String."
+sources = ["rust/book/ch08-02-strings", "rust/book/ch13-02-iterators"]
+
+[[questions]]
+id = "rust-lv037"
+module = "rs-ownership"
+type = "single"
+difficulty = 2
+tags = ["level:middle"]
+prompt = '''Vì sao đoạn code sau lỗi biên dịch?
+
+```rust
+let mut v = vec![1, 2, 3];
+let first = &v[0];
+v.push(4);
+println!("{}", first);
+```'''
+options = [
+  "`push` cần mutable borrow trong khi `first` (immutable borrow) vẫn còn được dùng sau đó",
+  "Vec không cho phép push sau khi đã đọc",
+  "`first` phải khai báo `mut`",
+  "`v[0]` trả về giá trị chứ không phải tham chiếu",
+]
+answer = [0]
+explanation = "push có thể cấp phát lại bộ nhớ làm tham chiếu cũ treo; borrow checker chặn việc này. Đọc giá trị trước (`let first = v[0];`) hoặc dùng `first` trước khi push."
+sources = ["rust/book/ch08-01-vectors", "rust/book/ch04-02-references-and-borrowing"]
+
+[[questions]]
+id = "rust-lv038"
+module = "rs-collections"
+type = "single"
+difficulty = 2
+tags = ["level:middle"]
+prompt = "Cách gọn và đúng nhất để đếm số lần xuất hiện của mỗi từ vào `HashMap<&str, usize>` là gì?"
+options = [
+  "`*counts.entry(word).or_insert(0) += 1;`",
+  "`counts.insert(word, counts[word] + 1);`",
+  "`counts.get_mut(word).unwrap() += 1;`",
+  "`if counts.contains_key(word) { counts.insert(word, 1); }`",
+]
+answer = [0]
+explanation = "Entry API tra cứu một lần và tạo giá trị mặc định nếu chưa có. `counts[word]` panic khi khóa chưa tồn tại; `get_mut().unwrap()` cũng panic; phương án cuối sai logic."
+sources = ["rust/book/ch08-03-hash-maps"]
+
+[[questions]]
+id = "rust-lv039"
+module = "rs-collections"
+type = "multiple"
+difficulty = 2
+tags = ["level:middle"]
+prompt = "Chọn các phát biểu đúng về iterator trong Rust."
+options = [
+  "Adapter như `map`, `filter` là lazy, không làm gì cho tới khi có consumer như `collect` hoặc `sum`",
+  "`iter()` duyệt `&T`, `into_iter()` trên Vec lấy ownership từng phần tử",
+  "`collect()` cần biết kiểu đích, qua chú thích kiểu hoặc turbofish",
+  "Gọi `map` trên iterator luôn tạo ngay một Vec mới",
+]
+answer = [0, 1, 2]
+explanation = "Iterator lazy nên chuỗi adapter không cấp phát trung gian; chỉ consumer mới tiêu thụ."
+sources = ["rust/book/ch13-02-iterators"]
+
+[[questions]]
+id = "rust-lv040"
+module = "rs-errors-modules"
+type = "single"
+difficulty = 2
+tags = ["level:middle"]
+prompt = "Hàm trả `Result<u32, MyError>` dùng `s.parse::<u32>()?`. Điều gì cần có để `?` biên dịch được?"
+options = [
+  "`impl From<ParseIntError> for MyError` để `?` tự chuyển đổi lỗi",
+  "MyError phải derive Clone",
+  "Hàm phải trả `Option<u32>`",
+  "Không cần gì, `?` bỏ qua kiểu lỗi",
+]
+answer = [0]
+explanation = "`?` gọi `From::from` trên lỗi trước khi return sớm; không có impl From thì kiểu lỗi không khớp."
+sources = ["rust/book/ch09-02-recoverable-errors-with-result"]
+
+[[questions]]
+id = "rust-lv041"
+module = "rs-traits"
+type = "single"
+difficulty = 2
+tags = ["level:middle"]
+prompt = "Hàm `fn largest<T>(items: &[T]) -> &T` so sánh phần tử bằng `>`. Cần thêm trait bound nào?"
+options = ["`T: PartialOrd`", "`T: Display`", "`T: Default`", "`T: Copy`"]
+answer = [0]
+explanation = "Toán tử `>` đến từ PartialOrd. Copy chỉ cần nếu trả về giá trị thay vì tham chiếu."
+sources = ["rust/book/ch10-02-traits", "rust/book/ch10-01-syntax"]
+
+[[questions]]
+id = "rust-lv042"
+module = "rs-concurrency"
+type = "single"
+difficulty = 2
+tags = ["level:middle"]
+prompt = "`thread::spawn(|| println!(\"{}\", data.len()))` báo lỗi closure có thể sống lâu hơn `data`. Cách sửa thường dùng là gì?"
+options = [
+  "Dùng `move ||` để closure lấy ownership của `data` (hoặc clone một `Arc` vào)",
+  "Thêm lifetime `'static` vào biến data",
+  "Bọc lời gọi trong `unsafe`",
+  "Gọi `join()` trước khi spawn",
+]
+answer = [0]
+explanation = "Thread mới có thể chạy lâu hơn hàm hiện tại nên closure không được mượn biến cục bộ; `move` chuyển ownership vào thread. Muốn chia sẻ giữa nhiều thread thì dùng Arc."
+sources = ["rust/book/ch16-01-threads"]
+
+[[questions]]
+id = "rust-lv043"
+module = "rs-errors-modules"
+type = "essay"
+difficulty = 2
+tags = ["level:middle"]
+prompt = "Khi nào nên dùng `panic!`/`unwrap()` và khi nào nên trả `Result`? Cho ví dụ trong một ứng dụng CLI đọc file cấu hình."
+keywords = [["result"], ["panic"], ["unwrap", "expect"], ["phục hồi", "recoverable", "xử lý được"], ["?", "toán tử ?"], ["test", "prototype", "bất biến", "invariant"]]
+min_keywords = 4
+model_answer = '''Dùng Result cho lỗi có thể phục hồi như file cấu hình không tồn tại hoặc sai định dạng: hàm load_config trả Result và lan truyền bằng toán tử ?, main in thông báo dễ hiểu rồi thoát với mã lỗi. Panic hoặc unwrap, expect hợp lý trong test, prototype, hoặc khi vi phạm bất biến mà chương trình không thể tiếp tục, ví dụ regex hằng số viết sai.'''
+explanation = "Tiêu chí là lỗi có đến từ môi trường và người gọi xử lý được hay không."
+sources = ["rust/book/ch09-03-to-panic-or-not-to-panic"]
+
+[[questions]]
+id = "rust-lvc03"
+module = "rs-errors-modules"
+type = "code"
+difficulty = 2
+tags = ["level:middle"]
+lang = "rust"
+title = "Phân tích dòng cấu hình key=value"
+prompt = '''Viết `parse_kv(line: &str) -> Result<(String, u32), String>` cho dòng dạng `key=value`:
+
+- Cắt khoảng trắng hai đầu của key và value.
+- Không có dấu `=` → `Err("missing '='")`.
+- Key rỗng sau khi trim → `Err("empty key")`.
+- Value không phải số `u32` hợp lệ → `Err("invalid number")`.
+- Chỉ tách ở dấu `=` đầu tiên.'''
+starter = '''fn parse_kv(_line: &str) -> Result<(String, u32), String> {
+    Err(String::from("todo"))
+}'''
+solution = '''fn parse_kv(line: &str) -> Result<(String, u32), String> {
+    let (key, value) = line.split_once('=').ok_or("missing '='")?;
+    let key = key.trim();
+    if key.is_empty() {
+        return Err("empty key".to_string());
+    }
+    let value = value.trim().parse::<u32>().map_err(|_| "invalid number".to_string())?;
+    Ok((key.to_string(), value))
+}'''
+tests = '''bovabon_tests! {
+    "dòng hợp lệ" => { assert_eq!(parse_kv("port=8080"), Ok(("port".to_string(), 8080))); },
+    "cắt khoảng trắng" => { assert_eq!(parse_kv("  retries = 3 "), Ok(("retries".to_string(), 3))); },
+    "thiếu dấu bằng" => { assert_eq!(parse_kv("port 8080"), Err("missing '='".to_string())); },
+    "key rỗng" => { assert_eq!(parse_kv(" =5"), Err("empty key".to_string())); },
+    "value không phải số" => { assert_eq!(parse_kv("port=abc"), Err("invalid number".to_string())); },
+    "số âm không hợp lệ cho u32" => { assert_eq!(parse_kv("port=-1"), Err("invalid number".to_string())); },
+    "chỉ tách dấu bằng đầu tiên" => { assert_eq!(parse_kv("a=1=2"), Err("invalid number".to_string())); },
+}'''
+hints = ["`split_once('=')` trả `Option<(&str, &str)>`.", "`ok_or` và `map_err` chuyển lỗi về `String` để dùng `?`."]
+explanation = "Bài luyện chuyển Option/Result bằng ok_or, map_err và toán tử ? với thông báo lỗi rõ ràng."
+sources = ["rust/book/ch09-02-recoverable-errors-with-result"]
+
+[[questions]]
+id = "rust-lv044"
+module = "rs-ownership"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "lifetime"]
+prompt = '''Vì sao signature sau không biên dịch nếu thiếu lifetime tường minh?
+
+```rust
+fn pick(a: &str, b: &str) -> &str
+```'''
+options = [
+  "Có hai tham chiếu đầu vào nên quy tắc lifetime elision không xác định được kết quả mượn từ đâu",
+  "Hàm trả về &str luôn cần `'static`",
+  "Không thể có hai tham số cùng kiểu &str",
+  "Thiếu `mut` ở tham số",
+]
+answer = [0]
+explanation = "Elision chỉ tự gán khi có đúng một lifetime đầu vào hoặc có &self. Với hai đầu vào phải viết `<'a>` để nói kết quả sống không lâu hơn cả hai."
+sources = ["rust/book/ch10-03-lifetime-syntax"]
+
+[[questions]]
+id = "rust-lv045"
+module = "rs-concurrency"
+type = "multiple"
+difficulty = 3
+tags = ["level:senior", "send-sync"]
+prompt = "Chọn các phát biểu đúng về `Send` và `Sync`."
+options = [
+  "`Rc<T>` không phải Send vì bộ đếm tham chiếu không atomic",
+  "`T` là Sync khi `&T` là Send",
+  "`Arc<T>` chỉ Send/Sync khi `T` là Send + Sync",
+  "`RefCell<T>` là Sync nên dùng chung giữa thread an toàn",
+  "Hai trait này được compiler tự suy ra từ các field (auto trait)",
+]
+answer = [0, 1, 2, 4]
+explanation = "RefCell kiểm tra borrow không atomic nên không Sync; dùng Mutex/RwLock cho chia sẻ giữa thread."
+sources = ["rust/book/ch16-04-extensible-concurrency-sync-and-send"]
+
+[[questions]]
+id = "rust-lv046"
+module = "rs-concurrency"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "deadlock"]
+prompt = "Hai thread cùng khóa hai `Mutex` A và B, thỉnh thoảng treo vĩnh viễn. Nguyên nhân và cách sửa hợp lý nhất?"
+options = [
+  "Thread khóa theo thứ tự ngược nhau (A rồi B, B rồi A) gây deadlock; quy ước một thứ tự khóa cố định hoặc gộp dữ liệu vào một Mutex",
+  "Mutex trong Rust không thread-safe, cần thay bằng RefCell",
+  "Do thiếu `unsafe impl Send`",
+  "Do Rust chưa giải phóng MutexGuard; phải gọi `free()`",
+]
+answer = [0]
+explanation = "Rust ngăn data race chứ không ngăn deadlock. Thứ tự khóa nhất quán hoặc giảm số khóa là cách chữa gốc; guard tự mở khi drop."
+sources = ["rust/book/ch16-03-shared-state"]
+
+[[questions]]
+id = "rust-lv047"
+module = "rust-dv-smart-pointers"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "memory"]
+prompt = "Cây có node con trỏ về node cha bằng `Rc<RefCell<Node>>` ở cả hai chiều, bộ nhớ không bao giờ được giải phóng. Sửa thế nào?"
+options = [
+  "Dùng `Weak<RefCell<Node>>` cho con trỏ về cha để phá vòng tham chiếu",
+  "Đổi toàn bộ sang `Box<Node>`",
+  "Gọi `drop` thủ công trên mọi node",
+  "Dùng `Arc` thay `Rc`",
+]
+answer = [0]
+explanation = "Vòng Rc giữ strong_count > 0 mãi; Weak không tăng strong count. Arc cũng bị cùng vấn đề; Box không cho phép nhiều owner."
+sources = ["rust/book/ch15-06-reference-cycles"]
+
+[[questions]]
+id = "rust-lv048"
+module = "rs-traits"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "generics"]
+prompt = "So với `fn render(items: &[Box<dyn Shape>])`, phiên bản `fn render<S: Shape>(items: &[S])` khác ở điểm nào quan trọng nhất?"
+options = [
+  "Generic được monomorphize (dispatch tĩnh, có thể inline) nhưng mọi phần tử phải cùng một kiểu S và làm tăng kích thước binary",
+  "Generic cho phép trộn nhiều kiểu shape trong cùng slice",
+  "Trait object nhanh hơn vì không có vtable",
+  "Hai phiên bản biên dịch ra mã giống hệt nhau",
+]
+answer = [0]
+explanation = "Đây là trade-off tốc độ/kích thước code với tính linh hoạt dị thể của dyn Trait."
+sources = ["rust/book/ch18-02-trait-objects", "rust/book/ch10-01-syntax"]
+
+[[questions]]
+id = "rust-lv049"
+module = "rs-traits"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "object-safety"]
+prompt = "Vì sao trait có phương thức `fn clone_box(&self) -> Self;` không dùng được dưới dạng `dyn Trait`?"
+options = [
+  "Trả về `Self` cần biết kích thước kiểu cụ thể lúc biên dịch, vi phạm điều kiện dyn-compatible (object safety)",
+  "Trait object không được có phương thức nhận &self",
+  "Do thiếu `#[derive(Clone)]`",
+  "dyn Trait chỉ cho phép phương thức static",
+]
+answer = [0]
+explanation = "Phương thức trả Self hoặc có tham số generic không gọi được qua vtable. Có thể thêm `where Self: Sized` hoặc trả `Box<dyn Trait>`."
+sources = ["rust/book/ch18-02-trait-objects", "rust/book/ch20-02-advanced-traits"]
+
+[[questions]]
+id = "rust-lv050"
+module = "rs-concurrency"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "async"]
+prompt = "Trong hàm async, gọi `std::thread::sleep(Duration::from_secs(1))` gây hậu quả gì trên runtime đa task?"
+options = [
+  "Chặn worker thread hiện tại, các task khác trên thread đó không được poll trong 1 giây",
+  "Chỉ task hiện tại tạm dừng, runtime tự chuyển task khác",
+  "Compiler báo lỗi vì sleep không phải async",
+  "Không ảnh hưởng gì vì future là lazy",
+]
+answer = [0]
+explanation = "Future chỉ nhường quyền ở điểm `.await`; sleep đồng bộ không nhường nên chặn cả worker. Dùng hàm sleep async của runtime."
+sources = ["rust/book/ch17-06-futures-tasks-threads", "rust/book/ch17-01-futures-and-syntax"]
+
+[[questions]]
+id = "rust-lv051"
+module = "rust-dv-smart-pointers"
+type = "multiple"
+difficulty = 3
+tags = ["level:senior", "unsafe"]
+prompt = "Chọn các thao tác chỉ được phép bên trong `unsafe`."
+options = [
+  "Dereference một raw pointer",
+  "Gọi hàm `unsafe fn` hoặc hàm `extern` của C",
+  "Truy cập hoặc sửa biến `static mut`",
+  "Tạo một raw pointer từ tham chiếu",
+  "Implement một `unsafe trait`",
+]
+answer = [0, 1, 2, 4]
+explanation = "Tạo raw pointer là an toàn; chỉ dereference mới cần unsafe. unsafe không tắt borrow checker với các tham chiếu thông thường."
+sources = ["rust/book/ch20-01-unsafe-rust"]
+
+[[questions]]
+id = "rust-lv052"
+module = "rs-collections"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "performance"]
+prompt = "Hàm nối 100.000 chuỗi nhỏ bằng `result = result + &s;` trong vòng lặp chậm và cấp phát nhiều. Cách tối ưu hợp lý?"
+options = [
+  "Tính tổng độ dài, `String::with_capacity`, rồi `push_str` từng phần (hoặc `concat`/`join`)",
+  "Đổi sang `format!(\"{}{}\", result, s)` mỗi vòng",
+  "Clone result trước mỗi lần nối",
+  "Dùng `Vec<String>` rồi in từng phần",
+]
+answer = [0]
+explanation = "Cấp phát trước một lần tránh realloc lặp lại; format! mỗi vòng còn tạo String mới mỗi lần."
+sources = ["rust/book/ch08-02-strings"]
+
+[[questions]]
+id = "rust-lv053"
+module = "rust-dv-testing-cli"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "testing"]
+prompt = "Integration test trong thư mục `tests/` của một binary crate chỉ có `main.rs` không import được hàm nào. Cách tổ chức đúng?"
+options = [
+  "Tách logic ra `src/lib.rs`, `main.rs` chỉ gọi thư viện; integration test dùng crate thư viện",
+  "Đánh dấu hàm trong main.rs là `pub`",
+  "Copy hàm sang thư mục tests",
+  "Dùng `#[cfg(test)]` trong main.rs để export",
+]
+answer = [0]
+explanation = "Integration test liên kết với library crate như người dùng bên ngoài; binary crate không lộ item ra ngoài."
+sources = ["rust/book/ch11-03-test-organization"]
+
+[[questions]]
+id = "rust-lv054"
+module = "rust-dv-patterns"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "api-design"]
+prompt = "Hàm `fn connect(host: String, port: u16, tls: bool, timeout: u64)` hay bị gọi nhầm thứ tự tham số. Thiết kế nào an toàn hơn cho API công khai?"
+options = [
+  "Newtype/enum cho tham số dễ nhầm (`Port(u16)`, `Tls::Enabled`) hoặc builder có giá trị mặc định",
+  "Đổi tất cả thành `String` và parse bên trong",
+  "Thêm comment nhắc thứ tự tham số",
+  "Dùng macro nhận tham số bất kỳ",
+]
+answer = [0]
+explanation = "Hệ kiểu biến lỗi gọi nhầm thành lỗi biên dịch; builder giúp mở rộng mà không phá signature."
+sources = ["rust/book/ch20-03-advanced-types", "rust/book/ch06-01-defining-an-enum"]
+
+[[questions]]
+id = "rust-lv055"
+module = "rs-concurrency"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "channels"]
+prompt = "Producer gửi qua `mpsc::channel()` nhanh hơn consumer xử lý nhiều lần, bộ nhớ tăng dần. Thay đổi nào giải quyết gốc rễ?"
+options = [
+  "Dùng `mpsc::sync_channel(n)` có giới hạn để producer bị chặn khi hàng đợi đầy (backpressure)",
+  "Tạo thêm channel mới khi channel cũ dài",
+  "Gọi `drop(tx)` sau mỗi lần gửi",
+  "Đổi sang `Arc<Mutex<Vec<T>>>` không giới hạn",
+]
+answer = [0]
+explanation = "Channel không giới hạn chỉ dời vấn đề vào bộ nhớ; channel bounded tạo backpressure."
+sources = ["rust/book/ch16-02-message-passing"]
+
+[[questions]]
+id = "rust-lv056"
+module = "rs-concurrency"
+type = "essay"
+difficulty = 3
+tags = ["level:senior", "concurrency"]
+prompt = "So sánh chia sẻ trạng thái bằng `Arc<Mutex<T>>` với truyền thông điệp qua channel cho một bộ đếm truy cập được nhiều thread cập nhật. Nêu trade-off và rủi ro."
+keywords = [["arc"], ["mutex"], ["channel", "kênh"], ["deadlock"], ["contention", "tranh chấp"], ["ownership", "sở hữu"], ["atomic"]]
+min_keywords = 4
+model_answer = '''Arc<Mutex<T>> cho nhiều thread cùng sửa dữ liệu, đơn giản nhưng có contention khi nhiều thread tranh chấp khóa và nguy cơ deadlock nếu khóa nhiều mutex sai thứ tự. Channel chuyển ownership dữ liệu cho một thread duy nhất xử lý, tránh khóa nhưng tốn cấp phát message và cần backpressure. Với bộ đếm đơn giản, kiểu atomic như AtomicU64 thường nhanh nhất.'''
+explanation = "Câu trả lời tốt chọn công cụ theo hình dạng dữ liệu và mức tranh chấp, không coi một cách là luôn đúng."
+sources = ["rust/book/ch16-03-shared-state", "rust/book/ch16-02-message-passing"]
+
+[[questions]]
+id = "rust-lvc04"
+module = "rs-collections"
+type = "code"
+difficulty = 3
+tags = ["level:senior", "cache"]
+lang = "rust"
+title = "LRU cache dung lượng cố định"
+prompt = '''Cài đặt `LruCache` lưu `String -> i32` với dung lượng `cap` (≥ 1):
+
+- `LruCache::new(cap: usize)`.
+- `get(&mut self, key: &str) -> Option<i32>`: trả giá trị và đánh dấu key vừa được dùng.
+- `put(&mut self, key: &str, value: i32)`: thêm/cập nhật và đánh dấu vừa dùng; nếu vượt dung lượng thì loại key ít được dùng gần đây nhất.
+- `len(&self) -> usize`.'''
+starter = '''use std::collections::HashMap;
+
+struct LruCache {
+    cap: usize,
+    map: HashMap<String, i32>,
+}
+
+impl LruCache {
+    fn new(cap: usize) -> Self {
+        LruCache { cap, map: HashMap::new() }
+    }
+
+    fn get(&mut self, key: &str) -> Option<i32> {
+        self.map.get(key).copied()
+    }
+
+    fn put(&mut self, key: &str, value: i32) {
+        let _ = self.cap;
+        self.map.insert(key.to_string(), value);
+    }
+
+    fn len(&self) -> usize {
+        self.map.len()
+    }
+}'''
+solution = '''use std::collections::{HashMap, VecDeque};
+
+struct LruCache {
+    cap: usize,
+    map: HashMap<String, i32>,
+    order: VecDeque<String>,
+}
+
+impl LruCache {
+    fn new(cap: usize) -> Self {
+        LruCache { cap, map: HashMap::new(), order: VecDeque::new() }
+    }
+
+    fn touch(&mut self, key: &str) {
+        if let Some(pos) = self.order.iter().position(|k| k == key) {
+            self.order.remove(pos);
+        }
+        self.order.push_back(key.to_string());
+    }
+
+    fn get(&mut self, key: &str) -> Option<i32> {
+        let value = *self.map.get(key)?;
+        self.touch(key);
+        Some(value)
+    }
+
+    fn put(&mut self, key: &str, value: i32) {
+        self.map.insert(key.to_string(), value);
+        self.touch(key);
+        if self.map.len() > self.cap {
+            if let Some(old) = self.order.pop_front() {
+                self.map.remove(&old);
+            }
+        }
+    }
+
+    fn len(&self) -> usize {
+        self.map.len()
+    }
+}'''
+tests = '''bovabon_tests! {
+    "get sau put" => {
+        let mut c = LruCache::new(2);
+        c.put("a", 1);
+        assert_eq!(c.get("a"), Some(1));
+        assert_eq!(c.get("z"), None);
+    },
+    "loại key cũ nhất khi đầy" => {
+        let mut c = LruCache::new(2);
+        c.put("a", 1);
+        c.put("b", 2);
+        c.put("c", 3);
+        assert_eq!(c.get("a"), None);
+        assert_eq!(c.len(), 2);
+    },
+    "get làm mới thứ tự" => {
+        let mut c = LruCache::new(2);
+        c.put("a", 1);
+        c.put("b", 2);
+        c.get("a");
+        c.put("c", 3);
+        assert_eq!(c.get("a"), Some(1));
+        assert_eq!(c.get("b"), None);
+    },
+    "cập nhật key không tăng kích thước" => {
+        let mut c = LruCache::new(2);
+        c.put("a", 1);
+        c.put("a", 5);
+        assert_eq!(c.len(), 1);
+        assert_eq!(c.get("a"), Some(5));
+    },
+    "put cập nhật cũng làm mới thứ tự" => {
+        let mut c = LruCache::new(2);
+        c.put("a", 1);
+        c.put("b", 2);
+        c.put("a", 3);
+        c.put("c", 4);
+        assert_eq!(c.get("b"), None);
+        assert_eq!(c.get("a"), Some(3));
+    },
+}'''
+hints = ["Giữ thêm `VecDeque<String>` lưu thứ tự dùng: đầu là cũ nhất, cuối là mới nhất.", "Khi get/put, xóa key khỏi vị trí cũ trong hàng đợi rồi push_back; khi vượt cap thì pop_front và xóa khỏi map."]
+explanation = "Phiên bản O(n) cho thao tác touch đủ cho bài tập; bản production dùng danh sách liên kết + HashMap để đạt O(1)."
+sources = ["rust/book/ch08-03-hash-maps", "rust/book/ch05-03-method-syntax"]

@@ -485,3 +485,420 @@ prompt = '''Write `orderModules(graph)` where `graph` is an object shaped like `
 If a dependency has no corresponding key in the graph, throw an `Error` whose message begins with `Unknown dependency`. If the graph contains a cycle, throw `Error('Dependency cycle')`. The input graph has a valid structure; you do not need to handle other data types.'''
 hints = ["Use depth-first search with three states: unvisited, visiting, and complete.", "Add a module to the result after visiting its dependencies; the visiting state helps detect cycles."]
 explanation = "Topological ordering models part of dependency ordering in a bundler; a real build also handles chunks, side effects, and asset emission."
+
+[modules.frontend-tooling-lead]
+title = "Tech Lead Perspective"
+description = "Choosing a bundler and monorepo structure, CI cache strategy, build-tool migration, performance budgets, dependency management, and supply-chain security for the whole team."
+lesson = '''### Tooling is a team decision, not a personal preference
+At the Tech Lead level the question is no longer "is Vite or webpack faster" but: which tool lowers the team's total cost over the next 12–24 months, given constraints on people, time, existing plugins, and release risk. A good tooling decision always has before/after numbers (build time, CI time, bundle size), a rollback plan, and is recorded as an ADR.
+
+### Framework for comparing options
+| Criterion | Keep + optimize | Incremental migration | Rewrite the whole config |
+|---|---|---|---|
+| Release risk | low | medium, controllable | high |
+| Effort (estimate) | a few days | 2–6 weeks | 1–3 months |
+| DX benefit | moderate | grows with each package | high but arrives late |
+| Custom plugin dependency | unchanged | must be inventoried first | must all be rewritten |
+
+Rule of thumb: measure before you change. If 80% of CI time goes to installing dependencies and running tests, switching bundlers barely helps; caching dependencies and running tests only for affected parts is the real lever.
+
+### Monorepo and CI cache
+- Key caches by **input content** (lockfile, source, config, Node version), not by branch name; a wrong cache key leads to stale artifacts or constant cache misses.
+- Run "affected": build/test only the changed packages and the packages that depend on them; this requires an accurate dependency graph between packages.
+- A remote cache lets many machines share results, but treat it as sensitive data: whoever can write to the cache can poison artifacts.
+
+### Dependencies and supply chain
+The lockfile is always committed; CI installs in a mode that does not modify the lockfile. Dependency update bots group updates on a fixed schedule, and major versions need someone to review the changelog. A new package must answer: who maintains it, does it have install scripts, how much does it add to the bundle, and is there an alternative in the standard library?
+
+### Checklist for reviewing tooling changes
+1. There is a baseline and a target (e.g. CI p50 from 14 minutes to under 8 — estimated numbers).
+2. Production output is compared: chunk list, source maps, exposed environment variables, asset paths.
+3. There is a flag or branch to fall back to the old tool for at least one release cycle.
+4. Onboarding docs and the `dev/build/test` scripts are updated in the same PR.
+5. The performance budget is checked automatically in CI, not just by eye.
+
+### Sample ADR (abridged)
+> **Context:** the dev server takes 90 seconds to start, HMR takes 5–8 seconds, 3 custom webpack plugins. **Decision:** move to Vite app by app in the monorepo, starting with a low-traffic internal app; keep webpack for the main app until 2 plugins are replaced. **Consequences:** two pipelines run in parallel for ~1 quarter; outputs must be compared and errors monitored after each step.
+
+### Team-scale anti-patterns
+- Switching tools because of trends, with no baseline, so the benefit cannot be proven.
+- Each package has its own ESLint/TS config that gradually drifts from the shared standard; use a versioned shareable config instead.
+- Mass-disabling lint rules to make a migration PR "green", then nobody re-enables them.
+- A performance budget that only warns and never blocks, so nobody reads it.
+- Only one person understands the build config (bus factor = 1).'''
+
+[questions.frontend-tooling-lv001]
+prompt = "An 8-person team's main app uses webpack 5 with 3 custom plugins; the dev server takes ~90 seconds to start. There are 6 weeks before peak season and release freezes are not allowed. Which strategy is most reasonable?"
+options = ["Move to Vite gradually app by app, starting with a low-risk internal app, and keep webpack for the main app until the custom plugins have replacements", "Rewrite the entire config to Vite in one big PR and merge it before peak season", "Change nothing and measure nothing, since the build still works", "Let each developer choose a bundler for their own part"]
+explanation = "An incremental migration delivers early benefits while keeping a way back; a big-bang change before peak season concentrates risk at the worst moment, and standing still ignores growing DX costs. Letting everyone choose creates many pipelines nobody can maintain."
+
+[questions.frontend-tooling-lv002]
+prompt = "The CI pipeline takes 18 minutes: installing dependencies 7 minutes, tests 8 minutes, build 3 minutes. Your manager suggests switching bundlers to speed up CI. What do you prioritize first?"
+options = ["Cache dependencies by lockfile hash and run tests only for affected parts", "Switch bundlers because the build is the most important step", "Disable tests on pull requests and run them only on main", "Increase the job timeout so it does not fail"]
+explanation = "The build is only 3 of 18 minutes; even a bundler 3x faster saves only ~2 minutes. Dependency installation and tests make up most of the time, so caching and affected tests have the highest leverage. Disabling tests shifts risk to main, and raising the timeout does not reduce time."
+
+[questions.frontend-tooling-lv003]
+prompt = "You are designing cache keys for the dependency directory and the build cache in a monorepo's CI. Which components should be part of the key?"
+options = ["The lockfile hash", "The Node/runtime version and the runner's operating system", "A hash of the build config (e.g. the bundler config file)", "The current git branch name, so each branch has a completely separate cache"]
+explanation = "A cache key should reflect the inputs that determine the content: lockfile, runtime, and config. Using the branch name as the primary key means new branches always miss the cache; the branch should only be a fallback (restore key) if needed."
+
+[questions.frontend-tooling-lv004]
+prompt = "A monorepo has 3 apps and 12 shared packages, a 15-person team, and CI reruns everything on every PR (~25 minutes). Which direction do you take first?"
+options = ["Use a task runner that understands the package graph (like turbo/nx) to run affected tasks and cache task results", "Split into 15 separate repos so each builds quickly", "Merge all packages into a single app so there is only one build", "Run CI nightly instead of on each PR"]
+explanation = "A graph-aware task runner keeps the monorepo's benefits (cross-package changes in one PR) while reducing reruns. Splitting repos complicates version coordination; merging apps breaks boundaries; nightly runs delay feedback by up to a day."
+
+[questions.frontend-tooling-lv005]
+prompt = "After an incident where an npm package was hijacked, you propose a dependency policy for the team. Which measures are reasonable?"
+options = ["Commit the lockfile and have CI install in a mode that does not modify it", "Batch dependency updates on a schedule; major versions need someone to review the changelog", "Vet new packages: maintainers, install scripts, size added to the bundle", "Always use the `*` range to automatically get the latest security patches"]
+explanation = "A lockfile pins a reproducible dependency tree; scheduled, reviewed updates reduce surprises; vetting new packages shrinks the attack surface. The `*` range means each install may pull in never-reviewed code — exactly the hijacking scenario."
+
+[questions.frontend-tooling-lv006]
+prompt = "The home page JS bundle grew 40% over 2 quarters without anyone noticing. What helps the team keep it under control long term?"
+options = ["Set a performance budget with thresholds in CI, block merges that exceed it, and require a justification when raising the threshold", "Ask one person to check the bundle size manually every month", "Only warn in the build log, without blocking, so the team is not slowed down", "Ban all new dependencies"]
+explanation = "An automated, enforced budget turns size into an explicit constraint; raising the threshold is still possible but needs a reason. Manual checks depend on one person, non-blocking warnings are usually ignored, and a total ban is impractical."
+
+[questions.frontend-tooling-lv007]
+prompt = "A monorepo has 10 packages, each with its own ESLint config, and they have drifted far apart. How do you standardize with the least disruption?"
+options = ["Create a versioned shareable config in the repo, migrate packages one at a time, and allow documented local overrides", "Delete all old configs and enable the strictest rule set in a single PR", "Disable ESLint in CI until everyone agrees", "Leave it as is because each sub-team can decide for itself"]
+explanation = "A shareable config provides one source of truth, migrating gradually keeps PRs small and easy to review, and documented overrides keep exceptions transparent. Enabling everything strictly at once creates thousands of errors; disabling lint or letting it drift both grow the debt."
+
+[questions.frontend-tooling-lv008]
+prompt = "When reviewing a PR that moves an app from webpack to Vite, what do you require before merging?"
+options = ["A before/after comparison of the chunk list and bundle size", "A check of which environment variables are embedded in the client bundle", "A way to return to the old pipeline for at least one release cycle", "Only that the dev server runs on the PR author's machine"]
+explanation = "A migration must prove the production output is equivalent, that no secrets leak through env, and that there is a way back. A working dev server says nothing about the production build, which uses a different pipeline."
+
+[questions.frontend-tooling-lv009]
+prompt = "The team wants to enable a remote cache shared between CI and developer machines to save build time. What is the main risk to design around?"
+options = ["Whoever can write to the cache can poison artifacts; only trusted CI should write, developer machines read only", "A remote cache makes the production bundle larger", "A remote cache requires switching bundlers", "A remote cache makes the lockfile unnecessary"]
+explanation = "The cache is reused as if it were real build output, so write access is a security boundary. The other options are not consequences of a remote cache."
+
+[questions.frontend-tooling-lv010]
+prompt = '''A short document recording an architectural decision with Context, Decision, and Consequences is usually referred to by which abbreviation?
+```text
+docs/{{blank}}/0007-move-to-vite.md
+```
+'''
+explanation = "An ADR (Architecture Decision Record) helps people who come later understand why a tool was chosen, avoiding re-litigating the debate from scratch."
+
+[questions.frontend-tooling-lv011]
+prompt = "Two frontend teams: one uses Tailwind, the other Sass modules, and they need a shared design system within one quarter. Which direction is least risky?"
+options = ["Put tokens (colors, spacing, typography) in a shared source as CSS custom properties that both the Tailwind theme and Sass read from", "Force the Sass team to rewrite everything in Tailwind this quarter", "Each team keeps its own palette and they only agree on the logo", "Copy hex values into each component so nothing depends on anything else"]
+explanation = "Unifying tokens first gives visual consistency without forcing a rewrite; the styling tools can converge later. A full rewrite costs a quarter without delivering features; keeping separate palettes or hard-coding makes the design system meaningless."
+
+[questions.frontend-tooling-lv012]
+prompt = "Only one engineer understands the build config (bus factor = 1) and that person is about to take a long leave. What do you do within 2 weeks?"
+options = ["Pair so someone else handles a few real build changes together with them", "Write a short doc: pipeline diagram, common commands, frequent errors", "Simplify the config and remove unused plugins", "Freeze all build-related changes until that person returns"]
+explanation = "Sharing knowledge through real work, documentation, and reducing complexity all lower the bus factor. Freezing only postpones the problem and also blocks urgent fixes."
+
+[questions.frontend-tooling-lv013]
+prompt = "A dependency update bot opens ~40 PRs a week, and the team has started merging blindly or ignoring them. What is a reasonable approach?"
+options = ["Group PRs by category (dev tooling, runtime) on a weekly schedule; auto-merge patches when CI is green, majors need review", "Turn off the bot and update dependencies once a year", "Let the bot auto-merge everything, including majors", "Assign a single person to review all 40 PRs"]
+explanation = "Grouping and classifying by risk level reduces noise while keeping updates regular. Yearly updates pile up breaking changes; auto-merging majors skips review; one person reviewing everything is a bottleneck."
+
+[questions.frontend-tooling-lv014]
+prompt = "The team needs to debug production errors but the company does not want to make the source code public. Which source map policy fits?"
+options = ["Generate source maps at build time but do not serve them publicly; upload them to an internal error-tracking tool", "Disable source maps entirely and debug minified code", "Serve source maps publicly next to the bundle", "Build production without minification so it is easy to read"]
+explanation = "Hidden source maps allow decoding stack traces without exposing code. Disabling them makes debugging very slow; public maps violate the requirement; skipping minification increases size for every user."
+
+[questions.frontend-tooling-lv015]
+prompt = "You want to enable a new ESLint rule in a large codebase that currently has 1,200 violations. Which approaches let you adopt it without blocking the team?"
+options = ["Enable it as a warning first and block only new code or changed files", "Use a suppression/baseline mechanism for existing violations and reduce them on a plan", "Split the fixes by package, in small PRs", "Enable it as an error across the whole repo immediately; whoever touches a file fixes the entire file"]
+explanation = "Gradual adoption (block new code, baseline old violations, fix in batches) preserves velocity. Enabling errors repo-wide forces small PRs to fix hundreds of unrelated lines."
+
+[questions.frontend-tooling-lv016]
+prompt = "Write a short ADR (Context – Options – Decision – Consequences) for moving a large React app from webpack to Vite, with a 10-person team and no release freeze allowed."
+keywords = [["context"], ["option", "alternative"], ["incremental", "gradual", "step by step", "app by app"], ["rollback", "fall back", "way back"], ["measure", "baseline", "metric"], ["plugin", "loader"]]
+model_answer = "Context: the dev server starts slowly, HMR takes several seconds, and the webpack config has custom loaders/plugins; 10-person team with weekly releases. Options: (1) keep webpack and optimize caching; (2) migrate incrementally to Vite app by app/route by route; (3) rewrite everything at once. Decision: option 2 — inventory the plugins, migrate an internal app first, measure a baseline (startup time, HMR, CI, bundle size) and compare. Consequences: two pipelines run in parallel for a while, production output must be compared, and a rollback path to webpack is kept for at least one release cycle."
+explanation = "A good ADR states the constraints, compares at least two options, chooses with measurable reasons, and spells out the costs/consequences, including how to roll back."
+
+[questions.frontend-tooling-lv017]
+prompt = "A frontend monorepo's CI takes 30 minutes per PR and developers are complaining. Present a 1-month plan to bring it under 10 minutes: what to measure, what to do in which order, and the risks."
+keywords = [["measure", "baseline", "profile", "metric"], ["cache", "caching"], ["affected", "changed packages"], ["parallel", "shard"], ["lockfile", "cache key"], ["risk", "stale", "flaky"]]
+model_answer = "Week 1: measure a baseline — the time of each step (dependency install, lint, typecheck, test, build) at p50/p95. Week 2: cache dependencies by lockfile hash and runtime, and enable build/test caching keyed on input content. Week 3: run affected — lint/test/build only the packages affected according to the dependency graph, and split tests to run in parallel (shard). Week 4: clean up flaky tests and set a CI time budget. Risks: a wrong cache key gives stale results, and a missing edge in the dependency graph skips tests — keep a full daily job on main to catch it."
+explanation = "The answer should start from data, prioritize the highest-leverage work, and explain how to mitigate the risks of caching/affected runs."
+
+[questions.frontend-tooling-lvc01]
+title = "Find Affected Packages in a Monorepo"
+prompt = '''Write `affectedPackages(changedFiles, packages, deps)` that simulates the "affected" command of a monorepo task runner.
+- `changedFiles`: an array of changed file paths, e.g. `'packages/ui/button.ts'`.
+- `packages`: an object `{ packageName: 'dir' }`, e.g. `{ ui: 'packages/ui' }`. A file belongs to a package if its path starts with `dir + '/'`.
+- `deps`: an object `{ packageName: [dependencyPackages] }` (a package without a key depends on nothing).
+Return an array of package names (sorted alphabetically ascending) containing the packages with changed files **and every package that depends on them directly or indirectly**. Files that belong to no package are ignored.
+'''
+explanation = "Affected detection relies on the reverse dependency graph: a change in a leaf package requires rechecking every package that uses it. A wrong graph skips tests, so a periodic full run is still needed."
+hints = ["Determine the package for each file first; match on `dir + '/'` so `packages/uikit` does not match `packages/ui`.", "Invert `deps` into a 'who depends on me' table, then BFS from the changed packages."]
+
+[questions.frontend-tooling-lv018]
+prompt = '''An internal library has an `index.js` that re-exports 50 components, but the bundle still contains all 50 even though the app only imports `Button`. The library's `package.json` declares nothing extra, and a few sub-files have `import './global.css'`. What is the most likely cause?
+```js
+import { Button } from '@acme/ui';
+```
+'''
+options = ["The bundler cannot be sure the other modules are side-effect free, so it keeps them; declare `sideEffects` accurately (e.g. list only the CSS files)", "Tree-shaking only runs in development mode", "A named import always pulls in the whole package", "`index.js` is missing an `export default`"]
+explanation = "Tree-shaking only drops a module when it is sure the module has no side effects. Declaring `sideEffects` (marking only the CSS files) lets unused parts be dropped. Tree-shaking works in production, and named imports are what make it effective."
+
+[questions.frontend-tooling-lv019]
+prompt = "After every deploy, some users get the error `Failed to fetch dynamically imported module`. Which statements are correct?"
+options = ["Open tabs hold the old HTML/manifest, pointing to chunks with old hashes that were deleted from the server", "Keeping the previous release's assets for a while reduces this error", "Catching chunk-load errors and suggesting a page reload is a reasonable fallback", "Setting a long-term cache on the HTML file solves it completely"]
+explanation = "Content hashes give the new release new chunk names; if old chunks are deleted immediately, old tabs cannot load them. Keeping old assets and handling load errors with a reload are practical approaches. A long cache on HTML keeps users stuck on the old version longer."
+
+[questions.frontend-tooling-lv020]
+prompt = "After converting every route to `import()`, the number of initial requests rose to ~60 small chunks and LCP got worse on mobile networks. What is a reasonable fix?"
+options = ["Group shared modules into vendor/shared chunks of a reasonable size and only lazy-split at route/large-feature boundaries", "Split even further so each chunk is under 1 KB", "Remove code splitting entirely", "Move everything into inline scripts in the HTML"]
+explanation = "Chunks that are too small increase request overhead and waterfalls. Configuring chunk splitting along meaningful boundaries balances initial load against caching. Removing splitting or inlining everything loses the benefit of on-demand loading."
+
+[questions.frontend-tooling-lv021]
+prompt = "Which statements about source maps in production builds are correct?"
+options = ["A source map maps positions in the transformed code back to positions in the original source", "You can generate source maps without referencing them in the public bundle", "`eval`-based devtool types are suitable for production", "Full source maps can expose the source code if they are served publicly"]
+explanation = "`eval`-based devtools are fast for development but unsuitable for production. Hidden (unreferenced) source maps are useful for uploading to an error-tracking tool."
+
+[questions.frontend-tooling-lv022]
+prompt = "The app has two copies of React in the bundle (hooks fail with 'Invalid hook call'). The `@acme/ui` package declares `react` in `dependencies`. What is the most fundamental fix?"
+options = ["Move `react` to the `peerDependencies` of `@acme/ui` so the app provides a single copy", "Add `React.StrictMode` at the app root", "Upgrade React in the app to the latest version", "Disable HMR"]
+explanation = "When a library ships its own React in dependencies, the resolver may pull two copies into the graph. A peer dependency lets the app decide on one shared copy; alias/dedupe is only a temporary workaround."
+
+[questions.frontend-tooling-lv023]
+prompt = "Typed linting (rules that need TypeScript type information) raised lint time from 20 seconds to 4 minutes. Which approaches reduce the cost while keeping the value?"
+options = ["Enable type-aware rules only for source files, not config/script files", "Enable ESLint caching in CI and locally", "Lint only changed files in pre-commit and run the full lint in CI", "Drop the `tsc` typecheck because typed linting fully replaces it"]
+explanation = "Limiting the scope of typed rules, caching, and incremental linting reduce time. Typed linting does not replace `tsc`: it uses types to detect error patterns, not to check the whole program."
+
+[questions.frontend-tooling-lv024]
+prompt = "After bringing components from a monorepo package into an app, the Tailwind classes in that package have no CSS. What is the most likely cause?"
+options = ["The class scanner does not include that package's directory; you need to declare it as an additional source to scan", "Tailwind does not support monorepos", "Classes in a package must be written in Sass", "You need to add `!important` to every class"]
+explanation = "Tailwind only generates CSS for classes it finds in the scanned sources; a package located elsewhere (or in `node_modules`) may be skipped until it is declared."
+
+[questions.frontend-tooling-lv025]
+prompt = "A large Sass codebase uses `@import` everywhere, global variables overwrite each other, and builds are slow. Which migration path is reasonable?"
+options = ["Move gradually to `@use`/`@forward` directory by directory, create `@forward` index files as the API, and use the migrator tool to help", "Rename every variable to a random string to avoid collisions", "Merge everything into one giant Sass file", "Move everything to inline styles"]
+explanation = "The module system provides namespaces and a clear API, and each module is loaded only once. Migrating per directory keeps PRs small; the migrator handles the mechanical part."
+
+[questions.frontend-tooling-lv026]
+prompt = '''Fill in the webpack placeholder so the filename changes if and only if the chunk's content changes:
+```js
+output: { filename: '[name].[{{blank}}].js' }
+```
+'''
+explanation = "`[contenthash]` is based on the content of the output file, so it suits long-term caching; it differs from the hash of the whole build."
+
+[questions.frontend-tooling-lvc02]
+title = "Find Unused Exports"
+prompt = '''Write `unusedExports(modules, entry)` that simulates the marking step of tree-shaking.
+- `modules`: an object `{ name: { exports: [...], imports: { moduleName: [importedNames] } } }`.
+- Starting from `entry`, a module is **used** if it can be reached from the entry via `imports`. An export is **used** if at least one used module imports that name.
+- Return an object containing only the used modules (excluding the entry) that have unused exports: `{ name: [unusedExports] }`, preserving the order in `exports`. Unreachable modules are skipped (they will be removed entirely). A used module whose exports are all used does not appear.
+'''
+explanation = "Real tree-shaking also has to consider side effects and re-exports, but the core is marking from the entry: unreachable modules are removed, and exports nobody imports are dropped during minification."
+hints = ["Step 1: traverse from the entry to find which modules are reachable, collecting the imported names for each module along the way.", "Step 2: for each reachable module (except the entry), filter `exports` not in the used set; use a `reached` set to avoid infinite loops."]
+
+[questions.frontend-tooling-lv027]
+prompt = '''In a Vite app, `import.meta.env.API_SECRET` is always `undefined` even though `.env` contains `API_SECRET=abc`. What is the correct explanation?
+```js
+console.log(import.meta.env.API_SECRET);
+```
+'''
+options = ["Vite only exposes variables with an allowed prefix (by default `VITE_`) to the client; real secrets should not be sent to the client", "You must restart the computer for `.env` to be read", "`.env` is only read during production builds", "You must use `process.env` in the browser"]
+explanation = "The prefix is a mechanism to avoid leaking sensitive variables into the bundle. Everything in the client's `import.meta.env` is readable by anyone, so secrets must stay on the server."
+
+[questions.frontend-tooling-lv028]
+prompt = "A Vite app is deployed at `https://example.com/shop/` but every asset returns 404 because the browser loads `/assets/...`. Which setting needs fixing?"
+explanation = "`base` sets the public path for assets when the app is not at the domain root."
+
+[questions.frontend-tooling-lv029]
+prompt = "HMR is not working; every time a file is edited the page fully reloads. What are possible causes?"
+options = ["The edited module (or its parent) has no boundary that accepts hot updates, so it bubbles up to the root", "The dev server runs behind a proxy/container and the HMR websocket connection is blocked", "The file is outside the watched directories", "HMR only works in production builds"]
+explanation = "HMR needs a module with a handler that accepts the update, a websocket connection to the dev server, and a watcher that sees the file. Production builds have no HMR."
+
+[questions.frontend-tooling-lv030]
+prompt = "ESLint and Prettier keep \"fighting\": ESLint fixes semicolons, then Prettier changes them back. What is the standard fix?"
+options = ["Let Prettier handle formatting and disable the purely stylistic rules in ESLint; ESLint focuses on logic errors", "Run ESLint twice in a row", "Remove Prettier and format by hand", "Keep both enabled but do not run them in CI"]
+explanation = "Clear roles: the formatter formats, the linter finds bugs. Overlapping formatting rules are the source of the conflict."
+
+[questions.frontend-tooling-lv031]
+prompt = "Which statements about ESLint's flat config (`eslint.config.js`) are correct?"
+options = ["The config is an array of objects; later objects can override earlier ones for matching files", "An object can be restricted to a set of files with `files`", "Build directories are skipped with `ignores`", "Every subdirectory must have its own config file"]
+explanation = "Flat config uses a single array at the root, applied via `files`/`ignores`; per-directory configs are not required."
+
+[questions.frontend-tooling-lv032]
+prompt = '''Badge colors come from an API (`success`, `warning`, `danger`), but the classes have no CSS in production. How do you fix it?
+```js
+const cls = `bg-${status}-500`;
+```
+'''
+options = ["Map each status to a complete class string, e.g. `{ success: 'bg-green-500', ... }`", "Add `!` before the variable", "Replace the template string with `+` concatenation", "Move the class into `useEffect`"]
+explanation = "The scanner only sees complete class names in the source. No form of string concatenation tells it what the final class is."
+
+[questions.frontend-tooling-lv033]
+prompt = '''The following throws `Undefined variable`. Why?
+```scss
+// _tokens.scss
+$brand: #06b6d4;
+// card.scss
+@use "tokens";
+.card { color: $brand; }
+```
+'''
+options = ["`@use` puts members in a namespace; you need to write `tokens.$brand` (or `@use \"tokens\" as *`)", "Sass variables cannot contain hex codes", "Partial files must be named without a leading underscore", "You must `@import` it again after `@use`"]
+explanation = "Unlike `@import`, `@use` does not dump variables into the global scope; the default namespace is the last component of the file name."
+
+[questions.frontend-tooling-lv034]
+prompt = "Which caching policy suits an SPA whose assets carry a content hash?"
+options = ["`index.html` with a short cache or revalidation; `/assets/*.[hash].js` cached long-term, immutable", "Cache every file for 1 year", "`no-store` for every file", "`index.html` cached for 1 year, assets `no-cache`"]
+explanation = "The HTML must be updated to point to new hashes; hashed assets get renamed when their content changes, so caching them for a long time is safe."
+
+[questions.frontend-tooling-lv035]
+prompt = '''Fill in the Vite field so that `@/utils` points to the `src/utils` directory:
+```js
+export default defineConfig({
+  resolve: { {{blank}}: { '@': '/src' } },
+})
+```
+'''
+explanation = "`resolve.alias` maps a specifier to a path; remember to configure the matching `paths` for TypeScript."
+
+[questions.frontend-tooling-lv036]
+prompt = "On mobile, the elements should stack vertically; from `md` upward they should be laid out horizontally. Which class string is correct?"
+options = ["`flex flex-col md:flex-row`", "`flex md:flex-col flex-row`", "`flex sm:flex-col md:flex-row` and `sm:` is required", "`flex-row md:flex-col`"]
+explanation = "Mobile-first: unprefixed classes apply by default, and `md:` overrides them from the md breakpoint upward."
+
+[questions.frontend-tooling-lv037]
+prompt = "A feature works fine with `vite dev` but breaks after `vite build` + `vite preview`. List the differences between dev and build that could cause the error, and how you would isolate it."
+keywords = [["bundle", "bundling", "rollup", "rolldown"], ["minify", "minification"], ["env", "environment variable", "mode"], ["base", "asset path", "public path"], ["tree-shaking", "side effect"], ["preview", "local build"]]
+model_answer = "In dev, Vite serves ESM modules on demand, while the build bundles, minifies, and applies tree-shaking, so code that relies on side effects or import order can behave differently. The mode and environment variables differ between dev and production, and a wrong `base` makes assets 404. I isolate it by running `vite build` + `vite preview` locally, temporarily disabling minification and enabling source maps to read the stack trace, then comparing env values and asset paths."
+explanation = "The answer should name at least a few real differences (bundling/minification, env/mode, base) and how to reproduce the problem locally."
+
+[questions.frontend-tooling-lvc03]
+title = "Filter Environment Variables for the Client"
+prompt = '''Write `clientEnv(text, prefix = 'VITE_')` that takes the contents of a `.env` file and returns an object containing only the variables whose names start with `prefix` (names unchanged).
+Rules for parsing each line:
+- Skip empty lines and lines starting with `#` (after trimming).
+- Split at the **first** `=`; trim both the name and the value. Lines without `=` are skipped.
+- If the value is wrapped in a pair of `"..."` or `'...'`, remove those quotes.
+- Variables declared later override earlier ones.
+'''
+explanation = "Filtering by prefix is a guard so sensitive variables are not accidentally embedded in the client bundle — which anyone can read."
+hints = ["Use `indexOf('=')` instead of `split('=')` to keep equals signs inside the value.", "Only strip quotes when the first and last characters are the same kind of quote."]
+
+[questions.frontend-tooling-lvc04]
+title = "Check a Caret Range"
+prompt = '''Write `satisfiesCaret(range, version)` that checks whether a version `x.y.z` satisfies a range of the form `^a.b.c` (following npm's semver conventions, ignoring pre-releases):
+- If `a > 0`: satisfied when the major equals `a` and the version is ≥ `a.b.c`.
+- If `a === 0` and `b > 0`: satisfied when major = 0, the minor equals `b`, and the patch is ≥ `c`.
+- If `a === 0` and `b === 0`: satisfied only when it is exactly `0.0.c`.
+Return `true`/`false`.
+'''
+explanation = "Understanding caret ranges helps you read lockfiles and explain why a fresh install pulled in a different minor version; for 0.x, npm treats the minor as a potentially breaking boundary."
+hints = ["Split the string into numbers with `split('.').map(Number)` so that `10 > 9` holds.", "Handle three cases based on the range's major/minor: `a > 0`, `a = 0, b > 0`, `a = b = 0`."]
+
+[questions.frontend-tooling-lv038]
+prompt = "Which class changes a button's background color on mouse hover?"
+explanation = "The variant comes before the utility, separated by a colon: `hover:`."
+
+[questions.frontend-tooling-lv039]
+prompt = '''Fill in the variant so the grid has 3 columns from the `lg` breakpoint upward:
+```html
+<div class="grid grid-cols-1 {{blank}}:grid-cols-3">...</div>
+```
+'''
+explanation = "The breakpoint prefix `lg:` applies the utility from the lg threshold upward."
+
+[questions.frontend-tooling-lv040]
+prompt = "You need a width of exactly 37rem, which is not in the theme scale. Which Tailwind syntax is correct?"
+explanation = "Arbitrary values go in square brackets; use them sparingly so the theme stays consistent."
+
+[questions.frontend-tooling-lv041]
+prompt = '''What is the CSS output of the following Sass?
+```scss
+.btn {
+  &:hover { color: red; }
+}
+```
+'''
+explanation = "`&` is replaced by the parent selector and joined directly, with no whitespace."
+
+[questions.frontend-tooling-lv042]
+prompt = '''Fill in the directive that inserts a mixin into a rule:
+```scss
+@mixin center { display: flex; align-items: center; }
+.box { @{{blank}} center; }
+```
+'''
+explanation = "`@mixin` defines it, and `@include` inserts the mixin's declarations at the call site."
+
+[questions.frontend-tooling-lv043]
+prompt = "Which statements about Sass are correct?"
+options = ["Sass variables start with `$`", "Browsers do not read `.scss` files directly; they must be compiled to CSS", "`@use` is the recommended way to load modules instead of `@import`", "Sass variables can change value at runtime via JavaScript"]
+explanation = "Sass runs at build time; values that change at runtime need CSS custom properties."
+
+[questions.frontend-tooling-lv044]
+prompt = "Which command creates a production build of a Vite project?"
+explanation = "`vite build` creates the production output (in `dist` by default); `vite preview` lets you try out that build."
+
+[questions.frontend-tooling-lv045]
+prompt = '''Fill in the default output directory of `vite build`:
+```text
+my-app/{{blank}}/index.html
+```
+'''
+explanation = "By default `build.outDir` is `dist`."
+
+[questions.frontend-tooling-lv046]
+prompt = "What is a loader used for in webpack?"
+options = ["Transforming non-JS files (CSS, images, TS…) into modules webpack can process", "Making web pages load faster in the browser", "Completely replacing plugins", "Running unit tests"]
+explanation = "A loader transforms each file as it is imported; a plugin hooks into broader steps of the build process."
+
+[questions.frontend-tooling-lv047]
+prompt = "What is the main difference between ESLint and Prettier?"
+options = ["ESLint finds bugs/suspicious code patterns; Prettier formats code in one consistent style", "ESLint only runs on CSS", "Prettier compiles TypeScript to JavaScript", "The two tools are identical"]
+explanation = "A linter analyzes logic and conventions; a formatter only handles whitespace, line breaks, and brackets."
+
+[questions.frontend-tooling-lv048]
+prompt = '''Fill in the CLI flag that makes ESLint automatically fix the problems that can be auto-fixed:
+```bash
+npx eslint src --{{blank}}
+```
+'''
+explanation = "`--fix` applies the safe fixes that rules provide."
+
+[questions.frontend-tooling-lv049]
+prompt = '''On which line does the `eqeqeq` rule report an error?
+```js
+if (count == 0) {}
+if (name === 'a') {}
+```
+'''
+options = ["The line using `==`", "The line using `===`", "Both lines", "Neither line"]
+explanation = "`eqeqeq` requires `===`/`!==` to avoid implicit type coercion."
+
+[questions.frontend-tooling-lv050]
+prompt = "Which form lets the bundler split the Settings page into its own chunk that loads only when needed?"
+options = ["`const Settings = () => import('./Settings.js')`", "`import Settings from './Settings.js'` at the top of the file", "`require('./Settings.js')` at the top of the file", "Copy the Settings code into `main.js`"]
+explanation = "A dynamic `import()` creates an asynchronous loading boundary; a static import merges the module into the caller's chunk."
+
+[questions.frontend-tooling-lv051]
+prompt = "Why do build files have names like `app.3f9a1c.js` instead of `app.js`?"
+options = ["The hash changes when the content changes, so browsers can cache for a long time and still get the new version on deploy", "To make the file smaller", "To make the browser run the code faster", "To hide the source code"]
+explanation = "That is cache busting with a content hash: new content gets a new URL."
+
+[questions.frontend-tooling-lv052]
+prompt = "Which classes vertically center the children of a flex row?"
+explanation = "With `flex-row`, `items-*` aligns along the cross axis (vertical); `justify-*` distributes along the main axis (horizontal)."
+
+[questions.frontend-tooling-lv053]
+prompt = '''How many classes does the following generate?
+```scss
+@each $size in sm, md, lg { .text-#{$size} { font-weight: bold; } }
+```
+'''
+options = ["3", "1", "0, because `@each` only runs in the browser", "6"]
+explanation = "`@each` iterates over the 3 list items and generates `.text-sm`, `.text-md`, `.text-lg` at compile time."
+
+[questions.frontend-tooling-lvc05]
+title = "Add a Hash to a File Name"
+prompt = '''Write `hashedName(fileName, hash)` that inserts the hash before the **last** extension of a file name, the way bundlers name assets:
+- `hashedName('app.js', 'a1b2')` → `'app.a1b2.js'`
+- `hashedName('vendor.min.js', 'ff')` → `'vendor.min.ff.js'`
+- A file without an extension: append `.hash` at the end, e.g. `hashedName('LICENSE', '9')` → `'LICENSE.9'`.
+- Only consider the file name (no directories). A name starting with a dot, like `.env`, is treated as having no extension.
+'''
+explanation = "A content hash in the file name is the foundation of long-term caching: when the content changes, the name changes and the browser fetches the new version automatically."
+hints = ["`lastIndexOf('.')` gives the position of the last dot.", "Position 0 (hidden file) or -1 (no dot) are both treated as having no extension."]

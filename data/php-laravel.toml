@@ -122,6 +122,7 @@ id = "php-001"
 module = "php-modern"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Hàm nhận biết email và số điện thoại, nhưng không hỗ trợ kiểu nào khác. Khai báo nào mô tả hợp đồng trực tiếp nhất?"
 options = ["mixed", "string|int", "object", "callable"]
 answer = [1]
@@ -133,6 +134,7 @@ id = "php-002"
 module = "php-modern"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Backed enum có giá trị string hữu ích nhất trong trường hợp nào?"
 options = ["Cần cho phép giá trị tùy ý do người dùng nhập", "Cần tập trạng thái hữu hạn đồng thời lưu mã ổn định vào database hoặc API", "Cần thay mọi class bằng enum", "Cần tự động dịch mọi label"]
 answer = [1]
@@ -144,6 +146,7 @@ id = "php-003"
 module = "php-modern"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Điều gì xảy ra nếu biểu thức match không khớp arm nào và không có default?"
 options = ["Trả về null", "Chạy arm đầu tiên", "Ném UnhandledMatchError", "Ép sang false"]
 answer = [2]
@@ -155,6 +158,7 @@ id = "php-004"
 module = "php-modern"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Giá trị nào dưới đây KHÔNG làm nullsafe operator dừng chuỗi truy cập?"
 options = ["Vế trái là null", "Vế trái là một object hợp lệ", "Một property không tồn tại trên object", "Vế trái là false"]
 answer = [1]
@@ -166,6 +170,7 @@ id = "php-005"
 module = "php-modern"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn các nhận định đúng về cú pháp PHP hiện đại."
 options = ["Named arguments gọi tham số theo tên và cho phép bỏ tham số tùy chọn", "Readonly property chỉ có thể được khởi tạo một lần", "match dùng so sánh lỏng như switch", "First-class callable tạo một Closure có thể truyền như giá trị", "Pure enum bắt buộc có backing value dạng int"]
 answer = [0, 1, 3]
@@ -177,6 +182,7 @@ id = "php-006"
 module = "php-modern"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Hoàn thành cú pháp ánh xạ trạng thái bằng biểu thức match:
 
@@ -194,6 +200,7 @@ id = "php-007"
 module = "php-modern"
 type = "essay"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "So sánh match với switch khi ánh xạ trạng thái nghiệp vụ; nêu một khác biệt về so sánh và một cách xử lý trường hợp không khớp."
 keywords = [["so sánh nghiêm ngặt", "strict comparison", "so sánh bằng ==="], ["default", "arm mặc định", "nhánh mặc định"], ["UnhandledMatchError", "lỗi khi không khớp"]]
 min_keywords = 2
@@ -206,6 +213,7 @@ id = "php-008"
 module = "php-oop"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Nhiều gateway thanh toán khác nhau cần cùng cung cấp phương thức charge. Cấu trúc nào phù hợp để định nghĩa hợp đồng chung?"
 options = ["Trait", "Interface", "Global constant", "Composer script"]
 answer = [1]
@@ -217,6 +225,7 @@ id = "php-009"
 module = "php-oop"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Trait phù hợp nhất với mục tiêu nào?"
 options = ["Tạo hợp đồng bắt buộc cho nhiều class", "Chia sẻ một nhóm implementation giữa các class không cùng cây kế thừa", "Quản lý phiên bản dependency", "Tạo bảng database"]
 answer = [1]
@@ -228,6 +237,7 @@ id = "php-010"
 module = "php-oop"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một class App\\Services\\Mailer nằm trong app/Services/Mailer.php. Cấu hình Composer PSR-4 ánh xạ App\\ sang app/. Vì sao class tự động được nạp?"
 options = ["Composer ánh xạ namespace prefix tới thư mục và chuyển phần namespace còn lại thành đường dẫn", "PHP quét mọi file trong dự án ở mỗi request", "PSR-4 yêu cầu khai báo class trong global scope", "Trait Mailer buộc PHP nạp file"]
 answer = [0]
@@ -239,6 +249,7 @@ id = "php-011"
 module = "php-oop"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Những lợi ích nào hợp lý khi dự án dùng Composer autoload theo PSR-4?"
 options = ["Có thể nạp class theo namespace mà không require từng file thủ công", "Namespace prefix được ánh xạ tới một hoặc nhiều thư mục", "Composer đảm bảo mọi class đều không có bug", "Tên class và đường dẫn cần tuân theo quy ước ánh xạ", "PSR-4 tự tạo schema database"]
 answer = [0, 1, 3]
@@ -250,6 +261,7 @@ id = "php-012"
 module = "php-oop"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Từ khóa PHP dùng để khai báo một hợp đồng phương thức mà class có thể implement là {{blank}}."
 blanks = [["interface"]]
 explanation = "Interface khai báo hợp đồng; class cung cấp implementation."
@@ -260,6 +272,7 @@ id = "php-013"
 module = "laravel-core"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Trong route GET /users/{id}, giá trị nào mô tả phần động của URI?"
 options = ["{id}", "Controller", "Middleware", "View"]
 answer = [0]
@@ -271,6 +284,7 @@ id = "php-014"
 module = "laravel-core"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một middleware cần kiểm tra request trước controller và thêm header sau khi controller tạo response. Cách tổ chức đúng là gì?"
 options = ["Gọi next(request), sau đó biến đổi response được trả về", "Chỉ chạy mã sau next và không gọi next", "Đặt kiểm tra trong migration", "Render Blade trước khi route khớp"]
 answer = [0]
@@ -282,6 +296,7 @@ id = "php-015"
 module = "laravel-core"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Template Blade hiển thị tên lấy từ input người dùng. Cú pháp nào mặc định escape nội dung HTML?"
 options = ["{!! $name !!}", "{{ $name }}", "{% $name %}", "@raw($name)"]
 answer = [1]
@@ -293,6 +308,7 @@ id = "php-016"
 module = "laravel-core"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn các bước hợp lý trong request lifecycle Laravel."
 options = ["Entry point nạp ứng dụng từ bootstrap/app.php", "Middleware có thể chạy trước và sau route handler qua next", "Controller luôn được gọi trước khi route được khớp", "Ứng dụng gửi response sau khi handler hoàn tất", "Blade quyết định mọi route"]
 answer = [0, 1, 3]
@@ -304,6 +320,7 @@ id = "php-017"
 module = "laravel-core"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Trong Laravel 11, file cấu hình khởi động ứng dụng và thường cấu hình middleware là {{blank}}."
 blanks = [["bootstrap/app.php"]]
 explanation = "Laravel 11 dùng bootstrap/app.php để cấu hình và tạo ứng dụng."
@@ -314,6 +331,7 @@ id = "php-018"
 module = "laravel-core"
 type = "code"
 difficulty = 3
+tags = ["level:senior"]
 lang = "php"
 title = "Service container tối giản"
 prompt = '''
@@ -403,6 +421,7 @@ id = "php-019"
 module = "laravel-core"
 type = "code"
 difficulty = 3
+tags = ["level:senior"]
 lang = "php"
 title = "Middleware onion pipeline"
 prompt = '''
@@ -475,6 +494,7 @@ id = "php-020"
 module = "laravel-core"
 type = "code"
 difficulty = 3
+tags = ["level:senior"]
 lang = "php"
 title = "Khớp route động"
 prompt = '''
@@ -551,6 +571,7 @@ id = "php-021"
 module = "laravel-data"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Một danh sách user được lặp qua, mỗi vòng đọc user->posts nhưng chưa eager load. Triệu chứng có khả năng nhất là gì?"
 options = ["Một query cố định cho toàn bộ hệ thống", "N+1 query do mỗi user phát sinh thêm query quan hệ", "Migration chạy lại mỗi vòng", "Cache tự invalidation"]
 answer = [1]
@@ -562,6 +583,7 @@ id = "php-022"
 module = "laravel-data"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Cần lấy danh sách user kèm posts và tránh lazy query theo từng user. Nên dùng gì?"
 options = ["User::with('posts')->get()", "User::all() rồi truy cập posts trong vòng lặp", "Chạy migration trước mỗi request", "Dùng cache forever cho mọi dữ liệu"]
 answer = [0]
@@ -573,6 +595,7 @@ id = "php-023"
 module = "laravel-data"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Khi người dùng chọn cột sắp xếp, vì sao không nên đưa trực tiếp tên cột từ input vào raw SQL?"
 options = ["Tên cột luôn được tự động bind như value", "Giá trị bind không thay thế identifier; cần ánh xạ hoặc whitelist tên cột hợp lệ", "Query Builder không hỗ trợ orderBy", "Migration sẽ escape mọi input"]
 answer = [1]
@@ -584,6 +607,7 @@ id = "php-024"
 module = "laravel-data"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn các phát biểu đúng về Eloquent và database."
 options = ["Migration lưu lịch sử thay đổi schema có thể áp dụng theo thứ tự", "Eager loading thường giảm query lặp khi đọc relationship cho nhiều model", "Query Builder tự động biến mọi tên cột từ input thành identifier an toàn", "Relationship mô tả liên kết giữa các model", "Collection luôn trì hoãn query tới database"]
 answer = [0, 1, 3]
@@ -595,6 +619,7 @@ id = "php-025"
 module = "laravel-data"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Eloquent method thường dùng để eager load relationship ngay trong truy vấn là {{blank}}."
 blanks = [["with"]]
 explanation = "with('relationship') nạp quan hệ cùng truy vấn model."
@@ -605,6 +630,7 @@ id = "php-026"
 module = "laravel-data"
 type = "code"
 difficulty = 3
+tags = ["level:senior"]
 lang = "php"
 title = "Collection mini fluent"
 prompt = '''
@@ -743,6 +769,7 @@ id = "php-027"
 module = "laravel-data"
 type = "code"
 difficulty = 3
+tags = ["level:senior"]
 lang = "php"
 title = "Phát hiện query dạng N+1"
 prompt = '''
@@ -849,6 +876,7 @@ id = "php-028"
 module = "laravel-services"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Laravel validation thất bại với request JSON thường được biểu diễn bằng status nào?"
 options = ["201", "302", "422", "503"]
 answer = [2]
@@ -860,6 +888,7 @@ id = "php-029"
 module = "laravel-services"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Người dùng đã đăng nhập nhưng không được sửa đơn hàng của người khác. Khái niệm nào kiểm tra quyền đó?"
 options = ["Authentication", "Authorization qua policy hoặc gate", "Cache", "Queue retry"]
 answer = [1]
@@ -871,6 +900,7 @@ id = "php-030"
 module = "laravel-services"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một job gửi email thất bại tạm thời và được retry. Điều gì giúp tránh gửi email hoặc tạo tác dụng phụ trùng lặp?"
 options = ["Thiết kế job idempotent hoặc ghi nhận trạng thái xử lý theo khóa duy nhất", "Tăng số lần retry vô hạn", "Tắt queue và gửi email trong mọi request", "Lưu mọi response vào cache forever"]
 answer = [0]
@@ -882,6 +912,7 @@ id = "php-031"
 module = "laravel-services"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn các cách tiếp cận phù hợp khi xây dựng ứng dụng Laravel."
 options = ["Dùng policy hoặc gate để kiểm tra quyền trên hành động/resource", "Đặt TTL hoặc chiến lược invalidation rõ cho cache", "Giả định queue job chỉ chạy đúng một lần", "Dùng feature test để kiểm tra luồng HTTP và database", "Đưa input chưa validate trực tiếp vào nghiệp vụ"]
 answer = [0, 1, 3]
@@ -893,6 +924,7 @@ id = "php-032"
 module = "laravel-services"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Một feature test tạo dữ liệu database và xác minh request cập nhật resource. Chọn các ý đúng."
 options = ["Có thể dùng database testing để quản lý dữ liệu test cô lập", "Nên xác minh cả response và trạng thái database mong đợi", "Mock mọi thành phần luôn làm test đáng tin hơn", "Test có thể fake queue để xác nhận job được dispatch mà không chạy job thật", "Test nên phụ thuộc vào thứ tự chạy của các test khác"]
 answer = [0, 1, 3]
@@ -904,6 +936,7 @@ id = "php-033"
 module = "laravel-services"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Laravel facade hoặc helper dispatch job vào nền tảng queue thường kết thúc lời gọi bằng {{blank}}."
 blanks = [["dispatch"]]
 explanation = "dispatch đưa job vào queue theo connection/configuration hiện hành."
@@ -914,6 +947,7 @@ id = "php-034"
 module = "laravel-services"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Trong validation rule required|email|min:3, rule tối thiểu độ dài là {{blank}}."
 blanks = [["min:3"]]
 explanation = "min:3 đặt giới hạn thấp nhất 3 theo kiểu dữ liệu đang validate."
@@ -924,6 +958,7 @@ id = "php-035"
 module = "laravel-services"
 type = "essay"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Giải thích khác nhau giữa authentication và authorization trong một endpoint cập nhật đơn hàng; nêu Laravel abstraction phù hợp."
 keywords = [["authentication", "xác thực"], ["authorization", "phân quyền", "ủy quyền"], ["policy", "gate"]]
 min_keywords = 3
@@ -936,6 +971,7 @@ id = "php-036"
 module = "laravel-services"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Đề xuất cách kiểm thử một endpoint cập nhật hồ sơ có validate email, yêu cầu đăng nhập và ghi thay đổi database. Nêu loại test và ít nhất hai điều cần xác minh."
 keywords = [["feature test", "http test"], ["validation", "422", "lỗi validation"], ["authentication", "đăng nhập"], ["database", "trạng thái database", "assert database"]]
 min_keywords = 3
@@ -948,6 +984,7 @@ id = "php-037"
 module = "laravel-services"
 type = "code"
 difficulty = 3
+tags = ["level:senior"]
 lang = "php"
 title = "Validator rule cơ bản"
 prompt = '''
@@ -1066,6 +1103,7 @@ id = "php-laravel-dv001"
 module = "php-laravel-dv-errors"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Một lời gọi hàm gây `TypeError`. Kiểu nào bắt được lỗi đó trong PHP?"
 options = ["Exception", "Error", "InvalidArgumentException", "RuntimeException"]
 answer = [1]
@@ -1077,6 +1115,7 @@ id = "php-laravel-dv002"
 module = "php-laravel-dv-errors"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Vì sao `catch (Exception $e)` không phải là cách bắt mọi lỗi có thể phát sinh trong PHP?"
 options = ["Vì Exception chỉ bắt lỗi cú pháp", "Vì Error cũng triển khai Throwable nhưng không kế thừa Exception", "Vì catch chỉ hoạt động với lỗi trong finally", "Vì PHP không cho bắt exception"]
 answer = [1]
@@ -1088,6 +1127,7 @@ id = "php-laravel-dv003"
 module = "php-laravel-dv-errors"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một hàm cần dọn dẹp file tạm dù xử lý thành công hay ném exception. Cấu trúc nào phù hợp nhất?"
 options = ["Đặt lệnh dọn dẹp sau try/catch", "Đặt lệnh dọn dẹp trong finally", "Bắt mọi lỗi rồi bỏ qua", "Chỉ dùng return trong catch"]
 answer = [1]
@@ -1099,6 +1139,7 @@ id = "php-laravel-dv004"
 module = "php-laravel-dv-errors"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn các thực hành giúp xử lý lỗi có thể bảo trì trong một ứng dụng PHP."
 options = ["Bắt loại exception cụ thể ở tầng có thể phục hồi", "Dùng finally để dọn dẹp tài nguyên", "Bắt Throwable ở mọi hàm và trả về giá trị rỗng", "Chuyển tiếp lỗi chưa biết cách xử lý sau khi bổ sung ngữ cảnh phù hợp"]
 answer = [0, 1, 3]
@@ -1110,6 +1151,7 @@ id = "php-laravel-dv005"
 module = "php-laravel-dv-errors"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''Để một catch nhận cả các đối tượng thuộc nhánh Error và Exception, điền giao diện gốc:
 
 ```php
@@ -1126,6 +1168,7 @@ id = "php-laravel-dv006"
 module = "php-laravel-dv-errors"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''Khối nào thích hợp cho việc dọn dẹp chạy sau try/catch dù có exception hay không?
 
 ```php
@@ -1140,6 +1183,7 @@ id = "php-laravel-dv007"
 module = "php-laravel-dv-errors"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Trong phỏng vấn, hãy giải thích khác biệt giữa `Error` và `Exception`, rồi nêu cách chọn nơi bắt lỗi trong một request web."
 keywords = [["Throwable", "giao diện Throwable"], ["Error", "TypeError"], ["Exception", "exception nghiệp vụ"], ["bắt cụ thể", "loại lỗi cụ thể"], ["chuyển tiếp", "rethrow"]]
 min_keywords = 3
@@ -1152,6 +1196,7 @@ id = "php-laravel-dvc01"
 module = "php-laravel-dv-errors"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 lang = "php"
 title = "Phân tích số nguyên dương an toàn"
 prompt = '''Viết `positiveInt(mixed $value): int`. Hàm nhận một số nguyên dương hoặc chuỗi chỉ gồm chữ số thập phân; chuỗi có thể có khoảng trắng ở hai đầu và số 0 ở đầu. Trả về số nguyên đã chuẩn hóa. Với số 0, số âm, boolean, float, chuỗi có ký tự khác chữ số hoặc giá trị lớn hơn `PHP_INT_MAX`, ném `InvalidArgumentException`.'''
@@ -1242,6 +1287,7 @@ id = "php-laravel-dv008"
 module = "php-laravel-dv-api"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Lợi ích chính của việc dùng Eloquent Resource thay vì trả trực tiếp model là gì?"
 options = ["Tự tạo database index", "Kiểm soát response JSON công khai tách khỏi cấu trúc model", "Tắt middleware cho route", "Bảo đảm mọi query chỉ chạy một lần"]
 answer = [1]
@@ -1253,6 +1299,7 @@ id = "php-laravel-dv009"
 module = "php-laravel-dv-api"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một endpoint trả danh sách hàng triệu bản ghi theo thời gian, client chỉ cần tiếp tục từ bản ghi cuối đã xem. Lựa chọn nào thường phù hợp hơn?"
 options = ["paginate vì luôn rẻ hơn", "simplePaginate để có tổng số chính xác", "cursorPaginate với thứ tự ổn định", "Tải toàn bộ collection rồi cắt bằng PHP"]
 answer = [2]
@@ -1264,6 +1311,7 @@ id = "php-laravel-dv010"
 module = "php-laravel-dv-api"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Khi nào `simplePaginate` là lựa chọn hợp lý?"
 options = ["Khi giao diện bắt buộc hiển thị chính xác tổng số trang", "Khi chỉ cần điều hướng trang trước/sau và không cần đếm toàn bộ kết quả", "Khi cần trả mọi bản ghi trong một response", "Khi thứ tự dữ liệu không xác định"]
 answer = [1]
@@ -1275,6 +1323,7 @@ id = "php-laravel-dv011"
 module = "php-laravel-dv-api"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn các thực hành tốt khi tạo response JSON phân trang bằng Resource."
 options = ["Chỉ công khai field client cần", "Dùng `whenLoaded` cho quan hệ tùy chọn để tránh lazy loading ngoài ý muốn", "Bỏ metadata phân trang để response ngắn hơn trong mọi trường hợp", "Đặt thứ tự ổn định trước khi dùng cursor pagination"]
 answer = [0, 1, 3]
@@ -1286,6 +1335,7 @@ id = "php-laravel-dv012"
 module = "php-laravel-dv-api"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''Điền tên resource để Laravel tạo collection JSON từ danh sách `$users`:
 
 ```php
@@ -1300,6 +1350,7 @@ id = "php-laravel-dv013"
 module = "php-laravel-dv-api"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''Query cần dùng phân trang cursor cho danh sách lớn. Điền method phù hợp:
 
 ```php
@@ -1314,6 +1365,7 @@ id = "php-laravel-dv014"
 module = "php-laravel-dv-api"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Trong phỏng vấn, hãy so sánh offset pagination với cursor pagination và giải thích vì sao API nên dùng Resource."
 keywords = [["offset pagination", "phân trang offset"], ["cursor pagination", "phân trang cursor"], ["thứ tự ổn định", "stable ordering"], ["hợp đồng response", "response contract"], ["tổng số", "total count"]]
 min_keywords = 3
@@ -1326,6 +1378,7 @@ id = "php-laravel-dvc02"
 module = "php-laravel-dv-api"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 lang = "php"
 title = "Phân trang danh sách kết quả"
 prompt = '''Viết `paginateRecords(array $items, int $perPage, int $page): array`. Trả về mảng có `data` là lát cắt đúng trang và `meta` gồm `current_page`, `per_page`, `total`, `last_page`. `page` và `perPage` phải từ 1 trở lên, nếu không ném `InvalidArgumentException`. `last_page` tối thiểu là 1 kể cả danh sách rỗng. Nếu page lớn hơn last_page thì `data` là mảng rỗng và `current_page` vẫn là page được yêu cầu.'''
@@ -1415,6 +1468,7 @@ id = "php-laravel-dv015"
 module = "php-laravel-dv-http-client"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Một request dùng Laravel HTTP Client nhận status 503. Điều nào đúng về response?"
 options = ["Luôn ném exception trước khi có response object", "Có thể kiểm tra status hoặc gọi `throw()` để chuyển status lỗi thành exception", "Laravel tự retry vô hạn", "Status 503 được xem là thành công"]
 answer = [1]
@@ -1426,6 +1480,7 @@ id = "php-laravel-dv016"
 module = "php-laravel-dv-http-client"
 type = "single"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Một endpoint tạo thanh toán có thể đã xử lý request nhưng client bị timeout trước khi nhận response. Trước khi retry, điều gì quan trọng nhất?"
 options = ["Tăng timeout lên vô hạn", "Đảm bảo thao tác có tính idempotent hoặc dùng idempotency key được dịch vụ hỗ trợ", "Retry liên tục tới khi nhận 200", "Chuyển POST thành GET mà không đổi hợp đồng"]
 answer = [1]
@@ -1437,6 +1492,7 @@ id = "php-laravel-dv017"
 module = "php-laravel-dv-http-client"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Muốn test một service gọi API đối tác mà không phụ thuộc mạng thật, nên làm gì?"
 options = ["Gọi endpoint thật trong mọi test", "Đăng ký `Http::fake` trước lời gọi rồi kiểm tra request/response", "Tắt mọi assertion của test", "Thay HTTP Client bằng sleep"]
 answer = [1]
@@ -1448,6 +1504,7 @@ id = "php-laravel-dv018"
 module = "php-laravel-dv-http-client"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn các biện pháp giúp tích hợp HTTP ổn định hơn trong production."
 options = ["Đặt timeout rõ ràng", "Giới hạn retry và chỉ retry các lỗi phù hợp", "Retry mọi lỗi xác thực 401 vô hạn", "Dùng fake trong test và assertion để kiểm tra request"]
 answer = [0, 1, 3]
@@ -1459,6 +1516,7 @@ id = "php-laravel-dv019"
 module = "php-laravel-dv-http-client"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''Điền facade để thiết lập response giả trước khi gọi dịch vụ ngoài trong test:
 
 ```php
@@ -1473,6 +1531,7 @@ id = "php-laravel-dv020"
 module = "php-laravel-dv-http-client"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''Điền method để chuyển response 4xx/5xx thành exception:
 
 ```php
@@ -1488,6 +1547,7 @@ id = "php-laravel-dv021"
 module = "php-laravel-dv-http-client"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Trong phỏng vấn, hãy mô tả chính sách timeout, retry và kiểm thử cho một client gọi API thanh toán bên ngoài."
 keywords = [["timeout", "thời gian chờ"], ["retry có giới hạn", "bounded retry"], ["idempotent", "tính idempotent"], ["idempotency key", "khóa idempotency"], ["Http::fake", "HTTP fake"]]
 min_keywords = 3
@@ -1500,6 +1560,7 @@ id = "php-laravel-dvc03"
 module = "php-laravel-dv-http-client"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 lang = "php"
 title = "Tính backoff có giới hạn"
 prompt = '''Viết `retryDelayMs(int $attempt, int $baseMs, int $maxMs): int` cho backoff lũy thừa. Lần thử bắt đầu từ 1; độ trễ lần đầu là `baseMs`, mỗi lần tiếp theo gấp đôi, nhưng không vượt quá `maxMs`. `attempt` phải trong khoảng 1 đến 20, `baseMs` và `maxMs` không âm; dữ liệu ngoài giới hạn phải ném `InvalidArgumentException`.'''
@@ -1587,6 +1648,7 @@ id = "php-laravel-dv022"
 module = "php-laravel-dv-events"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Trong kiến trúc event/listener, `OrderPaid` nên biểu đạt điều gì?"
 options = ["Một truy vấn SQL", "Một sự kiện nghiệp vụ đã xảy ra", "Một email gửi tới người mua", "Một middleware HTTP"]
 answer = [1]
@@ -1598,6 +1660,7 @@ id = "php-laravel-dv023"
 module = "php-laravel-dv-events"
 type = "single"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Một listener đọc order ngay sau khi event được dispatch trong transaction nhưng không tìm thấy bản ghi. Hướng sửa phù hợp là gì?"
 options = ["Dispatch event sau khi transaction commit", "Tắt transaction cho toàn ứng dụng", "Retry vô hạn trong controller", "Đổi event thành email"]
 answer = [0]
@@ -1609,6 +1672,7 @@ id = "php-laravel-dv024"
 module = "php-laravel-dv-events"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Khi một thông điệp cần gửi cho người dùng qua email và database, lựa chọn nào thể hiện đúng vai trò của Laravel Notification?"
 options = ["Notification có thể định nghĩa nhiều channel cho cùng thông điệp", "Mỗi notification chỉ gửi được qua một SMTP server", "Notification thay thế database transaction", "Notification chỉ dùng được trong controller"]
 answer = [0]
@@ -1620,6 +1684,7 @@ id = "php-laravel-dv025"
 module = "php-laravel-dv-events"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn các quyết định hợp lý khi triển khai thông báo sau khi đơn hàng được thanh toán."
 options = ["Phát event thể hiện đơn hàng đã thanh toán", "Đưa việc gửi email chậm vào queue khi phù hợp", "Gửi notification giả lập trong test bằng fake", "Phát event trước commit rồi giả định listener luôn thấy dữ liệu đã commit"]
 answer = [0, 1, 2]
@@ -1631,6 +1696,7 @@ id = "php-laravel-dv026"
 module = "php-laravel-dv-events"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''Điền interface để Laravel chạy việc gửi notification qua queue:
 
 ```php
@@ -1646,6 +1712,7 @@ id = "php-laravel-dv027"
 module = "php-laravel-dv-events"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''Điền facade để test ghi nhận việc gửi thông báo mà không gửi qua channel thật:
 
 ```php
@@ -1660,6 +1727,7 @@ id = "php-laravel-dv028"
 module = "php-laravel-dv-events"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Trong phỏng vấn, hãy giải thích cách tách việc thanh toán đơn hàng khỏi gửi email và đảm bảo listener đọc được dữ liệu đã commit."
 keywords = [["domain event", "sự kiện nghiệp vụ"], ["listener", "bộ lắng nghe"], ["queue", "hàng đợi"], ["after commit", "sau commit", "sau khi transaction commit"], ["notification", "thông báo"]]
 min_keywords = 3
@@ -1672,6 +1740,7 @@ id = "php-laravel-dvc04"
 module = "php-laravel-dv-events"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 lang = "php"
 title = "Khử trùng người nhận thông báo"
 prompt = '''Viết `uniqueRecipientIds(array $ids): array`. Chỉ giữ các ID là integer dương, loại bỏ ID trùng lặp và giữ thứ tự xuất hiện đầu tiên. Giá trị không phải integer dương phải bị bỏ qua; không ép chuỗi số thành integer.'''
@@ -1718,3 +1787,828 @@ hints = ["Duyệt một lần và thêm ID hợp lệ vào mảng kết quả.",
 explanation = "Khử trùng danh sách người nhận giúp tránh gửi thông báo lặp khi cùng user xuất hiện từ nhiều nguồn."
 sources = ["laravel~11/docs/11.x/notifications", "laravel~11/docs/11.x/events"]
 
+
+[[modules]]
+id = "php-laravel-lead"
+title = "Góc nhìn Tech Lead"
+description = "Ra quyết định kiến trúc cho ứng dụng Laravel ở quy mô team: tách module/domain, Octane, chiến lược queue & Horizon, nâng version framework."
+sources = ["laravel~11/docs/11.x/structure", "laravel~11/docs/11.x/providers", "laravel~11/docs/11.x/packages", "laravel~11/docs/11.x/octane", "laravel~11/docs/11.x/horizon", "laravel~11/docs/11.x/queues", "laravel~11/docs/11.x/upgrade", "laravel~11/docs/11.x/pennant", "laravel~11/docs/11.x/deployment"]
+lesson = '''
+### Khung ra quyết định
+Ở cấp Tech Lead, câu hỏi hiếm khi là "API này dùng thế nào" mà là "nên chọn phương án nào, chấp nhận đánh đổi gì, và làm sao rút lui nếu sai". Một khung đơn giản gồm năm bước:
+
+1. **Nêu vấn đề bằng số liệu**: p95 latency, số job tồn đọng, số conflict merge mỗi tuần, thời gian onboard dev mới.
+2. **Liệt kê ràng buộc**: quy mô team, ngân sách hạ tầng, SLA, kỹ năng hiện có, deadline kinh doanh.
+3. **So sánh ít nhất hai phương án**, kể cả phương án "không làm gì".
+4. **Chọn bước nhỏ nhất có thể đảo ngược** (feature flag, canary, chạy song song).
+5. **Ghi lại bằng ADR** để người đến sau hiểu vì sao.
+
+### Bảng so sánh các quyết định hay gặp
+| Quyết định | Khi nên làm | Khi chưa nên | Rủi ro chính |
+|---|---|---|---|
+| Modular monolith (thư mục theo domain) | Team > 6 người, conflict nhiều ở `app/Models` | App nhỏ, một người bảo trì | Ranh giới module bị phá ngầm qua Eloquent relation |
+| Tách microservice | Domain có vòng đời triển khai và tải khác hẳn | Ranh giới domain còn mờ | Giao dịch phân tán, vận hành phức tạp |
+| Laravel Octane | Bootstrap chiếm phần lớn thời gian request, đã đo | Nút thắt là DB hoặc API ngoài | Rò rỉ state giữa request, memory leak |
+| Tách queue theo mức ưu tiên + Horizon | Job chậm làm trễ job quan trọng | Lượng job rất thấp | Cấu hình worker sai làm đói queue |
+| Package Composer nội bộ | Nhiều app dùng chung, chu kỳ phát hành khác nhau | Chỉ một app dùng | Chi phí semver và phát hành |
+
+### Checklist review ở quy mô team
+- Job mới có idempotent không? Có `tries`, `backoff`, `failed()` rõ ràng không?
+- Truy vấn mới có eager loading, có index phù hợp chưa?
+- Có state nào lưu trong singleton/static có thể rò rỉ giữa request (quan trọng nếu chạy Octane)?
+- Migration có an toàn khi deploy không downtime (thêm cột nullable trước, xóa cột sau)?
+- Thay đổi có feature flag hoặc đường rollback không?
+- Code style và phân tích tĩnh được CI kiểm tra, không để reviewer bắt lỗi định dạng bằng tay.
+
+### ADR mẫu ngắn
+```text
+ADR-007: Tách queue theo SLA
+Bối cảnh: email reset mật khẩu trễ 20 phút vì job xuất báo cáo chiếm queue default.
+Quyết định: 3 queue high/default/reports, Horizon supervisor riêng, balance auto.
+Phương án khác: tăng số worker chung (không giải quyết ưu tiên).
+Hệ quả: thêm cấu hình Horizon; cần cảnh báo khi queue reports tồn đọng.
+```
+
+### Nâng version framework
+Đọc upgrade guide, nâng dependency trước (`composer outdated`), sửa deprecation trong các PR nhỏ có test, chạy staging với dữ liệu gần thật, rồi mới phát hành; luôn chuẩn bị đường rollback (giữ artifact build cũ).
+
+### Anti-pattern ở quy mô team
+- Mỗi dev tự đặt cấu trúc thư mục, không có quy ước chung.
+- Controller hàng nghìn dòng chứa toàn bộ nghiệp vụ.
+- Job có retry nhưng không idempotent, gây trừ tiền hai lần.
+- Bật Octane hay tách microservice vì "nghe nói nhanh hơn" mà không có số đo.
+- Nâng major version trong một PR khổng lồ, không ai review nổi.
+'''
+
+[[questions]]
+id = "php-laravel-lv001"
+module = "php-laravel-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "architecture"]
+prompt = "Team 12 dev cùng làm một monolith Laravel; tuần nào cũng có conflict ở `app/Models` và `app/Services`, các thay đổi của nhóm Billing hay làm hỏng nhóm Catalog. Bước đầu tiên hợp lý nhất là gì?"
+options = ["Tổ chức lại thành modular monolith theo domain, mỗi module có chủ sở hữu và giao tiếp qua interface/service công khai", "Tách ngay thành 6 microservice, mỗi nhóm một service", "Viết lại bằng framework khác có cấu trúc chặt hơn", "Cấm tạo model mới cho tới khi hết conflict"]
+answer = [0]
+explanation = "Modular monolith giải quyết ranh giới và quyền sở hữu với chi phí thấp, có thể đảo ngược; microservice thêm vận hành và giao dịch phân tán khi ranh giới domain còn chưa rõ."
+sources = ["laravel~11/docs/11.x/structure", "laravel~11/docs/11.x/providers"]
+
+[[questions]]
+id = "php-laravel-lv002"
+module = "php-laravel-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "octane"]
+prompt = "Profiling cho thấy 80% thời gian request nằm ở các truy vấn DB chậm; app có nhiều singleton giữ state theo user. Một dev đề xuất chuyển sang Laravel Octane. Quyết định hợp lý là gì?"
+options = ["Chưa chuyển Octane; ưu tiên tối ưu truy vấn/index vì Octane chủ yếu cắt chi phí bootstrap, lại thêm rủi ro rò rỉ state", "Chuyển Octane ngay vì Octane làm truy vấn DB nhanh hơn", "Chuyển Octane và bỏ cache vì không cần nữa", "Chuyển Octane rồi tăng max_requests lên vô hạn"]
+answer = [0]
+explanation = "Octane giữ app trong bộ nhớ nên giảm thời gian khởi động framework, không làm truy vấn nhanh hơn. Với nút thắt ở DB và nhiều singleton có state, lợi ích thấp mà rủi ro cao."
+sources = ["laravel~11/docs/11.x/octane"]
+
+[[questions]]
+id = "php-laravel-lv003"
+module = "php-laravel-lead"
+type = "multiple"
+difficulty = 3
+tags = ["level:lead", "octane"]
+prompt = "Team quyết định thử Octane cho API có tải cao. Chọn các điều kiện cần chuẩn bị trước khi bật trên production."
+options = ["Rà các singleton/static đang giữ request, user hoặc config thay đổi theo request", "Load test so sánh trước/sau trên cùng kịch bản", "Theo dõi bộ nhớ worker và giới hạn số request mỗi worker để giảm hậu quả memory leak", "Bỏ queue worker vì Octane đã xử lý thay việc nền"]
+answer = [0, 1, 2]
+explanation = "Octane giữ app sống giữa các request nên state sót lại và memory leak là rủi ro chính; cần số đo để chứng minh lợi ích. Octane không thay thế queue."
+sources = ["laravel~11/docs/11.x/octane", "laravel~11/docs/11.x/queues"]
+
+[[questions]]
+id = "php-laravel-lv004"
+module = "php-laravel-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "queue"]
+prompt = "Mọi job đang chạy trên queue `default`. Khi có job xuất báo cáo lớn, email reset mật khẩu bị trễ 20 phút. Chiến lược nào giải quyết gốc vấn đề?"
+options = ["Tách queue theo SLA (ví dụ high/default/reports) với supervisor Horizon riêng, job báo cáo chạy queue riêng", "Tăng timeout của tất cả job", "Gửi email reset mật khẩu đồng bộ trong request cho chắc", "Giảm số lần retry của job báo cáo xuống 0"]
+answer = [0]
+explanation = "Vấn đề là các job khác SLA dùng chung một hàng đợi. Tách queue và cấp worker riêng giúp job quan trọng không bị job nặng chặn."
+sources = ["laravel~11/docs/11.x/queues", "laravel~11/docs/11.x/horizon"]
+
+[[questions]]
+id = "php-laravel-lv005"
+module = "php-laravel-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "upgrade"]
+prompt = "App Laravel lớn (300 nghìn dòng, coverage 60%) cần lên major version mới trước khi bản cũ hết hỗ trợ bảo mật. Kế hoạch nào ít rủi ro nhất?"
+options = ["Theo upgrade guide, nâng dependency trước, sửa deprecation qua nhiều PR nhỏ có test, chạy staging rồi phát hành có đường rollback", "Một PR khổng lồ nâng mọi thứ cùng lúc và merge cuối tuần", "Hoãn nâng cấp cho tới khi viết lại toàn bộ app", "Sửa trực tiếp code trong vendor/ để tương thích"]
+answer = [0]
+explanation = "Chia nhỏ giúp review và khoanh vùng lỗi; staging và rollback giảm tác động. Sửa vendor/ sẽ mất khi composer install lại."
+sources = ["laravel~11/docs/11.x/upgrade", "laravel~11/docs/11.x/deployment"]
+
+[[questions]]
+id = "php-laravel-lv006"
+module = "php-laravel-lead"
+type = "multiple"
+difficulty = 3
+tags = ["level:lead", "adr"]
+prompt = "Một ADR (Architecture Decision Record) tốt cho quyết định 'tách queue theo SLA' nên có những phần nào?"
+options = ["Bối cảnh và vấn đề, kèm số liệu", "Quyết định được chọn", "Các phương án đã cân nhắc và lý do loại", "Hệ quả và đánh đổi phải chấp nhận", "Toàn bộ mã nguồn của cấu hình Horizon"]
+answer = [0, 1, 2, 3]
+explanation = "ADR ghi lại lý do và đánh đổi để người đến sau hiểu quyết định; mã nguồn đã nằm trong repo, không cần chép vào ADR."
+sources = ["laravel~11/docs/11.x/horizon"]
+
+[[questions]]
+id = "php-laravel-lv007"
+module = "php-laravel-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "architecture"]
+prompt = "Nhóm Order gọi thẳng model `Invoice` của nhóm Billing và join vào bảng của họ; mỗi lần Billing đổi schema là Order hỏng. Hướng xử lý nào bền vững?"
+options = ["Billing công bố một contract (interface/service hoặc event) làm API nội bộ, Order chỉ phụ thuộc contract đó", "Order copy model Invoice sang module của mình", "Cấm Billing đổi schema", "Gộp hai nhóm thành một"]
+answer = [0]
+explanation = "Phụ thuộc vào contract công khai thay vì chi tiết lưu trữ giúp mỗi module tự thay đổi bên trong; container của Laravel cho phép bind interface với implementation."
+sources = ["laravel~11/docs/11.x/contracts", "laravel~11/docs/11.x/container", "laravel~11/docs/11.x/providers"]
+
+[[questions]]
+id = "php-laravel-lv008"
+module = "php-laravel-lead"
+type = "fill"
+difficulty = 3
+tags = ["level:lead", "horizon"]
+prompt = '''Bạn muốn Horizon tự điều chỉnh số process giữa các queue dựa trên khối lượng job đang chờ. Điền chiến lược cân bằng:
+
+```php
+'supervisor-1' => [
+    'connection' => 'redis',
+    'queue' => ['high', 'default', 'reports'],
+    'balance' => '{{blank}}',
+    'maxProcesses' => 20,
+],
+```'''
+blanks = [["auto"]]
+explanation = "Chiến lược `auto` cho phép Horizon dời process sang queue đang tồn đọng nhiều; `simple` chia đều, còn `false` xử lý theo thứ tự queue."
+sources = ["laravel~11/docs/11.x/horizon"]
+
+[[questions]]
+id = "php-laravel-lv009"
+module = "php-laravel-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "review"]
+prompt = "Khi review PR thêm job `ChargeSubscription` gọi API thanh toán, yêu cầu nào quan trọng nhất trước khi merge?"
+options = ["Job idempotent (idempotency key), có tries/backoff giới hạn và xử lý failed() rõ ràng", "Đổi tên class theo quy ước", "Thêm comment cho mỗi dòng", "Chuyển job sang chạy đồng bộ trong controller"]
+answer = [0]
+explanation = "Queue có thể chạy lại job; nếu không idempotent, khách có thể bị trừ tiền hai lần. Các vấn đề định dạng nên do công cụ tự động đảm nhận."
+sources = ["laravel~11/docs/11.x/queues"]
+
+[[questions]]
+id = "php-laravel-lv010"
+module = "php-laravel-lead"
+type = "essay"
+difficulty = 3
+tags = ["level:lead", "octane"]
+prompt = "Ban giám đốc hỏi: 'Có nên chuyển toàn bộ API sang Laravel Octane không?'. Hãy trình bày cách bạn ra quyết định và triển khai an toàn."
+keywords = [["đo", "benchmark", "load test", "profiling"], ["nút thắt", "bottleneck", "bootstrap"], ["state", "singleton", "static"], ["memory", "bộ nhớ", "leak"], ["rollback", "canary", "từng phần", "song song"]]
+min_keywords = 3
+model_answer = '''Trước hết tôi đo: profiling xem thời gian request nằm ở bootstrap framework hay ở DB/API ngoài, vì Octane chủ yếu cắt chi phí bootstrap. Nếu nút thắt là DB thì tối ưu truy vấn trước. Nếu lợi ích rõ, tôi rà các singleton và static đang giữ state theo request (user, tenant, config) và chuyển sang scoped binding. Sau đó load test so sánh trước/sau, theo dõi bộ nhớ worker và đặt giới hạn số request mỗi worker để hạn chế memory leak. Triển khai canary cho một phần traffic, chạy song song với PHP-FPM, có đường rollback nhanh. Quyết định và số liệu được ghi trong ADR.'''
+explanation = "Câu trả lời tốt dựa trên số đo, nhận diện rủi ro state/memory và có kế hoạch triển khai từng phần, có thể đảo ngược."
+sources = ["laravel~11/docs/11.x/octane", "laravel~11/docs/11.x/container"]
+
+[[questions]]
+id = "php-laravel-lv011"
+module = "php-laravel-lead"
+type = "essay"
+difficulty = 3
+tags = ["level:lead", "upgrade"]
+prompt = "Hãy lập kế hoạch nâng một ứng dụng Laravel lớn lên major version mới mà không làm gián đoạn phát triển tính năng của team."
+keywords = [["upgrade guide", "hướng dẫn nâng cấp"], ["composer", "dependency", "package"], ["test", "ci"], ["deprecation", "deprecated", "breaking change"], ["staging"], ["rollback", "hoàn tác"]]
+min_keywords = 3
+model_answer = '''Tôi đọc upgrade guide để liệt kê breaking change, rồi kiểm tra composer xem package nào chưa hỗ trợ version mới. Trước khi nâng, tăng coverage cho các luồng quan trọng và đảm bảo CI chạy đủ test. Sửa deprecation trên version hiện tại qua nhiều PR nhỏ để không chặn team. Nhánh nâng cấp được rebase thường xuyên, khi xanh thì deploy staging với dữ liệu gần thật, theo dõi log lỗi. Phát hành vào khung giờ ít traffic, giữ artifact cũ để rollback nhanh.'''
+explanation = "Kế hoạch tốt chia nhỏ rủi ro, dựa vào test/CI và luôn có đường lui."
+sources = ["laravel~11/docs/11.x/upgrade", "laravel~11/docs/11.x/deployment"]
+
+[[questions]]
+id = "php-laravel-lv012"
+module = "php-laravel-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "packages"]
+prompt = "Ba ứng dụng Laravel của công ty cùng dùng logic tính thuế, mỗi app phát hành theo lịch riêng. Hiện code bị copy-paste và lệch nhau. Lựa chọn phù hợp là gì?"
+options = ["Tách thành package Composer nội bộ có semver, mỗi app nâng version khi sẵn sàng", "Tiếp tục copy-paste nhưng nhắc dev sửa cả ba nơi", "Gộp ba app thành một repo và deploy cùng lúc", "Đặt logic thuế trong một file .env chung"]
+answer = [0]
+explanation = "Package có version cho phép chia sẻ một nguồn sự thật mà mỗi app vẫn tự quyết thời điểm nâng cấp."
+sources = ["laravel~11/docs/11.x/packages"]
+
+[[questions]]
+id = "php-laravel-lv013"
+module = "php-laravel-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "review"]
+prompt = "Review PR trong team mất nhiều thời gian vì tranh luận về format code và lỗi kiểu dữ liệu nhỏ. Thay đổi quy trình nào hiệu quả nhất?"
+options = ["Đưa Pint và phân tích tĩnh vào CI làm cổng bắt buộc, để reviewer tập trung vào thiết kế và nghiệp vụ", "Bắt buộc 3 reviewer cho mỗi PR", "Bỏ review để đi nhanh hơn", "Viết tài liệu style dài và yêu cầu mọi người đọc thuộc"]
+answer = [0]
+explanation = "Tự động hóa những gì máy kiểm tra được giúp review tập trung vào quyết định có giá trị."
+sources = ["laravel~11/docs/11.x/pint"]
+
+[[questions]]
+id = "php-laravel-lv014"
+module = "php-laravel-lead"
+type = "multiple"
+difficulty = 3
+tags = ["level:lead", "anti-pattern"]
+prompt = "Chọn các anti-pattern ở quy mô team mà Tech Lead nên ưu tiên xử lý."
+options = ["Job có retry nhưng không idempotent", "Mỗi dev tự chọn cấu trúc thư mục cho tính năng mới", "Controller hàng nghìn dòng chứa toàn bộ nghiệp vụ", "Ghi ADR cho quyết định kiến trúc lớn"]
+answer = [0, 1, 2]
+explanation = "Ba lựa chọn đầu gây lỗi dữ liệu, khó onboard và khó test. ADR là thực hành tốt, không phải anti-pattern."
+sources = ["laravel~11/docs/11.x/queues", "laravel~11/docs/11.x/structure"]
+
+[[questions]]
+id = "php-laravel-lv015"
+module = "php-laravel-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "multi-tenancy"]
+prompt = "SaaS B2B có 20 khách doanh nghiệp, hợp đồng yêu cầu cô lập dữ liệu chặt, backup và khôi phục riêng từng khách. Chọn mô hình multi-tenancy nào?"
+options = ["Database riêng cho mỗi tenant, chọn connection theo tenant trong mỗi request/job", "Một bảng chung với cột tenant_id và global scope", "Lưu dữ liệu tenant trong session", "Một database, mỗi tenant một tiền tố cache"]
+answer = [0]
+explanation = "Với số tenant ít và yêu cầu cô lập/khôi phục riêng, database riêng đáng chi phí vận hành. Cột tenant_id phù hợp khi có rất nhiều tenant nhỏ và yêu cầu cô lập thấp hơn."
+sources = ["laravel~11/docs/11.x/database", "laravel~11/docs/11.x/configuration"]
+
+[[questions]]
+id = "php-laravel-lv016"
+module = "php-laravel-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "database"]
+prompt = "Để giảm tải, team bật read replica. Rủi ro nào cần xử lý trước tiên và bằng cách nào?"
+options = ["Đọc dữ liệu cũ ngay sau khi ghi do replica trễ; bật `sticky` hoặc định tuyến các lần đọc quan trọng về primary", "Replica làm mất dữ liệu khi ghi; tắt mọi lệnh ghi", "Replica làm migration chạy hai lần; bỏ migration", "Replica bắt buộc dùng Octane"]
+answer = [0]
+explanation = "Replication có độ trễ, nên người dùng có thể không thấy dữ liệu vừa ghi. Tùy chọn `sticky` giữ các lần đọc tiếp theo trong cùng request trên kết nối ghi."
+sources = ["laravel~11/docs/11.x/database"]
+
+[[questions]]
+id = "php-laravel-lv017"
+module = "php-laravel-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "release"]
+prompt = "Luồng checkout mới thay đổi cách tính giá; nếu sai sẽ ảnh hưởng doanh thu. Cách phát hành nào phù hợp?"
+options = ["Bật dần bằng feature flag (ví dụ Pennant) theo phần trăm người dùng, theo dõi chỉ số và có công tắc tắt nhanh", "Deploy cho 100% người dùng tối thứ Sáu", "Giữ nhánh riêng 6 tháng rồi merge một lần", "Cho người dùng tự chọn bản cũ hay mới trong URL"]
+answer = [0]
+explanation = "Rollout dần giới hạn phạm vi ảnh hưởng và cho phép rút lui không cần deploy lại."
+sources = ["laravel~11/docs/11.x/pennant"]
+
+[[questions]]
+id = "php-laravel-lvc01"
+module = "php-laravel-lead"
+type = "code"
+difficulty = 3
+tags = ["level:lead", "release"]
+lang = "php"
+title = "Rollout theo phần trăm ổn định"
+prompt = '''Viết `inRollout(string $key, int $percent): bool` quyết định một người dùng có nằm trong đợt rollout hay không.
+
+- `$percent <= 0` luôn trả `false`; `$percent >= 100` luôn trả `true`.
+- Ngược lại, tính bucket `crc32($key) % 100` và trả `true` khi bucket nhỏ hơn `$percent`.
+
+Nhờ đó cùng một key luôn cho cùng kết quả và người đã được bật ở 10% vẫn được bật khi tăng lên 30%.'''
+starter = '''function inRollout(string $key, int $percent): bool {
+    return false;
+}
+'''
+solution = '''function inRollout(string $key, int $percent): bool {
+    if ($percent <= 0) {
+        return false;
+    }
+    if ($percent >= 100) {
+        return true;
+    }
+    return crc32($key) % 100 < $percent;
+}
+'''
+tests = '''test('0 phan tram khong bat ai', function () {
+    expect(inRollout('user-1', 0))->toBeFalse();
+    expect(inRollout('user-2', -5))->toBeFalse();
+});
+
+test('100 phan tram bat tat ca', function () {
+    expect(inRollout('user-1', 100))->toBeTrue();
+    expect(inRollout('user-9', 150))->toBeTrue();
+});
+
+test('dung bucket crc32', function () {
+    $b = crc32('user-42') % 100;
+    expect(inRollout('user-42', $b + 1))->toBeTrue();
+    expect(inRollout('user-42', $b))->toBeFalse();
+});
+
+test('tang phan tram khong loai nguoi da duoc bat', function () {
+    $ok = true;
+    for ($i = 0; $i < 200; $i++) {
+        if (inRollout("u$i", 10) && !inRollout("u$i", 30)) {
+            $ok = false;
+        }
+    }
+    expect($ok)->toBeTrue();
+});
+
+test('ty le xap xi phan tram', function () {
+    $n = 0;
+    for ($i = 0; $i < 1000; $i++) {
+        if (inRollout("member-$i", 30)) {
+            $n++;
+        }
+    }
+    expect($n)->toBeGreaterThan(200);
+    expect($n)->toBeLessThan(400);
+});
+'''
+hints = ["Xử lý hai biên 0 và 100 trước.", "Bucket cố định theo key nên tăng phần trăm chỉ thêm người, không bớt người."]
+explanation = "Băm key vào bucket cố định cho kết quả ổn định giữa các request, là nền tảng của rollout dần và canary."
+sources = ["laravel~11/docs/11.x/pennant"]
+
+[[questions]]
+id = "php-laravel-lv018"
+module = "laravel-core"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "container"]
+prompt = "Sau khi chạy Octane, thỉnh thoảng user A thấy giỏ hàng của user B. Service `CartContext` được đăng ký bằng `$this->app->singleton(...)` và giữ user hiện tại. Cách sửa đúng là gì?"
+options = ["Đăng ký bằng `scoped` để instance được tạo lại cho mỗi request/job", "Đổi sang `bind` nhưng vẫn lưu user vào thuộc tính static", "Tăng số worker Octane", "Xóa cache config"]
+answer = [0]
+explanation = "Singleton sống suốt vòng đời worker nên state theo user rò sang request sau. Scoped binding được xóa khi bắt đầu lifecycle mới của request/job."
+sources = ["laravel~11/docs/11.x/container", "laravel~11/docs/11.x/octane"]
+
+[[questions]]
+id = "php-laravel-lv019"
+module = "laravel-core"
+type = "fill"
+difficulty = 3
+tags = ["level:senior", "container"]
+prompt = '''Điền phương thức binding để `TenantContext` chỉ được resolve một lần trong mỗi request hoặc job, và được làm mới khi lifecycle mới bắt đầu:
+
+```php
+$this->app->{{blank}}(TenantContext::class, fn () => new TenantContext());
+```'''
+blanks = [["scoped"]]
+explanation = "`scoped` giống singleton trong một lifecycle nhưng được flush khi request/job mới bắt đầu, phù hợp với Octane và queue worker."
+sources = ["laravel~11/docs/11.x/container"]
+
+[[questions]]
+id = "php-laravel-lv020"
+module = "laravel-data"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "eloquent"]
+prompt = "Team muốn phát hiện N+1 sớm ở môi trường dev/test nhưng không làm hỏng production nếu còn sót. Cấu hình nào phù hợp trong service provider?"
+options = ["`Model::preventLazyLoading(! $this->app->isProduction());`", "`Model::preventLazyLoading(true);` cho mọi môi trường", "Tắt toàn bộ relation trong model", "`DB::disableQueryLog();`"]
+answer = [0]
+explanation = "Chặn lazy loading ở môi trường không phải production khiến N+1 ném exception sớm trong lúc phát triển, còn production không bị gián đoạn."
+sources = ["laravel~11/docs/11.x/eloquent-relationships"]
+
+[[questions]]
+id = "php-laravel-lv021"
+module = "laravel-data"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "eloquent"]
+prompt = "Danh sách 50 bài viết cần hiển thị số bình luận của mỗi bài. Cách nào hiệu quả nhất?"
+options = ["`Post::withCount('comments')->paginate(50)` rồi dùng `comments_count`", "Gọi `$post->comments->count()` trong vòng lặp", "`Post::with('comments')` rồi đếm trong PHP", "Mỗi bài chạy một truy vấn `Comment::where(...)->count()`"]
+answer = [0]
+explanation = "`withCount` tính số lượng bằng subquery trong một truy vấn, không tải toàn bộ bình luận vào bộ nhớ."
+sources = ["laravel~11/docs/11.x/eloquent-relationships"]
+
+[[questions]]
+id = "php-laravel-lv022"
+module = "laravel-data"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "eloquent"]
+prompt = "Job lọc `User::where('migrated', false)` theo từng lô 1000 và cập nhật `migrated = true`. Dùng `chunk()` thì một nửa số user bị bỏ sót. Nguyên nhân và cách sửa?"
+options = ["Cập nhật cột đang lọc làm lệch offset giữa các lô; dùng `chunkById()`", "Lô 1000 quá lớn; giảm xuống 10", "`chunk()` không hỗ trợ update; dùng `get()` cho toàn bộ bảng", "Thiếu transaction; bọc toàn bộ trong một transaction"]
+answer = [0]
+explanation = "`chunk` phân trang bằng offset; khi bản ghi rời khỏi tập lọc, offset trỏ qua các bản ghi chưa xử lý. `chunkById` phân trang theo khóa chính nên ổn định."
+sources = ["laravel~11/docs/11.x/eloquent", "laravel~11/docs/11.x/queries"]
+
+[[questions]]
+id = "php-laravel-lv023"
+module = "laravel-services"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "queue"]
+prompt = "Job gọi API đối tác có `$tries = 5` nhưng khi đối tác quá tải, 5 lần thử chạy liên tiếp trong vài giây và đều thất bại. Thay đổi nào phù hợp?"
+options = ["Khai báo backoff tăng dần, ví dụ `[10, 60, 300]` giây", "Tăng `$tries` lên 100", "Đặt `$timeout = 0`", "Bắt mọi exception và return để job luôn thành công"]
+answer = [0]
+explanation = "Backoff tăng dần cho đối tác thời gian hồi phục; nuốt exception khiến lỗi bị che và dữ liệu không được xử lý."
+sources = ["laravel~11/docs/11.x/queues"]
+
+[[questions]]
+id = "php-laravel-lv024"
+module = "laravel-services"
+type = "fill"
+difficulty = 3
+tags = ["level:senior", "queue"]
+prompt = '''Điền tên phương thức để job chờ 10, 60 rồi 300 giây trước các lần thử lại:
+
+```php
+class SyncPartner implements ShouldQueue
+{
+    public $tries = 4;
+
+    public function {{blank}}(): array
+    {
+        return [10, 60, 300];
+    }
+}
+```'''
+blanks = [["backoff"]]
+explanation = "Phương thức `backoff` trả về mảng cho phép mỗi lần retry có thời gian chờ khác nhau."
+sources = ["laravel~11/docs/11.x/queues"]
+
+[[questions]]
+id = "php-laravel-lv025"
+module = "laravel-services"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "queue"]
+prompt = "Mỗi lần khách cập nhật đơn, app dispatch `RebuildCustomerReport($customerId)`; khách sửa liên tục nên hàng đợi có hàng chục job giống nhau cho cùng khách. Giải pháp nào phù hợp?"
+options = ["Cho job implement `ShouldBeUnique` với `uniqueId()` trả về customer id", "Tăng số worker để xử lý hết", "Chạy job đồng bộ", "Đặt `$tries = 1`"]
+answer = [0]
+explanation = "`ShouldBeUnique` ngăn dispatch thêm job cùng unique id khi job trước chưa xử lý xong, giảm việc trùng lặp. Lưu ý cần cache driver hỗ trợ lock."
+sources = ["laravel~11/docs/11.x/queues"]
+
+[[questions]]
+id = "php-laravel-lv026"
+module = "laravel-services"
+type = "multiple"
+difficulty = 3
+tags = ["level:senior", "cache"]
+prompt = "Bạn định dùng `Cache::tags(['products'])->flush()` để xóa cache theo nhóm. Những cache store nào hỗ trợ tags?"
+options = ["redis", "memcached", "file", "database"]
+answer = [0, 1]
+explanation = "Cache tags không được hỗ trợ trên các driver file, database và dynamodb; cần store như redis hoặc memcached."
+sources = ["laravel~11/docs/11.x/cache"]
+
+[[questions]]
+id = "php-laravel-lv027"
+module = "laravel-services"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "cache"]
+prompt = "Key cache `dashboard:stats` hết hạn lúc cao điểm; 200 request cùng lúc chạy truy vấn nặng để tính lại (cache stampede). Cách giảm thiểu phù hợp?"
+options = ["Dùng atomic lock (`Cache::lock`) để chỉ một process tính lại, các request khác dùng giá trị cũ hoặc chờ", "Giảm TTL xuống 1 giây", "Tắt cache cho dashboard", "Lưu cache trong biến static của controller"]
+answer = [0]
+explanation = "Lock đảm bảo chỉ một process tái tạo dữ liệu, tránh dồn tải lên DB khi key hết hạn."
+sources = ["laravel~11/docs/11.x/cache"]
+
+[[questions]]
+id = "php-laravel-lv028"
+module = "laravel-services"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "queue"]
+prompt = "Job `ReserveStock` đã giữ hàng trong kho rồi thất bại vĩnh viễn ở bước gọi vận chuyển. Nên đặt logic hoàn tác ở đâu?"
+options = ["Trong phương thức `failed()` của job, chạy sau khi hết số lần thử", "Trong constructor của job", "Trong `handle()` trước khi giữ hàng", "Không cần, queue tự rollback mọi thay đổi"]
+answer = [0]
+explanation = "`failed()` được gọi khi job thất bại hẳn, phù hợp để bù trừ (trả hàng về kho, báo lỗi). Queue không tự hoàn tác side effect bên ngoài."
+sources = ["laravel~11/docs/11.x/queues"]
+
+[[questions]]
+id = "php-laravel-lv029"
+module = "php-laravel-dv-errors"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "errors"]
+prompt = "Domain ném `InsufficientBalance` ở nhiều nơi; API cần trả 422 với JSON thống nhất mà không lặp try/catch trong controller. Đặt xử lý ở đâu?"
+options = ["Đăng ký `$exceptions->render(...)` trong `withExceptions` của `bootstrap/app.php`", "Bọc mọi controller trong try/catch", "Ghi đè `__destruct` của exception", "Bắt exception trong middleware CSRF"]
+answer = [0]
+explanation = "Exception handler tập trung chuyển exception domain thành response thống nhất, controller chỉ lo luồng chính."
+sources = ["laravel~11/docs/11.x/errors"]
+
+[[questions]]
+id = "php-laravel-lv030"
+module = "php-laravel-dv-api"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "pagination"]
+prompt = "Feed hoạt động có 50 triệu bản ghi, người dùng cuộn vô hạn; trang sâu dùng `paginate()` rất chậm và đôi khi lặp bản ghi khi có dữ liệu mới. Lựa chọn nào phù hợp?"
+options = ["`cursorPaginate()` theo cột có thứ tự ổn định và có index", "`paginate()` với `perPage` nhỏ hơn", "Tải toàn bộ rồi cắt mảng trong PHP", "`simplePaginate()` không có ORDER BY"]
+answer = [0]
+explanation = "Cursor pagination dùng điều kiện WHERE trên cột có thứ tự thay vì OFFSET, nên trang sâu vẫn nhanh và không lệch khi có bản ghi mới."
+sources = ["laravel~11/docs/11.x/pagination"]
+
+[[questions]]
+id = "php-laravel-lv031"
+module = "php-laravel-dv-http-client"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "http-client"]
+prompt = "Request POST tạo giao dịch thanh toán được cấu hình `Http::retry(3, 200)`. Rủi ro là gì và cách cấu hình an toàn hơn?"
+options = ["Retry khi server đã xử lý nhưng phản hồi lỗi có thể tạo giao dịch trùng; gửi idempotency key và chỉ retry lỗi kết nối qua callback điều kiện", "Không có rủi ro vì POST luôn idempotent", "Retry làm mất header Authorization", "Nên tăng lên 10 lần để chắc thành công"]
+answer = [0]
+explanation = "POST không mặc định idempotent. Idempotency key và điều kiện retry (ví dụ chỉ khi `ConnectionException`) tránh tạo bản ghi trùng."
+sources = ["laravel~11/docs/11.x/http-client"]
+
+[[questions]]
+id = "php-laravel-lv032"
+module = "laravel-data"
+type = "essay"
+difficulty = 3
+tags = ["level:senior", "eloquent"]
+prompt = "Endpoint danh sách đơn hàng trên production chậm dần khi dữ liệu tăng. Hãy mô tả cách bạn chẩn đoán và sửa nếu nghi ngờ N+1."
+keywords = [["n+1"], ["eager", "with("], ["preventlazyloading", "lazy loading"], ["query log", "telescope", "debugbar", "số truy vấn"], ["withcount", "index", "chỉ mục"]]
+min_keywords = 3
+model_answer = '''Tôi đo số truy vấn mỗi request bằng Telescope hoặc query log để xác nhận N+1: số truy vấn tăng theo số đơn hàng. Sau đó dùng eager loading `with('customer', 'items.product')` cho các quan hệ được dùng trong resource, `withCount` khi chỉ cần đếm. Bật `Model::preventLazyLoading` ở môi trường dev/test để lỗi tương tự bị phát hiện sớm. Cuối cùng kiểm tra index cho các cột lọc và khóa ngoại, rồi viết test giới hạn số truy vấn cho endpoint.'''
+explanation = "Câu trả lời tốt bắt đầu bằng đo đạc, sửa bằng eager loading và thêm hàng rào chống tái phát."
+sources = ["laravel~11/docs/11.x/eloquent-relationships", "laravel~11/docs/11.x/telescope"]
+
+[[questions]]
+id = "php-laravel-lvc02"
+module = "laravel-services"
+type = "code"
+difficulty = 3
+tags = ["level:senior", "queue"]
+lang = "php"
+title = "Exponential backoff có trần"
+prompt = '''Viết `backoffSeconds(int $attempt, int $base, int $cap): int` tính thời gian chờ trước lần retry thứ `$attempt`.
+
+- `$attempt <= 0` trả `0`.
+- Ngược lại thời gian chờ là `$base * 2^($attempt - 1)` nhưng không vượt quá `$cap`.
+- Không được tràn số với `$attempt` lớn (ví dụ 200).'''
+starter = '''function backoffSeconds(int $attempt, int $base, int $cap): int {
+    return 0;
+}
+'''
+solution = '''function backoffSeconds(int $attempt, int $base, int $cap): int {
+    if ($attempt <= 0) {
+        return 0;
+    }
+    $delay = $base;
+    for ($i = 1; $i < $attempt; $i++) {
+        if ($delay >= $cap) {
+            return $cap;
+        }
+        $delay *= 2;
+    }
+    return min($delay, $cap);
+}
+'''
+tests = '''test('lan dau bang base', function () {
+    expect(backoffSeconds(1, 10, 600))->toBe(10);
+});
+
+test('nhan doi moi lan', function () {
+    expect(backoffSeconds(2, 10, 600))->toBe(20);
+    expect(backoffSeconds(4, 10, 600))->toBe(80);
+});
+
+test('khong vuot tran', function () {
+    expect(backoffSeconds(7, 10, 600))->toBe(600);
+});
+
+test('attempt lon khong tran so', function () {
+    expect(backoffSeconds(200, 5, 3600))->toBe(3600);
+});
+
+test('attempt khong duong tra 0', function () {
+    expect(backoffSeconds(0, 10, 600))->toBe(0);
+    expect(backoffSeconds(-3, 10, 600))->toBe(0);
+});
+'''
+hints = ["Nhân đôi trong vòng lặp và dừng sớm khi đã chạm trần.", "Kết quả phải là int; tránh dùng `**` với số mũ lớn vì có thể thành float."]
+explanation = "Backoff tăng dần có trần giúp hệ thống phụ thuộc có thời gian hồi phục mà job không phải chờ vô hạn."
+sources = ["laravel~11/docs/11.x/queues"]
+
+[[questions]]
+id = "php-laravel-lv033"
+module = "php-modern"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "match"]
+prompt = "Biểu thức `match ('1') { 1 => 'int', '1' => 'string', default => 'other' }` trả về gì?"
+options = ["'string'", "'int'", "'other'", "Ném lỗi UnhandledMatchError"]
+answer = [0]
+explanation = "`match` so sánh nghiêm ngặt (`===`), nên chuỗi `'1'` chỉ khớp nhánh `'1'`."
+sources = ["php/control-structures.match"]
+
+[[questions]]
+id = "php-laravel-lv034"
+module = "php-modern"
+type = "fill"
+difficulty = 1
+tags = ["level:junior", "nullsafe"]
+prompt = '''Điền toán tử để biểu thức trả `null` thay vì lỗi khi `$user` là `null`:
+
+```php
+$city = $user{{blank}}address?->city;
+```'''
+blanks = [["?->"]]
+explanation = "Toán tử nullsafe `?->` dừng chuỗi gọi và trả về null khi vế trái là null."
+sources = ["php/language.oop5.basic"]
+
+[[questions]]
+id = "php-laravel-lv035"
+module = "php-oop"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "composer"]
+prompt = "Trong `composer.json` có `\"autoload\": {\"psr-4\": {\"App\\\\\": \"app/\"}}`. Class `App\\Services\\PriceCalculator` sẽ được tìm ở file nào?"
+options = ["app/Services/PriceCalculator.php", "src/App/Services/PriceCalculator.php", "app/PriceCalculator.php", "vendor/App/Services/PriceCalculator.php"]
+answer = [0]
+explanation = "PSR-4 ánh xạ tiền tố namespace `App\\` tới thư mục `app/`, phần còn lại của namespace thành đường dẫn con."
+sources = ["laravel~11/docs/11.x/structure"]
+
+[[questions]]
+id = "php-laravel-lv036"
+module = "laravel-core"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "artisan"]
+prompt = "Bạn vừa thêm route nhưng truy cập bị 404. Lệnh artisan nào giúp xem nhanh danh sách route đang được đăng ký?"
+options = ["php artisan route:list", "php artisan make:route", "php artisan serve --routes", "php artisan migrate"]
+answer = [0]
+explanation = "`route:list` liệt kê method, URI, tên và action của mọi route, giúp kiểm tra route đã được nạp chưa."
+sources = ["laravel~11/docs/11.x/routing", "laravel~11/docs/11.x/artisan"]
+
+[[questions]]
+id = "php-laravel-lv037"
+module = "laravel-data"
+type = "fill"
+difficulty = 1
+tags = ["level:junior", "migrations"]
+prompt = '''Điền lệnh artisan để tạo file migration mới:
+
+```bash
+php artisan {{blank}} create_orders_table
+```'''
+blanks = [["make:migration"]]
+explanation = "`make:migration` tạo file migration trong `database/migrations` với timestamp ở đầu tên."
+sources = ["laravel~11/docs/11.x/migrations"]
+
+[[questions]]
+id = "php-laravel-lv038"
+module = "laravel-data"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "eloquent"]
+prompt = "Thuộc tính `$fillable` trong model Eloquent dùng để làm gì?"
+options = ["Liệt kê các cột được phép gán hàng loạt qua `create()`/`fill()`", "Liệt kê các cột bắt buộc không được null", "Ẩn cột khi serialize JSON", "Khai báo kiểu dữ liệu của cột"]
+answer = [0]
+explanation = "`$fillable` chống mass assignment: chỉ các cột trong danh sách mới nhận giá trị từ mảng đầu vào."
+sources = ["laravel~11/docs/11.x/eloquent"]
+
+[[questions]]
+id = "php-laravel-lv039"
+module = "laravel-data"
+type = "multiple"
+difficulty = 1
+tags = ["level:junior", "relationships"]
+prompt = "Một `User` có nhiều `Post`, mỗi `Post` thuộc về một `User`. Chọn các khai báo quan hệ đúng."
+options = ["Trong User: `return $this->hasMany(Post::class);`", "Trong Post: `return $this->belongsTo(User::class);`", "Trong User: `return $this->belongsTo(Post::class);`", "Trong Post: `return $this->hasMany(User::class);`"]
+answer = [0, 1]
+explanation = "Bên 'một' dùng `hasMany`, bên giữ khóa ngoại `user_id` dùng `belongsTo`."
+sources = ["laravel~11/docs/11.x/eloquent-relationships"]
+
+[[questions]]
+id = "php-laravel-lv040"
+module = "laravel-services"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "validation"]
+prompt = "Trong form web, `$request->validate([...])` thất bại. Mặc định Laravel làm gì?"
+options = ["Redirect về trang trước kèm lỗi validation và dữ liệu cũ", "Trả trang trắng HTTP 500", "Bỏ qua lỗi và chạy tiếp controller", "Xóa session của người dùng"]
+answer = [0]
+explanation = "Với request web, validation thất bại sẽ redirect back, flash lỗi và input cũ vào session; với request mong đợi JSON thì trả 422."
+sources = ["laravel~11/docs/11.x/validation"]
+
+[[questions]]
+id = "php-laravel-lv041"
+module = "laravel-services"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "configuration"]
+prompt = "Sau khi chạy `php artisan config:cache` trên production, các lời gọi `env('STRIPE_KEY')` trong controller trả về `null`. Cách làm đúng là gì?"
+options = ["Chỉ gọi `env()` trong file config, còn code dùng `config('services.stripe.key')`", "Không bao giờ cache config", "Commit file .env lên git", "Gọi `putenv()` trong mỗi controller"]
+answer = [0]
+explanation = "Khi config đã cache, file .env không được nạp nữa; giá trị chỉ còn truy cập được qua `config()`."
+sources = ["laravel~11/docs/11.x/configuration"]
+
+[[questions]]
+id = "php-laravel-lv042"
+module = "php-laravel-dv-api"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "api-resources"]
+prompt = "Vì sao nên trả `new UserResource($user)` thay vì trả thẳng model `$user` từ API?"
+options = ["Resource kiểm soát rõ trường nào được trả ra, tránh lộ cột nhạy cảm và giữ format ổn định", "Resource làm truy vấn DB nhanh hơn", "Model không thể chuyển thành JSON", "Resource tự động cache response"]
+answer = [0]
+explanation = "API Resource là lớp biến đổi giữa model và JSON, giúp đổi schema DB mà không phá client."
+sources = ["laravel~11/docs/11.x/eloquent-resources"]
+
+[[questions]]
+id = "php-laravel-lvc03"
+module = "php-modern"
+type = "code"
+difficulty = 1
+tags = ["level:junior", "strings"]
+lang = "php"
+title = "Chuẩn hóa email"
+prompt = '''Viết `normalizeEmail(string $email): string` bỏ khoảng trắng (space, tab, xuống dòng) ở hai đầu và chuyển toàn bộ về chữ thường, để `" Bob@Mail.COM "` và `"bob@mail.com"` được coi là một.'''
+starter = '''function normalizeEmail(string $email): string {
+    return $email;
+}
+'''
+solution = '''function normalizeEmail(string $email): string {
+    return strtolower(trim($email));
+}
+'''
+tests = '''test('bo khoang trang va ha chu', function () {
+    expect(normalizeEmail('  Bob@Mail.COM '))->toBe('bob@mail.com');
+});
+
+test('bo tab va xuong dong', function () {
+    expect(normalizeEmail("\tann@x.io\n"))->toBe('ann@x.io');
+});
+
+test('email da chuan giu nguyen', function () {
+    expect(normalizeEmail('a@b.c'))->toBe('a@b.c');
+});
+
+test('chuoi rong tra rong', function () {
+    expect(normalizeEmail('   '))->toBe('');
+});
+'''
+hints = ["PHP có sẵn hàm bỏ khoảng trắng hai đầu và hàm hạ chữ thường."]
+explanation = "Chuẩn hóa email trước khi lưu/tìm giúp tránh tài khoản trùng do khác hoa thường hoặc khoảng trắng."
+sources = ["php/function.trim", "php/function.strtolower"]
+
+[[questions]]
+id = "php-laravel-lv043"
+module = "laravel-core"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "routing"]
+prompt = "Route `Route::get('/posts/{post}', [PostController::class, 'show'])` và action `show(Post $post)`. Khi id không tồn tại, điều gì xảy ra?"
+options = ["Route model binding tự trả 404", "`$post` là null và controller phải tự kiểm tra", "Laravel tạo bản ghi Post mới", "Trả lỗi 500"]
+answer = [0]
+explanation = "Implicit binding tìm model theo khóa và tự ném ModelNotFoundException, được chuyển thành 404."
+sources = ["laravel~11/docs/11.x/routing"]
+
+[[questions]]
+id = "php-laravel-lv044"
+module = "laravel-data"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "transactions"]
+prompt = "Chuyển tiền gồm trừ ví A và cộng ví B. Nếu bước cộng lỗi, bước trừ phải bị hủy. Dùng gì?"
+options = ["Bọc cả hai trong `DB::transaction(fn () => ...)`", "Gọi `save()` hai lần liên tiếp", "Đưa từng bước vào hai job riêng", "Dùng `Cache::lock` thay transaction"]
+answer = [0]
+explanation = "`DB::transaction` commit khi closure chạy xong và rollback nếu có exception, đảm bảo hai thao tác cùng thành công hoặc cùng thất bại."
+sources = ["laravel~11/docs/11.x/database"]
+
+[[questions]]
+id = "php-laravel-lv045"
+module = "laravel-services"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "authorization"]
+prompt = "Quy tắc 'chỉ tác giả mới được sửa/xóa bài viết' áp dụng cho nhiều action của model `Post`. Cách tổ chức phù hợp?"
+options = ["Tạo `PostPolicy` với các method update/delete và gọi `$this->authorize()` hoặc `can`", "Viết if trong mọi controller", "Kiểm tra trong Blade là đủ", "Lưu quyền trong cookie"]
+answer = [0]
+explanation = "Policy gom logic phân quyền theo model; Gate phù hợp cho quyền đơn lẻ không gắn với model."
+sources = ["laravel~11/docs/11.x/authorization"]
+
+[[questions]]
+id = "php-laravel-lv046"
+module = "php-laravel-dv-http-client"
+type = "fill"
+difficulty = 2
+tags = ["level:middle", "http-client"]
+prompt = '''Đối tác thỉnh thoảng treo kết nối, làm request của bạn chờ rất lâu. Điền phương thức đặt thời gian chờ tối đa 5 giây:
+
+```php
+$response = Http::{{blank}}(5)->get($url);
+```'''
+blanks = [["timeout"]]
+explanation = "`timeout` giới hạn thời gian chờ phản hồi, tránh worker/request bị treo vô thời hạn."
+sources = ["laravel~11/docs/11.x/http-client"]
+
+[[questions]]
+id = "php-laravel-lv047"
+module = "laravel-data"
+type = "multiple"
+difficulty = 2
+tags = ["level:middle", "casts"]
+prompt = "Chọn các khai báo cast hợp lệ trong `casts()` của model Eloquent."
+options = ["`'is_admin' => 'boolean'`", "`'options' => 'array'`", "`'status' => OrderStatus::class` với OrderStatus là backed enum", "`'price' => 'sql'`"]
+answer = [0, 1, 2]
+explanation = "Eloquent hỗ trợ cast boolean, array (JSON) và enum; `sql` không phải kiểu cast."
+sources = ["laravel~11/docs/11.x/eloquent-mutators"]
+
+[[questions]]
+id = "php-laravel-lv048"
+module = "php-laravel-dv-errors"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "errors"]
+prompt = "Gửi webhook phụ thất bại nhưng bạn không muốn làm hỏng request chính, chỉ cần ghi lại lỗi để theo dõi. Cách nào phù hợp?"
+options = ["Bắt exception và gọi `report($e)` rồi tiếp tục", "Bắt exception và bỏ qua hoàn toàn", "Để exception lan ra người dùng", "Gọi `dd($e)`"]
+answer = [0]
+explanation = "`report()` đẩy exception qua handler để log/gửi lên công cụ theo dõi mà không dừng luồng xử lý."
+sources = ["laravel~11/docs/11.x/errors"]

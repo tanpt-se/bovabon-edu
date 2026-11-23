@@ -518,3 +518,527 @@ title = "Atomic money transfer"
 prompt = '''Write `transfer(connection, source_id, target_id, amount)` for a table `accounts(id INTEGER PRIMARY KEY, balance INTEGER NOT NULL)`. `amount` is a positive integer number of cents, and the two IDs must differ. Return `True` if the transfer succeeds. Return `False` if `amount` is invalid, the source does not exist or lacks sufficient funds, or the target does not exist. If any update step fails, do not leave a partial change. Use placeholders for every SQL value.'''
 hints = ["Use an `UPDATE` with the condition `balance >= amount` and check `rowcount`.", "If updating the source or target does not affect exactly one row, raise an exception inside `with` so SQLite rolls back."]
 explanation = '''Two `UPDATE` statements in the same transaction make the operation atomic; parameter binding keeps input separate from SQL syntax.'''
+
+[modules.python-backend-lead]
+title = "Tech Lead Perspective"
+description = "Choosing a framework and the sync/async model, structuring large projects, zero-downtime DB migrations, worker scaling, task queues, observability, safe rollouts, and review standards for a Python backend team."
+lesson = '''### The Tech Lead's role in a Python backend project
+A senior answers "how do we do this right"; a lead answers "**what should we do, with this team, under these constraints**". Every decision should state the context (people, time, load, cost), the options, the comparison criteria, the risks and the way back (rollback).
+
+### A quick decision framework
+1. **Constraints first, technology second**: what the team knows, the deadline, the SLO (e.g. p95 < 300 ms), the infrastructure budget.
+2. **List ≥ 2 options**, always including "keep as is + small improvements".
+3. **Score against criteria** (table below), and say whether each number is an estimate or a measurement.
+4. **Try small first** (spike, canary, feature flag), with a stop point if metrics get worse.
+5. **Write an ADR** so whoever comes next understands why.
+
+| Criterion | Flask (WSGI) | FastAPI (ASGI) | Django |
+|---|---|---|---|
+| Team learning curve | low | medium (async, Pydantic) | medium |
+| High concurrent I/O, WebSocket | poor (needs gevent/separate ASGI) | good | medium (ASGI + channels) |
+| Built-in internal admin/CRUD | no | no | excellent |
+| API contract (OpenAPI) | add an extension | generated automatically | add DRF/ninja |
+| Biggest risk | self-assembled, few conventions | blocking code inside `async def` | heavy ORM, hard to split into services |
+
+### Reference numbers (estimates — always re-measure on the real system)
+- Gunicorn/Uvicorn workers: start at ~1 process per vCPU (sync workers can use 2×vCPU + 1), then tune by memory and load tests.
+- Sync workers blocked on I/O: throughput ≈ number of workers ÷ average wait time per request.
+- DB connection pool: the total `pool_size × processes × instances` must stay below the DB's `max_connections`.
+
+### Zero-downtime DB migration (expand → migrate → contract)
+1. **Expand**: add the new column/table as nullable, without locking the table for long.
+2. **Migrate**: code writes both old and new; backfill in small batches that can be paused and resumed.
+3. **Contract**: once every deployment reads the new column, add the NOT NULL constraint, then drop the old column in a later release.
+Each step must stay compatible with both code versions running side by side during a rolling deploy.
+
+### Backend PR review checklist (put it in the template)
+- [ ] The endpoint has a clear input/output schema (`response_model`) and exposes no sensitive fields.
+- [ ] No blocking library calls inside `async def`; outgoing calls always have a **timeout**.
+- [ ] Error branches (4xx) are tested, not just the happy path.
+- [ ] Logs are structured with a `request_id`, and never contain passwords/tokens.
+- [ ] Migrations are backward compatible and have a rollback plan.
+- [ ] Important background jobs go through a durable queue with retries and idempotency.
+
+### Sample ADR (condensed)
+> **ADR-007: Move realtime chat into a separate ASGI service**
+> *Context*: a 4-year-old Flask monolith, a team of 5, WebSocket needed within one quarter.
+> *Decision*: keep Flask for everything else; write the chat service in FastAPI, share auth via JWT, behind the same reverse proxy.
+> *Consequences*: one more deploy pipeline and dashboard; avoids a full rewrite; revisit in 6 months.
+
+### Anti-patterns at team scale
+- **A big-bang rewrite** just because a new framework is faster in benchmarks.
+- Business logic stuffed into route handlers → untestable, not reusable from workers/CLI.
+- Module-level globals used as cache/state → every worker process sees a different copy.
+- Everyone reads configuration their own way and picks their own HTTP library → slow onboarding, unpredictable bugs.
+- Alerting on every exception instead of on SLOs → the team goes "blind" from alert fatigue.
+- Fixing juniors' code for them without explaining, and without turning the lesson into a lint rule or guideline.
+'''
+
+[questions.python-backend-lv001]
+prompt = '''A team of 5 maintains a stable Flask monolith. Next quarter they need a realtime chat feature (WebSocket) for a small group of users, with a 10-week deadline and without slowing down the rest of the roadmap. What is the most reasonable option?'''
+options = ["Rewrite the whole monolith in FastAPI to get ASGI for every endpoint", "Keep Flask; write a small chat service in FastAPI/Starlette (ASGI) that shares the auth mechanism, behind the same reverse proxy", "Enable gevent monkey-patching for the whole monolith so Flask handles WebSocket itself", "Have the client poll REST every 100 ms so WebSocket is not needed"]
+explanation = '''Splitting the part that needs ASGI into a small service confines the risk to the new feature. A full rewrite blows the deadline and is high risk; monkey-patching the whole app can break libraries already in use; 100 ms polling costs many times more resources than it is worth.'''
+
+[questions.python-backend-lv002]
+prompt = '''You need to add a `tenant_id NOT NULL` column to an `orders` table with 50 million rows. Deploys are rolling (old and new code run side by side for a few minutes), and there must be no downtime. Which plan fits?'''
+options = ["A single migration: `ADD COLUMN tenant_id ... NOT NULL DEFAULT`, then deploy the new code", "Add a nullable column → deploy code that writes the new column → backfill in batches → once every deployment writes it, add the NOT NULL constraint → clean up old code", "Create an `orders_v2` table, copy the data overnight, rename the tables", "Stop writes for 30 minutes at off-peak hours to run the migration"]
+explanation = '''The expand → migrate → contract pattern keeps every step compatible with both old and new code and can be paused midway. A one-step migration may lock the table for a long time or make old code (unaware of the new column) fail on insert; copying to a new table misses writes made during the copy; stopping writes violates the no-downtime requirement.'''
+
+[questions.python-backend-lv003]
+prompt = '''You are writing a PR review checklist for a FastAPI team. Which items are worth including (value relative to review cost)?'''
+options = ["Endpoints declare a clear `response_model`/output schema and expose no sensitive fields", "Every outgoing HTTP/DB call has a timeout", "No blocking library calls inside `async def`", "Require 100% coverage on every PR and block the merge otherwise", "Reviewers manually check indentation and import order", "Error branches (4xx) are tested, not just the happy path"]
+explanation = '''Items 0, 1, 2 and 5 catch common production bugs that tools struggle to detect. 100% coverage produces meaningless tests written to hit a number; formatting and import order belong to a formatter/linter in CI, not to reviewers.'''
+
+[questions.python-backend-lv004]
+prompt = '''A FastAPI service must send ~10,000 report emails per day. Requirements: no lost jobs on deploy/restart, automatic retry on transient email provider errors, no duplicate sends. Choose the design.'''
+options = ["FastAPI `BackgroundTasks` in the report-creation endpoint", "Start a `threading.Thread` in the API process for each email", "A durable queue (Celery/RQ/Arq with a broker such as Redis/RabbitMQ), tasks with retry + backoff and an idempotency key per email", "A cron job that calls an internal endpoint every minute to scan the table and send everything"]
+explanation = '''Only a durable queue decoupled from the API process lifecycle keeps jobs across restarts; retry + an idempotency key handle transient errors without duplicates. BackgroundTasks and threads lose jobs when the process stops; a cron calling an endpoint easily overlaps and lacks per-job retry.'''
+
+[questions.python-backend-lv005]
+prompt = '''Each instance has 4 vCPU and 2 GB RAM; one Uvicorn worker of the FastAPI service (mostly async I/O) uses ~300 MB at runtime. Which starting worker configuration do you pick before load testing?'''
+options = ["A single worker, since async already handles many concurrent requests", "~4 workers (about 1 per vCPU, ~1.2 GB RAM), then adjust based on load test results and actual memory", "16 workers to maximize throughput", "As many workers as expected concurrent requests at peak"]
+explanation = '''A Python process can only make effective use of ~1 core for CPU work (GIL), so 1 worker wastes 3 vCPUs. 16 workers need ~4.8 GB, exceeding RAM. Async lets each worker serve many requests, so you do not need one worker per concurrent request. The number is only a starting point and must be measured.'''
+
+[questions.python-backend-lv006]
+prompt = '''Set the minimum mandatory observability for every new Python service before it goes to production. Choose the reasonable requirements.'''
+options = ["Structured (JSON) logs with a `request_id` propagated across services", "RED metrics per endpoint: rate, errors, duration (p50/p95/p99)", "Tracing for DB calls and outgoing HTTP", "Log the full request body (including passwords) for easier debugging", "Send an alert for every exception as soon as it happens", "SLO-based alerts (e.g. error rate/latency over a threshold within a time window)"]
+explanation = '''Structured logs, RED metrics, tracing and SLO-based alerts let you detect and isolate incidents. Logging passwords is a security bug; alerting on every exception causes alert fatigue, so the team ignores even the important alerts.'''
+
+[questions.python-backend-lv007]
+prompt = '''New project: an internal back-office with ~40 CRUD screens and group-based permissions, 6 weeks, a team of 4 who all have years of Django experience, low load (< 20 req/s). Choose the framework.'''
+options = ["FastAPI because it is fastest in benchmarks", "Flask + hand-assembled extensions for admin, auth and forms", "Django (built-in admin, auth, ORM, migrations), adding an API when needed", "Write it in Go to be ready for the future"]
+explanation = '''At low load, the deciding factors are delivery speed and team experience: Django admin covers most CRUD screens. FastAPI's performance edge is worthless at 20 req/s; Flask requires a lot of assembly; switching languages increases deadline risk.'''
+
+[questions.python-backend-lv008]
+prompt = '''A Flask codebase has ~40% of endpoints without tests. This quarter you must replace the auth mechanism (session cookie → JWT) while still shipping features. Which strategy is most balanced?'''
+options = ["Freeze features for 2 months to write tests for the whole codebase", "Write characterization tests for the current auth flows, replace the mechanism step by step behind a feature flag, and enable it gradually by user group", "Replace all of auth in one big PR and test it carefully by hand", "Keep both mechanisms forever to avoid risk"]
+explanation = '''Tests that lock in current behavior exactly where you are about to change things, combined with a feature flag, allow a gradual rollout and fast rollback. A feature freeze has a business cost; a large PR is hard to review and hard to back out; keeping two mechanisms forever doubles the attack surface and maintenance cost.'''
+
+[questions.python-backend-lv009]
+prompt = '''You are responsible for upgrading 12 services from Python 3.10 to 3.13. Two services handle payments; the rest are internal. Which plan is reasonable?'''
+options = ["Upgrade all 12 services in the same release for consistency", "Wait until 3.10 reaches end of support before thinking about it", "Add a CI matrix running tests on both 3.10 and 3.13; upgrade low-risk internal services first and watch metrics; finally canary the payment services", "Upgrade the payment services first because they matter most"]
+explanation = '''A CI matrix catches compatibility problems early; starting with low-risk services lets the team learn and refine the playbook before touching critical parts. Upgrading everything at once makes failures hard to isolate; waiting for EOL piles the risk into the last minute; starting with payments puts the biggest risk first.'''
+
+[questions.python-backend-lv010]
+prompt = '''Write a short ADR: a new service (FastAPI) calls 3 external APIs and PostgreSQL on every request; the team is not yet familiar with async. Do you choose `def` or `async def` endpoints? Include the conditions and how you will validate the decision.'''
+keywords = [["async"], ["blocking", "block"], ["driver"], ["threadpool", "thread pool"], ["load test", "benchmark", "measure"], ["trade-off", "tradeoff"]]
+model_answer = '''Context: each request waits on 3 external APIs and PostgreSQL, and the team is new to async. Decision: use async def with httpx.AsyncClient and an async driver (asyncpg/SQLAlchemy async) to call the 3 APIs concurrently, because I/O wait dominates the time. Conditions: no blocking library anywhere in the request path; where a synchronous library is unavoidable, keep that endpoint as def (FastAPI runs it in a threadpool) or use to_thread. Trade-off: async gives higher throughput but is harder to debug and needs team training, plus a lint rule that blocks blocking calls. Validation: run a load test comparing p95 and throughput of both options on a sample endpoint before applying it to the whole service; revisit after 3 months.'''
+explanation = '''A good answer states the context, the chosen option, the conditions under which it holds (no blocking calls, async driver), the trade-off in team skills, and how you will measure to validate it.'''
+
+[questions.python-backend-lv011]
+prompt = '''The JWT signing secret (HS256) is suspected to have leaked. Plan a key rotation that does not force every user to log in again at the same time, while limiting the damage.'''
+keywords = [["kid"], ["in parallel", "two keys", "both keys", "side by side"], ["exp", "expir"], ["revoke", "revocation"], ["monitor", "metric"]]
+model_answer = '''Create a new key and put a kid in the token header so you know which key signed each token. During the transition, run two keys in parallel: sign new tokens with the new key, and keep verifying old tokens until their exp (shorten the access token lifetime, e.g. 15 minutes). If evidence shows the key has been misused, revoke the old key and the related refresh tokens immediately, accepting forced re-login. Monitor metrics for the number of tokens signed with the old key and unusual verification failures; when it drops to 0, remove the old key. After the incident: move the secret into a secret manager and schedule periodic key rotation.'''
+explanation = '''Key points: key identification (kid), a parallel period bounded by exp, a revocation decision based on how badly the key leaked, and monitoring to know when to remove the old key.'''
+
+[questions.python-backend-lv012]
+prompt = '''A public API runs 6 instances behind a load balancer (round-robin). You need a limit of 100 requests/minute per API key, with an error of a few percent being acceptable. Choose the implementation.'''
+options = ["Each process keeps an in-memory counter dict, limited to 100/minute", "Each process limits to 100/6 ≈ 17 requests/minute", "Centralized counting: a token bucket in shared Redis (or limiting at the API gateway)", "Log every request in PostgreSQL and `COUNT(*)` before each request"]
+explanation = '''The counter must be shared across all instances/workers. An in-process dict allows up to 6 × number of workers times the limit; splitting evenly at 17/minute is wrong when the LB is uneven or the instance count changes; COUNT(*) on PostgreSQL per request puts heavy load on the primary DB.'''
+
+[questions.python-backend-lv013]
+prompt = '''Which practices are anti-patterns once a Python backend codebase grows to 10+ people?'''
+options = ["Business logic written directly in route handlers, calling the DB right there", "Module-level globals used as a cache/state shared between requests", "Every module reads environment variables its own way", "Using Pydantic schemas to validate data at the boundary (request/response)", "Injecting the DB session through a dependency so it can be replaced with a fake in tests"]
+explanation = '''Logic in handlers cannot be reused from workers/CLI and is hard to test; global state differs between worker processes; scattered configuration is hard to control. Validating at the boundary and injecting dependencies are good practices.'''
+
+[questions.python-backend-lv014]
+prompt = '''10 minutes after a deploy, p99 latency is up 5×, CPU is low, and the logs report `QueuePool limit ... timed out`. The previous deploy ran fine for 2 weeks. As incident coordinator, what is the first step?'''
+options = ["Roll back to the previous version to restore service, then investigate the cause on staging/logs", "Raise `pool_size` to 500 right away in production", "Restart the database", "Attach a debugger to the production process to see which request holds connections"]
+explanation = '''The most recent change coincides with the incident and a stable previous version exists → restore first, investigate later. Increasing the pool may exceed the DB's `max_connections` and bring the DB down; restarting the DB affects every service; debugging in production prolongs the incident.'''
+
+[questions.python-backend-lv015]
+prompt = '''A FastAPI backend serves 3 client teams (web, iOS, Android). API changes often break mobile apps already released. Which systemic measure is most effective?'''
+options = ["Send a new Postman collection whenever the API changes", "Generate OpenAPI from FastAPI, diff the schema against the previous version in CI to block breaking changes, generate clients from the schema, and version when a break is unavoidable", "Write wiki docs and remind everyone to read them", "Forbid API changes"]
+explanation = '''A machine-readable contract plus automated checks in CI catch problems before merge; old mobile apps stay in use for a long time, so versioning is needed. Manual docs go stale quickly; forbidding changes stalls the product.'''
+
+[questions.python-backend-lv016]
+prompt = '''Fill in the terms:
+
+- The zero-downtime DB migration pattern has three phases: `{{blank}}` → migrate → contract.
+- Enabling a new feature for 5% → 25% → 100% of users without redeploying, thanks to a feature `{{blank}}`.
+'''
+explanation = '''Expand/contract keeps backward compatibility during rolling deploys; feature flags separate deploying from releasing and allow a quick switch-off during incidents.'''
+
+[questions.python-backend-lv017]
+prompt = '''A SaaS has 200 small tenants and 2 large tenants that account for 60% of the load; the infrastructure team is 2 people. Which data design is reasonable?'''
+options = ["A separate database per tenant from day one", "A shared schema with a `tenant_id` column (indexed, mandatory filtering via a dependency), ready to move the 2 large tenants to their own DB/pool when needed", "Shared tables without a tenant column, distinguishing tenants by subdomain at the application layer", "A separate service per tenant"]
+explanation = '''A shared schema minimizes operating cost for the many small tenants; centralized `tenant_id` filtering via a dependency reduces the risk of cross-tenant data leaks; isolating the large tenants solves the noisy-neighbor problem. 200 separate databases are too heavy for a 2-person team; without a tenant column data cannot be isolated.'''
+
+[questions.python-backend-lv018]
+prompt = '''This is the third PR this month that calls `requests.get(...)` inside `async def`, blocking the event loop. What is the most sustainable fix?'''
+options = ["The lead fixes those PRs personally to save time", "Ban `async def` across the codebase", "Explain the cause in the review, enable a lint rule that detects blocking calls in async code (e.g. Ruff's ASYNC rules) in CI, and add a guideline with replacement examples (httpx.AsyncClient)", "Mention it in the team meeting"]
+explanation = '''Turning the lesson into an automated check stops the bug before it reaches review, while the explanation and guideline help newcomers understand why. Fixing it yourself does not transfer knowledge; banning async throws away legitimate benefits; verbal reminders are easily forgotten.'''
+
+[questions.python-backend-lv019]
+prompt = '''The team proposes moving a running service from synchronous SQLAlchemy to SQLAlchemy async + asyncpg. Which risks should be assessed before you agree?'''
+options = ["Relationship lazy loading no longer happens implicitly; accessing an attribute may fail if it was not loaded", "Session/transaction lifecycles must be reviewed for every request", "The test suite and fixtures must run with an event loop", "Performance will certainly improve many times over, so there is no need to measure", "There is no need to review the connection pool configuration"]
+explanation = '''Moving to async changes how relationships load, how sessions are managed and how tests are written. Performance gains depend on the workload and must be measured; the number of concurrent connections usually changes, so the pool needs reviewing.'''
+
+[questions.python-backend-lvc04]
+title = "Percentage rollout"
+prompt = '''You are standardizing how the team rolls out features. Write in_rollout(flag, user_id, percent) that returns True if the user is in the group for which the feature is enabled.
+
+Requirements:
+- percent is an integer 0..100; out of range (or not an int) raises ValueError.
+- The result is **stable** across processes and restarts: use hashlib (e.g. sha256 of "flag:user_id"), not hash(), which has a random salt.
+- **Monotonic**: a user in the 10% group stays in the group when it grows to 30%.
+- Each flag buckets users independently (the same user can be in one flag but not another).
+- 0% enables nobody, 100% enables everybody.'''
+explanation = '''A fixed bucket per (flag, user) pair makes rollouts stable and monotonic; including the flag in the hashed string keeps experiments from always hitting the same group of users.'''
+hints = ['Hash the string f"{flag}:{user_id}" with hashlib.sha256 and take part of the hexdigest as an integer.', "Map that number to a bucket 0..99 with % 100; the user is enabled when bucket < percent — this condition is naturally monotonic."]
+
+[questions.python-backend-lv020]
+prompt = '''One of three coroutines raises `TimeoutError` after 1 second; the other two run for 10 seconds. How do the following two approaches behave differently?
+
+```python
+# A
+await asyncio.gather(a(), b(), c())
+
+# B
+async with asyncio.TaskGroup() as tg:
+    tg.create_task(a()); tg.create_task(b()); tg.create_task(c())
+```
+'''
+options = ["Exactly the same: both cancel the remaining tasks", "A raises immediately but the other two tasks keep running in the background; B cancels the remaining tasks and then raises an `ExceptionGroup`", "A waits the full 10 seconds before raising; B raises right after 1 second", "B ignores the error, A raises it"]
+explanation = '''`gather` (with the default `return_exceptions=False`) propagates the first error but does not cancel the other awaitables; `TaskGroup` (3.11+) cancels sibling tasks and collects errors into an `ExceptionGroup`, preventing orphaned tasks from continuing to use resources.'''
+
+[questions.python-backend-lv021]
+prompt = '''An `async def` endpoint must compute a perceptual hash of an uploaded image (pure Python, ~800 ms of CPU). Which approach does not block the event loop and actually uses multiple cores on CPython with the GIL?'''
+options = ["Call the function directly inside `async def`", "`await asyncio.to_thread(compute, data)`", "`await loop.run_in_executor(process_pool, compute, data)` with a pre-created `ProcessPoolExecutor` (or push it to a worker queue)", "Add `await asyncio.sleep(0)` between computation steps"]
+explanation = '''A process pool runs CPU-bound code in another process, unconstrained by the GIL and without blocking the loop. `to_thread` frees the loop, but pure Python code still competes with the loop for the GIL; `sleep(0)` only splits up the blocking time without reducing total CPU.'''
+
+[questions.python-backend-lv022]
+prompt = '''Choose the correct statements about the GIL in CPython.'''
+options = ["Threads are still useful for I/O-bound work because the GIL is released while waiting on I/O", "Pure Python CPU-bound code running on many threads is not significantly faster on a CPython build with the GIL", "C libraries (e.g. numpy, hashlib on large data) can release the GIL while computing", "Since Python 3.13 there is an optional free-threaded build that can disable the GIL", "Because of the GIL, multithreaded code never has race conditions"]
+explanation = '''The GIL only protects the interpreter's internal state; it does not make your multi-step operations (read–modify–write) atomic, so you still need a `Lock` for shared data.'''
+
+[questions.python-backend-lv023]
+prompt = '''You want every log line in an async FastAPI service to automatically include the current request's `request_id`. Where should `request_id` be stored?'''
+options = ["A module-level global", "`threading.local()`", "A `contextvars.ContextVar` set in middleware", "An attribute of `app`"]
+explanation = '''Each asyncio task gets its own copy of the context, so a `ContextVar` isolates values between requests interleaved on the same thread. `threading.local` is shared by every coroutine on the event loop thread; globals and app attributes get overwritten by other requests.'''
+
+[questions.python-backend-lv024]
+prompt = '''Two concurrent requests run the following code for the same account, and the balance sometimes goes negative. What is the most reliable fix?
+
+```python
+balance = db.execute("SELECT balance FROM accounts WHERE id = ?", (aid,)).fetchone()[0]
+if balance >= amount:
+    db.execute("UPDATE accounts SET balance = ? WHERE id = ?", (balance - amount, aid))
+    db.commit()
+```
+'''
+options = ["Add `time.sleep(0.01)` between SELECT and UPDATE", "Merge the check and the update into one statement: `UPDATE accounts SET balance = balance - ? WHERE id = ? AND balance >= ?`, then check `rowcount`", "Read the balance again before the UPDATE", "Use a `threading.Lock` inside the process"]
+explanation = '''This is a lost update / check-then-act. A conditional UPDATE lets the DB check and write atomically (or lock the row with `SELECT ... FOR UPDATE` on PostgreSQL). An in-process lock does not help with multiple workers/instances; re-reading still leaves a gap.'''
+
+[questions.python-backend-lv025]
+prompt = '''An endpoint returns 50 orders with customer names. The SQL log shows 51 queries per request.
+
+```python
+orders = session.scalars(select(Order).limit(50)).all()
+return [{"id": o.id, "customer": o.customer.name} for o in orders]
+```
+
+What is the right fix?
+'''
+options = ["Put a cache in front of the endpoint", "Preload the relationship: `select(Order).options(selectinload(Order.customer))` (or `joinedload`)", "Increase the connection pool", "Convert the endpoint to `async def`"]
+explanation = '''This is N+1: every `o.customer` triggers a lazy query. Eager loading brings it down to 1–2 queries. A cache hides the symptom; the pool and async do not reduce the number of queries.'''
+
+[questions.python-backend-lv026]
+prompt = '''A service verifies RS256-signed JWTs with a public key. Which library call is safest against algorithm-confusion attacks (e.g. a forged token with `alg: HS256` or `none`)?'''
+options = ["Read `alg` from the token header and pass it to the decode function", "`jwt.decode(token, public_key, algorithms=[\"RS256\"])` — fix the list of algorithms on the server side", "Skip signature verification and only check `exp`", "Try every algorithm the library supports in turn"]
+explanation = '''The algorithm must be decided by the server. Trusting `alg` from the token lets an attacker use the (public) public key as an HMAC secret or drop the signature entirely.'''
+
+[questions.python-backend-lv027]
+prompt = '''An endpoint lets users register a webhook URL that the server will POST to. Which measures help prevent SSRF?'''
+options = ["Allow only the `https` scheme", "Resolve the hostname and block private/loopback/link-local addresses (e.g. 127.0.0.1, 10.0.0.0/8, 169.254.169.254)", "Do not follow redirects automatically, or re-check the destination after each redirect", "Set a timeout and limit the response size", "Checking that the URL string does not contain `localhost` is enough"]
+explanation = '''String checks are easy to bypass (numeric IPs, DNS pointing at 127.0.0.1, redirects). You need to check the real address after resolution and control redirects and timeouts.'''
+
+[questions.python-backend-lv028]
+prompt = '''Flask runs behind a single nginx doing TLS termination. `url_for(..., _external=True)` produces `http://` and `request.remote_addr` is always nginx's IP. What is the right fix?'''
+options = ["Read the `X-Forwarded-For` header directly wherever the IP is needed", "`app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)` — the numbers equal the number of trusted proxies", "`ProxyFix(app.wsgi_app, x_for=10)` to be safe", "Setting `PREFERRED_URL_SCHEME = 'https'` is enough, including for the IP"]
+explanation = '''ProxyFix only trusts the declared number of proxies. Setting it higher than the real number of proxies lets clients spoof `X-Forwarded-For`; reading the header manually everywhere is error-prone and also spoofable.'''
+
+[questions.python-backend-lv029]
+prompt = '''A `get_session()` dependency uses `yield session`. Where should commit/rollback go so that a failed request leaves no partial changes?'''
+options = ["Commit right before `yield`", "Wrap `yield` in `try/except/finally`: on error, roll back and re-raise; `finally` closes the session; commit in the service when the business operation completes (or after `yield` when there is no error)", "No commit is needed because the session commits automatically when closed", "Commit in middleware for every request, including GET"]
+explanation = '''The code after `yield` runs once the endpoint finishes, so it is the place to clean up and roll back on exceptions. Committing before `yield` is pointless; a SQLAlchemy session does not commit on close; blanket commits in middleware hide transaction boundaries.'''
+
+[questions.python-backend-lv030]
+prompt = '''On every request, an endpoint creates a new `httpx.AsyncClient()` to call a partner API. Under high load there are many TLS handshakes and file descriptors run out. What is a better design?'''
+options = ["Create one shared `AsyncClient` in the app's `lifespan` (closed on shutdown), configure timeouts and connection limits, inject it via a dependency", "Use synchronous `requests` instead", "Create the client at module level and never close it", "Add `await asyncio.sleep(0.1)` after each request"]
+explanation = '''A shared client keeps the connection pool and keep-alive; `lifespan` ties the client's lifecycle to the app so it closes cleanly on shutdown. `requests` blocks the event loop; a global client that is never closed is hard to test and leaks resources on reload.'''
+
+[questions.python-backend-lv031]
+prompt = '''Which signs indicate that a FastAPI worker's event loop is being blocked by blocking code?'''
+options = ["Every endpoint on that worker slows down together, even `/health`, which does nothing", "With asyncio debug mode on you see warnings like `Executing <Task ...> took 1.2 seconds`", "One CPU core is at 100% while the number of requests completed per second drops", "Only the endpoint that calls the DB is slow; other endpoints remain fast"]
+explanation = '''When the loop is blocked, every coroutine on that loop must wait, so latency rises across the board. If only one endpoint is slow, it is more likely a slow external dependency than a blocked loop.'''
+
+[questions.python-backend-lv032]
+prompt = '''A mobile app retries `POST /payments` on flaky networks, sometimes creating two transactions. What is the server-side solution?'''
+options = ["Prevent the client from retrying", "Require an `Idempotency-Key` header; store the key (unique constraint) along with the processing result, and return the stored result for requests with a duplicate key", "Compare amount and time within 5 seconds to guess duplicates", "Switch to `PUT /payments`"]
+explanation = '''An idempotency key generated by the client for each operation, plus a unique constraint in the DB, guarantees it is processed only once even if two requests arrive simultaneously. Guessing by time/amount will block legitimate transactions; changing the method does not create idempotency by itself.'''
+
+[questions.python-backend-lv033]
+prompt = '''Flask runs on Gunicorn with 4 sync workers (1 thread per worker). Each request calls an external API taking ~2 seconds, and the CPU is almost idle. What is the estimated maximum throughput of one instance?'''
+options = ["About 2 requests/second", "About 4 requests/second", "About 400 requests/second because the CPU is idle", "Unlimited because I/O costs no CPU"]
+explanation = '''Each sync worker handles only one request at a time: 4 workers ÷ 2 seconds ≈ 2 req/s. To increase it you need more threads (gthread), more workers or an async model — and a timeout on the external call.'''
+
+[questions.python-backend-lv034]
+prompt = '''Product configuration data is read very often and changes a few times a day; the service runs 8 workers on 3 instances. Compare an in-process cache (`functools.lru_cache`/dict) with Redis and state your choice.'''
+keywords = [["process", "worker"], ["invalidat"], ["ttl", "expir"], ["network", "latency"], ["consisten"]]
+model_answer = '''An in-process cache is fastest (no network hop), but every worker keeps its own copy: 8 workers × 3 instances is 24 copies, invalidation when the data changes is very hard, data is less consistent between requests, and RAM usage multiplies. lru_cache also has no TTL. Redis is shared, so you invalidate in one place and get better consistency, but it adds network latency and one more dependency to operate. For data that changes a few times a day you can combine them: an in-process cache with a short TTL (e.g. 30–60 seconds) in front of Redis or the DB, accepting stale data within the TTL window; if changes must take effect immediately, publish an invalidation event.'''
+explanation = '''The answer should mention the number of cache copies per worker/process, the invalidation and TTL problem, the network latency cost of Redis, and the acceptable level of consistency.'''
+
+[questions.python-backend-lv035]
+prompt = '''Python 3.11+: bound the total time and run tasks in a structured way (if one task fails, cancel the rest):
+
+```python
+async with asyncio.{{blank}}(2.0):
+    async with asyncio.{{blank}}() as tg:
+        tg.create_task(fetch_price())
+        tg.create_task(fetch_stock())
+```
+'''
+explanation = '''`asyncio.timeout()` cancels the inner block when the deadline passes and raises `TimeoutError`; `TaskGroup` guarantees no task is left running in the background when the block exits.'''
+
+[questions.python-backend-lv036]
+prompt = '''A small app uses SQLite with 4 Gunicorn workers and occasionally hits `sqlite3.OperationalError: database is locked` on writes. What is a reasonable approach?'''
+options = ["Enable WAL (`PRAGMA journal_mode=WAL`), set a `timeout`/busy timeout on connect, keep write transactions short; if concurrent writes grow a lot, move to PostgreSQL", "Open one global connection shared by all worker processes", "Catch the error and skip the write", "Increase the number of workers to write faster"]
+explanation = '''SQLite allows only one writer at a time; WAL lets reads run alongside writes, and a busy timeout waits instead of failing immediately. A connection cannot be shared across processes; ignoring the error loses data; more workers mean more contention.'''
+
+[questions.python-backend-lvc03]
+title = "Retry with exponential backoff"
+prompt = '''Write retry(fn, attempts, base_delay, sleep, retry_on=(Exception,)) that calls fn() and returns its result.
+
+- If fn() raises an exception in retry_on and attempts remain, call sleep(base_delay * 2**i) (i is the index of the attempt that just failed, starting from 0) and try again.
+- Exceptions not in retry_on are raised immediately, without sleeping.
+- When attempts run out, re-raise the last exception (no sleep after the final attempt).
+- attempts < 1 raises ValueError.
+- sleep is passed in so tests do not have to actually wait.'''
+explanation = '''Increasing backoff reduces pressure on a failing service; retrying only transient errors (retry_on) and injecting sleep keeps tests fast and deterministic. In production, add random jitter and retry only idempotent operations.'''
+hints = ["Use a for i in range(attempts) loop with try/except retry_on.", "On the last attempt use a bare raise to re-raise the exact exception; on earlier attempts call sleep(base_delay * 2 ** i)."]
+
+[questions.python-backend-lv037]
+prompt = '''With the endpoint below, what does the request `GET /items?limit=500` get?
+
+```python
+@app.get("/items")
+def list_items(limit: int = Query(default=20, ge=1, le=100)):
+    ...
+```
+'''
+options = ["200 with 100 items (automatically clamped to `le`)", "422 with error details because `limit` exceeds `le=100`", "400 Bad Request without details", "200 with 500 items because `Query` is only for documentation"]
+explanation = '''The `ge`/`le` constraints are checked by Pydantic; a violation returns 422 like any validation error. FastAPI does not clamp values.'''
+
+[questions.python-backend-lv038]
+prompt = '''A Flask API returns the default HTML page on 404, but the mobile client needs JSON. What is the cleanest approach?'''
+options = ["Wrap every view in try/except", "Register `@app.errorhandler(404)` (or for `HTTPException`) returning `{\"error\": ...}, 404`", "Check that `request.path` exists before every route", "Turn every 404 into 200 with `ok: false`"]
+explanation = '''A central error handler converts every HTTP error into consistent JSON; returning 200 for errors breaks HTTP semantics and caching.'''
+
+[questions.python-backend-lv039]
+prompt = '''You write a test using `app.dependency_overrides[get_db] = fake_db`. Which statements are true?'''
+options = ["The override applies to every endpoint depending on `get_db`, including through sub-dependencies", "The override should be removed after the test (e.g. `app.dependency_overrides.clear()` in a fixture) so it does not leak into other tests", "The dict key is the original dependency function itself, not a string name", "Overrides only take effect when running real uvicorn, not with `TestClient`"]
+explanation = '''`dependency_overrides` is a global dict on the app keyed by the original function; `TestClient` goes through the same mechanism, so overrides work in tests.'''
+
+[questions.python-backend-lv040]
+prompt = '''You want to add an `X-Process-Time` header to every FastAPI response. What is the right way?'''
+options = ["Add timing code to every endpoint", "`@app.middleware(\"http\")` taking `(request, call_next)`, timing around `await call_next(request)` and then attaching the header to the response", "Use `BackgroundTasks` to attach the header", "Set the header in `response_model`"]
+explanation = '''HTTP middleware wraps every request; `call_next` returns the response so you can modify headers before it is sent. BackgroundTasks run after the response has already been sent.'''
+
+[questions.python-backend-lv041]
+prompt = '''Generate a secure password-reset token (without using the `random` module):
+
+```python
+import {{blank}}
+token = {{blank}}.token_urlsafe(32)
+```
+'''
+explanation = '''`secrets` uses the operating system's cryptographically secure randomness source; `random` is predictable, so it must not be used for tokens.'''
+
+[questions.python-backend-lv042]
+prompt = '''Importing 50,000 CSV rows into SQLite takes several minutes because each row does `execute(...)` and then `commit()`. What is the most reasonable improvement?'''
+options = ["Concatenate everything into one SQL string with an f-string", "Use `executemany` with placeholders inside one transaction, committing once (or in large batches)", "Open a new connection for each row", "Run 8 writer threads in parallel"]
+explanation = '''Each commit forces a write to disk; grouping into one transaction greatly reduces the cost and stays safe thanks to placeholders. SQLite has a single writer, so parallel threads do not help.'''
+
+[questions.python-backend-lv043]
+prompt = '''Explain the difference between HTTP 401 and 403, and how to return each correctly in a FastAPI API that uses OAuth2 bearer tokens.'''
+keywords = [["401"], ["403"], ["authentication", "authenticated"], ["authorization", "permission"], ["WWW-Authenticate"]]
+model_answer = '''401 Unauthorized means authentication failed: the token is missing, invalid or expired; it should come with the header WWW-Authenticate: Bearer so the client knows it must log in again. 403 Forbidden means we know who the user is, but they lack the permission (authorization) to perform the action. In FastAPI, the get_current_user dependency raises HTTPException(401, headers={"WWW-Authenticate": "Bearer"}) when the token is invalid; a role-checking dependency raises HTTPException(403) when the user lacks permission.'''
+explanation = '''You need to clearly separate authentication (401, with WWW-Authenticate) from authorization (403), and point out where the errors are raised in dependencies.'''
+
+[questions.python-backend-lv044]
+prompt = '''In `create_app()`, you want to read configuration from environment variables such as `FLASK_SECRET_KEY` and `FLASK_DATABASE_URL` without writing `os.environ` for every key. What do you use?'''
+options = ["`app.config.from_prefixed_env()`", "`app.config.from_pyfile('.env')`", "`app.run(env=True)`", "`app.config.update(os.environ)` to load every environment variable"]
+explanation = '''`from_prefixed_env()` (Flask 2.1+) loads variables with the `FLASK_` prefix into config, with the prefix stripped from the names. Loading all of `os.environ` pulls unrelated variables into config.'''
+
+[questions.python-backend-lvc02]
+title = "Extract a bearer token from a header"
+prompt = '''Write parse_bearer(header) that takes the Authorization header value (possibly None) and returns the token, or None if it is invalid.
+
+- Valid when there are exactly two whitespace-separated parts: the scheme "Bearer" (case-insensitive) and a non-empty token.
+- Strip extra leading/trailing whitespace.
+- Another scheme (e.g. "Basic"), a missing token, or more than two parts → None.'''
+explanation = '''Header parsing at the system boundary must be strict: accept exactly one form and return None for everything else so the dependency returns 401.'''
+hints = ["str.split() without arguments splits on any whitespace and drops empty parts.", "Check len(parts) == 2 and parts[0].lower() == 'bearer'."]
+
+[questions.python-backend-lv045]
+prompt = '''For the URL `/search?q=python&page=2`, how do you get the value of `q` in a Flask view?'''
+explanation = '''`request.args` holds the query string; `request.form` holds form data in the body; `request.json` is the JSON body.'''
+
+[questions.python-backend-lv046]
+prompt = '''A route is declared as `@app.route('/login')` (without `methods`). What does sending `POST /login` return?'''
+explanation = '''By default a route only accepts GET (plus HEAD and OPTIONS). You need `methods=['GET', 'POST']` or `@app.post`.'''
+
+[questions.python-backend-lv047]
+prompt = '''Declare a POST-only route with Flask 2.0+'s shorthand decorator:
+
+```python
+@app.{{blank}}("/todos")
+def create_todo():
+    ...
+```
+'''
+explanation = '''Flask has `@app.get`, `@app.post`, `@app.put`, `@app.delete` and `@app.patch`, equivalent to `route(..., methods=[...])`.'''
+
+[questions.python-backend-lv048]
+prompt = '''In the endpoint below, what kind of parameter is `q`?
+
+```python
+@app.get("/items/{item_id}")
+def read_item(item_id: int, q: str | None = None):
+    ...
+```
+'''
+options = ["Path parameter", "Query parameter, optional", "Request body", "Header"]
+explanation = '''`item_id` appears in the path, so it is a path param; `q` is a simple type, not in the path, and has a default value → an optional query param.'''
+
+[questions.python-backend-lv049]
+prompt = '''Endpoint `def list_users(skip: int = 0, limit: int = 10)`. Calling `GET /users?limit=5` gives which values?'''
+options = ["skip=0, limit=5", "skip=5, limit=10", "skip=None, limit=5", "422 error because skip is missing"]
+explanation = '''Parameters with default values are optional; values passed through the query string are converted to `int`.'''
+
+[questions.python-backend-lv050]
+prompt = '''Return 404 when the item is not found:
+
+```python
+from fastapi import FastAPI, {{blank}}
+
+@app.get("/items/{item_id}")
+def read_item(item_id: int):
+    if item_id not in items:
+        raise {{blank}}(status_code=404, detail="Item not found")
+    return items[item_id]
+```
+'''
+explanation = '''`raise HTTPException(...)` stops processing and returns JSON `{"detail": ...}` with the corresponding status code.'''
+
+[questions.python-backend-lv051]
+prompt = '''After running a FastAPI app at `http://127.0.0.1:8000`, which path do you open to see the auto-generated Swagger UI?'''
+explanation = '''FastAPI automatically generates `/docs` (Swagger UI), `/redoc`, and the JSON schema at `/openapi.json`.'''
+
+[questions.python-backend-lv052]
+prompt = '''With the model below as the request body, which JSON payloads are valid?
+
+```python
+class User(BaseModel):
+    email: str
+    age: int | None = None
+```
+'''
+options = ['`{"email": "a@b.com"}`', '`{"email": "a@b.com", "age": 30}`', '`{"age": 30}`', '`{"email": "a@b.com", "age": "thirty"}`']
+explanation = '''`email` is required; `age` is optional, but if present it must be convertible to `int` — a word string returns 422.'''
+
+[questions.python-backend-lv053]
+prompt = '''Inside `async def`, what does `data = await fetch()` do?'''
+options = ["Creates a new thread to run `fetch`", "Suspends the current coroutine until `fetch()` finishes, while the event loop runs other work in the meantime", "Blocks the whole program until it finishes", "Runs `fetch` in another process"]
+explanation = '''`await` yields control to the event loop; that is how a single thread can serve many requests waiting on I/O.'''
+
+[questions.python-backend-lv054]
+prompt = '''What does the following code print?
+
+```python
+async def get_number():
+    return 42
+
+result = get_number()
+print(type(result).__name__)
+```
+'''
+explanation = '''Calling an `async` function without `await` only creates a coroutine object without running the body; Python also warns `coroutine ... was never awaited`.'''
+
+[questions.python-backend-lv055]
+prompt = '''The project has a `.env` file containing `SECRET_KEY` and the DB password. What is the right thing to do?'''
+options = ["Commit `.env` so teammates can share it", "Add `.env` to `.gitignore` and commit a template `.env.example` without real values", "Put the secrets directly in the code for easier deploys", "Send `.env` in the team chat"]
+explanation = '''Secrets must not live in git (git history keeps them forever). The template shows which variables are needed; real values come from environment variables or a secret manager.'''
+
+[questions.python-backend-lv056]
+prompt = '''An endpoint that successfully creates a new resource (e.g. `POST /users`) should return which status code?'''
+explanation = '''201 indicates a new resource was created; 204 is used for success without a body.'''
+
+[questions.python-backend-lv057]
+prompt = '''Read a secret from an environment variable, returning `None` if it is not set (without raising `KeyError`):
+
+```python
+import os
+secret = os.environ.{{blank}}("SECRET_KEY")
+```
+'''
+explanation = '''`os.environ.get(name)` returns `None` when missing; `os.environ[name]` raises `KeyError` — useful when you want the app to fail fast if required configuration is missing.'''
+
+[questions.python-backend-lv058]
+prompt = '''Which statement queries SQLite safely with a user-supplied `name`?'''
+explanation = '''The `?` placeholder lets the driver pass the value separately from the SQL statement. String concatenation in any form opens the door to SQL injection.'''
+
+[questions.python-backend-lv059]
+prompt = '''A script runs an `INSERT` with sqlite3 without errors, but opening the DB in another tool shows no new row. What is the most common cause?'''
+options = ["SQLite does not support INSERT", "Forgetting to call `connection.commit()` (or not using `with connection:`) before closing", "`cursor.close()` must be called twice", "Table names must be uppercase"]
+explanation = '''sqlite3 implicitly opens a transaction before write statements; without a commit, the changes are discarded when the connection closes.'''
+
+[questions.python-backend-lv060]
+prompt = '''What is the command `flask --app app run --debug` suitable for?'''
+options = ["Running in production because it auto-reloads", "Development on your own machine: auto-reload on code changes and a debugger on errors; production uses a WSGI server such as gunicorn", "Running automated tests", "Building an executable"]
+explanation = '''The interactive debugger allows running arbitrary code on the server; never enable it in production.'''
+
+[questions.python-backend-lv061]
+prompt = '''What does the following test check?
+
+```python
+def test_home(client):
+    response = client.get("/")
+    assert response.status_code == 200
+```
+'''
+options = ["A real server is running on port 5000", "Sends a GET `/` request to the app through the test client (no network port needed) and checks for status code 200", "The browser displays the home page", "The database contains data"]
+explanation = '''`app.test_client()` calls the WSGI application directly inside the test process — fast and no server needed.'''
+
+[questions.python-backend-lv062]
+prompt = '''Two endpoints both need pagination parameters. Which version uses FastAPI's dependency injection correctly?
+
+```python
+def pagination(skip: int = 0, limit: int = 10):
+    return {"skip": skip, "limit": limit}
+```
+'''
+options = ["`def list_items(p = pagination()):`", "`def list_items(p: dict = Depends(pagination)):`", "`def list_items(p: pagination):`", "Call `pagination()` at the start of each endpoint"]
+explanation = '''`Depends(pagination)` makes FastAPI call the function for each request and read `skip` and `limit` from the query automatically. Calling `pagination()` as a default value runs it only once, when the function is defined.'''
+
+[questions.python-backend-lv063]
+prompt = '''Which values may a Flask view return?'''
+options = ['The string `"Hello"`', 'A dict `{"ok": True}` (automatically converted to JSON)', 'A tuple `({"id": 1}, 201)`', "The integer `42` on its own"]
+explanation = '''Flask accepts str, dict/list (JSON), a tuple (body, status[, headers]) or a Response; a bare integer causes a `TypeError`.'''
+
+[questions.python-backend-lv064]
+prompt = '''How do you make the FastAPI endpoint `POST /items` return 201 instead of the default 200?'''
+options = ['`@app.post("/items", status_code=201)`', "`return 201`", '`@app.post("/items", code=201)`', "Rename the function to `create_201`"]
+explanation = '''The `status_code` parameter on the decorator sets the default code and also shows up in the OpenAPI docs.'''
+
+[questions.python-backend-lvc01]
+title = "Paginate a list"
+prompt = '''Write paginate(items, page, size) for a list endpoint. page starts at 1.
+
+Return a dict {"items": <items on the page>, "page": page, "total_pages": <number of pages>}.
+- total_pages = the number of pages needed to hold all items (empty list → 0).
+- page greater than total_pages → items is an empty list.
+- page < 1 or size < 1 → raise ValueError.'''
+explanation = '''Python slicing does not fail when out of range, so a page past the end naturally returns empty; validate page/size at the boundary so the endpoint returns 422/400 instead of odd results.'''
+hints = ["The start index is (page - 1) * size; out-of-range slicing returns an empty list.", "Round the division up: (n + size - 1) // size."]

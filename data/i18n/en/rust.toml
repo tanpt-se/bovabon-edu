@@ -40,6 +40,73 @@ prompt = "Why does `fn longest<'a>(x: &'a str, y: &'a str) -> &'a str` need a li
 options = ["To allocate both strings on the heap", "To describe that the returned reference is valid no longer than the related input references", "To make the compiler extend the inputs' lifetimes", "To require both strings to have the same contents"]
 explanation = "A lifetime annotation describes relationships among references; it does not change how long the underlying values actually live."
 
+[questions.rust-lv018]
+prompt = '''Does this code compile?
+
+```rust
+let s1 = String::from("hi");
+let s2 = s1;
+println!("{}", s1);
+```'''
+options = ["No, because `s1` was moved to `s2`", "Yes, it prints `hi`", "Yes, but it prints an empty string", "No, because `mut` is missing"]
+explanation = "Assigning a String moves ownership, so `s1` is no longer valid. Use `s1.clone()` or borrow `&s1` if both uses are needed."
+
+[questions.rust-lv019]
+prompt = '''What does this code print?
+
+```rust
+let x = 5;
+let y = x;
+println!("{} {}", x, y);
+```'''
+options = ["It prints `5 5` because i32 is Copy", "A compile error because x was moved", "It prints `5 0`", "It panics at runtime"]
+explanation = "Integer types implement Copy, so assignment copies the value and `x` remains usable."
+
+[questions.rust-lv020]
+prompt = "To change a value after declaring it, a variable needs the keyword: `let {{blank}} count = 0;`"
+explanation = "Rust variables are immutable by default; `mut` allows reassignment or mutation."
+
+[questions.rust-lv021]
+prompt = '''What does this code print?
+
+```rust
+let x = 5;
+let x = x + 1;
+{
+    let x = x * 2;
+    println!("{}", x);
+}
+println!("{}", x);
+```'''
+options = ["`12` then `6`", "`12` then `12`", "`6` then `6`", "A compile error because x is not mutable"]
+explanation = "Shadowing creates a new binding with the same name. The binding inside the block shadows the outer one only until the block ends."
+
+[questions.rust-lv022]
+prompt = "Which parameter type is most flexible for a function that only reads text and should accept both a `String` and a string literal?"
+options = ["`&str`", "`String`", "`&mut String`", "`Vec<char>`"]
+explanation = "A `String` deref-coerces to `&str`, and a literal is already `&str`; this type accepts both without taking ownership."
+
+[questions.rust-lv037]
+prompt = '''Why does this code fail to compile?
+
+```rust
+let mut v = vec![1, 2, 3];
+let first = &v[0];
+v.push(4);
+println!("{}", first);
+```'''
+options = ["`push` needs a mutable borrow while `first` (an immutable borrow) is still used afterward", "Vec does not allow pushing after a read", "`first` must be declared `mut`", "`v[0]` returns a value rather than a reference"]
+explanation = "`push` may reallocate the vector and invalidate the old reference, so the borrow checker prevents it. Copy the value first (`let first = v[0];`) or use `first` before pushing."
+
+[questions.rust-lv044]
+prompt = '''Why does this signature fail to compile without an explicit lifetime?
+
+```rust
+fn pick(a: &str, b: &str) -> &str
+```'''
+options = ["There are two input references, so lifetime elision cannot determine which one the result borrows from", "A function returning &str always needs `'static`", "Two parameters cannot both have type &str", "The parameters need `mut`"]
+explanation = "Elision applies when there is one input lifetime or a `&self` receiver. With two inputs, write `<'a>` to express the relationship between them and the returned reference."
+
 [questions.rs-017]
 prompt = "Select all correct statements about borrowing."
 options = ["Multiple immutable references may exist at the same time", "A mutable reference to data cannot be used at the same time as another reference to that data", "A reference cannot outlive the data it points to", "Every reference transfers ownership"]
@@ -60,6 +127,26 @@ title = "Choose the longer string with a lifetime"
 prompt = "Write `longest<'a>(left: &'a str, right: &'a str) -> &'a str`. Return the string with the greater byte length; if their lengths are equal, return `left`. Do not allocate a new string."
 hints = ["Use the same lifetime parameter `'a` for both inputs and the returned reference.", "Compare lengths with `str::len`; do not return a newly allocated `String`."]
 explanation = "The lifetime expresses that the result is borrowed from one of the two inputs and cannot outlive them."
+
+[questions.rust-lv036]
+prompt = "To print a struct with `println!(\"{:?}\", user)`, what is the quickest approach?"
+options = ["Add `#[derive(Debug)]` to the struct", "Manually implement the `Display` trait", "Change the struct to a tuple", "Call `user.to_string()`"]
+explanation = "`{:?}` uses the `Debug` trait, which can be derived; `{}` requires `Display`."
+
+[questions.rust-lv041]
+prompt = "The function `fn largest<T>(items: &[T]) -> &T` compares items with `>`. Which trait bound is needed?"
+options = ["`T: PartialOrd`", "`T: Display`", "`T: Default`", "`T: Copy`"]
+explanation = "The `>` operator comes from `PartialOrd`. `Copy` is only needed if returning a value instead of a reference."
+
+[questions.rust-lv048]
+prompt = "Compared with `fn render(items: &[Box<dyn Shape>])`, what is the key difference in `fn render<S: Shape>(items: &[S])`?"
+options = ["The generic is monomorphized (static dispatch, potentially inline), but every element must have the same type S and binary size may increase", "The generic allows different shape types in the same slice", "Trait objects are faster because they have no vtable", "Both versions compile to identical code"]
+explanation = "This is a trade-off between speed and code size versus the heterogeneous flexibility of `dyn Trait`."
+
+[questions.rust-lv049]
+prompt = "Why can't a trait with the method `fn clone_box(&self) -> Self;` be used as `dyn Trait`?"
+options = ["Returning `Self` requires knowing the concrete type's size at compile time, which violates dyn-compatibility (object safety)", "Trait objects cannot have methods that take `&self`", "`#[derive(Clone)]` is missing", "`dyn Trait` only allows static methods"]
+explanation = "A method returning `Self` or taking generic parameters cannot be called through a vtable. One option is `where Self: Sized`; another is returning `Box<dyn Trait>`."
 
 [modules.rs-types]
 title = "Structs, enums, pattern matching & Result"
@@ -100,6 +187,35 @@ explanation = "`Option<T>` represents `Some(T)` or `None`; `Result` represents s
 prompt = "In a function returning `Result<User, AppError>`, what happens if `load_user(id)?` returns `Err`?"
 options = ["The function panics immediately", "The error is returned early and can be converted to AppError if a suitable From implementation exists", "The error is ignored and a default User is created", "The `?` operator only works with Option"]
 explanation = "The `?` operator unwraps the success case or returns the error early; the source error must be convertible to the function's error type."
+
+[questions.rust-lv023]
+prompt = "Which type does Rust use for the index and length of a `Vec`?"
+options = ["`usize`", "`i32`", "`u8`", "`f64`"]
+explanation = "`usize` has the platform's pointer width; `len()` returns it and indexing uses it."
+
+[questions.rust-lv024]
+prompt = '''What is the value of `label`?
+
+```rust
+let n = 7;
+let label = if n % 2 == 0 { "even" } else { "odd" };
+```'''
+options = ["`\"odd\"`", "`\"even\"`", "A compile error because if does not return a value", "`()`"]
+explanation = "`if` is an expression; both branches have type `&str`, so the result can be assigned directly."
+
+[questions.rust-lv025]
+prompt = "The keyword for declaring a data type with multiple variants such as `Ok` and `Err` is: `{{blank}} Status { Active, Banned }`"
+explanation = "`enum` defines a type with one of several variants; a `struct` groups fields together."
+
+[questions.rust-lv026]
+prompt = "Why does the compiler report an error when a `match` on `Option<i32>` has only a `Some(n)` arm?"
+options = ["`match` must be exhaustive, and the `None` arm is missing", "`Option` cannot be used with match", "It must be written as `Some(mut n)`", "A semicolon is missing after match"]
+explanation = "The compiler requires handling every variant. Add `None => ...`, or use `if let` if only one arm matters."
+
+[questions.rust-lv027]
+prompt = "Select the correct statements about Rust `struct`s."
+options = ["Methods are defined in an `impl` block", "A `&self` parameter lets a method read fields without taking ownership", "An associated function without `self` (such as `new`) is called with `Type::new()`", "Struct fields are public to other modules by default"]
+explanation = "Fields and methods are private outside their module by default; use `pub` to expose them."
 
 [questions.rs-018]
 prompt = "Select explicit ways to handle Option/Result without panicking when a value is absent."
@@ -195,6 +311,68 @@ let doubled: Vec<i32> = values.iter().map(|value| value * 2).collect();
 
 Common mistakes include assuming `map` ran before consuming the iterator, relying on a `HashMap` iteration order, or using a reference after its collection has changed.
 '''
+
+[questions.rust-lv028]
+prompt = '''What error occurs?
+
+```rust
+let v = Vec::new();
+v.push(1);
+```'''
+options = ["A compile error: `v` was not declared `mut`", "A panic because the Vec is empty", "No error", "An error because Vec must have a fixed size"]
+explanation = "`push` requires `&mut self`, so the binding must be `let mut v`. The element type is inferred from the pushed value."
+
+[questions.rust-lv029]
+prompt = "Given `let v = vec![1, 2, 3];`, how can you access the tenth element without panicking?"
+options = ["`v.get(9)` returns `Option<&i32>`", "`v[9]`", "`v.at(9)`", "`v.index(9).unwrap_or(0)`"]
+explanation = "`get` returns `None` when the index is out of bounds; indexing with `v[9]` panics in that case."
+
+[questions.rust-lv030]
+prompt = '''Which numbers does this loop print?
+
+```rust
+for i in 1..4 {
+    print!("{} ", i);
+}
+```'''
+options = ["`1 2 3`", "`1 2 3 4`", "`0 1 2 3`", "`2 3 4`"]
+explanation = "A range `a..b` excludes `b`; use `1..=4` to include 4."
+
+[questions.rust-lv031]
+prompt = "The macro for quickly creating a Vec with elements is: `let nums = {{blank}}[1, 2, 3];`"
+explanation = "`vec!` creates a Vec with initial values; `Vec::new()` creates an empty Vec."
+
+[questions.rust-lv038]
+prompt = "What is the most concise and correct way to count each word in a `HashMap<&str, usize>`?"
+options = ["`*counts.entry(word).or_insert(0) += 1;`", "`counts.insert(word, counts[word] + 1);`", "`counts.get_mut(word).unwrap() += 1;`", "`if counts.contains_key(word) { counts.insert(word, 1); }`"]
+explanation = "The entry API performs one lookup and creates a default value when needed. `counts[word]` panics for a missing key; `get_mut().unwrap()` can also panic, and the last option is logically incorrect."
+
+[questions.rust-lv039]
+prompt = "Select the correct statements about Rust iterators."
+options = ["Adapters such as `map` and `filter` are lazy until consumed by an operation such as `collect` or `sum`", "`iter()` yields `&T`, while `into_iter()` on a Vec takes ownership of each element", "`collect()` needs a known target type, from an annotation or turbofish", "Calling `map` on an iterator immediately creates a Vec"]
+explanation = "Iterators are lazy, so adapter chains do not allocate intermediate collections; a consumer is what drives them."
+
+[questions.rust-lv052]
+prompt = "A loop concatenating 100,000 small strings with `result = result + &s;` is slow and allocates often. What is a reasonable optimization?"
+options = ["Compute the total length, use `String::with_capacity`, then append each part with `push_str` (or use `concat`/`join`)", "Use `format!(\"{}{}\", result, s)` each iteration", "Clone result before every append", "Use `Vec<String>` and print each part"]
+explanation = "Preallocating once avoids repeated reallocations; `format!` in each iteration creates another String each time."
+
+[questions.rust-lvc02]
+title = "Extract initials from a name"
+prompt = '''Write `initials(name: &str) -> String` to return the first letter of each word (words are separated by whitespace, possibly multiple spaces), uppercased and concatenated. For example, `"nguyen van an"` → `"NVA"`. Return `""` for an empty or whitespace-only string.'''
+hints = ["`split_whitespace()` splits words and skips repeated whitespace.", "`word.chars().next()` gets the first character; `to_uppercase()` returns an iterator, so use `extend`."]
+explanation = "This exercise practices iterating over `&str`, handling the `Option` from `next()`, and building a String."
+
+[questions.rust-lvc04]
+title = "Fixed-capacity LRU cache"
+prompt = '''Implement `LruCache` storing `String -> i32` with capacity `cap` (≥ 1):
+
+- `LruCache::new(cap: usize)`.
+- `get(&mut self, key: &str) -> Option<i32>`: return the value and mark the key as recently used.
+- `put(&mut self, key: &str, value: i32)`: insert or update and mark it recently used; if capacity is exceeded, evict the least recently used key.
+- `len(&self) -> usize`.'''
+hints = ["Keep a `VecDeque<String>` for usage order: least recent at the front, most recent at the back.", "On get/put, remove the key from its old queue position and push it to the back; when over capacity, pop the front and remove that key from the map."]
+explanation = "An O(n) touch operation is sufficient for this exercise; production implementations use a linked list plus HashMap to achieve O(1)."
 
 [questions.rs-011]
 prompt = "When counting word frequencies in a HashMap, why is `*counts.entry(word).or_insert(0) += 1` useful?"
@@ -493,3 +671,241 @@ title = "Filter readings to the valid range"
 prompt = "Write `valid_readings(readings: &[Option<i32>]) -> Vec<i32>`. Return, in the original order, the readings that are present and in the inclusive range 0..=100. Skip `None`, negative values, and values greater than 100. Use pattern matching to extract the value and check the range."
 hints = ["Iterate over each `&Option<i32>` and match after dereferencing, since i32 is Copy.", "Use a binding such as `value @ 0..=100` to check the range while keeping the reading."]
 explanation = "A range pattern checks the limit during destructuring; a wildcard can skip None and values outside the range."
+
+[modules.rust-lead]
+title = "Tech Lead perspective"
+description = "Decide where Rust fits in a system, manage FFI and unsafe boundaries, workspaces and build times, error conventions, async runtimes, memory-safe code review, and team mentoring."
+lesson = '''
+### The Tech Lead's role in a Rust codebase
+At Lead level, the question is no longer "how do I write this function?" but "where should Rust be used, at what cost, and how can the team maintain quality?" Rust offers memory safety, predictable performance, and a strong type system, while bringing a learning curve, longer compile times, and a fragmented async ecosystem. Good decisions are tied to concrete constraints: team size and experience, deadlines, latency requirements, and infrastructure costs.
+
+### A decision framework: should this component use Rust?
+
+| Criterion | Rust is a good fit | Rust may not be a good fit yet |
+|---|---|---|
+| Workload | CPU-bound, low p99 latency, limited memory | Simple CRUD, purely I/O-bound |
+| Safety risk | Untrusted-data parsers, cryptography, binary processing | Internal scripts, prototypes |
+| Team | At least one or two people strong in ownership/async | No experienced developers and a tight deadline |
+| Scope | An isolated hot path, such as an extension or sidecar | Rewriting an entire stable system |
+
+A safer strategy is usually incremental: profile first, isolate the hot path in a Rust library called through FFI or a small service, add benchmarks and a fallback, and then expand if results justify it.
+
+### Unsafe and FFI boundaries
+- Put `extern` declarations and raw pointers in a `-sys` crate or a dedicated module; provide a safe wrapper above it that manages ownership (for example, `Drop` calls the C deallocation function) and converts `CString`/`CStr` explicitly.
+- Every `unsafe` block should have a `// SAFETY:` comment describing the invariant guaranteed by the caller or implementation.
+- Run Miri or a sanitizer in CI for modules containing unsafe code, and require review from two people.
+
+### Workspaces, build time, and dependencies
+- Use a Cargo workspace with one shared `Cargo.lock` and `[workspace.dependencies]` to keep versions aligned.
+- Measure before optimizing: `cargo build --timings` identifies the crates taking the most time; cache `target` and the registry in CI, and disable unnecessary default features.
+- Each new dependency adds supply-chain exposure and build cost. Check its transitive crate count, license, and advisories with community tools such as cargo-audit or cargo-deny; these are not built into Cargo.
+
+### Team conventions
+- **Errors**: libraries use typed error enums that implement `std::error::Error`; binaries can aggregate errors with `Box<dyn Error>` and add context. Never use `unwrap()` on external input.
+- **Async**: standardize on one runtime across the workspace; move heavy CPU work or synchronous I/O to a separate thread pool; do not hold a `MutexGuard` across `.await`.
+- **Public API**: follow semver. For a signature change, add a new function and mark the old one `#[deprecated]`; remove it in the next major release.
+
+### PR review checklist
+1. Are `unwrap`, `expect`, or direct indexing used on external input?
+2. Is `clone()` being used to work around the borrow checker in a hot loop?
+3. Does each `unsafe` block have a `// SAFETY:` explanation and tests?
+4. Do shared types use `Send`/`Sync` as intended, without relying on `unsafe impl`?
+5. Does a public API change break semver?
+6. Are Clippy checks clean, with tests for error branches?
+
+### A short ADR example
+> **Context**: an image-resizing function accounts for about 70% of CPU use (estimated by profiling), and the service is written in Python. **Options**: (A) add servers, (B) rewrite everything in Rust, (C) move the function into a Rust extension. **Decision**: choose C, with a feature flag and comparative benchmarks. **Consequences**: add a Rust build step to CI and assign one person to own the module; risk stays low because the Python implementation remains as a fallback.
+
+### Team-scale anti-patterns
+- Rewriting a stable system all at once simply because the team likes Rust.
+- Using `Rc<RefCell<T>>` or `Arc<Mutex<T>>` everywhere to "get past" the borrow checker, hiding a poor ownership design.
+- Mixing multiple async runtimes in one process.
+- Forbidding `clone()` outright, leaving junior developers stuck for days on code that is not a hot path; optimize when profiling identifies one.
+'''
+
+[questions.rust-lv001]
+prompt = "A six-person team runs a Python image-processing service. Profiling shows that one resize function uses most of the CPU. No one is proficient in Rust, and the deadline is six weeks. Which strategy is most reasonable?"
+options = ["Extract only the hot path into a Rust extension with benchmarks and a fallback flag for the Python version", "Rewrite the entire service in Rust within six weeks to gain performance", "Leave the code unchanged and double the number of servers indefinitely", "Rewrite in Rust but use unsafe everywhere to meet the deadline"]
+explanation = "Isolating the measured hot spot limits the learning scope and risk while providing benchmarks and a fallback. A full rewrite is too risky for an inexperienced team and a short deadline; scaling servers is only a costly temporary fix, and widespread unsafe code undermines Rust's safety benefits."
+
+[questions.rust-lv002]
+prompt = "A 40-crate workspace has a 25-minute CI pipeline, and developers are unhappy. What should the Tech Lead do first?"
+options = ["Measure with `cargo build --timings`, cache `target` and the registry in CI, then address the slowest crates (for example, unnecessary features or heavy proc macros)", "Set `opt-level = 3` for the dev profile so code runs faster", "Merge all 40 crates into one crate", "Stop running tests in CI to shorten the pipeline"]
+explanation = "Measure before optimizing; caching and removing unnecessary features or dependencies often help most. A high optimization level slows builds, merging crates can hurt incremental and parallel builds, and dropping tests trades speed for risk."
+
+[questions.rust-lv003]
+prompt = "You are drafting an unsafe-code policy for a team. Select the reasonable rules."
+options = ["Every unsafe block has a `// SAFETY:` comment that states the invariant being guaranteed", "Encapsulate unsafe behind a small safe API in a dedicated module and require two reviewers", "Run Miri or a sanitizer in CI for modules that contain unsafe code", "Ban every dependency that contains unsafe code, including the standard library", "Allow unsafe to temporarily disable the borrow checker when deadlines are tight"]
+explanation = "Documenting invariants, isolating unsafe code, and automated checks help keep it under control. A total ban is impractical because the standard library itself uses unsafe internally; unsafe does not disable the borrow checker, and using it to bypass compile errors can cause undefined behavior."
+
+[questions.rust-lv004]
+prompt = "The workspace already uses Tokio, and its database driver also depends on Tokio. A developer wants a new crate to use a different async runtime because they prefer its API. What is a reasonable decision?"
+options = ["Standardize on one runtime across the workspace and record the decision in an ADR; reconsider only for a measurable reason", "Let each crate choose a runtime based on personal preference", "Run both runtimes and nest `block_on` calls when needed", "Drop async and create one thread for each of 10,000 connections"]
+explanation = "Mixing runtimes adds dependencies and can cause difficult bugs, such as missing-reactor panics or blocking interactions. Nested `block_on` calls can deadlock, while one thread per connection uses substantial memory at this scale."
+
+[questions.rust-lv005]
+prompt = "A workspace has several internal library crates and two binaries. Which error-handling convention is the most balanced?"
+options = ["Libraries return typed error enums implementing `std::error::Error`; binaries aggregate errors with `Box<dyn Error>` and add context when logging", "Use `String` as the error type everywhere for simplicity", "Call `unwrap()` everywhere and let `main` log panics", "Libraries return `Box<dyn Error>` so callers never need to match errors"]
+explanation = "Library callers need structured error types so they can respond appropriately; binaries mainly report errors, so an aggregate type is convenient. Strings lose structure, unwrap turns recoverable errors into crashes, and a boxed error in a library forces callers to downcast."
+
+[questions.rust-lv006]
+prompt = "The product must call a security-audited C library. Which FFI boundary strategy is appropriate for the team?"
+options = ["Put raw bindings in a `-sys` crate, add a safe wrapper crate that manages ownership (with `Drop` calling the C free function) and converts strings using `CString`/`CStr`, and focus tests on the boundary", "Scatter direct `extern` calls throughout business logic", "Rewrite the cryptography library in Rust during this sprint", "Pass a Rust `String` pointer directly to C without a terminating character"]
+explanation = "Isolating unsafe code lets most of the application use a safe API and makes review easier. Scattered extern calls duplicate risk; rewriting audited cryptography gives up that assurance; Rust strings are not NUL-terminated, so C may read past the buffer."
+
+[questions.rust-lv007]
+prompt = "Select the items worth including in a team's Rust PR review checklist."
+options = ["`unwrap()`/`expect()` on data from outside the program", "`clone()` in a hot loop solely to work around the borrow checker", "Holding a `MutexGuard` across an `.await` point", "Whether a variable name is longer than eight characters", "Whether a public API change breaks semver"]
+explanation = "The selected items affect reliability, performance, deadlocks, and compatibility. Variable-name length is a style matter better handled by rustfmt, Clippy, and team conventions than by spending review time on it."
+
+[questions.rust-lv008]
+prompt = "A PR adds a popular crate with about 120 transitive dependencies, but the code uses only one small formatting function. What is a reasonable decision?"
+options = ["Consider writing the small function or choosing a lighter crate/disabling default features; also check the license and advisories with a CI tool such as cargo-deny", "Approve immediately because a high download count proves the crate is safe", "Vendor all source code and patch it manually as needed", "Ban every external dependency across the company"]
+explanation = "Each dependency increases build time and supply-chain exposure, so a small requirement may have a cheaper option. Popularity does not replace review; manual vendoring creates a hard-to-maintain fork, while a blanket ban creates unnecessary friction."
+
+[questions.rust-lv009]
+prompt = "A production Rust binary occasionally panics, and the team lacks enough information to debug it. Which release configuration is reasonable?"
+options = ["Build in release mode but keep debug symbols (they can be split into a separate file), and install a panic hook that logs a backtrace and request context", "Deploy a debug build to production for easier debugging", "Strip all symbols and disable logging to make the binary as small as possible", "Set `opt-level = 0` in the release profile"]
+explanation = "Symbols help interpret backtraces without slowing optimized code, and a panic hook records useful context. Debug builds are slower and behave differently (including overflow checks); stripping everything makes crashes harder to inspect, and `opt-level = 0` sacrifices performance."
+
+[questions.rust-lv010]
+prompt = "The team has just adopted Rust; junior developers spend a lot of time with the borrow checker and often use `clone()`. What is the best mentoring approach?"
+options = ["Allow clones in non-hot code at first, use profiling to identify hot spots, pair-review ownership patterns, and write internal examples", "Reject every PR containing `clone()`", "Encourage `Rc<RefCell<T>>` everywhere to avoid compile errors", "Let junior developers learn alone and skip reviews for speed"]
+explanation = "Prioritize correctness and learning speed, then optimize based on measurements. Banning clone can block the team; widespread Rc<RefCell> turns compile-time feedback into runtime panics; skipping reviews spreads poor patterns."
+
+[questions.rust-lv011]
+prompt = "Five teams use an internal crate, and you need to change a public function's signature. Which strategy minimizes disruption?"
+options = ["Add a new function, mark the old one `#[deprecated]` with migration guidance, release a minor version, and remove the old function in the next major release", "Change it directly and increment only the patch version", "Copy the entire crate into a new crate named `crate2`", "Change it directly and message each team to fix their code"]
+explanation = "Deprecation gives teams time to migrate and lets the compiler point to the old API, in line with semver. A breaking patch violates semver; a fork creates two sources of truth; messages do not replace compiler support."
+
+[questions.rust-lv012]
+prompt = "An async service's p99 latency spikes under load, and the team suspects blocking code in the runtime. Select the appropriate actions."
+options = ["Find synchronous I/O or heavy CPU work in async tasks and move it to a separate thread pool (for example, `spawn_blocking`)", "Add tracing/metrics to measure each task's processing time and verify the hypothesis", "Increase the worker-thread count substantially as the root fix", "Limit concurrent heavy tasks with a semaphore"]
+explanation = "A blocking task stalls a worker and makes other tasks wait. Measure the behavior, move blocking work off the runtime, and limit concurrency. Adding workers only masks the symptom and increases context-switching costs."
+
+[questions.rust-lv013]
+prompt = "A plugin system accepts plugins from three other teams; the plugin list is loaded at runtime from a configuration file. Which design fits?"
+options = ["Define a `Plugin` trait and store plugins in `Vec<Box<dyn Plugin>>`, accepting a small dynamic-dispatch cost", "Use a generic `<P: Plugin>` for each plugin to monomorphize", "Hard-code every plugin in a `match` in the core", "Use `transmute` to cast function pointers for speed"]
+explanation = "Trait objects are a natural fit when the set of plugins is known only at runtime. Generics need types at compile time; a hard-coded match forces core changes for every plugin; transmute adds unnecessary unsafe code."
+
+[questions.rust-lv014]
+prompt = "Three Rust services share data models and often end up with mismatched dependency versions. Which organization makes sense?"
+options = ["Use one Cargo workspace with a shared `domain` crate, one `Cargo.lock`, and versions aligned through `[workspace.dependencies]`", "Copy the models into each service to keep them independent", "Publish the internal model to crates.io and have each service download it", "Merge the three services into one binary in `main.rs`"]
+explanation = "A workspace supports shared code and locked versions while preserving separate binaries for deployment. Copies drift, publishing internal code exposes it, and merging binaries removes independent deployment."
+
+[questions.rust-lv015]
+prompt = "In the root `Cargo.toml` of a workspace, the table that declares dependency versions shared by all members is `[workspace.{{blank}}]`."
+explanation = "A member can write `serde = { workspace = true }` to inherit the version from `[workspace.dependencies]` and avoid version drift across crates."
+
+[questions.rust-lv016]
+prompt = "Write a short ADR answering whether a stable Go service should be rewritten in Rust. State the context, options, evaluation criteria, decision, and consequences."
+keywords = [["context", "background"], ["options", "alternatives"], ["cost", "costs"], ["risk", "risks"], ["benchmark", "measurement", "metrics"], ["consequences", "impact"], ["incremental", "pilot", "partial rewrite"]]
+model_answer = '''Context: the Go service is stable, only one of five team members knows Rust, and there is no data showing Go is a bottleneck. Options: (A) keep Go and optimize based on profiling, (B) rewrite everything in Rust, or (C) pilot Rust for one CPU-bound component. Criteria: development and training cost, production disruption risk, and measurable benefits in p99 latency and memory from benchmarks. Decision: choose A, and consider C only if benchmarks show a clear benefit. Consequences: avoid rewrite costs and preserve stability; schedule a review if load increases.'''
+explanation = "A good ADR uses measurements and team constraints, compares several options, and states consequences instead of choosing a technology based on preference."
+
+[questions.rust-lv017]
+prompt = "Propose a memory-safety and concurrency review policy for an eight-person Rust team. Cover unsafe code, Send/Sync, panics, linting, and automated CI checks."
+keywords = [["unsafe"], ["safety:", "invariant"], ["send"], ["sync"], ["clippy", "lint"], ["panic", "unwrap"], ["miri", "sanitizer"], ["ci"]]
+model_answer = '''Keep every unsafe block in a dedicated module, document its invariant with a `SAFETY:` comment, and require two reviewers. Do not write `unsafe impl Send` or `Sync` without proving that the type is safe to share across threads; prefer `Arc`, `Mutex`, and channels. Ban `unwrap` and `expect` on external input, and reserve panics for programming errors. CI should run Clippy with warnings treated as errors, tests, and Miri or a sanitizer for modules containing unsafe code.'''
+explanation = "The policy should be specific and automatically enforceable, while directing human review toward the parts that carry real risk."
+
+[questions.rust-lv032]
+prompt = "Which Cargo command checks that code compiles without producing a binary, and is often the fastest choice while coding?"
+explanation = "`cargo check` skips code generation, so it is faster than `build`; `--release` also performs optimizations and takes longer."
+
+[questions.rust-lv033]
+prompt = "What does `\"42a\".parse::<i32>()` return?"
+options = ["`Err(...)` because the string is not a valid number", "`Ok(42)`", "`0`", "An immediate panic"]
+explanation = "`parse` returns a `Result`; invalid characters produce `Err(ParseIntError)`. It panics only if you call `unwrap()` on that result."
+
+[questions.rust-lv034]
+prompt = "Which keyword brings an item into scope so it can be used with a short name: `{{blank}} std::collections::HashMap;`"
+explanation = "`use` creates a shortcut to an item in the module tree."
+
+[questions.rust-lv040]
+prompt = "A function returns `Result<u32, MyError>` and uses `s.parse::<u32>()?`. What must be in place for `?` to compile?"
+options = ["`impl From<ParseIntError> for MyError`, so `?` can convert the error automatically", "MyError must derive Clone", "The function must return `Option<u32>`", "Nothing; `?` ignores the error type"]
+explanation = "Before returning early, `?` calls `From::from` on the error. Without a suitable `From` implementation, the error type does not match."
+
+[questions.rust-lv043]
+prompt = "When should you use `panic!`/`unwrap()`, and when should you return `Result`? Give an example for a CLI application that reads a configuration file."
+keywords = [["result"], ["panic"], ["unwrap", "expect"], ["recoverable", "can be handled"], ["?", "question mark operator"], ["test", "prototype", "invariant"]]
+model_answer = '''Use `Result` for recoverable errors, such as a missing or malformed configuration file: let `load_config` return `Result`, propagate with the `?` operator, and have `main` print a clear message before exiting with an error code. `panic`, `unwrap`, or `expect` can be reasonable in tests, prototypes, or when an invariant is violated and the program cannot continue, such as an invalid hard-coded regular expression.'''
+explanation = "The key distinction is whether the error comes from the environment and can be handled by the caller."
+
+[questions.rust-lvc03]
+title = "Parse a key=value configuration line"
+prompt = '''Write `parse_kv(line: &str) -> Result<(String, u32), String>` for a line in the form `key=value`:
+
+- Trim whitespace from both ends of the key and value.
+- If there is no `=`, return `Err("missing '='")`.
+- If the trimmed key is empty, return `Err("empty key")`.
+- If the value is not a valid `u32`, return `Err("invalid number")`.
+- Split only at the first `=`.'''
+explanation = "This exercise practices converting between Option and Result with ok_or, map_err, and `?`, while returning clear error messages."
+hints = ["`split_once('=')` returns `Option<(&str, &str)>`.", "Use `ok_or` and `map_err` to convert errors to `String` so they can be propagated with `?`."]
+
+[questions.rust-lv042]
+prompt = "`thread::spawn(|| println!(\"{}\", data.len()))` reports that the closure may outlive `data`. What is the usual fix?"
+options = ["Use `move ||` so the closure takes ownership of `data` (or clone an `Arc` into it)", "Add a `'static` lifetime to the `data` variable", "Wrap the call in `unsafe`", "Call `join()` before spawning"]
+explanation = "A new thread may run longer than the current function, so its closure cannot borrow a local variable. `move` transfers ownership into the thread. Use `Arc` when multiple threads need shared access."
+
+[questions.rust-lv045]
+prompt = "Select the correct statements about `Send` and `Sync`."
+options = ["`Rc<T>` is not Send because its reference count is not atomic", "`T` is Sync when `&T` is Send", "`Arc<T>` is Send/Sync only when `T` is Send + Sync", "`RefCell<T>` is Sync, so it is safe to share between threads", "The compiler automatically derives these traits from fields (they are auto traits)"]
+explanation = "RefCell's borrow checking is not atomic, so it is not Sync. Use Mutex or RwLock for sharing across threads."
+
+[questions.rust-lv046]
+prompt = "Two threads lock Mutexes A and B; the program occasionally hangs forever. What is the likely cause and the best general fix?"
+options = ["The threads acquire locks in opposite orders (A then B, B then A), causing deadlock; enforce one lock order or combine the data under one Mutex", "Rust Mutex is not thread-safe, so replace it with RefCell", "An `unsafe impl Send` is missing", "Rust does not release MutexGuard; call `free()`"]
+explanation = "Rust prevents data races but not deadlocks. A consistent lock order or fewer locks addresses the root cause; guards are released when dropped."
+
+[questions.rust-lv050]
+prompt = "In an async function, what happens if you call `std::thread::sleep(Duration::from_secs(1))` on a multi-task runtime?"
+options = ["It blocks the current worker thread, so other tasks on that thread are not polled for one second", "Only the current task pauses; the runtime automatically switches to another task", "The compiler reports an error because sleep is not async", "It has no effect because futures are lazy"]
+explanation = "A future yields only at an `.await` point. Synchronous sleep does not yield, so it blocks the worker. Use the runtime's async sleep function."
+
+[questions.rust-lv055]
+prompt = "A producer sends through `mpsc::channel()` much faster than the consumer processes messages, and memory keeps growing. Which change addresses the root cause?"
+options = ["Use `mpsc::sync_channel(n)` with a capacity limit so the producer blocks when the queue is full (backpressure)", "Create another channel whenever the current one gets long", "Call `drop(tx)` after every send", "Switch to an unbounded `Arc<Mutex<Vec<T>>>`"]
+explanation = "An unbounded channel only moves the problem into memory usage; a bounded channel applies backpressure."
+
+[questions.rust-lv056]
+prompt = "Compare shared state with `Arc<Mutex<T>>` and message passing through a channel for a counter updated by multiple threads. Describe trade-offs and risks."
+keywords = [["arc"], ["mutex"], ["channel", "message passing"], ["deadlock"], ["contention", "lock contention"], ["ownership"], ["atomic"]]
+model_answer = '''`Arc<Mutex<T>>` lets multiple threads mutate shared data and is straightforward, but lock contention can grow as threads compete, and taking multiple locks in the wrong order can cause deadlock. A channel transfers data ownership to one thread that performs the updates, avoiding locks but adding message allocation and requiring backpressure. For a simple counter, an atomic type such as `AtomicU64` is often fastest.'''
+explanation = "A good answer chooses based on the data shape and contention level instead of treating one approach as universally best."
+
+[questions.rust-lv047]
+prompt = "A tree uses `Rc<RefCell<Node>>` pointers from each child to its parent and from each parent to its children. Memory is never freed. How should this be fixed?"
+options = ["Use `Weak<RefCell<Node>>` for parent pointers to break the reference cycle", "Replace everything with `Box<Node>`", "Manually call `drop` on every node", "Use `Arc` instead of `Rc`"]
+explanation = "An Rc cycle keeps the strong count above zero. Weak does not increase the strong count. Arc has the same cycle issue, while Box does not support multiple owners."
+
+[questions.rust-lv051]
+prompt = "Select the operations that are allowed only inside `unsafe`."
+options = ["Dereference a raw pointer", "Call an `unsafe fn` or a C `extern` function", "Access or modify a `static mut` variable", "Create a raw pointer from a reference", "Implement an `unsafe trait`"]
+explanation = "Creating a raw pointer is safe; only dereferencing it requires unsafe. Unsafe does not disable the borrow checker for ordinary references."
+
+[questions.rust-lv035]
+prompt = "Which attribute marks a function as a unit test for `cargo test` to run?"
+explanation = "`#[test]` marks the test function; test modules are often placed under `#[cfg(test)]` so they are compiled only for tests."
+
+[questions.rust-lv053]
+prompt = "An integration test in `tests/` cannot import any functions from a binary crate that has only `main.rs`. What is the right organization?"
+options = ["Move the logic into `src/lib.rs`, have `main.rs` call the library, and let the integration test use the library crate", "Mark the functions in `main.rs` as `pub`", "Copy the functions into the `tests` directory", "Use `#[cfg(test)]` in `main.rs` to export them"]
+explanation = "An integration test links to a library crate like an external user would; a binary crate does not expose its items externally."
+
+[questions.rust-lv054]
+prompt = "A function `fn connect(host: String, port: u16, tls: bool, timeout: u64)` is often called with arguments in the wrong order. Which design is safer for a public API?"
+options = ["Use newtypes/enums for easily confused parameters (`Port(u16)`, `Tls::Enabled`) or a builder with defaults", "Change every parameter to `String` and parse inside the function", "Add a comment reminding callers of the parameter order", "Use a macro that accepts arbitrary parameters"]
+explanation = "The type system turns argument mix-ups into compile errors; a builder also makes it easier to extend the API without breaking its signature."
+
+[questions.rust-lvc01]
+title = "Circuit breaker for external service calls"
+prompt = '''Implement `Breaker` to protect calls to an external service (`now` is passed in as seconds; do not read the system clock):
+
+- `Breaker::new(threshold: u32, cooldown: u64)`.
+- `allow(&self, now: u64) -> bool`: while closed, always return `true`. If opened at time `t`, return `false` when `now < t + cooldown`; otherwise return `true` (half-open, allowing one trial call).
+- `record(&mut self, ok: bool, now: u64)`: on success, reset the failure count to zero and close the breaker. On failure, increment consecutive failures; when the count is `>= threshold`, open the breaker at `now` (a failure in half-open state opens it again immediately).'''
+hints = ["Store `failures: u32` and `opened_at: Option<u64>`.", "In `allow`, compare `now` with `opened_at + cooldown`; a separate half-open state is unnecessary because the next failure resets `opened_at`."]
+explanation = "A circuit breaker prevents a system from continuing to overload a failing service; passing `now` in makes the logic deterministic and easy to test."

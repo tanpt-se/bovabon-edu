@@ -173,11 +173,57 @@ Bundler bắt đầu từ một hoặc nhiều entry point rồi lần theo impo
 Vite phục vụ module qua ESM trong development và tối ưu dependency package khi cần; khi build, import tĩnh và dynamic import giúp xác định asset hoặc chunk đầu ra. Vite cũng xử lý asset được import và asset trong `public` theo các quy tắc khác nhau. webpack cấu hình entry, resolve, module rules và output riêng, nhưng vẫn xây graph từ các dependency. Lỗi hay gặp là cho rằng một file chỉ được đóng gói nếu nó xuất hiện trong HTML, quên rằng CSS có thể import ảnh/font, hoặc tạo đường dẫn import biến thiên mà bundler không thể phân tích. Khi debug file bị thiếu, lần theo entry → import → resolver → transform/output và kiểm tra cấu hình đúng môi trường dev hay production.
 '''
 
+[[modules]]
+id = "frontend-tooling-lead"
+title = "Góc nhìn Tech Lead"
+description = "Chọn bundler và cấu trúc monorepo, chiến lược cache CI, migration build tool, performance budget, quản lý dependency và bảo mật supply chain cho cả team."
+sources = ["vite/guide/migration", "vite/guide/performance", "webpack~5/configuration/cache", "webpack~5/guides/build-performance", "webpack~5/configuration/performance", "eslint/use/configure/configuration-files"]
+lesson = '''
+### Tooling là quyết định của team, không phải sở thích cá nhân
+Ở cấp Tech Lead, câu hỏi không còn là "Vite hay webpack nhanh hơn" mà là: công cụ nào giảm tổng chi phí cho team trong 12–24 tháng tới, với ràng buộc về người, thời gian, plugin đang dùng và rủi ro phát hành. Một quyết định tooling tốt luôn có số liệu trước/sau (thời gian build, thời gian CI, kích thước bundle), có kế hoạch rollback và được ghi lại thành ADR.
+
+### Khung so sánh phương án
+| Tiêu chí | Giữ nguyên + tối ưu | Migration từng phần | Viết lại toàn bộ cấu hình |
+|---|---|---|---|
+| Rủi ro phát hành | thấp | trung bình, kiểm soát được | cao |
+| Công sức (ước lượng) | vài ngày | 2–6 tuần | 1–3 tháng |
+| Lợi ích DX | vừa phải | cao dần theo từng gói | cao nhưng đến muộn |
+| Phụ thuộc plugin tuỳ biến | không đổi | phải kiểm kê trước | phải viết lại hết |
+
+Quy tắc ngón tay cái: đo trước khi đổi. Nếu 80% thời gian CI nằm ở cài dependency và test, đổi bundler gần như không giúp gì; cache dependency và chạy test theo phần bị ảnh hưởng mới là đòn bẩy.
+
+### Monorepo và CI cache
+- Cache theo **nội dung đầu vào** (lockfile, source, cấu hình, phiên bản Node) chứ không theo tên nhánh; khoá cache sai dẫn tới artifact cũ hoặc cache miss liên tục.
+- Chạy "affected": chỉ build/test package thay đổi và các package phụ thuộc vào nó; cần đồ thị phụ thuộc chính xác giữa package.
+- Remote cache giúp nhiều máy dùng chung kết quả, nhưng phải coi như dữ liệu nhạy cảm: ai ghi được cache thì có thể đầu độc artifact.
+
+### Dependency và supply chain
+Lockfile luôn được commit; CI cài bằng chế độ không sửa lockfile. Bot cập nhật dependency gom theo nhóm, có lịch cố định, và bản major phải có người review changelog. Package mới cần trả lời: ai duy trì, có script cài đặt không, kích thước thêm vào bundle là bao nhiêu, có phương án thay thế trong thư viện chuẩn không.
+
+### Checklist review thay đổi tooling
+1. Có số liệu baseline và mục tiêu (ví dụ CI p50 từ 14 phút xuống dưới 8 phút — số ước lượng).
+2. Output production được so sánh: danh sách chunk, source map, biến môi trường bị lộ, đường dẫn asset.
+3. Có cờ hoặc nhánh để quay lại công cụ cũ trong ít nhất một chu kỳ release.
+4. Tài liệu onboarding và script `dev/build/test` được cập nhật cùng PR.
+5. Performance budget được kiểm tra tự động trong CI, không chỉ bằng mắt.
+
+### ADR mẫu (rút gọn)
+> **Bối cảnh:** dev server khởi động 90 giây, HMR 5–8 giây, 3 plugin webpack tự viết. **Quyết định:** chuyển sang Vite theo từng app trong monorepo, bắt đầu từ app nội bộ ít traffic; giữ webpack cho app chính tới khi 2 plugin được thay thế. **Hệ quả:** hai pipeline song song trong ~1 quý; cần so sánh output và theo dõi lỗi sau mỗi bước.
+
+### Anti-pattern ở quy mô team
+- Đổi công cụ vì xu hướng, không có baseline nên không chứng minh được lợi ích.
+- Mỗi package một bộ cấu hình ESLint/TS riêng, trôi dần khỏi chuẩn chung; nên có shareable config được version hoá.
+- Tắt rule lint hàng loạt để PR migration "xanh", rồi không ai bật lại.
+- Performance budget chỉ cảnh báo, không bao giờ chặn, nên không ai đọc.
+- Một người duy nhất hiểu cấu hình build (bus factor = 1).
+'''
+
 [[questions]]
 id = "tool-001"
 module = "tool-tailwind"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Trong Tailwind theo hướng mobile-first, `md:grid-cols-2` có nghĩa gì?"
 options = ["Chỉ áp dụng ở màn hình nhỏ hơn md", "Áp dụng từ breakpoint md trở lên", "Luôn áp dụng cho mọi kích thước", "Chỉ áp dụng khi hover"]
 answer = [1]
@@ -189,6 +235,7 @@ id = "tool-002"
 module = "tool-tailwind"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một đoạn JS tạo class bằng `const c = 'bg-' + color + '-600'`. Trong production CSS thiếu các lớp này. Nguyên nhân có khả năng nhất là gì?"
 options = ["Tailwind chỉ đọc file CSS", "Tên class hoàn chỉnh không xuất hiện để trình quét phát hiện", "Các utility màu không thể dùng với JS", "Prefix `bg-` luôn bị loại khỏi output"]
 answer = [1]
@@ -200,6 +247,7 @@ id = "tool-003"
 module = "tool-tailwind"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Bạn cần đặt chiều rộng chính xác 37rem nhưng giá trị này không thuộc thang theme. Cú pháp Tailwind nào phù hợp?"
 options = ["`w(37rem)`", "`w-[37rem]`", "`width:37rem` trong class", "`w-37rem`"]
 answer = [1]
@@ -211,6 +259,7 @@ id = "tool-004"
 module = "tool-tailwind"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Trong Tailwind CSS hiện đại, nơi phù hợp để thêm token theme dạng CSS-first là gì?"
 options = ["`@theme` trong stylesheet", "Một selector `#theme` bất kỳ", "Thuộc tính HTML `theme`", "Chỉ có thể khai báo trong JavaScript"]
 answer = [0]
@@ -222,6 +271,7 @@ id = "tool-005"
 module = "tool-tailwind"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Những lớp nào minh hoạ đúng việc kết hợp utility với responsive hoặc state variant?"
 options = ["`hover:bg-sky-700`", "`md:grid-cols-2`", "`focus-visible:ring-2`", "`hover:md:` đứng riêng không có utility", "`@media:` như một class HTML"]
 answer = [0, 1, 2]
@@ -233,6 +283,7 @@ id = "tool-006"
 module = "tool-tailwind"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Một bảng màu runtime làm thiếu utility trong production. Cách xử lý nào giữ tên lớp có thể được phát hiện tĩnh?"
 options = ["Ánh xạ mỗi màu sang chuỗi class hoàn chỉnh", "Ghép `bg-` với hậu tố runtime rồi kỳ vọng scanner chạy JS", "Khai báo nguồn/lớp cần thiết theo cơ chế của phiên bản Tailwind", "Tạo sẵn một tập class hoàn chỉnh trong source"]
 answer = [0, 2, 3]
@@ -244,6 +295,7 @@ id = "tool-007"
 module = "tool-tailwind"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Điền variant trạng thái để utility chỉ áp dụng khi con trỏ hover:
 
@@ -260,6 +312,7 @@ id = "tool-008"
 module = "tool-tailwind"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Vì sao class Tailwind được ghép động từ nhiều mảnh có thể biến mất trong production, và bạn sẽ sửa theo hướng nào?"
 keywords = [["tên class hoàn chỉnh", "full class name"], ["quét tĩnh", "static scan", "source detection"], ["ánh xạ", "mapping"], ["safelist", "nguồn khai báo"]]
 min_keywords = 2
@@ -272,6 +325,7 @@ id = "tool-009"
 module = "tool-tailwind"
 type = "code"
 difficulty = 3
+tags = ["level:senior"]
 title = "Gộp class utility đơn giản"
 prompt = '''
 Viết `cn(...values)` theo phạm vi sau:
@@ -353,6 +407,7 @@ id = "tool-010"
 module = "tool-sass"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Trong Sass module system, cú pháp nào nạp API từ module với namespace?"
 options = ["`@use`", "`@forward`", "`@include`", "`@return`"]
 answer = [0]
@@ -364,6 +419,7 @@ id = "tool-011"
 module = "tool-sass"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một file Sass cần tổng hợp và công khai các token từ nhiều module cho client của thư mục. Directive nào phù hợp?"
 options = ["`@forward`", "`@extend`", "`@return`", "`@media`"]
 answer = [0]
@@ -375,6 +431,7 @@ id = "tool-012"
 module = "tool-sass"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Khi nào nên ưu tiên Sass function thay vì mixin?"
 options = ["Khi cần trả một giá trị tính toán để dùng trong biểu thức CSS", "Khi cần chèn nhiều selector vào stylesheet", "Khi muốn thay mọi biến bằng selector", "Khi cần nạp module"]
 answer = [0]
@@ -386,6 +443,7 @@ id = "tool-013"
 module = "tool-sass"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Những nhận định nào đúng về Sass module và nesting?"
 options = ["`@use` giúp truy cập thành viên qua namespace", "`@forward` có thể tạo API tổng hợp", "Nesting càng sâu luôn càng tốt", "`@import` là lựa chọn khuyến nghị cho dự án Sass mới"]
 answer = [0, 1]
@@ -397,6 +455,7 @@ id = "tool-014"
 module = "tool-sass"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Hoàn thành Sass variable:
 ```scss
@@ -412,6 +471,7 @@ id = "tool-015"
 module = "tool-bundlers"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Trong development, lợi ích chính của việc Vite phục vụ ESM theo yêu cầu là gì?"
 options = ["Không cần trình duyệt hỗ trợ JavaScript", "Tránh phải bundle toàn bộ ứng dụng trước mỗi lần khởi động dev server", "Không cần dependency graph", "Production build không cần thiết"]
 answer = [1]
@@ -423,6 +483,7 @@ id = "tool-016"
 module = "tool-bundlers"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một biến môi trường cần được đọc từ mã client của Vite. Quy tắc nào đúng?"
 options = ["Đặt tên bắt đầu bằng `VITE_` và không lưu secret ở đó", "Mọi biến hệ điều hành tự động được an toàn đưa ra client", "Đặt tên bắt đầu bằng `SECRET_` để Vite mã hoá", "Chỉ biến trong `.env.production` mới được phép truy cập"]
 answer = [0]
@@ -434,6 +495,7 @@ id = "tool-017"
 module = "tool-bundlers"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Trong webpack, công việc nào phù hợp nhất với loader?"
 options = ["Biến đổi nội dung một loại module trong quá trình build", "Quản lý toàn bộ quy trình release của nhóm", "Chỉ định quyền truy cập API runtime", "Thay thế trình duyệt bằng compiler"]
 answer = [0]
@@ -445,6 +507,7 @@ id = "tool-018"
 module = "tool-bundlers"
 type = "single"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Một route chỉ cần tải trình soạn thảo khi người dùng mở nó. Lựa chọn nào thường tạo ranh giới tải bất đồng bộ?"
 options = ["`import('./editor.js')`", "Thêm mọi file vào entry chính", "Đổi tên file thành `.async`", "Đặt một comment trước import tĩnh"]
 answer = [0]
@@ -456,6 +519,7 @@ id = "tool-019"
 module = "tool-bundlers"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn nhận định đúng về Vite và webpack."
 options = ["HMR có thể cập nhật module trong dev mà không reload toàn trang", "Webpack loader và plugin là cùng một cơ chế với cùng phạm vi", "Dynamic import có thể đánh dấu mã tải bất đồng bộ", "Biến Vite đưa ra client nên được xem là công khai"]
 answer = [0, 2, 3]
@@ -467,6 +531,7 @@ id = "tool-020"
 module = "tool-bundlers"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Hoàn thành cú pháp JavaScript để tải module theo yêu cầu:
 ```js
@@ -482,6 +547,7 @@ id = "tool-021"
 module = "tool-bundlers"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 Trong `vite.config.js`, cấu hình nào thường được dùng để nạp một plugin `myPlugin()`?
 ```js
@@ -497,6 +563,7 @@ id = "tool-022"
 module = "tool-bundlers"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Giải thích vai trò khác nhau của webpack loader và plugin, kèm ví dụ một loại công việc phù hợp cho mỗi loại."
 keywords = [["loader", "loaders"], ["biến đổi module", "transform module", "module content"], ["plugin", "plugins"], ["compiler", "compilation", "vòng đời"]]
 min_keywords = 3
@@ -509,6 +576,7 @@ id = "tool-023"
 module = "tool-bundlers"
 type = "code"
 difficulty = 3
+tags = ["level:senior"]
 title = "So khớp phiên bản semver đơn giản"
 prompt = '''
 Viết `satisfies(version, range)` trả về boolean. Hỗ trợ version chuẩn `major.minor.patch` bằng số nguyên không âm, không có leading zero (ngoại trừ `0`), prerelease hoặc build metadata. Hỗ trợ đúng ba dạng range: `^x.y.z`, `~x.y.z`, `>=x.y.z`; đầu vào sai hoặc range không hỗ trợ trả `false`.
@@ -589,6 +657,7 @@ id = "tool-024"
 module = "tool-bundlers"
 type = "code"
 difficulty = 3
+tags = ["level:senior"]
 title = "Sắp xếp đồ thị import"
 prompt = '''
 Viết `topoSort(graph)` để sắp xếp module theo thứ tự dependency trước importer. `graph` là object ánh xạ tên module tới mảng tên module mà nó import. Module chỉ xuất hiện ở danh sách import được xem là node lá không có dependency. Không cần giữ thứ tự từ điển nhưng kết quả phải ổn định theo thứ tự duyệt input. Bỏ import trùng trong cùng một danh sách. Nếu có chu trình, ném `Error('cycle')`.
@@ -665,6 +734,7 @@ id = "tool-025"
 module = "tool-quality"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Trong ESLint flat config, vì sao config thường xuất một mảng object?"
 options = ["Các object có thể áp dụng theo file và được ghép theo thứ tự", "Mỗi object là một tiến trình riêng", "ESLint chỉ hỗ trợ mảng để chạy Prettier", "Mảng làm mọi rule thành warning"]
 answer = [0]
@@ -676,6 +746,7 @@ id = "tool-026"
 module = "tool-quality"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một rule ESLint được bật với mức `warn`. Điều đó biểu thị gì?"
 options = ["Lỗi sẽ hiện cảnh báo nhưng không mang mức error", "Rule bị tắt hoàn toàn", "ESLint tự sửa mọi trường hợp", "Chỉ chạy trong production"]
 answer = [0]
@@ -687,6 +758,7 @@ id = "tool-027"
 module = "tool-quality"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Vai trò chính của Prettier khác ESLint ở điểm nào?"
 options = ["Prettier định dạng nhất quán; ESLint phát hiện vấn đề và quy ước mã", "Prettier kiểm tra type còn ESLint biên dịch", "Hai công cụ đều chỉ phục vụ minify", "ESLint thay thế hoàn toàn formatter trong mọi dự án"]
 answer = [0]
@@ -698,6 +770,7 @@ id = "tool-028"
 module = "tool-quality"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Khi một rule ESLint tự viết cần báo lỗi với `console.log()`, phần nào là hướng triển khai hợp lý?"
 options = ["Nhận biết node CallExpression có callee là MemberExpression của console.log", "Duyệt AST theo cấu trúc node và báo diagnostic", "Tìm chuỗi `console.log` trong mọi comment như cách duy nhất", "Giới hạn rule theo file/parser phù hợp trong config"]
 answer = [0, 1, 3]
@@ -709,6 +782,7 @@ id = "tool-029"
 module = "tool-quality"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Trong ESLint rule config, giá trị nào tắt rule?
 ```js
@@ -724,6 +798,7 @@ id = "tool-030"
 module = "tool-quality"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Mô tả cách phân tách cấu hình ESLint cho JavaScript và TypeScript, và giải thích vì sao Prettier không nên được xem như một bộ rule lint khác."
 keywords = [["flat config", "eslint.config"], ["files", "file pattern"], ["parser", "typescript parser"], ["plugin", "typescript-eslint"], ["định dạng", "formatting", "formatter"], ["lint", "rule"]]
 min_keywords = 4
@@ -736,6 +811,7 @@ id = "tool-031"
 module = "tool-quality"
 type = "code"
 difficulty = 3
+tags = ["level:senior"]
 title = "Rule AST không dùng console.log"
 prompt = '''
 Viết `findConsoleLog(ast)` cho một AST object đơn giản. Node có thể chứa object con hoặc mảng node. Phát hiện mỗi `CallExpression` có `callee` là `MemberExpression` dạng `console.log`, trong đó `object` và `property` là `Identifier`, và `computed` không phải `true`. Trả về một diagnostic cho mỗi lần gọi, theo thứ tự duyệt preorder:
@@ -817,6 +893,7 @@ id = "tool-032"
 module = "tool-performance"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Điều kiện nào thường giúp tree shaking loại code không dùng hiệu quả hơn?"
 options = ["Dependency tĩnh theo ESM và side effects được khai báo chính xác", "Import mọi module qua chuỗi runtime không xác định", "Đưa toàn bộ mã vào một global script", "Tắt mọi metadata của package"]
 answer = [0]
@@ -828,6 +905,7 @@ id = "tool-033"
 module = "tool-performance"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Vì sao asset có content hash thường phù hợp với cache dài hạn?"
 options = ["URL đổi khi nội dung asset đổi", "Hash buộc trình duyệt tải lại ở mọi lần xem", "Hash chứa credential để xác thực file", "URL không còn cần được ghi vào HTML"]
 answer = [0]
@@ -839,6 +917,7 @@ id = "tool-034"
 module = "tool-performance"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Những cách nào giúp quyết định tối ưu bundle dựa trên bằng chứng?"
 options = ["Dùng bundle analyzer để tìm module chiếm dung lượng", "Xem route nào có thể lazy load bằng dynamic import", "Chia mọi module thành chunk nhỏ nhất có thể", "Đo tải ban đầu và trải nghiệm khi mở tính năng sau khi đổi"]
 answer = [0, 1, 3]
@@ -850,6 +929,7 @@ id = "tool-035"
 module = "tool-performance"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 Điền cú pháp để tải module bất đồng bộ và thường tạo split point:
 ```js
@@ -865,6 +945,7 @@ id = "tool-036"
 module = "tool-performance"
 type = "code"
 difficulty = 3
+tags = ["level:senior"]
 title = "Tên file theo content hash"
 prompt = '''
 Viết `hashedFileName(fileName, content)` thay phần cuối tên file bằng một hash 8 ký tự hex, giữ nguyên thư mục và extension cuối. Với tên không có extension, nối hash vào cuối. Dùng FNV-1a 32-bit trên từng UTF-16 code unit: khởi đầu `2166136261`; mỗi ký tự cập nhật `Math.imul(hash ^ charCode, 16777619) >>> 0`; định dạng hex chữ thường và thêm số 0 bên trái đủ 8 ký tự.
@@ -914,6 +995,7 @@ id = "tool-037"
 module = "tool-performance"
 type = "code"
 difficulty = 3
+tags = ["level:senior"]
 title = "Chia chunk theo giới hạn kích thước"
 prompt = '''
 Viết `chunkBySize(items, maxSize)` với `items` là mảng `{ id, size }`. Duyệt theo thứ tự đầu vào và gom tuần tự vào chunk hiện tại nếu tổng size không vượt `maxSize`; nếu vượt thì bắt đầu chunk mới. Một item lớn hơn giới hạn phải đứng một mình trong chunk. Trả về mảng các chunk, mỗi chunk là mảng `id`. Không tạo chunk rỗng. `maxSize` phải là số hữu hạn dương; `size` từng item phải hữu hạn và không âm, nếu sai thì ném `Error('invalid size')`.
@@ -975,6 +1057,7 @@ id = "frontend-tooling-dv001"
 module = "frontend-tooling-dv-layout"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Trong một hàng Flexbox nằm ngang, utility nào căn các phần tử theo trục chéo?"
 options = ["`items-center`", "`justify-center`", "`gap-x-4`", "`grid-cols-2`"]
 answer = [0]
@@ -986,6 +1069,7 @@ id = "frontend-tooling-dv002"
 module = "frontend-tooling-dv-layout"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Bạn cần danh sách một cột trên màn hình nhỏ, hai cột từ `md` và ba cột từ `xl`. Cách viết nào thể hiện đúng cả display lẫn số cột?"
 options = ["`grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3`", "`grid-cols-1 md:grid-cols-2 xl:grid-cols-3`", "`flex grid-cols-1 md:grid-cols-2 xl:grid-cols-3`", "`grid grid-cols-3 md:grid-cols-2 xl:grid-cols-1`"]
 answer = [0]
@@ -997,6 +1081,7 @@ id = "frontend-tooling-dv003"
 module = "frontend-tooling-dv-layout"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Trong Grid, utility nào chỉ đặt khoảng cách theo chiều ngang giữa các cột?"
 options = ["`gap-x-6`", "`gap-y-6`", "`space-y-6`", "`items-x-6`"]
 answer = [0]
@@ -1008,6 +1093,7 @@ id = "frontend-tooling-dv004"
 module = "frontend-tooling-dv-layout"
 type = "single"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Một tiêu đề dài làm thẻ trong Grid rộng hơn dự kiến và đẩy các cột khác. Hướng xử lý nào nên được kiểm tra trước?"
 options = ["Cho phép track co lại, chẳng hạn dùng `minmax(0, 1fr)`, và kiểm soát tràn văn bản", "Thêm `justify-between` lên tiêu đề", "Tăng `gap` cho tới khi các cột cân bằng", "Xoá `grid` và để mọi phần tử thành block"]
 answer = [0]
@@ -1019,6 +1105,7 @@ id = "frontend-tooling-dv005"
 module = "frontend-tooling-dv-layout"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Những utility nào thường phù hợp để dựng một danh sách thẻ tự xuống hàng khi viewport hẹp?"
 options = ["`grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3`", "`flex flex-wrap gap-4`", "`grid-cols-3 gap-4` mà không có utility bật Grid", "`items-center justify-between` mà không có utility bật Flexbox hoặc Grid"]
 answer = [0, 1]
@@ -1030,6 +1117,7 @@ id = "frontend-tooling-dv006"
 module = "frontend-tooling-dv-layout"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Những nhận định nào đúng về utility Flexbox và khoảng cách?"
 options = ["`items-center` căn theo trục chéo của flex container", "`justify-between` phân bố phần tử theo trục chính", "`gap-x-4` đặt khoảng cách ngang giữa các mục", "`justify-center` luôn căn giữa theo trục dọc dù `flex-direction` thay đổi"]
 answer = [0, 1, 2]
@@ -1041,6 +1129,7 @@ id = "frontend-tooling-dv007"
 module = "frontend-tooling-dv-layout"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Điền utility để đặt khoảng cách theo chiều ngang giữa các cột:
 ```html
@@ -1056,6 +1145,7 @@ id = "frontend-tooling-dv008"
 module = "frontend-tooling-dv-layout"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Một lưới thẻ bị tràn ngang khi tiêu đề dài, dù đã khai báo nhiều cột responsive. Bạn sẽ lần lượt kiểm tra những gì trong utility layout và nội dung?"
 keywords = [["minmax(0, 1fr)", "min-width", "kích thước tối thiểu"], ["overflow", "tràn nội dung"], ["responsive", "breakpoint"], ["grid", "lưới"]]
 min_keywords = 2
@@ -1068,6 +1158,7 @@ id = "frontend-tooling-dv009"
 module = "frontend-tooling-dv-sass-flow"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Directive nào phù hợp để lặp qua từng cặp key/value của một Sass map và sinh selector theo tên token?"
 options = ["`@each $name, $value in $tokens`", "`@for $name from $tokens`", "`@if $name in $tokens`", "`@use $name from $tokens`"]
 answer = [0]
@@ -1079,6 +1170,7 @@ id = "frontend-tooling-dv010"
 module = "frontend-tooling-dv-sass-flow"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Trong `@for $i from 1 through 4`, vòng lặp chạy qua những giá trị nào của `$i`?"
 options = ["1, 2, 3, 4", "1, 2, 3", "0, 1, 2, 3", "Chỉ 1 và 4"]
 answer = [0]
@@ -1090,6 +1182,7 @@ id = "frontend-tooling-dv011"
 module = "frontend-tooling-dv-sass-flow"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 Một stylesheet dùng `map.get($palette, "brand")`. Cách nào khai báo rõ module built-in chứa hàm `map.get`?
 '''
@@ -1103,6 +1196,7 @@ id = "frontend-tooling-dv012"
 module = "frontend-tooling-dv-sass-flow"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "`@if` trong Sass được đánh giá ở thời điểm nào?"
 options = ["Khi biên dịch Sass để chọn CSS đầu ra", "Mỗi lần người dùng hover trong trình duyệt", "Mỗi lần JavaScript thay đổi DOM", "Khi trình duyệt tải font"]
 answer = [0]
@@ -1114,6 +1208,7 @@ id = "frontend-tooling-dv013"
 module = "frontend-tooling-dv-sass-flow"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Những phát biểu nào đúng về Sass control flow?"
 options = ["`@each` có thể duyệt list hoặc map", "`@for ... through` bao gồm cận cuối", "`@if` chọn nhánh trong lúc biên dịch Sass", "`@each` tạo CSS động lại trong trình duyệt khi biến đổi"]
 answer = [0, 1, 2]
@@ -1125,6 +1220,7 @@ id = "frontend-tooling-dv014"
 module = "frontend-tooling-dv-sass-flow"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Một nhóm muốn sinh utility màu từ design tokens. Những lựa chọn nào giúp kiểm soát cấu trúc và đầu ra?"
 options = ["Dùng map để ghép tên token với giá trị", "Dùng `@each` để tạo selector theo từng cặp key/value", "Giới hạn tập token và kiểm tra CSS đã biên dịch", "Tạo vòng lặp không giới hạn vì compiler sẽ chỉ giữ class được dùng ở runtime"]
 answer = [0, 1, 2]
@@ -1136,6 +1232,7 @@ id = "frontend-tooling-dv015"
 module = "frontend-tooling-dv-sass-flow"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 Điền cú pháp nội suy để biến `$name` trở thành một phần của selector:
 ```scss
@@ -1151,6 +1248,7 @@ id = "frontend-tooling-dv016"
 module = "frontend-tooling-dv-sass-flow"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Khi nào bạn sẽ tạo utility CSS bằng map và `@each` trong Sass, và làm sao tránh khiến stylesheet đầu ra phình to hoặc khó bảo trì?"
 keywords = [["map", "bản đồ token"], ["@each", "vòng lặp each"], ["CSS output", "CSS đầu ra"], ["giới hạn", "tập token nhỏ"], ["namespace", "module namespace"]]
 min_keywords = 2
@@ -1163,6 +1261,7 @@ id = "frontend-tooling-dv017"
 module = "frontend-tooling-dv-graph"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Trong webpack, entry point có vai trò gì khi dựng dependency graph?"
 options = ["Chỉ định module gốc để bắt đầu lần theo các dependency", "Định nghĩa thứ tự CSS trong trình duyệt", "Thay thế toàn bộ quy tắc resolver", "Bắt buộc mỗi module tải bằng dynamic import"]
 answer = [0]
@@ -1174,6 +1273,7 @@ id = "frontend-tooling-dv018"
 module = "frontend-tooling-dv-graph"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một module JavaScript import `./logo.svg` và dùng giá trị import trong thuộc tính `src`. Cách hiểu nào phù hợp với pipeline asset của Vite?"
 options = ["Asset được resolve và xử lý trong build; giá trị import có thể là URL đầu ra", "Mọi file SVG chỉ được đọc nếu đặt inline trong HTML", "Import ảnh luôn bị bỏ khỏi dependency graph", "Trình duyệt tự tìm file trong thư mục source mà bundler không tham gia"]
 answer = [0]
@@ -1185,6 +1285,7 @@ id = "frontend-tooling-dv019"
 module = "frontend-tooling-dv-graph"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Mục đích chính của dependency pre-bundling trong Vite development là gì?"
 options = ["Chuẩn hoá/tối ưu dependency package để trình duyệt tải hiệu quả hơn", "Thay thế production build và deploy ứng dụng", "Tự động viết lại toàn bộ source app sang TypeScript", "Xoá mọi dependency không được gọi trực tiếp từ HTML"]
 answer = [0]
@@ -1196,6 +1297,7 @@ id = "frontend-tooling-dv020"
 module = "frontend-tooling-dv-graph"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Trong webpack, trường nào bên dưới điều khiển danh sách extension được thử khi resolve import không ghi extension?"
 options = ["`resolve.extensions`", "`output.filename`", "`module.rules`", "`optimization.minimize`"]
 answer = [0]
@@ -1207,6 +1309,7 @@ id = "frontend-tooling-dv021"
 module = "frontend-tooling-dv-graph"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Những phát biểu nào đúng về import và asset trong dependency graph?"
 options = ["Static import thường cho bundler biết dependency trong lúc phân tích", "Dynamic `import()` có thể tạo ranh giới tải bất đồng bộ", "CSS import có thể kéo thêm asset như font hoặc ảnh vào pipeline", "Mọi dependency phải được liệt kê thủ công trong HTML"]
 answer = [0, 1, 2]
@@ -1218,6 +1321,7 @@ id = "frontend-tooling-dv022"
 module = "frontend-tooling-dv-graph"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Khi debug một import không tìm thấy trong production, những bước nào giúp khoanh vùng đúng?"
 options = ["Xác nhận import được truy cập từ entry hoặc dependency khác", "Kiểm tra resolver, alias và tên file/case thực tế", "Kiểm tra rule hoặc transform xử lý đúng loại module/asset", "Chỉ sửa dev server vì nếu chạy được ở dev thì production chắc chắn giống hệt"]
 answer = [0, 1, 2]
@@ -1229,6 +1333,7 @@ id = "frontend-tooling-dv023"
 module = "frontend-tooling-dv-graph"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Điền tên trường webpack cấu hình module gốc của build:
 ```js
@@ -1244,6 +1349,7 @@ id = "frontend-tooling-dv024"
 module = "frontend-tooling-dv-graph"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Hãy giải thích cách bundler đi từ entry tới asset/chunk và vì sao một dynamic import hoặc resolver sai có thể làm thay đổi kết quả build."
 keywords = [["entry point", "entry"], ["dependency graph", "đồ thị phụ thuộc"], ["resolve", "resolver"], ["dynamic import", "import động"], ["asset", "tài nguyên"]]
 min_keywords = 2
@@ -1257,6 +1363,7 @@ module = "frontend-tooling-dv-graph"
 type = "code"
 lang = "javascript"
 difficulty = 3
+tags = ["level:senior"]
 title = "Sắp xếp module theo dependency"
 prompt = '''
 Viết `orderModules(graph)` với `graph` là object có dạng `{ moduleName: [dependencyName, ...] }`. Trả về mảng tên module theo thứ tự dependency xuất hiện trước module sử dụng nó. Duyệt các key gốc theo thứ tự trong object và dependency theo thứ tự trong mảng để kết quả ổn định; mỗi module chỉ xuất hiện một lần. Ví dụ `{ app: ['view'], view: ['utils'], utils: [] }` có thể trả `['utils', 'view', 'app']`.
@@ -1310,3 +1417,1025 @@ test('chu trình báo lỗi', () => {
 hints = ["Dùng DFS với ba trạng thái: chưa thăm, đang thăm và đã hoàn tất.", "Thêm module vào kết quả sau khi duyệt xong dependencies; trạng thái đang thăm giúp nhận ra chu trình."]
 explanation = "Topological ordering mô phỏng một phần việc sắp xếp dependency trong bundler; build thực tế còn xử lý chunk, side effects và asset emit."
 sources = ["webpack~5/concepts/dependency-graph", "webpack~5/concepts/module-resolution"]
+
+[[questions]]
+id = "frontend-tooling-lv001"
+module = "frontend-tooling-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "migration"]
+prompt = "Team 8 người, app chính dùng webpack 5 với 3 plugin tự viết; dev server khởi động ~90 giây. Có 6 tuần trước mùa cao điểm và không được phép đóng băng release. Chiến lược nào hợp lý nhất?"
+options = ["Chuyển dần sang Vite theo từng app, bắt đầu app nội bộ ít rủi ro, giữ webpack cho app chính tới khi plugin tự viết có phương án thay thế", "Viết lại toàn bộ cấu hình sang Vite trong một PR lớn rồi merge trước cao điểm", "Giữ nguyên, không đo đạc gì vì build vẫn chạy được", "Cho mỗi dev tự chọn bundler cho phần mình làm"]
+answer = [0]
+explanation = "Migration từng phần cho lợi ích sớm mà vẫn giữ đường lui; big-bang trước cao điểm dồn rủi ro vào thời điểm tệ nhất, còn đứng yên bỏ qua chi phí DX đang tăng. Để mỗi người tự chọn tạo ra nhiều pipeline không ai bảo trì nổi."
+sources = ["vite/guide/migration", "webpack~5/concepts/plugins"]
+
+[[questions]]
+id = "frontend-tooling-lv002"
+module = "frontend-tooling-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "ci"]
+prompt = "Pipeline CI mất 18 phút: cài dependency 7 phút, test 8 phút, build 3 phút. Sếp đề nghị đổi bundler để CI nhanh hơn. Bạn ưu tiên việc gì trước?"
+options = ["Cache dependency theo hash lockfile và chạy test theo phần bị ảnh hưởng", "Đổi bundler vì build là bước quan trọng nhất", "Tắt test trên pull request, chỉ chạy ở nhánh main", "Tăng timeout của job để không bị fail"]
+answer = [0]
+explanation = "Build chỉ chiếm 3/18 phút; dù bundler mới nhanh gấp 3 cũng chỉ tiết kiệm ~2 phút. Cài dependency và test chiếm phần lớn nên cache và affected test có đòn bẩy cao nhất. Tắt test chuyển rủi ro sang main, tăng timeout không giảm thời gian."
+sources = ["webpack~5/guides/build-performance"]
+
+[[questions]]
+id = "frontend-tooling-lv003"
+module = "frontend-tooling-lead"
+type = "multiple"
+difficulty = 3
+tags = ["level:lead", "ci", "cache"]
+prompt = "Bạn thiết kế khoá cache cho thư mục dependency và cache build trong CI của một monorepo. Những thành phần nào nên nằm trong khoá?"
+options = ["Hash của lockfile", "Phiên bản Node/runtime và hệ điều hành của runner", "Hash cấu hình build (ví dụ file config bundler)", "Tên nhánh git hiện tại, để mỗi nhánh có cache riêng hoàn toàn"]
+answer = [0, 1, 2]
+explanation = "Khoá cache nên phản ánh đầu vào quyết định nội dung: lockfile, runtime và cấu hình. Dùng tên nhánh làm khoá chính khiến nhánh mới luôn cache miss; nhánh chỉ nên là khoá dự phòng (restore key) nếu cần."
+sources = ["webpack~5/configuration/cache"]
+
+[[questions]]
+id = "frontend-tooling-lv004"
+module = "frontend-tooling-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "monorepo"]
+prompt = "Monorepo có 3 app và 12 package dùng chung, team 15 người, CI chạy lại mọi thứ mỗi PR (~25 phút). Chọn hướng đi nào trước?"
+options = ["Dùng task runner hiểu đồ thị package (kiểu turbo/nx) để chạy affected và cache kết quả task", "Tách thành 15 repo riêng để mỗi repo build nhanh", "Gộp mọi package vào một app duy nhất để chỉ có một build", "Chạy CI ban đêm thay vì trên từng PR"]
+answer = [0]
+explanation = "Task runner theo đồ thị giữ lợi ích monorepo (thay đổi xuyên package trong một PR) mà giảm việc chạy lại. Tách repo làm việc phối hợp version phức tạp; gộp app phá ranh giới; chạy đêm làm feedback chậm tới cả ngày."
+sources = ["webpack~5/guides/build-performance"]
+
+[[questions]]
+id = "frontend-tooling-lv005"
+module = "frontend-tooling-lead"
+type = "multiple"
+difficulty = 3
+tags = ["level:lead", "supply-chain"]
+prompt = "Sau một sự cố package npm bị chiếm quyền, bạn đề xuất chính sách dependency cho team. Những biện pháp nào hợp lý?"
+options = ["Commit lockfile và để CI cài ở chế độ không sửa lockfile", "Gom cập nhật dependency theo lịch, bản major phải có người review changelog", "Rà soát package mới: người duy trì, script cài đặt, kích thước thêm vào bundle", "Luôn dùng range `*` để tự nhận bản vá bảo mật mới nhất"]
+answer = [0, 1, 2]
+explanation = "Lockfile cố định cây dependency có thể tái lập; cập nhật có lịch và review giảm bất ngờ; rà package mới giảm bề mặt tấn công. Range `*` khiến mỗi lần cài có thể kéo về mã chưa từng được kiểm tra — đúng kịch bản bị chiếm quyền."
+sources = ["webpack~5/guides/dependency-management"]
+
+[[questions]]
+id = "frontend-tooling-lv006"
+module = "frontend-tooling-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "performance-budget"]
+prompt = "Bundle JS trang chủ tăng 40% sau 2 quý mà không ai để ý. Cách nào giúp team kiểm soát lâu dài?"
+options = ["Đặt performance budget có ngưỡng trong CI, chặn merge khi vượt và yêu cầu ghi lý do khi nâng ngưỡng", "Nhờ một người kiểm tra kích thước bundle bằng tay mỗi tháng", "Chỉ cảnh báo trong log build, không chặn để khỏi làm chậm team", "Cấm thêm mọi dependency mới"]
+answer = [0]
+explanation = "Budget tự động và có hiệu lực biến kích thước thành ràng buộc rõ ràng; nâng ngưỡng vẫn được nhưng phải có lý do. Kiểm tra tay phụ thuộc một người, cảnh báo không chặn thường bị bỏ qua, cấm hoàn toàn thì phi thực tế."
+sources = ["webpack~5/configuration/performance", "vite/config/build-options"]
+
+[[questions]]
+id = "frontend-tooling-lv007"
+module = "frontend-tooling-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "lint"]
+prompt = "Monorepo có 10 package, mỗi package một file cấu hình ESLint khác nhau và đã trôi xa nhau. Bạn chuẩn hoá thế nào ít gây xáo trộn nhất?"
+options = ["Tạo shareable config có version trong repo, chuyển từng package sang, cho phép override cục bộ có ghi chú", "Xoá hết cấu hình cũ và bật bộ rule nghiêm nhất ngay trong một PR", "Tắt ESLint ở CI cho tới khi mọi người thống nhất", "Giữ nguyên vì mỗi team con có quyền tự quyết"]
+answer = [0]
+explanation = "Shareable config cho một nguồn chuẩn, chuyển dần giúp PR nhỏ và dễ review, override có ghi chú giữ ngoại lệ minh bạch. Bật nghiêm toàn bộ một lần tạo hàng nghìn lỗi; tắt lint hoặc để trôi đều làm nợ tăng."
+sources = ["eslint/extend/shareable-configs", "eslint/use/configure/configuration-files"]
+
+[[questions]]
+id = "frontend-tooling-lv008"
+module = "frontend-tooling-lead"
+type = "multiple"
+difficulty = 3
+tags = ["level:lead", "migration"]
+prompt = "Khi review PR chuyển app từ webpack sang Vite, những điều nào bạn yêu cầu trước khi merge?"
+options = ["So sánh danh sách chunk và kích thước bundle trước/sau", "Kiểm tra biến môi trường nào được nhúng vào client bundle", "Có cách quay lại pipeline cũ trong ít nhất một chu kỳ release", "Chỉ cần dev server chạy được trên máy tác giả PR"]
+answer = [0, 1, 2]
+explanation = "Migration phải chứng minh output production tương đương, không lộ secret qua env và có đường lui. Dev server chạy được không nói gì về production build vốn dùng pipeline khác."
+sources = ["vite/guide/migration", "vite/guide/env-and-mode", "vite/guide/build"]
+
+[[questions]]
+id = "frontend-tooling-lv009"
+module = "frontend-tooling-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "cache", "security"]
+prompt = "Team muốn bật remote cache dùng chung cho CI và máy dev để tiết kiệm thời gian build. Rủi ro chính cần thiết kế quanh là gì?"
+options = ["Ai ghi được cache có thể đầu độc artifact; nên chỉ cho CI tin cậy ghi, máy dev chỉ đọc", "Remote cache làm bundle production lớn hơn", "Remote cache bắt buộc phải đổi bundler", "Remote cache khiến lockfile không còn cần thiết"]
+answer = [0]
+explanation = "Cache được tái dùng như kết quả build thật, nên quyền ghi là ranh giới bảo mật. Các lựa chọn khác không phải hệ quả của remote cache."
+sources = ["webpack~5/configuration/cache"]
+
+[[questions]]
+id = "frontend-tooling-lv010"
+module = "frontend-tooling-lead"
+type = "fill"
+difficulty = 3
+tags = ["level:lead", "adr"]
+prompt = '''
+Tài liệu ngắn ghi lại một quyết định kiến trúc gồm Bối cảnh, Quyết định và Hệ quả thường được gọi bằng viết tắt nào?
+```text
+docs/{{blank}}/0007-chuyen-sang-vite.md
+```
+'''
+blanks = [["adr", "adrs"]]
+explanation = "ADR (Architecture Decision Record) giúp người đến sau hiểu vì sao chọn công cụ, tránh tranh luận lại từ đầu."
+sources = ["vite/guide/migration"]
+
+[[questions]]
+id = "frontend-tooling-lv011"
+module = "frontend-tooling-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "styling"]
+prompt = "Hai team frontend: một dùng Tailwind, một dùng Sass modules, giờ cần design system chung trong 1 quý. Hướng nào ít rủi ro nhất?"
+options = ["Đưa token (màu, spacing, typography) vào một nguồn chung dạng CSS custom properties, cả Tailwind theme và Sass cùng đọc từ đó", "Bắt team Sass viết lại toàn bộ sang Tailwind ngay quý này", "Mỗi team giữ bảng màu riêng, chỉ thống nhất logo", "Copy giá trị hex vào từng component để không phụ thuộc nhau"]
+answer = [0]
+explanation = "Thống nhất token trước cho nhất quán thị giác mà không buộc viết lại; công cụ styling có thể hội tụ sau. Viết lại toàn bộ tốn cả quý không tạo tính năng; giữ riêng hoặc hard-code làm design system vô nghĩa."
+sources = ["tailwindcss/theme", "sass/at-rules/use"]
+
+[[questions]]
+id = "frontend-tooling-lv012"
+module = "frontend-tooling-lead"
+type = "multiple"
+difficulty = 3
+tags = ["level:lead", "process"]
+prompt = "Chỉ một kỹ sư hiểu cấu hình build (bus factor = 1) và người đó sắp nghỉ phép dài. Trong 2 tuần, bạn làm những gì?"
+options = ["Pair để người khác cùng xử lý một vài thay đổi build thật", "Viết tài liệu ngắn: sơ đồ pipeline, lệnh thường dùng, lỗi hay gặp", "Đơn giản hoá cấu hình, gỡ plugin không còn dùng", "Đóng băng mọi thay đổi liên quan đến build cho tới khi người đó quay lại"]
+answer = [0, 1, 2]
+explanation = "Chia sẻ kiến thức qua việc thật, tài liệu và giảm độ phức tạp đều hạ bus factor. Đóng băng chỉ hoãn vấn đề và chặn cả việc sửa lỗi khẩn."
+sources = ["webpack~5/concepts/configuration"]
+
+[[questions]]
+id = "frontend-tooling-lv013"
+module = "frontend-tooling-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "dependency"]
+prompt = "Bot cập nhật dependency mở ~40 PR mỗi tuần, team đã bắt đầu merge mù hoặc bỏ qua. Cách xử lý hợp lý?"
+options = ["Gom PR theo nhóm (dev tooling, runtime) và theo lịch tuần; tự động merge patch khi CI xanh, major cần review", "Tắt bot, cập nhật dependency mỗi năm một lần", "Cho bot tự merge mọi bản kể cả major", "Giao một người duy nhất review tất cả 40 PR"]
+answer = [0]
+explanation = "Gom nhóm và phân loại theo mức rủi ro giảm nhiễu mà vẫn cập nhật đều. Cập nhật mỗi năm dồn breaking change; tự merge major bỏ qua review; một người review hết là nút thắt."
+sources = ["webpack~5/guides/dependency-management"]
+
+[[questions]]
+id = "frontend-tooling-lv014"
+module = "frontend-tooling-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "source-map"]
+prompt = "Team cần debug lỗi production nhưng công ty không muốn công khai mã nguồn. Chính sách source map nào phù hợp?"
+options = ["Sinh source map khi build nhưng không phục vụ công khai; tải lên công cụ theo dõi lỗi nội bộ", "Tắt hẳn source map, debug bằng code đã minify", "Phục vụ source map công khai cạnh bundle", "Build production không minify để dễ đọc"]
+answer = [0]
+explanation = "Source map ẩn cho phép giải mã stack trace mà không lộ mã. Tắt hẳn làm debug rất chậm; công khai map trái yêu cầu; bỏ minify tăng kích thước cho mọi người dùng."
+sources = ["vite/config/build-options", "webpack~5/configuration/devtool"]
+
+[[questions]]
+id = "frontend-tooling-lv015"
+module = "frontend-tooling-lead"
+type = "multiple"
+difficulty = 3
+tags = ["level:lead", "lint"]
+prompt = "Bạn muốn bật một rule ESLint mới cho codebase lớn đang có 1.200 vi phạm. Những cách nào giúp áp dụng mà không chặn team?"
+options = ["Bật ở mức cảnh báo trước, chặn với code mới hoặc file thay đổi", "Dùng cơ chế suppression/baseline cho vi phạm cũ, giảm dần theo kế hoạch", "Chia việc sửa theo package, mỗi PR nhỏ", "Bật mức error ngay cho toàn repo, ai đụng file nào tự sửa hết file đó"]
+answer = [0, 1, 2]
+explanation = "Áp dụng dần (chặn code mới, baseline vi phạm cũ, sửa theo lô) giữ được tốc độ. Bật error toàn repo khiến PR nhỏ phải sửa hàng trăm dòng không liên quan."
+sources = ["eslint/use/suppressions", "eslint/use/configure/rules"]
+
+[[questions]]
+id = "frontend-tooling-lv016"
+module = "frontend-tooling-lead"
+type = "essay"
+difficulty = 3
+tags = ["level:lead", "adr", "migration"]
+prompt = "Viết một ADR ngắn (Bối cảnh – Phương án – Quyết định – Hệ quả) cho việc chuyển app React lớn từ webpack sang Vite, team 10 người, không được dừng release."
+keywords = [["bối cảnh", "context"], ["phương án", "lựa chọn", "options"], ["từng phần", "từng bước", "incremental", "dần"], ["rollback", "quay lại", "đường lui"], ["đo", "baseline", "số liệu", "metric"], ["plugin", "loader"]]
+min_keywords = 3
+model_answer = '''Bối cảnh: dev server khởi động chậm, HMR vài giây, cấu hình webpack có loader/plugin tự viết; team 10 người, release hàng tuần. Phương án: (1) giữ webpack và tối ưu cache; (2) chuyển dần sang Vite theo từng app/route; (3) viết lại toàn bộ một lần. Quyết định: phương án 2 — kiểm kê plugin, chuyển app nội bộ trước, đo baseline (thời gian khởi động, HMR, CI, kích thước bundle) rồi so sánh. Hệ quả: hai pipeline song song một thời gian, cần so sánh output production và giữ đường lui rollback về webpack trong ít nhất một chu kỳ release.'''
+explanation = "ADR tốt nêu ràng buộc, so sánh ít nhất hai phương án, chọn có lý do đo được và nói rõ chi phí/hệ quả, gồm cả cách quay lại."
+sources = ["vite/guide/migration", "webpack~5/concepts/plugins"]
+
+[[questions]]
+id = "frontend-tooling-lv017"
+module = "frontend-tooling-lead"
+type = "essay"
+difficulty = 3
+tags = ["level:lead", "ci", "monorepo"]
+prompt = "CI của monorepo frontend mất 30 phút mỗi PR, dev than phiền. Trình bày kế hoạch 1 tháng để đưa xuống dưới 10 phút: đo gì, làm gì theo thứ tự nào, rủi ro gì."
+keywords = [["đo", "baseline", "profile", "số liệu"], ["cache", "bộ nhớ đệm"], ["affected", "bị ảnh hưởng", "phần thay đổi"], ["song song", "parallel", "shard"], ["lockfile", "khoá cache"], ["rủi ro", "cache cũ", "flaky"]]
+min_keywords = 3
+model_answer = '''Tuần 1 đo baseline: thời gian từng bước (cài dependency, lint, typecheck, test, build) trên p50/p95. Tuần 2 cache dependency theo hash lockfile và runtime, bật cache build/test theo nội dung đầu vào. Tuần 3 chạy affected: chỉ lint/test/build package bị ảnh hưởng theo đồ thị phụ thuộc, chia test song song (shard). Tuần 4 dọn flaky test và đặt ngân sách thời gian CI. Rủi ro: khoá cache sai cho kết quả cũ, đồ thị phụ thuộc thiếu làm bỏ sót test — giữ một job chạy đầy đủ trên main hằng ngày để phát hiện.'''
+explanation = "Câu trả lời cần bắt đầu từ số liệu, ưu tiên việc có đòn bẩy lớn nhất và nêu cách phòng rủi ro của cache/affected."
+sources = ["webpack~5/guides/build-performance", "webpack~5/configuration/cache"]
+
+[[questions]]
+id = "frontend-tooling-lvc01"
+module = "frontend-tooling-lead"
+type = "code"
+lang = "javascript"
+difficulty = 3
+tags = ["level:lead", "monorepo"]
+title = "Tìm package bị ảnh hưởng trong monorepo"
+prompt = '''
+Viết `affectedPackages(changedFiles, packages, deps)` mô phỏng lệnh "affected" của task runner monorepo.
+- `changedFiles`: mảng đường dẫn file đã đổi, ví dụ `'packages/ui/button.ts'`.
+- `packages`: object `{ tenPackage: 'thuMuc' }`, ví dụ `{ ui: 'packages/ui' }`. Một file thuộc package nếu đường dẫn bắt đầu bằng `thuMuc + '/'`.
+- `deps`: object `{ tenPackage: [cacPackagePhuThuoc] }` (package nào không có key thì không phụ thuộc gì).
+Trả về mảng tên package (sắp xếp tăng dần theo bảng chữ cái) gồm package chứa file đổi **và mọi package phụ thuộc trực tiếp hoặc gián tiếp vào chúng**. File không thuộc package nào thì bỏ qua.
+'''
+starter = '''
+function affectedPackages(changedFiles, packages, deps) {
+  return [];
+}
+'''
+solution = '''
+function affectedPackages(changedFiles, packages, deps) {
+  const result = new Set();
+  for (const file of changedFiles) {
+    for (const [name, dir] of Object.entries(packages)) {
+      if (file.startsWith(dir + '/')) result.add(name);
+    }
+  }
+  const dependents = {};
+  for (const [name, list] of Object.entries(deps)) {
+    for (const d of list) {
+      (dependents[d] = dependents[d] || []).push(name);
+    }
+  }
+  const queue = [...result];
+  while (queue.length) {
+    const current = queue.shift();
+    for (const parent of dependents[current] || []) {
+      if (!result.has(parent)) { result.add(parent); queue.push(parent); }
+    }
+  }
+  return [...result].sort();
+}
+'''
+tests = '''
+const packages = { ui: 'packages/ui', utils: 'packages/utils', web: 'apps/web', admin: 'apps/admin', docs: 'apps/docs' };
+const deps = { ui: ['utils'], web: ['ui'], admin: ['ui', 'utils'], docs: [] };
+test('đổi package lá kéo theo mọi package phụ thuộc gián tiếp', () => {
+  expect(affectedPackages(['packages/utils/date.ts'], packages, deps)).toEqual(['admin', 'ui', 'utils', 'web']);
+});
+test('đổi app chỉ ảnh hưởng chính nó', () => {
+  expect(affectedPackages(['apps/docs/index.md'], packages, deps)).toEqual(['docs']);
+});
+test('file ngoài package bị bỏ qua', () => {
+  expect(affectedPackages(['README.md', 'packages/uikit/x.ts'], packages, deps)).toEqual([]);
+});
+test('nhiều file, không trùng lặp và sắp xếp', () => {
+  expect(affectedPackages(['apps/web/a.ts', 'apps/web/b.ts', 'apps/docs/c.md'], packages, deps)).toEqual(['docs', 'web']);
+});
+test('không có file đổi', () => {
+  expect(affectedPackages([], packages, deps)).toEqual([]);
+});
+'''
+hints = ["Xác định package chứa file trước, chú ý so khớp theo `dir + '/'` để `packages/uikit` không khớp `packages/ui`.", "Đảo ngược `deps` thành bảng 'ai phụ thuộc vào tôi' rồi duyệt BFS từ các package đã đổi."]
+explanation = "Affected dựa trên đồ thị phụ thuộc ngược: thay đổi ở package lá phải kiểm tra lại mọi package dùng nó. Đồ thị sai sẽ bỏ sót test, nên vẫn cần job chạy đầy đủ định kỳ."
+sources = ["webpack~5/concepts/dependency-graph"]
+
+[[questions]]
+id = "frontend-tooling-lv018"
+module = "tool-performance"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "tree-shaking"]
+prompt = '''
+Thư viện nội bộ có `index.js` re-export 50 component, nhưng bundle vẫn chứa cả 50 dù app chỉ import `Button`. File `package.json` của thư viện không khai báo gì thêm và một vài file con có `import './global.css'`. Nguyên nhân khả dĩ nhất?
+```js
+import { Button } from '@acme/ui';
+```
+'''
+options = ["Bundler không chắc các module khác không có side effect nên giữ lại; cần khai báo `sideEffects` chính xác (vd. chỉ liệt kê file CSS)", "Tree-shaking chỉ chạy trong development mode", "Named import luôn kéo theo cả package", "Thiếu `export default` trong index.js"]
+answer = [0]
+explanation = "Tree-shaking chỉ bỏ module khi chắc nó không có side effect. Khai báo `sideEffects` (đánh dấu riêng các file CSS) cho phép bỏ phần không dùng. Tree-shaking hoạt động ở production, và named import là thứ giúp nó hiệu quả."
+sources = ["webpack~5/guides/tree-shaking"]
+
+[[questions]]
+id = "frontend-tooling-lv019"
+module = "tool-performance"
+type = "multiple"
+difficulty = 3
+tags = ["level:senior", "cache-busting"]
+prompt = "Sau mỗi deploy, một phần người dùng gặp lỗi `Failed to fetch dynamically imported module`. Những nhận định nào đúng?"
+options = ["Tab đang mở giữ HTML/manifest cũ, trỏ tới chunk có hash cũ đã bị xoá khỏi server", "Giữ lại asset của bản trước một thời gian giảm lỗi này", "Bắt lỗi khi tải chunk và gợi ý tải lại trang là một biện pháp dự phòng hợp lý", "Đặt cache dài hạn cho file HTML sẽ giải quyết triệt để"]
+answer = [0, 1, 2]
+explanation = "Content hash khiến bản mới có tên chunk mới; nếu xoá chunk cũ ngay, tab cũ không tải được. Giữ asset cũ và xử lý lỗi tải lại là cách thực tế. Cache dài cho HTML làm người dùng kẹt ở bản cũ lâu hơn."
+sources = ["webpack~5/guides/caching", "vite/guide/build"]
+
+[[questions]]
+id = "frontend-tooling-lv020"
+module = "tool-bundlers"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "code-splitting"]
+prompt = "Sau khi chuyển mọi route sang `import()`, số request ban đầu tăng lên ~60 chunk nhỏ và LCP xấu đi trên mạng di động. Hướng xử lý nào hợp lý?"
+options = ["Gom module dùng chung thành vendor/shared chunk có kích thước hợp lý và chỉ tách lazy ở ranh giới route/tính năng lớn", "Tách nhỏ hơn nữa để mỗi chunk dưới 1 KB", "Bỏ hoàn toàn code splitting", "Chuyển toàn bộ sang inline script trong HTML"]
+answer = [0]
+explanation = "Chunk quá nhỏ làm tăng overhead request và waterfall. Cấu hình chia chunk theo ranh giới có ý nghĩa cân bằng giữa tải ban đầu và cache. Bỏ hẳn splitting hay inline mọi thứ làm mất lợi ích tải theo nhu cầu."
+sources = ["webpack~5/plugins/split-chunks-plugin", "webpack~5/guides/code-splitting"]
+
+[[questions]]
+id = "frontend-tooling-lv021"
+module = "tool-bundlers"
+type = "multiple"
+difficulty = 3
+tags = ["level:senior", "source-map"]
+prompt = "Những phát biểu nào đúng về source map trong build production?"
+options = ["Source map ánh xạ vị trí trong code đã biến đổi về vị trí trong source gốc", "Có thể sinh source map nhưng không tham chiếu nó trong bundle công khai", "Loại devtool dựa trên `eval` phù hợp cho production", "Source map đầy đủ có thể làm lộ mã nguồn nếu được phục vụ công khai"]
+answer = [0, 1, 3]
+explanation = "`eval`-based devtool nhanh cho development nhưng không phù hợp production. Source map ẩn (không tham chiếu) hữu ích để upload cho công cụ theo dõi lỗi."
+sources = ["webpack~5/configuration/devtool", "vite/config/build-options"]
+
+[[questions]]
+id = "frontend-tooling-lv022"
+module = "frontend-tooling-dv-graph"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "module-graph"]
+prompt = "App có hai bản React trong bundle (hook báo lỗi 'Invalid hook call'). Package `@acme/ui` khai báo `react` trong `dependencies`. Cách sửa căn bản nhất?"
+options = ["Chuyển `react` sang `peerDependencies` của `@acme/ui` để app cung cấp một bản duy nhất", "Thêm `React.StrictMode` ở gốc app", "Tăng phiên bản React trong app lên bản mới nhất", "Tắt HMR"]
+answer = [0]
+explanation = "Khi thư viện tự mang React trong dependencies, resolver có thể kéo hai bản vào graph. Peer dependency để app quyết định một bản dùng chung; alias/dedupe chỉ là biện pháp tạm."
+sources = ["webpack~5/configuration/resolve", "vite/config/shared-options"]
+
+[[questions]]
+id = "frontend-tooling-lv023"
+module = "tool-quality"
+type = "multiple"
+difficulty = 3
+tags = ["level:senior", "lint"]
+prompt = "Typed lint (rule cần thông tin type của TypeScript) làm thời gian lint tăng từ 20 giây lên 4 phút. Những cách nào giảm chi phí mà vẫn giữ giá trị?"
+options = ["Chỉ bật rule cần type cho file source, không cho file cấu hình/script", "Bật cache của ESLint trong CI và local", "Chỉ lint file thay đổi trong pre-commit, lint đầy đủ ở CI", "Tắt typecheck `tsc` vì typed lint đã thay thế hoàn toàn"]
+answer = [0, 1, 2]
+explanation = "Giới hạn phạm vi typed rule, cache và lint gia tăng giảm thời gian. Typed lint không thay thế `tsc`: nó dùng type để phát hiện mẫu lỗi, không kiểm tra toàn bộ chương trình."
+sources = ["eslint/use/command-line-interface", "eslint/use/configure/configuration-files"]
+
+[[questions]]
+id = "frontend-tooling-lv024"
+module = "tool-tailwind"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "tailwind"]
+prompt = "Sau khi đưa component từ một package trong monorepo vào app, các class Tailwind trong package không có CSS. Nguyên nhân hợp lý nhất?"
+options = ["Trình quét class không bao gồm thư mục của package đó; cần khai báo thêm nguồn để quét", "Tailwind không hỗ trợ monorepo", "Class trong package phải viết bằng Sass", "Cần thêm `!important` cho mọi class"]
+answer = [0]
+explanation = "Tailwind chỉ sinh CSS cho class nó tìm thấy trong nguồn được quét; package nằm ngoài (hoặc trong `node_modules`) có thể bị bỏ qua cho tới khi được khai báo."
+sources = ["tailwindcss/detecting-classes-in-source-files"]
+
+[[questions]]
+id = "frontend-tooling-lv025"
+module = "tool-sass"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "sass"]
+prompt = "Codebase Sass lớn dùng `@import` khắp nơi, biến toàn cục đè nhau và build chậm. Lộ trình migration nào hợp lý?"
+options = ["Chuyển dần sang `@use`/`@forward` theo từng thư mục, tạo file index `@forward` làm API, có thể dùng công cụ migrator hỗ trợ", "Đổi tên mọi biến thành chuỗi ngẫu nhiên để tránh trùng", "Gộp tất cả vào một file Sass khổng lồ", "Chuyển hết sang inline style"]
+answer = [0]
+explanation = "Module system cho namespace và API rõ ràng, mỗi module chỉ được nạp một lần. Chuyển theo thư mục giữ PR nhỏ; migrator giúp phần cơ học."
+sources = ["sass/at-rules/use", "sass/at-rules/forward", "sass/cli/migrator"]
+
+[[questions]]
+id = "frontend-tooling-lv026"
+module = "tool-performance"
+type = "fill"
+difficulty = 3
+tags = ["level:senior", "cache-busting"]
+prompt = '''
+Điền placeholder của webpack để tên file thay đổi khi và chỉ khi nội dung chunk thay đổi:
+```js
+output: { filename: '[name].[{{blank}}].js' }
+```
+'''
+blanks = [["contenthash"]]
+explanation = "`[contenthash]` dựa trên nội dung file đầu ra nên phù hợp cache dài hạn; khác với hash của cả lần build."
+sources = ["webpack~5/guides/caching", "webpack~5/configuration/output"]
+
+[[questions]]
+id = "frontend-tooling-lvc02"
+module = "tool-performance"
+type = "code"
+lang = "javascript"
+difficulty = 3
+tags = ["level:senior", "tree-shaking"]
+title = "Tìm export không được dùng"
+prompt = '''
+Viết `unusedExports(modules, entry)` mô phỏng bước đánh dấu của tree-shaking.
+- `modules`: object `{ ten: { exports: [...], imports: { tenModule: [cacTenImport] } } }`.
+- Bắt đầu từ `entry`, một module **được dùng** nếu có thể đi tới từ entry qua `imports`. Một export là **đã dùng** nếu ít nhất một module được dùng import tên đó.
+- Trả về object chỉ gồm các module được dùng (trừ entry) có export không dùng: `{ ten: [cacExportKhongDung] }`, giữ thứ tự trong `exports`. Module không đi tới được thì bỏ qua (sẽ bị loại toàn bộ). Module được dùng mà mọi export đều dùng thì không xuất hiện.
+'''
+starter = '''
+function unusedExports(modules, entry) {
+  return {};
+}
+'''
+solution = '''
+function unusedExports(modules, entry) {
+  const reached = new Set();
+  const used = {};
+  const stack = [entry];
+  while (stack.length) {
+    const name = stack.pop();
+    if (reached.has(name)) continue;
+    reached.add(name);
+    const imports = (modules[name] && modules[name].imports) || {};
+    for (const [dep, names] of Object.entries(imports)) {
+      (used[dep] = used[dep] || new Set());
+      for (const n of names) used[dep].add(n);
+      stack.push(dep);
+    }
+  }
+  const result = {};
+  for (const name of Object.keys(modules)) {
+    if (name === entry || !reached.has(name)) continue;
+    const set = used[name] || new Set();
+    const unused = modules[name].exports.filter((e) => !set.has(e));
+    if (unused.length) result[name] = unused;
+  }
+  return result;
+}
+'''
+tests = '''
+const modules = {
+  main: { exports: [], imports: { utils: ['format'], ui: ['Button'] } },
+  utils: { exports: ['format', 'parse', 'debounce'], imports: {} },
+  ui: { exports: ['Button', 'Modal'], imports: { utils: ['debounce'] } },
+  legacy: { exports: ['old'], imports: { utils: ['parse'] } },
+};
+test('đánh dấu export không dùng của module đi tới được', () => {
+  expect(unusedExports(modules, 'main')).toEqual({ utils: ['parse'], ui: ['Modal'] });
+});
+test('import từ module không đi tới được không tính là dùng', () => {
+  expect(unusedExports(modules, 'main').utils).toEqual(['parse']);
+});
+test('module dùng hết export không xuất hiện', () => {
+  const m = { app: { exports: [], imports: { a: ['x'] } }, a: { exports: ['x'], imports: {} } };
+  expect(unusedExports(m, 'app')).toEqual({});
+});
+test('entry khác thay đổi kết quả', () => {
+  expect(unusedExports(modules, 'legacy')).toEqual({ utils: ['format', 'debounce'] });
+});
+test('chu trình import không lặp vô hạn', () => {
+  const m = { app: { exports: [], imports: { a: ['x'] } }, a: { exports: ['x', 'y'], imports: { b: ['z'] } }, b: { exports: ['z', 'w'], imports: { a: ['x'] } } };
+  expect(unusedExports(m, 'app')).toEqual({ a: ['y'], b: ['w'] });
+});
+'''
+hints = ["Bước 1: duyệt từ entry để biết module nào đi tới được; đồng thời gom các tên được import cho từng module.", "Bước 2: với mỗi module đi tới được (trừ entry), lọc `exports` không nằm trong tập đã dùng; dùng tập `reached` để tránh lặp vô hạn."]
+explanation = "Tree-shaking thật còn phải xét side effect và re-export, nhưng lõi là đánh dấu từ entry: module không đi tới được bị loại, export không ai import bị bỏ khi minify."
+sources = ["webpack~5/guides/tree-shaking"]
+
+[[questions]]
+id = "frontend-tooling-lv027"
+module = "tool-bundlers"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "env"]
+prompt = '''
+Trong app Vite, `import.meta.env.API_SECRET` luôn là `undefined` dù `.env` có dòng `API_SECRET=abc`. Giải thích đúng?
+```js
+console.log(import.meta.env.API_SECRET);
+```
+'''
+options = ["Vite chỉ đưa vào client các biến có tiền tố cho phép (mặc định `VITE_`); secret thật không nên đưa vào client", "Phải restart máy tính mới đọc được `.env`", "`.env` chỉ được đọc khi build production", "Cần dùng `process.env` trong trình duyệt"]
+answer = [0]
+explanation = "Tiền tố là cơ chế tránh lộ biến nhạy cảm vào bundle. Mọi thứ trong `import.meta.env` của client đều ai cũng đọc được, nên secret phải ở server."
+sources = ["vite/guide/env-and-mode"]
+
+[[questions]]
+id = "frontend-tooling-lv028"
+module = "tool-bundlers"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "deploy"]
+prompt = "App Vite deploy tại `https://example.com/shop/` nhưng mọi asset trả 404 vì trình duyệt tải `/assets/...`. Cấu hình nào cần sửa?"
+options = ["`base: '/shop/'`", "`server.port`", "`build.minify`", "`resolve.alias`"]
+answer = [0]
+explanation = "`base` đặt public path cho asset khi app không nằm ở gốc domain."
+sources = ["vite/config/shared-options", "vite/guide/static-deploy"]
+
+[[questions]]
+id = "frontend-tooling-lv029"
+module = "tool-bundlers"
+type = "multiple"
+difficulty = 2
+tags = ["level:middle", "hmr"]
+prompt = "HMR không hoạt động, mỗi lần sửa file trang lại tải lại toàn bộ. Những nguyên nhân nào có thể?"
+options = ["Module bị sửa (hoặc module cha) không có ranh giới chấp nhận cập nhật nóng nên bubble lên tới gốc", "Dev server chạy sau proxy/container mà kết nối websocket HMR bị chặn", "File nằm ngoài thư mục được watch", "HMR chỉ hoạt động khi build production"]
+answer = [0, 1, 2]
+explanation = "HMR cần module có handler chấp nhận cập nhật, kết nối websocket tới dev server và watcher thấy file. Production build không có HMR."
+sources = ["vite/guide/api-hmr", "vite/config/server-options"]
+
+[[questions]]
+id = "frontend-tooling-lv030"
+module = "tool-quality"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "lint"]
+prompt = "ESLint và Prettier liên tục \"đánh nhau\": ESLint sửa dấu chấm phẩy, Prettier sửa lại. Cách xử lý chuẩn?"
+options = ["Để Prettier lo format, tắt các rule thuần format trong ESLint; ESLint tập trung vào lỗi logic", "Chạy ESLint hai lần liên tiếp", "Xoá Prettier và tự format bằng tay", "Bật cả hai nhưng không chạy trong CI"]
+answer = [0]
+explanation = "Phân vai rõ: formatter định dạng, linter tìm lỗi. Rule format chồng chéo là nguồn xung đột."
+sources = ["eslint/use/configure/rules"]
+
+[[questions]]
+id = "frontend-tooling-lv031"
+module = "tool-quality"
+type = "multiple"
+difficulty = 2
+tags = ["level:middle", "lint"]
+prompt = "Trong flat config của ESLint (`eslint.config.js`), những phát biểu nào đúng?"
+options = ["Cấu hình là một mảng object, object sau có thể ghi đè object trước cho file khớp", "Có thể giới hạn một object cho tập file bằng `files`", "Bỏ qua thư mục build bằng `ignores`", "Mỗi thư mục con bắt buộc phải có file cấu hình riêng"]
+answer = [0, 1, 2]
+explanation = "Flat config dùng một mảng ở gốc, áp dụng theo `files`/`ignores`; không bắt buộc cấu hình theo thư mục."
+sources = ["eslint/use/configure/configuration-files", "eslint/use/configure/ignore"]
+
+[[questions]]
+id = "frontend-tooling-lv032"
+module = "tool-tailwind"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "tailwind"]
+prompt = '''
+Màu badge lấy từ API (`success`, `warning`, `danger`), nhưng class không có CSS trong production. Sửa thế nào?
+```js
+const cls = `bg-${status}-500`;
+```
+'''
+options = ["Ánh xạ status sang chuỗi class đầy đủ, ví dụ `{ success: 'bg-green-500', ... }`", "Thêm `!` trước biến", "Đổi template string sang nối chuỗi bằng `+`", "Chuyển class vào `useEffect`"]
+answer = [0]
+explanation = "Trình quét chỉ thấy tên class hoàn chỉnh trong source. Nối chuỗi theo kiểu nào cũng không cho nó biết class cuối cùng."
+sources = ["tailwindcss/detecting-classes-in-source-files"]
+
+[[questions]]
+id = "frontend-tooling-lv033"
+module = "tool-sass"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "sass"]
+prompt = '''
+Đoạn sau báo lỗi `Undefined variable`. Vì sao?
+```scss
+// _tokens.scss
+$brand: #06b6d4;
+// card.scss
+@use "tokens";
+.card { color: $brand; }
+```
+'''
+options = ["`@use` đưa thành viên vào namespace; cần viết `tokens.$brand` (hoặc `@use \"tokens\" as *`)", "Biến Sass không được chứa mã hex", "File partial phải đặt tên không có dấu gạch dưới", "Phải `@import` thêm lần nữa sau `@use`"]
+answer = [0]
+explanation = "Khác `@import`, `@use` không đổ biến vào phạm vi toàn cục; namespace mặc định là tên file cuối cùng."
+sources = ["sass/at-rules/use"]
+
+[[questions]]
+id = "frontend-tooling-lv034"
+module = "tool-performance"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "cache"]
+prompt = "Chính sách cache nào phù hợp cho app SPA có asset gắn content hash?"
+options = ["`index.html` cache ngắn hoặc revalidate; `/assets/*.[hash].js` cache dài hạn, immutable", "Mọi file cache 1 năm", "Mọi file `no-store`", "`index.html` cache 1 năm, asset `no-cache`"]
+answer = [0]
+explanation = "HTML phải được cập nhật để trỏ tới hash mới; asset có hash đổi tên khi đổi nội dung nên cache lâu an toàn."
+sources = ["webpack~5/guides/caching"]
+
+[[questions]]
+id = "frontend-tooling-lv035"
+module = "frontend-tooling-dv-graph"
+type = "fill"
+difficulty = 2
+tags = ["level:middle", "alias"]
+prompt = '''
+Điền tên trường Vite để `@/utils` trỏ tới thư mục `src/utils`:
+```js
+export default defineConfig({
+  resolve: { {{blank}}: { '@': '/src' } },
+})
+```
+'''
+blanks = [["alias"]]
+explanation = "`resolve.alias` ánh xạ specifier sang đường dẫn; nhớ cấu hình `paths` tương ứng cho TypeScript."
+sources = ["vite/config/shared-options"]
+
+[[questions]]
+id = "frontend-tooling-lv036"
+module = "frontend-tooling-dv-layout"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "tailwind"]
+prompt = '''
+Trên mobile, phần tử nên xếp dọc; từ `md` trở lên xếp ngang. Chuỗi class nào đúng?
+'''
+options = ["`flex flex-col md:flex-row`", "`flex md:flex-col flex-row`", "`flex sm:flex-col md:flex-row` và bắt buộc có `sm:`", "`flex-row md:flex-col`"]
+answer = [0]
+explanation = "Mobile-first: class không tiền tố áp dụng mặc định, `md:` ghi đè từ breakpoint md trở lên."
+sources = ["tailwindcss/responsive-design", "tailwindcss/flex-direction"]
+
+[[questions]]
+id = "frontend-tooling-lv037"
+module = "tool-bundlers"
+type = "essay"
+difficulty = 2
+tags = ["level:middle", "dev-vs-build"]
+prompt = "Một tính năng chạy tốt với `vite dev` nhưng lỗi sau `vite build` + `vite preview`. Liệt kê các khác biệt giữa dev và build có thể gây ra lỗi và cách bạn khoanh vùng."
+keywords = [["bundle", "đóng gói", "rollup", "rolldown"], ["minify", "nén"], ["env", "biến môi trường", "mode"], ["base", "đường dẫn asset", "public path"], ["tree-shaking", "side effect"], ["preview", "build cục bộ"]]
+min_keywords = 3
+model_answer = '''Dev phục vụ module ESM theo yêu cầu, còn build đóng gói, minify và tree-shaking nên code dựa vào side effect hoặc thứ tự import có thể đổi hành vi. Mode và biến môi trường khác nhau giữa dev và production; `base` sai làm asset 404. Tôi khoanh vùng bằng `vite build` + `vite preview` cục bộ, tắt minify tạm thời và bật source map để đọc stack trace, rồi so sánh env và đường dẫn asset.'''
+explanation = "Câu trả lời cần nêu được ít nhất vài khác biệt thực tế (đóng gói/minify, env/mode, base) và cách tái hiện cục bộ."
+sources = ["vite/guide/build", "vite/guide/env-and-mode", "vite/config/build-options"]
+
+[[questions]]
+id = "frontend-tooling-lvc03"
+module = "tool-bundlers"
+type = "code"
+lang = "javascript"
+difficulty = 2
+tags = ["level:middle", "env"]
+title = "Lọc biến môi trường cho client"
+prompt = '''
+Viết `clientEnv(text, prefix = 'VITE_')` nhận nội dung file `.env` và trả về object chỉ gồm biến có tên bắt đầu bằng `prefix` (giữ nguyên tên).
+Quy tắc phân tích mỗi dòng:
+- Bỏ dòng trống và dòng bắt đầu bằng `#` (sau khi trim).
+- Tách tại dấu `=` **đầu tiên**; trim cả tên và giá trị. Dòng không có `=` thì bỏ qua.
+- Nếu giá trị được bọc trong cặp `"..."` hoặc `'...'` thì bỏ cặp ngoặc đó.
+- Biến khai báo sau ghi đè biến trước.
+'''
+starter = '''
+function clientEnv(text, prefix = 'VITE_') {
+  return {};
+}
+'''
+solution = '''
+function clientEnv(text, prefix = 'VITE_') {
+  const out = {};
+  for (const raw of text.split('\n')) {
+    const line = raw.trim();
+    if (!line || line.startsWith('#')) continue;
+    const i = line.indexOf('=');
+    if (i === -1) continue;
+    const key = line.slice(0, i).trim();
+    let value = line.slice(i + 1).trim();
+    if (value.length >= 2 && (value[0] === '"' || value[0] === "'") && value[value.length - 1] === value[0]) {
+      value = value.slice(1, -1);
+    }
+    if (key.startsWith(prefix)) out[key] = value;
+  }
+  return out;
+}
+'''
+tests = '''
+test('chỉ giữ biến có tiền tố', () => {
+  expect(clientEnv('VITE_API=https://api.test\nDB_PASSWORD=secret')).toEqual({ VITE_API: 'https://api.test' });
+});
+test('bỏ comment, dòng trống và dòng không có dấu bằng', () => {
+  expect(clientEnv('# comment\n\nVITE_A=1\nVITE_BROKEN\n  # indent comment')).toEqual({ VITE_A: '1' });
+});
+test('tách tại dấu bằng đầu tiên và bỏ ngoặc', () => {
+  expect(clientEnv('VITE_Q="a=b"\nVITE_S=\'x y\'')).toEqual({ VITE_Q: 'a=b', VITE_S: 'x y' });
+});
+test('biến sau ghi đè biến trước', () => {
+  expect(clientEnv('VITE_MODE=dev\nVITE_MODE=prod')).toEqual({ VITE_MODE: 'prod' });
+});
+test('prefix tuỳ chỉnh', () => {
+  expect(clientEnv('PUBLIC_X=1\nVITE_Y=2', 'PUBLIC_')).toEqual({ PUBLIC_X: '1' });
+});
+'''
+hints = ["Dùng `indexOf('=')` thay vì `split('=')` để giữ được dấu bằng trong giá trị.", "Chỉ bỏ ngoặc khi ký tự đầu và cuối là cùng một loại ngoặc."]
+explanation = "Lọc theo tiền tố là hàng rào để biến nhạy cảm không vô tình bị nhúng vào bundle client — thứ mà ai cũng có thể đọc."
+sources = ["vite/guide/env-and-mode"]
+
+[[questions]]
+id = "frontend-tooling-lvc04"
+module = "tool-quality"
+type = "code"
+lang = "javascript"
+difficulty = 2
+tags = ["level:middle", "dependency"]
+title = "Kiểm tra caret range"
+prompt = '''
+Viết `satisfiesCaret(range, version)` kiểm tra phiên bản `x.y.z` có thoả range dạng `^a.b.c` không (theo quy ước semver của npm, bỏ qua pre-release):
+- Nếu `a > 0`: thoả khi major bằng `a` và phiên bản ≥ `a.b.c`.
+- Nếu `a === 0` và `b > 0`: thoả khi major = 0, minor bằng `b` và patch ≥ `c`.
+- Nếu `a === 0` và `b === 0`: chỉ thoả khi đúng bằng `0.0.c`.
+Trả về `true`/`false`.
+'''
+starter = '''
+function satisfiesCaret(range, version) {
+  return range.slice(1) === version;
+}
+'''
+solution = '''
+function satisfiesCaret(range, version) {
+  const [a, b, c] = range.slice(1).split('.').map(Number);
+  const [x, y, z] = version.split('.').map(Number);
+  if (a > 0) {
+    if (x !== a) return false;
+    if (y !== b) return y > b;
+    return z >= c;
+  }
+  if (b > 0) return x === 0 && y === b && z >= c;
+  return x === 0 && y === 0 && z === c;
+}
+'''
+tests = '''
+test('major > 0 cho phép minor và patch cao hơn', () => {
+  expect(satisfiesCaret('^1.2.3', '1.9.0')).toBe(true);
+  expect(satisfiesCaret('^1.2.3', '1.2.10')).toBe(true);
+});
+test('major > 0 không cho major mới hoặc bản thấp hơn', () => {
+  expect(satisfiesCaret('^1.2.3', '2.0.0')).toBe(false);
+  expect(satisfiesCaret('^1.2.3', '1.2.2')).toBe(false);
+  expect(satisfiesCaret('^1.2.3', '1.1.9')).toBe(false);
+});
+test('0.x khoá theo minor', () => {
+  expect(satisfiesCaret('^0.3.1', '0.3.5')).toBe(true);
+  expect(satisfiesCaret('^0.3.1', '0.4.0')).toBe(false);
+});
+test('0.0.x khoá đúng patch', () => {
+  expect(satisfiesCaret('^0.0.4', '0.0.4')).toBe(true);
+  expect(satisfiesCaret('^0.0.4', '0.0.5')).toBe(false);
+});
+test('so sánh số chứ không so sánh chuỗi', () => {
+  expect(satisfiesCaret('^2.9.0', '2.10.0')).toBe(true);
+});
+'''
+hints = ["Tách chuỗi thành số bằng `split('.').map(Number)` để `10 > 9` đúng.", "Xử lý ba trường hợp theo major/minor của range: `a > 0`, `a = 0, b > 0`, `a = b = 0`."]
+explanation = "Hiểu caret range giúp đọc lockfile và giải thích vì sao một lần cài mới kéo về bản minor khác; với 0.x, npm coi minor là ranh giới có thể breaking."
+sources = ["webpack~5/guides/dependency-management"]
+
+[[questions]]
+id = "frontend-tooling-lv038"
+module = "tool-tailwind"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "tailwind"]
+prompt = "Class nào đổi màu nền nút khi rê chuột qua?"
+options = ["`hover:bg-sky-700`", "`bg-sky-700:hover`", "`on-hover-bg-sky-700`", "`bg-hover-sky-700`"]
+answer = [0]
+explanation = "Variant đứng trước utility, ngăn cách bằng dấu hai chấm: `hover:`."
+sources = ["tailwindcss/hover-focus-and-other-states"]
+
+[[questions]]
+id = "frontend-tooling-lv039"
+module = "tool-tailwind"
+type = "fill"
+difficulty = 1
+tags = ["level:junior", "tailwind"]
+prompt = '''
+Điền variant để lưới có 3 cột từ breakpoint `lg` trở lên:
+```html
+<div class="grid grid-cols-1 {{blank}}:grid-cols-3">...</div>
+```
+'''
+blanks = [["lg"]]
+explanation = "Tiền tố breakpoint `lg:` áp dụng utility từ ngưỡng lg trở lên."
+sources = ["tailwindcss/responsive-design"]
+
+[[questions]]
+id = "frontend-tooling-lv040"
+module = "tool-tailwind"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "tailwind"]
+prompt = "Cần chiều rộng đúng 37rem, không có trong thang theme. Cú pháp Tailwind nào đúng?"
+options = ["`w-[37rem]`", "`w-37rem`", "`w:(37rem)`", "`width-37`"]
+answer = [0]
+explanation = "Arbitrary value đặt trong ngoặc vuông; nên dùng tiết chế để theme còn nhất quán."
+sources = ["tailwindcss/width"]
+
+[[questions]]
+id = "frontend-tooling-lv041"
+module = "tool-sass"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "sass"]
+prompt = '''
+CSS đầu ra của đoạn Sass sau là gì?
+```scss
+.btn {
+  &:hover { color: red; }
+}
+```
+'''
+options = ["`.btn:hover { color: red; }`", "`.btn :hover { color: red; }`", "`&:hover { color: red; }`", "`.btn, :hover { color: red; }`"]
+answer = [0]
+explanation = "`&` thay bằng selector cha, ghép liền không có khoảng trắng."
+sources = ["sass/style-rules/parent-selector"]
+
+[[questions]]
+id = "frontend-tooling-lv042"
+module = "tool-sass"
+type = "fill"
+difficulty = 1
+tags = ["level:junior", "sass"]
+prompt = '''
+Điền directive để chèn mixin vào rule:
+```scss
+@mixin center { display: flex; align-items: center; }
+.box { @{{blank}} center; }
+```
+'''
+blanks = [["include"]]
+explanation = "`@mixin` định nghĩa, `@include` chèn khai báo của mixin vào chỗ gọi."
+sources = ["sass/at-rules/mixin"]
+
+[[questions]]
+id = "frontend-tooling-lv043"
+module = "tool-sass"
+type = "multiple"
+difficulty = 1
+tags = ["level:junior", "sass"]
+prompt = "Những phát biểu nào đúng về Sass?"
+options = ["Biến Sass bắt đầu bằng `$`", "Trình duyệt không đọc trực tiếp file `.scss`; cần biên dịch ra CSS", "`@use` là cách nạp module được khuyến nghị thay cho `@import`", "Biến Sass có thể đổi giá trị lúc runtime bằng JavaScript"]
+answer = [0, 1, 2]
+explanation = "Sass chạy lúc build; giá trị đổi lúc runtime cần CSS custom properties."
+sources = ["sass/variables", "sass/at-rules/use"]
+
+[[questions]]
+id = "frontend-tooling-lv044"
+module = "tool-bundlers"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "vite"]
+prompt = "Lệnh nào tạo bản build production của dự án Vite?"
+options = ["`vite build`", "`vite dev --prod`", "`vite serve`", "`vite compile`"]
+answer = [0]
+explanation = "`vite build` tạo output production (mặc định vào `dist`); `vite preview` để xem thử bản build đó."
+sources = ["vite/guide/cli", "vite/guide/build"]
+
+[[questions]]
+id = "frontend-tooling-lv045"
+module = "tool-bundlers"
+type = "fill"
+difficulty = 1
+tags = ["level:junior", "vite"]
+prompt = '''
+Điền thư mục output mặc định của `vite build`:
+```text
+my-app/{{blank}}/index.html
+```
+'''
+blanks = [["dist"]]
+explanation = "Mặc định `build.outDir` là `dist`."
+sources = ["vite/config/build-options"]
+
+[[questions]]
+id = "frontend-tooling-lv046"
+module = "tool-bundlers"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "webpack"]
+prompt = "Trong webpack, loader dùng để làm gì?"
+options = ["Biến đổi file không phải JS (CSS, ảnh, TS…) thành module mà webpack xử lý được", "Tải trang web nhanh hơn trong trình duyệt", "Thay thế hoàn toàn plugin", "Chạy unit test"]
+answer = [0]
+explanation = "Loader biến đổi từng file khi được import; plugin can thiệp vào các bước rộng hơn của quá trình build."
+sources = ["webpack~5/concepts/loaders"]
+
+[[questions]]
+id = "frontend-tooling-lv047"
+module = "tool-quality"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "lint"]
+prompt = "Khác biệt chính giữa ESLint và Prettier?"
+options = ["ESLint tìm lỗi/mẫu code đáng ngờ; Prettier định dạng code theo một kiểu thống nhất", "ESLint chỉ chạy trên CSS", "Prettier biên dịch TypeScript sang JavaScript", "Hai công cụ giống hệt nhau"]
+answer = [0]
+explanation = "Linter phân tích logic và quy ước; formatter chỉ lo khoảng trắng, xuống dòng, dấu ngoặc."
+sources = ["eslint/use/core-concepts"]
+
+[[questions]]
+id = "frontend-tooling-lv048"
+module = "tool-quality"
+type = "fill"
+difficulty = 1
+tags = ["level:junior", "lint"]
+prompt = '''
+Điền cờ CLI để ESLint tự sửa những lỗi có thể sửa tự động:
+```bash
+npx eslint src --{{blank}}
+```
+'''
+blanks = [["fix"]]
+explanation = "`--fix` áp dụng các bản sửa an toàn mà rule cung cấp."
+sources = ["eslint/use/command-line-interface"]
+
+[[questions]]
+id = "frontend-tooling-lv049"
+module = "tool-quality"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "lint"]
+prompt = '''
+Rule `eqeqeq` báo lỗi ở dòng nào?
+```js
+if (count == 0) {}
+if (name === 'a') {}
+```
+'''
+options = ["Dòng dùng `==`", "Dòng dùng `===`", "Cả hai dòng", "Không dòng nào"]
+answer = [0]
+explanation = "`eqeqeq` yêu cầu dùng `===`/`!==` để tránh ép kiểu ngầm."
+sources = ["eslint/rules/eqeqeq"]
+
+[[questions]]
+id = "frontend-tooling-lv050"
+module = "tool-performance"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "code-splitting"]
+prompt = "Cách viết nào giúp bundler tách trang Settings thành chunk riêng, chỉ tải khi cần?"
+options = ["`const Settings = () => import('./Settings.js')`", "`import Settings from './Settings.js'` ở đầu file", "`require('./Settings.js')` ở đầu file", "Copy code Settings vào `main.js`"]
+answer = [0]
+explanation = "Dynamic `import()` tạo ranh giới tải bất đồng bộ; static import gộp module vào chunk của file gọi."
+sources = ["webpack~5/guides/code-splitting", "webpack~5/guides/lazy-loading"]
+
+[[questions]]
+id = "frontend-tooling-lv051"
+module = "tool-performance"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "cache-busting"]
+prompt = "Vì sao file build có tên dạng `app.3f9a1c.js` thay vì `app.js`?"
+options = ["Hash đổi khi nội dung đổi, nên trình duyệt có thể cache lâu mà vẫn nhận bản mới khi deploy", "Để file nhỏ hơn", "Để trình duyệt chạy code nhanh hơn", "Để giấu mã nguồn"]
+answer = [0]
+explanation = "Đó là cache busting bằng content hash: URL mới cho nội dung mới."
+sources = ["webpack~5/guides/caching"]
+
+[[questions]]
+id = "frontend-tooling-lv052"
+module = "frontend-tooling-dv-layout"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "tailwind"]
+prompt = "Class nào căn giữa các phần tử con theo chiều dọc trong một hàng flex?"
+options = ["`flex items-center`", "`flex justify-center`", "`flex text-center`", "`flex align-middle`"]
+answer = [0]
+explanation = "Với `flex-row`, `items-*` căn theo trục chéo (dọc); `justify-*` phân bố theo trục chính (ngang)."
+sources = ["tailwindcss/align-items", "tailwindcss/flex"]
+
+[[questions]]
+id = "frontend-tooling-lv053"
+module = "frontend-tooling-dv-sass-flow"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "sass"]
+prompt = '''
+Đoạn sau sinh ra bao nhiêu class?
+```scss
+@each $size in sm, md, lg { .text-#{$size} { font-weight: bold; } }
+```
+'''
+options = ["3", "1", "0, vì `@each` chỉ chạy trong trình duyệt", "6"]
+answer = [0]
+explanation = "`@each` duyệt 3 phần tử của list và sinh `.text-sm`, `.text-md`, `.text-lg` lúc biên dịch."
+sources = ["sass/at-rules/control/each"]
+
+[[questions]]
+id = "frontend-tooling-lvc05"
+module = "tool-performance"
+type = "code"
+lang = "javascript"
+difficulty = 1
+tags = ["level:junior", "cache-busting"]
+title = "Gắn hash vào tên file"
+prompt = '''
+Viết `hashedName(fileName, hash)` chèn hash trước phần mở rộng **cuối cùng** của tên file, giống cách bundler đặt tên asset:
+- `hashedName('app.js', 'a1b2')` → `'app.a1b2.js'`
+- `hashedName('vendor.min.js', 'ff')` → `'vendor.min.ff.js'`
+- File không có phần mở rộng: nối `.hash` vào cuối, ví dụ `hashedName('LICENSE', '9')` → `'LICENSE.9'`.
+- Chỉ xét tên file (không có thư mục). Tên bắt đầu bằng dấu chấm như `.env` coi như không có phần mở rộng.
+'''
+starter = '''
+function hashedName(fileName, hash) {
+  return fileName;
+}
+'''
+solution = '''
+function hashedName(fileName, hash) {
+  const i = fileName.lastIndexOf('.');
+  if (i <= 0) return fileName + '.' + hash;
+  return fileName.slice(0, i) + '.' + hash + fileName.slice(i);
+}
+'''
+tests = '''
+test('chèn hash trước phần mở rộng', () => {
+  expect(hashedName('app.js', 'a1b2')).toBe('app.a1b2.js');
+});
+test('dùng phần mở rộng cuối cùng', () => {
+  expect(hashedName('vendor.min.js', 'ff')).toBe('vendor.min.ff.js');
+});
+test('không có phần mở rộng', () => {
+  expect(hashedName('LICENSE', '9')).toBe('LICENSE.9');
+});
+test('file ẩn bắt đầu bằng dấu chấm', () => {
+  expect(hashedName('.env', 'x')).toBe('.env.x');
+});
+test('file CSS', () => {
+  expect(hashedName('style.css', '3f9a')).toBe('style.3f9a.css');
+});
+'''
+hints = ["`lastIndexOf('.')` cho vị trí dấu chấm cuối cùng.", "Vị trí 0 (file ẩn) hoặc -1 (không có dấu chấm) đều xử lý như không có phần mở rộng."]
+explanation = "Content hash trong tên file là nền tảng của cache dài hạn: nội dung đổi thì tên đổi, trình duyệt tự tải bản mới."
+sources = ["webpack~5/guides/caching", "webpack~5/configuration/output"]

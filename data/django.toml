@@ -207,6 +207,7 @@ id = "dj-001"
 module = "django-project"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Một website có các vùng blog, billing và accounts dùng chung cấu hình database, middleware và URL gốc. Khái niệm nào bao quanh các vùng chức năng này?"
 options = ["Một project Django", "Một migration", "Một QuerySet", "Một template"]
 answer = [0]
@@ -218,6 +219,7 @@ id = "dj-002"
 module = "django-project"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Hai URL patterns cùng có thể khớp với /articles/archive/. Pattern nào được dùng?"
 options = ["Pattern xuất hiện đầu tiên trong danh sách khớp", "Pattern khớp chính xác nhất bất kể thứ tự", "Pattern nằm trong app có tên ngắn hơn", "Django chọn ngẫu nhiên"]
 answer = [0]
@@ -229,6 +231,7 @@ id = "dj-003"
 module = "django-project"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Với route path(\"articles/<int:pk>/\", view), view nhận pk dưới dạng nào?"
 options = ["Chuỗi nguyên trạng", "Số nguyên", "Một đối tượng Model tự tải", "Một dict chứa toàn bộ request"]
 answer = [1]
@@ -240,6 +243,7 @@ id = "dj-004"
 module = "django-project"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Cách gắn một class-based view có tên ArticleView vào URLconf là gì?"
 options = ["ArticleView.as_view()", "ArticleView.dispatch()", "ArticleView.get()", "ArticleView()"]
 answer = [0]
@@ -251,6 +255,7 @@ id = "dj-005"
 module = "django-project"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn các phát biểu đúng khi chia URLconf của một project thành các app."
 options = ["Project URLconf có thể dùng include() để chuyển tiếp một nhánh URL", "Mỗi app có thể khai báo urlpatterns riêng", "include() tự thêm mọi app vào INSTALLED_APPS", "Đổi thứ tự URL patterns không bao giờ ảnh hưởng kết quả"]
 answer = [0, 1]
@@ -262,6 +267,7 @@ id = "dj-006"
 module = "django-project"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Trong package cấu hình chuẩn, biến {{blank}} trỏ tới URLconf gốc của project."
 blanks = [["ROOT_URLCONF"]]
 explanation = "ROOT_URLCONF chỉ tới module khai báo URL patterns gốc."
@@ -272,6 +278,7 @@ id = "dj-007"
 module = "django-project"
 type = "essay"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "So sánh FBV và CBV, rồi nêu tình huống phù hợp để chọn mỗi kiểu."
 keywords = [["function-based view", "fbv"], ["class-based view", "cbv"], ["as_view"], ["dispatch"], ["tái sử dụng", "mixin"]]
 min_keywords = 3
@@ -284,6 +291,7 @@ id = "dj-008"
 module = "django-project"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 title = "Mô phỏng URL resolver"
 lang = "python"
 prompt = '''
@@ -360,6 +368,7 @@ id = "dj-009"
 module = "django-orm"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Một view tạo qs = Article.objects.filter(published=True) nhưng không lặp, không chuyển list và không yêu cầu giá trị nào khác. Điều gì thường xảy ra?"
 options = ["QuerySet đã chạy SELECT ngay khi gọi filter", "QuerySet mới được mô tả; dữ liệu thường chưa tải", "Django ghi migration mới", "Django tự lưu mọi Article"]
 answer = [1]
@@ -371,6 +380,7 @@ id = "dj-010"
 module = "django-orm"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Trang hiển thị nhiều Article cùng một ForeignKey author và cần đọc author.name cho từng hàng. Cách tối ưu phù hợp nhất là gì?"
 options = ["prefetch_related(\"author\")", "select_related(\"author\")", "annotate(\"author\")", "bulk_create(\"author\")"]
 answer = [1]
@@ -382,6 +392,7 @@ id = "dj-011"
 module = "django-orm"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Sau khi sửa field trên model, quy trình nào tạo file migration rồi áp dụng thay đổi vào database?"
 options = ["migrate rồi makemigrations", "makemigrations rồi migrate", "runserver rồi collectstatic", "check rồi flush"]
 answer = [1]
@@ -393,6 +404,7 @@ id = "dj-012"
 module = "django-orm"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một thao tác cần tạo Order và trừ tồn kho; nếu một bước lỗi thì cả hai thay đổi phải rollback. Nên dùng gì?"
 options = ["transaction.atomic()", "select_related()", "get_or_create() cho toàn bộ view", "makemigrations"]
 answer = [0]
@@ -404,6 +416,7 @@ id = "dj-013"
 module = "django-orm"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Chọn các phát biểu đúng về biểu thức ORM."
 options = ["Q có thể ghép điều kiện bằng OR", "F cho phép database so sánh hoặc cập nhật dựa trên giá trị field", "F luôn tải mọi hàng về Python trước khi so sánh", "Q chỉ dùng được với aggregate"]
 answer = [0, 1]
@@ -415,6 +428,7 @@ id = "dj-014"
 module = "django-orm"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn hai mô tả đúng về annotate() và aggregate()."
 options = ["annotate() thêm giá trị tính toán cho từng object trong kết quả", "aggregate() trả về kết quả tổng hợp cho toàn QuerySet", "aggregate() tự thêm một thuộc tính vào mỗi object", "annotate() luôn tạo một hàng duy nhất"]
 answer = [0, 1]
@@ -426,6 +440,7 @@ id = "dj-015"
 module = "django-orm"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Điền tên context manager chuẩn để nhóm thay đổi database trong một transaction: transaction.{{blank}}"
 blanks = [["atomic"]]
 explanation = "transaction.atomic() cung cấp ranh giới commit/rollback."
@@ -436,6 +451,7 @@ id = "dj-016"
 module = "django-orm"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Một danh sách bài viết tạo thêm một query cho mỗi tác giả khi render. Giải thích nguyên nhân và cách chọn biện pháp giảm N+1."
 keywords = [["n+1", "n + 1"], ["select_related"], ["foreign key", "fk", "one-to-one"], ["prefetch_related"], ["many-to-many", "many to many", "reverse relation"]]
 min_keywords = 3
@@ -448,6 +464,7 @@ id = "dj-017"
 module = "django-orm"
 type = "code"
 difficulty = 3
+tags = ["level:senior"]
 title = "QuerySet lazy tối giản"
 lang = "python"
 prompt = '''
@@ -547,6 +564,7 @@ id = "dj-018"
 module = "django-forms"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Một user nhập <script> vào trường title và template in biến bằng cú pháp thông thường. Hành vi mặc định nào giúp an toàn hơn?"
 options = ["Django template autoescape nội dung HTML", "Django luôn loại bỏ mọi thẻ khỏi database", "CSRF middleware biến nội dung thành text", "Template tự mã hóa toàn bộ response thành JSON"]
 answer = [0]
@@ -558,6 +576,7 @@ id = "dj-019"
 module = "django-forms"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Sau khi gọi form.is_valid() và nhận True, nên lấy giá trị field đã được chuyển đổi, làm sạch ở đâu?"
 options = ["form.cleaned_data", "form.data trực tiếp", "request.path", "form.errors"]
 answer = [0]
@@ -569,6 +588,7 @@ id = "dj-020"
 module = "django-forms"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Trong Django Paginator, trang đầu tiên có số trang nào?"
 options = ["0", "1", "-1", "Số lượng phần tử"]
 answer = [1]
@@ -580,6 +600,7 @@ id = "dj-021"
 module = "django-forms"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn các phát biểu đúng về quy trình validation của Django Form."
 options = ["Field.clean() chuyển đổi và kiểm tra dữ liệu của field", "clean_<field>() dùng cho quy tắc của một field", "Form.clean() có thể kiểm tra quan hệ giữa nhiều field", "is_valid() chỉ kiểm tra HTML ở trình duyệt"]
 answer = [0, 1, 2]
@@ -591,6 +612,7 @@ id = "dj-022"
 module = "django-forms"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Trong template form POST, điền tên tag bảo vệ CSRF: {% {{blank}} %}"
 blanks = [["csrf_token"]]
 explanation = "Tag csrf_token tạo hidden input chứa token để middleware xác minh request."
@@ -601,6 +623,7 @@ id = "dj-023"
 module = "django-forms"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Điền thuộc tính chứa lỗi của form theo từng field: form.{{blank}}"
 blanks = [["errors"]]
 explanation = "form.errors cung cấp lỗi gắn với field và lỗi toàn form."
@@ -611,6 +634,7 @@ id = "dj-024"
 module = "django-forms"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 title = "Form validation và lỗi theo field"
 lang = "python"
 prompt = '''
@@ -720,6 +744,7 @@ id = "dj-025"
 module = "django-forms"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 title = "Phân trang danh sách"
 lang = "python"
 prompt = '''
@@ -794,6 +819,7 @@ id = "dj-026"
 module = "django-request"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Với hai middleware A rồi B trong settings, request đi qua A rồi B rồi view. Theo chiều response thành công, thứ tự thông thường là gì?"
 options = ["A rồi B rồi view", "View rồi A rồi B", "View rồi B rồi A", "Response không đi qua middleware"]
 answer = [2]
@@ -805,6 +831,7 @@ id = "dj-027"
 module = "django-request"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một user có is_staff=True nhưng thiếu permission cần thiết để sửa model trong admin. Kết luận nào đúng?"
 options = ["is_staff tự cấp mọi quyền model", "is_staff cho phép vào admin, nhưng vẫn cần permission cho thao tác", "is_staff tương đương superuser", "User không cần đăng nhập vào admin"]
 answer = [1]
@@ -816,6 +843,7 @@ id = "dj-028"
 module = "django-request"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Khi user đăng nhập thành công, API nào ghi user đã xác thực vào session của request?"
 options = ["login(request, user)", "authenticate(request, user)", "has_perm(request, user)", "include(request, user)"]
 answer = [0]
@@ -827,6 +855,7 @@ id = "dj-029"
 module = "django-request"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn các phát biểu đúng về quản lý quyền trong Django."
 options = ["Group có thể cấp model permissions cho các thành viên", "user.has_perm() có thể kiểm tra một permission cụ thể", "is_staff tự chứng minh user có quyền xóa mọi object", "Authentication và authorization là cùng một bước"]
 answer = [0, 1]
@@ -838,6 +867,7 @@ id = "dj-030"
 module = "django-request"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Một app dùng signal receiver để tích hợp hành vi khi model được lưu. Chọn hai thực hành giúp code dễ kiểm soát hơn."
 options = ["Đăng ký receiver ở AppConfig.ready()", "Dùng dispatch_uid khi cần tránh đăng ký receiver lặp", "Đưa toàn bộ nghiệp vụ cốt lõi vào signal để không thấy luồng gọi", "Dùng signal thay validation và quyền truy cập"]
 answer = [0, 1]
@@ -849,6 +879,7 @@ id = "dj-031"
 module = "django-request"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Middleware factory nhận callable tiếp theo trong chuỗi qua tham số thường được đặt tên là {{blank}}."
 blanks = [["get_response"]]
 explanation = "get_response là callable tiếp theo; middleware có thể gọi nó để tiếp tục xử lý request."
@@ -859,6 +890,7 @@ id = "dj-032"
 module = "django-request"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 title = "Chuỗi middleware"
 lang = "python"
 prompt = '''
@@ -931,6 +963,7 @@ id = "dj-033"
 module = "django-api-security"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Django REST Framework là gì trong một ứng dụng Django?"
 options = ["Thư viện riêng bổ sung công cụ xây dựng Web API", "Một module bắt buộc trong Django core", "Database backend", "Middleware tự động tạo mọi endpoint"]
 answer = [0]
@@ -942,6 +975,7 @@ id = "dj-034"
 module = "django-api-security"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một view nhận POST thay đổi dữ liệu và xác thực người dùng bằng session cookie. Biện pháp nào cần để chống CSRF?"
 options = ["Yêu cầu và xác minh CSRF token", "Chỉ kiểm tra user đã đăng nhập", "Tắt CSRF middleware cho toàn site", "Chuyển POST thành GET"]
 answer = [0]
@@ -953,6 +987,7 @@ id = "dj-035"
 module = "django-api-security"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Ứng dụng cần triển khai production. Thiết lập nào là hướng đúng?"
 options = ["DEBUG=False, ALLOWED_HOSTS phù hợp và secret lấy từ môi trường", "DEBUG=True để có log chi tiết cho mọi người dùng", "Đưa SECRET_KEY lên repository để mọi worker dùng chung", "Dùng runserver làm server production"]
 answer = [0]
@@ -964,6 +999,7 @@ id = "dj-036"
 module = "django-api-security"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn các biện pháp giảm rủi ro XSS và SQL injection trong Django."
 options = ["Giữ autoescape khi render dữ liệu do user cung cấp", "Dùng ORM hoặc parameter binding cho giá trị truy vấn", "Đánh dấu mọi nội dung người dùng là safe", "Nối trực tiếp input vào raw SQL"]
 answer = [0, 1]
@@ -975,6 +1011,7 @@ id = "dj-037"
 module = "django-api-security"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Dùng API ORM nào thay vì nối trực tiếp chuỗi SQL để lọc theo input: Article.objects.{{blank}}(title=user_input)"
 blanks = [["filter"]]
 explanation = "QuerySet filter truyền giá trị dưới dạng tham số truy vấn; không tự nối input vào SQL."
@@ -985,6 +1022,7 @@ id = "dj-038"
 module = "django-api-security"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Trong cấu hình production, DEBUG = {{blank}}."
 blanks = [["False"]]
 explanation = "DEBUG phải tắt trong production để không tiết lộ trang lỗi và thông tin nội bộ."
@@ -995,6 +1033,7 @@ id = "dj-039"
 module = "django-api-security"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Nêu các điểm cần kiểm tra trước khi triển khai một Django project lên production."
 keywords = [["debug=false", "debug = false"], ["allowed_hosts"], ["secret_key", "secret key"], ["https", "tls"], ["check --deploy", "deploy check"], ["static files", "collectstatic"], ["wsgi", "asgi"]]
 min_keywords = 3
@@ -1007,6 +1046,7 @@ id = "dj-040"
 module = "django-api-security"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 title = "Quyền dựa trên group"
 lang = "python"
 prompt = '''
@@ -1066,6 +1106,7 @@ id = "django-dv001"
 module = "django-dv-testing"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Bạn muốn kiểm tra một request POST đi qua URL resolver và middleware, sau đó xác nhận redirect. Công cụ nào phù hợp nhất?"
 options = ["RequestFactory", "Client của Django", "MigrationExecutor", "Paginator"]
 answer = [1]
@@ -1077,6 +1118,7 @@ id = "django-dv002"
 module = "django-dv-testing"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một test cần xác nhận callback chỉ chạy sau khi transaction database được commit thật. Lựa chọn nào phù hợp hơn TestCase thông thường?"
 options = ["SimpleTestCase", "TransactionTestCase", "RequestFactory", "LiveServerTestCase"]
 answer = [1]
@@ -1088,6 +1130,7 @@ id = "django-dv003"
 module = "django-dv-testing"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Các test trong cùng một class cùng cần một bộ dữ liệu nền không bị thay đổi. Cách thiết lập nào thường hiệu quả hơn?"
 options = ["Tạo lại toàn bộ dữ liệu trong từng assertion", "Dùng setUpTestData()", "Gọi migrate trong mỗi test", "Dùng một database production dùng chung"]
 answer = [1]
@@ -1099,6 +1142,7 @@ id = "django-dv004"
 module = "django-dv-testing"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Khi dùng Django test Client, mặc định một response redirect được xử lý thế nào?"
 options = ["Client luôn theo redirect và chỉ trả response cuối", "Client trả response redirect; có thể yêu cầu theo tiếp bằng follow=True", "Redirect bị đổi thành lỗi 500", "Client bỏ qua mọi header Location"]
 answer = [1]
@@ -1110,6 +1154,7 @@ id = "django-dv005"
 module = "django-dv-testing"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn các phát biểu đúng về RequestFactory."
 options = ["Cho phép tạo request rồi gọi trực tiếp view", "Tự chạy toàn bộ middleware như Client", "Có thể cần gắn session hoặc user thủ công khi view cần chúng", "Thích hợp để kiểm tra riêng logic view"]
 answer = [0, 2, 3]
@@ -1121,6 +1166,7 @@ id = "django-dv006"
 module = "django-dv-testing"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Một nhóm test endpoint thanh toán đang chậm và dễ chập chờn. Chọn các hướng cải thiện hợp lý."
 options = ["Thay lời gọi cổng thanh toán bằng mock trong test đơn vị", "Kiểm tra cả response lẫn thay đổi dữ liệu cần thiết", "Dùng TransactionTestCase cho mọi test dù không cần transaction thật", "Tách một số test tích hợp ít hơn để kiểm tra hợp đồng bên ngoài"]
 answer = [0, 1, 3]
@@ -1132,6 +1178,7 @@ id = "django-dv007"
 module = "django-dv-testing"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Trong test Django, context manager nào giúp xác nhận một đoạn code thực hiện đúng số truy vấn SQL dự kiến: self.{{blank}}(2)?"
 blanks = [["assertNumQueries"]]
 explanation = "assertNumQueries hữu ích để bắt hồi quy truy vấn ở một phạm vi được chọn, ví dụ khi thêm render danh sách có quan hệ ORM."
@@ -1142,6 +1189,7 @@ id = "django-dv008"
 module = "django-dv-testing"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Bạn sẽ thiết kế test cho endpoint yêu cầu đăng nhập và trả danh sách đơn hàng như thế nào để kiểm tra cả quyền truy cập lẫn kết quả?"
 keywords = [["test client", "client"], ["authentication", "login", "đăng nhập"], ["permission", "authorization", "phân quyền"], ["status code", "response"], ["database", "dữ liệu"]]
 min_keywords = 3
@@ -1154,6 +1202,7 @@ id = "django-dvc01"
 module = "django-dv-testing"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 title = "Kiểm tra hợp đồng response"
 lang = "python"
 prompt = '''
@@ -1204,6 +1253,7 @@ id = "django-dv009"
 module = "django-dv-files"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Form HTML gửi file lên Django cần cấu hình nào để trình duyệt gửi nội dung file?"
 options = ["method=\"get\" và enctype=\"text/plain\"", "method=\"post\" và enctype=\"multipart/form-data\"", "method=\"put\" và enctype=\"application/json\"", "Chỉ cần thêm accept vào input"]
 answer = [1]
@@ -1215,6 +1265,7 @@ id = "django-dv010"
 module = "django-dv-files"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Sau khi Django parse một request multipart chứa file, view thường lấy file từ thuộc tính nào của request?"
 options = ["request.GET", "request.COOKIES", "request.FILES", "request.path_info"]
 answer = [2]
@@ -1226,6 +1277,7 @@ id = "django-dv011"
 module = "django-dv-files"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một endpoint nhận file lớn và cần chuyển nội dung lên storage theo từng phần. Phương thức nào phù hợp hơn việc đọc toàn bộ bytes cùng lúc?"
 options = ["UploadedFile.chunks()", "UploadedFile.name", "UploadedFile.content_type", "UploadedFile.size"]
 answer = [0]
@@ -1237,6 +1289,7 @@ id = "django-dv012"
 module = "django-dv-files"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Phát biểu nào đúng về FileField khi dùng storage backend từ xa?"
 options = ["Giá trị lưu trong model thường là tên/path do storage quản lý; không nên mặc định có filesystem path cục bộ", "Django luôn chép file vào thư mục hiện tại của process", "Trường trong database luôn chứa toàn bộ bytes file", "Storage backend từ xa bắt buộc hỗ trợ phương thức path()"]
 answer = [0]
@@ -1248,6 +1301,7 @@ id = "django-dv013"
 module = "django-dv-files"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Chọn các kiểm soát phù hợp khi xây dựng luồng upload file do người dùng gửi."
 options = ["Giới hạn kích thước và số lượng file", "Tin hoàn toàn content_type do trình duyệt gửi", "Kiểm tra nội dung bằng parser phù hợp với loại file", "Giới hạn quyền đọc và tránh phục vụ file không tin cậy như mã thực thi"]
 answer = [0, 2, 3]
@@ -1259,6 +1313,7 @@ id = "django-dv014"
 module = "django-dv-files"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn các phát biểu đúng về static assets và file người dùng upload."
 options = ["CSS/JavaScript phát hành cùng ứng dụng thuộc luồng staticfiles", "Ảnh đại diện do người dùng gửi thường thuộc luồng media/storage", "collectstatic là thao tác thay thế cho việc validate file upload", "File người dùng gửi cần chính sách lưu trữ và truy cập riêng"]
 answer = [0, 1, 3]
@@ -1270,6 +1325,7 @@ id = "django-dv015"
 module = "django-dv-files"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Để đọc một UploadedFile theo từng phần thay vì tải toàn bộ nội dung vào memory, hãy gọi phương thức {{blank}}()."
 blanks = [["chunks"]]
 explanation = "chunks() phù hợp hơn cho xử lý upload lớn, đặc biệt khi ghi nội dung sang nơi lưu trữ theo luồng."
@@ -1280,6 +1336,7 @@ id = "django-dv016"
 module = "django-dv-files"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Mô tả một pipeline upload an toàn cho tài liệu người dùng trong ứng dụng Django, từ form đến lúc file được tải lại."
 keywords = [["multipart/form-data", "request.files"], ["size limit", "giới hạn kích thước"], ["validate content", "kiểm tra nội dung", "content type"], ["storage", "storage backend"], ["access control", "phân quyền", "private"], ["chunks", "chunk"]]
 min_keywords = 3
@@ -1292,6 +1349,7 @@ id = "django-dv017"
 module = "django-dv-tasks"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Một view async gọi một hàm tạo báo cáo mất vài phút trước khi trả response. Nếu muốn người dùng nhận phản hồi nhanh và xử lý báo cáo ở worker, nên dùng cơ chế nào?"
 options = ["Chuyển view thành template tag", "Task được enqueue qua backend", "Dùng RequestFactory trong production", "Bật DEBUG"]
 answer = [1]
@@ -1303,6 +1361,7 @@ id = "django-dv018"
 module = "django-dv-tasks"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Sau khi định nghĩa task bằng decorator @task, API nào dùng để gửi một lần thực thi qua backend?"
 options = ["task.enqueue(...)", "task.migrate(...)", "task.render(...)", "task.as_view()"]
 answer = [0]
@@ -1314,6 +1373,7 @@ id = "django-dv019"
 module = "django-dv-tasks"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Phát biểu nào mô tả đúng ranh giới của task framework trong Django 6.0?"
 options = ["Django core định nghĩa API và backend contract, nhưng không tự cung cấp production worker hoàn chỉnh", "Mọi task luôn chạy đồng bộ trong tiến trình web", "Django tự khởi chạy worker khi gọi runserver", "Task backend chỉ dùng được với một database cụ thể"]
 answer = [0]
@@ -1325,6 +1385,7 @@ id = "django-dv020"
 module = "django-dv-tasks"
 type = "single"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Một view tạo Order trong transaction rồi enqueue task gửi email xác nhận. Làm sao tránh worker đọc Order trước khi transaction commit?"
 options = ["Đưa lời gọi enqueue vào transaction.on_commit()", "Gọi task trực tiếp trước khi lưu Order", "Tăng timeout của request", "Dùng async view thay cho transaction"]
 answer = [0]
@@ -1336,6 +1397,7 @@ id = "django-dv021"
 module = "django-dv-tasks"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Chọn các thực hành phù hợp khi thiết kế task có thể chạy lại sau lỗi worker."
 options = ["Truyền ID bền vững rồi đọc lại dữ liệu cần thiết khi task chạy", "Thiết kế side effect có thể xử lý lặp an toàn", "Truyền object model đang nằm trong memory và kỳ vọng object tồn tại qua restart", "Giả định mọi backend bảo đảm chạy đúng một lần"]
 answer = [0, 1]
@@ -1347,6 +1409,7 @@ id = "django-dv022"
 module = "django-dv-tasks"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn các phát biểu đúng về enqueue, TaskResult và backend."
 options = ["Enqueue là yêu cầu thực thi, không chứng minh task đã hoàn tất", "TaskResult có thể cung cấp trạng thái/kết quả theo khả năng backend", "Mọi backend bắt buộc giữ kết quả vô thời hạn", "Django core không tự chạy production worker chỉ vì task đã được khai báo"]
 answer = [0, 1, 3]
@@ -1358,6 +1421,7 @@ id = "django-dv023"
 module = "django-dv-tasks"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Thuộc tính task nào chỉ thời điểm sớm nhất task nên được chạy: task.{{blank}}?"
 blanks = [["run_after"]]
 explanation = "run_after biểu diễn thời điểm trì hoãn task; backend cần hỗ trợ cách lập lịch tương ứng."
@@ -1368,6 +1432,7 @@ id = "django-dv024"
 module = "django-dv-tasks"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Thiết kế luồng tạo báo cáo nền sau khi người dùng lưu yêu cầu. Nêu cách enqueue, xử lý transaction và giảm tác hại khi task được chạy lại."
 keywords = [["enqueue", "xếp hàng"], ["worker", "backend"], ["on_commit", "sau commit", "commit transaction"], ["idempotent", "idempotency"], ["taskresult", "task result", "trạng thái"]]
 min_keywords = 3
@@ -1380,6 +1445,7 @@ id = "django-dvc02"
 module = "django-dv-files"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 title = "Kiểm tra metadata upload"
 lang = "python"
 prompt = '''
@@ -1446,3 +1512,968 @@ def _():
 hints = ["Xác thực metadata và giới hạn trước khi so sánh phần mở rộng.", "Chuẩn hóa phần mở rộng và MIME type về chữ thường; MIME client vẫn không chứng minh bytes an toàn."]
 explanation = "Allowlist metadata là bước đầu của policy upload; ứng dụng vẫn cần xác thực nội dung thật và kiểm soát cách phục vụ file."
 sources = ["django~6.0/ref/files/uploads", "django~6.0/ref/files/storage", "django~6.0/topics/security"]
+
+[[modules]]
+id = "django-lead"
+title = "Góc nhìn Tech Lead"
+description = "Ra quyết định cho team Django: cấu trúc dự án lớn, migration không downtime, scaling worker và kết nối DB, observability, chiến lược test/release, nâng version LTS."
+sources = ["django~6.0/howto/deployment/checklist", "django~6.0/howto/writing-migrations", "django~6.0/ref/migration-operations", "django~6.0/topics/migrations", "django~6.0/ref/databases", "django~6.0/topics/performance", "django~6.0/topics/logging", "django~6.0/topics/testing/advanced", "django~6.0/topics/cache"]
+lesson = '''
+### Vai trò của Tech Lead trong dự án Django
+Ở cấp Lead, câu hỏi không còn là "API nào đúng" mà là "phương án nào hợp lý nhất với ràng buộc của team": số người, thời hạn, traffic, chi phí hạ tầng, rủi ro khi sự cố. Một quyết định tốt luôn ghi rõ bối cảnh, các phương án đã cân nhắc và lý do loại bỏ chúng.
+
+### Khung ra quyết định
+1. **Bối cảnh & ràng buộc**: traffic hiện tại/dự kiến, SLA, quy mô team, deadline.
+2. **Phương án**: tối thiểu 2–3 lựa chọn, kể cả "giữ nguyên".
+3. **Tiêu chí**: độ phức tạp vận hành, rủi ro, chi phí, khả năng đảo ngược (reversible).
+4. **Quyết định + điều kiện xem lại**: khi nào cần đánh giá lại (ví dụ traffic x5).
+
+### Bảng so sánh: tổ chức codebase
+| Phương án | Ưu | Nhược | Hợp khi |
+|---|---|---|---|
+| Monolith một app lớn | Đơn giản, deploy một lần | Ranh giới mờ, xung đột merge | Team ≤ 3, sản phẩm mới |
+| Modular monolith (nhiều app có ranh giới rõ) | Một deploy, ranh giới domain rõ, refactor dần | Cần kỷ luật import giữa app | Team 4–15 người, đa số dự án |
+| Tách microservice | Scale/deploy độc lập | Chi phí vận hành, giao dịch phân tán | Nhiều team, nhu cầu scale khác hẳn nhau |
+
+### Migration không downtime (expand/contract)
+Khi deploy cuốn chiếu (rolling), code cũ và mới chạy song song trên cùng schema. Quy tắc:
+- **Expand**: thêm cột nullable hoặc có default, thêm bảng mới, thêm index đồng thời (trên PostgreSQL dùng `AddIndexConcurrently` với migration `atomic = False`).
+- **Migrate dữ liệu**: backfill theo batch, tách khỏi migration schema; `RunPython` nên có hàm reverse.
+- **Contract**: chỉ xoá/đổi tên cột sau khi không còn code nào đọc nó (ít nhất một release sau).
+- Đặt `lock_timeout`/`statement_timeout` để migration không khoá bảng quá lâu.
+
+### Scaling worker và kết nối DB
+Số kết nối ≈ số pod × worker mỗi pod × thread (ước lượng). Khi scale ngang, database thường cạn kết nối trước CPU. Dùng connection pooler (PgBouncer hoặc pool của backend), tách queue Celery/task theo mức ưu tiên để job chậm không chặn job quan trọng.
+
+### Checklist review PR (gợi ý)
+- Migration có an toàn với rolling deploy không? Có reverse không?
+- Có query trong vòng lặp (N+1) không? Đã có test đếm query cho endpoint nóng chưa?
+- Side effect (email, webhook) có chạy sau `transaction.on_commit` không?
+- Secret, `DEBUG`, `ALLOWED_HOSTS` có lấy từ biến môi trường? CI chạy `check --deploy` và `makemigrations --check`?
+- Log có đủ ngữ cảnh (request id, user id) nhưng không lộ dữ liệu nhạy cảm?
+
+### ADR mẫu (ngắn)
+> **ADR-012: Tách queue task theo mức ưu tiên.** Bối cảnh: email marketing (100k job/đêm) làm webhook thanh toán chậm 20 phút. Quyết định: 3 queue `critical`, `default`, `bulk`, worker riêng cho `critical`. Hệ quả: thêm cấu hình deploy; cần cảnh báo độ dài queue. Xem lại khi số job x3.
+
+### Anti-pattern ở quy mô team
+- Dùng signal để nối logic nghiệp vụ cốt lõi giữa các app (luồng ẩn, khó debug, không chạy với `bulk_create`/`update`).
+- Migration vừa đổi schema vừa backfill hàng triệu dòng trong một transaction.
+- Mỗi người tự cấu hình settings, không có nguồn sự thật chung.
+- Tối ưu theo cảm tính thay vì đo (APM, query count, p95).
+- Nâng Django nhảy nhiều phiên bản một lần mà không xử lý deprecation warning trước.
+
+Số liệu trong bài là ước lượng tham khảo; luôn đo trên hệ thống thật trước khi quyết định.
+'''
+
+[[questions]]
+id = "django-lv001"
+module = "django-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "migration"]
+prompt = "Bảng orders có 50 triệu dòng, app chạy rolling deploy trên 8 pod. Cần đổi tên cột customer_ref thành customer_code. Kế hoạch nào hợp lý nhất?"
+options = ["Một migration RenameField rồi deploy ngay", "Thêm cột mới nullable, ghi song song cả hai cột, backfill theo batch, chuyển code đọc cột mới, release sau mới xoá cột cũ", "Tắt app 2 tiếng vào cuối tuần để rename cho chắc", "Giữ tên cũ mãi mãi và chỉ đổi tên thuộc tính Python bằng db_column"]
+answer = [1]
+explanation = "Expand/contract giữ cho code cũ và mới cùng chạy được trong lúc rolling deploy. RenameField làm pod cũ lỗi ngay; downtime là chi phí không cần thiết; db_column chỉ hợp khi mục tiêu thuần là tên trong code, không phải khi cần đổi schema thật."
+sources = ["django~6.0/howto/writing-migrations", "django~6.0/ref/migration-operations"]
+
+[[questions]]
+id = "django-lv002"
+module = "django-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "architecture"]
+prompt = "Team 6 dev, một monolith Django 4 năm tuổi, mọi thứ nằm trong app core. Merge conflict nhiều, nhưng traffic ổn định và chỉ có 1 người lo hạ tầng. Hướng đi nào hợp lý nhất cho 2 quý tới?"
+options = ["Tách ngay 5 microservice theo domain", "Chuyển dần thành modular monolith: tách app theo domain, quy ước app nào được import app nào, vẫn một lần deploy", "Viết lại bằng framework khác", "Giữ nguyên, chỉ yêu cầu commit nhỏ hơn"]
+answer = [1]
+explanation = "Vấn đề là ranh giới code, không phải scale. Modular monolith giải quyết xung đột mà không thêm chi phí vận hành mà 1 người hạ tầng khó gánh. Microservice và viết lại đều rủi ro cao; giữ nguyên không xử lý gốc rễ."
+sources = ["django~6.0/ref/applications"]
+
+[[questions]]
+id = "django-lv003"
+module = "django-lead"
+type = "multiple"
+difficulty = 3
+tags = ["level:lead", "code-review"]
+prompt = "Bạn soạn checklist review migration cho team (PostgreSQL, rolling deploy). Chọn các mục nên có."
+options = ["AddField trên bảng lớn phải nullable hoặc có default an toàn", "Index trên bảng lớn tạo bằng AddIndexConcurrently trong migration atomic = False", "RunPython nên có hàm reverse (hoặc noop có chủ đích)", "Xoá cột trong cùng release với lúc bỏ code đọc cột đó", "Gộp backfill hàng triệu dòng vào cùng migration đổi schema để chỉ chạy một lần"]
+answer = [0, 1, 2]
+explanation = "Ba mục đầu giảm khoá bảng và cho phép rollback. Xoá cột cùng release làm pod cũ lỗi khi đang rolling; gộp backfill vào migration schema giữ transaction/khoá rất lâu."
+sources = ["django~6.0/ref/migration-operations", "django~6.0/howto/writing-migrations", "django~6.0/ref/contrib/postgres/operations"]
+
+[[questions]]
+id = "django-lv004"
+module = "django-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "tasks"]
+prompt = "Mỗi đêm job gửi 100k email marketing chạy chung queue với task xử lý webhook thanh toán; webhook bị trễ tới 20 phút. Ngân sách chỉ cho thêm ít worker. Quyết định nào hợp lý nhất?"
+options = ["Tăng gấp đôi worker cho queue chung", "Tách queue theo mức ưu tiên (critical/bulk), dành worker riêng cho critical và giới hạn tốc độ bulk", "Chuyển gửi email về chạy đồng bộ trong request", "Giảm số email marketing xuống"]
+answer = [1]
+explanation = "Vấn đề là cô lập ưu tiên, không phải tổng năng lực. Tách queue bảo đảm webhook có worker riêng với chi phí nhỏ. Tăng worker tốn tiền và vẫn có thể bị lấp đầy; chạy đồng bộ làm chậm request; giảm email là quyết định kinh doanh, không phải kỹ thuật."
+sources = ["django~6.0/topics/tasks"]
+
+[[questions]]
+id = "django-lv005"
+module = "django-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "observability"]
+prompt = "Sau release, p95 của API /orders tăng từ 180ms lên 900ms; chưa có APM, chỉ có log truy cập. Bước đầu tiên hợp lý nhất cho team là gì?"
+options = ["Thêm cache cho toàn bộ API ngay", "Rollback hoặc tắt tính năng mới nếu ảnh hưởng người dùng, đồng thời thu thập số query và thời gian DB theo endpoint (tracing/log có request id) để tìm nguyên nhân", "Nâng cấu hình database lên gấp đôi", "Chờ thêm một tuần xem có tự hết không"]
+answer = [1]
+explanation = "Ưu tiên giảm tác động rồi đo đúng chỗ. Cache hoặc nâng DB khi chưa biết nguyên nhân có thể che giấu lỗi N+1 và tốn chi phí; chờ đợi kéo dài sự cố."
+sources = ["django~6.0/topics/performance", "django~6.0/topics/logging", "django~6.0/topics/db/instrumentation"]
+
+[[questions]]
+id = "django-lv006"
+module = "django-lead"
+type = "essay"
+difficulty = 3
+tags = ["level:lead", "async"]
+prompt = "Viết ADR ngắn: app Django hiện chạy WSGI, 95% là CRUD, sắp có tính năng thông báo realtime. Bạn có chuyển toàn bộ sang ASGI và async view không? Nêu bối cảnh, phương án, quyết định và hệ quả."
+keywords = [["asgi"], ["wsgi"], ["async"], ["sync_to_async", "thread", "luồng"], ["realtime", "websocket", "sse"], ["rủi ro", "chi phí", "trade-off", "đánh đổi"]]
+min_keywords = 4
+model_answer = '''Bối cảnh: phần lớn là CRUD sync dùng ORM, chỉ một tính năng realtime. Phương án: (1) giữ WSGI và tách dịch vụ realtime riêng chạy ASGI/websocket; (2) chuyển toàn bộ sang ASGI và viết lại view sang async; (3) chạy ASGI nhưng giữ view sync. Quyết định: giữ WSGI cho CRUD, triển khai phần realtime bằng một tiến trình ASGI riêng. Lý do: view sync chạy trên ASGI phải qua sync_to_async/thread nên không nhanh hơn, async ORM chưa hỗ trợ transaction, viết lại toàn bộ là rủi ro và chi phí lớn. Hệ quả: thêm một tiến trình deploy, cần chia sẻ auth/session; xem lại khi phần async chiếm tỷ trọng lớn.'''
+explanation = "Câu Lead đánh giá khả năng cân nhắc trade-off: async chỉ có lợi cho I/O chờ lâu, còn chuyển cả app có chi phí và rủi ro."
+sources = ["django~6.0/topics/async", "django~6.0/howto/deployment/asgi/index"]
+
+[[questions]]
+id = "django-lv007"
+module = "django-lead"
+type = "essay"
+difficulty = 3
+tags = ["level:lead", "upgrade"]
+prompt = "Codebase Django 300k dòng đang ở bản LTS cũ, cần lên bản LTS mới trong 1 quý mà không đóng băng tính năng. Trình bày kế hoạch nâng version."
+keywords = [["deprecation", "warning", "cảnh báo"], ["test", "ci"], ["từng bước", "từng phiên bản", "lts", "trung gian"], ["dependency", "thư viện", "package"], ["staging", "canary", "rollback"]]
+min_keywords = 3
+model_answer = '''Kiểm kê dependency và xác nhận các package hỗ trợ bản đích. Bật deprecation warning thành lỗi trong CI (python -W error::DeprecationWarning) và sửa dần ở bản hiện tại. Nâng từng phiên bản trung gian thay vì nhảy thẳng, mỗi bước chạy toàn bộ test suite và đọc release notes. Làm trên nhánh ngắn hạn merge thường xuyên để không xung đột với tính năng mới. Deploy lên staging, rồi canary một phần traffic, theo dõi lỗi và có kế hoạch rollback.'''
+explanation = "Nâng version lớn cần làm từng bước có kiểm chứng; đọc warning trước giúp phần lớn thay đổi xảy ra ở bản cũ, giảm rủi ro ngày chuyển."
+sources = ["django~6.0/howto/upgrade-version", "django~6.0/topics/testing/overview"]
+
+[[questions]]
+id = "django-lv008"
+module = "django-lead"
+type = "multiple"
+difficulty = 3
+tags = ["level:lead", "settings"]
+prompt = "Chuẩn hoá cấu hình cho 3 môi trường (dev/staging/prod) và 8 dev. Chọn các quyết định nên áp dụng."
+options = ["Đọc secret, DEBUG, ALLOWED_HOSTS, DATABASES từ biến môi trường hoặc secret manager", "CI chạy manage.py check --deploy với settings production", "Commit file settings_prod.py chứa SECRET_KEY thật để mọi người tiện chạy", "Mỗi dev tự sửa settings.py chung theo máy mình rồi commit", "Có một file mẫu (ví dụ .env.example) mô tả các biến bắt buộc"]
+answer = [0, 1, 4]
+explanation = "Cấu hình theo môi trường, tự động kiểm tra và tài liệu hoá biến giúp team nhất quán. Commit secret là rủi ro bảo mật; settings chung bị sửa theo máy gây xung đột liên tục."
+sources = ["django~6.0/topics/settings", "django~6.0/howto/deployment/checklist"]
+
+[[questions]]
+id = "django-lv009"
+module = "django-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "caching"]
+prompt = "Trang chi tiết sản phẩm chiếm 70% traffic, giá đổi vài lần mỗi ngày và phải đúng ngay sau khi admin sửa. Team nhỏ, đã có Redis. Chiến lược cache nào hợp lý nhất?"
+options = ["Per-site cache middleware TTL 1 giờ", "Cache dữ liệu sản phẩm bằng low-level cache với key theo id, xoá/đổi phiên bản key khi sản phẩm được lưu (sau commit)", "Không cache, chỉ tăng số pod", "Cache toàn bộ HTML ở CDN 24 giờ"]
+answer = [1]
+explanation = "Yêu cầu đúng ngay sau khi sửa cần invalidation theo sự kiện. TTL dài (middleware, CDN) trả giá cũ; không cache tốn chi phí cho 70% traffic đọc."
+sources = ["django~6.0/topics/cache", "django~6.0/topics/db/transactions"]
+
+[[questions]]
+id = "django-lv010"
+module = "django-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "database"]
+prompt = "Scale từ 4 lên 20 pod, mỗi pod 4 gunicorn worker, PostgreSQL bắt đầu báo too many connections dù CPU DB chỉ 30%. Quyết định nào hợp lý nhất?"
+options = ["Tăng max_connections của PostgreSQL lên 5000", "Đặt một connection pooler (ví dụ PgBouncer hoặc pool của backend) giữa app và DB, tính lại số kết nối mỗi pod", "Giảm về 4 pod", "Đặt CONN_MAX_AGE = None để kết nối sống mãi"]
+answer = [1]
+explanation = "Pooler gom kết nối, giữ số kết nối thật tới DB ổn định khi scale ngang. Tăng max_connections tốn RAM mỗi kết nối; giảm pod bỏ mục tiêu scale; kết nối sống mãi càng giữ nhiều kết nối hơn."
+sources = ["django~6.0/ref/databases"]
+
+[[questions]]
+id = "django-lv011"
+module = "django-lead"
+type = "fill"
+difficulty = 3
+tags = ["level:lead", "ci"]
+prompt = "Để CI fail khi ai đó sửa model mà quên tạo migration, thêm bước: python manage.py {{blank}} --check --dry-run"
+blanks = [["makemigrations"]]
+explanation = "makemigrations --check trả exit code khác 0 nếu còn thay đổi model chưa có migration, giúp chặn lỗi trước khi merge."
+sources = ["django~6.0/ref/django-admin"]
+
+[[questions]]
+id = "django-lv012"
+module = "django-lead"
+type = "fill"
+difficulty = 3
+tags = ["level:lead", "deployment"]
+prompt = "Quality gate trước khi deploy production chạy lệnh kiểm tra cấu hình bảo mật: python manage.py check {{blank}}"
+blanks = [["--deploy"]]
+explanation = "check --deploy bật thêm các kiểm tra dành cho production như DEBUG, cookie secure, HSTS."
+sources = ["django~6.0/howto/deployment/checklist", "django~6.0/ref/checks"]
+
+[[questions]]
+id = "django-lv013"
+module = "django-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "testing"]
+prompt = "Test suite mất 40 phút, dev bắt đầu bỏ qua CI. Phân tích cho thấy 60% thời gian nằm ở các test dùng TransactionTestCase không cần thiết. Hành động đầu tiên có lợi nhất?"
+options = ["Chuyển các test đó sang TestCase (rollback theo transaction) và bật chạy song song với --parallel", "Xoá bớt test chậm", "Chỉ chạy test vào ban đêm", "Mua máy CI mạnh gấp đôi"]
+answer = [0]
+explanation = "Sửa đúng nguyên nhân đã đo: TestCase nhanh hơn nhiều vì không flush DB, kết hợp --parallel tận dụng nhiều core. Xoá test giảm độ an toàn; chạy đêm làm phản hồi chậm; tăng máy tốn tiền mà không xử lý gốc."
+sources = ["django~6.0/topics/testing/tools", "django~6.0/topics/testing/advanced"]
+
+[[questions]]
+id = "django-lv014"
+module = "django-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "multi-tenant"]
+prompt = "SaaS B2B 200 khách hàng (tenant), dữ liệu mỗi tenant nhỏ, team 5 dev, cần báo cáo tổng hợp toàn hệ thống. Mô hình multi-tenant nào hợp lý nhất?"
+options = ["Mỗi tenant một database riêng", "Mỗi tenant một schema PostgreSQL riêng", "Chung schema, mỗi bảng có tenant_id, manager/queryset mặc định lọc theo tenant và test chống rò dữ liệu", "Mỗi tenant deploy một instance app riêng"]
+answer = [2]
+explanation = "Với nhiều tenant nhỏ và cần báo cáo chéo, shared schema đơn giản nhất về migration và vận hành; rủi ro rò dữ liệu được giảm bằng scoping tập trung và test. DB/schema/instance riêng làm migration x200 và báo cáo chéo khó."
+sources = ["django~6.0/topics/db/managers", "django~6.0/topics/db/multi-db"]
+
+[[questions]]
+id = "django-lv015"
+module = "django-lead"
+type = "multiple"
+difficulty = 3
+tags = ["level:lead", "anti-pattern"]
+prompt = "Chọn các anti-pattern nên ghi vào guideline của team Django."
+options = ["Dùng post_save signal để kích hoạt logic nghiệp vụ cốt lõi của app khác", "Đặt logic nghiệp vụ trong service/model method có test, view chỉ điều phối", "Gửi email/webhook ngay trong transaction thay vì sau commit", "Tối ưu query dựa trên đo đạc (query count, EXPLAIN)", "Import model chéo tuỳ ý giữa mọi app"]
+answer = [0, 2, 4]
+explanation = "Signal cho logic cốt lõi tạo luồng ẩn và bị bỏ qua với bulk_create/update; side effect trước commit có thể gửi cho dữ liệu bị rollback; import chéo tự do phá ranh giới module. Hai lựa chọn còn lại là thực hành tốt."
+sources = ["django~6.0/topics/signals", "django~6.0/topics/db/transactions"]
+
+[[questions]]
+id = "django-lv016"
+module = "django-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "incident"]
+prompt = "Một migration ALTER TABLE chờ khoá rồi chặn toàn bộ truy vấn vào bảng users 6 phút trong giờ cao điểm. Sau khi khắc phục, thay đổi quy trình nào giảm tái diễn hiệu quả nhất?"
+options = ["Cấm mọi migration", "Đặt lock_timeout ngắn cho phiên chạy migration để thất bại nhanh thay vì xếp hàng, kèm checklist review migration và chạy migration rủi ro ngoài giờ cao điểm", "Chỉ cho senior được viết migration", "Tăng timeout của load balancer"]
+answer = [1]
+explanation = "lock_timeout biến việc chờ khoá thành lỗi nhanh có thể thử lại, checklist bắt các thao tác nguy hiểm từ lúc review. Cấm migration hay giới hạn người viết không khả thi; tăng timeout chỉ kéo dài thời gian người dùng chờ."
+sources = ["django~6.0/howto/writing-migrations", "django~6.0/ref/databases"]
+
+[[questions]]
+id = "django-lv017"
+module = "django-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "tech-debt"]
+prompt = "Codebase có 120 chỗ raw SQL rải rác, 3 chỗ từng gây SQL injection. Team chỉ có 20% thời gian mỗi sprint cho nợ kỹ thuật. Cách xử lý hợp lý nhất?"
+options = ["Dừng tính năng 1 tháng để viết lại hết sang ORM", "Ưu tiên theo rủi ro: rà ngay chỗ nối chuỗi từ input người dùng, thêm lint/review rule cấm nối chuỗi SQL, chuyển dần phần còn lại khi chạm vào code", "Bỏ qua vì đã sửa 3 chỗ lỗi", "Chuyển sang database khác"]
+answer = [1]
+explanation = "Xử lý theo rủi ro và ngăn nợ mới phát sinh phù hợp ngân sách 20%. Viết lại toàn bộ tốn kém và rủi ro; bỏ qua để lại lỗ hổng tương tự; đổi database không liên quan tới cách nối chuỗi."
+sources = ["django~6.0/topics/db/sql", "django~6.0/topics/security"]
+
+[[questions]]
+id = "django-lv018"
+module = "django-lead"
+type = "multiple"
+difficulty = 3
+tags = ["level:lead", "release"]
+prompt = "Cần ra mắt tính năng có thêm cột mới và đổi luồng checkout, yêu cầu rollback được trong 5 phút. Chọn các bước nên có trong kế hoạch."
+options = ["Migration chỉ thêm (expand), tương thích với code cũ", "Bật tính năng qua feature flag, mở dần theo % người dùng", "Theo dõi tỷ lệ lỗi và thời gian checkout trên dashboard trong lúc mở rộng", "Xoá cột cũ ngay trong cùng release để dọn dẹp", "Rollback bằng cách chạy migrate ngược trên production"]
+answer = [0, 1, 2]
+explanation = "Expand-only migration và feature flag cho phép rollback bằng cách tắt cờ mà không động tới schema. Xoá cột cùng release và migrate ngược trên production đều chậm, rủi ro mất dữ liệu."
+sources = ["django~6.0/howto/writing-migrations", "django~6.0/topics/migrations"]
+
+[[questions]]
+id = "django-lv019"
+module = "django-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "code-review"]
+prompt = "PR trung bình của team 1.500 dòng, review mất 3 ngày và hay bỏ sót lỗi. Bạn là Tech Lead, thay đổi nào hiệu quả nhất?"
+options = ["Yêu cầu 3 người approve mỗi PR", "Đặt hướng dẫn PR nhỏ (ví dụ dưới ~400 dòng), tách migration/refactor/tính năng thành PR riêng, dùng feature flag để merge phần dở dang an toàn", "Bỏ review để đi nhanh hơn", "Chỉ review phần test"]
+answer = [1]
+explanation = "PR nhỏ, một mục đích, review nhanh và kỹ hơn; feature flag cho phép merge sớm. Thêm người approve tăng thời gian chờ; bỏ review hay chỉ xem test làm mất lớp kiểm soát chất lượng."
+sources = ["django~6.0/topics/testing/overview", "django~6.0/howto/writing-migrations"]
+
+[[questions]]
+id = "django-lvc01"
+module = "django-lead"
+type = "code"
+difficulty = 3
+tags = ["level:lead", "migration"]
+title = "Gác cổng migration không downtime"
+lang = "python"
+prompt = '''
+Team quyết định CI tự đánh giá migration theo chính sách rolling deploy. Viết review_migration(ops), ops là list dict, mỗi dict có khoá "op" (tên thao tác) và có thể có "null", "default", "concurrently", "reverse".
+Quy tắc cho từng thao tác:
+- "unsafe": AddField khi null không phải True và không có khoá "default"; hoặc op là RemoveField, RenameField, RenameModel, DeleteModel.
+- "review": AlterField; AddIndex khi concurrently không phải True; RunPython khi reverse không phải True.
+- "safe": mọi trường hợp còn lại.
+Trả về dict {"verdict": v, "issues": [...]}. issues là list dict {"index": i, "op": tên_op, "level": mức} cho các thao tác không safe, theo thứ tự xuất hiện. verdict là mức nặng nhất (unsafe > review > safe); list rỗng thì verdict là "safe".
+'''
+starter = '''
+def review_migration(ops):
+    return {"verdict": "safe", "issues": []}
+'''
+solution = '''
+UNSAFE_OPS = {"RemoveField", "RenameField", "RenameModel", "DeleteModel"}
+RANK = {"safe": 0, "review": 1, "unsafe": 2}
+
+def _level(op):
+    name = op.get("op")
+    if name == "AddField":
+        if op.get("null") is not True and "default" not in op:
+            return "unsafe"
+        return "safe"
+    if name in UNSAFE_OPS:
+        return "unsafe"
+    if name == "AlterField":
+        return "review"
+    if name == "AddIndex" and op.get("concurrently") is not True:
+        return "review"
+    if name == "RunPython" and op.get("reverse") is not True:
+        return "review"
+    return "safe"
+
+def review_migration(ops):
+    verdict = "safe"
+    issues = []
+    for index, op in enumerate(ops):
+        level = _level(op)
+        if level != "safe":
+            issues.append({"index": index, "op": op.get("op"), "level": level})
+            if RANK[level] > RANK[verdict]:
+                verdict = level
+    return {"verdict": verdict, "issues": issues}
+'''
+tests = '''
+@test("migration rỗng là safe")
+def _():
+    expect(review_migration([])).to_equal({"verdict": "safe", "issues": []})
+
+@test("AddField nullable hoặc có default là safe")
+def _():
+    ops = [{"op": "AddField", "null": True}, {"op": "AddField", "default": 0}, {"op": "CreateModel"}]
+    expect(review_migration(ops)).to_equal({"verdict": "safe", "issues": []})
+
+@test("AddField NOT NULL không default là unsafe")
+def _():
+    r = review_migration([{"op": "AddField", "null": False}])
+    expect(r["verdict"]).to_be("unsafe")
+    expect(r["issues"]).to_equal([{"index": 0, "op": "AddField", "level": "unsafe"}])
+
+@test("index thường và RunPython không reverse cần review")
+def _():
+    ops = [{"op": "AddIndex"}, {"op": "AddIndex", "concurrently": True}, {"op": "RunPython", "reverse": True}, {"op": "RunPython"}]
+    r = review_migration(ops)
+    expect(r["verdict"]).to_be("review")
+    expect([i["index"] for i in r["issues"]]).to_equal([0, 3])
+
+@test("verdict lấy mức nặng nhất")
+def _():
+    ops = [{"op": "AlterField"}, {"op": "RenameField"}, {"op": "AddIndex"}]
+    r = review_migration(ops)
+    expect(r["verdict"]).to_be("unsafe")
+    expect([i["level"] for i in r["issues"]]).to_equal(["review", "unsafe", "review"])
+
+@test("RemoveField và DeleteModel là unsafe")
+def _():
+    r = review_migration([{"op": "RemoveField"}, {"op": "DeleteModel"}])
+    expect([i["level"] for i in r["issues"]]).to_equal(["unsafe", "unsafe"])
+'''
+hints = ["Viết hàm phụ trả mức cho một thao tác, rồi gộp kết quả.", "Dùng bảng thứ hạng safe < review < unsafe để tính verdict."]
+explanation = "Tự động hoá chính sách migration biến kinh nghiệm của Lead thành quality gate cho cả team; review con người tập trung vào trường hợp được đánh dấu."
+sources = ["django~6.0/ref/migration-operations", "django~6.0/howto/writing-migrations"]
+
+[[questions]]
+id = "django-lv020"
+module = "django-orm"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "concurrency"]
+prompt = "Hai request chuyển tiền đồng thời: A khoá account 1 rồi 2, B khoá account 2 rồi 1 bằng select_for_update(), thỉnh thoảng gặp deadlock. Cách sửa gọn nhất?"
+options = ["Bỏ transaction.atomic()", "Luôn khoá các hàng theo cùng một thứ tự, ví dụ select_for_update().filter(pk__in=[...]).order_by('pk')", "Thêm time.sleep ngẫu nhiên trước khi khoá", "Chuyển sang đọc không khoá rồi save()"]
+answer = [1]
+explanation = "Deadlock xuất hiện khi hai transaction giữ khoá theo thứ tự ngược nhau; khoá theo thứ tự cố định loại bỏ chu trình chờ. Bỏ transaction hay đọc không khoá gây sai số dư; sleep chỉ giảm xác suất."
+sources = ["django~6.0/ref/models/querysets", "django~6.0/topics/db/transactions"]
+
+[[questions]]
+id = "django-lv021"
+module = "django-orm"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "concurrency"]
+prompt = "Đoạn code post.views = post.views + 1; post.save() bị mất lượt đếm khi traffic cao. Cách nào xử lý tại database, không cần khoá ở tầng Python?"
+options = ["Post.objects.filter(pk=post.pk).update(views=F('views') + 1)", "Gọi post.refresh_from_db() trước khi cộng", "Bọc trong try/except", "Dùng cache.get rồi cache.set"]
+answer = [0]
+explanation = "F() sinh câu UPDATE views = views + 1 nên phép cộng nguyên tử ở DB. refresh_from_db vẫn có khoảng hở giữa đọc và ghi; get/set cache cũng có race."
+sources = ["django~6.0/ref/models/expressions"]
+
+[[questions]]
+id = "django-lv022"
+module = "django-orm"
+type = "multiple"
+difficulty = 3
+tags = ["level:senior", "transactions"]
+prompt = "Chọn các nhận định đúng về ATOMIC_REQUESTS = True."
+options = ["Mỗi request của view được bọc trong một transaction", "Exception trong view làm rollback các thay đổi DB của request đó", "Response streaming cũng được bảo vệ trọn vẹn bởi transaction tới khi gửi xong", "Transaction kéo dài theo thời gian chạy view, có thể giữ khoá lâu nếu view gọi dịch vụ ngoài chậm", "Có thể loại trừ một view bằng non_atomic_requests"]
+answer = [0, 1, 3, 4]
+explanation = "ATOMIC_REQUESTS tiện nhưng có giá: transaction dài theo view. Phần sinh nội dung của streaming response chạy sau khi view trả về nên không nằm trong transaction đó."
+sources = ["django~6.0/topics/db/transactions"]
+
+[[questions]]
+id = "django-lv023"
+module = "django-request"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "async"]
+prompt = "Trong async view cần ghi Order và OrderLine cùng một transaction. Cách nào đúng?"
+options = ["async with transaction.atomic(): await Order.objects.acreate(...)", "Viết hàm sync dùng transaction.atomic() rồi gọi await sync_to_async(fn)()", "Gọi Order.objects.create() trực tiếp trong async view", "Dùng asyncio.gather để ghi hai bảng song song"]
+answer = [1]
+explanation = "Async ORM chưa hỗ trợ transaction; đặt toàn bộ khối transaction trong một hàm sync và gọi qua sync_to_async để chạy trên cùng thread/kết nối. Gọi ORM sync trực tiếp trong async context sẽ bị chặn bằng SynchronousOnlyOperation."
+sources = ["django~6.0/topics/async", "django~6.0/topics/db/transactions"]
+
+[[questions]]
+id = "django-lv024"
+module = "django-api-security"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "database"]
+prompt = "Chuyển app sang chạy ASGI. Khuyến nghị nào về kết nối database là hợp lý?"
+options = ["Giữ CONN_MAX_AGE thật lớn để tái dùng kết nối", "Tắt persistent connection (CONN_MAX_AGE = 0) và dùng connection pool của backend hoặc pooler bên ngoài", "Mở một kết nối toàn cục dùng chung cho mọi coroutine", "Không cần thay đổi gì vì ASGI và WSGI quản lý kết nối giống hệt nhau"]
+answer = [1]
+explanation = "Dưới ASGI, request có thể chạy trên nhiều thread khác nhau nên persistent connection khó kiểm soát; tài liệu Django khuyên tắt và dùng pooling."
+sources = ["django~6.0/ref/databases", "django~6.0/howto/deployment/asgi/index"]
+
+[[questions]]
+id = "django-lv025"
+module = "django-orm"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "performance"]
+prompt = "Lệnh export 5 triệu dòng Event ra CSV làm tiến trình tốn hàng GB RAM. Thay đổi nào giảm bộ nhớ mà vẫn dùng ORM?"
+options = ["Dùng list(Event.objects.all())", "Lặp qua Event.objects.values_list(...).iterator(chunk_size=2000) và ghi từng dòng", "Thêm prefetch_related cho mọi quan hệ", "Gọi .count() trước khi lặp"]
+answer = [1]
+explanation = "iterator() không giữ cache kết quả của QuerySet và đọc theo lô; values_list tránh tạo object model. list() và prefetch làm tăng bộ nhớ."
+sources = ["django~6.0/ref/models/querysets", "django~6.0/topics/db/optimization"]
+
+[[questions]]
+id = "django-lv026"
+module = "django-orm"
+type = "multiple"
+difficulty = 3
+tags = ["level:senior", "constraints"]
+prompt = "Yêu cầu: mỗi user chỉ có tối đa một địa chỉ is_default = True, và tìm kiếm theo lower(email) phải nhanh. Chọn các khai báo phù hợp trong Meta."
+options = ["UniqueConstraint(fields=['user'], condition=Q(is_default=True), name='one_default_address')", "Index(Lower('email'), name='user_email_lower_idx')", "unique=True trên field is_default", "Kiểm tra trong save() là đủ, không cần ràng buộc DB"]
+answer = [0, 1]
+explanation = "Unique có điều kiện (partial) đảm bảo bất biến ngay tại DB kể cả khi có race; functional index phục vụ truy vấn theo biểu thức. unique trên is_default chỉ cho đúng một hàng True toàn bảng; kiểm tra trong save() thua race và bị bỏ qua bởi update()."
+sources = ["django~6.0/ref/models/constraints", "django~6.0/ref/models/indexes"]
+
+[[questions]]
+id = "django-lv027"
+module = "django-api-security"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "caching"]
+prompt = "Key cache dashboard tốn 8 giây để tính; khi hết hạn, hàng trăm request cùng tính lại làm DB quá tải. Cách giảm cache stampede đơn giản với API cache của Django?"
+options = ["Giảm TTL xuống 1 giây", "Dùng cache.add(lock_key, ...) làm khoá ngắn hạn: request lấy được khoá thì tính lại, các request khác trả giá trị cũ hoặc chờ", "Xoá cache mỗi khi có request", "Tăng số worker web"]
+answer = [1]
+explanation = "cache.add chỉ ghi khi key chưa tồn tại (nguyên tử trên backend hỗ trợ), phù hợp làm khoá tính lại một lần. Giảm TTL hay xoá cache làm tình trạng nặng hơn; thêm worker càng nhiều request đồng thời."
+sources = ["django~6.0/topics/cache"]
+
+[[questions]]
+id = "django-lv028"
+module = "django-request"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "signals"]
+prompt = "Receiver post_save của Product cập nhật search index, nhưng sau khi import hàng loạt bằng bulk_create và cập nhật giá bằng queryset.update(), index không đổi. Vì sao?"
+options = ["Receiver chưa được import nên không đăng ký", "bulk_create và QuerySet.update() không gọi save() nên không phát pre_save/post_save", "post_save chỉ chạy trong admin", "Do thiếu transaction.atomic()"]
+answer = [1]
+explanation = "Các thao tác hàng loạt bỏ qua save() và signal theo từng object; cần cập nhật index tường minh sau thao tác bulk. Đây là lý do không nên đặt logic quan trọng chỉ trong signal."
+sources = ["django~6.0/ref/signals", "django~6.0/ref/models/querysets"]
+
+[[questions]]
+id = "django-lv029"
+module = "django-orm"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "transactions"]
+prompt = "Trên PostgreSQL với mức cô lập mặc định, trong một transaction.atomic() bạn đọc Stock.quantity hai lần cách nhau 1 giây và thấy giá trị khác nhau. Giải thích đúng?"
+options = ["Lỗi của Django ORM cache", "READ COMMITTED: mỗi câu lệnh thấy dữ liệu đã commit tại thời điểm câu lệnh đó chạy, nên transaction khác commit ở giữa sẽ thấy được", "Do autocommit đang tắt", "PostgreSQL mặc định là SERIALIZABLE nên không thể xảy ra"]
+answer = [1]
+explanation = "Mặc định PostgreSQL là READ COMMITTED; cần select_for_update hoặc mức cô lập cao hơn nếu logic phụ thuộc vào giá trị không đổi."
+sources = ["django~6.0/ref/databases", "django~6.0/topics/db/transactions"]
+
+[[questions]]
+id = "django-lv030"
+module = "django-dv-tasks"
+type = "fill"
+difficulty = 3
+tags = ["level:senior", "concurrency"]
+prompt = "Nhiều worker cùng lấy job từ bảng Job; để mỗi worker bỏ qua hàng đang bị worker khác khoá, dùng Job.objects.select_for_update({{blank}}=True).filter(status='pending')[:10]"
+blanks = [["skip_locked"]]
+explanation = "skip_locked=True bỏ qua hàng đã bị khoá thay vì chờ, là pattern phổ biến khi dùng bảng DB làm hàng đợi."
+sources = ["django~6.0/ref/models/querysets"]
+
+[[questions]]
+id = "django-lv031"
+module = "django-orm"
+type = "fill"
+difficulty = 3
+tags = ["level:senior", "performance"]
+prompt = "Để xem query plan mà database chọn cho một QuerySet, gọi print(qs.{{blank}}())"
+blanks = [["explain"]]
+explanation = "QuerySet.explain() trả về kế hoạch thực thi, giúp kiểm tra index có được dùng hay không."
+sources = ["django~6.0/ref/models/querysets", "django~6.0/topics/db/optimization"]
+
+[[questions]]
+id = "django-lv032"
+module = "django-orm"
+type = "essay"
+difficulty = 3
+tags = ["level:senior", "concurrency"]
+prompt = "So sánh ba cách chống ghi đè đồng thời trong Django: F() expression, select_for_update và optimistic locking bằng cột version. Khi nào chọn cách nào?"
+keywords = [["f()", "f expression", "biểu thức f"], ["select_for_update", "khoá hàng", "pessimistic"], ["version", "optimistic", "lạc quan"], ["race", "đồng thời", "concurrent"], ["update()", "rows", "số hàng"]]
+min_keywords = 3
+model_answer = '''F() phù hợp khi thay đổi là phép toán đơn giản trên một cột (cộng/trừ), DB tự làm nguyên tử, không cần khoá. select_for_update (pessimistic) khoá hàng trong transaction khi phải đọc, kiểm tra điều kiện phức tạp rồi ghi, đổi lại là giảm đồng thời và có nguy cơ deadlock. Optimistic locking dùng cột version: filter(pk=..., version=v).update(..., version=v+1) và kiểm tra số rows bị ảnh hưởng; nếu 0 thì có xung đột, báo lỗi hoặc thử lại. Phù hợp khi xung đột hiếm, ví dụ form chỉnh sửa lâu của người dùng.'''
+explanation = "Câu senior kiểm tra hiểu biết về race condition và đánh đổi giữa khoá bi quan và lạc quan."
+sources = ["django~6.0/ref/models/expressions", "django~6.0/ref/models/querysets"]
+
+[[questions]]
+id = "django-lv033"
+module = "django-api-security"
+type = "multiple"
+difficulty = 3
+tags = ["level:senior", "security"]
+prompt = "App chạy sau load balancer kết thúc TLS. Chọn các cấu hình đúng."
+options = ["Đặt SECURE_PROXY_SSL_HEADER chỉ khi proxy luôn ghi đè header đó từ phía client", "SESSION_COOKIE_SECURE và CSRF_COOKIE_SECURE = True", "ALLOWED_HOSTS = ['*'] để tránh lỗi 400", "Khai báo CSRF_TRUSTED_ORIGINS cho các origin HTTPS hợp lệ khi cần", "Tắt CsrfViewMiddleware vì đã có HTTPS"]
+answer = [0, 1, 3]
+explanation = "SECURE_PROXY_SSL_HEADER sai có thể bị client giả mạo; cookie secure ngăn gửi qua HTTP. ALLOWED_HOSTS '*' mở đường cho tấn công Host header; HTTPS không thay thế được bảo vệ CSRF."
+sources = ["django~6.0/ref/settings", "django~6.0/topics/security", "django~6.0/howto/deployment/checklist"]
+
+[[questions]]
+id = "django-lv034"
+module = "django-api-security"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "security"]
+prompt = "Đoạn nào an toàn trước SQL injection khi cần raw SQL với tham số q từ người dùng?"
+options = ["cursor.execute(f\"SELECT * FROM book WHERE title = '{q}'\")", "cursor.execute(\"SELECT * FROM book WHERE title = %s\", [q])", "cursor.execute(\"SELECT * FROM book WHERE title = '%s'\" % q)", "Book.objects.raw(\"SELECT * FROM book WHERE title = '\" + q + \"'\")"]
+answer = [1]
+explanation = "Truyền tham số riêng để driver escape. Mọi cách nối chuỗi (f-string, %, +) đều đưa input thẳng vào câu SQL."
+sources = ["django~6.0/topics/db/sql", "django~6.0/topics/security"]
+
+[[questions]]
+id = "django-lv035"
+module = "django-orm"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "performance"]
+prompt = "Để giảm dữ liệu tải, list view dùng Article.objects.only('id', 'title'). Template lại hiển thị {{ article.body|truncatewords:20 }}. Hệ quả?"
+options = ["Không sao, body tự rỗng", "Mỗi article phát sinh thêm một query để nạp body, tạo N+1", "Django báo lỗi FieldError", "only() bị bỏ qua hoàn toàn"]
+answer = [1]
+explanation = "Field bị defer vẫn truy cập được nhưng nạp lười từng object. Phải đồng bộ danh sách field với những gì template thật sự dùng."
+sources = ["django~6.0/ref/models/querysets", "django~6.0/topics/db/optimization"]
+
+[[questions]]
+id = "django-lv036"
+module = "django-orm"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "query"]
+prompt = "Cần danh sách Post kèm thời điểm comment mới nhất, sắp xếp theo giá trị đó, trong một query. Biểu thức phù hợp?"
+options = ["Post.objects.annotate(last_comment=Max('comments__created_at')).order_by('-last_comment')", "Lặp từng post rồi gọi post.comments.latest()", "prefetch_related('comments') rồi sort trong Python", "Post.objects.order_by('-comments')"]
+answer = [0]
+explanation = "annotate + aggregate tính tại DB và có thể order_by trực tiếp. Lặp từng post gây N+1; prefetch kéo mọi comment về bộ nhớ; order_by('-comments') sắp theo id comment và nhân bản hàng."
+sources = ["django~6.0/topics/db/aggregation", "django~6.0/ref/models/expressions"]
+
+[[questions]]
+id = "django-lv037"
+module = "django-dv-testing"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "testing"]
+prompt = "View enqueue task trong transaction.on_commit(). Test dùng TestCase nhưng không thấy task được enqueue. Cách kiểm thử đúng?"
+options = ["Chuyển mọi test sang TransactionTestCase", "Dùng with self.captureOnCommitCallbacks(execute=True): gọi view, rồi assert", "Bỏ on_commit trong code cho dễ test", "Mock transaction.atomic"]
+answer = [1]
+explanation = "TestCase bọc test trong transaction không commit nên callback on_commit không chạy; captureOnCommitCallbacks bắt và có thể thực thi chúng. TransactionTestCase chạy được nhưng chậm hơn nhiều; sửa code để dễ test làm mất bảo đảm đúng."
+sources = ["django~6.0/topics/testing/tools", "django~6.0/topics/db/transactions"]
+
+[[questions]]
+id = "django-lvc02"
+module = "django-orm"
+type = "code"
+difficulty = 3
+tags = ["level:senior", "concurrency"]
+title = "Optimistic locking bằng cột version"
+lang = "python"
+prompt = '''
+Mô phỏng optimistic locking như filter(pk=pk, version=v).update(...). store là dict pk -> dict dữ liệu, mỗi bản ghi có khoá "version" (int).
+1. update_if_version(store, pk, expected_version, changes): nếu pk tồn tại và version hiện tại bằng expected_version thì cập nhật các field trong changes, tăng version thêm 1 và trả 1 (số hàng bị ảnh hưởng); ngược lại không đổi gì và trả 0. changes không được ghi đè trực tiếp khoá "version" (bỏ qua nếu có).
+2. save_with_retry(store, pk, mutate, attempts=3): lặp tối đa attempts lần: đọc bản sao bản ghi hiện tại, gọi mutate(bản_sao) trả về dict changes, thử update_if_version với version đã đọc. Thành công trả True; hết lượt trả False. pk không tồn tại trả False ngay.
+'''
+starter = '''
+def update_if_version(store, pk, expected_version, changes):
+    store[pk].update(changes)
+    return 1
+
+def save_with_retry(store, pk, mutate, attempts=3):
+    return True
+'''
+solution = '''
+def update_if_version(store, pk, expected_version, changes):
+    row = store.get(pk)
+    if row is None or row.get("version") != expected_version:
+        return 0
+    for key, value in changes.items():
+        if key != "version":
+            row[key] = value
+    row["version"] = expected_version + 1
+    return 1
+
+def save_with_retry(store, pk, mutate, attempts=3):
+    for _ in range(attempts):
+        row = store.get(pk)
+        if row is None:
+            return False
+        snapshot = dict(row)
+        changes = mutate(snapshot)
+        if update_if_version(store, pk, snapshot["version"], changes) == 1:
+            return True
+    return False
+'''
+tests = '''
+@test("cập nhật khi đúng version và tăng version")
+def _():
+    store = {1: {"title": "a", "version": 3}}
+    expect(update_if_version(store, 1, 3, {"title": "b"})).to_be(1)
+    expect(store[1]).to_equal({"title": "b", "version": 4})
+
+@test("sai version thì không đổi")
+def _():
+    store = {1: {"title": "a", "version": 3}}
+    expect(update_if_version(store, 1, 2, {"title": "b"})).to_be(0)
+    expect(store[1]).to_equal({"title": "a", "version": 3})
+
+@test("không cho changes ghi đè version")
+def _():
+    store = {1: {"n": 0, "version": 1}}
+    update_if_version(store, 1, 1, {"n": 5, "version": 99})
+    expect(store[1]).to_equal({"n": 5, "version": 2})
+
+@test("pk không tồn tại")
+def _():
+    expect(update_if_version({}, 9, 1, {"x": 1})).to_be(0)
+    expect(save_with_retry({}, 9, lambda r: {"x": 1})).to_be(False)
+
+@test("retry thành công sau một lần xung đột")
+def _():
+    store = {1: {"n": 0, "version": 1}}
+    calls = []
+    def mutate(row):
+        calls.append(row["version"])
+        if len(calls) == 1:
+            store[1]["n"] = 10
+            store[1]["version"] = 2
+        return {"n": row["n"] + 1}
+    expect(save_with_retry(store, 1, mutate)).to_be(True)
+    expect(store[1]).to_equal({"n": 11, "version": 3})
+    expect(calls).to_equal([1, 2])
+
+@test("hết lượt thử trả False")
+def _():
+    store = {1: {"n": 0, "version": 1}}
+    def mutate(row):
+        store[1]["version"] += 1
+        return {"n": 1}
+    expect(save_with_retry(store, 1, mutate, attempts=2)).to_be(False)
+    expect(store[1]["n"]).to_be(0)
+'''
+hints = ["update_if_version chỉ ghi khi version khớp; trả số hàng bị ảnh hưởng.", "Trong vòng retry, đọc lại bản ghi mới nhất ở mỗi lượt rồi tính changes từ bản sao đó."]
+explanation = "Pattern này tương ứng với filter(pk=..., version=...).update(...) và kiểm tra số hàng trả về; hợp khi xung đột hiếm và không muốn giữ khoá lâu."
+sources = ["django~6.0/ref/models/querysets", "django~6.0/ref/models/expressions"]
+
+[[questions]]
+id = "django-lv038"
+module = "django-orm"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "migration"]
+prompt = "Bạn vừa thêm field phone vào model Customer. Lệnh nào tạo file migration mô tả thay đổi này?"
+options = ["python manage.py migrate", "python manage.py makemigrations", "python manage.py runserver", "python manage.py collectstatic"]
+answer = [1]
+explanation = "makemigrations so model với migration hiện có và tạo file mới; migrate mới áp dụng file đó lên database."
+sources = ["django~6.0/topics/migrations"]
+
+[[questions]]
+id = "django-lv039"
+module = "django-orm"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "orm"]
+prompt = "Article.objects.get(pk=999) được gọi khi không có bài viết nào có pk 999. Điều gì xảy ra?"
+options = ["Trả về None", "Ném Article.DoesNotExist", "Trả về QuerySet rỗng", "Tạo bài viết mới với pk 999"]
+answer = [1]
+explanation = "get() yêu cầu đúng một kết quả: không có thì ném DoesNotExist, nhiều hơn một thì ném MultipleObjectsReturned. filter() mới trả QuerySet rỗng."
+sources = ["django~6.0/ref/models/querysets"]
+
+[[questions]]
+id = "django-lv040"
+module = "django-forms"
+type = "fill"
+difficulty = 1
+tags = ["level:junior", "csrf"]
+prompt = "Form method POST trong template cần thêm thẻ {% {{blank}} %} để vượt qua kiểm tra CSRF."
+blanks = [["csrf_token"]]
+explanation = "csrf_token chèn input ẩn chứa token; thiếu nó request POST bị CsrfViewMiddleware trả 403."
+sources = ["django~6.0/howto/csrf", "django~6.0/ref/templates/builtins"]
+
+[[questions]]
+id = "django-lv041"
+module = "django-forms"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "template"]
+prompt = "Với user.nickname là chuỗi rỗng, template {{ user.nickname|default:'Ẩn danh' }} hiển thị gì?"
+options = ["Chuỗi rỗng", "Ẩn danh", "None", "Lỗi TemplateSyntaxError"]
+answer = [1]
+explanation = "Filter default dùng giá trị thay thế khi biến có giá trị falsy (chuỗi rỗng, None, 0…). default_if_none chỉ thay khi là None."
+sources = ["django~6.0/ref/templates/builtins"]
+
+[[questions]]
+id = "django-lv042"
+module = "django-orm"
+type = "fill"
+difficulty = 1
+tags = ["level:junior", "model"]
+prompt = "Field nội dung bài viết dài, không giới hạn độ dài cố định, nên khai báo là body = models.{{blank}}()"
+blanks = [["TextField"]]
+explanation = "TextField dành cho văn bản dài; CharField phù hợp chuỗi ngắn có max_length."
+sources = ["django~6.0/ref/models/fields"]
+
+[[questions]]
+id = "django-lv043"
+module = "django-request"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "views"]
+prompt = "Sau khi xử lý form POST thành công, vì sao view thường trả redirect() thay vì render trực tiếp?"
+options = ["redirect nhanh hơn render", "Để người dùng bấm F5 không gửi lại form (Post/Redirect/Get)", "Vì render không dùng được với POST", "Để tắt CSRF"]
+answer = [1]
+explanation = "Redirect sau POST đưa trình duyệt sang request GET mới, tránh gửi trùng dữ liệu khi tải lại trang."
+sources = ["django~6.0/topics/http/shortcuts", "django~6.0/intro/tutorial04"]
+
+[[questions]]
+id = "django-lv044"
+module = "django-project"
+type = "multiple"
+difficulty = 1
+tags = ["level:junior", "model"]
+prompt = "Chọn các phát biểu đúng về model Django."
+options = ["Định nghĩa __str__ giúp admin và shell hiển thị object dễ đọc", "Mỗi model mặc định có field id tự tăng làm khoá chính nếu không khai báo khác", "App chứa model phải nằm trong INSTALLED_APPS để migration nhận ra", "Sửa model xong database tự đổi schema mà không cần migration"]
+answer = [0, 1, 2]
+explanation = "Thay đổi model chỉ tới database qua makemigrations và migrate."
+sources = ["django~6.0/topics/db/models"]
+
+[[questions]]
+id = "django-lv045"
+module = "django-request"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "request"]
+prompt = "URL /search/?q=django. Trong view, cách lấy q an toàn, trả chuỗi rỗng nếu không có tham số?"
+options = ["request.GET['q']", "request.GET.get('q', '')", "request.POST.get('q')", "request.q"]
+answer = [1]
+explanation = "QueryDict.get trả giá trị mặc định khi thiếu khoá; request.GET['q'] ném MultiValueDictKeyError nếu không có q."
+sources = ["django~6.0/ref/request-response"]
+
+[[questions]]
+id = "django-lv046"
+module = "django-dv-testing"
+type = "fill"
+difficulty = 1
+tags = ["level:junior", "testing"]
+prompt = "Trong TestCase: response = self.client.get('/'); để kiểm tra trang trả 200, viết self.assertEqual(response.{{blank}}, 200)"
+blanks = [["status_code"]]
+explanation = "HttpResponse có thuộc tính status_code; test client trả response giống như view."
+sources = ["django~6.0/topics/testing/tools"]
+
+[[questions]]
+id = "django-lvc03"
+module = "django-project"
+type = "code"
+difficulty = 1
+tags = ["level:junior", "utils"]
+title = "Tự viết slugify đơn giản"
+lang = "python"
+prompt = '''
+Viết slugify(text) tạo slug cho URL:
+- Bỏ dấu bằng unicodedata.normalize("NFKD", ...) rồi loại các ký tự không phải ASCII.
+- Chuyển chữ thường.
+- Mỗi chuỗi liên tiếp các ký tự không phải chữ a-z hoặc số 0-9 thay bằng một dấu gạch ngang.
+- Bỏ dấu gạch ngang ở đầu và cuối. Chuỗi rỗng trả "".
+Ví dụ: "Học Django 6!" -> "hoc-django-6".
+'''
+starter = '''
+def slugify(text):
+    return text.lower()
+'''
+solution = '''
+import re
+import unicodedata
+
+def slugify(text):
+    ascii_text = unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode("ascii")
+    return re.sub(r"[^a-z0-9]+", "-", ascii_text.lower()).strip("-")
+'''
+tests = '''
+@test("bỏ dấu và thay khoảng trắng")
+def _():
+    expect(slugify("Học Django 6!")).to_be("hoc-django-6")
+
+@test("gộp nhiều ký tự đặc biệt")
+def _():
+    expect(slugify("Hello,   World -- 2026")).to_be("hello-world-2026")
+
+@test("bỏ gạch ngang đầu cuối")
+def _():
+    expect(slugify("  --Xin chào--  ")).to_be("xin-chao")
+
+@test("chuỗi rỗng")
+def _():
+    expect(slugify("")).to_be("")
+
+@test("đã là slug giữ nguyên")
+def _():
+    expect(slugify("abc-123")).to_be("abc-123")
+'''
+hints = ["encode('ascii', 'ignore') sau NFKD sẽ bỏ dấu.", "re.sub(r'[^a-z0-9]+', '-', ...) rồi strip('-')."]
+explanation = "Django có sẵn django.utils.text.slugify; tự viết giúp hiểu cách chuẩn hoá Unicode và regex. Lưu ý chữ đ không phân rã nên bị loại."
+sources = ["django~6.0/ref/utils"]
+
+[[questions]]
+id = "django-lv047"
+module = "django-request"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "views"]
+prompt = "View chi tiết cần trả 404 thay vì lỗi 500 khi không tìm thấy Article. Cách gọn nhất?"
+options = ["article = get_object_or_404(Article, pk=pk)", "article = Article.objects.filter(pk=pk).first()", "try: Article.objects.get(pk=pk) except Exception: pass", "Article.objects.get_or_create(pk=pk)"]
+answer = [0]
+explanation = "get_object_or_404 ném Http404 khi không có object. first() trả None khiến lỗi ở chỗ khác; bắt Exception chung che lỗi; get_or_create tạo dữ liệu rác."
+sources = ["django~6.0/topics/http/shortcuts"]
+
+[[questions]]
+id = "django-lv048"
+module = "django-forms"
+type = "multiple"
+difficulty = 2
+tags = ["level:middle", "forms"]
+prompt = "Chọn các phát biểu đúng về validate trong Form/ModelForm."
+options = ["clean_<field>() phải trả về giá trị đã làm sạch của field", "clean() dùng cho kiểm tra liên quan nhiều field", "Ném ValidationError trong clean_<field>() gắn lỗi vào field đó", "clean_<field>() chạy trước khi field được chuyển kiểu", "form.cleaned_data có sẵn ngay cả khi chưa gọi is_valid()"]
+answer = [0, 1, 2]
+explanation = "clean_<field> chạy sau khi field đã to_python/validate; cleaned_data chỉ có sau khi gọi is_valid() (hoặc full_clean)."
+sources = ["django~6.0/ref/forms/validation"]
+
+[[questions]]
+id = "django-lv049"
+module = "django-request"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "auth"]
+prompt = "class ReportView(TemplateView, LoginRequiredMixin) vẫn cho người chưa đăng nhập vào xem. Nguyên nhân?"
+options = ["LoginRequiredMixin chỉ dùng với FBV", "Mixin phải đứng bên trái view cơ sở trong danh sách kế thừa để dispatch của nó chạy trước", "Thiếu LOGIN_URL", "TemplateView không hỗ trợ auth"]
+answer = [1]
+explanation = "Theo MRO, dispatch của TemplateView được tìm thấy trước nên mixin không có tác dụng. Viết class ReportView(LoginRequiredMixin, TemplateView)."
+sources = ["django~6.0/topics/auth/default", "django~6.0/topics/class-based-views/mixins"]
+
+[[questions]]
+id = "django-lv050"
+module = "django-orm"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "performance"]
+prompt = "Cần đánh dấu 10.000 đơn hàng quá hạn sang status 'expired'. Code hiện tại lặp và gọi order.save() từng cái. Cách tốt hơn?"
+options = ["Order.objects.filter(due__lt=now, status='open').update(status='expired')", "Gọi save(update_fields=['status']) trong vòng lặp", "Dùng prefetch_related trước vòng lặp", "Chạy vòng lặp trong thread riêng"]
+answer = [0]
+explanation = "update() sinh một câu UPDATE duy nhất. Lưu ý nó không gọi save() và không phát signal; update_fields chỉ giảm cột ghi chứ vẫn 10.000 query."
+sources = ["django~6.0/ref/models/querysets", "django~6.0/topics/db/optimization"]
+
+[[questions]]
+id = "django-lv051"
+module = "django-orm"
+type = "fill"
+difficulty = 2
+tags = ["level:middle", "orm"]
+prompt = "Prefetch chỉ comment đã duyệt vào thuộc tính riêng: Post.objects.prefetch_related(Prefetch('comments', queryset=Comment.objects.filter(approved=True), {{blank}}='approved_comments'))"
+blanks = [["to_attr"]]
+explanation = "to_attr lưu kết quả prefetch thành list trên thuộc tính mới, không đè lên manager comments."
+sources = ["django~6.0/ref/models/querysets"]
+
+[[questions]]
+id = "django-lvc04"
+module = "django-forms"
+type = "code"
+difficulty = 2
+tags = ["level:middle", "pagination"]
+title = "Phân trang như Paginator.get_page"
+lang = "python"
+prompt = '''
+Viết paginate(items, page, per_page) mô phỏng Paginator.get_page:
+- num_pages = số trang cần để chứa items (làm tròn lên), tối thiểu 1 kể cả khi items rỗng.
+- page có thể là int hoặc chuỗi; nếu không chuyển được sang int thì dùng trang 1; nếu nhỏ hơn 1 thì dùng 1; nếu lớn hơn num_pages thì dùng trang cuối.
+- Trả dict {"items": list phần tử của trang, "number": số trang, "num_pages": ..., "has_next": bool, "has_previous": bool}.
+per_page luôn là số nguyên dương.
+'''
+starter = '''
+def paginate(items, page, per_page):
+    return {"items": list(items[:per_page]), "number": 1, "num_pages": 1, "has_next": False, "has_previous": False}
+'''
+solution = '''
+def paginate(items, page, per_page):
+    items = list(items)
+    num_pages = max(1, -(-len(items) // per_page))
+    try:
+        number = int(page)
+    except (TypeError, ValueError):
+        number = 1
+    number = min(max(number, 1), num_pages)
+    start = (number - 1) * per_page
+    return {
+        "items": items[start:start + per_page],
+        "number": number,
+        "num_pages": num_pages,
+        "has_next": number < num_pages,
+        "has_previous": number > 1,
+    }
+'''
+tests = '''
+@test("trang giữa")
+def _():
+    r = paginate(list(range(1, 11)), 2, 3)
+    expect(r).to_equal({"items": [4, 5, 6], "number": 2, "num_pages": 4, "has_next": True, "has_previous": True})
+
+@test("chuỗi số và trang cuối không đầy")
+def _():
+    r = paginate(list(range(10)), "4", 3)
+    expect(r["items"]).to_equal([9])
+    expect(r["has_next"]).to_be(False)
+
+@test("trang không hợp lệ về trang 1")
+def _():
+    expect(paginate([1, 2, 3], "abc", 2)["number"]).to_be(1)
+    expect(paginate([1, 2, 3], None, 2)["number"]).to_be(1)
+    expect(paginate([1, 2, 3], -5, 2)["number"]).to_be(1)
+
+@test("vượt quá về trang cuối")
+def _():
+    r = paginate([1, 2, 3], 99, 2)
+    expect(r["number"]).to_be(2)
+    expect(r["items"]).to_equal([3])
+
+@test("danh sách rỗng vẫn có 1 trang")
+def _():
+    expect(paginate([], 1, 5)).to_equal({"items": [], "number": 1, "num_pages": 1, "has_next": False, "has_previous": False})
+'''
+hints = ["Làm tròn lên bằng -(-n // k) hoặc math.ceil.", "Bắt TypeError và ValueError khi int(page)."]
+explanation = "Paginator.get_page xử lý mềm trang lỗi để URL người dùng sửa tay không gây 404; page() thì ném EmptyPage/PageNotAnInteger."
+sources = ["django~6.0/ref/paginator"]

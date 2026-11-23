@@ -1,0 +1,3539 @@
+id = "system-design"
+title = "System Design & Tech Lead"
+icon = "SD"
+color = "#475569"
+group = "Kiến trúc"
+area = "dev"
+description = "Thiết kế hệ thống phân tán từ nền tảng tới quyết định kiến trúc: ước lượng, dữ liệu, cache, messaging, độ tin cậy, API, observability, bảo mật, case study phỏng vấn và góc nhìn Tech Lead."
+
+[[modules]]
+id = "sd-fundamentals"
+title = "Nền tảng System Design"
+description = "Latency vs throughput, ước lượng dung lượng (back-of-the-envelope), CAP/PACELC, các consistency model."
+lesson = '''
+### Latency, throughput và percentile
+- **Latency**: thời gian một request đi hết hệ thống (đo bằng ms). **Throughput**: số việc xử lý được trên một đơn vị thời gian (RPS, QPS, MB/s).
+- Đừng dùng trung bình (mean) để nói về latency: một vài request chậm bị "che" đi. Dùng **percentile**: p50 (trung vị), **p95**, **p99**. Người dùng gọi 1 trang cần 20 request backend sẽ "gặp" p99 khá thường xuyên — gọi là **tail latency**.
+- **Little's Law**: `L = λ × W` — số request đang xử lý đồng thời = tốc độ đến × thời gian xử lý. Ví dụ 2.000 RPS, mỗi request 50 ms → khoảng 100 request "trong hệ thống" cùng lúc, cần pool kết nối/worker tương ứng.
+
+### Bảng độ trễ tham khảo (bậc độ lớn, ước lượng)
+| Thao tác | Bậc độ lớn |
+|---|---|
+| Đọc RAM | ~100 ns |
+| Đọc SSD ngẫu nhiên | ~100 µs |
+| Round-trip trong cùng data center | ~0,5 ms |
+| Seek ổ HDD | ~10 ms |
+| Round-trip liên lục địa | ~100–150 ms |
+
+Ý nghĩa: gọi mạng đắt hơn đọc bộ nhớ hàng nghìn lần → gom request (batch), cache gần nơi dùng, tránh "chatty" giữa các service.
+
+### Back-of-the-envelope
+Quy tắc nhanh: 1 ngày ≈ **86.400 s ≈ 10^5 s**. 10 triệu request/ngày ≈ **~115 RPS** trung bình; peak thường lấy ×2–×5.
+Ví dụ (ước lượng): 1 triệu bài đăng/ngày × 1 KB = 1 GB/ngày ≈ 365 GB/năm; ×3 bản sao ≈ 1,1 TB/năm. Mục tiêu là **đúng bậc độ lớn** để chọn kiến trúc (1 máy hay cluster), không cần chính xác.
+
+### CAP và PACELC
+- **CAP**: khi có **network partition (P)**, hệ thống phải chọn **C** (consistency — từ chối/đợi để không trả dữ liệu cũ) hoặc **A** (availability — vẫn trả lời, có thể dữ liệu cũ). Partition không phải thứ "chọn bỏ" được trong hệ phân tán.
+- **PACELC**: nếu Partition thì chọn A hoặc C; **Else** (bình thường) vẫn phải đánh đổi **Latency** vs **Consistency** (ví dụ chờ quorum ghi đồng bộ làm tăng latency).
+
+### Consistency model (từ mạnh tới yếu)
+| Model | Đảm bảo | Ví dụ dùng |
+|---|---|---|
+| Linearizable (strong) | mọi đọc thấy ghi mới nhất theo thời gian thực | số dư, khoá phân tán |
+| Sequential / causal | giữ thứ tự nhân quả (trả lời sau câu hỏi) | comment, chat |
+| Read-your-writes | người ghi luôn thấy ghi của chính mình | sửa profile |
+| Eventual | cuối cùng các bản sao hội tụ | đếm like, feed |
+
+### Lỗi hay gặp
+- Thiết kế cho "trung bình" mà quên peak và tail latency.
+- Nói "chọn CA" cho hệ phân tán — partition luôn có thể xảy ra.
+- Đòi strong consistency cho mọi thứ → chậm và đắt; nên chọn theo **từng loại dữ liệu**.
+- Quên đơn vị (bit vs byte, ms vs µs) khi ước lượng.
+'''
+
+[[modules]]
+id = "sd-scaling-data"
+title = "Mở rộng tầng dữ liệu"
+description = "Replication, partitioning/sharding, consistent hashing, read/write split, hot key."
+lesson = '''
+### Scale up vs scale out
+- **Vertical scaling** (máy to hơn): đơn giản, không đổi code, nhưng có trần và là một điểm lỗi.
+- **Horizontal scaling** (thêm máy): gần như không trần, nhưng phải xử lý phân phối dữ liệu, consistency, rebalancing.
+Thứ tự hợp lý thường là: tối ưu query/index → cache → read replica → partition theo chức năng → shard.
+
+### Replication
+| Kiểu | Ưu | Nhược |
+|---|---|---|
+| Leader–follower (single-leader) | đơn giản, ghi có thứ tự | ghi dồn vào leader, **replication lag** khi đọc từ follower |
+| Multi-leader | ghi ở nhiều region | xung đột ghi phải giải quyết (LWW, CRDT…) |
+| Leaderless (quorum) | chịu lỗi tốt | phải chọn N, W, R; đọc có thể cũ nếu `W + R ≤ N` |
+
+Quorum: với N bản sao, chọn **W + R > N** thì tập ghi và tập đọc giao nhau → đọc thấy bản ghi mới nhất (trong điều kiện bình thường). Ví dụ N=3, W=2, R=2.
+**Sync vs async replication**: đồng bộ thì an toàn hơn nhưng tăng latency ghi; bất đồng bộ thì có thể mất dữ liệu đã xác nhận khi leader chết (RPO > 0).
+
+### Read/write split và replication lag
+Đọc từ replica giúp tăng throughput đọc, nhưng người dùng vừa ghi có thể đọc lại dữ liệu cũ. Cách xử lý: đọc từ leader trong vài giây sau khi ghi (read-your-writes), hoặc gắn version/LSN và chỉ đọc replica đã bắt kịp.
+
+### Partitioning / sharding
+| Chiến lược | Ưu | Nhược |
+|---|---|---|
+| Range (theo khoảng key) | range query hiệu quả | dễ **hot partition** (key tăng dần như thời gian) |
+| Hash (`hash(key) % N`) | phân bố đều | đổi N làm **di chuyển gần hết** key; mất range query |
+| Consistent hashing | thêm/bớt node chỉ dời ~1/N key | cần **virtual node** để cân bằng |
+| Directory/lookup | linh hoạt tuyệt đối | thêm một dịch vụ tra cứu phải HA |
+
+**Shard key** là quyết định khó đảo ngược: chọn key có **cardinality cao**, phân bố đều và khớp truy vấn phổ biến (ví dụ `tenant_id` cho SaaS, `user_id` cho dữ liệu cá nhân). Query không chứa shard key sẽ thành **scatter-gather** tới mọi shard.
+
+### Hot key
+Một key nhận quá nhiều traffic (người nổi tiếng, sản phẩm flash sale). Xử lý: cache cục bộ, nhân bản key đọc nhiều, **key salting** (chia `counter:42` thành `counter:42#0..9` rồi cộng lại khi đọc), gom ghi (batch).
+
+### Lỗi hay gặp
+- Shard quá sớm khi một instance với index tốt vẫn đủ (độ phức tạp vận hành tăng mạnh).
+- Dùng `% N` rồi phải thêm node giữa mùa cao điểm.
+- Join/transaction xuyên shard làm mất lợi ích sharding.
+- Quên đo replication lag; đọc replica cho luồng thanh toán.
+'''
+
+[[modules]]
+id = "sd-caching"
+title = "Caching"
+description = "Cache-aside, write-through, write-back, TTL & invalidation, cache stampede, CDN, eviction."
+lesson = '''
+### Vì sao cache
+Cache đặt dữ liệu nóng gần nơi dùng để giảm latency và tải cho nguồn (DB, service). Hiệu quả đo bằng **hit ratio**. Ví dụ (ước lượng): DB chịu 2.000 QPS, hit ratio 95% → chỉ còn ~100 QPS chạm DB; nếu hit ratio rơi xuống 80% thì tải DB tăng gấp 4 (400 QPS) — cache chết là sự cố DB.
+
+### Các pattern
+| Pattern | Cách làm | Ưu | Nhược |
+|---|---|---|---|
+| Cache-aside (lazy loading) | app đọc cache, miss thì đọc DB rồi ghi cache | đơn giản, chỉ cache thứ được đọc | miss đầu chậm, dễ stale |
+| Read-through | thư viện/cache tự nạp khi miss | code app gọn | phụ thuộc cache provider |
+| Write-through | ghi cache và DB đồng bộ | cache luôn mới | ghi chậm hơn, cache cả dữ liệu ít đọc |
+| Write-back (write-behind) | ghi cache, flush DB sau | ghi rất nhanh, gom ghi | **mất dữ liệu** nếu cache chết trước khi flush |
+| Write-around | ghi thẳng DB, không ghi cache | tránh làm bẩn cache | đọc ngay sau ghi bị miss |
+
+### Invalidation và TTL
+- "Xoá cache khi ghi" (delete thay vì update) thường an toàn hơn update vì tránh race hai lần ghi đè nhau với giá trị cũ.
+- **TTL** là lưới an toàn: kể cả khi invalidation bị sót, dữ liệu cũ chỉ tồn tại tối đa TTL. Thêm **jitter** vào TTL để các key không hết hạn cùng lúc.
+- Với dữ liệu quan trọng, dùng version trong key (`user:42:v7`) để chuyển phiên bản nguyên tử.
+
+### Cache stampede (thundering herd)
+Key nóng hết hạn → hàng nghìn request cùng miss và cùng đập vào DB. Cách chống:
+- **Request coalescing / single-flight**: chỉ một request nạp lại, các request khác chờ kết quả đó.
+- **Lock/lease** trên key khi nạp lại.
+- **Stale-while-revalidate**: trả bản cũ trong lúc làm mới nền.
+- Làm mới sớm theo xác suất trước khi hết hạn.
+
+### Eviction
+LRU (ít dùng gần đây nhất), LFU (ít dùng nhất), FIFO, TTL. LRU cài bằng hash map + danh sách liên kết đôi cho O(1).
+
+### CDN
+CDN cache nội dung tĩnh (và cả API công khai) ở edge gần người dùng. Điều khiển bằng `Cache-Control` (`max-age`, `s-maxage`, `stale-while-revalidate`), **cache key** (URL + header được vary) và purge. Asset nên đặt tên có hash (`app.3f9a.js`) để cache lâu và không cần purge.
+
+### Lỗi hay gặp
+- Cache dữ liệu cá nhân trên shared cache/CDN (lộ dữ liệu giữa người dùng).
+- Không có TTL → dữ liệu cũ vĩnh viễn khi quên invalidate.
+- Cache cả kết quả lỗi/rỗng quá lâu, hoặc không cache kết quả rỗng nên bị **cache penetration** (truy vấn key không tồn tại liên tục).
+- Xem cache như nguồn sự thật duy nhất.
+'''
+
+[[modules]]
+id = "sd-async-messaging"
+title = "Xử lý bất đồng bộ & Messaging"
+description = "Queue vs log (Kafka-style), delivery semantics, idempotent consumer, outbox, saga, backpressure."
+lesson = '''
+### Vì sao bất đồng bộ
+Tách việc chậm hoặc không cần trả lời ngay (gửi email, resize ảnh, tính điểm) ra khỏi request: giảm latency, **làm phẳng đỉnh tải** (queue hấp thụ burst), cô lập lỗi giữa service.
+
+### Queue vs log
+| | Message queue (RabbitMQ, SQS) | Log phân vùng (Kafka-style) |
+|---|---|---|
+| Mô hình | message bị xoá sau khi ack | message giữ theo retention, consumer tự giữ **offset** |
+| Đọc lại (replay) | không (trừ DLQ) | có, đọc lại từ offset cũ |
+| Thứ tự | thường không đảm bảo khi nhiều consumer | đảm bảo **trong một partition** |
+| Mở rộng consumer | thêm worker cạnh tranh | tối đa số consumer trong group = số partition |
+| Hợp với | task/job | event stream, nhiều consumer độc lập, event sourcing |
+
+Thứ tự theo thực thể: dùng **partition key** (ví dụ `order_id`) để mọi event của một đơn hàng vào cùng partition.
+
+### Delivery semantics
+- **At-most-once**: có thể mất, không trùng.
+- **At-least-once**: không mất nhưng **có thể trùng** — phổ biến nhất.
+- **Exactly-once** đầu-cuối là bài toán khó; thực tế đạt "hiệu quả như exactly-once" bằng **at-least-once + idempotent consumer**.
+
+### Idempotent consumer
+Lưu `message_id` đã xử lý (bảng có unique constraint) **trong cùng transaction** với thay đổi nghiệp vụ, hoặc thiết kế thao tác tự nhiên idempotent (`SET status = 'paid'` thay vì `balance = balance + 10`).
+
+### Dual-write và Transactional Outbox
+Ghi DB rồi publish message là **dual write**: crash giữa hai bước → DB có đơn mà không có event (hoặc ngược lại). **Outbox**: trong cùng transaction, ghi dữ liệu nghiệp vụ và một dòng vào bảng `outbox`; một **relay** (polling hoặc CDC) đọc outbox, publish rồi đánh dấu đã gửi. Relay có thể publish trùng → consumer phải idempotent.
+
+### Saga
+Transaction trải trên nhiều service không dùng 2PC: chuỗi bước cục bộ, mỗi bước có **compensating action** (hoàn tiền, nhả kho). Hai kiểu: **orchestration** (một điều phối viên ra lệnh — dễ theo dõi) và **choreography** (service phản ứng theo event — ít phụ thuộc trung tâm nhưng khó nhìn toàn cục).
+
+### Backpressure, retry và DLQ
+- Theo dõi **consumer lag** (độ trễ so với đầu log) và độ dài queue — tín hiệu scale worker.
+- Message lỗi lặp lại (poison message) → sau N lần chuyển vào **dead-letter queue** để không chặn cả hàng.
+
+### Lỗi hay gặp
+- Giả định không bao giờ nhận trùng.
+- Tăng consumer quá số partition rồi thắc mắc vì sao không nhanh hơn.
+- Ack trước khi xử lý xong (mất message khi crash).
+- Dùng queue để che một service luôn quá tải — queue chỉ hoãn vấn đề, lag sẽ tăng mãi.
+'''
+
+[[modules]]
+id = "sd-reliability"
+title = "Độ tin cậy & Khả năng chịu lỗi"
+description = "Timeout, retry + exponential backoff + jitter, circuit breaker, bulkhead, rate limiting, load shedding, graceful degradation."
+lesson = '''
+### Mọi lời gọi mạng đều có thể chậm hoặc lỗi
+Thiết kế theo giả định dependency sẽ lỗi. Bộ công cụ cơ bản:
+
+### Timeout
+Mọi lời gọi ra ngoài phải có timeout. Không có timeout → thread/connection bị giữ mãi, lỗi lan ngược (cascading failure). Đặt timeout theo latency thực tế của dependency (ví dụ cao hơn p99 một chút) và theo **deadline** tổng của request (truyền deadline xuống các tầng dưới).
+
+### Retry, exponential backoff và jitter
+- Chỉ retry lỗi **tạm thời** (timeout, 503, 429) và thao tác **idempotent** (hoặc có idempotency key).
+- Backoff mũ: chờ `base × 2^attempt` (giới hạn bởi `max`). **Jitter** (ngẫu nhiên hoá thời gian chờ) tránh hàng nghìn client retry cùng nhịp.
+- Retry ở nhiều tầng nhân lên: 3 tầng × 3 lần = tới 27 lần gọi vào dependency đang ốm → **retry storm**. Chỉ retry ở một tầng, dùng **retry budget** (ví dụ tối đa 10% request là retry).
+
+### Circuit breaker
+| Trạng thái | Hành vi |
+|---|---|
+| Closed | gọi bình thường, đếm lỗi |
+| Open | từ chối ngay (fail fast) trong một khoảng cool-down |
+| Half-open | cho vài request thử; thành công → Closed, lỗi → Open |
+Mục đích: cho dependency thời gian hồi phục và giải phóng tài nguyên phía gọi.
+
+### Bulkhead
+Chia tài nguyên (pool thread/connection) theo dependency hoặc theo loại khách hàng, để một phần hỏng không ăn hết tài nguyên của phần còn lại.
+
+### Rate limiting
+| Thuật toán | Đặc điểm |
+|---|---|
+| Token bucket | cho phép burst tới dung lượng bucket, tốc độ trung bình = tốc độ nạp |
+| Leaky bucket | đầu ra đều, làm mượt burst |
+| Fixed window | đơn giản, nhưng có thể gấp đôi quota ở mép cửa sổ |
+| Sliding window log/counter | chính xác hơn, tốn bộ nhớ hơn (log) |
+Trả **429** kèm `Retry-After`. Rate limit phân tán thường dùng Redis (thao tác nguyên tử) hoặc chấp nhận xấp xỉ theo từng node.
+
+### Load shedding và graceful degradation
+- **Load shedding**: khi quá tải, chủ động từ chối sớm request ít quan trọng để giữ phần quan trọng (thanh toán > gợi ý sản phẩm).
+- **Graceful degradation**: dependency phụ lỗi thì trả kết quả rút gọn (ẩn khối gợi ý, dùng dữ liệu cache cũ) thay vì lỗi cả trang.
+
+### Redundancy và failover
+Loại bỏ **single point of failure**, chạy nhiều AZ; health check + tự động failover. Nhớ: thêm bản sao chỉ giúp nếu lỗi **độc lập** (cùng bản deploy lỗi thì mọi bản sao cùng chết).
+
+### Lỗi hay gặp
+- Timeout phía client dài hơn timeout của load balancer/gateway.
+- Retry thao tác không idempotent (trừ tiền hai lần).
+- Không có jitter; circuit breaker dùng chung cho mọi endpoint của dependency.
+'''
+
+[[modules]]
+id = "sd-api-design"
+title = "Thiết kế API"
+description = "REST vs gRPC vs GraphQL, pagination, versioning, idempotency key, webhook, backward compatibility."
+lesson = '''
+### Chọn kiểu API
+| | REST/JSON | gRPC (HTTP/2 + Protobuf) | GraphQL |
+|---|---|---|---|
+| Hợp với | API công khai, đơn giản, cache HTTP | service-to-service, latency thấp, streaming | client cần ghép dữ liệu linh hoạt (mobile, nhiều màn) |
+| Ưu | dễ dùng, công cụ phổ biến, CDN cache | schema chặt, codegen, nhỏ gọn, streaming 2 chiều | một request lấy đúng dữ liệu cần, tránh over/under-fetching |
+| Nhược | over-fetching, nhiều round-trip | khó gọi từ trình duyệt (cần gRPC-Web), khó debug bằng mắt | cache HTTP khó, query đắt (cần giới hạn độ sâu/độ phức tạp), N+1 ở resolver |
+
+### Pagination
+- **Offset/limit**: dễ nhảy trang, nhưng `OFFSET 100000` chậm (DB vẫn đọc qua) và lệch khi có bản ghi mới chèn vào.
+- **Cursor (keyset)**: `WHERE (created_at, id) < (:c_time, :c_id) ORDER BY created_at DESC, id DESC LIMIT 20` — ổn định, dùng index; cursor nên **opaque** (mã hoá base64) để server tự do đổi cách cài.
+
+### Versioning và tương thích ngược
+- Thay đổi **an toàn**: thêm field tuỳ chọn, thêm endpoint, thêm giá trị enum (nếu client được dặn bỏ qua giá trị lạ).
+- Thay đổi **phá vỡ**: đổi tên/xoá field, đổi kiểu, đổi ngữ nghĩa, thêm field bắt buộc ở request.
+- Cách version: URL (`/v2/`), header, hoặc ngày phiên bản. Có **chính sách deprecation**: thông báo, header `Deprecation`/`Sunset`, theo dõi ai còn gọi bản cũ trước khi tắt.
+- Với Protobuf: không tái sử dụng số field đã xoá (`reserved`).
+
+### Idempotency key
+POST tạo thanh toán: client gửi header `Idempotency-Key: <uuid>`. Server lưu `(key → trạng thái, response, hash của body)`: request trùng key trả lại response cũ; trùng key nhưng body khác → lỗi 422/409; request đang xử lý → 409 để client thử lại sau. Key có thời hạn (ví dụ 24 giờ — ước lượng tuỳ nghiệp vụ).
+
+### Webhook
+- Ký payload bằng **HMAC** với secret riêng từng khách hàng, kèm timestamp để chống replay.
+- Giao **at-least-once** với retry + backoff; bên nhận phải idempotent theo `event_id`, trả 2xx nhanh rồi xử lý bất đồng bộ.
+- Thứ tự không đảm bảo → gửi kèm version/thời điểm, hoặc bên nhận gọi lại API lấy trạng thái mới nhất.
+
+### Lỗi và hợp đồng
+Định dạng lỗi thống nhất (ví dụ Problem Details – RFC 9457), mã lỗi ổn định cho máy đọc, `request_id` để tra log. Mô tả API bằng OpenAPI/Protobuf và kiểm tra tương thích trong CI (contract test).
+
+### Lỗi hay gặp
+- Dùng GET cho hành động có side effect.
+- Trả 200 kèm `{"error": ...}`.
+- Đổi kiểu field "nhỏ thôi" và làm hỏng app mobile bản cũ không thể ép cập nhật.
+'''
+
+[[modules]]
+id = "sd-observability"
+title = "Observability & Vận hành"
+description = "Log/metric/trace, SLI/SLO/error budget, alert tốt, incident response, postmortem không đổ lỗi."
+lesson = '''
+### Ba trụ cột
+| Tín hiệu | Trả lời câu hỏi | Lưu ý |
+|---|---|---|
+| Metric | "có vấn đề không, bao nhiêu?" | rẻ, tổng hợp; cẩn thận **cardinality** của label (đừng gắn `user_id`) |
+| Log | "chuyện gì đã xảy ra ở request này?" | log có cấu trúc (JSON), kèm `trace_id`; không log secret/PII |
+| Trace | "thời gian đi đâu qua các service?" | **distributed tracing** truyền context (W3C `traceparent`), sampling |
+OpenTelemetry là chuẩn mở phổ biến để thu cả ba.
+
+### Phương pháp chọn metric
+- **RED** cho service: Rate, Errors, Duration.
+- **USE** cho tài nguyên: Utilization, Saturation, Errors.
+- **Four golden signals**: latency, traffic, errors, saturation.
+Latency nên đo bằng **histogram** để tính percentile; không thể lấy trung bình của các p99 từ nhiều instance.
+
+### SLI, SLO, SLA, error budget
+- **SLI**: chỉ số đo được, ví dụ "tỉ lệ request thành công trả lời dưới 300 ms".
+- **SLO**: mục tiêu nội bộ cho SLI trong một cửa sổ, ví dụ 99,9% trong 30 ngày.
+- **SLA**: cam kết với khách hàng, có hậu quả (bồi thường) — thường lỏng hơn SLO.
+- **Error budget** = 1 − SLO. 99,9% trong 30 ngày ≈ **43 phút** "được phép lỗi"; 99,99% ≈ 4,3 phút. Còn budget → được phát hành nhanh; hết budget → ưu tiên độ ổn định.
+
+### Alert tốt
+- Alert theo **triệu chứng người dùng thấy** (SLO bị đốt), không theo nguyên nhân lặt vặt (CPU 80%).
+- **Burn rate**: tốc độ tiêu error budget. Burn rate 1 = tiêu vừa hết budget đúng cuối cửa sổ. Kiểu phổ biến: cảnh báo khẩn khi burn rate cao trong cửa sổ ngắn (ví dụ ~14 trong 1 giờ), cảnh báo chậm khi burn rate thấp kéo dài.
+- Mỗi alert phải **actionable** và có **runbook**. Alert vô nghĩa gây **alert fatigue**.
+
+### Incident response
+Vai trò rõ: **Incident Commander** (điều phối), người xử lý kỹ thuật, người liên lạc (status page, stakeholder). Ưu tiên **giảm thiểu tác động** (rollback, tắt feature flag, chuyển traffic) trước khi tìm root cause. Ghi timeline trong lúc xử lý.
+Chỉ số: **MTTD** (phát hiện), **MTTR** (khôi phục).
+
+### Postmortem không đổ lỗi (blameless)
+Tập trung vào hệ thống và quy trình đã cho phép lỗi xảy ra, không vào cá nhân. Nội dung: tác động, timeline, nguyên nhân (thường nhiều yếu tố), điều đã làm tốt, **action item có người chịu trách nhiệm và hạn**.
+
+### Lỗi hay gặp
+- Dashboard đầy biểu đồ nhưng không ai biết SLO là gì.
+- Label metric chứa id người dùng → bùng nổ chi phí lưu trữ.
+- Postmortem kết luận "do người A bất cẩn" — không có cải tiến hệ thống.
+'''
+
+[[modules]]
+id = "sd-security"
+title = "Bảo mật trong kiến trúc"
+description = "Authn/authz ở cấp kiến trúc, quản lý secrets, threat modeling, least privilege, multi-tenant isolation."
+lesson = '''
+### Authentication vs authorization
+- **Authentication (authn)**: bạn là ai (đăng nhập, token, mTLS giữa service).
+- **Authorization (authz)**: bạn được làm gì. Kiểm tra quyền phải ở **server**, trên **từng tài nguyên** (chống IDOR: `GET /invoices/123` của người khác).
+Mô hình quyền: **RBAC** (theo vai trò), **ABAC** (theo thuộc tính: phòng ban, khu vực), **ReBAC** (theo quan hệ, kiểu "người được chia sẻ tài liệu").
+
+### Kiến trúc xác thực phổ biến
+- Người dùng: OIDC/OAuth 2.0 qua Identity Provider; app web dùng session cookie `HttpOnly; Secure; SameSite` hoặc access token ngắn hạn + refresh token xoay vòng.
+- JWT tiện vì stateless nhưng **khó thu hồi** → TTL ngắn; luôn kiểm tra chữ ký, `exp`, `aud`, `iss`, không chấp nhận `alg: none`.
+- Service-to-service: **mTLS** (thường qua service mesh) + danh tính workload, thay vì API key dùng chung.
+
+### Secrets
+Không để secret trong code, image, biến log. Dùng secret manager (Vault, cloud KMS/Secrets Manager), cấp quyền đọc tối thiểu, **xoay vòng** định kỳ và khi nghi lộ, ưu tiên credential **ngắn hạn** cấp động. Quét secret trong CI (pre-commit, repo scanning).
+
+### Threat modeling
+Làm sớm khi thiết kế: vẽ data flow, xác định **trust boundary**, liệt kê mối đe doạ theo **STRIDE**:
+| Chữ | Mối đe doạ | Biện pháp ví dụ |
+|---|---|---|
+| S | Spoofing (giả danh) | xác thực mạnh, mTLS |
+| T | Tampering (sửa dữ liệu) | chữ ký, checksum, TLS |
+| R | Repudiation (chối bỏ) | audit log bất biến |
+| I | Information disclosure | mã hoá, phân quyền |
+| D | Denial of service | rate limit, quota |
+| E | Elevation of privilege | least privilege, kiểm tra authz |
+
+### Least privilege và defense in depth
+Mỗi service/người chỉ có quyền tối thiểu cần thiết (IAM role riêng, DB user riêng chỉ có quyền cần). **Defense in depth**: nhiều lớp (WAF, authn, authz, mã hoá, network policy) để một lớp hỏng không thành thảm hoạ. **Zero trust**: không tin mạng nội bộ mặc định.
+
+### Multi-tenant isolation
+| Mô hình | Cô lập | Chi phí |
+|---|---|---|
+| Shared DB, cột `tenant_id` | thấp nhất (dựa vào code/RLS) | rẻ nhất |
+| Schema riêng mỗi tenant | trung bình | trung bình |
+| DB/cluster riêng (silo) | cao nhất | đắt, vận hành nhiều |
+Với shared DB: ép `tenant_id` ở tầng truy cập dữ liệu, dùng **Row-Level Security**, test tự động chống truy cập chéo tenant; chú ý **noisy neighbor** (quota theo tenant).
+
+### Mã hoá
+Encryption **in transit** (TLS) và **at rest** (KMS, envelope encryption). Mật khẩu người dùng: hash chậm có salt (Argon2id, bcrypt), không bao giờ mã hoá hai chiều.
+
+### Lỗi hay gặp
+- Chỉ ẩn nút trên UI mà không kiểm tra quyền ở API.
+- Một API key "admin" dùng chung cho mọi service.
+- Log chứa token/mật khẩu.
+'''
+
+[[modules]]
+id = "sd-case-studies"
+title = "Case study phỏng vấn"
+description = "Thiết kế URL shortener, news feed, chat, rate limiter, notification, file upload — từng bước."
+lesson = '''
+### Khung trả lời một bài system design (~45 phút)
+1. **Làm rõ yêu cầu** (5 phút): functional (làm gì) và non-functional (latency, availability, consistency, quy mô). Hỏi số người dùng, tỉ lệ đọc/ghi.
+2. **Ước lượng** (5 phút): QPS, dung lượng, băng thông — đúng bậc độ lớn.
+3. **API & data model**: các endpoint chính, bảng/collection, key truy cập.
+4. **High-level design**: client → LB → service → cache/DB/queue.
+5. **Deep dive** 1–2 phần khó nhất (thường là phần người phỏng vấn quan tâm).
+6. **Trade-off, điểm lỗi, mở rộng**: nói rõ đã đánh đổi gì.
+
+### URL shortener (ví dụ số liệu ước lượng)
+100 triệu link mới/tháng, đọc:ghi ≈ 100:1 → ghi ~40/s, đọc ~4.000/s trung bình. Mã 7 ký tự base62 → 62^7 ≈ 3,5 nghìn tỉ mã. Sinh mã: bộ đếm/ID phân tán rồi base62 (không trùng, nhưng đoán được) hoặc hash + kiểm tra trùng. Đọc nhiều → cache (key nóng), redirect **301** (trình duyệt cache, giảm tải nhưng mất analytics) vs **302** (đếm được mọi click).
+
+### News feed
+- **Fan-out on write (push)**: khi đăng, ghi id bài vào feed của từng follower → đọc nhanh, nhưng người có hàng triệu follower làm ghi bùng nổ.
+- **Fan-out on read (pull)**: đọc thì gom bài từ người mình theo dõi → ghi rẻ, đọc đắt.
+- **Hybrid**: push cho người thường, pull cho tài khoản nổi tiếng rồi trộn khi đọc.
+
+### Chat
+Kết nối lâu dài (WebSocket) tới gateway; một registry ghi người dùng đang nối vào gateway nào; tin nhắn lưu theo `conversation_id` (partition key) với id tăng dần trong hội thoại để giữ thứ tự; trạng thái đã nhận/đã đọc; người offline nhận qua push notification.
+
+### Rate limiter
+Đặt ở gateway; token bucket theo `(api_key, route)` lưu trên Redis với thao tác nguyên tử (script); trả 429 + `Retry-After`; khi Redis lỗi phải chọn **fail-open** (cho qua) hay **fail-closed** (chặn) tuỳ rủi ro.
+
+### Notification
+API nhận yêu cầu → queue → worker theo kênh (email, SMS, push) → nhà cung cấp bên ngoài. Cần: tôn trọng tuỳ chọn người dùng, dedupe theo idempotency key, retry + DLQ, rate limit theo nhà cung cấp, template.
+
+### File upload
+Client xin **pre-signed URL** rồi tải thẳng lên object storage (không đi qua app server), file lớn dùng **multipart upload** có thể tiếp tục; sự kiện "upload xong" kích hoạt xử lý bất đồng bộ (quét virus, tạo thumbnail); phục vụ qua CDN.
+
+### Lỗi hay gặp khi phỏng vấn
+- Nhảy ngay vào vẽ Kafka/Kubernetes khi chưa hỏi yêu cầu.
+- Không nêu trade-off, chỉ liệt kê công nghệ.
+- Bỏ qua điểm lỗi, dữ liệu nóng, và cách hệ thống hành xử khi dependency chết.
+'''
+
+[[modules]]
+id = "system-design-lead"
+title = "Góc nhìn Tech Lead"
+description = "ADR, đánh giá trade-off, ước lượng & quản lý rủi ro, code review, nợ kỹ thuật, mentoring, giao tiếp với stakeholder."
+lesson = '''
+### Ra quyết định kiến trúc
+Không có kiến trúc "tốt nhất", chỉ có kiến trúc **phù hợp ràng buộc**: quy mô thật (không phải tưởng tượng), năng lực team, thời hạn, ngân sách, rủi ro chấp nhận được. Ưu tiên phương án **dễ đảo ngược** khi chưa chắc ("two-way door"); dành phân tích kỹ cho quyết định khó đảo ngược ("one-way door": chọn DB chính, shard key, hợp đồng API công khai).
+
+### Ma trận so sánh phương án (ví dụ)
+| Tiêu chí (trọng số) | Monolith module hoá | Microservices |
+|---|---|---|
+| Tốc độ ra tính năng với team 6 người (3) | cao | thấp (chi phí hạ tầng, contract) |
+| Scale độc lập từng phần (2) | trung bình | cao |
+| Độ phức tạp vận hành (3) | thấp | cao (tracing, deploy, network) |
+| Cô lập lỗi (2) | trung bình | cao nếu thiết kế đúng |
+Chấm điểm giúp **lộ giả định** để thảo luận, không phải để máy móc chọn số lớn nhất.
+
+### ADR (Architecture Decision Record)
+Tài liệu ngắn, lưu cùng repo, **bất biến** (quyết định mới thì viết ADR mới "supersedes"):
+```
+# ADR-012: Dùng transactional outbox cho event đơn hàng
+Status: Accepted (2026-03-10)
+Context: dual-write DB + broker đã gây mất event 3 lần/tháng.
+Decision: ghi outbox cùng transaction, relay polling 1 s.
+Alternatives: CDC (Debezium) — mạnh hơn nhưng team chưa vận hành Kafka Connect.
+Consequences: +1 bảng, độ trễ event ~1–2 s (ước lượng), consumer phải idempotent.
+```
+
+### Ước lượng và rủi ro
+- Chia nhỏ việc, ước lượng theo khoảng (tốt/xấu/khả dĩ), nêu rõ giả định. Phần chưa biết → **spike** có timebox.
+- Sổ rủi ro: xác suất × tác động, người theo dõi, biện pháp giảm thiểu. Làm phần rủi ro nhất **sớm** (de-risk).
+- Rollout an toàn: feature flag, canary, dark launch, có kế hoạch rollback và tiêu chí dừng rõ ràng.
+
+### Code review ở quy mô team
+- Mục tiêu: chất lượng + chia sẻ kiến thức, không phải gác cổng cá nhân. PR nhỏ (vài trăm dòng), mô tả rõ "vì sao".
+- Tự động hoá phần máy làm được (lint, format, test, security scan) để người review tập trung vào thiết kế, tính đúng, khả năng vận hành.
+- Checklist: xử lý lỗi & timeout, idempotency, migration tương thích ngược, log/metric, bảo mật (authz, input), test cho case biên.
+
+### Nợ kỹ thuật
+Nợ có chủ đích (đi nhanh có ghi lại) khác nợ do cẩu thả. Quản lý: liệt kê trong backlog kèm **chi phí lãi** (sự cố, thời gian chậm lại), dành ngân sách cố định (ví dụ 15–20% mỗi sprint — tham khảo), gắn trả nợ với tính năng chạm vào vùng đó. Viết lại toàn bộ ("big rewrite") hiếm khi là lựa chọn tốt; ưu tiên **strangler fig** thay dần.
+
+### Mentoring và giao tiếp
+- Giao việc vừa sức cao hơn một chút, pairing, để người khác dẫn thiết kế có review.
+- Với stakeholder: nói bằng **tác động kinh doanh** (rủi ro mất đơn, thời gian ra mắt, chi phí), đưa 2–3 phương án kèm đánh đổi thay vì một câu "không làm được".
+
+### Anti-pattern ở quy mô team
+- Resume-driven development (chọn công nghệ để học chứ không để giải quyết vấn đề).
+- Một người duy nhất hiểu hệ thống (bus factor = 1).
+- Quyết định trong tin nhắn riêng, không ai biết vì sao 6 tháng sau.
+'''
+
+[[questions]]
+id = "sd-lead-001"
+module = "system-design-lead"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "risk", "debt"]
+prompt = "Tech Lead nhận được hai tính năng mới: A có thể giải quyết bằng 2 ngày code, B cần 2 tuần vì cần đổi kiến trúc. Product muốn cả hai ra mắt trong tuần tới. Điều gì nên làm đầu tiên?"
+options = [
+  "Bắt đầu với A để có người dùng thực tế feedback nhanh",
+  "Bắt đầu với B vì nó giải quyết bottleneck lớn hơn",
+  "Tách A thành 3 tiến độ nhỏ hơn để làm đề đặn",
+  "Delay cả hai tính năng cho đến khi team sẵn sàng",
+]
+answer = [1]
+explanation = "B thường có tác động kinh doanh lớn hơn hoặc mở khóa khả năng tương lai. Trong system design, việc mô hình hóa lại phải trả lại với lợi ích lâu dài. Tech Lead cần đánh giá trade-off giữa tốc độ ra tính năng và độ ảnh hưởng đến kiến trúc."
+
+[[questions]]
+id = "sd-lead-002"
+module = "system-design-lead"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "debt", "prioritization"]
+prompt = "Trong backlog có 3 công việc có nợ kỹ thuật: X (refactor module cache), Y (viết test coverage cho payment), Z (upgrade framework beta). Ngân sách sprint chỉ đủ 1 công việc. Chọn gì?"
+options = [
+  "Y vì payment là hệ thống tài chính, lỗi gây thai sự",
+  "X vì cache là bộ phận cốt lõi của hệ thống",
+  "Z vì nâng cấp framework mang lại lợi ích lâu dài",
+  "X và Y song song để giảm chi phí",
+]
+answer = [0]
+explanation = "Payment là hệ thống tài chính, lỗi/an toàn dữ liệu gây tổn thất tài chính lớn. Test coverage giúp phát hiện và ngăn chặn bugs. Tech Lead phải ưu tiên rủi ro cao nhất - những điều có thể gây mất hàng hoá hoặc an toàn."
+
+[[questions]]
+id = "sd-lead-003"
+module = "system-design-lead"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "communication", "stakeholder"]
+prompt = "Stakeholder không đồng ý đầu tư vào microservice mới. Bạn trình bày lý do như thế nào?"
+options = [
+  "Microservices giúp team làm việc độc lập hơn, giảm bottleneck",
+  "Microservices luôn nhanh hơn monolith",
+  "Đây là chuẩn mã hóa công nghiệp, bất kỳ startup nào đều dùng",
+  "Team đã thử và thành công với microservices ở dự án khác",
+]
+answer = [0]
+explanation = "Tech Lead nên nói về tác động thực tế: khả năng độc lập, giảm thời gian review, và cải thiện scalability. Không nên dùng lẽ tâm chung hoặc so sánh với những gì khác. Tập trung vào vấn đề team đang gặp phận áp vấn đề microservice giải quyết."
+
+# ===================== sd-fundamentals =====================
+
+[[questions]]
+id = "sd-001"
+module = "sd-fundamentals"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "latency"]
+prompt = "Phân biệt **latency** và **throughput**. Câu nào đúng?"
+options = [
+  "Latency là thời gian một request hoàn tất; throughput là số request xử lý được trong một đơn vị thời gian",
+  "Latency và throughput là hai tên gọi của cùng một chỉ số",
+  "Throughput là thời gian chờ trong hàng đợi; latency là số CPU core",
+  "Tăng throughput luôn làm giảm latency",
+]
+answer = [0]
+explanation = "Latency đo **một request mất bao lâu** (ms); throughput đo **khả năng xử lý** (RPS). Hai chỉ số liên quan nhưng không đồng nhất: gom batch có thể tăng throughput nhưng làm từng request chờ lâu hơn (latency tăng), nên câu \"tăng throughput luôn giảm latency\" sai."
+
+[[questions]]
+id = "sd-002"
+module = "sd-fundamentals"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "estimation"]
+prompt = "Một ngày có khoảng bao nhiêu giây (giá trị hay dùng khi ước lượng nhanh)?"
+options = ["~10^3 (1.000)", "~10^5 (86.400)", "~10^7", "~3,6 × 10^3"]
+answer = [1]
+explanation = "1 ngày = 24 × 3.600 = 86.400 s ≈ 10^5. Nhờ vậy 10 triệu request/ngày ≈ 10^7 / 10^5 ≈ 100 RPS (chính xác ~115). 3.600 là số giây trong **một giờ**."
+
+[[questions]]
+id = "sd-003"
+module = "sd-fundamentals"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "latency"]
+prompt = "Sắp xếp theo bậc độ lớn: thao tác nào **chậm nhất**?"
+options = ["Đọc một giá trị trong RAM", "Đọc ngẫu nhiên một block trên SSD", "Round-trip mạng trong cùng data center", "Round-trip mạng giữa hai lục địa"]
+answer = [3]
+explanation = "Bậc độ lớn (ước lượng): RAM ~100 ns, SSD ~100 µs, cùng data center ~0,5 ms, liên lục địa ~100+ ms (giới hạn bởi tốc độ ánh sáng trong cáp quang). Vì vậy hệ thống toàn cầu thường đặt dữ liệu/CDN gần người dùng."
+
+[[questions]]
+id = "sd-004"
+module = "sd-fundamentals"
+type = "fill"
+difficulty = 1
+tags = ["level:junior", "latency"]
+prompt = "Chỉ số latency mà 99% request nhanh hơn (hoặc bằng) được gọi là `p{{blank}}`."
+blanks = [["99"]]
+explanation = "p99 là percentile thứ 99. Percentile cho thấy **tail latency** mà trung bình che mất: mean 50 ms vẫn có thể đi kèm p99 = 2 s."
+
+[[questions]]
+id = "sd-005"
+module = "sd-fundamentals"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "scaling"]
+prompt = "**Vertical scaling** là gì?"
+options = [
+  "Thêm nhiều máy chạy song song phía sau load balancer",
+  "Nâng cấp một máy mạnh hơn (thêm CPU, RAM, ổ nhanh hơn)",
+  "Chia dữ liệu theo cột vào nhiều bảng",
+  "Chạy ứng dụng trong container",
+]
+answer = [1]
+explanation = "Vertical scaling (scale up) = máy to hơn: đơn giản, không đổi kiến trúc nhưng có trần phần cứng và vẫn là một điểm lỗi. Thêm máy là **horizontal scaling** (scale out)."
+
+[[questions]]
+id = "sd-c01"
+module = "sd-fundamentals"
+type = "code"
+lang = "python"
+difficulty = 1
+tags = ["level:junior", "estimation"]
+title = "Ước lượng QPS và dung lượng"
+prompt = '''
+Viết `estimate(dau, actions_per_user, peak_factor, bytes_per_action)` trả về `dict`:
+- `total = dau * actions_per_user` (số request mỗi ngày), một ngày = `86400` giây
+- `"avg_rps"`: `total / 86400` làm tròn **2 chữ số** (`round(x, 2)`)
+- `"peak_rps"`: `total / 86400 * peak_factor` **làm tròn lên** thành số nguyên (`math.ceil`) — hệ thống phải chịu được đỉnh
+- `"storage_gb_per_day"`: `total * bytes_per_action / 10**9` làm tròn 2 chữ số
+- Nếu `dau < 0`, `actions_per_user < 0` hoặc `peak_factor < 1` → `raise ValueError("invalid input")`
+
+Ví dụ: `estimate(1_000_000, 10, 3, 500)` → `{"avg_rps": 115.74, "peak_rps": 348, "storage_gb_per_day": 5.0}`.
+'''
+starter = '''
+import math
+
+def estimate(dau, actions_per_user, peak_factor, bytes_per_action):
+    return {"avg_rps": 0, "peak_rps": 0, "storage_gb_per_day": 0}
+'''
+solution = '''
+import math
+
+def estimate(dau, actions_per_user, peak_factor, bytes_per_action):
+    if dau < 0 or actions_per_user < 0 or peak_factor < 1:
+        raise ValueError("invalid input")
+    total = dau * actions_per_user
+    per_sec = total / 86400
+    return {
+        "avg_rps": round(per_sec, 2),
+        "peak_rps": math.ceil(per_sec * peak_factor),
+        "storage_gb_per_day": round(total * bytes_per_action / 10**9, 2),
+    }
+'''
+tests = '''
+@test("ví dụ trong đề")
+def _():
+    expect(estimate(1_000_000, 10, 3, 500)).to_equal({"avg_rps": 115.74, "peak_rps": 348, "storage_gb_per_day": 5.0})
+
+@test("peak làm tròn lên")
+def _():
+    expect(estimate(86400, 1, 1.5, 1000)["peak_rps"]).to_equal(2)
+    expect(estimate(86400, 1, 1, 1000)["avg_rps"]).to_equal(1.0)
+
+@test("không có người dùng")
+def _():
+    expect(estimate(0, 5, 2, 100)).to_equal({"avg_rps": 0.0, "peak_rps": 0, "storage_gb_per_day": 0.0})
+
+@test("dung lượng lớn")
+def _():
+    expect(estimate(50_000_000, 20, 4, 2000)["storage_gb_per_day"]).to_equal(2000.0)
+
+@test("đầu vào sai")
+def _():
+    expect(lambda: estimate(-1, 1, 2, 1)).to_raise(ValueError, match="invalid input")
+    expect(lambda: estimate(10, 1, 0.5, 1)).to_raise(ValueError, match="invalid input")
+'''
+hints = ["Tính `per_sec = total / 86400` một lần rồi dùng lại.", "`math.ceil(per_sec * peak_factor)` cho peak."]
+explanation = "Back-of-the-envelope giúp chọn kiến trúc đúng bậc: ~350 RPS peak thì một cụm nhỏ đủ, ~35.000 RPS thì phải nghĩ tới cache, sharding. Thiết kế theo **peak** chứ không theo trung bình."
+
+[[questions]]
+id = "sd-007"
+module = "sd-fundamentals"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "estimation"]
+prompt = '''
+Ứng dụng có 20 triệu người dùng hoạt động mỗi ngày, mỗi người tải feed ~5 lần/ngày, peak gấp 3 lần trung bình. Ước lượng **peak QPS** đọc feed gần nhất?
+'''
+options = ["~350", "~3.500", "~35.000", "~350.000"]
+answer = [1]
+explanation = "20 triệu × 5 = 10^8 request/ngày; chia 10^5 s ≈ 1.000–1.160 RPS trung bình; × 3 ≈ ~3.500 RPS. Mục đích ước lượng là đúng **bậc độ lớn** để quyết định số instance, cache, DB."
+
+[[questions]]
+id = "sd-008"
+module = "sd-fundamentals"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "latency"]
+prompt = '''
+Dịch vụ có **mean latency 40 ms** nhưng người dùng than trang chậm. Mỗi trang gọi song song 30 request backend và phải chờ request chậm nhất. Nhận định nào hợp lý nhất?
+'''
+options = [
+  "Mean 40 ms là tốt nên vấn đề chắc nằm ở trình duyệt",
+  "Cần xem p99: với 30 lời gọi song song, xác suất ít nhất một lời gọi rơi vào nhóm chậm 1% là khoảng 26%",
+  "Chỉ cần tăng số CPU là mean giảm và hết chậm",
+  "Gọi tuần tự thay vì song song sẽ nhanh hơn",
+]
+answer = [1]
+explanation = "Trang chờ lời gọi chậm nhất nên chịu **tail latency**. P(ít nhất 1 trong 30 rơi vào 1% chậm) = 1 − 0,99^30 ≈ 26%. Mean che mất đuôi; phải đo p95/p99. Gọi tuần tự còn tệ hơn vì latency cộng dồn."
+
+[[questions]]
+id = "sd-009"
+module = "sd-fundamentals"
+type = "fill"
+difficulty = 2
+tags = ["level:middle", "cap"]
+prompt = "Theo CAP, khi xảy ra network **{{blank}}**, hệ thống phân tán phải chọn giữa consistency và availability."
+blanks = [["partition", "network partition", "phân mảnh mạng", "chia cắt mạng"]]
+explanation = "CAP chỉ \"bắt chọn\" khi có partition (P). Partition không thể loại bỏ trong hệ phân tán, nên lựa chọn thực tế là CP hoặc AP khi mạng bị chia cắt."
+
+[[questions]]
+id = "sd-010"
+module = "sd-fundamentals"
+type = "multiple"
+difficulty = 2
+tags = ["level:middle", "consistency"]
+prompt = "Chọn các dữ liệu mà **eventual consistency** thường chấp nhận được:"
+options = [
+  "Số lượt like của một bài viết",
+  "Số dư tài khoản khi trừ tiền thanh toán",
+  "Danh sách bài trong news feed",
+  "Số lượng tồn kho khi chốt đơn sản phẩm cuối cùng",
+  "Số lượt xem video",
+]
+answer = [0, 2, 4]
+explanation = "Like, feed, lượt xem lệch vài giây không gây hại. Trừ tiền và chốt tồn kho cuối cùng cần **strong consistency** (hoặc ít nhất kiểm tra điều kiện nguyên tử) để tránh âm tiền/bán vượt kho."
+
+[[questions]]
+id = "sd-011"
+module = "sd-fundamentals"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "consistency"]
+prompt = "Người dùng sửa tên hiển thị rồi tải lại trang và vẫn thấy tên cũ (vì đọc từ replica chưa bắt kịp). Đảm bảo nào bị vi phạm?"
+options = ["Read-your-writes", "Monotonic writes", "Partition tolerance", "Durability"]
+answer = [0]
+explanation = "**Read-your-writes**: người ghi phải thấy ghi của chính mình. Cách sửa: đọc từ leader một thời gian ngắn sau khi ghi, hoặc chỉ đọc replica đã đạt version/LSN của lần ghi đó. Durability nói về việc dữ liệu đã xác nhận không mất."
+
+[[questions]]
+id = "sd-c02"
+module = "sd-fundamentals"
+type = "code"
+lang = "python"
+difficulty = 2
+tags = ["level:middle", "latency", "metrics"]
+title = "Tính percentile latency"
+prompt = '''
+Viết `percentile(values, p)` theo phương pháp **nearest-rank**:
+- sắp xếp tăng dần; `rank = ceil(p / 100 * n)`; trả `sorted_values[rank - 1]`
+- `p == 0` → trả phần tử nhỏ nhất; `p` ngoài `[0, 100]` → `raise ValueError("bad p")`
+- `values` rỗng → `raise ValueError("empty")`
+- **không** sửa list đầu vào
+
+Và `summarize(values)` trả `{"p50": ..., "p95": ..., "p99": ..., "max": ...}`.
+
+Ví dụ: `percentile([5, 1, 3, 2, 4], 50)` → `3`; với 100 giá trị `1..100`, `p95` → `95`.
+'''
+starter = '''
+import math
+
+def percentile(values, p):
+    return sum(values) / len(values)
+
+def summarize(values):
+    return {"p50": 0, "p95": 0, "p99": 0, "max": 0}
+'''
+solution = '''
+import math
+
+def percentile(values, p):
+    if not values:
+        raise ValueError("empty")
+    if p < 0 or p > 100:
+        raise ValueError("bad p")
+    s = sorted(values)
+    if p == 0:
+        return s[0]
+    rank = math.ceil(p / 100 * len(s))
+    return s[rank - 1]
+
+def summarize(values):
+    return {
+        "p50": percentile(values, 50),
+        "p95": percentile(values, 95),
+        "p99": percentile(values, 99),
+        "max": max(values),
+    }
+'''
+tests = '''
+@test("trung vị")
+def _():
+    expect(percentile([5, 1, 3, 2, 4], 50)).to_equal(3)
+
+@test("1..100")
+def _():
+    vals = list(range(100, 0, -1))
+    expect(percentile(vals, 95)).to_equal(95)
+    expect(percentile(vals, 99)).to_equal(99)
+    expect(percentile(vals, 100)).to_equal(100)
+    expect(percentile(vals, 0)).to_equal(1)
+    expect(vals[0]).to_equal(100)
+
+@test("tail latency bị mean che mất")
+def _():
+    vals = [10] * 98 + [2000, 3000]
+    r = summarize(vals)
+    expect(r["p50"]).to_equal(10)
+    expect(r["p99"]).to_equal(2000)
+    expect(r["max"]).to_equal(3000)
+
+@test("lỗi đầu vào")
+def _():
+    expect(lambda: percentile([], 50)).to_raise(ValueError, match="empty")
+    expect(lambda: percentile([1], 101)).to_raise(ValueError, match="bad p")
+'''
+hints = ["`sorted(values)` trả list mới, không sửa list gốc.", "Rank tính từ 1 nên phần tử là `s[rank - 1]`."]
+explanation = "Percentile là cách đúng để nói về latency. Lưu ý thực tế: không thể lấy trung bình các p99 của nhiều instance; cần gộp **histogram** rồi tính percentile trên dữ liệu gộp."
+
+[[questions]]
+id = "sd-013"
+module = "sd-fundamentals"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "pacelc"]
+prompt = '''
+Một DB phân tán cấu hình ghi phải được **quorum ở 3 region** xác nhận trước khi trả lời. Mạng bình thường, không có partition, nhưng latency ghi lên ~150 ms. Khung lý thuyết nào mô tả đúng đánh đổi này?
+'''
+options = [
+  "CAP — hệ thống đang chọn availability",
+  "PACELC — khi không có partition (Else) vẫn phải đánh đổi Latency lấy Consistency",
+  "ACID — vì ghi quorum là một transaction",
+  "BASE — vì hệ thống là eventual consistency",
+]
+answer = [1]
+explanation = "CAP chỉ nói về lúc có partition. PACELC bổ sung: **Else** (bình thường) hệ thống chọn giữa **L**atency và **C**onsistency. Chờ quorum liên region là chọn C và trả giá bằng latency. Đây không phải eventual consistency vì đọc quorum sau đó sẽ thấy dữ liệu mới."
+
+[[questions]]
+id = "sd-014"
+module = "sd-fundamentals"
+type = "multiple"
+difficulty = 3
+tags = ["level:senior", "consistency"]
+prompt = "Chọn các nhận định **đúng** về consistency model:"
+options = [
+  "Linearizability đảm bảo mọi thao tác như xảy ra tức thời tại một điểm giữa lúc gọi và lúc trả về, theo thời gian thực",
+  "Causal consistency đảm bảo một câu trả lời không bao giờ hiện ra trước câu hỏi mà nó trả lời",
+  "Eventual consistency đảm bảo đọc luôn thấy giá trị mới nhất sau tối đa 1 giây",
+  "Khoá phân tán (leader election, lock) cần một nền tảng linearizable như consensus (Raft/Paxos)",
+  "Strong consistency không có chi phí latency nếu dùng SSD",
+]
+answer = [0, 1, 3]
+explanation = "Eventual consistency **không** hứa thời hạn cụ thể, chỉ hứa hội tụ khi ngừng ghi. Strong consistency tốn chi phí phối hợp qua mạng (round-trip quorum), SSD không loại bỏ được. Lock/leader election cần linearizable — thường xây trên Raft/Paxos (etcd, ZooKeeper)."
+
+[[questions]]
+id = "sd-015"
+module = "sd-fundamentals"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "capacity"]
+prompt = '''
+Service nhận **2.000 RPS**, mỗi request giữ một kết nối DB trong trung bình **25 ms**. Theo Little's Law, pool kết nối DB tối thiểu (tổng mọi instance) cần khoảng bao nhiêu để không xếp hàng ở trạng thái ổn định?
+'''
+options = ["~5", "~50", "~500", "~2.000"]
+answer = [1]
+explanation = "L = λ × W = 2.000/s × 0,025 s = 50 kết nối đồng thời trung bình. Thực tế cần dư (ví dụ ×1,5–2) cho dao động, nhưng không phải 2.000: quá nhiều kết nối làm DB tốn RAM và tranh chấp lock. Little's Law cũng giúp phát hiện: nếu latency DB tăng gấp 4, pool cần gấp 4."
+
+[[questions]]
+id = "sd-016"
+module = "sd-fundamentals"
+type = "essay"
+difficulty = 3
+tags = ["level:senior", "estimation", "interview"]
+prompt = "Phỏng vấn: \"Hãy ước lượng dung lượng lưu trữ và băng thông cho một dịch vụ chia sẻ ảnh có 10 triệu người dùng hoạt động mỗi ngày.\" Trình bày cách bạn tiếp cận (giả định, công thức, kết luận ảnh hưởng tới kiến trúc)."
+keywords = [
+  ["giả định", "assumption", "giả sử"],
+  ["86400", "86.400", "10^5", "giây mỗi ngày"],
+  ["peak", "đỉnh", "cao điểm"],
+  ["replica", "bản sao", "replication", "x3", "×3"],
+  ["băng thông", "bandwidth", "egress"],
+  ["cdn", "object storage", "s3"],
+]
+min_keywords = 4
+model_answer = '''
+1. **Nêu giả định** rõ ràng: 10 triệu DAU, 10% đăng ảnh mỗi ngày → 1 triệu ảnh/ngày; ảnh sau nén ~500 KB, thêm 2 thumbnail ~50 KB; mỗi người xem ~50 ảnh/ngày (số liệu ước lượng).
+2. **Lưu trữ**: 1 triệu × ~600 KB ≈ 600 GB/ngày ≈ 220 TB/năm; nhân **replica ×3** (hoặc erasure coding ~1,5×) → hàng trăm TB/năm → phải dùng **object storage** (S3-like), không để trong DB; DB chỉ giữ metadata (~1 KB/ảnh).
+3. **QPS**: upload 1 triệu/86400 ≈ 12/s trung bình, **peak** ×3–5 ≈ 50/s; xem 500 triệu lượt/ngày ≈ 6.000/s, peak ~20.000/s.
+4. **Băng thông** đọc: 6.000/s × ~100 KB (đa số xem thumbnail/bản vừa) ≈ 600 MB/s ≈ ~5 Gbps trung bình → bắt buộc **CDN** để giảm egress từ origin.
+5. **Kết luận kiến trúc**: đọc ≫ ghi → tối ưu đường đọc (CDN, cache metadata); upload trực tiếp lên object storage bằng pre-signed URL; xử lý thumbnail bất đồng bộ qua queue.
+'''
+explanation = "Điểm chính: nêu giả định, tính đúng bậc độ lớn, tính cả bản sao và peak, và **rút ra hệ quả kiến trúc** (object storage + CDN, đọc ≫ ghi). Con số tuyệt đối không quan trọng bằng lập luận."
+
+[[questions]]
+id = "sd-017"
+module = "sd-fundamentals"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "consistency"]
+prompt = '''
+Team 5 người xây sàn bán vé sự kiện (ra mắt sau 3 tháng). Product muốn "mọi dữ liệu luôn nhất quán tuyệt đối ở 3 region". Ngân sách hạ tầng hạn chế, đa số người dùng ở một quốc gia. Đề xuất nào hợp lý nhất?
+'''
+options = [
+  "Dùng DB phân tán multi-region với strong consistency cho mọi bảng ngay từ đầu",
+  "Một region chính (multi-AZ) với strong consistency cho đặt vé/thanh toán; dữ liệu hiển thị (danh sách sự kiện, ảnh) cache/CDN và chấp nhận eventual consistency; DR sang region khác bằng backup/replica bất đồng bộ",
+  "Eventual consistency cho mọi thứ kể cả giữ ghế, xử lý trùng ghế bằng hoàn tiền thủ công",
+  "Mỗi region một DB độc lập, đồng bộ ban đêm",
+]
+answer = [1]
+explanation = "Chọn consistency **theo loại dữ liệu**: giữ ghế/thanh toán cần strong (tránh bán trùng), còn danh mục sự kiện có thể cũ vài giây. Người dùng tập trung một quốc gia nên multi-region active-active chỉ thêm latency ghi, chi phí và độ phức tạp mà team 5 người khó vận hành trong 3 tháng. Eventual cho giữ ghế gây bán trùng (hại uy tín); đồng bộ ban đêm thì dữ liệu lệch cả ngày."
+
+# ===================== sd-scaling-data =====================
+
+[[questions]]
+id = "sd-018"
+module = "sd-scaling-data"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "replication"]
+prompt = "Mục đích chính của **replication** (nhân bản dữ liệu sang nhiều máy) là gì?"
+options = [
+  "Tăng khả năng chịu lỗi và mở rộng khả năng đọc",
+  "Giảm dung lượng lưu trữ cần thiết",
+  "Làm cho mọi thao tác ghi nhanh hơn",
+  "Thay thế cho việc backup",
+]
+answer = [0]
+explanation = "Replication giữ nhiều bản sao: một máy chết vẫn còn bản khác (availability), và có thể đọc từ nhiều replica (read scaling). Nó **tăng** dung lượng lưu trữ, không làm ghi nhanh hơn, và **không thay backup**: lệnh xoá nhầm cũng được nhân bản ngay sang mọi replica."
+
+[[questions]]
+id = "sd-019"
+module = "sd-scaling-data"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "sharding"]
+prompt = "**Sharding** (partitioning ngang) là gì?"
+options = [
+  "Sao chép toàn bộ DB sang máy khác",
+  "Chia các dòng dữ liệu của một tập dữ liệu ra nhiều DB/node, mỗi node giữ một phần",
+  "Tách một bảng thành nhiều cột",
+  "Nén dữ liệu để tiết kiệm ổ đĩa",
+]
+answer = [1]
+explanation = "Sharding chia dữ liệu theo **shard key** (ví dụ `user_id`) để mỗi node chỉ giữ và xử lý một phần → mở rộng được cả ghi lẫn dung lượng. Sao chép toàn bộ là replication."
+
+[[questions]]
+id = "sd-020"
+module = "sd-scaling-data"
+type = "fill"
+difficulty = 1
+tags = ["level:junior", "replication"]
+prompt = "Trong mô hình leader–follower, các bản sao chỉ phục vụ đọc thường được gọi là read {{blank}}."
+blanks = [["replica", "replicas"]]
+explanation = "Read replica nhận thay đổi từ leader (thường bất đồng bộ) và phục vụ truy vấn đọc, giúp giảm tải cho leader. Đổi lại có **replication lag**."
+
+[[questions]]
+id = "sd-021"
+module = "sd-scaling-data"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "sharding"]
+prompt = '''
+Dữ liệu chia theo `shard = hash(key) % N` với N = 4. Thêm node thứ 5 (N = 5). Điều gì xảy ra?
+'''
+options = [
+  "Chỉ khoảng 1/5 số key phải di chuyển",
+  "Khoảng 80% số key đổi shard và phải di chuyển",
+  "Không key nào phải di chuyển",
+  "Chỉ các key mới ghi sau đó được đặt vào node 5",
+]
+answer = [1]
+explanation = "Với `% N`, key ở lại chỗ cũ chỉ khi `h % 4 == h % 5`, xác suất ~1/5 → ~80% key phải dời. Đây là lý do dùng **consistent hashing** (chỉ ~1/N key dời) hoặc chia trước nhiều partition logic cố định rồi gán partition cho node."
+
+[[questions]]
+id = "sd-022"
+module = "sd-scaling-data"
+type = "fill"
+difficulty = 2
+tags = ["level:middle", "quorum"]
+prompt = "Hệ leaderless có N = 3 bản sao, ghi cần W = 2 xác nhận. Giá trị R **nhỏ nhất** để tập đọc chắc chắn giao với tập ghi là R = {{blank}}."
+blanks = [["2"]]
+explanation = "Điều kiện W + R > N → 2 + R > 3 → R ≥ 2. Khi đó mọi tập đọc 2 node đều chứa ít nhất một node đã nhận ghi mới nhất (trong điều kiện không có lỗi bất thường như sloppy quorum)."
+
+[[questions]]
+id = "sd-023"
+module = "sd-scaling-data"
+type = "multiple"
+difficulty = 2
+tags = ["level:middle", "sharding"]
+prompt = "Chọn các đặc điểm của một **shard key tốt**:"
+options = [
+  "Cardinality cao (nhiều giá trị khác nhau)",
+  "Phân bố traffic đều, không tập trung vào vài giá trị",
+  "Có mặt trong phần lớn truy vấn quan trọng để tránh hỏi mọi shard",
+  "Tăng dần theo thời gian để dữ liệu mới nằm cùng một chỗ",
+  "Là cột boolean để dễ chia đôi",
+]
+answer = [0, 1, 2]
+explanation = "Key tăng dần (timestamp, auto-increment) làm mọi ghi mới dồn vào shard cuối (**hot partition**). Boolean chỉ có 2 giá trị → tối đa 2 shard và lệch. Key tốt có cardinality cao, phân bố đều và khớp truy vấn."
+
+[[questions]]
+id = "sd-024"
+module = "sd-scaling-data"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "replication"]
+prompt = '''
+Sau khi tách đọc sang read replica, khách hàng báo: đặt hàng xong, mở trang "Đơn của tôi" ngay thì không thấy đơn vừa tạo, vài giây sau mới thấy. Cách xử lý hợp lý nhất?
+'''
+options = [
+  "Tắt replica, đọc mọi thứ từ leader",
+  "Định tuyến đọc của chính người dùng đó về leader trong một khoảng ngắn sau khi họ ghi (hoặc đọc replica đã bắt kịp version của lần ghi)",
+  "Thêm `sleep(5)` sau khi tạo đơn",
+  "Tăng số replica để lag giảm",
+]
+answer = [1]
+explanation = "Đây là vi phạm **read-your-writes** do replication lag. Chỉ cần đọc từ leader cho người vừa ghi (hoặc theo LSN/version), phần lớn traffic đọc khác vẫn đi replica. Tắt replica bỏ mất lợi ích; sleep làm chậm mọi người; thêm replica không giảm lag (thậm chí tăng tải leader)."
+
+[[questions]]
+id = "sd-025"
+module = "sd-scaling-data"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "partitioning"]
+prompt = "Bảng log sự kiện được **range-partition theo `created_at`**. Triệu chứng nào dễ xảy ra nhất khi lượng ghi tăng?"
+options = [
+  "Mọi ghi mới dồn vào partition mới nhất → một node nóng trong khi các node khác rảnh",
+  "Truy vấn theo khoảng thời gian trở nên chậm hơn hash partition",
+  "Không thể xoá dữ liệu cũ",
+  "Dữ liệu bị mất khi sang ngày mới",
+]
+answer = [0]
+explanation = "Key tăng dần + range partition = **hot partition** ở đầu ghi. Ưu điểm của range theo thời gian là truy vấn khoảng thời gian và xoá dữ liệu cũ (drop partition) rất rẻ. Cách giảm nóng: thêm tiền tố phân tán (ví dụ `(source_id, created_at)`), hoặc chấp nhận nếu một node chịu nổi lượng ghi."
+
+[[questions]]
+id = "sd-c03"
+module = "sd-scaling-data"
+type = "code"
+lang = "javascript"
+difficulty = 3
+tags = ["level:senior", "consistent-hashing"]
+title = "Consistent hashing ring với virtual node"
+prompt = '''
+Cài `class HashRing` với `constructor(vnodes = 100)`:
+- `addNode(name)`: thêm node, tạo `vnodes` điểm trên vòng, điểm thứ `i` có vị trí `hash32(name + '#' + i)` (hàm `hash32` có sẵn trong starter, trả số nguyên 32-bit không dấu)
+- `removeNode(name)`: bỏ mọi điểm của node đó
+- `getNode(key)`: tính `h = hash32(key)`, trả tên node của **điểm đầu tiên có vị trí ≥ h** theo chiều tăng; nếu không có thì quay vòng về điểm nhỏ nhất. Vòng rỗng → `null`
+- Thêm/bớt node chỉ được làm dời các key liên quan tới node đó (đặc tính của consistent hashing)
+
+Gợi ý hiệu năng: giữ mảng điểm đã sắp xếp và tìm kiếm nhị phân.
+'''
+starter = '''
+function hash32(str) {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
+  h ^= h >>> 16; h = Math.imul(h, 0x85ebca6b) >>> 0;
+  h ^= h >>> 13; h = Math.imul(h, 0xc2b2ae35) >>> 0;
+  h ^= h >>> 16;
+  return h >>> 0;
+}
+
+class HashRing {
+  constructor(vnodes = 100) { this.vnodes = vnodes; this.nodes = []; }
+  addNode(name) { this.nodes.push(name); }
+  removeNode(name) { this.nodes = this.nodes.filter((n) => n !== name); }
+  getNode(key) {
+    if (this.nodes.length === 0) return null;
+    return this.nodes[hash32(key) % this.nodes.length];
+  }
+}
+'''
+solution = '''
+function hash32(str) {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
+  h ^= h >>> 16; h = Math.imul(h, 0x85ebca6b) >>> 0;
+  h ^= h >>> 13; h = Math.imul(h, 0xc2b2ae35) >>> 0;
+  h ^= h >>> 16;
+  return h >>> 0;
+}
+
+class HashRing {
+  constructor(vnodes = 100) { this.vnodes = vnodes; this.points = []; }
+  addNode(name) {
+    for (let i = 0; i < this.vnodes; i++) this.points.push({ pos: hash32(name + '#' + i), node: name });
+    this.points.sort((a, b) => a.pos - b.pos);
+  }
+  removeNode(name) { this.points = this.points.filter((p) => p.node !== name); }
+  getNode(key) {
+    const pts = this.points;
+    if (pts.length === 0) return null;
+    const h = hash32(key);
+    let lo = 0, hi = pts.length;
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      if (pts[mid].pos >= h) hi = mid; else lo = mid + 1;
+    }
+    return pts[lo === pts.length ? 0 : lo].node;
+  }
+}
+'''
+tests = '''
+const keys = Array.from({ length: 2000 }, (_, i) => 'user:' + i);
+function owners(ring) { return keys.map((k) => ring.getNode(k)); }
+
+test('vòng rỗng trả null, một node nhận mọi key', () => {
+  const r = new HashRing(10);
+  expect(r.getNode('x')).toBeNull();
+  r.addNode('a');
+  expect(r.getNode('x')).toBe('a');
+  expect(r.getNode('y')).toBe('a');
+});
+test('thêm node chỉ dời khoảng 1/N key và chỉ sang node mới', () => {
+  const r = new HashRing(100);
+  ['a', 'b', 'c'].forEach((n) => r.addNode(n));
+  const before = owners(r);
+  r.addNode('d');
+  const after = owners(r);
+  let moved = 0;
+  for (let i = 0; i < keys.length; i++) {
+    if (before[i] !== after[i]) { moved++; expect(after[i]).toBe('d'); }
+  }
+  expect(moved).toBeGreaterThan(200);
+  expect(moved).toBeLessThan(800);
+});
+test('bỏ node không làm dời key của node khác', () => {
+  const r = new HashRing(100);
+  ['a', 'b', 'c', 'd'].forEach((n) => r.addNode(n));
+  const before = owners(r);
+  r.removeNode('b');
+  const after = owners(r);
+  for (let i = 0; i < keys.length; i++) {
+    if (before[i] !== 'b') expect(after[i]).toBe(before[i]);
+    else expect(after[i]).not.toBe('b');
+  }
+});
+test('virtual node giúp phân bố tương đối đều', () => {
+  const r = new HashRing(100);
+  ['a', 'b', 'c', 'd'].forEach((n) => r.addNode(n));
+  const count = {};
+  owners(r).forEach((o) => { count[o] = (count[o] || 0) + 1; });
+  ['a', 'b', 'c', 'd'].forEach((n) => {
+    expect(count[n]).toBeGreaterThan(250);
+    expect(count[n]).toBeLessThan(750);
+  });
+});
+'''
+hints = ["Lưu các điểm `{ pos, node }` rồi sort theo `pos`.", "Tìm vị trí đầu tiên `pos >= h` bằng binary search; nếu vượt cuối mảng thì lấy phần tử 0."]
+explanation = "Consistent hashing đặt node và key trên cùng một vòng băm; thêm node chỉ \"cướp\" các đoạn vòng liền trước điểm của nó, nên chỉ ~1/N key dời. Virtual node chia mỗi node thành nhiều điểm để cân bằng tải và để khi một node rời đi, phần của nó rải đều cho các node còn lại."
+
+[[questions]]
+id = "sd-026"
+module = "sd-scaling-data"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "replication", "failover"]
+prompt = '''
+PostgreSQL leader replicate **bất đồng bộ** sang 1 follower. Leader chết đột ngột, hệ thống tự promote follower. Rủi ro chính cần nói với stakeholder là gì?
+'''
+options = [
+  "Không có rủi ro, follower có đủ dữ liệu",
+  "Các transaction đã commit (đã trả OK cho client) nhưng chưa kịp replicate sẽ mất — RPO > 0; nếu leader cũ quay lại còn có nguy cơ split-brain",
+  "Follower không thể nhận ghi sau khi promote",
+  "Toàn bộ dữ liệu sẽ bị rollback về bản backup gần nhất",
+]
+answer = [1]
+explanation = "Async replication xác nhận ghi trước khi follower nhận → khi failover có thể mất vài giây ghi cuối (RPO > 0). Cần fencing để leader cũ không tiếp tục nhận ghi (split-brain). Nếu dữ liệu không được phép mất (thanh toán), dùng synchronous replication cho ít nhất một replica và chấp nhận latency ghi cao hơn."
+
+[[questions]]
+id = "sd-027"
+module = "sd-scaling-data"
+type = "multiple"
+difficulty = 3
+tags = ["level:senior", "hot-key"]
+prompt = "Một bộ đếm lượt xem `views:video:42` trên Redis cluster nhận 200.000 lệnh `INCR`/giây do video viral, làm một node quá tải. Chọn các biện pháp **phù hợp**:"
+options = [
+  "Key salting: ghi vào `views:video:42#0..15` ngẫu nhiên, khi đọc cộng 16 key",
+  "Gom đếm cục bộ trong từng app instance rồi flush định kỳ (ví dụ mỗi giây) bằng `INCRBY`",
+  "Thêm read replica cho node đó",
+  "Tăng TTL của key",
+  "Chấp nhận số đếm xấp xỉ, cập nhật hiển thị theo chu kỳ",
+]
+answer = [0, 1, 4]
+explanation = "Vấn đề là **ghi nóng** vào một key: salting rải ghi ra nhiều slot/node; gom cục bộ giảm số lệnh hàng trăm lần; lượt xem chấp nhận xấp xỉ. Read replica không giúp vì replica không nhận ghi. TTL không liên quan tới tải."
+
+[[questions]]
+id = "sd-028"
+module = "sd-scaling-data"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "sharding"]
+prompt = '''
+Bảng `orders` shard theo `user_id`. Bộ phận hỗ trợ cần tra cứu đơn theo `order_number` (không chứa user_id) với latency thấp. Hướng nào tốt nhất?
+'''
+options = [
+  "Gửi truy vấn tới mọi shard rồi gộp kết quả cho mọi lần tra cứu",
+  "Duy trì một bảng tra cứu toàn cục `order_number → user_id` (global secondary index), hoặc nhúng shard id vào order_number khi sinh",
+  "Shard lại toàn bộ theo `order_number`",
+  "Chuyển về một DB duy nhất",
+]
+answer = [1]
+explanation = "Truy vấn không có shard key thành **scatter-gather**: latency theo shard chậm nhất và tải nhân N. Bảng tra cứu toàn cục (cập nhật cùng lúc tạo đơn, chấp nhận eventual) hoặc mã hoá shard id vào `order_number` cho phép định tuyến thẳng. Shard lại theo order_number làm hỏng truy vấn chính \"đơn của tôi\"."
+
+[[questions]]
+id = "sd-029"
+module = "sd-scaling-data"
+type = "essay"
+difficulty = 3
+tags = ["level:senior", "scaling"]
+prompt = "DB PostgreSQL chính đang ở 85% CPU vào giờ cao điểm, traffic dự kiến tăng gấp 3 trong 6 tháng. Trình bày lộ trình mở rộng tầng dữ liệu theo thứ tự bạn sẽ làm và lý do."
+keywords = [
+  ["query", "index", "explain", "truy vấn chậm"],
+  ["cache", "redis"],
+  ["read replica", "replica", "read/write split"],
+  ["connection pool", "pgbouncer", "pool"],
+  ["partition", "phân vùng", "tách bảng"],
+  ["shard", "sharding"],
+  ["đo", "metric", "profil", "pg_stat_statements"],
+]
+min_keywords = 4
+model_answer = '''
+1. **Đo trước**: dùng `pg_stat_statements`/metric để tìm top query tốn CPU; thường 20% query gây 80% tải.
+2. **Tối ưu query & index**: thêm index thiếu, sửa N+1, bỏ `SELECT *`, xem `EXPLAIN ANALYZE`. Rẻ nhất và hay đem lại nhiều nhất.
+3. **Connection pool** (PgBouncer): giảm chi phí hàng nghìn kết nối.
+4. **Cache** dữ liệu đọc nhiều (Redis, cache-aside với TTL) để giảm tải đọc.
+5. **Read replica + read/write split** cho truy vấn chấp nhận replication lag (báo cáo, danh sách), giữ đọc-sau-ghi ở leader.
+6. **Partition** bảng lớn theo thời gian, lưu trữ dữ liệu cũ; tách theo chức năng (bảng log/analytics sang hệ khác).
+7. Chỉ khi ghi vẫn vượt khả năng một leader mới **shard**, vì sharding thay đổi mô hình truy vấn, transaction và vận hành — quyết định khó đảo ngược.
+Song song: nâng cấp vertical tạm thời để có thời gian, và đặt ngưỡng cảnh báo dung lượng.
+'''
+explanation = "Câu trả lời tốt đi từ rẻ & dễ đảo ngược tới đắt & khó đảo ngược, luôn bắt đầu bằng đo đạc. Nhảy thẳng vào sharding là dấu hiệu thiếu kinh nghiệm vận hành."
+
+[[questions]]
+id = "sd-030"
+module = "sd-scaling-data"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "sharding", "decision"]
+prompt = '''
+SaaS B2B: 2.000 tenant, DB 1,5 TB, ghi ~800/s, đọc ~6.000/s (đa số đọc dashboard). Một dev đề xuất shard theo `tenant_id` ngay quý này. Team 4 backend, đang có 2 tính năng lớn cam kết với khách. Lựa chọn hợp lý nhất?
+'''
+options = [
+  "Shard ngay theo tenant_id vì sớm muộn cũng phải làm",
+  "Thêm read replica cho dashboard, cache, partition bảng lớn theo thời gian và nâng cấp máy; chuẩn bị cho sharding bằng cách đảm bảo mọi truy vấn có tenant_id, xem lại khi chỉ số ghi/dung lượng chạm ngưỡng đã định",
+  "Chuyển sang NoSQL để tự động scale",
+  "Không làm gì cho tới khi DB sập",
+]
+answer = [1]
+explanation = "800 ghi/s và 1,5 TB vẫn nằm trong khả năng một Postgres leader được tối ưu; tải chủ yếu là **đọc** → replica + cache giải quyết đúng chỗ. Sharding lúc này tiêu tốn nhiều tháng của team 4 người và đe doạ cam kết với khách. Chuẩn bị rẻ (truy vấn luôn có tenant_id, ngưỡng kích hoạt rõ ràng) giữ được lựa chọn cho tương lai. Đổi sang NoSQL là migration rủi ro cao không giải quyết vấn đề đọc; chờ sập là không chấp nhận được."
+
+[[questions]]
+id = "sd-031"
+module = "sd-scaling-data"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "sharding", "multi-tenant"]
+prompt = '''
+Hệ thống đã shard theo `tenant_id` (hash). 3 tenant lớn nhất chiếm 40% traffic và liên tục làm shard của họ quá tải, ảnh hưởng các tenant nhỏ cùng shard. Bạn đề xuất gì cho roadmap quý tới?
+'''
+options = [
+  "Tăng số shard từ 16 lên 64 bằng hash, hy vọng tenant lớn được chia nhỏ",
+  "Chuyển sang lookup/directory-based placement: đưa các tenant lớn sang shard (hoặc cluster) riêng, tenant nhỏ ở shard dùng chung; thêm quota theo tenant",
+  "Từ chối hợp đồng với tenant lớn",
+  "Shard lại toàn bộ theo `user_id`",
+]
+answer = [1]
+explanation = "Hash theo tenant không chia nhỏ được **một** tenant — tăng số shard không giúp tenant lớn. Directory-based placement cho phép đặt tenant lớn ở hạ tầng riêng (cô lập noisy neighbor, có thể bán gói enterprise) mà không động tới tenant nhỏ. Shard theo user_id phá vỡ truy vấn theo tenant và cô lập dữ liệu; từ chối khách là quyết định kinh doanh, không phải kỹ thuật."
+
+# ===================== sd-caching =====================
+
+[[questions]]
+id = "sd-032"
+module = "sd-caching"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "caching"]
+prompt = "Cache có **hit ratio 90%** nghĩa là gì?"
+options = [
+  "90% request tìm thấy dữ liệu trong cache, 10% phải đọc từ nguồn",
+  "Cache chiếm 90% RAM của máy",
+  "90% dữ liệu trong DB đã được cache",
+  "Cache nhanh hơn DB 90%",
+]
+answer = [0]
+explanation = "Hit ratio = số lần trúng cache / tổng số lần đọc. Chỉ số này quyết định tải còn lại trên nguồn: từ 90% lên 99% làm tải DB giảm **10 lần** (10% → 1%)."
+
+[[questions]]
+id = "sd-033"
+module = "sd-caching"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "cache-aside"]
+prompt = "Trong pattern **cache-aside**, khi đọc key bị **miss** thì ứng dụng làm gì?"
+options = [
+  "Trả lỗi 404 cho người dùng",
+  "Đọc từ DB, ghi kết quả vào cache (kèm TTL) rồi trả về",
+  "Chờ cache tự nạp dữ liệu",
+  "Xoá toàn bộ cache",
+]
+answer = [1]
+explanation = "Cache-aside (lazy loading): ứng dụng tự quản lý — đọc cache, miss thì đọc nguồn rồi đặt vào cache. Lần đọc sau sẽ hit. \"Cache tự nạp\" là read-through."
+
+[[questions]]
+id = "sd-034"
+module = "sd-caching"
+type = "fill"
+difficulty = 1
+tags = ["level:junior", "caching"]
+prompt = "Thời gian một mục được giữ trong cache trước khi tự hết hạn thường viết tắt là {{blank}}."
+blanks = [["ttl", "time to live", "time-to-live"]]
+explanation = "TTL (time to live) là lưới an toàn: kể cả khi quên invalidate, dữ liệu cũ chỉ tồn tại tối đa TTL."
+
+[[questions]]
+id = "sd-c05"
+module = "sd-caching"
+type = "code"
+lang = "javascript"
+difficulty = 1
+tags = ["level:junior", "caching", "ttl"]
+title = "Cache có TTL"
+prompt = '''
+Cài `class TtlCache` với `constructor(ttlMs)`:
+- `set(key, value)`: lưu value, hết hạn sau `ttlMs` mili-giây tính từ lúc `set` (dùng `Date.now()`)
+- `get(key)`: trả value nếu còn hạn; nếu không có hoặc đã hết hạn (`Date.now() >= thời điểm hết hạn`) → trả `undefined` và xoá mục đó
+- `size()`: số mục **còn hạn** hiện tại
+- `set` lại cùng key thì ghi đè value và tính lại thời hạn
+'''
+starter = '''
+class TtlCache {
+  constructor(ttlMs) { this.ttlMs = ttlMs; this.map = new Map(); }
+  set(key, value) { this.map.set(key, value); }
+  get(key) { return this.map.get(key); }
+  size() { return this.map.size; }
+}
+'''
+solution = '''
+class TtlCache {
+  constructor(ttlMs) { this.ttlMs = ttlMs; this.map = new Map(); }
+  set(key, value) { this.map.set(key, { value, expiresAt: Date.now() + this.ttlMs }); }
+  get(key) {
+    const e = this.map.get(key);
+    if (!e) return undefined;
+    if (Date.now() >= e.expiresAt) { this.map.delete(key); return undefined; }
+    return e.value;
+  }
+  size() {
+    const now = Date.now();
+    for (const [k, e] of this.map) if (now >= e.expiresAt) this.map.delete(k);
+    return this.map.size;
+  }
+}
+'''
+tests = '''
+test('đọc trong hạn', () => {
+  const c = new TtlCache(1000);
+  c.set('a', 1);
+  jest.advanceTimersByTime(999);
+  expect(c.get('a')).toBe(1);
+});
+test('hết hạn đúng thời điểm', () => {
+  const c = new TtlCache(1000);
+  c.set('a', 1);
+  jest.advanceTimersByTime(1000);
+  expect(c.get('a')).toBeUndefined();
+});
+test('set lại thì gia hạn', () => {
+  const c = new TtlCache(1000);
+  c.set('a', 1);
+  jest.advanceTimersByTime(800);
+  c.set('a', 2);
+  jest.advanceTimersByTime(800);
+  expect(c.get('a')).toBe(2);
+});
+test('size chỉ đếm mục còn hạn', () => {
+  const c = new TtlCache(500);
+  c.set('a', 1);
+  jest.advanceTimersByTime(300);
+  c.set('b', 2);
+  expect(c.size()).toBe(2);
+  jest.advanceTimersByTime(300);
+  expect(c.size()).toBe(1);
+  expect(c.get('missing')).toBeUndefined();
+});
+'''
+hints = ["Lưu `{ value, expiresAt }` thay vì chỉ value.", "So sánh `Date.now() >= expiresAt` khi đọc."]
+explanation = "Đây là cơ chế lazy expiration (kiểm tra khi đọc). Redis kết hợp lazy expiration với quét ngẫu nhiên định kỳ để dọn key hết hạn không ai đọc."
+
+[[questions]]
+id = "sd-035"
+module = "sd-caching"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "write-back"]
+prompt = "Rủi ro lớn nhất của **write-back (write-behind)** cache là gì?"
+options = [
+  "Đọc chậm hơn cache-aside",
+  "Dữ liệu đã xác nhận với client có thể mất nếu node cache chết trước khi flush xuống DB",
+  "Không thể dùng TTL",
+  "Tốn nhiều băng thông ghi DB hơn write-through",
+]
+answer = [1]
+explanation = "Write-back trả OK ngay khi ghi vào cache và flush DB sau → ghi rất nhanh, gom được nhiều ghi (ít tải DB hơn), nhưng mất dữ liệu nếu cache chết. Chỉ hợp với dữ liệu chấp nhận mất một ít (bộ đếm, metric) hoặc cache có persistence/replication."
+
+[[questions]]
+id = "sd-036"
+module = "sd-caching"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "invalidation"]
+prompt = '''
+Khi cập nhật DB, vì sao nhiều team chọn **xoá key cache** (`DEL`) thay vì **ghi giá trị mới vào cache** (`SET`)?
+'''
+options = [
+  "Vì DEL nhanh hơn SET",
+  "Vì hai request cập nhật đồng thời có thể SET cache theo thứ tự ngược với thứ tự ghi DB, để lại giá trị cũ vĩnh viễn; DEL để lần đọc sau nạp lại từ DB",
+  "Vì SET không hỗ trợ TTL",
+  "Vì DEL đảm bảo strong consistency tuyệt đối",
+]
+answer = [1]
+explanation = "Với SET, A ghi DB=1, B ghi DB=2, B SET cache=2, A SET cache=1 → cache sai đến hết TTL. DEL giảm đáng kể cửa sổ sai (vẫn còn race hiếm giữa đọc-nạp và xoá, nên vẫn cần TTL; có thể dùng delayed double delete hoặc version). Không có cách nào cho strong consistency tuyệt đối giữa cache và DB mà không có cơ chế phối hợp."
+
+[[questions]]
+id = "sd-037"
+module = "sd-caching"
+type = "multiple"
+difficulty = 2
+tags = ["level:middle", "cdn"]
+prompt = "Chọn các nhận định **đúng** về CDN và HTTP caching:"
+options = [
+  "Asset có hash trong tên file (`app.3f9a.js`) có thể đặt `Cache-Control: max-age` rất dài vì nội dung đổi thì tên đổi",
+  "Response chứa dữ liệu riêng của người dùng phải đánh dấu `private` (hoặc `no-store`) để shared cache/CDN không lưu",
+  "`s-maxage` áp dụng cho shared cache như CDN",
+  "CDN chỉ cache được ảnh, không cache được response API",
+  "`no-cache` nghĩa là tuyệt đối không được lưu",
+]
+answer = [0, 1, 2]
+explanation = "CDN cache được cả response API công khai nếu header cho phép. `no-cache` nghĩa là **được lưu nhưng phải revalidate** trước khi dùng; không lưu là `no-store`."
+
+[[questions]]
+id = "sd-038"
+module = "sd-caching"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "cache-penetration"]
+prompt = '''
+Bot liên tục gọi `GET /products/{id}` với id ngẫu nhiên **không tồn tại**. Mỗi lần đều miss cache và truy vấn DB. Biện pháp phù hợp nhất?
+'''
+options = [
+  "Tăng TTL của các key đang có",
+  "Cache cả kết quả \"không tồn tại\" với TTL ngắn, kết hợp Bloom filter các id hợp lệ và rate limit theo client",
+  "Tắt cache cho endpoint này",
+  "Thêm read replica",
+]
+answer = [1]
+explanation = "Đây là **cache penetration**: key không tồn tại thì cache-aside không bao giờ hit. Cache kết quả rỗng (negative caching, TTL ngắn để khi sản phẩm được tạo thì sớm thấy), Bloom filter loại nhanh id chắc chắn không có, và rate limit bot. Tăng TTL key đang có không liên quan; tắt cache hay thêm replica chỉ chuyển tải chứ không chặn nguồn gốc."
+
+[[questions]]
+id = "sd-c04"
+module = "sd-caching"
+type = "code"
+lang = "javascript"
+difficulty = 2
+tags = ["level:middle", "lru"]
+title = "LRU cache O(1)"
+prompt = '''
+Cài `class LRUCache` với `constructor(capacity)` (capacity ≥ 1):
+- `get(key)`: trả value hoặc `undefined`; một lần `get` trúng làm key thành **mới dùng gần nhất**
+- `put(key, value)`: thêm hoặc cập nhật (cập nhật cũng tính là dùng gần nhất). Nếu vượt `capacity` → loại key **ít được dùng gần đây nhất**
+- `keys()`: mảng key theo thứ tự **từ cũ nhất tới mới nhất**
+- `get`/`put` phải O(1) trung bình (gợi ý: `Map` giữ thứ tự chèn, hoặc hash map + danh sách liên kết đôi)
+'''
+starter = '''
+class LRUCache {
+  constructor(capacity) { this.capacity = capacity; this.map = new Map(); }
+  get(key) { return this.map.get(key); }
+  put(key, value) {
+    this.map.set(key, value);
+    if (this.map.size > this.capacity) this.map.delete([...this.map.keys()].pop());
+  }
+  keys() { return [...this.map.keys()]; }
+}
+'''
+solution = '''
+class LRUCache {
+  constructor(capacity) { this.capacity = capacity; this.map = new Map(); }
+  get(key) {
+    if (!this.map.has(key)) return undefined;
+    const v = this.map.get(key);
+    this.map.delete(key);
+    this.map.set(key, v);
+    return v;
+  }
+  put(key, value) {
+    if (this.map.has(key)) this.map.delete(key);
+    this.map.set(key, value);
+    if (this.map.size > this.capacity) {
+      const oldest = this.map.keys().next().value;
+      this.map.delete(oldest);
+    }
+  }
+  keys() { return [...this.map.keys()]; }
+}
+'''
+tests = '''
+test('loại key ít dùng gần đây nhất', () => {
+  const c = new LRUCache(2);
+  c.put('a', 1); c.put('b', 2); c.put('c', 3);
+  expect(c.get('a')).toBeUndefined();
+  expect(c.keys()).toEqual(['b', 'c']);
+});
+test('get làm mới thứ tự', () => {
+  const c = new LRUCache(2);
+  c.put('a', 1); c.put('b', 2);
+  expect(c.get('a')).toBe(1);
+  c.put('c', 3);
+  expect(c.get('b')).toBeUndefined();
+  expect(c.keys()).toEqual(['a', 'c']);
+});
+test('put cập nhật cũng làm mới và không vượt capacity', () => {
+  const c = new LRUCache(2);
+  c.put('a', 1); c.put('b', 2); c.put('a', 10); c.put('c', 3);
+  expect(c.get('a')).toBe(10);
+  expect(c.get('b')).toBeUndefined();
+  expect(c.keys()).toHaveLength(2);
+});
+test('capacity 1 và key không tồn tại', () => {
+  const c = new LRUCache(1);
+  c.put('x', 1); c.put('y', 2);
+  expect(c.keys()).toEqual(['y']);
+  expect(c.get('nope')).toBeUndefined();
+});
+'''
+hints = ["`Map` của JS giữ thứ tự chèn: xoá rồi set lại để đưa key về cuối.", "Key cũ nhất là `map.keys().next().value`."]
+explanation = "LRU kinh điển dùng hash map + danh sách liên kết đôi; `Map` của JS làm sẵn cả hai. Redis dùng LRU **xấp xỉ** (lấy mẫu vài key) để tiết kiệm bộ nhớ thay vì giữ danh sách đầy đủ."
+
+[[questions]]
+id = "sd-039"
+module = "sd-caching"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "stampede"]
+prompt = '''
+Key `homepage:v1` (nặng, mất 2 s để tính) hết hạn lúc cao điểm 5.000 RPS. DB bị dồn hàng nghìn truy vấn giống hệt nhau và sập. Phương án nào giải quyết **gốc** vấn đề tốt nhất?
+'''
+options = [
+  "Tăng TTL từ 60 s lên 600 s",
+  "Request coalescing (single-flight/lock) để chỉ một request tính lại, kết hợp stale-while-revalidate để phục vụ bản cũ trong lúc làm mới",
+  "Thêm nhiều app server hơn",
+  "Giảm timeout của truy vấn DB xuống 100 ms",
+]
+answer = [1]
+explanation = "Đây là **cache stampede**. Tăng TTL chỉ làm sự cố thưa hơn chứ không biến mất. Thêm app server làm tăng số request đồng thời vào DB. Giảm timeout làm truy vấn 2 s luôn thất bại → không bao giờ nạp lại được cache. Single-flight + phục vụ bản cũ đảm bảo DB chỉ nhận ~1 truy vấn và người dùng không phải chờ."
+
+[[questions]]
+id = "sd-c06"
+module = "sd-caching"
+type = "code"
+lang = "javascript"
+difficulty = 3
+tags = ["level:senior", "stampede", "single-flight"]
+title = "Single-flight chống cache stampede"
+prompt = '''
+Cài `class SingleFlightCache`:
+- `constructor()` — cache trong bộ nhớ (không cần TTL)
+- `async get(key, loader)`:
+  - nếu key đã có giá trị trong cache → trả giá trị đó, **không** gọi `loader`
+  - nếu đang có một lần nạp key đó chưa xong → dùng chung promise đó (**không** gọi `loader` lần nữa)
+  - ngược lại gọi `loader()` (trả Promise) đúng một lần; thành công thì lưu cache; **thất bại thì không lưu** và lần gọi sau được nạp lại; mọi người đang chờ nhận cùng lỗi
+- `inflight()`: số key đang được nạp
+'''
+starter = '''
+class SingleFlightCache {
+  constructor() { this.cache = new Map(); }
+  async get(key, loader) {
+    const v = await loader();
+    this.cache.set(key, v);
+    return v;
+  }
+  inflight() { return 0; }
+}
+'''
+solution = '''
+class SingleFlightCache {
+  constructor() { this.cache = new Map(); this.pending = new Map(); }
+  get(key, loader) {
+    if (this.cache.has(key)) return Promise.resolve(this.cache.get(key));
+    if (this.pending.has(key)) return this.pending.get(key);
+    const p = Promise.resolve()
+      .then(() => loader())
+      .then(
+        (v) => { this.cache.set(key, v); this.pending.delete(key); return v; },
+        (e) => { this.pending.delete(key); throw e; }
+      );
+    this.pending.set(key, p);
+    return p;
+  }
+  inflight() { return this.pending.size; }
+}
+'''
+tests = '''
+test('nhiều lời gọi đồng thời chỉ nạp một lần', async () => {
+  const c = new SingleFlightCache();
+  const loader = jest.fn(() => Promise.resolve(42));
+  const ps = [c.get('k', loader), c.get('k', loader), c.get('k', loader)];
+  expect(c.inflight()).toBe(1);
+  const vals = await Promise.all(ps);
+  expect(vals).toEqual([42, 42, 42]);
+  expect(loader).toHaveBeenCalledTimes(1);
+  expect(c.inflight()).toBe(0);
+});
+test('đã có trong cache thì không gọi loader', async () => {
+  const c = new SingleFlightCache();
+  await c.get('k', () => Promise.resolve('v'));
+  const loader = jest.fn(() => Promise.resolve('other'));
+  const v = await c.get('k', loader);
+  expect(v).toBe('v');
+  expect(loader).toHaveBeenCalledTimes(0);
+});
+test('lỗi không được cache, lần sau nạp lại', async () => {
+  const c = new SingleFlightCache();
+  let failed = 0;
+  const bad = () => Promise.reject(new Error('db down'));
+  const p1 = c.get('k', bad);
+  const p2 = c.get('k', bad);
+  try { await p1; } catch (e) { failed++; expect(e.message).toBe('db down'); }
+  try { await p2; } catch (e) { failed++; }
+  expect(failed).toBe(2);
+  expect(c.inflight()).toBe(0);
+  const v = await c.get('k', () => Promise.resolve('ok'));
+  expect(v).toBe('ok');
+});
+test('các key khác nhau nạp độc lập', async () => {
+  const c = new SingleFlightCache();
+  const loader = jest.fn((x) => Promise.resolve(x));
+  const a = c.get('a', () => loader('A'));
+  const b = c.get('b', () => loader('B'));
+  expect(c.inflight()).toBe(2);
+  expect(await a).toBe('A');
+  expect(await b).toBe('B');
+  expect(loader).toHaveBeenCalledTimes(2);
+});
+'''
+hints = ["Lưu promise đang chạy vào một `Map` riêng (`pending`) **trước** khi await.", "Xoá khỏi `pending` cả khi thành công lẫn thất bại; chỉ ghi `cache` khi thành công."]
+explanation = "Đây là ý tưởng của `singleflight` trong Go và request coalescing ở CDN. Lưu ý đừng cache lỗi (hoặc chỉ cache lỗi rất ngắn), nếu không một sự cố thoáng qua sẽ bị \"đóng băng\" trong cache."
+
+[[questions]]
+id = "sd-040"
+module = "sd-caching"
+type = "multiple"
+difficulty = 3
+tags = ["level:senior", "caching"]
+prompt = "Chọn các nhận định **đúng** khi vận hành cache ở quy mô lớn:"
+options = [
+  "Thêm jitter ngẫu nhiên vào TTL giúp tránh nhiều key cùng hết hạn một lúc sau khi warm-up hoặc deploy",
+  "Nếu DB chỉ chịu được tải khi hit ratio ≥ 95%, thì restart toàn bộ cluster cache cùng lúc có thể gây sự cố DB",
+  "Đưa version vào key (`user:42:v7`) giúp chuyển sang dữ liệu/định dạng mới mà không cần xoá hàng loạt",
+  "Cache cục bộ trong từng process (in-process) luôn nhất quán giữa các instance",
+  "Cache là nguồn sự thật, có thể không cần DB cho dữ liệu đó",
+]
+answer = [0, 1, 2]
+explanation = "Cache in-process ở mỗi instance có thể lệch nhau (mỗi instance nạp vào thời điểm khác); cần TTL ngắn hoặc kênh invalidation (pub/sub). Cache không phải nguồn sự thật — có thể bị evict bất cứ lúc nào. Restart cache cùng lúc = cold cache → DB nhận toàn bộ tải: nên rolling restart và warm-up."
+
+[[questions]]
+id = "sd-041"
+module = "sd-caching"
+type = "essay"
+difficulty = 3
+tags = ["level:senior", "caching", "interview"]
+prompt = "Phỏng vấn: trang chi tiết sản phẩm của một sàn TMĐT đọc 20.000 RPS, giá và tồn kho thay đổi thường xuyên. Bạn thiết kế caching thế nào (tầng nào cache gì, invalidation, các rủi ro)?"
+keywords = [
+  ["cdn", "edge"],
+  ["redis", "cache-aside", "cache phân tán"],
+  ["ttl"],
+  ["invalidat", "xoá cache", "purge", "event"],
+  ["tồn kho", "inventory", "stock", "giá"],
+  ["stampede", "single-flight", "coalesc", "thundering"],
+  ["hot key", "key nóng", "local cache", "in-process"],
+]
+min_keywords = 4
+model_answer = '''
+- **Tách dữ liệu theo tốc độ thay đổi**: mô tả, ảnh, thông số (ít đổi) khác với **giá và tồn kho** (đổi liên tục).
+- **CDN/edge**: ảnh và asset tĩnh cache lâu (tên file có hash); phần HTML/JSON khung sản phẩm cache ngắn với `stale-while-revalidate`.
+- **Redis (cache-aside)** cho dữ liệu sản phẩm, **TTL** vài phút + jitter; khi sản phẩm được sửa thì phát **event** để xoá key (invalidation) và purge CDN nếu cần.
+- **Giá/tồn kho**: cache TTL rất ngắn (vài giây) hoặc lấy riêng qua API nhẹ; hiển thị "còn hàng" có thể xấp xỉ, nhưng **khi đặt hàng luôn kiểm tra lại ở DB** bằng thao tác nguyên tử (không tin cache).
+- **Rủi ro**: stampede khi key sản phẩm nóng hết hạn → single-flight/lock + phục vụ bản cũ; **hot key** trong flash sale → thêm local cache in-process vài giây; cache penetration với id rác → negative caching; cache chết → DB phải chịu được hoặc có rate limit/fallback.
+- Đo hit ratio, latency, số lần nạp lại theo key để tinh chỉnh.
+'''
+explanation = "Ý quan trọng: không cache mọi thứ cùng một kiểu; dữ liệu ảnh hưởng tiền/tồn kho chỉ được cache để **hiển thị**, quyết định cuối luôn ở nguồn sự thật."
+
+[[questions]]
+id = "sd-042"
+module = "sd-caching"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "caching", "risk"]
+prompt = '''
+Postmortem: cụm Redis bị failover 3 phút, hit ratio rơi từ 97% về 0, DB quá tải và toàn site lỗi 20 phút (lâu hơn nhiều so với 3 phút Redis lỗi). Team có 1 sprint cho action item. Ưu tiên nào hợp lý nhất?
+'''
+options = [
+  "Chuyển sang một sản phẩm cache khác",
+  "Bảo vệ DB khi cache lạnh: giới hạn đồng thời/concurrency limit vào DB kèm load shedding, single-flight khi nạp lại, warm-up key nóng, và tập dượt (game day) kịch bản mất cache",
+  "Mua DB gấp 30 lần để chịu được 100% tải không cache",
+  "Thêm alert khi Redis down là đủ",
+]
+answer = [1]
+explanation = "Vấn đề gốc là hệ thống **không có cơ chế tự bảo vệ** khi cache lạnh: DB bị dồn quá tải nên không tự hồi phục kể cả khi Redis đã sống lại. Giới hạn đồng thời + shedding giúp DB phục vụ được một phần và hồi phục; single-flight/warm-up rút ngắn thời gian lạnh; game day kiểm chứng. Đổi sản phẩm cache không giải quyết gốc; scale DB ×30 quá đắt; alert chỉ giúp biết sớm chứ không giảm tác động."
+
+# ===================== sd-async-messaging =====================
+
+[[questions]]
+id = "sd-043"
+module = "sd-async-messaging"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "queue"]
+prompt = "API đăng ký tài khoản phải gửi email chào mừng (nhà cung cấp email mất 1–3 s). Vì sao nên đẩy việc gửi email vào **message queue**?"
+options = [
+  "Để email đến nhanh hơn",
+  "Để API trả lời ngay, việc gửi email chạy nền, có thể retry khi nhà cung cấp lỗi mà không làm hỏng đăng ký",
+  "Vì queue mã hoá nội dung email",
+  "Vì queue đảm bảo email không bao giờ bị trùng",
+]
+answer = [1]
+explanation = "Queue tách việc chậm/không bắt buộc đồng bộ ra khỏi request: giảm latency, cô lập lỗi của nhà cung cấp, retry được. Queue thường giao **at-least-once** nên email vẫn có thể bị gửi trùng nếu consumer không idempotent."
+
+[[questions]]
+id = "sd-044"
+module = "sd-async-messaging"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "delivery-semantics"]
+prompt = "Delivery semantics **at-least-once** nghĩa là gì?"
+options = [
+  "Message được giao đúng một lần",
+  "Message không bị mất nhưng có thể được giao nhiều lần",
+  "Message có thể mất nhưng không bao giờ trùng",
+  "Message được giao ít nhất một lần mỗi giây",
+]
+answer = [1]
+explanation = "At-least-once: broker giao lại khi chưa nhận ack (consumer crash, timeout) → không mất nhưng có thể **trùng**. Vì vậy consumer phải idempotent."
+
+[[questions]]
+id = "sd-045"
+module = "sd-async-messaging"
+type = "fill"
+difficulty = 1
+tags = ["level:junior", "dlq"]
+prompt = "Message xử lý thất bại quá số lần cho phép thường được chuyển vào một hàng đợi riêng gọi là dead-letter {{blank}} (DLQ)."
+blanks = [["queue"]]
+explanation = "DLQ giữ \"poison message\" để không chặn cả hàng đợi; cần alert khi DLQ có message và công cụ để xem/replay sau khi sửa lỗi."
+
+[[questions]]
+id = "sd-046"
+module = "sd-async-messaging"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "kafka"]
+prompt = "Topic Kafka có **6 partition**. Team tăng consumer group từ 6 lên 12 instance để xử lý nhanh hơn. Kết quả?"
+options = [
+  "Throughput tăng gấp đôi",
+  "6 instance nhận partition, 6 instance còn lại ngồi không — throughput gần như không đổi",
+  "Mỗi message được xử lý hai lần",
+  "Kafka tự tăng số partition lên 12",
+]
+answer = [1]
+explanation = "Trong một consumer group, mỗi partition chỉ được gán cho tối đa **một** consumer → số consumer hữu ích tối đa = số partition. Muốn song song hơn phải tăng partition (lưu ý làm đổi ánh xạ key → partition) hoặc xử lý song song bên trong consumer mà vẫn giữ thứ tự theo key."
+
+[[questions]]
+id = "sd-047"
+module = "sd-async-messaging"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "ordering"]
+prompt = "Các event `OrderCreated`, `OrderPaid`, `OrderShipped` của **cùng một đơn** phải được xử lý đúng thứ tự. Cách đơn giản nhất với log phân vùng (Kafka-style)?"
+options = [
+  "Dùng 1 partition cho cả topic",
+  "Dùng `order_id` làm message key để mọi event của một đơn vào cùng partition",
+  "Gắn timestamp và để consumer tự sắp xếp lại",
+  "Gửi event với độ trễ tăng dần",
+]
+answer = [1]
+explanation = "Kafka đảm bảo thứ tự **trong một partition**; key giống nhau → cùng partition. Một partition cho cả topic giữ thứ tự toàn cục nhưng mất khả năng song song. Sắp xếp theo timestamp ở consumer phức tạp và sai khi đồng hồ lệch."
+
+[[questions]]
+id = "sd-048"
+module = "sd-async-messaging"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "ack"]
+prompt = '''
+Consumer có code:
+```python
+msg = queue.receive()
+queue.ack(msg)
+process(msg)   # ghi DB, gọi API
+```
+Lỗi gì có thể xảy ra?
+'''
+options = [
+  "Message bị xử lý trùng",
+  "Nếu process crash sau khi ack, message bị mất vĩnh viễn (thành at-most-once)",
+  "Queue sẽ bị đầy",
+  "Không có vấn đề gì",
+]
+answer = [1]
+explanation = "Ack trước nghĩa là broker đã xoá message; crash giữa chừng thì không ai xử lý lại. Đúng thứ tự cho at-least-once: **process xong rồi mới ack**, và làm process idempotent để chịu được giao lại."
+
+[[questions]]
+id = "sd-049"
+module = "sd-async-messaging"
+type = "multiple"
+difficulty = 2
+tags = ["level:middle", "queue-vs-log"]
+prompt = "Chọn các nhận định **đúng** khi so sánh message queue (kiểu SQS/RabbitMQ) với log phân vùng (kiểu Kafka):"
+options = [
+  "Với log, nhiều consumer group độc lập có thể đọc cùng dữ liệu, mỗi group giữ offset riêng",
+  "Với log, có thể replay lại event cũ trong thời gian retention",
+  "Queue truyền thống thường xoá message sau khi được ack",
+  "Log không đảm bảo thứ tự ở bất kỳ mức nào",
+  "Queue không thể có nhiều worker cùng lấy việc",
+]
+answer = [0, 1, 2]
+explanation = "Log đảm bảo thứ tự **trong partition**. Queue sinh ra để nhiều worker cạnh tranh lấy việc (competing consumers)."
+
+[[questions]]
+id = "sd-c08"
+module = "sd-async-messaging"
+type = "code"
+lang = "python"
+difficulty = 2
+tags = ["level:middle", "idempotency", "consumer"]
+title = "Idempotent consumer với SQLite"
+prompt = '''
+Broker giao message **at-least-once**. Viết `class PaymentConsumer`:
+- `__init__(self, conn)`: nhận `sqlite3.Connection`, tạo bảng (nếu chưa có) `processed(message_id TEXT PRIMARY KEY)` và `balances(account TEXT PRIMARY KEY, amount INTEGER NOT NULL)`
+- `handle(self, msg) -> bool`: `msg` là dict `{"id": str, "account": str, "amount": int}`
+  - nếu `msg["id"]` đã xử lý → trả `False`, **không** đổi số dư
+  - nếu `amount` không phải `int` hoặc `<= 0` → `raise ValueError("bad amount")` và **không ghi nhận gì** (message đó có thể được giao lại sau khi sửa)
+  - ngược lại cộng `amount` vào số dư `account` và ghi nhận id — **trong cùng một transaction** — rồi trả `True`
+- `balance(self, account) -> int`: số dư, `0` nếu chưa có
+'''
+starter = '''
+import sqlite3
+
+class PaymentConsumer:
+    def __init__(self, conn):
+        self.conn = conn
+        conn.execute("CREATE TABLE IF NOT EXISTS processed (message_id TEXT PRIMARY KEY)")
+        conn.execute("CREATE TABLE IF NOT EXISTS balances (account TEXT PRIMARY KEY, amount INTEGER NOT NULL)")
+
+    def handle(self, msg):
+        self.conn.execute(
+            "INSERT INTO balances(account, amount) VALUES (?, ?) "
+            "ON CONFLICT(account) DO UPDATE SET amount = amount + excluded.amount",
+            (msg["account"], msg["amount"]),
+        )
+        return True
+
+    def balance(self, account):
+        row = self.conn.execute("SELECT amount FROM balances WHERE account = ?", (account,)).fetchone()
+        return row[0] if row else 0
+'''
+solution = '''
+import sqlite3
+
+class PaymentConsumer:
+    def __init__(self, conn):
+        self.conn = conn
+        with conn:
+            conn.execute("CREATE TABLE IF NOT EXISTS processed (message_id TEXT PRIMARY KEY)")
+            conn.execute("CREATE TABLE IF NOT EXISTS balances (account TEXT PRIMARY KEY, amount INTEGER NOT NULL)")
+
+    def handle(self, msg):
+        try:
+            with self.conn:
+                self.conn.execute("INSERT INTO processed(message_id) VALUES (?)", (msg["id"],))
+                amount = msg["amount"]
+                if not isinstance(amount, int) or isinstance(amount, bool) or amount <= 0:
+                    raise ValueError("bad amount")
+                self.conn.execute(
+                    "INSERT INTO balances(account, amount) VALUES (?, ?) "
+                    "ON CONFLICT(account) DO UPDATE SET amount = amount + excluded.amount",
+                    (msg["account"], amount),
+                )
+        except sqlite3.IntegrityError:
+            return False
+        return True
+
+    def balance(self, account):
+        row = self.conn.execute("SELECT amount FROM balances WHERE account = ?", (account,)).fetchone()
+        return row[0] if row else 0
+'''
+tests = '''
+import sqlite3
+
+def make():
+    return PaymentConsumer(sqlite3.connect(":memory:"))
+
+@test("xử lý bình thường")
+def _():
+    c = make()
+    expect(c.handle({"id": "m1", "account": "A", "amount": 100})).to_be_true()
+    expect(c.handle({"id": "m2", "account": "A", "amount": 50})).to_be_true()
+    expect(c.balance("A")).to_equal(150)
+    expect(c.balance("B")).to_equal(0)
+
+@test("message trùng không cộng hai lần")
+def _():
+    c = make()
+    m = {"id": "m1", "account": "A", "amount": 100}
+    expect(c.handle(m)).to_be_true()
+    expect(c.handle(m)).to_be_false()
+    expect(c.handle(dict(m))).to_be_false()
+    expect(c.balance("A")).to_equal(100)
+
+@test("lỗi giữa chừng thì không ghi nhận id")
+def _():
+    c = make()
+    expect(lambda: c.handle({"id": "m9", "account": "A", "amount": -5})).to_raise(ValueError, match="bad amount")
+    expect(c.balance("A")).to_equal(0)
+    expect(c.handle({"id": "m9", "account": "A", "amount": 5})).to_be_true()
+    expect(c.balance("A")).to_equal(5)
+
+@test("nhiều tài khoản")
+def _():
+    c = make()
+    for i in range(10):
+        c.handle({"id": f"x{i}", "account": "A" if i % 2 else "B", "amount": 10})
+    c.handle({"id": "x3", "account": "A", "amount": 10})
+    expect(c.balance("A")).to_equal(50)
+    expect(c.balance("B")).to_equal(50)
+'''
+hints = ["`with conn:` mở transaction, tự commit khi không lỗi và rollback khi có exception.", "Chèn `message_id` vào bảng có PRIMARY KEY: trùng thì `sqlite3.IntegrityError`."]
+explanation = "Ghi nhận id đã xử lý và thay đổi nghiệp vụ trong **cùng một transaction** là điều kiện để đạt hiệu quả \"exactly-once\" trên nền at-least-once. Nếu hai việc nằm ở hai hệ thống khác nhau (ví dụ Redis + DB) thì vẫn có cửa sổ lỗi."
+
+[[questions]]
+id = "sd-050"
+module = "sd-async-messaging"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "outbox"]
+prompt = '''
+```python
+db.insert(order)            # commit
+broker.publish("order.created", order)
+```
+Thỉnh thoảng có đơn trong DB nhưng service kho không bao giờ nhận event. Giải pháp chuẩn nào xử lý gốc vấn đề?
+'''
+options = [
+  "Đảo thứ tự: publish trước rồi mới insert",
+  "Transactional outbox: ghi order và một dòng outbox trong cùng transaction; relay riêng đọc outbox và publish (at-least-once)",
+  "Bọc hai lệnh trong try/except và log lỗi",
+  "Dùng distributed transaction 2PC giữa DB và mọi broker",
+]
+answer = [1]
+explanation = "Đây là **dual write**: hai hệ thống không cùng transaction, crash giữa hai bước gây lệch. Đảo thứ tự chỉ đổi kiểu lỗi (event về đơn không tồn tại). Log lỗi không khôi phục được. 2PC hiếm broker hỗ trợ, chậm và giảm availability. Outbox biến việc publish thành \"đọc dữ liệu đã commit\"; relay có thể publish trùng nên consumer phải idempotent."
+
+[[questions]]
+id = "sd-c07"
+module = "sd-async-messaging"
+type = "code"
+lang = "python"
+difficulty = 3
+tags = ["level:senior", "outbox"]
+title = "Transactional outbox + relay"
+prompt = '''
+Hàm `setup(conn)` (có sẵn) tạo bảng `orders(id TEXT PRIMARY KEY, total INTEGER)` và `outbox(seq INTEGER PRIMARY KEY AUTOINCREMENT, topic TEXT, payload TEXT, sent INTEGER DEFAULT 0)`.
+
+Viết:
+1. `create_order(conn, order_id, total)`: trong **một transaction**, chèn order và một dòng outbox `topic = "order.created"`, `payload = json.dumps({"id": order_id, "total": total})`. Nếu chèn order lỗi (trùng id → `sqlite3.IntegrityError`) thì **không** được còn dòng outbox nào, và exception được ném ra ngoài.
+2. `relay(conn, publish, batch_size=100) -> int`: lấy tối đa `batch_size` dòng `sent = 0` theo `seq` tăng dần; với mỗi dòng gọi `publish(topic, payload_dict)` rồi đánh dấu `sent = 1` (commit ngay sau mỗi dòng). Nếu `publish` ném exception thì **dừng** (giữ thứ tự, dòng đó và các dòng sau để lần sau) và trả số dòng đã publish thành công trong lần chạy này (không ném lỗi ra ngoài).
+'''
+starter = '''
+import json
+import sqlite3
+
+def setup(conn):
+    conn.execute("CREATE TABLE IF NOT EXISTS orders (id TEXT PRIMARY KEY, total INTEGER)")
+    conn.execute("CREATE TABLE IF NOT EXISTS outbox (seq INTEGER PRIMARY KEY AUTOINCREMENT, topic TEXT, payload TEXT, sent INTEGER DEFAULT 0)")
+    conn.commit()
+
+def create_order(conn, order_id, total):
+    conn.execute("INSERT INTO orders(id, total) VALUES (?, ?)", (order_id, total))
+    conn.commit()
+
+def relay(conn, publish, batch_size=100):
+    return 0
+'''
+solution = '''
+import json
+import sqlite3
+
+def setup(conn):
+    conn.execute("CREATE TABLE IF NOT EXISTS orders (id TEXT PRIMARY KEY, total INTEGER)")
+    conn.execute("CREATE TABLE IF NOT EXISTS outbox (seq INTEGER PRIMARY KEY AUTOINCREMENT, topic TEXT, payload TEXT, sent INTEGER DEFAULT 0)")
+    conn.commit()
+
+def create_order(conn, order_id, total):
+    with conn:
+        conn.execute("INSERT INTO outbox(topic, payload) VALUES (?, ?)",
+                     ("order.created", json.dumps({"id": order_id, "total": total})))
+        conn.execute("INSERT INTO orders(id, total) VALUES (?, ?)", (order_id, total))
+
+def relay(conn, publish, batch_size=100):
+    rows = conn.execute(
+        "SELECT seq, topic, payload FROM outbox WHERE sent = 0 ORDER BY seq LIMIT ?", (batch_size,)
+    ).fetchall()
+    count = 0
+    for seq, topic, payload in rows:
+        try:
+            publish(topic, json.loads(payload))
+        except Exception:
+            break
+        with conn:
+            conn.execute("UPDATE outbox SET sent = 1 WHERE seq = ?", (seq,))
+        count += 1
+    return count
+'''
+tests = '''
+import sqlite3
+
+def fresh():
+    conn = sqlite3.connect(":memory:")
+    setup(conn)
+    return conn
+
+@test("publish theo thứ tự và không gửi lại")
+def _():
+    conn = fresh()
+    for i, t in enumerate([10, 20, 30]):
+        create_order(conn, f"o{i}", t)
+    got = []
+    expect(relay(conn, lambda topic, p: got.append((topic, p["id"], p["total"])))).to_equal(3)
+    expect(got).to_equal([("order.created", "o0", 10), ("order.created", "o1", 20), ("order.created", "o2", 30)])
+    expect(relay(conn, lambda topic, p: got.append(p))).to_equal(0)
+
+@test("broker lỗi thì dừng và lần sau tiếp tục đúng chỗ")
+def _():
+    conn = fresh()
+    for i in range(3):
+        create_order(conn, f"o{i}", i)
+    got = []
+    def flaky(topic, p):
+        if p["id"] == "o1":
+            raise ConnectionError("broker down")
+        got.append(p["id"])
+    expect(relay(conn, flaky)).to_equal(1)
+    expect(got).to_equal(["o0"])
+    expect(relay(conn, lambda t, p: got.append(p["id"]))).to_equal(2)
+    expect(got).to_equal(["o0", "o1", "o2"])
+
+@test("tạo đơn lỗi thì không có event mồ côi")
+def _():
+    conn = fresh()
+    create_order(conn, "o1", 5)
+    expect(lambda: create_order(conn, "o1", 99)).to_raise(sqlite3.IntegrityError)
+    expect(conn.execute("SELECT COUNT(*) FROM outbox").fetchone()[0]).to_equal(1)
+    expect(conn.execute("SELECT COUNT(*) FROM orders").fetchone()[0]).to_equal(1)
+
+@test("tôn trọng batch_size")
+def _():
+    conn = fresh()
+    for i in range(5):
+        create_order(conn, f"o{i}", i)
+    got = []
+    expect(relay(conn, lambda t, p: got.append(p["id"]), batch_size=2)).to_equal(2)
+    expect(relay(conn, lambda t, p: got.append(p["id"]), batch_size=2)).to_equal(2)
+    expect(got).to_equal(["o0", "o1", "o2", "o3"])
+'''
+hints = ["`with conn:` gói nhiều lệnh thành một transaction và rollback khi có exception.", "Trong relay, bắt exception của `publish` rồi `break` để giữ thứ tự."]
+explanation = "Relay có thể crash **sau** khi publish nhưng **trước** khi đánh dấu `sent` → event bị gửi lại; vì thế outbox luôn đi kèm consumer idempotent. Ở quy mô lớn, thay polling bằng CDC (đọc WAL/binlog)."
+
+[[questions]]
+id = "sd-051"
+module = "sd-async-messaging"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "saga"]
+prompt = '''
+Saga đặt hàng: (1) giữ hàng ở Inventory, (2) trừ tiền ở Payment, (3) tạo vận đơn ở Shipping. Bước (3) thất bại vĩnh viễn. Hệ thống nên làm gì?
+'''
+options = [
+  "Rollback transaction DB chung của ba service",
+  "Chạy compensating action theo thứ tự ngược: hoàn tiền ở Payment rồi nhả hàng ở Inventory, đánh dấu đơn thất bại",
+  "Retry bước (3) mãi mãi",
+  "Bỏ qua, để đơn ở trạng thái đã trừ tiền",
+]
+answer = [1]
+explanation = "Saga không có transaction chung; mỗi bước đã commit cục bộ nên phải **bù trừ** bằng hành động nghiệp vụ ngược (hoàn tiền, nhả kho). Compensation cũng phải idempotent và có retry. Retry vô hạn với lỗi vĩnh viễn làm tiền khách bị giữ."
+
+[[questions]]
+id = "sd-052"
+module = "sd-async-messaging"
+type = "multiple"
+difficulty = 3
+tags = ["level:senior", "delivery-semantics"]
+prompt = "Chọn các nhận định **đúng** về \"exactly-once\":"
+options = [
+  "Trong thực tế thường đạt \"hiệu quả exactly-once\" bằng at-least-once kết hợp xử lý idempotent",
+  "Transaction của Kafka giúp exactly-once trong phạm vi đọc–xử lý–ghi giữa các topic Kafka, nhưng không tự bao phủ side effect ra hệ thống ngoài (gửi email, gọi API thanh toán)",
+  "Chỉ cần bật exactly-once ở broker là consumer không bao giờ thấy trùng dù ghi vào DB ngoài",
+  "Lưu offset cùng transaction với kết quả xử lý trong DB là một cách tránh xử lý trùng",
+  "At-most-once là lựa chọn an toàn nhất cho thanh toán",
+]
+answer = [0, 1, 3]
+explanation = "Broker không kiểm soát được side effect bên ngoài, nên consumer vẫn phải idempotent hoặc lưu offset nguyên tử cùng kết quả. At-most-once có thể **mất** giao dịch — không an toàn cho thanh toán."
+
+[[questions]]
+id = "sd-053"
+module = "sd-async-messaging"
+type = "essay"
+difficulty = 3
+tags = ["level:senior", "saga", "interview"]
+prompt = "So sánh saga kiểu **orchestration** và **choreography** cho luồng đặt hàng gồm Inventory, Payment, Shipping. Khi nào bạn chọn mỗi kiểu?"
+keywords = [
+  ["orchestrat", "điều phối"],
+  ["choreograph", "event", "sự kiện"],
+  ["compensat", "bù trừ", "hoàn tiền"],
+  ["coupling", "phụ thuộc", "kết dính"],
+  ["theo dõi", "observab", "trạng thái", "debug", "toàn cục"],
+  ["idempot"],
+]
+min_keywords = 4
+model_answer = '''
+- **Orchestration**: một Order Orchestrator giữ state machine của saga, gửi lệnh tới từng service và quyết định bước tiếp theo/compensation. Ưu: luồng nằm ở một chỗ, dễ theo dõi trạng thái toàn cục, debug và thêm timeout; nhược: orchestrator là thành phần trung tâm, có nguy cơ ôm logic nghiệp vụ của service khác.
+- **Choreography**: mỗi service phản ứng theo event (`OrderCreated` → Inventory giữ hàng → `StockReserved` → Payment trừ tiền…). Ưu: ít coupling vào một trung tâm, dễ thêm consumer mới; nhược: luồng bị rải khắp nơi, khó biết một đơn đang ở đâu, dễ sinh vòng lặp event.
+- Cả hai đều cần **compensating action** (hoàn tiền, nhả kho), message/command **idempotent**, timeout và lưu trạng thái saga.
+- Chọn: luồng nghiệp vụ quan trọng, nhiều bước, cần kiểm soát và báo cáo (đặt hàng, thanh toán) → orchestration; phản ứng đơn giản 1–2 bước, nhiều bên quan tâm (gửi thông báo, cập nhật analytics) → choreography. Có thể kết hợp.
+'''
+explanation = "Câu trả lời tốt nêu được trade-off về coupling và khả năng quan sát, đồng thời nhắc compensation và idempotency vì đó là điều kiện để mọi saga chạy đúng."
+
+[[questions]]
+id = "sd-054"
+module = "sd-async-messaging"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "messaging", "decision"]
+prompt = '''
+Startup 6 dev, chưa có SRE riêng, cần xử lý nền ~200 job/s (gửi email, tạo PDF, webhook). Một dev muốn tự dựng cụm Kafka trên VM "cho chuẩn". Bạn quyết định thế nào?
+'''
+options = [
+  "Đồng ý dựng Kafka tự quản lý vì Kafka scale tốt nhất",
+  "Dùng queue managed (ví dụ SQS/Cloud Tasks) hoặc queue trên Redis/Postgres đang có, với DLQ và retry; xem lại khi có nhu cầu event stream/replay nhiều consumer",
+  "Không dùng queue, xử lý đồng bộ trong request",
+  "Viết broker riêng cho phù hợp nghiệp vụ",
+]
+answer = [1]
+explanation = "Nhu cầu là **job queue** ở tải nhỏ; dịch vụ managed hoặc hạ tầng đang có giải quyết đủ với chi phí vận hành gần bằng 0. Kafka tự quản (broker, replication, nâng cấp, giám sát) là gánh nặng lớn cho team không có SRE, và lợi thế của nó (replay, nhiều consumer group, throughput rất cao) chưa cần. Xử lý đồng bộ làm request chậm và không retry được; tự viết broker là rủi ro không cần thiết."
+
+[[questions]]
+id = "sd-055"
+module = "sd-async-messaging"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "messaging", "incident"]
+prompt = '''
+Consumer lag của topic `payments` tăng đều 3 ngày liền (từ vài giây lên 40 phút) dù không có lỗi. Producer tăng 30% do chiến dịch marketing kéo dài 2 tuần. Bạn quyết định gì trước?
+'''
+options = [
+  "Giảm retention của topic để lag giảm",
+  "Xác định nút cổ chai của consumer (DB ghi, API ngoài, xử lý tuần tự) rồi scale đúng chỗ: thêm partition/consumer nếu CPU consumer là giới hạn, batch ghi DB nếu DB là giới hạn; đặt alert theo lag/thời gian chờ",
+  "Bỏ qua vì không có lỗi",
+  "Chuyển payments sang xử lý đồng bộ",
+]
+answer = [1]
+explanation = "Lag tăng đều nghĩa là throughput consumer < tốc độ đến — sẽ không tự hết trong 2 tuần chiến dịch, và với thanh toán thì 40 phút chậm là tác động người dùng. Phải tìm nút cổ chai trước khi scale (thêm consumer không giúp nếu DB là giới hạn). Giảm retention có thể **xoá message chưa xử lý**. Xử lý đồng bộ chuyển áp lực sang người dùng."
+
+# ===================== sd-reliability =====================
+
+[[questions]]
+id = "sd-056"
+module = "sd-reliability"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "timeout"]
+prompt = "Service A gọi service B qua HTTP **không đặt timeout**. B bị treo (không trả lời, không đóng kết nối). Điều gì dễ xảy ra nhất với A?"
+options = [
+  "A nhận lỗi ngay lập tức nên không bị ảnh hưởng",
+  "Các thread/connection của A bị giữ chờ mãi, pool cạn dần và A cũng ngừng phục vụ request khác",
+  "Load balancer tự động sửa B",
+  "Request được tự động chuyển sang B ở region khác",
+]
+answer = [1]
+explanation = "Không có timeout, mỗi lời gọi treo giữ một tài nguyên (thread, connection, bộ nhớ). Khi pool cạn, A cũng \"chết\" dù A không có lỗi — đó là **cascading failure**. Mọi lời gọi mạng phải có timeout gắn với deadline của request."
+
+[[questions]]
+id = "sd-057"
+module = "sd-reliability"
+type = "fill"
+difficulty = 1
+tags = ["level:junior", "rate-limiting"]
+prompt = "Khi client vượt rate limit, API nên trả HTTP status `{{blank}}` (Too Many Requests), thường kèm header `Retry-After`."
+blanks = [["429"]]
+explanation = "429 Too Many Requests báo cho client biết cần chậm lại; `Retry-After` cho biết nên chờ bao lâu. Dùng 500/503 cho trường hợp này làm client tưởng server lỗi và có thể retry dồn dập."
+
+[[questions]]
+id = "sd-058"
+module = "sd-reliability"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "graceful-degradation"]
+prompt = "Trang chi tiết sản phẩm gọi service **gợi ý sản phẩm** (không quan trọng) và service đó đang lỗi. Cách xử lý nào thể hiện **graceful degradation**?"
+options = [
+  "Trả lỗi 500 cho cả trang",
+  "Vẫn hiển thị trang sản phẩm, ẩn khối gợi ý (hoặc dùng gợi ý cũ từ cache)",
+  "Retry service gợi ý liên tục cho tới khi được",
+  "Chuyển người dùng về trang chủ",
+]
+answer = [1]
+explanation = "Graceful degradation: phần phụ hỏng thì trả kết quả rút gọn, giữ chức năng chính. Phải đặt timeout ngắn cho lời gọi phụ để nó không kéo chậm cả trang. Retry liên tục làm dependency đang ốm càng quá tải."
+
+[[questions]]
+id = "sd-059"
+module = "sd-reliability"
+type = "multiple"
+difficulty = 2
+tags = ["level:middle", "retry", "idempotency"]
+prompt = "Client nhận **timeout** (không biết server đã xử lý hay chưa). Những lời gọi nào có thể **retry an toàn** mà không cần cơ chế bổ sung?"
+options = [
+  "`GET /orders/42`",
+  "`PUT /users/7/email` với body là email mới (ghi đè toàn bộ giá trị)",
+  "`POST /payments` trừ 100.000đ (không có idempotency key)",
+  "`DELETE /cart/items/9`",
+  "`POST /counters/likes/increment`",
+]
+answer = [0, 1, 3]
+explanation = "GET, PUT ghi đè và DELETE là **idempotent**: gọi nhiều lần cho cùng trạng thái cuối. POST trừ tiền và tăng bộ đếm không idempotent — retry có thể trừ tiền/tăng hai lần; cần **idempotency key** hoặc thiết kế lại thao tác."
+
+[[questions]]
+id = "sd-060"
+module = "sd-reliability"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "bulkhead"]
+prompt = '''
+API gateway dùng **một** connection pool 200 kết nối cho mọi dependency. Service báo cáo (chậm, ít quan trọng) bắt đầu trả lời sau 30 s và chiếm hết pool, khiến cả luồng thanh toán cũng lỗi. Mẫu thiết kế nào trực tiếp ngăn chuyện này?
+'''
+options = [
+  "Bulkhead: tách pool/giới hạn đồng thời riêng cho từng dependency (ví dụ báo cáo tối đa 20)",
+  "Tăng pool lên 2.000 kết nối",
+  "Thêm cache trước service thanh toán",
+  "Chuyển sang HTTP/2",
+]
+answer = [0]
+explanation = "**Bulkhead** chia tài nguyên thành ngăn riêng, như vách ngăn tàu thuỷ: ngăn báo cáo đầy thì chỉ request báo cáo bị từ chối. Tăng pool chỉ trì hoãn và tốn bộ nhớ; nên kết hợp thêm timeout ngắn cho service báo cáo."
+
+[[questions]]
+id = "sd-c09"
+module = "sd-reliability"
+type = "code"
+lang = "javascript"
+difficulty = 2
+tags = ["level:middle", "retry", "backoff"]
+title = "Retry với exponential backoff + full jitter"
+prompt = '''
+Cài `retry(op, { retries, baseMs, maxMs, random = Math.random }, done)`:
+- Gọi `op()` **ngay lập tức** (đồng bộ). `op` trả giá trị hoặc ném lỗi.
+- Thành công → gọi `done(null, value)`.
+- Lỗi lần thứ `n` (n = 1, 2, …): nếu `err.retryable === false` hoặc đã dùng hết `retries` lần thử lại → `done(err)` (lỗi cuối cùng). Ngược lại hẹn giờ `setTimeout` thử lại sau
+  `delay = Math.floor(random() * Math.min(maxMs, baseMs * 2 ** (n - 1)))` (full jitter).
+- Tổng số lần gọi `op` tối đa là `retries + 1`. `done` chỉ được gọi **đúng một lần**.
+
+Ví dụ: `baseMs = 100`, `random = () => 0.5` → các lần chờ là 50, 100, 200 ms…
+'''
+starter = '''
+function retry(op, { retries, baseMs, maxMs, random = Math.random }, done) {
+  try {
+    done(null, op());
+  } catch (err) {
+    done(err);
+  }
+}
+'''
+solution = '''
+function retry(op, { retries, baseMs, maxMs, random = Math.random }, done) {
+  let failures = 0;
+  const attempt = () => {
+    let value;
+    try {
+      value = op();
+    } catch (err) {
+      failures++;
+      if (err && err.retryable === false || failures > retries) {
+        done(err);
+        return;
+      }
+      const cap = Math.min(maxMs, baseMs * 2 ** (failures - 1));
+      setTimeout(attempt, Math.floor(random() * cap));
+      return;
+    }
+    done(null, value);
+  };
+  attempt();
+}
+'''
+tests = '''
+const half = () => 0.5;
+function failing(times, value) {
+  let calls = 0;
+  return jest.fn(() => {
+    calls++;
+    if (calls <= times) throw new Error('fail ' + calls);
+    return value;
+  });
+}
+test('thành công ngay lần đầu', () => {
+  const op = jest.fn(() => 'ok');
+  const done = jest.fn();
+  retry(op, { retries: 3, baseMs: 100, maxMs: 1000, random: half }, done);
+  expect(op).toHaveBeenCalledTimes(1);
+  expect(done.mock.calls).toEqual([[null, 'ok']]);
+});
+test('chờ backoff rồi thành công', () => {
+  const op = failing(2, 'ok');
+  const done = jest.fn();
+  retry(op, { retries: 3, baseMs: 100, maxMs: 1000, random: half }, done);
+  expect(op).toHaveBeenCalledTimes(1);
+  jest.advanceTimersByTime(49);
+  expect(op).toHaveBeenCalledTimes(1);
+  jest.advanceTimersByTime(1);
+  expect(op).toHaveBeenCalledTimes(2);
+  jest.advanceTimersByTime(99);
+  expect(op).toHaveBeenCalledTimes(2);
+  jest.advanceTimersByTime(1);
+  expect(op).toHaveBeenCalledTimes(3);
+  expect(done.mock.calls).toEqual([[null, 'ok']]);
+});
+test('hết lượt retry thì trả lỗi cuối', () => {
+  const op = failing(10, 'never');
+  const done = jest.fn();
+  retry(op, { retries: 2, baseMs: 10, maxMs: 1000, random: half }, done);
+  jest.advanceTimersByTime(1000);
+  expect(op).toHaveBeenCalledTimes(3);
+  expect(done).toHaveBeenCalledTimes(1);
+  expect(done.mock.calls[0][0].message).toBe('fail 3');
+});
+test('delay bị chặn bởi maxMs', () => {
+  const op = failing(3, 'ok');
+  const done = jest.fn();
+  retry(op, { retries: 5, baseMs: 100, maxMs: 300, random: half }, done);
+  jest.advanceTimersByTime(299);
+  expect(op).toHaveBeenCalledTimes(3);
+  jest.advanceTimersByTime(1);
+  expect(op).toHaveBeenCalledTimes(4);
+  expect(done.mock.calls).toEqual([[null, 'ok']]);
+});
+test('lỗi không retry được thì dừng ngay', () => {
+  const op = jest.fn(() => { const e = new Error('bad request'); e.retryable = false; throw e; });
+  const done = jest.fn();
+  retry(op, { retries: 5, baseMs: 100, maxMs: 1000, random: half }, done);
+  jest.advanceTimersByTime(5000);
+  expect(op).toHaveBeenCalledTimes(1);
+  expect(done.mock.calls[0][0].message).toBe('bad request');
+});
+'''
+hints = ["Đếm số lần lỗi `failures`; điều kiện dừng là `failures > retries`.", "Delay lần lỗi thứ n: `Math.floor(random() * Math.min(maxMs, baseMs * 2 ** (n - 1)))`."]
+explanation = "Full jitter phân tán thời điểm retry của hàng nghìn client, tránh chúng cùng đập vào dependency đúng một nhịp. Chặn bằng `maxMs` để thời gian chờ không tăng vô hạn; lỗi không tạm thời (4xx) thì không retry."
+
+[[questions]]
+id = "sd-c10"
+module = "sd-reliability"
+type = "code"
+lang = "python"
+difficulty = 3
+tags = ["level:senior", "circuit-breaker"]
+title = "Circuit breaker ba trạng thái"
+prompt = '''
+Cài `class CircuitBreaker(failure_threshold, reset_timeout, clock)` — `clock()` trả thời gian hiện tại (giây, số thực):
+- `call(fn)`: gọi `fn()` và trả kết quả, theo trạng thái:
+  - **closed**: gọi bình thường. `fn` ném lỗi → tăng bộ đếm lỗi liên tiếp rồi ném lại lỗi; khi bộ đếm đạt `failure_threshold` → chuyển **open** (ghi thời điểm mở). Thành công → đặt bộ đếm về 0.
+  - **open**: nếu chưa qua `reset_timeout` giây kể từ lúc mở → **không gọi** `fn`, ném `CircuitOpenError`. Nếu đã qua (`clock() - opened_at >= reset_timeout`) → coi là **half_open**.
+  - **half_open**: cho **một** lời gọi thử. Thành công → **closed**, bộ đếm = 0. Lỗi → **open** lại với thời điểm mở mới, ném lại lỗi.
+- Thuộc tính `state` trả `"closed"`, `"open"` hoặc `"half_open"` (open đã hết cool-down thì báo `"half_open"`).
+'''
+starter = '''
+class CircuitOpenError(Exception):
+    pass
+
+class CircuitBreaker:
+    def __init__(self, failure_threshold, reset_timeout, clock):
+        self.failure_threshold = failure_threshold
+        self.reset_timeout = reset_timeout
+        self.clock = clock
+
+    @property
+    def state(self):
+        return "closed"
+
+    def call(self, fn):
+        return fn()
+'''
+solution = '''
+class CircuitOpenError(Exception):
+    pass
+
+class CircuitBreaker:
+    def __init__(self, failure_threshold, reset_timeout, clock):
+        self.failure_threshold = failure_threshold
+        self.reset_timeout = reset_timeout
+        self.clock = clock
+        self.failures = 0
+        self.opened_at = None
+
+    @property
+    def state(self):
+        if self.opened_at is None:
+            return "closed"
+        if self.clock() - self.opened_at >= self.reset_timeout:
+            return "half_open"
+        return "open"
+
+    def call(self, fn):
+        st = self.state
+        if st == "open":
+            raise CircuitOpenError("circuit open")
+        try:
+            result = fn()
+        except Exception:
+            if st == "half_open":
+                self.opened_at = self.clock()
+            else:
+                self.failures += 1
+                if self.failures >= self.failure_threshold:
+                    self.opened_at = self.clock()
+            raise
+        self.failures = 0
+        self.opened_at = None
+        return result
+'''
+tests = '''
+class Clock:
+    def __init__(self):
+        self.t = 0.0
+    def __call__(self):
+        return self.t
+
+def boom():
+    raise ConnectionError("down")
+
+def make():
+    c = Clock()
+    return c, CircuitBreaker(3, 10, c)
+
+@test("mở sau đủ số lỗi liên tiếp")
+def _():
+    c, cb = make()
+    for _ in range(3):
+        expect(lambda: cb.call(boom)).to_raise(ConnectionError)
+    expect(cb.state).to_equal("open")
+    calls = []
+    expect(lambda: cb.call(lambda: calls.append(1))).to_raise(CircuitOpenError)
+    expect(calls).to_equal([])
+
+@test("thành công giữa chừng thì reset bộ đếm")
+def _():
+    c, cb = make()
+    expect(lambda: cb.call(boom)).to_raise(ConnectionError)
+    expect(lambda: cb.call(boom)).to_raise(ConnectionError)
+    expect(cb.call(lambda: "ok")).to_equal("ok")
+    expect(lambda: cb.call(boom)).to_raise(ConnectionError)
+    expect(lambda: cb.call(boom)).to_raise(ConnectionError)
+    expect(cb.state).to_equal("closed")
+
+@test("half_open thành công thì đóng lại")
+def _():
+    c, cb = make()
+    for _ in range(3):
+        expect(lambda: cb.call(boom)).to_raise(ConnectionError)
+    c.t = 9.9
+    expect(cb.state).to_equal("open")
+    c.t = 10.0
+    expect(cb.state).to_equal("half_open")
+    expect(cb.call(lambda: 42)).to_equal(42)
+    expect(cb.state).to_equal("closed")
+
+@test("half_open lỗi thì mở lại với thời điểm mới")
+def _():
+    c, cb = make()
+    for _ in range(3):
+        expect(lambda: cb.call(boom)).to_raise(ConnectionError)
+    c.t = 12.0
+    expect(lambda: cb.call(boom)).to_raise(ConnectionError)
+    expect(cb.state).to_equal("open")
+    c.t = 21.0
+    expect(cb.state).to_equal("open")
+    c.t = 22.0
+    expect(cb.state).to_equal("half_open")
+'''
+hints = ["Chỉ cần lưu `failures` và `opened_at`; `state` suy ra từ `opened_at` và `clock()`.", "Ở half_open, một lỗi là đủ để mở lại — không cần đếm tới threshold."]
+explanation = "Circuit breaker giúp **fail fast** khi dependency chết: phía gọi không phí thread chờ timeout, dependency có thời gian hồi phục. Half-open chỉ cho một (hoặc vài) request thử để tránh dồn tải ngay khi vừa hồi."
+
+[[questions]]
+id = "sd-061"
+module = "sd-reliability"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "retry", "retry-storm"]
+prompt = '''
+Chuỗi gọi: Mobile → API Gateway → Order Service → Inventory Service. Mỗi tầng retry tối đa 3 lần (tổng 4 lần gọi) khi tầng dưới lỗi. Inventory chết hẳn. Một request của người dùng có thể sinh tối đa bao nhiêu lời gọi vào Inventory, và nên sửa thế nào?
+'''
+options = [
+  "4 lời gọi; không cần sửa",
+  "12 lời gọi; tăng số lần retry ở tầng cuối",
+  "64 lời gọi (4×4×4); chỉ retry ở một tầng (gần lỗi nhất), các tầng khác fail fast, thêm retry budget và circuit breaker",
+  "64 lời gọi; bỏ timeout để giảm số lần retry",
+]
+answer = [2]
+explanation = "Retry nhân lên theo từng tầng: 4 × 4 × 4 = 64 lời gọi vào một dependency **đang chết** — retry storm khiến nó không thể hồi phục. Quy tắc: retry ở đúng một tầng, giới hạn bằng retry budget (ví dụ ≤ 10% traffic), circuit breaker để dừng hẳn khi lỗi kéo dài."
+
+[[questions]]
+id = "sd-062"
+module = "sd-reliability"
+type = "essay"
+difficulty = 3
+tags = ["level:senior", "resilience", "interview"]
+prompt = "Phỏng vấn: \"Service checkout của bạn gọi 4 dependency (inventory, pricing, payment, recommendation). Hãy thiết kế để checkout vẫn đáng tin cậy khi một dependency chậm hoặc chết.\" Trình bày các cơ chế và cách bạn phân biệt dependency quan trọng với không quan trọng."
+keywords = [
+  ["timeout", "deadline"],
+  ["retry", "backoff", "jitter"],
+  ["circuit breaker", "ngắt mạch"],
+  ["bulkhead", "pool riêng", "cô lập"],
+  ["idempot", "idempotency key"],
+  ["degrad", "fallback", "rút gọn", "ẩn"],
+]
+min_keywords = 4
+model_answer = '''
+1. **Phân loại dependency**: payment và inventory là quan trọng (thiếu thì không thể chốt đơn), pricing quan trọng nhưng có thể dùng giá cache ngắn hạn, recommendation là phụ.
+2. **Timeout + deadline**: checkout có deadline tổng (ví dụ 2 s — ước lượng), truyền xuống; timeout mỗi dependency theo p99 của nó; recommendation timeout rất ngắn (~100 ms).
+3. **Retry có kiểm soát**: chỉ retry lỗi tạm thời, exponential backoff + jitter, retry budget; payment chỉ retry với **idempotency key** để không trừ tiền hai lần.
+4. **Circuit breaker** cho từng dependency để fail fast khi nó chết, **bulkhead** (pool/semaphore riêng) để recommendation chậm không ăn hết tài nguyên của payment.
+5. **Graceful degradation / fallback**: recommendation lỗi → ẩn khối; pricing lỗi → giá cache còn hạn hoặc báo thử lại; payment lỗi kéo dài → cho phép đặt đơn "chờ thanh toán" và xử lý bất đồng bộ nếu nghiệp vụ chấp nhận.
+6. **Quan sát**: metric theo dependency (lỗi, latency, trạng thái breaker), alert theo SLO của checkout.
+'''
+explanation = "Câu trả lời tốt không chỉ liệt kê pattern mà gắn từng pattern với mức độ quan trọng của dependency, và nhắc idempotency cho thanh toán khi retry."
+
+[[questions]]
+id = "sd-063"
+module = "sd-reliability"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "rate-limiting", "decision"]
+prompt = '''
+Rate limiter của API công khai dựa trên Redis. Redis cluster sập 5 phút. API phục vụ (a) đọc catalog sản phẩm và (b) endpoint gửi OTP qua SMS (mỗi SMS tốn tiền, từng bị lạm dụng). Bạn chọn chính sách khi rate limiter không hoạt động thế nào?
+'''
+options = [
+  "Fail-closed cho mọi endpoint: chặn hết cho an toàn",
+  "Fail-open cho mọi endpoint: không để người dùng bị ảnh hưởng",
+  "Fail-open cho đọc catalog (có thể kèm giới hạn cục bộ theo từng instance), fail-closed hoặc giới hạn cục bộ rất chặt cho gửi OTP; ghi quyết định vào ADR và có alert khi limiter lỗi",
+  "Tắt cả hai endpoint cho tới khi Redis hồi phục",
+]
+answer = [2]
+explanation = "Quyết định fail-open/fail-closed phụ thuộc **rủi ro của từng endpoint**: đọc catalog bị lạm dụng 5 phút chỉ tốn tài nguyên; gửi OTP bị lạm dụng là mất tiền thật và có thể bị dùng để spam. Giới hạn cục bộ trong bộ nhớ từng instance là phương án dự phòng rẻ. Áp một chính sách chung cho mọi endpoint là bỏ qua trade-off."
+
+# ===================== sd-api-design =====================
+
+[[questions]]
+id = "sd-064"
+module = "sd-api-design"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "rest"]
+prompt = "Endpoint nào thiết kế **sai** theo ngữ nghĩa HTTP?"
+options = [
+  "`GET /orders?status=paid` để lọc đơn",
+  "`GET /orders/42/cancel` để huỷ đơn 42",
+  "`POST /orders` để tạo đơn mới",
+  "`DELETE /orders/42/items/3` để xoá một dòng trong đơn",
+]
+answer = [1]
+explanation = "GET phải **an toàn** (không có side effect): crawler, prefetch của trình duyệt, cache hay retry tự động đều có thể gọi GET bất cứ lúc nào. Huỷ đơn nên là `POST /orders/42/cancel` (hành động) hoặc `PATCH /orders/42` với trạng thái mới."
+
+[[questions]]
+id = "sd-065"
+module = "sd-api-design"
+type = "fill"
+difficulty = 1
+tags = ["level:junior", "rest", "status-code"]
+prompt = "Khi `POST /users` tạo tài nguyên mới thành công, status code phù hợp nhất là `{{blank}}` (Created), thường kèm header `Location` trỏ tới tài nguyên mới."
+blanks = [["201"]]
+explanation = "201 Created báo rõ đã tạo tài nguyên. 200 vẫn chạy được nhưng mất thông tin ngữ nghĩa; 202 Accepted dùng khi chỉ mới nhận yêu cầu để xử lý bất đồng bộ."
+
+[[questions]]
+id = "sd-c11"
+module = "sd-api-design"
+type = "code"
+lang = "python"
+difficulty = 1
+tags = ["level:junior", "pagination", "cursor"]
+title = "Cursor pagination (keyset)"
+prompt = '''
+Viết `paginate(items, limit, cursor=None)` cho danh sách `items` gồm các dict có khoá `"id"` (số nguyên, duy nhất, **chưa sắp xếp**):
+- Sắp xếp theo `id` tăng dần (không sửa list đầu vào).
+- `cursor is None` → bắt đầu từ đầu; ngược lại `cursor` là chuỗi do `encode_cursor(last_id)` tạo ra → chỉ lấy các item có `id > last_id`.
+- Trả `{"data": <tối đa limit item>, "next_cursor": encode_cursor(id cuối trang) hoặc None nếu không còn item nào sau trang này}`.
+- `limit` ngoài khoảng `1..100` → `raise ValueError("bad limit")`.
+
+Hàm `encode_cursor` / `decode_cursor` (base64, opaque với client) có sẵn trong starter.
+'''
+starter = '''
+import base64
+
+def encode_cursor(last_id):
+    return base64.urlsafe_b64encode(str(last_id).encode()).decode()
+
+def decode_cursor(cursor):
+    return int(base64.urlsafe_b64decode(cursor.encode()).decode())
+
+def paginate(items, limit, cursor=None):
+    return {"data": items[:limit], "next_cursor": None}
+'''
+solution = '''
+import base64
+
+def encode_cursor(last_id):
+    return base64.urlsafe_b64encode(str(last_id).encode()).decode()
+
+def decode_cursor(cursor):
+    return int(base64.urlsafe_b64decode(cursor.encode()).decode())
+
+def paginate(items, limit, cursor=None):
+    if limit < 1 or limit > 100:
+        raise ValueError("bad limit")
+    rows = sorted(items, key=lambda it: it["id"])
+    if cursor is not None:
+        last_id = decode_cursor(cursor)
+        rows = [it for it in rows if it["id"] > last_id]
+    page = rows[:limit]
+    has_more = len(rows) > limit
+    return {"data": page, "next_cursor": encode_cursor(page[-1]["id"]) if has_more else None}
+'''
+tests = '''
+def ids(page):
+    return [it["id"] for it in page["data"]]
+
+@test("trang đầu và next_cursor")
+def _():
+    items = [{"id": i} for i in [5, 1, 4, 2, 3]]
+    p = paginate(items, 2)
+    expect(ids(p)).to_equal([1, 2])
+    expect(decode_cursor(p["next_cursor"])).to_equal(2)
+    expect([it["id"] for it in items]).to_equal([5, 1, 4, 2, 3])
+
+@test("đi hết các trang")
+def _():
+    items = [{"id": i} for i in range(1, 8)]
+    p1 = paginate(items, 3)
+    p2 = paginate(items, 3, p1["next_cursor"])
+    p3 = paginate(items, 3, p2["next_cursor"])
+    expect(ids(p2)).to_equal([4, 5, 6])
+    expect(ids(p3)).to_equal([7])
+    expect(p3["next_cursor"]).to_be_none()
+
+@test("xoá bản ghi giữa chừng không làm lệch trang")
+def _():
+    items = [{"id": i} for i in range(1, 11)]
+    p1 = paginate(items, 3)
+    items = [it for it in items if it["id"] != 2]
+    p2 = paginate(items, 3, p1["next_cursor"])
+    expect(ids(p2)).to_equal([4, 5, 6])
+
+@test("trang vừa khít thì không còn cursor")
+def _():
+    items = [{"id": i} for i in range(1, 5)]
+    expect(paginate(items, 4)["next_cursor"]).to_be_none()
+    expect(paginate([], 10)).to_equal({"data": [], "next_cursor": None})
+
+@test("limit không hợp lệ")
+def _():
+    expect(lambda: paginate([], 0)).to_raise(ValueError)
+    expect(lambda: paginate([], 101)).to_raise(ValueError)
+'''
+hints = ["`sorted(items, key=...)` trả list mới, không đụng tới list gốc.", "Còn trang sau khi số item sau cursor lớn hơn `limit`."]
+explanation = "Keyset pagination lọc theo giá trị của item cuối (`WHERE id > :last_id ORDER BY id LIMIT n`) nên không bị lệch khi có bản ghi bị xoá/chèn và chạy nhanh nhờ index, khác với OFFSET phải đọc bỏ qua toàn bộ phần trước. Cursor opaque cho phép server đổi cách mã hoá mà client không phải sửa."
+
+[[questions]]
+id = "sd-066"
+module = "sd-api-design"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "pagination"]
+prompt = "Vì sao `SELECT ... ORDER BY id LIMIT 20 OFFSET 200000` thường chậm trên bảng lớn?"
+options = [
+  "Vì LIMIT không dùng được index",
+  "Vì DB vẫn phải đọc và bỏ qua 200.000 dòng trước khi trả 20 dòng cần lấy",
+  "Vì OFFSET khoá toàn bảng",
+  "Vì ORDER BY id luôn sắp xếp lại toàn bảng trong bộ nhớ",
+]
+answer = [1]
+explanation = "OFFSET càng lớn càng chậm vì công việc tỉ lệ với `offset + limit`. Cursor/keyset (`WHERE id > :last ORDER BY id LIMIT 20`) nhảy thẳng tới vị trí bằng index nên chi phí gần như cố định."
+
+[[questions]]
+id = "sd-067"
+module = "sd-api-design"
+type = "multiple"
+difficulty = 2
+tags = ["level:middle", "versioning", "compatibility"]
+prompt = "API JSON đang được nhiều app mobile bản cũ dùng. Những thay đổi nào là **phá vỡ tương thích** (breaking)?"
+options = [
+  "Thêm field tuỳ chọn `discount` vào response",
+  "Đổi `price` từ số (`120000`) sang chuỗi (`\"120000\"`)",
+  "Đổi tên field `user_name` thành `username`",
+  "Thêm field **bắt buộc** `currency` vào request body của `POST /orders`",
+  "Thêm endpoint mới `GET /orders/{id}/invoice`",
+]
+answer = [1, 2, 3]
+explanation = "Đổi kiểu, đổi tên/xoá field và thêm field bắt buộc ở request làm client cũ hỏng (parse lỗi hoặc bị 400). Thêm field tuỳ chọn ở response hay thêm endpoint là an toàn nếu client bỏ qua field lạ — quy ước nên ghi rõ trong tài liệu API."
+
+[[questions]]
+id = "sd-068"
+module = "sd-api-design"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "idempotency"]
+prompt = '''
+`POST /payments` hỗ trợ header `Idempotency-Key`. Client gửi lại cùng key `k1` nhưng **body khác** (số tiền 200.000 thay vì 100.000). Server nên làm gì?
+'''
+options = [
+  "Xử lý như một thanh toán mới",
+  "Trả lại response của lần đầu như thể thành công",
+  "Từ chối với lỗi (ví dụ 422/409) vì key đã dùng cho một request khác nội dung",
+  "Ghi đè thanh toán cũ bằng số tiền mới",
+]
+answer = [2]
+explanation = "Server lưu kèm **hash của body** theo key. Cùng key + cùng body → trả response đã lưu; cùng key + body khác gần như chắc chắn là lỗi client, nên báo lỗi rõ ràng thay vì đoán. Xử lý như mới hoặc ghi đè đều phá vỡ ý nghĩa của idempotency."
+
+[[questions]]
+id = "sd-069"
+module = "sd-api-design"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "grpc", "graphql"]
+prompt = "Hệ thống có ~30 microservice nội bộ gọi nhau với tải cao, cần latency thấp, schema chặt và streaming hai chiều. Lựa chọn giao thức hợp lý nhất cho giao tiếp **service-to-service** là gì?"
+options = [
+  "GraphQL cho mọi lời gọi nội bộ",
+  "gRPC với Protobuf",
+  "SOAP/XML",
+  "REST với JSON tuỳ ý, không cần schema",
+]
+answer = [1]
+explanation = "gRPC (HTTP/2 + Protobuf) cho payload nhỏ, codegen client/server từ schema, hỗ trợ streaming và deadline — hợp với service nội bộ. GraphQL mạnh ở phía client cần ghép dữ liệu linh hoạt; REST/JSON hợp API công khai."
+
+[[questions]]
+id = "sd-070"
+module = "sd-api-design"
+type = "multiple"
+difficulty = 2
+tags = ["level:middle", "webhook"]
+prompt = "Bạn thiết kế **webhook** gửi sự kiện `payment.succeeded` cho khách hàng. Những điểm nào nên có?"
+options = [
+  "Ký payload bằng HMAC với secret riêng của từng khách hàng, kèm timestamp để chống replay",
+  "Retry với backoff khi bên nhận không trả 2xx, kèm `event_id` để bên nhận dedupe",
+  "Cam kết gửi đúng thứ tự tuyệt đối và đúng một lần",
+  "Khuyên bên nhận trả 2xx nhanh rồi xử lý bất đồng bộ",
+  "Gửi kèm toàn bộ số thẻ của khách cho tiện đối soát",
+]
+answer = [0, 1, 3]
+explanation = "Webhook thực tế là **at-least-once** và không đảm bảo thứ tự, nên cần `event_id` để bên nhận idempotent và thông tin version/thời điểm. Chữ ký HMAC giúp bên nhận xác thực nguồn. Không bao giờ gửi dữ liệu thẻ nhạy cảm qua webhook."
+
+[[questions]]
+id = "sd-071"
+module = "sd-api-design"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "graphql", "security"]
+prompt = '''
+API GraphQL công khai cho phép query lồng tuỳ ý. Một client gửi query `user { friends { friends { friends { posts { comments { author { ... } } } } } } }` làm DB quá tải. Biện pháp nào **phù hợp nhất**?
+'''
+options = [
+  "Chuyển toàn bộ sang REST",
+  "Giới hạn độ sâu và **độ phức tạp** (cost) của query, phân trang bắt buộc cho list, dùng DataLoader để gộp truy vấn; với client bên thứ ba có thể chỉ cho phép persisted query",
+  "Tăng timeout của server lên 5 phút",
+  "Cache toàn bộ response GraphQL ở CDN theo URL",
+]
+answer = [1]
+explanation = "Rủi ro lớn của GraphQL là client tự tạo query đắt. Phân tích cost/độ sâu trước khi thực thi, bắt buộc `first/limit` cho list và DataLoader (batch, tránh N+1) giải quyết trực tiếp. Cache CDN khó vì GraphQL thường dùng POST và query rất đa dạng."
+
+[[questions]]
+id = "sd-072"
+module = "sd-api-design"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "versioning", "deprecation"]
+prompt = "Bạn cần bỏ field `address` (chuỗi) để thay bằng object `shipping_address` trong API công khai có hàng trăm khách tích hợp. Kế hoạch nào an toàn nhất?"
+options = [
+  "Đổi ngay trong bản deploy tới, gửi email thông báo",
+  "Thêm `shipping_address` song song, đánh dấu `address` deprecated (tài liệu + header `Deprecation`/`Sunset`), đo ai còn đọc `address`, liên hệ từng khách, chỉ gỡ sau thời hạn đã công bố",
+  "Giữ `address` mãi mãi và không thêm field mới",
+  "Tạo `/v2` cho toàn bộ API chỉ vì một field",
+]
+answer = [1]
+explanation = "Mẫu **expand → migrate → contract**: thêm cái mới song song, cho client thời gian chuyển, đo lường thực tế trước khi gỡ. Tạo cả `/v2` cho một field làm tăng chi phí bảo trì hai phiên bản; giữ mãi thì nợ kỹ thuật tích tụ."
+
+[[questions]]
+id = "sd-073"
+module = "sd-api-design"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "api", "decision"]
+prompt = '''
+Team mobile (2 app, nhiều màn hình ghép dữ liệu từ 5 service) muốn chuyển sang GraphQL. Team backend 4 người chưa ai vận hành GraphQL ở production; hiện REST hoạt động ổn, vấn đề chính là màn hình chính cần 7 request. Bạn đề xuất gì?
+'''
+options = [
+  "Chuyển toàn bộ API sang GraphQL ngay quý này",
+  "Từ chối, bảo team mobile tự gộp request",
+  "Bắt đầu bằng một endpoint tổng hợp (BFF) cho màn hình chính hoặc thử GraphQL gateway cho một màn hình có timebox; đo latency/độ phức tạp vận hành rồi mới quyết định mở rộng",
+  "Viết lại các service bằng một ngôn ngữ khác",
+]
+answer = [2]
+explanation = "Vấn đề thật là **nhiều round-trip ở một màn hình**; BFF hoặc thử GraphQL ở phạm vi nhỏ là quyết định dễ đảo ngược (two-way door), có số liệu để quyết bước tiếp. Chuyển toàn bộ ngay là one-way door với rủi ro vận hành (N+1, cache, bảo mật query) khi team chưa có kinh nghiệm."
+
+# ===================== sd-observability =====================
+
+[[questions]]
+id = "sd-074"
+module = "sd-observability"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "observability"]
+prompt = "Người dùng báo \"thanh toán chậm\". Bạn muốn biết **thời gian của một request cụ thể** đã tiêu tốn ở service nào (gateway, order, payment, DB). Tín hiệu nào phù hợp nhất?"
+options = [
+  "Metric CPU của từng máy",
+  "Distributed trace của request đó",
+  "Số dòng log mỗi phút",
+  "Dashboard số người dùng online",
+]
+answer = [1]
+explanation = "Trace ghi lại các **span** của một request qua nhiều service kèm thời gian, cho thấy thời gian đi đâu. Metric cho bức tranh tổng hợp; log cho chi tiết sự kiện — gắn `trace_id` vào log để nối được hai thứ."
+
+[[questions]]
+id = "sd-075"
+module = "sd-observability"
+type = "fill"
+difficulty = 1
+tags = ["level:junior", "slo"]
+prompt = "Nếu SLO availability là 99,9% thì **error {{blank}}** là 0,1% — phần lỗi được phép trong cửa sổ đo."
+blanks = [["budget"]]
+explanation = "Error budget = 1 − SLO. Với 99,9% trong 30 ngày, budget ≈ 43 phút lỗi. Còn budget thì được phát hành nhanh; hết budget thì ưu tiên ổn định."
+
+[[questions]]
+id = "sd-076"
+module = "sd-observability"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "logging"]
+prompt = "Dòng log nào **tốt nhất** cho một hệ thống nhiều service?"
+options = [
+  "`print(\"loi roi!!!\")`",
+  "`{\"level\":\"error\",\"msg\":\"payment declined\",\"order_id\":\"o-91\",\"trace_id\":\"4bf9…\",\"provider_code\":\"insufficient_funds\"}`",
+  "`ERROR: user 7 password=hunter2 login failed`",
+  "Log toàn bộ request/response body của mọi request ở mức info",
+]
+answer = [1]
+explanation = "Log **có cấu trúc** (JSON) với level, thông điệp rõ, id nghiệp vụ và `trace_id` dễ tìm kiếm và nối với trace. Không bao giờ log mật khẩu/secret/PII; log toàn bộ body tốn chi phí và dễ lộ dữ liệu nhạy cảm."
+
+[[questions]]
+id = "sd-077"
+module = "sd-observability"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "metrics", "cardinality"]
+prompt = "Dev thêm label `user_id` (5 triệu người dùng) vào metric `http_requests_total{route, status, user_id}` trên Prometheus. Vấn đề chính là gì?"
+options = [
+  "Không có vấn đề, càng nhiều label càng chi tiết",
+  "Bùng nổ **cardinality**: mỗi tổ hợp label là một time series riêng → hàng triệu series, tốn bộ nhớ, truy vấn chậm, có thể làm sập hệ thống metric",
+  "Prometheus không hỗ trợ label dạng số",
+  "Chỉ làm dashboard khó đọc hơn",
+]
+answer = [1]
+explanation = "Số series ≈ tích số giá trị của các label. Metric dành cho dữ liệu tổng hợp với label ít giá trị (route, status, region). Muốn tra theo người dùng thì dùng log/trace có `user_id`."
+
+[[questions]]
+id = "sd-078"
+module = "sd-observability"
+type = "multiple"
+difficulty = 2
+tags = ["level:middle", "alerting"]
+prompt = "Chọn các alert **nên** đánh thức on-call lúc 3 giờ sáng:"
+options = [
+  "Tỉ lệ checkout thất bại vượt ngưỡng và đang đốt error budget nhanh (burn rate cao)",
+  "CPU một instance trong autoscaling group chạm 85% trong 2 phút",
+  "p99 latency của API đăng nhập vượt SLO liên tục 15 phút",
+  "Ổ đĩa DB chính dự báo đầy trong 2 giờ tới",
+  "Một job báo cáo nội bộ hàng tuần chạy chậm hơn thường lệ",
+]
+answer = [0, 2, 3]
+explanation = "Page khi có **tác động người dùng** hoặc sắp có sự cố cần hành động ngay (đĩa đầy trong 2 giờ). CPU cao trong autoscaling là bình thường; job nội bộ chậm thì tạo ticket xử lý giờ hành chính. Alert không actionable gây alert fatigue."
+
+[[questions]]
+id = "sd-079"
+module = "sd-observability"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "metrics", "percentile"]
+prompt = "Có 10 instance, mỗi instance báo p99 latency của riêng mình. Cách nào cho **p99 toàn hệ thống** đúng?"
+options = [
+  "Lấy trung bình 10 giá trị p99",
+  "Lấy giá trị p99 lớn nhất",
+  "Thu latency dưới dạng **histogram** (bucket) ở mỗi instance, cộng các bucket lại rồi tính percentile từ histogram tổng",
+  "Lấy p99 của instance có nhiều request nhất",
+]
+answer = [2]
+explanation = "Percentile không cộng/trung bình được. Histogram thì cộng được (đếm theo bucket), nên tính percentile từ histogram gộp là cách đúng (sai số theo độ rộng bucket). Trung bình các p99 có thể sai rất xa khi tải các instance không đều."
+
+[[questions]]
+id = "sd-080"
+module = "sd-observability"
+type = "essay"
+difficulty = 2
+tags = ["level:middle", "incident", "postmortem"]
+prompt = "Deploy lúc 14:00 làm 30% request thanh toán lỗi trong 25 phút. Mô tả cách bạn xử lý sự cố khi đang diễn ra và nội dung postmortem sau đó."
+keywords = [
+  ["rollback", "hoàn tác", "feature flag", "tắt"],
+  ["incident commander", "điều phối", "vai trò"],
+  ["timeline", "dòng thời gian"],
+  ["status page", "thông báo", "stakeholder", "khách hàng"],
+  ["blameless", "không đổ lỗi"],
+  ["action item", "hành động", "người chịu trách nhiệm"],
+]
+min_keywords = 4
+model_answer = '''
+**Khi đang diễn ra**
+1. Tuyên bố incident, chỉ định **incident commander** (điều phối) và người liên lạc; mở kênh riêng, ghi **timeline**.
+2. Ưu tiên **giảm tác động**: deploy là thay đổi gần nhất → **rollback** (hoặc tắt feature flag) trước, tìm root cause sau.
+3. Xác nhận hồi phục bằng metric (tỉ lệ lỗi thanh toán về mức bình thường), kiểm tra đơn hàng/thanh toán dở dang cần đối soát.
+4. Cập nhật **status page** và stakeholder theo nhịp cố định.
+
+**Postmortem (blameless)**
+- Tác động: 25 phút, ~30% thanh toán lỗi, số đơn/doanh thu ảnh hưởng (ước lượng).
+- Timeline: deploy, lúc phát hiện, lúc rollback, lúc hồi phục — đo MTTD, MTTR.
+- Nguyên nhân gốc và các yếu tố góp phần (vì sao test/canary không bắt được, vì sao phát hiện mất X phút).
+- **Không đổ lỗi** cá nhân; tập trung vào hệ thống.
+- **Action item** cụ thể có người chịu trách nhiệm và hạn: thêm canary + rollback tự động theo tỉ lệ lỗi, test cho case gây lỗi, alert burn rate.
+'''
+explanation = "Hai ý quan trọng nhất: khôi phục trước khi tìm nguyên nhân, và postmortem không đổ lỗi với action item có chủ sở hữu."
+
+[[questions]]
+id = "sd-081"
+module = "sd-observability"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "slo", "burn-rate"]
+prompt = '''
+SLO 99,9% trong 30 ngày. Trong 1 giờ qua, tỉ lệ lỗi là 1,44%. Burn rate là bao nhiêu và nếu giữ nguyên tốc độ này thì error budget 30 ngày cạn sau khoảng bao lâu?
+'''
+options = [
+  "Burn rate 1,44; cạn sau ~21 ngày",
+  "Burn rate 14,4; cạn sau ~2 ngày (≈ 50 giờ)",
+  "Burn rate 144; cạn sau ~5 giờ",
+  "Burn rate 0,144; không bao giờ cạn",
+]
+answer = [1]
+explanation = "Burn rate = tỉ lệ lỗi / budget = 1,44% / 0,1% = 14,4. Budget đủ cho 30 ngày ở burn rate 1, nên ở 14,4 sẽ cạn sau 30/14,4 ≈ 2,08 ngày ≈ 50 giờ. Đây chính là ngưỡng thường dùng cho cảnh báo khẩn trong cửa sổ 1 giờ (tiêu ~2% budget mỗi giờ)."
+
+[[questions]]
+id = "sd-082"
+module = "sd-observability"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "tracing", "sampling"]
+prompt = "Hệ thống 50.000 request/s; lưu 100% trace quá đắt. Bạn muốn vẫn luôn có trace của các request **lỗi** hoặc **rất chậm**. Chiến lược sampling nào phù hợp?"
+options = [
+  "Head-based sampling 1% ngẫu nhiên tại gateway",
+  "Tail-based sampling: collector giữ tạm span của cả trace, quyết định giữ sau khi trace kết thúc (giữ mọi trace lỗi/chậm, chỉ giữ một tỉ lệ nhỏ trace bình thường)",
+  "Tắt tracing, chỉ dùng log",
+  "Mỗi service tự sample ngẫu nhiên độc lập",
+]
+answer = [1]
+explanation = "Head-based quyết định từ đầu nên bỏ lỡ phần lớn trace lỗi hiếm. Tail-based quyết định khi đã biết kết quả, đổi lại collector phải giữ span tạm trong bộ nhớ (tốn tài nguyên). Sample độc lập ở từng service làm trace bị đứt đoạn."
+
+[[questions]]
+id = "sd-083"
+module = "sd-observability"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "slo", "error-budget", "decision"]
+prompt = '''
+Service đặt vé đã tiêu 110% error budget tháng này do 2 sự cố. Product muốn phát hành tính năng lớn tuần tới cho chiến dịch đã quảng cáo. Theo chính sách error budget team đã thống nhất, bạn đề xuất gì?
+'''
+options = [
+  "Phát hành bình thường, error budget chỉ là con số tham khảo",
+  "Đóng băng mọi thay đổi trong 3 tháng",
+  "Tạm dừng phát hành tính năng không khẩn, ưu tiên các action item độ tin cậy; với tính năng chiến dịch thì đàm phán phát hành sau feature flag + canary nhỏ + kế hoạch rollback, có sự đồng ý rõ ràng của product và ghi nhận ngoại lệ",
+  "Hạ SLO xuống 99% để có thêm budget",
+]
+answer = [2]
+explanation = "Error budget là **công cụ thoả thuận** giữa tốc độ và độ ổn định; bỏ qua nó làm chính sách mất giá trị, còn đóng băng cứng thì bỏ qua cam kết kinh doanh. Lead tìm cách giảm rủi ro (flag, canary, rollback) và làm ngoại lệ minh bạch. Hạ SLO chỉ hợp lý khi SLO thật sự không phản ánh nhu cầu người dùng, không phải để lách."
+
+# ===================== sd-security =====================
+
+[[questions]]
+id = "sd-084"
+module = "sd-security"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "authz"]
+prompt = "Người dùng A đăng nhập hợp lệ, đổi URL từ `/api/invoices/1001` thành `/api/invoices/1002` và xem được hoá đơn của người B. Đây là lỗi gì?"
+options = [
+  "Lỗi authentication: A đăng nhập sai",
+  "IDOR (Insecure Direct Object Reference) — thiếu kiểm tra **authorization** trên từng tài nguyên",
+  "SQL injection",
+  "Lỗi CORS",
+]
+answer = [1]
+explanation = "A đã được xác thực đúng, nhưng server không kiểm tra A có quyền với hoá đơn 1002 hay không. Mọi truy cập tài nguyên phải kiểm tra quyền ở server (ví dụ `WHERE id = ? AND owner_id = ?`); dùng id khó đoán chỉ là lớp phụ, không thay thế authz."
+
+[[questions]]
+id = "sd-085"
+module = "sd-security"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "password"]
+prompt = "Cách lưu mật khẩu người dùng nào đúng?"
+options = [
+  "Mã hoá AES với một key chung để có thể giải mã khi người dùng quên",
+  "Băm SHA-256 một lần, không salt",
+  "Băm bằng thuật toán chậm có salt như Argon2id hoặc bcrypt",
+  "Lưu nguyên văn nhưng chỉ admin được đọc bảng",
+]
+answer = [2]
+explanation = "Mật khẩu chỉ cần **kiểm tra**, không cần giải mã, nên dùng hash một chiều. Hash nhanh (SHA-256) bị dò bằng GPU rất nhanh; Argon2id/bcrypt cố ý chậm và có salt riêng từng mật khẩu để chống rainbow table. Quên mật khẩu thì cho đặt lại, không gửi lại mật khẩu cũ."
+
+[[questions]]
+id = "sd-086"
+module = "sd-security"
+type = "fill"
+difficulty = 1
+tags = ["level:junior", "least-privilege"]
+prompt = "Nguyên tắc chỉ cấp cho mỗi người dùng/service **quyền tối thiểu** cần để làm việc gọi là least **{{blank}}**."
+blanks = [["privilege"]]
+explanation = "Least privilege giới hạn thiệt hại khi một tài khoản hay service bị chiếm: service báo cáo chỉ cần quyền đọc DB thì không được có quyền ghi/xoá."
+
+[[questions]]
+id = "sd-087"
+module = "sd-security"
+type = "multiple"
+difficulty = 2
+tags = ["level:middle", "jwt"]
+prompt = "Service nhận access token JWT từ client. Những kiểm tra nào **bắt buộc** phải làm?"
+options = [
+  "Xác minh chữ ký với key/thuật toán được cấu hình sẵn (không tin trường `alg` tuỳ ý, từ chối `none`)",
+  "Kiểm tra `exp` (hết hạn)",
+  "Kiểm tra `aud` và `iss` khớp với service/IdP mong đợi",
+  "Chỉ cần decode base64 payload để đọc `user_id`",
+  "Lưu toàn bộ JWT vào localStorage của server",
+]
+answer = [0, 1, 2]
+explanation = "JWT chỉ đáng tin khi chữ ký hợp lệ, còn hạn và được phát cho đúng service (`aud`) bởi đúng IdP (`iss`). Decode payload không kiểm tra chữ ký nghĩa là ai cũng tự tạo token được."
+
+[[questions]]
+id = "sd-088"
+module = "sd-security"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "secrets"]
+prompt = "Một dev lỡ commit AWS access key vào repo public, phát hiện sau 10 phút và đã force-push xoá commit. Việc **đầu tiên** cần làm là gì?"
+options = [
+  "Không cần làm gì vì commit đã bị xoá",
+  "Thu hồi/vô hiệu hoá key ngay, tạo key mới qua secret manager, rồi kiểm tra log hoạt động của key trong khoảng bị lộ",
+  "Đổi repo sang private",
+  "Gửi email nhắc nhở dev",
+]
+answer = [1]
+explanation = "Bot quét repo public trong vài giây; xoá commit không thu hồi được bản đã bị sao chép. Phải coi key là **đã lộ**: revoke, xoay vòng, kiểm tra audit log (CloudTrail…) để phát hiện lạm dụng. Sau đó mới tới biện pháp phòng ngừa (secret scanning pre-commit, credential ngắn hạn)."
+
+[[questions]]
+id = "sd-089"
+module = "sd-security"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "service-to-service", "mtls"]
+prompt = "30 service nội bộ hiện gọi nhau bằng **một API key chung** để trong biến môi trường. Thay thế nào cải thiện bảo mật nhiều nhất?"
+options = [
+  "Đổi API key mỗi năm một lần",
+  "Mỗi service có danh tính riêng (mTLS qua service mesh hoặc token workload ngắn hạn) và chính sách cho phép ai được gọi ai",
+  "Đặt tất cả service trong cùng VPC là đủ an toàn",
+  "Mã hoá API key bằng base64",
+]
+answer = [1]
+explanation = "Key dùng chung không cho biết **ai** gọi, không giới hạn được phạm vi, và lộ một chỗ là lộ hết. Danh tính riêng cho từng workload + authz giữa service (zero trust) giới hạn thiệt hại. Base64 không phải mã hoá; tin mạng nội bộ là trái nguyên tắc zero trust."
+
+[[questions]]
+id = "sd-090"
+module = "sd-security"
+type = "multiple"
+difficulty = 2
+tags = ["level:middle", "threat-modeling", "stride"]
+prompt = "Tính năng mới: người dùng tải ảnh đại diện lên. Theo STRIDE, ghép đúng mối đe doạ với biện pháp (chọn các cặp **đúng**):"
+options = [
+  "Denial of service (tải file 5 GB) → giới hạn kích thước, rate limit theo người dùng",
+  "Tampering (file chứa mã độc giả dạng ảnh) → kiểm tra magic bytes, xử lý/re-encode ảnh ở môi trường cô lập, quét virus",
+  "Information disclosure (ảnh chứa metadata GPS) → xoá EXIF khi xử lý",
+  "Elevation of privilege → tăng dung lượng bucket",
+  "Spoofing (tải ảnh lên tài khoản người khác) → kiểm tra quyền chủ sở hữu ở API cấp pre-signed URL",
+]
+answer = [0, 1, 2, 4]
+explanation = "Threat modeling giúp liệt kê có hệ thống. Tăng dung lượng bucket không liên quan tới leo thang đặc quyền; biện pháp cho E là least privilege (ví dụ worker xử lý ảnh không có quyền đọc dữ liệu khác)."
+
+[[questions]]
+id = "sd-091"
+module = "sd-security"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "multi-tenant"]
+prompt = '''
+SaaS B2B dùng chung một DB PostgreSQL, mỗi bảng có cột `tenant_id`. Một bug quên `WHERE tenant_id = ?` từng làm lộ dữ liệu chéo tenant. Biện pháp nào **giảm rủi ro một cách hệ thống** mà không phải tách DB cho từng tenant?
+'''
+options = [
+  "Nhắc team review kỹ hơn",
+  "Bật Row-Level Security với policy theo `tenant_id` lấy từ biến session do tầng truy cập dữ liệu đặt cho mỗi request, cộng test tự động thử truy cập chéo tenant",
+  "Mã hoá cột `tenant_id`",
+  "Đổi `tenant_id` sang UUID",
+]
+answer = [1]
+explanation = "RLS đưa điều kiện tenant xuống DB nên một truy vấn quên filter cũng không đọc được dữ liệu tenant khác (defense in depth). Cần cẩn thận: role của app không được bypass RLS, và connection pool phải đặt lại biến session mỗi request. Review thủ công không phải biện pháp hệ thống."
+
+[[questions]]
+id = "sd-092"
+module = "sd-security"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "session", "jwt"]
+prompt = "Yêu cầu: khi admin khoá tài khoản bị chiếm, mọi phiên của tài khoản đó phải mất hiệu lực **trong vòng 1 phút**. Hệ thống dùng JWT access token stateless TTL 24 giờ. Thiết kế nào đáp ứng hợp lý?"
+options = [
+  "Giữ TTL 24 giờ, tin rằng kẻ tấn công không dùng lâu",
+  "Rút access token xuống ~5 phút + refresh token lưu server-side có thể thu hồi, và một danh sách chặn (theo `jti`/user, lưu Redis) được kiểm tra cho tới khi token cũ hết hạn",
+  "Đổi secret ký JWT mỗi khi khoá một tài khoản",
+  "Xoá cookie phía trình duyệt của kẻ tấn công",
+]
+answer = [1]
+explanation = "JWT stateless khó thu hồi; cách phổ biến là TTL ngắn + refresh token kiểm soát ở server, cộng denylist ngắn hạn cho yêu cầu thu hồi gần như tức thì. Đổi signing key làm **mọi** người dùng bị đăng xuất. Server không thể xoá cookie trên máy kẻ tấn công."
+
+[[questions]]
+id = "sd-093"
+module = "sd-security"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "multi-tenant", "decision"]
+prompt = '''
+SaaS có 2.000 tenant nhỏ dùng chung DB. Một khách hàng ngân hàng (chiếm 25% doanh thu dự kiến) yêu cầu dữ liệu tách biệt vật lý, khoá mã hoá riêng và có thể đặt ở region riêng. Team 8 người. Bạn đề xuất gì?
+'''
+options = [
+  "Chuyển cả 2.000 tenant sang DB riêng cho đồng nhất",
+  "Từ chối khách hàng vì làm phức tạp kiến trúc",
+  "Mô hình lai: giữ pool chung cho tenant nhỏ, thêm tầng \"silo\" (DB/cluster riêng, KMS key riêng, region tuỳ chọn) cho tenant cao cấp, định tuyến theo tenant ở tầng truy cập dữ liệu; tính chi phí vận hành vào giá gói và tự động hoá việc tạo silo",
+  "Hứa đáp ứng nhưng vẫn để chung DB, chỉ thêm mã hoá cột",
+]
+answer = [2]
+explanation = "Mô hình **pool + silo** là cách phổ biến: chi phí thấp cho số đông, cô lập mạnh cho số ít trả tiền cho nó. Quyết định cần đi kèm tự động hoá (provisioning, migration chạy trên nhiều DB) và mô hình giá để không thành gánh nặng. Hứa suông vi phạm cam kết hợp đồng; chuyển toàn bộ sang silo nhân chi phí vận hành lên hàng nghìn lần."
+
+# ===================== sd-case-studies =====================
+
+[[questions]]
+id = "sd-094"
+module = "sd-case-studies"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "interview", "requirements"]
+prompt = "Người phỏng vấn nói: \"Hãy thiết kế một URL shortener.\" Bước đầu tiên nên làm là gì?"
+options = [
+  "Vẽ ngay sơ đồ với Kafka, Kubernetes và Cassandra",
+  "Hỏi làm rõ yêu cầu: tính năng cần có (custom alias, hết hạn, analytics), quy mô (số link/tháng, tỉ lệ đọc/ghi), yêu cầu latency/availability",
+  "Viết code hàm sinh mã base62",
+  "Chọn ngay database SQL hay NoSQL",
+]
+answer = [1]
+explanation = "Không có yêu cầu thì không có cơ sở để đánh đổi. Vài phút làm rõ functional và non-functional quyết định toàn bộ thiết kế phía sau (ví dụ đọc ≫ ghi → tối ưu đường đọc bằng cache)."
+
+[[questions]]
+id = "sd-095"
+module = "sd-case-studies"
+type = "fill"
+difficulty = 1
+tags = ["level:junior", "url-shortener", "estimation"]
+prompt = "Mã rút gọn dùng bảng chữ **base{{blank}}** gồm `a–z`, `A–Z`, `0–9`; với 7 ký tự sẽ có khoảng 3,5 nghìn tỉ mã."
+blanks = [["62"]]
+explanation = "26 + 26 + 10 = 62 ký tự; 62^7 ≈ 3,5 × 10^12 mã, đủ cho hàng chục năm ở mức 100 triệu link/tháng (ước lượng)."
+
+[[questions]]
+id = "sd-096"
+module = "sd-case-studies"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "url-shortener"]
+prompt = "URL shortener cần đếm **chính xác mọi lượt click** để làm analytics. Nên trả redirect loại nào?"
+options = [
+  "301 Moved Permanently vì trình duyệt cache được, giảm tải server",
+  "302 Found (hoặc 307) để mỗi lượt click đều đi qua server và được ghi nhận",
+  "200 kèm nội dung trang đích",
+  "404 rồi dùng JavaScript chuyển trang",
+]
+answer = [1]
+explanation = "301 được trình duyệt cache, các lần click sau đi thẳng tới đích nên **mất số liệu**. 302 đổi lại tải server cao hơn — chấp nhận được vì đường redirect rất nhẹ (tra cache key → URL). Ghi click nên đẩy vào queue để không làm chậm redirect."
+
+[[questions]]
+id = "sd-097"
+module = "sd-case-studies"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "chat"]
+prompt = "Ứng dụng chat 1-1 và nhóm. Cách chọn **partition key** cho bảng tin nhắn hợp lý nhất để đọc lịch sử hội thoại nhanh và giữ thứ tự là gì?"
+options = [
+  "Partition theo `message_id` ngẫu nhiên để phân bố đều",
+  "Partition theo `conversation_id`, sắp xếp trong partition theo id tăng dần theo thời gian (ví dụ Snowflake/ULID)",
+  "Partition theo ngày gửi",
+  "Partition theo `sender_id`",
+]
+answer = [1]
+explanation = "Truy vấn chính là \"lấy N tin mới nhất của hội thoại X\" → cùng partition, đã sắp xếp, chỉ một lần đọc. Partition theo ngày tạo hot partition; theo người gửi phải gom từ nhiều partition. Nhóm rất lớn có thể cần chia thêm theo khoảng thời gian (bucket)."
+
+[[questions]]
+id = "sd-098"
+module = "sd-case-studies"
+type = "multiple"
+difficulty = 2
+tags = ["level:middle", "file-upload"]
+prompt = "Thiết kế upload video (tối đa 5 GB) cho ứng dụng di động. Chọn các quyết định **hợp lý**:"
+options = [
+  "Server cấp pre-signed URL, client tải thẳng lên object storage",
+  "Dùng multipart upload để tải lại từng phần khi mạng chập chờn",
+  "Gửi toàn bộ file qua app server rồi app server mới đẩy lên storage",
+  "Sự kiện upload hoàn tất đẩy vào queue để worker transcode bất đồng bộ",
+  "Lưu file video trong cột BLOB của DB chính",
+]
+answer = [0, 1, 3]
+explanation = "Đi thẳng tới object storage giảm băng thông/bộ nhớ của app server; multipart cho phép resume; transcode chậm nên xử lý bất đồng bộ qua queue. File lớn trong DB chính làm phình backup, replication và cache của DB."
+
+[[questions]]
+id = "sd-099"
+module = "sd-case-studies"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "news-feed", "fan-out"]
+prompt = '''
+Mạng xã hội: người dùng trung bình có 200 follower, nhưng có ~1.000 tài khoản nổi tiếng với 10–50 triệu follower. Đọc feed rất nhiều. Chiến lược tạo feed nào hợp lý?
+'''
+options = [
+  "Fan-out on write cho mọi người, kể cả tài khoản nổi tiếng",
+  "Fan-out on read cho mọi người",
+  "Hybrid: push (fan-out on write) bài của người thường vào feed cache của follower; bài của tài khoản nổi tiếng được pull lúc đọc rồi trộn vào",
+  "Mỗi lần đọc feed thì quét toàn bộ bảng bài viết",
+]
+answer = [2]
+explanation = "Push cho người nổi tiếng nghĩa là một bài đăng sinh 50 triệu lượt ghi; pull cho tất cả làm mỗi lần đọc phải gom từ hàng trăm nguồn. Hybrid dùng push ở nơi rẻ và pull ở nơi fan-out quá lớn — đây là trade-off kinh điển khi tải lệch (skew)."
+
+[[questions]]
+id = "sd-100"
+module = "sd-case-studies"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "notification"]
+prompt = '''
+Hệ thống notification gửi ~5 triệu push/email trong 10 phút khi có khuyến mãi. Nhà cung cấp email giới hạn 1.000 email/s, worker đôi khi crash giữa chừng. Thiết kế nào tránh **gửi trùng** và **vượt giới hạn**?
+'''
+options = [
+  "Một vòng lặp gửi tuần tự trong cron job",
+  "Queue theo kênh; worker lấy batch, kiểm tra/ghi `notification_id` vào bảng dedupe trước khi gửi (idempotency), rate limiter token bucket theo nhà cung cấp, retry có backoff và DLQ",
+  "Gửi song song không giới hạn cho nhanh",
+  "Gửi cùng lúc qua hai nhà cung cấp để chắc chắn tới nơi",
+]
+answer = [1]
+explanation = "Queue + worker scale ngang; dedupe theo id giúp worker crash rồi chạy lại không gửi trùng (at-least-once + idempotent); token bucket giữ đúng hạn mức nhà cung cấp; DLQ giữ lại phần lỗi vĩnh viễn để xử lý. Lưu ý: 5 triệu email ở 1.000/s cần ~83 phút — phải báo lại product hoặc thêm hạn mức, không thể \"10 phút\"."
+
+[[questions]]
+id = "sd-101"
+module = "sd-case-studies"
+type = "essay"
+difficulty = 3
+tags = ["level:senior", "rate-limiter", "interview"]
+prompt = "Phỏng vấn: \"Thiết kế rate limiter phân tán cho API gateway, 100.000 request/s, giới hạn theo API key và route.\" Trình bày thuật toán, nơi lưu trạng thái, xử lý khi kho trạng thái lỗi, và phản hồi cho client."
+keywords = [
+  ["token bucket", "sliding window", "leaky bucket"],
+  ["redis"],
+  ["nguyên tử", "atomic", "lua", "script"],
+  ["429", "retry-after"],
+  ["fail-open", "fail-closed", "fail open", "fail closed"],
+  ["cục bộ", "local", "từng instance", "xấp xỉ"],
+]
+min_keywords = 4
+model_answer = '''
+1. **Yêu cầu**: giới hạn theo `(api_key, route)`, cho phép burst ngắn, độ trễ thêm < 1–2 ms (ước lượng), chấp nhận sai số nhỏ.
+2. **Thuật toán**: token bucket (dung lượng = burst, tốc độ nạp = quota trung bình) hoặc sliding window counter; tránh fixed window vì có thể gấp đôi quota ở mép cửa sổ.
+3. **Lưu trạng thái**: Redis cluster, key `rl:{api_key}:{route}`, cập nhật bằng **script Lua nguyên tử** (đọc token, nạp theo thời gian, trừ, đặt TTL) để không race giữa các gateway. 100.000 req/s chia trên nhiều shard theo key.
+4. **Giảm tải Redis**: với key rất nóng, mỗi gateway giữ bộ đếm **cục bộ** và đồng bộ theo lô (chấp nhận sai số xấp xỉ).
+5. **Khi Redis lỗi**: chọn theo rủi ro endpoint — **fail-open** cho đọc thông thường, **fail-closed**/giới hạn cục bộ chặt cho endpoint tốn tiền hoặc nhạy cảm; có alert.
+6. **Phản hồi**: **429** + `Retry-After`, header `RateLimit-Remaining`; tài liệu quota cho khách hàng.
+'''
+explanation = "Điểm cộng: dùng thao tác nguyên tử, nêu sai số chấp nhận được, và có chính sách rõ ràng khi chính rate limiter bị lỗi."
+
+[[questions]]
+id = "sd-102"
+module = "sd-case-studies"
+type = "essay"
+difficulty = 3
+tags = ["level:lead", "interview", "migration"]
+prompt = "Phỏng vấn vị trí Tech Lead: \"Monolith đặt vé hiện xử lý 500 đơn/phút, kinh doanh dự kiến gấp 10 lần trong 12 tháng. CTO muốn tách microservices ngay.\" Bạn sẽ đánh giá và đề xuất lộ trình thế nào?"
+keywords = [
+  ["đo", "profil", "nút cổ chai", "bottleneck", "số liệu"],
+  ["strangler", "tách dần", "từng phần"],
+  ["rủi ro", "risk", "rollback"],
+  ["năng lực team", "team", "vận hành"],
+  ["adr", "trade-off", "đánh đổi"],
+  ["modular", "module hoá", "ranh giới", "bounded context"],
+]
+min_keywords = 4
+model_answer = '''
+1. **Đo trước khi quyết**: 10× = ~5.000 đơn/phút ≈ 85 đơn/s (ước lượng) — không phải tải lớn. Profile để tìm **nút cổ chai** thật (DB khoá ghế, truy vấn chậm, gọi payment đồng bộ).
+2. **Sửa đúng chỗ trước**: index/truy vấn, cache dữ liệu đọc nhiều (lịch chiếu), read replica, đưa việc chậm (email, xuất vé PDF) sang queue, scale ngang monolith stateless.
+3. **Module hoá trong monolith**: vạch ranh giới theo bounded context (booking, payment, catalog), tách schema logic, cấm gọi chéo trực tiếp.
+4. **Tách dần (strangler fig)** chỉ những phần có lý do rõ: cần scale độc lập (search/catalog), hoặc team riêng, hoặc chu kỳ phát hành khác. Mỗi bước có feature flag, chạy song song và kế hoạch **rollback**.
+5. **Năng lực team & vận hành**: microservices cần tracing, CI/CD, on-call; nếu chưa có thì đó là chi phí lớn nhất — đưa vào kế hoạch.
+6. **Trình bày cho CTO** bằng ADR: các phương án, trade-off, chi phí, rủi ro và mốc đo (nếu sau bước 2 vẫn không đạt mục tiêu thì tách tiếp phần nào).
+'''
+explanation = "Câu trả lời Lead tốt dựa trên số liệu, chọn phương án dễ đảo ngược trước, tính tới năng lực team và trình bày trade-off cho người ra quyết định — không phản đối hay đồng ý theo cảm tính."
+
+[[questions]]
+id = "sd-103"
+module = "sd-case-studies"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "interview", "scope"]
+prompt = '''
+Còn 15 phút trong buổi phỏng vấn thiết kế hệ thống đặt xe; bạn mới xong high-level design. Người phỏng vấn hỏi: "Bạn muốn đi sâu vào phần nào?" Lựa chọn nào thể hiện tư duy tốt nhất?
+'''
+options = [
+  "Đi sâu vào việc chọn framework frontend",
+  "Chọn phần rủi ro/khó nhất của bài: ghép tài xế–khách theo vị trí thời gian thực (geo-index, cập nhật vị trí tần suất cao) và tránh một tài xế bị gán hai chuyến; nói rõ vì sao chọn phần đó",
+  "Liệt kê thêm mọi công nghệ có thể dùng",
+  "Nói về cách viết unit test cho API",
+]
+answer = [1]
+explanation = "Deep dive nên vào phần **quyết định thành bại** của hệ thống và giải thích lý do ưu tiên — đó là kỹ năng phân bổ thời gian và nhận diện rủi ro mà vị trí Lead cần. Liệt kê công nghệ không cho thấy khả năng đánh đổi."
+
+# ===================== system-design-lead =====================
+
+[[questions]]
+id = "sd-104"
+module = "system-design-lead"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "adr"]
+prompt = "**ADR** (Architecture Decision Record) dùng để làm gì?"
+options = [
+  "Ghi lại một quyết định kiến trúc: bối cảnh, quyết định, các phương án đã cân nhắc và hệ quả",
+  "Danh sách task của sprint",
+  "Tài liệu hướng dẫn cài đặt môi trường dev",
+  "Báo cáo sự cố production",
+]
+answer = [0]
+explanation = "ADR ngắn, lưu cùng repo, giúp người đến sau hiểu **vì sao** hệ thống như hiện tại. Quyết định thay đổi thì viết ADR mới thay thế (supersedes), không sửa ADR cũ."
+
+[[questions]]
+id = "sd-105"
+module = "system-design-lead"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "code-review"]
+prompt = "PR 2.400 dòng gộp refactor, tính năng mới và đổi format code. Cách góp ý hữu ích nhất của reviewer là gì?"
+options = [
+  "Approve vì quá dài để đọc",
+  "Đề nghị tách thành các PR nhỏ (format riêng, refactor riêng, tính năng riêng) để review được thiết kế và tính đúng",
+  "Để lại 200 comment về đặt tên biến",
+  "Tự viết lại PR theo cách của mình",
+]
+answer = [1]
+explanation = "PR lớn trộn nhiều loại thay đổi làm review hời hợt và rollback khó. PR nhỏ, một mục đích, cho phép người review tập trung vào thiết kế; format nên để công cụ tự động xử lý."
+
+[[questions]]
+id = "sd-106"
+module = "system-design-lead"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "tech-debt"]
+prompt = "Module tính giá 8 năm tuổi, không có test, mỗi lần sửa gây trung bình 1 sự cố/tháng. Cách tiếp cận nào hợp lý nhất?"
+options = [
+  "Viết lại toàn bộ trong 6 tháng, đóng băng tính năng",
+  "Không động vào nữa",
+  "Viết characterization test cho hành vi hiện tại ở các đường quan trọng, rồi tách và thay dần từng phần (strangler) khi có tính năng chạm vào, đo số sự cố để chứng minh hiệu quả",
+  "Thêm comment cảnh báo ở đầu file",
+]
+answer = [2]
+explanation = "Big rewrite rủi ro cao (mất hành vi ẩn, kéo dài). Characterization test \"đóng băng\" hành vi hiện có để sửa an toàn; thay dần gắn với công việc thật giúp trả nợ mà vẫn ra tính năng. Số sự cố/tháng là \"lãi\" của nợ — dùng để thuyết phục stakeholder."
+
+[[questions]]
+id = "sd-107"
+module = "system-design-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "decision", "reversibility"]
+prompt = "Quyết định nào là **one-way door** (khó đảo ngược), đáng dành nhiều thời gian phân tích nhất?"
+options = [
+  "Chọn thư viện log cho một service nội bộ",
+  "Chọn shard key cho bảng đơn hàng hàng tỉ dòng và định dạng id công khai trong API của đối tác",
+  "Đổi màu nút trên trang quản trị",
+  "Thử một cấu hình cache TTL mới sau feature flag",
+]
+answer = [1]
+explanation = "Shard key và hợp đồng API công khai rất tốn kém để đổi (migrate dữ liệu khổng lồ, đối tác phải sửa). Các quyết định còn lại dễ đảo ngược — nên quyết nhanh, thử và đo, thay vì họp kéo dài."
+
+[[questions]]
+id = "sd-108"
+module = "system-design-lead"
+type = "multiple"
+difficulty = 3
+tags = ["level:lead", "risk", "rollout"]
+prompt = "Bạn dẫn dắt việc chuyển DB thanh toán từ MySQL sang PostgreSQL. Những việc nào **giảm rủi ro** đáng kể?"
+options = [
+  "Làm phần rủi ro nhất sớm: spike có timebox để kiểm tra khác biệt kiểu dữ liệu/collation và hiệu năng truy vấn chính",
+  "Dual-write hoặc CDC sang DB mới, chạy so sánh dữ liệu (shadow read) trước khi chuyển đọc",
+  "Chuyển 100% traffic trong một đêm, không có đường quay lại để team tập trung",
+  "Chuyển dần theo tỉ lệ traffic/tenant với tiêu chí dừng và kế hoạch rollback đã diễn tập",
+  "Giữ kế hoạch trong đầu lead để tránh tranh luận",
+]
+answer = [0, 1, 3]
+explanation = "De-risk sớm, kiểm chứng bằng dữ liệu thật, rollout từng bước có tiêu chí dừng và rollback đã tập. Big-bang không đường lui và kế hoạch không chia sẻ (bus factor = 1) làm rủi ro tăng vọt."
+
+[[questions]]
+id = "sd-109"
+module = "system-design-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "stakeholder", "communication"]
+prompt = '''
+Product yêu cầu tính năng "xuất báo cáo realtime toàn bộ dữ liệu" trong 2 tuần. Team ước lượng cần 2 tháng nếu làm đúng (tránh làm sập DB chính). Bạn phản hồi thế nào?
+'''
+options = [
+  "\"Không làm được.\"",
+  "Nhận lời 2 tuần và cho team làm thêm giờ",
+  "Hỏi rõ nhu cầu thật (ai dùng, độ trễ chấp nhận được), rồi đưa 2–3 phương án kèm đánh đổi: ví dụ báo cáo trễ 15 phút từ read replica trong 2 tuần; realtime đầy đủ qua pipeline riêng trong 2 tháng",
+  "Tự làm một mình cuối tuần",
+]
+answer = [2]
+explanation = "Lead chuyển xung đột thành lựa chọn có thông tin: làm rõ mục tiêu kinh doanh, nói bằng tác động (rủi ro sập DB, thời gian), đưa phương án thay vì từ chối hay hứa suông. Thường \"realtime\" thực ra là \"đủ mới\"."
+
+[[questions]]
+id = "sd-110"
+module = "system-design-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "mentoring", "bus-factor"]
+prompt = "Chỉ một senior hiểu hệ thống billing; người đó sắp nghỉ phép 1 tháng. Hành động nào giảm rủi ro bền vững nhất?"
+options = [
+  "Huỷ phép của người đó",
+  "Cấm deploy billing trong tháng đó và hy vọng không có sự cố",
+  "Lên kế hoạch chuyển giao: pairing cho 2 người khác xử lý vài việc thật, viết runbook cho các sự cố hay gặp, cho họ trực on-call có senior dự phòng trước khi nghỉ",
+  "Yêu cầu người đó viết tài liệu 100 trang trong một tuần",
+]
+answer = [2]
+explanation = "Bus factor = 1 là rủi ro tổ chức. Kiến thức chuyển giao tốt nhất qua **làm việc thật** (pairing, on-call có hỗ trợ) kèm runbook ngắn có thể hành động. Tài liệu dài viết vội ít người đọc; đóng băng chỉ hoãn vấn đề."
+
+[[questions]]
+id = "sd-111"
+module = "system-design-lead"
+type = "essay"
+difficulty = 3
+tags = ["level:lead", "adr", "decision"]
+prompt = "Team tranh luận giữa giữ PostgreSQL (đang dùng) hay chuyển sang một NoSQL document DB cho dịch vụ catalog sản phẩm mới. Viết dàn ý một ADR và mô tả cách bạn dẫn dắt team ra quyết định."
+keywords = [
+  ["context", "bối cảnh", "vấn đề"],
+  ["phương án", "alternative", "lựa chọn"],
+  ["tiêu chí", "trọng số", "criteria"],
+  ["trade-off", "đánh đổi", "hệ quả", "consequence"],
+  ["spike", "prototype", "đo", "benchmark"],
+  ["vận hành", "năng lực team", "kinh nghiệm"],
+]
+min_keywords = 4
+model_answer = '''
+**Dàn ý ADR**
+- Tiêu đề, trạng thái (Proposed/Accepted), ngày.
+- **Context**: yêu cầu catalog (thuộc tính sản phẩm thay đổi theo ngành hàng, đọc ≫ ghi, cần tìm kiếm/lọc), quy mô ước lượng, ràng buộc team.
+- **Phương án**: (1) PostgreSQL + JSONB cho thuộc tính động, (2) document DB, (3) Postgres + search engine riêng cho lọc/tìm kiếm.
+- **Tiêu chí có trọng số**: phù hợp mô hình dữ liệu, hiệu năng truy vấn chính, **vận hành** (backup, giám sát, kinh nghiệm team), chi phí, khả năng đảo ngược.
+- **Quyết định** và **hệ quả / trade-off**: điều chấp nhận đánh đổi, rủi ro, việc phải làm thêm.
+
+**Dẫn dắt**
+1. Thống nhất vấn đề và tiêu chí **trước** khi bàn công nghệ, để tranh luận về giả định chứ không về sở thích.
+2. Với giả định chưa chắc (JSONB có đủ nhanh?), làm **spike/benchmark** có timebox bằng dữ liệu giống thật.
+3. Mời người phản biện viết phần "alternatives"; ghi rõ lý do bác bỏ.
+4. Ra quyết định đúng hạn (disagree and commit), lưu ADR trong repo, đặt mốc xem lại khi điều kiện thay đổi.
+'''
+explanation = "Lead tách vấn đề khỏi công nghệ, dùng tiêu chí và dữ liệu để quyết định, cân nhắc chi phí vận hành với năng lực team, và ghi lại để tổ chức không mất trí nhớ."
+
+[[questions]]
+id = "sd-c12"
+module = "system-design-lead"
+type = "code"
+lang = "python"
+difficulty = 3
+tags = ["level:lead", "rollout", "canary"]
+title = "Cổng quyết định canary"
+prompt = '''
+Team bạn thống nhất tự động hoá quyết định canary. Viết `decide(baseline, canary, policy)` trả về tuple `(decision, reason)`.
+`baseline`/`canary`: dict `{"requests": int, "errors": int, "p99_ms": float}`.
+`policy`: dict `{"min_requests": int, "max_error_rate": float, "max_error_delta": float, "max_p99_ms": float, "max_p99_ratio": float}`.
+
+Error rate = `errors / requests` (requests = 0 → 0). Xét **theo đúng thứ tự**:
+1. Canary error rate > `max_error_rate` **và** canary có ít nhất 10 lỗi → `("rollback", "error_rate")` (lỗi rõ ràng thì dừng ngay, không chờ đủ traffic)
+2. `canary["requests"] < policy["min_requests"]` → `("wait", "insufficient_traffic")`
+3. Canary error rate > `max_error_rate` → `("rollback", "error_rate")`
+4. Canary error rate − baseline error rate > `max_error_delta` → `("rollback", "regression_vs_baseline")`
+5. Canary p99 > `max_p99_ms` **hoặc** canary p99 > baseline p99 × `max_p99_ratio` → `("rollback", "latency")`
+6. Còn lại → `("promote", "ok")`
+'''
+starter = '''
+def decide(baseline, canary, policy):
+    return ("promote", "ok")
+'''
+solution = '''
+def rate(m):
+    return m["errors"] / m["requests"] if m["requests"] else 0.0
+
+def decide(baseline, canary, policy):
+    cr, br = rate(canary), rate(baseline)
+    if cr > policy["max_error_rate"] and canary["errors"] >= 10:
+        return ("rollback", "error_rate")
+    if canary["requests"] < policy["min_requests"]:
+        return ("wait", "insufficient_traffic")
+    if cr > policy["max_error_rate"]:
+        return ("rollback", "error_rate")
+    if cr - br > policy["max_error_delta"]:
+        return ("rollback", "regression_vs_baseline")
+    if canary["p99_ms"] > policy["max_p99_ms"] or canary["p99_ms"] > baseline["p99_ms"] * policy["max_p99_ratio"]:
+        return ("rollback", "latency")
+    return ("promote", "ok")
+'''
+tests = '''
+P = {"min_requests": 1000, "max_error_rate": 0.02, "max_error_delta": 0.005, "max_p99_ms": 800, "max_p99_ratio": 1.3}
+BASE = {"requests": 20000, "errors": 40, "p99_ms": 400}
+
+def m(req, err, p99):
+    return {"requests": req, "errors": err, "p99_ms": p99}
+
+@test("chưa đủ traffic thì chờ")
+def _():
+    expect(decide(BASE, m(300, 1, 390), P)).to_equal(("wait", "insufficient_traffic"))
+    expect(decide(BASE, m(0, 0, 0), P)).to_equal(("wait", "insufficient_traffic"))
+
+@test("lỗi rõ ràng thì rollback dù ít traffic")
+def _():
+    expect(decide(BASE, m(200, 30, 390), P)).to_equal(("rollback", "error_rate"))
+    expect(decide(BASE, m(200, 5, 390), P)).to_equal(("wait", "insufficient_traffic"))
+
+@test("vượt ngưỡng lỗi tuyệt đối hoặc so với baseline")
+def _():
+    expect(decide(BASE, m(2000, 9, 390) | {"requests": 400}, P)).to_equal(("wait", "insufficient_traffic"))
+    expect(decide(BASE, m(2000, 50, 390), P)).to_equal(("rollback", "error_rate"))
+    expect(decide(BASE, m(2000, 16, 390), P)).to_equal(("rollback", "regression_vs_baseline"))
+
+@test("latency tuyệt đối và tương đối")
+def _():
+    expect(decide(BASE, m(2000, 4, 900), P)).to_equal(("rollback", "latency"))
+    expect(decide(BASE, m(2000, 4, 530), P)).to_equal(("rollback", "latency"))
+    expect(decide(BASE, m(2000, 4, 510), P)).to_equal(("promote", "ok"))
+
+@test("baseline không có request")
+def _():
+    expect(decide(m(0, 0, 400), m(2000, 2, 400), P)).to_equal(("promote", "ok"))
+'''
+hints = ["Viết hàm phụ `rate(m)` xử lý `requests == 0`.", "Thứ tự kiểm tra là một phần của chính sách — bước 1 là \"cầu dao khẩn\" trước khi chờ đủ mẫu."]
+explanation = "Cổng canary biến chính sách rollout của team thành code có thể review và test: chờ đủ mẫu để không quyết định theo nhiễu, nhưng vẫn dừng ngay khi lỗi rõ ràng; so sánh với baseline cùng thời điểm để loại ảnh hưởng của traffic chung. Ở lớp Lead, phần khó là thống nhất các ngưỡng này với product và on-call."
+
+[[questions]]
+id = "sd-112"
+module = "system-design-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "build-vs-buy"]
+prompt = "Team 5 người cần tìm kiếm full-text cho 2 triệu sản phẩm, lọc theo thuộc tính. Lựa chọn nào hợp lý nhất ban đầu?"
+options = [
+  "Tự viết search engine với inverted index riêng",
+  "Dùng full-text search có sẵn của PostgreSQL hoặc dịch vụ search managed; chỉ cân nhắc tự vận hành cụm search khi số liệu cho thấy cần",
+  "Dùng `LIKE '%keyword%'` trên mọi cột",
+  "Mua giải pháp enterprise đắt nhất cho chắc",
+]
+answer = [1]
+explanation = "Build-vs-buy: 2 triệu bản ghi nằm trong khả năng của full-text Postgres hoặc dịch vụ managed, chi phí vận hành thấp. Tự viết search là lệch trọng tâm sản phẩm; `LIKE '%x%'` không dùng index và không xếp hạng kết quả."

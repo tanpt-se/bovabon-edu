@@ -196,11 +196,49 @@ Khi kiểm thử HTTP, đăng ký provideHttpClient() trước provideHttpClient
 Lỗi thường gặp: quên detectChanges() trước khi đọc DOM; để request giả chưa flush; chỉ kiểm tra implementation nội bộ thay vì kết quả; dùng một test khổng lồ bao trùm component, router và backend; hoặc để nhiều test dùng chung trạng thái khiến kết quả phụ thuộc thứ tự chạy.
 '''
 
+[[modules]]
+id = "angular-lead"
+title = "Góc nhìn Tech Lead"
+description = "Ra quyết định kiến trúc Angular, hiệu năng, SSR, độ tin cậy, chiến lược test/release và chuẩn hóa cách làm trong team."
+sources = ["angular/guide/signals", "angular/guide/http", "angular/guide/ssr", "angular/guide/testing", "angular/guide/di"]
+lesson = '''
+### Ra quyết định cho ứng dụng Angular ở quy mô team
+
+Tech Lead bắt đầu từ kết quả cần bảo vệ: người dùng nào bị ảnh hưởng, chỉ số nào đang lệch, ràng buộc thời gian/nhân lực ra sao và quyết định có thể đảo ngược đến mức nào. Không chọn API vì nó mới hoặc vì một benchmark riêng lẻ. Hãy ghi giả định, lập đường cơ sở, thử trên một lát cắt đại diện rồi mở rộng theo cổng kiểm soát.
+
+| Phương án | Khi hợp lý | Chi phí/rủi ro cần đo |
+|---|---|---|
+| Giữ hiện trạng và sửa điểm nghẽn | Phạm vi nhỏ, có số liệu tái hiện | Có thể giữ lại nợ kỹ thuật; cần đặt thời hạn xem lại |
+| Chuyển dần theo feature/route | Hệ thống đang chạy, nhiều nhóm cùng phát hành | Có giai đoạn hai cách làm; cần hợp đồng tương thích và owner |
+| Thay đổi đồng loạt | Ranh giới rõ, tự động hóa tốt, rollback khả thi | Phạm vi lỗi lớn; phụ thuộc test và thời gian release |
+
+Khung đánh giá tối thiểu gồm: tác động người dùng; độ tin cậy và bảo mật; khả năng đo/rollback; tổng chi phí vận hành; độ phức tạp cho các nhóm; và mức chắc chắn của dữ liệu. Ví dụ, chọn prerender cho trang nội dung ổn định có thể giảm công việc lúc request, còn dữ liệu cá nhân hóa cần phân tích cache và ranh giới server trước khi bật SSR. Không dùng guard ở trình duyệt thay cho kiểm tra quyền ở backend. Với signals/RxJS, thống nhất ranh giới: signal cho trạng thái UI đồng bộ, Observable cho luồng bất đồng bộ cần hủy/kết hợp; ngoại lệ phải có lý do dễ review.
+
+Checklist review trước khi duyệt thay đổi lớn:
+- Có người dùng, luồng và chỉ số nền cụ thể; có phân biệt dữ liệu công khai với dữ liệu theo người dùng.
+- Có kiểm thử ở đúng ranh giới: logic thuần, component/service, HTTP giả lập và smoke test cho đường phát hành.
+- Có xử lý lỗi, loading/empty state, hủy request và hành vi khi dependency chậm hoặc lỗi.
+- Có cách triển khai theo lát cắt, cổng dừng, rollback, người trực và dashboard sau phát hành.
+- Có owner, tài liệu ngắn, kế hoạch tương thích và tiêu chí xóa mã chuyển tiếp.
+- Có kiểm tra accessibility, bundle/performance và dependency theo mức rủi ro của thay đổi.
+
+ADR mẫu ngắn:
+> **Bối cảnh:** ba nhóm cùng sở hữu ứng dụng Angular; trang hướng dẫn công khai chậm ở lần tải đầu, còn dashboard cá nhân hóa phải giữ dữ liệu riêng tư.  
+> **Quyết định:** prerender các route nội dung ổn định; đánh giá SSR riêng cho dashboard với cache riêng tư; giữ client rendering cho khu vực chỉ xuất hiện sau đăng nhập nếu SSR chưa đem lại lợi ích đo được.  
+> **Kiểm chứng:** so sánh p75/p95, TTFB, lỗi hydration, chi phí server và lỗi truy cập dữ liệu trước/sau; thử theo nhóm route.  
+> **Hoàn tác:** chuyển route thử nghiệm về client rendering nếu ngưỡng lỗi hoặc chi phí vượt ngân sách.
+
+Các số liệu trong ADR là ước lượng cho lần thử, không phải cam kết chung: có thể đặt canary 5–10% traffic và quan sát ít nhất một chu kỳ tải đại diện; nhóm phải chọn ngưỡng theo baseline thật và mức độ rủi ro. Không áp một con số mẫu cho mọi sản phẩm.
+
+Anti-pattern ở quy mô team gồm: big-bang migration không có đường lui; dùng shared service như kho trạng thái toàn cục không owner; interceptor chứa logic riêng của từng màn hình; retry mù request ghi; test snapshot khổng lồ thay cho hợp đồng hành vi; bỏ qua flaky test vì “CI đôi lúc đỏ”; ép mọi nhóm dùng cùng một abstraction trước khi có nhu cầu chung; và để chuẩn review chỉ tồn tại trong trí nhớ của senior. Thay vào đó, chuẩn hóa tiêu chí và ví dụ, không chuẩn hóa mọi chi tiết triển khai; theo dõi ngoại lệ và xóa dần khi đã hết lý do tồn tại.
+'''
+
 [[questions]]
 id = "ng-001"
 module = "ng-components"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Trong Angular hiện đại, nhận định nào đúng về component standalone?"
 options = ["Mặc định component mới có thể dùng standalone và tự khai báo dependency template", "Component standalone không thể dùng service", "Standalone bắt buộc phải được khai báo trong NgModule", "Standalone chỉ chạy khi bật Zone.js"]
 answer = [0]
@@ -212,6 +250,7 @@ id = "ng-002"
 module = "ng-components"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Muốn truyền giá trị của biến title vào thuộc tính DOM title, cú pháp nào là property binding?"
 options = ["[title]=\"title\"", "(title)=\"title\"", "{{title}} trong tên thuộc tính", "bind:title=\"title\""]
 answer = [0]
@@ -223,6 +262,7 @@ id = "ng-003"
 module = "ng-components"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một danh sách có thể đổi thứ tự và giữ lại nhiều phần tử cũ. Vì sao @for nên dùng track item.id?"
 options = ["Giúp Angular ghép item với view ổn định và giảm tạo lại DOM", "Ép danh sách luôn sắp xếp theo id", "Làm cho id trở thành khóa bảo mật", "Bắt Angular chạy change detection ít nhất một lần"]
 answer = [0]
@@ -233,7 +273,8 @@ sources = ["angular/api/core/@for"]
 id = "ng-004"
 module = "ng-components"
 type = "single"
-difficulty = 2
+difficulty = 1
+tags = ["level:junior"]
 prompt = "Bạn cần hiển thị một trong ba nhánh theo trạng thái role. Cấu trúc template mới phù hợp nhất là gì?"
 options = ["@switch với các @case và @default", "@for với ba item giả", "@defer cho mọi nhánh", "Ba event binding click"]
 answer = [0]
@@ -245,6 +286,7 @@ id = "ng-005"
 module = "ng-components"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn các phát biểu đúng về input(), output() và model() trong component."
 options = ["input() khai báo dữ liệu đầu vào dạng signal chỉ đọc", "output() phát sự kiện từ component ra ngoài", "model() biểu đạt giá trị có thể đồng bộ hai chiều với component cha", "Mọi output() tự động trở thành input của component cha", "model() thay thế mọi service dùng chung"]
 answer = [0, 1, 2]
@@ -256,6 +298,7 @@ id = "ng-006"
 module = "ng-components"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Hoàn thiện control flow để lặp users và nhận diện mỗi phần tử bằng id:
 
@@ -274,6 +317,7 @@ id = "ng-007"
 module = "ng-signals"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Giá trị total chỉ là price nhân quantity và không cần ghi trực tiếp. API nào phù hợp nhất?"
 options = ["computed()", "effect()", "linkedSignal() trong mọi trường hợp", "setTimeout()"]
 answer = [0]
@@ -285,6 +329,7 @@ id = "ng-008"
 module = "ng-signals"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Khi nào effect() là lựa chọn hợp lý hơn computed()?"
 options = ["Khi cần đồng bộ signal với tác động bên ngoài như ghi local storage", "Khi cần đặt tên cho một biến", "Khi cần thay đổi DOM trực tiếp trong mọi lần render", "Khi muốn sao chép một signal sang signal khác"]
 answer = [0]
@@ -295,7 +340,8 @@ sources = ["angular/api/core/effect"]
 id = "ng-009"
 module = "ng-signals"
 type = "single"
-difficulty = 3
+difficulty = 2
+tags = ["level:middle"]
 prompt = "Người dùng chọn một tab trong danh sách; khi danh sách tab được tải lại, lựa chọn cũ không còn hợp lệ và cần trở về tab mặc định mới. API nào mô tả tốt nhất trạng thái này?"
 options = ["linkedSignal() phụ thuộc danh sách tab", "effect() sao chép mọi thay đổi vào một signal khác", "Một computed không thể ghi", "Một biến global không phản ứng"]
 answer = [0]
@@ -307,6 +353,7 @@ id = "ng-010"
 module = "ng-signals"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn các phát biểu đúng khi dùng OnPush và cấu hình zoneless."
 options = ["OnPush giúp giới hạn thời điểm component được kiểm tra theo các trigger phù hợp", "Zoneless yêu cầu ứng dụng báo hiệu cập nhật theo cơ chế Angular hiểu được", "OnPush có nghĩa component sẽ không bao giờ được kiểm tra lại", "Zoneless loại bỏ nhu cầu quản lý trạng thái", "provideZonelessChangeDetection() là một cách cấu hình zoneless"]
 answer = [0, 1, 4]
@@ -318,6 +365,7 @@ id = "ng-011"
 module = "ng-signals"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Điền API tạo trạng thái signal có thể ghi:
 
@@ -334,6 +382,7 @@ id = "ng-012"
 module = "ng-signals"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Câu hỏi phỏng vấn: phân biệt signal, computed và effect; mô tả cách tránh vòng lặp hoặc trạng thái trùng lặp khi thiết kế luồng cập nhật."
 keywords = [["signal", "trạng thái"], ["computed", "giá trị dẫn xuất"], ["effect", "side effect"], ["dependency", "phụ thuộc"], ["trùng lặp", "duplicate"]]
 min_keywords = 3
@@ -348,6 +397,7 @@ id = "ng-c02"
 module = "ng-signals"
 type = "code"
 difficulty = 3
+tags = ["level:senior"]
 lang = "javascript"
 title = "Mini signal, computed và effect"
 prompt = '''
@@ -520,6 +570,7 @@ id = "ng-013"
 module = "ng-di"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Khi injector con và injector cha cùng cung cấp một token, injector con thường trả về instance nào?"
 options = ["Instance trong injector con", "Instance trong injector cha", "Luôn tạo instance mới không lưu", "Không thể phân giải token"]
 answer = [0]
@@ -530,7 +581,8 @@ sources = ["angular/guide/di/hierarchical-dependency-injection"]
 id = "ng-014"
 module = "ng-di"
 type = "single"
-difficulty = 2
+difficulty = 1
+tags = ["level:junior"]
 prompt = "Service khai báo providedIn: 'root' thường có ý nghĩa gì?"
 options = ["Service được cung cấp ở root injector và có thể dùng chung trong ứng dụng", "Mỗi lần inject luôn tạo instance mới", "Service chỉ dùng được trong component root", "Angular tự gửi service tới server"]
 answer = [0]
@@ -542,6 +594,7 @@ id = "ng-015"
 module = "ng-di"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Cần inject một cấu hình có kiểu interface, không phải class runtime. Cơ chế nào phù hợp?"
 options = ["InjectionToken", "Một interface được inject trực tiếp ở runtime", "RouterLink", "ChangeDetectionStrategy"]
 answer = [0]
@@ -552,7 +605,8 @@ sources = ["angular/api/core/injectiontoken"]
 id = "ng-016"
 module = "ng-di"
 type = "multiple"
-difficulty = 3
+difficulty = 2
+tags = ["level:middle"]
 prompt = "Ở những nơi nào inject() thường được phép gọi trong Angular?"
 options = ["Field initializer của injectable hoặc component", "Provider factory đang chạy trong injection context", "Constructor khi Angular đang khởi tạo instance", "Callback bất kỳ chạy sau một timer", "Một hàm tiện ích bất kỳ không có injection context"]
 answer = [0, 1, 2]
@@ -564,6 +618,7 @@ id = "ng-017"
 module = "ng-di"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Điền scope thường dùng để cung cấp một service dùng chung ở cấp ứng dụng:
 
@@ -580,6 +635,7 @@ id = "ng-018"
 module = "ng-di"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Câu hỏi phỏng vấn: giải thích hierarchical dependency injection, cách injector con tìm dependency và khi nào nên đặt provider ở root, route hoặc component."
 keywords = [["hierarchical", "phân cấp"], ["parent", "cha"], ["child", "con"], ["scope", "phạm vi"], ["override", "ghi đè"]]
 min_keywords = 3
@@ -594,6 +650,7 @@ id = "ng-c03"
 module = "ng-di"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 lang = "javascript"
 title = "Injector cha và con"
 prompt = '''
@@ -665,6 +722,7 @@ id = "ng-019"
 module = "ng-router-forms"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Route ít được truy cập chứa một component standalone lớn. Cách tải nào giúp trì hoãn tải code của component?"
 options = ["loadComponent", "component với eager import ở entry bundle", "Validators.required", "FormControl"]
 answer = [0]
@@ -675,7 +733,8 @@ sources = ["angular/api/router/route", "angular/guide/routing/define-routes"]
 id = "ng-020"
 module = "ng-router-forms"
 type = "single"
-difficulty = 3
+difficulty = 2
+tags = ["level:middle"]
 prompt = "Guard phát hiện người dùng chưa đăng nhập và muốn đưa họ tới trang đăng nhập. Nên trả kết quả nào?"
 options = ["UrlTree hoặc RedirectCommand để yêu cầu router chuyển hướng", "true rồi tự sửa URL trong mọi component", "Một Observable không bao giờ phát", "FormControl với trạng thái invalid"]
 answer = [0]
@@ -687,6 +746,7 @@ id = "ng-021"
 module = "ng-router-forms"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Khi nào resolver phù hợp hơn việc tải dữ liệu sau khi component route đã hiện?"
 options = ["Khi route cần dữ liệu trước activation và giao diện nên dựa trên dữ liệu đó", "Khi dữ liệu chỉ dùng cho một click event sau này", "Khi cần thay thế authorization ở server", "Khi form không có trường nào"]
 answer = [0]
@@ -698,6 +758,7 @@ id = "ng-022"
 module = "ng-router-forms"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "FormControl<string> được khởi tạo bằng giá trị mặc định và không khai báo nonNullable. Tình huống nào cần lưu ý trong typed forms?"
 options = ["Reset có thể đưa giá trị về null theo cấu hình mặc định", "FormControl không thể phát valueChanges", "Validators bị vô hiệu hóa", "Angular tự chuyển string thành number"]
 answer = [0]
@@ -709,6 +770,7 @@ id = "ng-023"
 module = "ng-router-forms"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn các phát biểu đúng về reactive forms và validation."
 options = ["FormGroup gom controls thành cấu trúc có kiểu", "Validator phía client giúp trải nghiệm nhưng server vẫn phải xác thực dữ liệu", "Typed forms giúp phát hiện một số lỗi kiểu khi biên dịch", "Validators.required ngăn mọi request giả mạo gửi dữ liệu rỗng tới API", "Reactive forms chỉ dùng được với template-driven forms"]
 answer = [0, 1, 2]
@@ -720,6 +782,7 @@ id = "ng-024"
 module = "ng-router-forms"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Điền tên API dùng để tải component standalone theo nhu cầu trong route:
 
@@ -736,6 +799,7 @@ id = "ng-025"
 module = "ng-router-forms"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Câu hỏi phỏng vấn: thiết kế một form profile typed có kiểm tra dữ liệu, giải thích vai trò của FormControl/FormGroup, validator phía client và kiểm tra ở server."
 keywords = [["typed forms", "kiểu"], ["formcontrol", "control"], ["formgroup", "group"], ["validator", "validation"], ["server", "backend"]]
 min_keywords = 3
@@ -750,6 +814,7 @@ id = "ng-026"
 module = "rxjs-core"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Một cold Observable tạo timer bên trong producer. Điều gì thường xảy ra khi hai người subscribe riêng?"
 options = ["Mỗi subscription chạy một producer độc lập", "Luôn chỉ có một timer dùng chung", "Subscription thứ hai tự nhận lại toàn bộ giá trị cũ", "Cold Observable không thể phát giá trị"]
 answer = [0]
@@ -761,6 +826,7 @@ id = "ng-027"
 module = "rxjs-core"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Subscription.unsubscribe() cần làm gì với một nguồn có timer đang chờ?"
 options = ["Hủy nhận dữ liệu và chạy teardown để giải phóng timer", "Phát lại mọi giá trị từ đầu", "Tự retry nguồn đến khi thành công", "Biến nguồn thành BehaviorSubject"]
 answer = [0]
@@ -772,6 +838,7 @@ id = "ng-028"
 module = "rxjs-core"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn các đặc điểm đúng của Subject, BehaviorSubject và ReplaySubject."
 options = ["Subject multicast giá trị đến các observer đang đăng ký", "BehaviorSubject giữ giá trị hiện tại và phát giá trị đó cho subscriber mới", "ReplaySubject có thể phát lại một số giá trị trước đó theo cấu hình", "Subject luôn lưu lại mọi giá trị kể từ khi tạo", "Unsubscribe một observer bắt buộc hoàn tất Subject cho tất cả observer"]
 answer = [0, 1, 2]
@@ -782,7 +849,8 @@ sources = ["rxjs/guide/subject"]
 id = "ng-029"
 module = "rxjs-core"
 type = "multiple"
-difficulty = 3
+difficulty = 2
+tags = ["level:middle"]
 prompt = "Những thao tác nào là trách nhiệm hợp lý của consumer khi dùng Observable?"
 options = ["Đăng ký handler cho next/error/complete khi cần", "Hủy subscription sống lâu khi không còn cần", "Có thể dùng pipeable operator để biến đổi luồng trước subscribe", "Giả định mọi nguồn tự hoàn tất sau một giá trị", "Chỉ dùng subscribe khi cần side effect hoặc nhận kết quả"]
 answer = [0, 1, 2, 4]
@@ -794,6 +862,7 @@ id = "ng-030"
 module = "rxjs-core"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Điền các callback theo thứ tự để tạo observer:
 
@@ -810,6 +879,7 @@ id = "ng-031"
 module = "rxjs-core"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Câu hỏi phỏng vấn: so sánh cold và hot Observable trong một tính năng tìm kiếm; nêu ảnh hưởng đến việc chạy request, chia sẻ dữ liệu và subscription."
 keywords = [["cold"], ["hot"], ["subscription", "đăng ký"], ["chia sẻ", "multicast"], ["request"]]
 min_keywords = 3
@@ -824,6 +894,7 @@ id = "ng-c01"
 module = "rxjs-core"
 type = "code"
 difficulty = 3
+tags = ["level:senior"]
 lang = "javascript"
 title = "Mini Observable và pipeable operators"
 prompt = '''
@@ -1017,6 +1088,7 @@ id = "ng-c04"
 module = "rxjs-core"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 lang = "javascript"
 title = "Mini BehaviorSubject"
 prompt = '''
@@ -1145,6 +1217,7 @@ id = "ng-032"
 module = "rxjs-angular"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Luồng tìm kiếm nhận từ khóa mới và không cần kết quả của request cũ nữa. Higher-order operator nào thường phù hợp?"
 options = ["switchMap", "concatMap", "mergeMap", "exhaustMap"]
 answer = [0]
@@ -1156,6 +1229,7 @@ id = "ng-033"
 module = "rxjs-angular"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Tải nhiều ảnh độc lập và chấp nhận kết quả hoàn thành không theo thứ tự đầu vào. Operator nào phù hợp?"
 options = ["mergeMap", "switchMap", "concatMap", "exhaustMap"]
 answer = [0]
@@ -1166,7 +1240,8 @@ sources = ["rxjs/api/operators/mergemap"]
 id = "ng-034"
 module = "rxjs-angular"
 type = "single"
-difficulty = 3
+difficulty = 2
+tags = ["level:middle"]
 prompt = "Người dùng bấm submit nhiều lần trong khi request đầu vẫn chạy; muốn bỏ các lần bấm tiếp theo cho đến khi hoàn tất. Chọn gì?"
 options = ["exhaustMap", "switchMap", "mergeMap", "concatMap"]
 answer = [0]
@@ -1178,6 +1253,7 @@ id = "ng-035"
 module = "rxjs-angular"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Chọn các phát biểu đúng về kết hợp luồng và xử lý lỗi."
 options = ["combineLatest chờ mỗi nguồn phát ít nhất một giá trị rồi phát kết hợp khi nguồn thay đổi", "forkJoin thường phát kết quả cuối sau khi tất cả nguồn hoàn tất", "catchError có thể thay nguồn lỗi bằng Observable khác", "retry có thể lặp lại request có tác dụng phụ mà không cần xem xét idempotency", "concatMap giữ thứ tự xử lý inner bằng cách xếp hàng"]
 answer = [0, 1, 2, 4]
@@ -1189,6 +1265,7 @@ id = "ng-036"
 module = "rxjs-angular"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 Trong component Angular, điền operator để gắn subscription với vòng đời component:
 
@@ -1204,7 +1281,8 @@ sources = ["angular/api/core/rxjs-interop/takeuntildestroyed"]
 id = "ng-037"
 module = "rxjs-angular"
 type = "fill"
-difficulty = 2
+difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Điền hai API Angular để chuyển Observable thành signal đọc được và signal thành Observable:
 
@@ -1220,6 +1298,7 @@ id = "ng-c05"
 module = "rxjs-angular"
 type = "code"
 difficulty = 3
+tags = ["level:senior"]
 lang = "javascript"
 title = "switchMap hủy inner cũ"
 prompt = '''
@@ -1398,6 +1477,7 @@ id = "ng-c06"
 module = "rxjs-angular"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 lang = "javascript"
 title = "debounceTime với fake timers"
 prompt = '''
@@ -1596,6 +1676,7 @@ id = "ng-038"
 module = "rxjs-angular"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "HttpClient functional interceptor thường phù hợp để làm gì?"
 options = ["Áp dụng logic request/response dùng chung như header hoặc logging có kiểm soát", "Thay thế validator phía server", "Tạo component từ response", "Bỏ qua mọi lỗi mạng"]
 answer = [0]
@@ -1607,6 +1688,7 @@ id = "ng-039"
 module = "rxjs-angular"
 type = "single"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Vì sao không nên retry mù một request ghi dữ liệu khi chưa biết nó idempotent?"
 options = ["Request có thể chạy tác dụng phụ nhiều lần", "Retry biến Observable thành signal", "Retry luôn xóa dữ liệu ở server", "HttpClient không phát error"]
 answer = [0]
@@ -1618,6 +1700,7 @@ id = "angular-dv001"
 module = "angular-dv-http"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Trong HttpClient, generic get<User>() có đảm bảo response JSON thực tế đúng cấu trúc User ở runtime không?"
 options = ["Có, Angular tự kiểm tra mọi field trước khi trả response", "Không, generic chỉ cung cấp kỳ vọng kiểu cho TypeScript khi biên dịch", "Có, nhưng chỉ khi bật interceptor", "Không, vì HttpClient luôn trả về chuỗi"]
 answer = [1]
@@ -1629,6 +1712,7 @@ id = "angular-dv002"
 module = "angular-dv-http"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một Observable do HttpClient tạo được subscribe hai lần độc lập. Điều gì thường xảy ra?"
 options = ["Request chỉ gửi một lần vì Observable luôn chia sẻ response", "Mỗi subscription có thể gửi một request mới", "Subscription thứ hai tự dùng cache của trình duyệt", "Observable phát response trước cả khi subscribe"]
 answer = [1]
@@ -1640,6 +1724,7 @@ id = "angular-dv003"
 module = "angular-dv-http"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Ô tìm kiếm gửi request theo từng từ khóa; kết quả của từ khóa cũ không còn cần thiết khi có từ khóa mới. Cách xử lý nào phù hợp?"
 options = ["switchMap để chuyển sang request mới và hủy subscription của request cũ", "concatMap để giữ mọi kết quả theo thứ tự", "mergeMap để mọi request đều luôn hoàn tất", "subscribe lồng nhau mà không giữ subscription"]
 answer = [0]
@@ -1651,6 +1736,7 @@ id = "angular-dv004"
 module = "angular-dv-http"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Trong ứng dụng standalone, cách nào đăng ký functional interceptor với HttpClient?"
 options = ["Đưa interceptor vào withInterceptors() trong provideHttpClient()", "Khai báo interceptor như một validator của FormGroup", "Gọi interceptor trực tiếp trong mỗi template", "Thêm interceptor vào danh sách routes"]
 answer = [0]
@@ -1662,6 +1748,7 @@ id = "angular-dv005"
 module = "angular-dv-http"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn các nhận định đúng về HttpClient và request đang chạy."
 options = ["Mỗi subscription độc lập có thể làm phát sinh một request mới", "HttpParams.set() sửa chính object hiện tại và luôn trả về void", "HttpParams và HttpHeaders là bất biến; cần dùng object được trả về", "Unsubscribe có thể hủy việc chờ một request HttpClient chưa hoàn tất", "Generic get<User>() kiểm tra JSON lúc chạy"]
 answer = [0, 2, 3]
@@ -1673,6 +1760,7 @@ id = "angular-dv006"
 module = "angular-dv-http"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Chọn các nhận định đúng về xử lý lỗi trong luồng request."
 options = ["HttpErrorResponse có thể biểu diễn lỗi từ response server hoặc lỗi mạng", "Đặt catchError bên trong switchMap có thể giúp luồng từ khóa bên ngoài tiếp tục sau lỗi một request", "Vì HttpClient Observable là cold nên retry POST luôn an toàn", "Interceptor có thể thay thế việc server kiểm tra dữ liệu và quyền truy cập"]
 answer = [0, 1]
@@ -1684,6 +1772,7 @@ id = "angular-dv007"
 module = "angular-dv-http"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Các phương thức HttpClient như get() trả về một {{blank}} có thể subscribe để gửi request."
 blanks = [["Observable"]]
 explanation = "HttpClient biểu diễn kết quả request bằng Observable; việc subscribe thường khởi chạy request."
@@ -1694,6 +1783,7 @@ id = "angular-dv008"
 module = "angular-dv-http"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Câu hỏi phỏng vấn: mô tả cách bạn thiết kế luồng tìm kiếm dùng HttpClient khi người dùng nhập liên tục. Giải thích cách hủy request cũ, đặt xử lý lỗi và quyết định có retry hay không."
 keywords = [["cancellation", "unsubscribe", "hủy request"], ["idempotent", "idempotency"], ["error handling", "catchError", "xử lý lỗi"]]
 min_keywords = 2
@@ -1707,6 +1797,7 @@ module = "angular-dv-http"
 type = "code"
 lang = "javascript"
 difficulty = 2
+tags = ["level:middle"]
 title = "Quyết định retry request HTTP"
 prompt = '''Viết hàm shouldRetryHttp(method, status) cho chính sách retry tự động bảo thủ. Trả về true chỉ khi method là GET, HEAD, PUT, DELETE hoặc OPTIONS và status là 408, 429, 500, 502, 503 hoặc 504. Method có thể viết thường hoặc hoa. Mọi tổ hợp khác trả về false; chính sách này không xét Idempotency-Key cho POST.'''
 starter = '''function shouldRetryHttp(method, status) {
@@ -1746,6 +1837,7 @@ id = "angular-dv010"
 module = "angular-dv-ssr"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Trang hướng dẫn công khai chỉ đổi khi phát hành phiên bản mới. Chiến lược render nào thường phù hợp để tạo HTML trước?"
 options = ["Prerender", "Server rendering theo từng request", "Chỉ client rendering", "Hydration mà không có HTML ban đầu"]
 answer = [0]
@@ -1757,6 +1849,7 @@ id = "angular-dv011"
 module = "angular-dv-ssr"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Trang hồ sơ phải dựng nội dung theo cookie và dữ liệu mới nhất của request. Cách render nào phù hợp hơn prerender công khai?"
 options = ["Server rendering theo request", "Prerender một bản dùng chung cho mọi người", "Chỉ tạo nội dung trong lúc build", "Tắt mọi rendering"]
 answer = [0]
@@ -1768,6 +1861,7 @@ id = "angular-dv012"
 module = "angular-dv-ssr"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một service được thực thi trong quá trình server rendering cần dùng window để đọc kích thước màn hình. Vấn đề chính là gì?"
 options = ["window chỉ có trong môi trường trình duyệt nên không thể giả định luôn tồn tại trên server", "window chỉ hoạt động bên trong HttpInterceptor", "Angular tự chuyển mọi truy cập window thành request HTTP", "SSR cấm mọi service có dependency"]
 answer = [0]
@@ -1778,7 +1872,8 @@ sources = ["angular/guide/ssr"]
 id = "angular-dv013"
 module = "angular-dv-ssr"
 type = "single"
-difficulty = 2
+difficulty = 1
+tags = ["level:junior"]
 prompt = "Hydration chủ yếu cho phép ứng dụng làm gì sau khi HTML server được tải về?"
 options = ["Tái sử dụng DOM hiện có và gắn hành vi Angular phía client", "Xác thực quyền của request thay cho backend", "Tạo lại toàn bộ HTML ở build time", "Biến mọi route thành prerender"]
 answer = [0]
@@ -1790,6 +1885,7 @@ id = "angular-dv014"
 module = "angular-dv-ssr"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn các nhận định đúng về hybrid rendering và SSR."
 options = ["Có thể chọn render mode khác nhau cho các route", "SSR tự thay thế kiểm tra quyền trên server", "Kết quả render đầu ở server và client nên nhất quán để hydration hoạt động ổn định", "Mọi API của trình duyệt đều có sẵn trong lúc server render"]
 answer = [0, 2]
@@ -1801,6 +1897,7 @@ id = "angular-dv015"
 module = "angular-dv-ssr"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Chọn các thực hành giúp tránh lỗi khi bật server rendering và hydration."
 options = ["Tránh tạo nội dung ban đầu phụ thuộc giá trị ngẫu nhiên khác nhau giữa server và client", "Đưa dữ liệu cá nhân vào HTML prerender dùng chung", "Chỉ truy cập browser API trong ngữ cảnh client phù hợp", "Kiểm tra side effect để tránh khởi chạy request trùng khi client tiếp nhận trang"]
 answer = [0, 2, 3]
@@ -1812,6 +1909,7 @@ id = "angular-dv016"
 module = "angular-dv-ssr"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Trong cấu hình ServerRoute, trang công khai cần tạo HTML tại build có thể dùng RenderMode.{{blank}}."
 blanks = [["Prerender"]]
 explanation = "Prerender tạo trước HTML cho route trong quá trình build."
@@ -1821,7 +1919,8 @@ sources = ["angular/api/ssr/rendermode", "angular/api/ssr/serverrouteprerender"]
 id = "angular-dv017"
 module = "angular-dv-ssr"
 type = "fill"
-difficulty = 2
+difficulty = 1
+tags = ["level:junior"]
 prompt = "Quá trình gắn ứng dụng Angular phía client lên DOM đã được server render gọi là {{blank}}."
 blanks = [["hydration"]]
 explanation = "Hydration tái sử dụng HTML/DOM đã có để kết nối hành vi phía client."
@@ -1832,6 +1931,7 @@ id = "angular-dv018"
 module = "angular-dv-ssr"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Câu hỏi phỏng vấn: bạn sẽ chọn client rendering, server rendering hay prerender cho các route khác nhau như thế nào? Nêu các rủi ro cần xử lý khi hydration khởi chạy trên trình duyệt."
 keywords = [["render mode", "rendering mode"], ["hydration"], ["browser api", "window", "document"], ["server-side rendering", "ssr"]]
 min_keywords = 3
@@ -1844,6 +1944,7 @@ id = "angular-dv019"
 module = "angular-dv-testing"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "TestBed hữu ích nhất cho nhiệm vụ nào trong unit test Angular?"
 options = ["Tạo môi trường kiểm thử có cấu hình dependency và component cần kiểm tra", "Thay toàn bộ kiểm thử end-to-end trên trình duyệt", "Gửi request thật tới production API", "Tự sinh dữ liệu kiểm thử ngẫu nhiên cho mọi service"]
 answer = [0]
@@ -1855,6 +1956,7 @@ id = "angular-dv020"
 module = "angular-dv-testing"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Sau khi tạo ComponentFixture, bạn cần chạy binding/lifecycle trước khi đọc kết quả render ban đầu. Thường gọi API nào?"
 options = ["fixture.detectChanges()", "fixture.destroy()", "TestBed.resetTestingModule()", "HttpTestingController.verify()"]
 answer = [0]
@@ -1866,6 +1968,7 @@ id = "angular-dv021"
 module = "angular-dv-testing"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Khi cấu hình test HTTP với provider function, thứ tự nào cho phép backend kiểm thử thay backend thật?"
 options = ["provideHttpClient() trước provideHttpClientTesting()", "provideHttpClientTesting() trước provideHttpClient()", "Chỉ đăng ký provideHttpClientTesting()", "Đăng ký hai provider trong component template"]
 answer = [0]
@@ -1876,7 +1979,8 @@ sources = ["angular/guide/http/testing", "angular/api/common/http/testing/provid
 id = "angular-dv022"
 module = "angular-dv-testing"
 type = "single"
-difficulty = 2
+difficulty = 1
+tags = ["level:junior"]
 prompt = "HttpTestingController.expectOne('/api/users') hữu ích nhất để xác nhận điều gì?"
 options = ["Có đúng một request khớp điều kiện được tạo và lấy request đó để kiểm tra", "Server production đã lưu user thành công", "Component không còn subscription nào", "Route đã được prerender"]
 answer = [0]
@@ -1888,6 +1992,7 @@ id = "angular-dv023"
 module = "angular-dv-testing"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn các bước đúng khi kiểm thử service gọi HttpClient bằng backend giả."
 options = ["Gọi method của service để phát request", "Dùng expectOne() để lấy request cần kiểm tra", "Dùng flush() để cung cấp response giả", "Bỏ qua mọi request còn treo vì chúng tự được đóng khi test kết thúc"]
 answer = [0, 1, 2]
@@ -1898,7 +2003,8 @@ sources = ["angular/guide/http/testing", "angular/api/common/http/testing/httpte
 id = "angular-dv024"
 module = "angular-dv-testing"
 type = "multiple"
-difficulty = 3
+difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn các thực hành giúp component test tập trung và ít phụ thuộc implementation."
 options = ["Kiểm tra nội dung/hành vi mà người dùng hoặc consumer quan sát được", "Thay service ngoài phạm vi bằng provider giả nếu phù hợp mục tiêu test", "Kiểm tra mọi field private để test luôn biết chi tiết nội bộ", "Tạo trạng thái riêng cho mỗi test để tránh phụ thuộc thứ tự chạy"]
 answer = [0, 1, 3]
@@ -1910,6 +2016,7 @@ id = "angular-dv025"
 module = "angular-dv-testing"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Để đồng bộ binding và cập nhật DOM của component fixture trong test, gọi fixture.{{blank}}()."
 blanks = [["detectChanges"]]
 explanation = "detectChanges() chạy change detection cho fixture."
@@ -1919,7 +2026,8 @@ sources = ["angular/api/core/testing/componentfixture"]
 id = "angular-dv026"
 module = "angular-dv-testing"
 type = "fill"
-difficulty = 2
+difficulty = 1
+tags = ["level:junior"]
 prompt = "Sau khi xử lý các request mong đợi, gọi HttpTestingController.{{blank}}() để phát hiện request chưa được xử lý."
 blanks = [["verify"]]
 explanation = "verify() kiểm tra không còn request mở hoặc ngoài dự kiến trong test."
@@ -1929,10 +2037,851 @@ sources = ["angular/guide/http/testing", "angular/api/common/http/testing/httpte
 id = "angular-dv027"
 module = "angular-dv-testing"
 type = "essay"
-difficulty = 3
+difficulty = 2
+tags = ["level:middle"]
 prompt = "Câu hỏi phỏng vấn: bạn sẽ tách test component và service như thế nào, và kiểm thử một request HttpClient ra sao mà không gọi mạng thật?"
 keywords = [["testbed"], ["observable behavior", "user-visible behavior", "hành vi quan sát được"], ["httptestingcontroller"], ["flush"], ["verify"]]
 min_keywords = 3
 model_answer = '''Tôi dùng TestBed để cấu hình component hoặc service cùng dependency cần thiết, rồi kiểm tra observable behavior thay vì private implementation. Với request, HttpTestingController.expectOne() xác nhận request, flush() cấp response giả và verify() phát hiện request còn sót.'''
 explanation = "Câu trả lời cần thể hiện ranh giới unit test và quy trình kiểm soát request giả."
 sources = ["angular/guide/testing", "angular/guide/http/testing", "angular/api/common/http/testing/httptestingcontroller"]
+
+[[questions]]
+id = "angular-lv001"
+module = "angular-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "migration"]
+prompt = "Ứng dụng Angular 15 dùng NgModule, 4 team cùng phát hành hằng tuần, 40% route lazy-load. Ban lãnh đạo muốn \"chuyển hết sang standalone\" trong quý này nhưng không được dừng feature. Quyết định hợp lý nhất?"
+options = ["Chạy schematic migrate theo từng thư mục/route, gate bằng CI, để module cũ và standalone cùng tồn tại tới khi xong", "Đóng băng feature 6 tuần để viết lại toàn bộ bằng tay trong một PR lớn", "Giữ NgModule vĩnh viễn vì standalone chưa cần thiết", "Cho mỗi team tự chọn cách riêng, không có quy ước chung"]
+answer = [0]
+explanation = "Standalone và NgModule tương thích nên có thể chuyển dần theo lát cắt, mỗi PR nhỏ, dễ rollback, không chặn feature. Viết lại một lần làm rủi ro merge conflict và dừng giao hàng; không chuyển hẳn thì nợ kỹ thuật tích tụ; mỗi team một kiểu làm quy ước phân mảnh và tăng chi phí review."
+sources = ["angular/guide/components/inputs", "angular/guide/di"]
+
+[[questions]]
+id = "angular-lv002"
+module = "angular-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "state"]
+prompt = "Team 5 người, ứng dụng dashboard có dữ liệu server (danh sách, chi tiết) và vài trạng thái UI cục bộ (tab, bộ lọc). Bạn cần chọn chiến lược state trong 2 tuần, ít người biết NgRx. Lựa chọn nào hợp lý?"
+options = ["Dùng service + signals cho state cục bộ, lớp data/HTTP riêng cho dữ liệu server; chỉ thêm NgRx khi xuất hiện nhu cầu rõ (time-travel, nhiều luồng phức tạp)", "Áp NgRx đầy đủ (actions, effects, selectors) cho mọi thứ ngay từ đầu để \"đúng chuẩn\"", "Lưu mọi thứ trong biến global của window để truy cập nhanh", "Dùng một BehaviorSubject lớn duy nhất cho cả ứng dụng và cho mọi component ghi trực tiếp"]
+answer = [0]
+explanation = "Với team nhỏ, ít kinh nghiệm NgRx và thời gian ngắn, chi phí boilerplate/học vượt lợi ích. Signals + service đủ cho phạm vi này và có đường nâng cấp. NgRx từ đầu làm chậm giao hàng; biến global và một Subject cho phép ghi tùy ý nên khó debug khi team lớn lên."
+sources = ["angular/guide/signals", "angular/guide/di"]
+
+[[questions]]
+id = "angular-lv003"
+module = "angular-lead"
+type = "multiple"
+difficulty = 3
+tags = ["level:lead", "ssr"]
+prompt = "Site thương mại điện tử 300k sản phẩm, LCP mobile 4.2 s, SEO quan trọng, ngân sách hạ tầng hạn chế. Chọn các quyết định render hợp lý."
+options = ["Prerender trang tĩnh (landing, danh mục ít đổi)", "SSR cho trang sản phẩm cần dữ liệu mới, kèm cache ở CDN/edge theo TTL", "Prerender toàn bộ 300k trang trong mỗi lần build", "Giữ client-side rendering thuần cho mọi trang vì đơn giản nhất", "Đo trước/sau bằng dữ liệu thực (RUM) trên một nhóm route trước khi mở rộng"]
+answer = [0, 1, 4]
+explanation = "Phân loại theo mức độ đổi của nội dung: tĩnh thì prerender, động thì SSR có cache. Prerender 300k trang làm build quá lâu và tốn kém; CSR thuần làm hại SEO/LCP. Đo bằng RUM giúp chứng minh hiệu quả trước khi đầu tư rộng."
+sources = ["angular/guide/ssr", "angular/guide/hydration"]
+
+[[questions]]
+id = "angular-lv004"
+module = "angular-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "zoneless"]
+prompt = "Ứng dụng lớn dùng Zone.js, nhiều thư viện bên thứ ba chưa rõ có hoạt động zoneless không. Bạn muốn giảm chi phí change detection. Bước đầu tiên hợp lý?"
+options = ["Chuyển component sang OnPush + signals dần dần và thử zoneless trên một route/feature đại diện sau khi kiểm kê thư viện", "Bật zoneless toàn cục ngay trên production, sửa lỗi nếu có người dùng báo", "Xoá Zone.js khỏi polyfills mà không đổi code", "Không làm gì vì Angular sẽ tự tối ưu"]
+answer = [0]
+explanation = "Zoneless cần mọi cập nhật UI đi qua cơ chế Angular nhận biết (signals, markForCheck, async pipe). Lộ trình an toàn là chuẩn bị bằng OnPush/signals, kiểm kê phụ thuộc và thử trên lát cắt nhỏ. Bật thẳng trên production hay xoá polyfill làm UI không cập nhật theo cách khó tìm."
+sources = ["angular/guide/zoneless", "angular/guide/signals"]
+
+[[questions]]
+id = "angular-lv005"
+module = "angular-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "monorepo"]
+prompt = "Ba ứng dụng Angular chia sẻ component và logic API; hiện copy-paste nên lệch phiên bản, CI mỗi PR mất 25 phút. Team 12 người. Đề xuất hợp lý?"
+options = ["Gom vào monorepo (Nx hoặc Angular workspace), tách libs có ranh giới rõ và dùng affected/cache cho CI", "Publish mọi thứ lên npm private và để mỗi app tự nâng cấp khi nhớ", "Hợp nhất ba app thành một app duy nhất", "Giữ copy-paste nhưng viết tài liệu hướng dẫn đồng bộ thủ công"]
+answer = [0]
+explanation = "Monorepo với affected build và cache trả lời cả hai vấn đề: chia sẻ code một nguồn và rút ngắn CI. Npm private tăng chi phí release/đồng bộ phiên bản cho team 12 người; gộp app xoá ranh giới sản phẩm; tài liệu thủ công không ngăn lệch."
+sources = ["angular/guide/zoneless"]
+
+[[questions]]
+id = "angular-lv006"
+module = "angular-lead"
+type = "multiple"
+difficulty = 3
+tags = ["level:lead", "review"]
+prompt = "Bạn viết checklist code review Angular cho team. Chọn các mục đáng đưa vào checklist bắt buộc."
+options = ["Subscription có được huỷ (takeUntilDestroyed, async pipe, toSignal)?", "Component mới có dùng OnPush hoặc signals không?", "Có test cho hành vi người dùng thấy được không?", "Tên biến có đúng sở thích cá nhân của reviewer không?", "Dữ liệu từ server có validate/xử lý lỗi ở biên không?"]
+answer = [0, 1, 2, 4]
+explanation = "Checklist nên bắt các lỗi lặp lại gây sự cố (rò rỉ subscription, change detection, thiếu test, lỗi ở biên). Sở thích cá nhân nên giao cho linter/formatter, không đưa vào review thủ công vì tốn thời gian và gây mâu thuẫn."
+sources = ["angular/guide/testing"]
+
+[[questions]]
+id = "angular-lv007"
+module = "angular-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "performance"]
+prompt = "Trang chính nặng 1.8 MB JS ban đầu, mục tiêu giảm 30% trong 1 sprint, 2 dev. Phương án đáng làm đầu tiên?"
+options = ["Phân tích bundle, lazy-load route/component nặng bằng @defer và loadComponent, bỏ thư viện trùng lặp", "Viết lại toàn bộ UI bằng framework khác", "Tắt source map trong production và coi như xong", "Nén ảnh nhưng không đụng JS"]
+answer = [0]
+explanation = "Phân tích bundle cho biết đâu là phần nặng; tách theo route/@defer cho hiệu quả lớn với chi phí nhỏ, làm được trong 1 sprint. Viết lại là quá rủi ro; source map không nằm trong JS người dùng tải; ảnh không giải quyết mục tiêu về JS."
+sources = ["angular/guide/templates/defer", "angular/guide/routing/define-routes"]
+
+[[questions]]
+id = "angular-lv008"
+module = "angular-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "upgrade"]
+prompt = "Team đang ở Angular 2 major phía sau bản hiện hành, có release hằng tuần, bộ test đủ tốt. Chiến lược nâng version nào hợp lý nhất?"
+options = ["Nâng từng major một bằng ng update, chạy test và thử trên staging sau mỗi bước, tách PR nâng cấp khỏi PR feature", "Nhảy thẳng nhiều major bằng cách sửa package.json thủ công", "Chờ tới khi bản cũ hết hỗ trợ rồi nâng một lần", "Nâng trực tiếp trên nhánh production để nhanh"]
+answer = [0]
+explanation = "Nâng từng major theo hướng dẫn chính thức dùng migration có sẵn và giữ PR nhỏ, dễ truy vết lỗi. Nhảy nhiều major hay chờ hết hỗ trợ làm khối lượng và rủi ro tăng, có thể mất bản vá bảo mật."
+sources = ["angular/guide/upgrade"]
+
+[[questions]]
+id = "angular-lv009"
+module = "angular-lead"
+type = "multiple"
+difficulty = 3
+tags = ["level:lead", "observability"]
+prompt = "Sau release, lỗi JS ở production tăng nhưng không ai biết nguồn. Chọn các biện pháp quan sát đáng đầu tư."
+options = ["Cấu hình ErrorHandler toàn cục gửi lỗi kèm release/version và route tới hệ thống theo dõi", "Upload source map riêng tới công cụ theo dõi lỗi, không public cho người dùng", "Đo Core Web Vitals bằng RUM theo route", "Chỉ dựa vào console.log trong trình duyệt của dev", "Đặt feature flag/canary để giới hạn phạm vi ảnh hưởng của bản phát hành"]
+answer = [0, 1, 2, 4]
+explanation = "Lỗi cần ngữ cảnh (release, route), source map để đọc stack, RUM để thấy hiệu năng thật, và canary/flag để giới hạn rủi ro. console.log cục bộ không thấy được hành vi của người dùng thật."
+sources = ["angular/api/core/errorhandler"]
+
+[[questions]]
+id = "angular-lv010"
+module = "angular-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "testing"]
+prompt = "CI mất 40 phút vì 300 test E2E; flaky 8%. Team 8 người hay bỏ qua kết quả đỏ. Quyết định ưu tiên?"
+options = ["Giữ E2E cho vài luồng quan trọng, đẩy phần còn lại xuống component/integration test, cách ly và sửa/ngưng test flaky có owner", "Chạy lại tất cả E2E tới khi xanh thì merge", "Xoá toàn bộ test E2E", "Tăng timeout của mọi test lên gấp đôi"]
+answer = [0]
+explanation = "Tháp test hợp lý và xử lý flaky có chủ sở hữu giúp lấy lại niềm tin vào CI. Retry mù hoặc tăng timeout che giấu vấn đề và làm CI chậm hơn; xoá hết E2E mất kiểm tra luồng quan trọng."
+sources = ["angular/guide/testing"]
+
+[[questions]]
+id = "angular-lv011"
+module = "angular-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "micro-frontend"]
+prompt = "Hai team mới đề xuất micro-frontend (Module Federation) cho ứng dụng Angular 10 dev, một sản phẩm, một lịch release. Họ muốn \"độc lập deploy\". Bạn trả lời thế nào?"
+options = ["Chưa cần: dùng monorepo với ranh giới lib và lazy route; chỉ xét micro-frontend khi có nhu cầu release độc lập thực sự và đã chịu được chi phí vận hành", "Đồng ý ngay vì micro-frontend luôn nhanh hơn", "Từ chối vì micro-frontend không bao giờ dùng được với Angular", "Chia thành 10 micro-frontend, mỗi dev một cái"]
+answer = [0]
+explanation = "Micro-frontend thêm chi phí: version chia sẻ, runtime contract, UX nhất quán, quan sát. Với một sản phẩm và một lịch release, monorepo có ranh giới rõ cho phần lớn lợi ích với chi phí thấp hơn. Chia 10 mảnh hay chấp nhận vô điều kiện đều bỏ qua ràng buộc team."
+sources = ["angular/guide/routing"]
+
+[[questions]]
+id = "angular-lv012"
+module = "angular-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "design-system"]
+prompt = "Ba app dùng ba bộ nút/form khác nhau, designer than phiền, a11y không đồng đều. Có 2 FE dev rảnh một nửa thời gian. Quyết định hợp lý?"
+options = ["Xây thư viện component nhỏ trong workspace (nút, input, dialog) với token và test a11y, áp dụng dần theo màn hình mới trước", "Viết lại tất cả màn hình của ba app bằng thư viện mới trong 1 tháng", "Mua thư viện UI và ép mọi app dùng ngay không cần đánh giá", "Mỗi dev tự sửa style theo ý mình"]
+answer = [0]
+explanation = "Với nguồn lực nhỏ, bắt đầu bằng tập component có nhiều tác động nhất và áp dụng cho code mới giảm rủi ro. Viết lại tất cả là quá tải; ép dùng thư viện chưa đánh giá có thể không khớp yêu cầu a11y/brand; tự sửa làm phân mảnh thêm."
+sources = ["angular/guide/components/inputs"]
+
+[[questions]]
+id = "angular-lv013"
+module = "angular-lead"
+type = "multiple"
+difficulty = 3
+tags = ["level:lead", "rxjs"]
+prompt = "Codebase có nhiều pipeline RxJS lồng nhau khó đọc, có rò rỉ subscription. Chọn các quy ước đáng áp dụng cho team."
+options = ["Ưu tiên toSignal/async pipe trong template thay cho subscribe thủ công", "Dùng takeUntilDestroyed khi buộc phải subscribe trong component/service", "Đặt tên và tách pipeline phức tạp thành hàm/operator có test", "Cấm hoàn toàn RxJS và chuyển mọi thứ sang Promise", "Dùng switchMap cho tìm kiếm cần huỷ request cũ, exhaustMap cho submit tránh double click"]
+answer = [0, 1, 2, 4]
+explanation = "Quy ước nên giảm bề mặt lỗi lặp lại: tự huỷ subscription, chọn flattening operator đúng ngữ nghĩa, tách logic để test. Cấm RxJS làm mất khả năng huỷ/ghép luồng mà HttpClient, router và form đang dùng."
+sources = ["angular/api/core/destroyref", "rxjs/api/operators/switchmap"]
+
+[[questions]]
+id = "angular-lv014"
+module = "angular-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "security"]
+prompt = "Pentest phát hiện token đăng nhập lưu trong localStorage và có chỗ dùng bypassSecurityTrustHtml với nội dung người dùng. Có 1 sprint. Ưu tiên xử lý?"
+options = ["Gỡ bypassSecurityTrust* cho dữ liệu người dùng (để sanitizer của Angular hoạt động), thêm CSP, rồi lập kế hoạch chuyển token sang cookie HttpOnly với backend", "Chỉ thêm thông báo cảnh báo cho người dùng", "Mã hoá token bằng Base64 trong localStorage", "Bỏ qua vì Angular đã an toàn mặc định mọi trường hợp"]
+answer = [0]
+explanation = "bypassSecurityTrustHtml tắt cơ chế bảo vệ XSS nên cần xử lý trước vì khai thác trực tiếp; CSP giảm thiệt hại. Token trong HttpOnly cookie cần backend phối hợp nên lên kế hoạch. Base64 không phải mã hoá bảo mật; Angular chỉ an toàn khi không tắt sanitizer."
+sources = ["angular/api/platform-browser/domsanitizer"]
+
+[[questions]]
+id = "angular-lv015"
+module = "angular-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "a11y"]
+prompt = "Hợp đồng với khách hàng công yêu cầu đạt WCAG 2.1 AA trong 3 tháng. Hiện không có test a11y, 120 màn hình. Cách tiếp cận hợp lý?"
+options = ["Xếp màn hình theo mức dùng/rủi ro, đưa lint a11y và kiểm tra tự động vào CI, sửa theo lô, bổ sung kiểm thử thủ công với screen reader cho luồng chính", "Chỉ chạy một công cụ tự động một lần rồi coi như đạt", "Đợi khách hàng báo lỗi", "Sửa ngẫu nhiên các màn hình dễ nhất"]
+answer = [0]
+explanation = "Công cụ tự động chỉ bắt một phần lỗi; cần ưu tiên theo rủi ro, chặn hồi quy bằng CI và kiểm tra thủ công luồng chính. Một lần quét hay chờ báo lỗi không đáp ứng cam kết hợp đồng; sửa ngẫu nhiên không có độ phủ."
+sources = ["angular/guide/templates/event-listeners"]
+
+[[questions]]
+id = "angular-lv016"
+module = "angular-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "hiring"]
+prompt = "Dev junior mới vào hay tạo service singleton giữ state toàn cục và subscribe không huỷ. Bạn có 30 phút mỗi tuần cho mentoring. Cách hiệu quả nhất?"
+options = ["Pair review PR nhỏ theo checklist, thêm lint rule (ví dụ no-floating subscribe) và một mẫu tham chiếu trong repo", "Viết tài liệu 50 trang và yêu cầu đọc hết", "Tự sửa lại mọi PR của họ không giải thích", "Cấm junior tạo service"]
+answer = [0]
+explanation = "Phản hồi cụ thể trên code thật, lint tự động và ví dụ chuẩn mở rộng được trong thời gian ít. Tài liệu dài ít được đọc; tự sửa không giúp họ học; cấm service cản trở công việc thường ngày."
+sources = ["angular/guide/di"]
+
+[[questions]]
+id = "angular-lv017"
+module = "angular-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "tech-debt"]
+prompt = "Sprint sắp tới có 5 ngày dành cho nợ kỹ thuật. Ứng cử: (A) đổi toàn bộ component sang OnPush không có số liệu, (B) sửa module dashboard gây 60% lỗi production và 3 lần sự cố/tháng, (C) đổi tên thư mục cho đẹp. Chọn?"
+options = ["B, vì có bằng chứng tác động lên độ tin cậy và có thể đo kết quả bằng số lỗi/sự cố", "A, vì OnPush luôn tốt", "C, vì dễ làm nhất", "Chia đều thời gian cho cả ba"]
+answer = [0]
+explanation = "Nợ kỹ thuật nên xếp theo tác động đo được và rủi ro. B có số liệu sự cố, kết quả kiểm chứng được. A thiếu bằng chứng và phạm vi lớn; C ít giá trị; chia đều làm loãng tác động."
+sources = ["angular/api/core/changedetectionstrategy"]
+
+[[questions]]
+id = "angular-lv018"
+module = "angular-lead"
+type = "multiple"
+difficulty = 3
+tags = ["level:lead", "release"]
+prompt = "Bạn thiết kế quy trình release cho ứng dụng Angular có 200k người dùng/ngày. Chọn các biện pháp giảm rủi ro hợp lý."
+options = ["Build một lần, dùng cùng artifact qua các môi trường", "Hash tên file bundle và cache dài hạn, index.html cache ngắn", "Canary hoặc feature flag cho thay đổi rủi ro cao", "Sửa trực tiếp file trên server production khi có lỗi gấp", "Có kế hoạch rollback và theo dõi tỉ lệ lỗi sau phát hành"]
+answer = [0, 1, 2, 4]
+explanation = "Artifact bất biến, hash file, rollout từng phần và rollback là nền tảng release an toàn. Sửa trực tiếp trên production không truy vết được và tạo sai khác giữa môi trường."
+sources = ["angular/guide/ssr"]
+
+[[questions]]
+id = "angular-lv019"
+module = "angular-lead"
+type = "essay"
+difficulty = 3
+tags = ["level:lead", "adr"]
+prompt = "Viết ADR ngắn: nên chuyển ứng dụng Angular lớn từ NgModule + Zone.js sang standalone + signals + zoneless hay giữ nguyên? Nêu bối cảnh, lựa chọn, tiêu chí, rủi ro và kế hoạch thực hiện."
+keywords = [["rủi ro", "risk"], ["từng bước", "dần dần", "incremental", "theo lát cắt"], ["đo", "metric", "baseline"], ["rollback", "đảo ngược", "revert"], ["standalone"], ["zoneless", "zone.js"]]
+min_keywords = 4
+model_answer = '''Bối cảnh: app lớn, nhiều team, mục tiêu giảm chi phí change detection và boilerplate. Lựa chọn: giữ nguyên, chuyển dần theo feature, hoặc viết lại. Tôi chọn chuyển dần: dùng schematic chuyển sang standalone trước (rủi ro thấp), sau đó OnPush và signals cho code mới, rồi thử zoneless trên một route đại diện. Tiêu chí: đo baseline (INP, thời gian change detection, kích thước bundle), số lỗi, tốc độ giao hàng. Rủi ro: thư viện chưa tương thích zoneless, hai cách làm cùng tồn tại; giảm bằng danh sách kiểm kê, owner, cổng CI và khả năng rollback/revert theo từng route. Quyết định được xem lại sau mỗi mốc dựa trên số liệu.'''
+explanation = "Đáp án tốt có ngữ cảnh, phương án thay thế, tiêu chí đo được, kế hoạch dần dần, rủi ro và đường lui."
+sources = ["angular/guide/zoneless"]
+
+[[questions]]
+id = "angular-lv020"
+module = "angular-lead"
+type = "essay"
+difficulty = 3
+tags = ["level:lead", "incident"]
+prompt = "Sau release thứ Sáu, tỉ lệ lỗi JS tăng gấp 5 và nhiều người dùng không đăng nhập được. Bạn là Tech Lead trực: trình bày các bước xử lý và việc làm sau sự cố."
+keywords = [["rollback", "quay lại", "revert"], ["giao tiếp", "communication", "thông báo"], ["nguyên nhân gốc", "root cause"], ["postmortem", "retrospective", "blameless"], ["giám sát", "monitor", "alert", "sentry"]]
+min_keywords = 4
+model_answer = '''Ưu tiên giảm thiệt hại: xác nhận phạm vi bằng monitoring, rollback hoặc tắt feature flag nếu release là nghi phạm chính, thông báo cho các bên liên quan (support, sản phẩm) và cập nhật trạng thái định kỳ. Sau khi ổn định mới điều tra nguyên nhân gốc bằng log, source map và so sánh release. Sau sự cố viết postmortem blameless, nêu hành động phòng ngừa như test hồi quy, canary, alert theo release và cập nhật runbook; gán owner và hạn cho từng hành động.'''
+explanation = "Tech Lead cần giảm thiệt hại trước, điều tra sau, giao tiếp rõ và biến sự cố thành cải tiến có owner."
+sources = ["angular/api/core/errorhandler"]
+
+[[questions]]
+id = "angular-lvc01"
+module = "angular-lead"
+type = "code"
+lang = "javascript"
+difficulty = 3
+tags = ["level:lead", "ssr"]
+title = "Chọn chế độ render theo route"
+prompt = '''Team muốn quy tắc render rõ ràng cho từng route. Viết hàm chooseRenderMode(route) trả về "csr", "ssr" hoặc "prerender".
+
+route có dạng { requiresAuth: boolean, seo: boolean, personalized: boolean, updatesPerDay: number }.
+
+- Route cần đăng nhập (requiresAuth) và không cần SEO: "csr".
+- Route cần SEO mà nội dung cá nhân hoá (personalized) hoặc đổi từ 24 lần/ngày trở lên: "ssr".
+- Route cần SEO, không cá nhân hoá và đổi ít hơn 24 lần/ngày: "prerender".
+- Các trường hợp còn lại (không SEO, không cần đăng nhập): "csr".
+- Route cần SEO thì ưu tiên các quy tắc SEO kể cả khi requiresAuth là true và personalized là true: "ssr".'''
+starter = '''function chooseRenderMode(route) {
+  return "csr";
+}'''
+solution = '''function chooseRenderMode(route) {
+  if (route.seo) {
+    if (route.personalized || route.updatesPerDay >= 24) return "ssr";
+    return "prerender";
+  }
+  return "csr";
+}'''
+tests = '''test("trang marketing tĩnh được prerender", function () {
+  expect(chooseRenderMode({ requiresAuth: false, seo: true, personalized: false, updatesPerDay: 0 })).toBe("prerender");
+});
+
+test("trang SEO đổi liên tục dùng ssr", function () {
+  expect(chooseRenderMode({ requiresAuth: false, seo: true, personalized: false, updatesPerDay: 24 })).toBe("ssr");
+});
+
+test("trang SEO cá nhân hoá dùng ssr", function () {
+  expect(chooseRenderMode({ requiresAuth: false, seo: true, personalized: true, updatesPerDay: 1 })).toBe("ssr");
+});
+
+test("trang sau đăng nhập không SEO dùng csr", function () {
+  expect(chooseRenderMode({ requiresAuth: true, seo: false, personalized: true, updatesPerDay: 100 })).toBe("csr");
+});
+
+test("SEO được ưu tiên hơn requiresAuth", function () {
+  expect(chooseRenderMode({ requiresAuth: true, seo: true, personalized: true, updatesPerDay: 1 })).toBe("ssr");
+});
+
+test("route công khai không SEO dùng csr", function () {
+  expect(chooseRenderMode({ requiresAuth: false, seo: false, personalized: false, updatesPerDay: 2 })).toBe("csr");
+});'''
+hints = ["Xét seo trước vì nó quyết định có cần HTML ban đầu hay không.", "Ngưỡng 24 lần/ngày dùng toán tử >= ."]
+explanation = "Quyết định render nên là quy tắc tường minh dựa trên nhu cầu SEO, cá nhân hoá và độ thường xuyên đổi của dữ liệu, để team áp dụng nhất quán."
+sources = ["angular/guide/ssr"]
+
+[[questions]]
+id = "angular-lvc02"
+module = "angular-lead"
+type = "code"
+lang = "javascript"
+difficulty = 3
+tags = ["level:lead", "release"]
+title = "Chia người dùng cho canary release"
+prompt = '''Viết hàm isInRollout(userId, percent) quyết định người dùng có thuộc nhóm canary hay không.
+
+- userId là chuỗi; percent là số từ 0 đến 100.
+- Kết quả phải xác định: cùng userId và percent luôn cho cùng kết quả.
+- percent = 0: không ai thuộc nhóm; percent = 100: mọi người đều thuộc nhóm.
+- Tính tăng dần: nếu một user thuộc nhóm ở percent p thì vẫn thuộc nhóm ở mọi percent lớn hơn p.
+- Gợi ý: băm userId thành bucket từ 0 đến 99 và so sánh bucket < percent. Dùng băm chuỗi đơn giản, không cần mật mã.'''
+starter = '''function isInRollout(userId, percent) {
+  return false;
+}'''
+solution = '''function bucketOf(userId) {
+  let hash = 0;
+  for (let i = 0; i < userId.length; i++) {
+    hash = (hash * 31 + userId.charCodeAt(i)) % 1000003;
+  }
+  return hash % 100;
+}
+
+function isInRollout(userId, percent) {
+  return bucketOf(String(userId)) < percent;
+}'''
+tests = '''test("percent 0 không chọn ai", function () {
+  for (let i = 0; i < 50; i++) {
+    expect(isInRollout("user-" + i, 0)).toBe(false);
+  }
+});
+
+test("percent 100 chọn tất cả", function () {
+  for (let i = 0; i < 50; i++) {
+    expect(isInRollout("user-" + i, 100)).toBe(true);
+  }
+});
+
+test("kết quả xác định", function () {
+  expect(isInRollout("alice", 30)).toBe(isInRollout("alice", 30));
+});
+
+test("tăng dần khi tăng percent", function () {
+  for (let i = 0; i < 100; i++) {
+    const id = "u" + i;
+    let was = false;
+    for (let p = 0; p <= 100; p += 10) {
+      const now = isInRollout(id, p);
+      if (was) expect(now).toBe(true);
+      was = now;
+    }
+  }
+});
+
+test("percent 50 chọn khoảng một nửa", function () {
+  let count = 0;
+  for (let i = 0; i < 1000; i++) {
+    if (isInRollout("user-" + i, 50)) count++;
+  }
+  expect(count > 350 && count < 650).toBe(true);
+});'''
+hints = ["Băm chuỗi bằng vòng lặp charCodeAt rồi lấy phần dư cho 100.", "So sánh bucket < percent để có tính tăng dần."]
+explanation = "Chia nhóm xác định theo băm userId giúp mỗi người luôn thấy cùng một phiên bản và cho phép tăng dần tỉ lệ canary mà không đổi người đã được chọn."
+sources = ["angular/guide/ssr"]
+
+[[questions]]
+id = "angular-lv021"
+module = "ng-signals"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "change-detection"]
+prompt = '''Component OnPush hiển thị user.name. Cha truyền cùng một object user và đổi trực tiếp user.name = "Lan" trong handler. Giao diện con không cập nhật. Giải thích đúng nhất?
+
+~~~ts
+@Component({ changeDetection: ChangeDetectionStrategy.OnPush, template: `{{ user.name }}` })
+class Child { @Input() user!: { name: string }; }
+~~~'''
+options = ["OnPush so sánh tham chiếu input; mutate cùng object không làm tham chiếu đổi nên component không được đánh dấu dirty", "Angular không hỗ trợ binding thuộc tính lồng nhau", "Zone.js bị tắt nên không có change detection", "Template chỉ được render một lần duy nhất"]
+answer = [0]
+explanation = "Với OnPush, input thay đổi được xác định bằng tham chiếu. Mutate tại chỗ không đổi tham chiếu. Cách sửa là tạo object mới (immutable update), dùng signal hoặc markForCheck có chủ đích."
+sources = ["angular/api/core/changedetectionstrategy"]
+
+[[questions]]
+id = "angular-lv022"
+module = "ng-signals"
+type = "multiple"
+difficulty = 3
+tags = ["level:senior", "signals"]
+prompt = "Chọn các phát biểu đúng về computed() và effect() của signals."
+options = ["computed() tính lazy và được cache cho tới khi dependency đổi", "computed() nên là hàm thuần, không ghi vào signal khác", "effect() phù hợp cho side effect như ghi log hoặc đồng bộ ra thế giới ngoài", "Dùng effect() để sao chép signal này sang signal khác là cách tốt nhất", "Dependency của computed được theo dõi động theo các signal thực sự được đọc"]
+answer = [0, 1, 2, 4]
+explanation = "computed là giá trị dẫn xuất lazy, cache, thuần và theo dõi dependency động. effect dành cho side effect; đồng bộ signal sang signal bằng effect dễ gây vòng cập nhật và nên thay bằng computed hoặc linkedSignal."
+sources = ["angular/api/core/computed", "angular/api/core/effect", "angular/api/core/linkedsignal"]
+
+[[questions]]
+id = "angular-lv023"
+module = "ng-signals"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "signals"]
+prompt = "Bạn có signal selectedId và cần một giá trị \"index đang chọn\" tự reset về 0 khi danh sách items thay đổi nhưng vẫn cho người dùng ghi đè thủ công. Công cụ phù hợp nhất?"
+options = ["linkedSignal", "computed", "effect ghi vào signal", "Một BehaviorSubject"]
+answer = [0]
+explanation = "linkedSignal là signal ghi được, được đặt lại theo nguồn khi nguồn đổi, hợp với trạng thái dẫn xuất có thể ghi đè. computed chỉ đọc; effect ghi signal làm luồng dữ liệu khó theo dõi."
+sources = ["angular/api/core/linkedsignal"]
+
+[[questions]]
+id = "angular-lv024"
+module = "ng-di"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "di"]
+prompt = "Service CartService được khai báo providers: [CartService] trong component ProductCard. Có 50 ProductCard trên trang và kỳ vọng dùng chung một giỏ hàng, nhưng mỗi thẻ thấy giỏ riêng. Nguyên nhân?"
+options = ["Provider ở cấp component tạo một instance cho mỗi component instance", "inject() luôn tạo instance mới ở mọi lần gọi", "Service bị tree-shake", "Angular giới hạn một service cho tối đa 10 component"]
+answer = [0]
+explanation = "Provider khai báo trong component có scope theo element injector, mỗi component sinh instance riêng. Muốn singleton dùng providedIn: 'root' hoặc provider cấp ứng dụng."
+sources = ["angular/guide/di/hierarchical-dependency-injection"]
+
+[[questions]]
+id = "angular-lv025"
+module = "ng-di"
+type = "multiple"
+difficulty = 3
+tags = ["level:senior", "di"]
+prompt = "Chọn các phát biểu đúng về injector hierarchy và các modifier của inject()."
+options = ["optional: true trả về null thay vì ném lỗi nếu không tìm thấy provider", "self: true chỉ tra injector của chính element/component", "skipSelf: true bỏ qua injector hiện tại và tra từ cha", "host: true giúp lấy provider từ bất kỳ route nào trong ứng dụng", "InjectionToken có thể kèm factory để cung cấp giá trị mặc định"]
+answer = [0, 1, 2, 4]
+explanation = "optional, self, skipSelf, host là các tuỳ chọn điều khiển phạm vi tra cứu; host giới hạn tra cứu tới host element, không phải toàn bộ route. InjectionToken với factory cho giá trị mặc định tree-shakable."
+sources = ["angular/api/core/inject", "angular/api/core/injectoptions", "angular/api/core/injectiontoken"]
+
+[[questions]]
+id = "angular-lv026"
+module = "rxjs-angular"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "rxjs"]
+prompt = "Ô tìm kiếm gọi API theo từng phím. Người dùng gõ nhanh, response cũ về sau response mới và ghi đè kết quả. Cấu trúc đúng là?"
+options = ["valueChanges.pipe(debounceTime(300), distinctUntilChanged(), switchMap(q => api.search(q)))", "valueChanges.pipe(mergeMap(q => api.search(q)))", "valueChanges.pipe(concatMap(q => api.search(q)))", "valueChanges.pipe(exhaustMap(q => api.search(q)))"]
+answer = [0]
+explanation = "switchMap huỷ request cũ khi có giá trị mới nên chỉ kết quả mới nhất được dùng; debounce/distinct giảm số request. mergeMap cho phép response chạy đua; concatMap xếp hàng gây trễ; exhaustMap bỏ qua giá trị mới trong lúc đang chờ."
+sources = ["rxjs/api/operators/switchmap"]
+
+[[questions]]
+id = "angular-lv027"
+module = "rxjs-angular"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "rxjs"]
+prompt = "Nút \"Lưu\" gọi POST. Người dùng bấm đúp, tạo hai request và tạo trùng bản ghi. Operator nào trong pipeline click phù hợp nhất ở phía client?"
+options = ["exhaustMap", "switchMap", "mergeMap", "map"]
+answer = [0]
+explanation = "exhaustMap bỏ qua click mới khi request đang chạy, hợp với thao tác ghi cần tránh trùng. switchMap sẽ huỷ phía client nhưng server có thể vẫn đã xử lý; mergeMap vẫn gửi cả hai; map không xử lý Observable bên trong. Phía server vẫn cần idempotency."
+sources = ["rxjs/api/operators/exhaustmap"]
+
+[[questions]]
+id = "angular-lv028"
+module = "rxjs-angular"
+type = "multiple"
+difficulty = 3
+tags = ["level:senior", "rxjs"]
+prompt = "Chọn các nguyên nhân thường gặp gây rò rỉ bộ nhớ hoặc request lặp trong code RxJS của Angular."
+options = ["Subscribe trong ngOnInit nhưng không huỷ khi component bị huỷ", "Gọi cùng cold Observable HTTP nhiều lần bằng nhiều async pipe", "Dùng takeUntilDestroyed ở constructor/injection context", "Tạo subscription lồng nhau trong subscribe", "Dùng Subject không bao giờ complete và giữ tham chiếu tới component"]
+answer = [0, 1, 3, 4]
+explanation = "Subscription không huỷ, nhiều subscribe vào cold observable (mỗi lần là một request), subscribe lồng nhau và Subject giữ tham chiếu là nguồn lỗi phổ biến. takeUntilDestroyed là cách khắc phục chứ không phải nguyên nhân."
+sources = ["angular/api/core/destroyref", "rxjs/api/operators/sharereplay"]
+
+[[questions]]
+id = "angular-lv029"
+module = "ng-signals"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "zoneless"]
+prompt = "Sau khi bật zoneless, một component đổi trường this.count trong setTimeout nhưng giao diện không cập nhật. Cách sửa phù hợp nhất?"
+options = ["Chuyển count thành signal (hoặc gọi markForCheck có chủ đích) để Angular biết cần cập nhật", "Thêm lại Zone.js trong tất cả trường hợp", "Dùng document.write", "Gọi lại bootstrapApplication mỗi giây"]
+answer = [0]
+explanation = "Zoneless không tự phát hiện thay đổi từ setTimeout. Trạng thái dạng signal (hoặc markForCheck, async pipe) báo cho Angular lên lịch cập nhật. Thêm lại Zone.js đi ngược mục tiêu; hai lựa chọn còn lại không hợp lý."
+sources = ["angular/guide/zoneless", "angular/api/core/providezonelesschangedetection"]
+
+[[questions]]
+id = "angular-lv030"
+module = "ng-router-forms"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "router"]
+prompt = "Resolver chặn điều hướng tới trang chi tiết tới khi API trả về, làm người dùng thấy màn hình cũ lâu. Giải pháp tốt cho trải nghiệm?"
+options = ["Điều hướng ngay, hiển thị khung chờ và tải dữ liệu bằng resource/httpResource trong component, chỉ giữ resolver cho dữ liệu bắt buộc", "Tăng timeout của API lên 5 phút", "Bỏ router, dùng một component duy nhất", "Chạy resolver hai lần"]
+answer = [0]
+explanation = "Điều hướng sớm với trạng thái loading mang lại phản hồi nhanh; resolver chỉ nên dùng khi không thể hiển thị trang nếu thiếu dữ liệu. Tăng timeout hay bỏ router không giải quyết vấn đề trải nghiệm."
+sources = ["angular/guide/routing/data-resolvers", "angular/guide/http/http-resource"]
+
+[[questions]]
+id = "angular-lvc03"
+module = "rxjs-angular"
+type = "code"
+lang = "javascript"
+difficulty = 3
+tags = ["level:senior", "async"]
+title = "Chỉ giữ kết quả mới nhất (kiểu switchMap)"
+prompt = '''Viết latestOnly(asyncFn) trả về hàm mới. Mỗi lần gọi hàm mới sẽ gọi asyncFn(...args) và trả Promise.
+
+- Nếu một lời gọi cũ hoàn thành sau khi đã có lời gọi mới hơn, Promise của lời gọi cũ phải resolve với giá trị undefined (kết quả bị bỏ qua).
+- Lời gọi mới nhất resolve với kết quả thật.
+- Lỗi của lời gọi mới nhất phải được ném tiếp (reject); lỗi của lời gọi cũ bị bỏ qua (resolve undefined).'''
+starter = '''function latestOnly(asyncFn) {
+  return function () {
+    return asyncFn.apply(null, arguments);
+  };
+}'''
+solution = '''function latestOnly(asyncFn) {
+  let latest = 0;
+  return function () {
+    const id = ++latest;
+    return Promise.resolve(asyncFn.apply(null, arguments)).then(
+      function (value) {
+        return id === latest ? value : undefined;
+      },
+      function (error) {
+        if (id === latest) throw error;
+        return undefined;
+      }
+    );
+  };
+}'''
+tests = '''function deferred() {
+  const d = {};
+  d.promise = new Promise(function (resolve, reject) { d.resolve = resolve; d.reject = reject; });
+  return d;
+}
+
+test("lời gọi đơn lẻ trả kết quả", function () {
+  const fn = latestOnly(function (x) { return Promise.resolve(x * 2); });
+  return fn(4).then(function (v) { expect(v).toBe(8); });
+});
+
+test("kết quả cũ về sau bị bỏ qua", function () {
+  const d1 = deferred();
+  const d2 = deferred();
+  const queue = [d1, d2];
+  const fn = latestOnly(function () { return queue.shift().promise; });
+  const first = fn();
+  const second = fn();
+  d2.resolve("new");
+  d1.resolve("old");
+  return Promise.all([first, second]).then(function (r) {
+    expect(r[0]).toBe(undefined);
+    expect(r[1]).toBe("new");
+  });
+});
+
+test("lỗi của lời gọi mới nhất được ném", function () {
+  const fn = latestOnly(function () { return Promise.reject(new Error("boom")); });
+  return fn().then(function () { throw new Error("should fail"); }, function (e) { expect(e.message).toBe("boom"); });
+});
+
+test("lỗi của lời gọi cũ bị bỏ qua", function () {
+  const d1 = deferred();
+  const queue = [d1.promise, Promise.resolve("ok")];
+  const fn = latestOnly(function () { return queue.shift(); });
+  const a = fn();
+  const b = fn();
+  d1.reject(new Error("old"));
+  return Promise.all([a, b]).then(function (r) {
+    expect(r[0]).toBe(undefined);
+    expect(r[1]).toBe("ok");
+  });
+});'''
+hints = ["Giữ một bộ đếm tăng dần; mỗi lời gọi nhớ id của mình.", "Khi Promise xong, so id với bộ đếm hiện tại để biết còn là mới nhất hay không."]
+explanation = "Đây là ngữ nghĩa của switchMap: chỉ kết quả của lời gọi mới nhất được dùng, tránh response cũ ghi đè kết quả mới."
+sources = ["rxjs/api/operators/switchmap"]
+
+[[questions]]
+id = "angular-lv031"
+module = "ng-signals"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "performance"]
+prompt = "Danh sách 5000 dòng dùng @for và mỗi lần nhận dữ liệu mới từ server tạo object mới cho tất cả dòng. DOM bị tạo lại, mất focus và chậm. Cách khắc phục đúng?"
+options = ["Dùng track với khoá ổn định như id để Angular tái sử dụng DOM, kết hợp virtual scroll nếu danh sách lớn", "Dùng track $index khi danh sách có thể sắp xếp lại", "Tắt change detection", "Gọi detectChanges() trong vòng lặp"]
+answer = [0]
+explanation = "track với khoá định danh ổn định cho phép Angular so khớp và tái sử dụng DOM khi object mới có cùng id. track $index sai khi thứ tự đổi vì gắn DOM với vị trí; hai lựa chọn còn lại không giải quyết nguyên nhân."
+sources = ["angular/api/core/@for"]
+
+[[questions]]
+id = "angular-lv032"
+module = "rxjs-angular"
+type = "multiple"
+difficulty = 3
+tags = ["level:senior", "rxjs"]
+prompt = "Chọn các phát biểu đúng về shareReplay và chia sẻ luồng Observable."
+options = ["Observable HTTP là cold: mỗi subscribe tạo một request riêng", "shareReplay({ bufferSize: 1, refCount: true }) cho phép nhiều subscriber dùng chung một nguồn và phát lại giá trị gần nhất", "shareReplay không bao giờ giữ tham chiếu tới nguồn nếu bỏ refCount", "Cache bằng shareReplay cần chiến lược làm mới/huỷ khi dữ liệu cũ", "Subject là cold Observable"]
+answer = [0, 1, 3]
+explanation = "Cold observable chạy lại nguồn cho mỗi subscriber; shareReplay chia sẻ và phát lại, nhưng cần quyết định refCount và cách vô hiệu hoá cache. Nếu không dùng refCount, nguồn có thể được giữ sau khi hết subscriber; Subject là hot."
+sources = ["rxjs/api/operators/sharereplay"]
+
+[[questions]]
+id = "angular-lv033"
+module = "angular-dv-ssr"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "hydration"]
+prompt = "Console báo hydration mismatch: server render \"10:05\" còn client render \"10:06\" vì dùng new Date() trong template. Cách xử lý đúng?"
+options = ["Tính giá trị phụ thuộc thời gian/trình duyệt sau khi hydrate (ví dụ afterNextRender) hoặc truyền cùng một giá trị từ server sang client", "Tắt hydration cho toàn ứng dụng", "Dùng setTimeout trong constructor", "Bỏ qua cảnh báo"]
+answer = [0]
+explanation = "Hydration đòi DOM do server và client sinh ra khớp nhau. Dữ liệu phụ thuộc môi trường nên được tạo sau hydrate hoặc đồng bộ qua state. Tắt hydration mất lợi ích; bỏ qua cảnh báo có thể gây lỗi giao diện."
+sources = ["angular/guide/hydration", "angular/api/core/afternextrender"]
+
+[[questions]]
+id = "angular-lv034"
+module = "angular-dv-http"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "http"]
+prompt = "Hai interceptor: auth (gắn token, refresh khi 401) và logging. Nhiều request cùng gặp 401 và cùng gọi refresh, tạo nhiều refresh song song. Thiết kế đúng?"
+options = ["Chỉ cho một refresh chạy, các request khác chờ cùng kết quả (chia sẻ bằng shareReplay/Promise chung) rồi thử lại một lần", "Mỗi request tự gọi refresh để đơn giản", "Bỏ qua 401 và để người dùng tải lại trang", "Thử lại vô hạn khi 401"]
+answer = [0]
+explanation = "Refresh token thường chỉ dùng được một lần nên refresh song song gây lỗi; chia sẻ một lần refresh và retry tối đa một lần tránh vòng lặp. Retry vô hạn có thể khoá tài khoản hoặc tạo bão request."
+sources = ["angular/guide/http/interceptors"]
+
+[[questions]]
+id = "angular-lv035"
+module = "angular-dv-testing"
+type = "multiple"
+difficulty = 3
+tags = ["level:senior", "testing"]
+prompt = "Test dùng fakeAsync/tick hoặc fake timers cho debounce. Chọn các nhận định đúng."
+options = ["Có thể tua thời gian ảo mà không chờ thật", "Cần xử lý hoặc xả mọi timer còn lại trước khi kết thúc để test không rò rỉ", "Test với timer thật làm bộ test chậm và dễ flaky", "fakeAsync cho phép kiểm tra HTTP thật tới server production", "Nên kiểm tra kết quả sau khi tua đủ thời gian debounce"]
+answer = [0, 1, 2, 4]
+explanation = "Fake timers làm test xác định và nhanh, nhưng cần xả timer còn lại. Chúng không liên quan tới việc gọi mạng thật; request nên dùng HttpTestingController."
+sources = ["angular/guide/testing/zone-js-testing-utilities"]
+
+[[questions]]
+id = "angular-lv036"
+module = "ng-di"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "di"]
+prompt = "Thư viện nội bộ cần cấu hình tuỳ chọn (apiUrl, timeout) mà ứng dụng chủ cung cấp, có giá trị mặc định hợp lý. Thiết kế DI đẹp nhất?"
+options = ["InjectionToken<LibConfig> kèm factory mặc định và hàm provideLib(config) trả về provider", "Đọc biến global window.config trong service", "Truyền cấu hình bằng chuỗi qua @Input của mọi component", "Hard-code giá trị trong service"]
+answer = [0]
+explanation = "InjectionToken + factory + hàm provideX là mẫu chuẩn: kiểu rõ ràng, tree-shakable, dễ test bằng cách ghi đè provider. Biến global và hard-code gây khó test, Input không phù hợp cho cấu hình dùng chung."
+sources = ["angular/api/core/injectiontoken", "angular/api/core/makeenvironmentproviders"]
+
+[[questions]]
+id = "angular-lv037"
+module = "ng-components"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "template"]
+prompt = "Hiển thị thông báo \"Không có dữ liệu\" khi mảng items rỗng bằng control flow hiện đại, nên dùng cú pháp nào?"
+options = ["@for (item of items; track item.id) { ... } @empty { <p>Không có dữ liệu</p> }", "*ngFor với else", "@if (items) { ... } không xử lý mảng rỗng", "Dùng innerHTML"]
+answer = [0]
+explanation = "Khối @empty của @for hiển thị khi danh sách rỗng, gọn hơn việc kiểm tra riêng."
+sources = ["angular/api/core/@for"]
+
+[[questions]]
+id = "angular-lv038"
+module = "ng-components"
+type = "fill"
+difficulty = 1
+tags = ["level:junior", "template"]
+prompt = "Gắn giá trị biểu thức vào thuộc tính DOM disabled của nút: <button [{{blank}}]=\"isSaving\">Lưu</button>"
+blanks = [["disabled"]]
+explanation = "Property binding dùng dấu ngoặc vuông quanh tên thuộc tính; [disabled] điều khiển trạng thái của nút."
+sources = ["angular/guide/templates/event-listeners"]
+
+[[questions]]
+id = "angular-lv039"
+module = "ng-di"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "di"]
+prompt = "Cách hiện đại để lấy một service trong class (không dùng constructor injection)?"
+options = ["private readonly http = inject(HttpClient);", "new HttpClient()", "document.getElementById('http')", "require('http')"]
+answer = [0]
+explanation = "inject() lấy dependency từ injector trong injection context, như initializer của field hoặc constructor."
+sources = ["angular/api/core/inject"]
+
+[[questions]]
+id = "angular-lv040"
+module = "rxjs-core"
+type = "fill"
+difficulty = 1
+tags = ["level:junior", "rxjs"]
+prompt = "Để biến đổi từng giá trị phát ra từ Observable, dùng toán tử trong pipe(): source$.pipe({{blank}}(x => x * 2))"
+blanks = [["map"]]
+explanation = "map áp dụng hàm lên từng giá trị mà Observable phát ra."
+sources = ["rxjs/api/operators/map"]
+
+[[questions]]
+id = "angular-lv041"
+module = "ng-router-forms"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "router"]
+prompt = "Khai báo route /users/:id; để đọc id bằng input() của component (khi bật withComponentInputBinding), cần làm gì?"
+options = ["Khai báo id = input<string>() trong component và bật withComponentInputBinding()", "Đọc window.location.href rồi cắt chuỗi", "Gọi fetch('/users/:id')", "Dùng localStorage"]
+answer = [0]
+explanation = "Với withComponentInputBinding(), tham số route được gán vào input cùng tên của component."
+sources = ["angular/guide/routing/read-route-state"]
+
+[[questions]]
+id = "angular-lvc04"
+module = "ng-components"
+type = "code"
+lang = "javascript"
+difficulty = 1
+tags = ["level:junior", "pipe"]
+title = "Lọc danh sách theo từ khoá"
+prompt = '''Viết hàm filterByName(users, query) giống logic của một pipe lọc.
+
+- users là mảng object { id, name }.
+- Trả về mảng mới chỉ gồm user có name chứa query, không phân biệt hoa thường.
+- Bỏ khoảng trắng đầu/cuối của query. Nếu query rỗng thì trả về bản sao của toàn bộ mảng.
+- Không làm thay đổi mảng gốc.'''
+starter = '''function filterByName(users, query) {
+  return users;
+}'''
+solution = '''function filterByName(users, query) {
+  const q = (query || "").trim().toLowerCase();
+  if (q === "") return users.slice();
+  return users.filter(function (u) {
+    return u.name.toLowerCase().indexOf(q) !== -1;
+  });
+}'''
+tests = '''const users = [
+  { id: 1, name: "Lan Nguyen" },
+  { id: 2, name: "Minh Tran" },
+  { id: 3, name: "Anh Lan" }
+];
+
+test("lọc không phân biệt hoa thường", function () {
+  expect(filterByName(users, "LAN").map(function (u) { return u.id; })).toEqual([1, 3]);
+});
+
+test("bỏ khoảng trắng của query", function () {
+  expect(filterByName(users, "  minh ").length).toBe(1);
+});
+
+test("query rỗng trả bản sao", function () {
+  const result = filterByName(users, "");
+  expect(result).toEqual(users);
+  expect(result === users).toBe(false);
+});
+
+test("không khớp trả mảng rỗng", function () {
+  expect(filterByName(users, "zzz")).toEqual([]);
+});'''
+hints = ["Chuẩn hoá query bằng trim() và toLowerCase().", "Dùng filter, không dùng sort hay splice trên mảng gốc."]
+explanation = "Logic lọc thuần, không mutate đầu vào, là nền tảng cho pipe hoặc computed lọc danh sách trong Angular."
+sources = ["angular/guide/templates/pipes"]
+
+[[questions]]
+id = "angular-lv042"
+module = "ng-signals"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "signals"]
+prompt = "Bạn cần danh sách đã lọc từ signal items và signal query, tự cập nhật khi một trong hai đổi. Cách đúng?"
+options = ["const filtered = computed(() => items().filter(i => i.name.includes(query())));", "effect(() => { filtered = items().filter(...) });", "Gọi filter trong template mỗi lần change detection mà không cache", "Dùng setInterval cập nhật mỗi giây"]
+answer = [0]
+explanation = "computed là giá trị dẫn xuất, tự theo dõi dependency và được cache. Gán biến trong effect dễ lệch và khó theo dõi; setInterval lãng phí."
+sources = ["angular/api/core/computed"]
+
+[[questions]]
+id = "angular-lv043"
+module = "ng-router-forms"
+type = "multiple"
+difficulty = 2
+tags = ["level:middle", "forms"]
+prompt = "Chọn các phát biểu đúng về Reactive Forms."
+options = ["FormGroup gom nhiều FormControl thành một giá trị/trạng thái", "Validators.required là validator đồng bộ", "Async validator nên tránh gọi server ở mỗi phím mà không debounce", "Reactive Forms không thể kiểm thử vì phụ thuộc DOM", "valueChanges là Observable phát giá trị khi form đổi"]
+answer = [0, 1, 2, 4]
+explanation = "Reactive Forms định nghĩa model trong code nên dễ test; async validator cần giảm số lần gọi, valueChanges phát khi giá trị đổi."
+sources = ["angular/guide/forms"]
+
+[[questions]]
+id = "angular-lv044"
+module = "rxjs-core"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "rxjs"]
+prompt = "Gọi API thất bại tạm thời, bạn muốn thử lại tối đa 2 lần rồi báo lỗi. Cách hợp lý trong RxJS?"
+options = ["http.get(url).pipe(retry(2), catchError(handle))", "Gọi subscribe trong vòng while(true)", "Bỏ catchError", "Dùng debounceTime(2)"]
+answer = [0]
+explanation = "retry(2) subscribe lại nguồn tối đa 2 lần khi lỗi, catchError xử lý lỗi cuối cùng. Chỉ nên retry thao tác an toàn/idempotent."
+sources = ["rxjs/api/operators/retry"]
+
+[[questions]]
+id = "angular-lv045"
+module = "angular-dv-http"
+type = "fill"
+difficulty = 2
+tags = ["level:middle", "http"]
+prompt = "Đăng ký HttpClient với interceptor dạng hàm trong cấu hình ứng dụng: provideHttpClient(with{{blank}}([authInterceptor]))"
+blanks = [["Interceptors"]]
+explanation = "withInterceptors nhận danh sách interceptor dạng hàm cho provideHttpClient."
+sources = ["angular/guide/http/interceptors"]
+
+[[questions]]
+id = "angular-lvc05"
+module = "angular-dv-http"
+type = "code"
+lang = "javascript"
+difficulty = 2
+tags = ["level:middle", "http"]
+title = "Tính thời gian chờ retry với exponential backoff"
+prompt = '''Viết hàm backoffDelay(attempt, baseMs, maxMs) cho chiến lược retry.
+
+- attempt bắt đầu từ 1 (lần retry thứ nhất).
+- Độ trễ = baseMs * 2^(attempt - 1), nhưng không vượt maxMs.
+- attempt nhỏ hơn 1 được coi như 1.
+- Trả về số nguyên (miligiây).'''
+starter = '''function backoffDelay(attempt, baseMs, maxMs) {
+  return baseMs;
+}'''
+solution = '''function backoffDelay(attempt, baseMs, maxMs) {
+  const n = Math.max(1, Math.floor(attempt));
+  const delay = baseMs * Math.pow(2, n - 1);
+  return Math.min(delay, maxMs);
+}'''
+tests = '''test("lần đầu bằng baseMs", function () {
+  expect(backoffDelay(1, 200, 5000)).toBe(200);
+});
+
+test("tăng gấp đôi mỗi lần", function () {
+  expect(backoffDelay(2, 200, 5000)).toBe(400);
+  expect(backoffDelay(3, 200, 5000)).toBe(800);
+});
+
+test("không vượt maxMs", function () {
+  expect(backoffDelay(10, 200, 5000)).toBe(5000);
+});
+
+test("attempt nhỏ hơn 1 coi như 1", function () {
+  expect(backoffDelay(0, 100, 1000)).toBe(100);
+  expect(backoffDelay(-3, 100, 1000)).toBe(100);
+});'''
+hints = ["Dùng Math.pow(2, attempt - 1).", "Kết hợp Math.min với maxMs."]
+explanation = "Backoff tăng cấp số nhân giúp giảm tải cho server khi lỗi tạm thời; giới hạn tối đa tránh chờ quá lâu."
+sources = ["angular/guide/http/making-requests"]

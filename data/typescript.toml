@@ -106,6 +106,7 @@ id = "ts-001"
 module = "ts-types"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Đọc đoạn TypeScript:
 ~~~ts
@@ -124,6 +125,7 @@ id = "ts-002"
 module = "ts-types"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 ~~~ts
 type HasId = { id: number };
@@ -142,6 +144,7 @@ id = "ts-003"
 module = "ts-types"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 Một hàm nhận JSON từ bên ngoài và chưa biết cấu trúc. Chọn kiểu giúp buộc mã kiểm tra dữ liệu trước khi truy cập thuộc tính.
 '''
@@ -155,6 +158,7 @@ id = "ts-004"
 module = "ts-types"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 ~~~ts
 function format(value: number, prefix = "id:") {
@@ -173,6 +177,7 @@ id = "ts-005"
 module = "ts-types"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 Trong strict mode, kiểu {{blank}} biểu diễn giá trị chưa biết và bắt buộc narrowing trước khi gọi phương thức.
 '''
@@ -185,6 +190,7 @@ id = "ts-006"
 module = "ts-types"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 Trong TypeScript, phép assertion bằng cú pháp value as User được kiểm tra ở compile time nhưng không chạy {{blank}} dữ liệu khi ứng dụng hoạt động.
 '''
@@ -197,6 +203,7 @@ id = "ts-007"
 module = "ts-types"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Một ứng dụng ép JSON từ API sang kiểu User bằng assertion. Giải thích vì sao assertion chưa đủ an toàn và nêu cách xử lý phù hợp ở ranh giới dữ liệu."
 keywords = [["không kiểm tra runtime", "không xác thực", "không validation"], ["unknown"], ["kiểm tra kiểu", "type guard", "validator"], ["dữ liệu không tin cậy", "ranh giới dữ liệu"]]
 min_keywords = 3
@@ -212,6 +219,7 @@ module = "ts-types"
 type = "code"
 lang = "javascript"
 difficulty = 1
+tags = ["level:junior"]
 title = "Runtime guard & assertion"
 prompt = '''
 Viết hai hàm JavaScript:
@@ -265,6 +273,7 @@ id = "ts-009"
 module = "ts-narrowing"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 ~~~ts
 function printId(id: string | number) {
@@ -284,6 +293,7 @@ id = "ts-010"
 module = "ts-narrowing"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 ~~~ts
 type Result = { ok: true; value: string } | { ok: false; error: Error };
@@ -304,6 +314,7 @@ id = "ts-011"
 module = "ts-narrowing"
 type = "single"
 difficulty = 3
+tags = ["level:senior"]
 prompt = '''
 ~~~ts
 type Shape = { kind: "circle"; radius: number } | { kind: "square"; side: number };
@@ -328,6 +339,7 @@ id = "ts-012"
 module = "ts-narrowing"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn các phép kiểm tra có thể giúp TypeScript narrowing union trong ngữ cảnh phù hợp."
 options = ["typeof value === \"string\"", "\"id\" in value", "value instanceof Date", "JSON.stringify(value)", "value.kind === \"saved\""]
 answer = [0, 1, 2, 4]
@@ -339,6 +351,7 @@ id = "ts-013"
 module = "ts-narrowing"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 Trong chữ ký type predicate, hàm kiểm tra có kiểu trả về dạng value {{blank}} User.
 '''
@@ -351,6 +364,7 @@ id = "ts-014"
 module = "ts-narrowing"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Một discriminated union nhận thêm biến thể archived. Mô tả cách viết switch để compiler giúp phát hiện nhánh bị bỏ sót."
 keywords = [["discriminant", "trường phân biệt", "kind"], ["never"], ["assertnever", "assert never"], ["lỗi biên dịch", "compiler báo", "compile error"]]
 min_keywords = 3
@@ -366,6 +380,7 @@ module = "ts-narrowing"
 type = "code"
 lang = "javascript"
 difficulty = 2
+tags = ["level:middle"]
 title = "Exhaustive switch cho event"
 prompt = '''
 Viết describeEvent(event) theo mô hình discriminated union:
@@ -421,6 +436,7 @@ id = "ts-016"
 module = "ts-generics"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 ~~~ts
 function identity<T>(value: T): T { return value; }
@@ -438,6 +454,7 @@ id = "ts-017"
 module = "ts-generics"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 ~~~ts
 function getId<T extends { id: string }>(value: T) {
@@ -456,6 +473,7 @@ id = "ts-018"
 module = "ts-generics"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 ~~~ts
 function getProperty<T, K extends keyof T>(object: T, key: K): T[K] {
@@ -474,6 +492,7 @@ id = "ts-019"
 module = "ts-generics"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn các mô tả đúng về generic function."
 options = ["Có thể suy luận type parameter từ đối số", "Constraint extends giới hạn thao tác hợp lệ với T", "Mỗi lần gọi có thể suy ra một T khác", "Generic luôn sinh một bản sao hàm cho từng kiểu lúc runtime"]
 answer = [0, 1, 2]
@@ -485,6 +504,7 @@ id = "ts-020"
 module = "ts-generics"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 Toán tử kiểu {{blank}} nào lấy union tên thuộc tính của một kiểu đối tượng T?
 '''
@@ -498,6 +518,7 @@ module = "ts-generics"
 type = "code"
 lang = "javascript"
 difficulty = 2
+tags = ["level:middle"]
 title = "Result<T, E> helpers"
 prompt = '''
 Triển khai các helper JavaScript cho kiểu Result:
@@ -563,6 +584,7 @@ id = "ts-022"
 module = "ts-type-programming"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Utility type nào tạo kiểu có cùng thuộc tính với T nhưng mọi thuộc tính đều tùy chọn?"
 options = ["Required<T>", "Partial<T>", "Pick<T, K>", "Record<K, V>"]
 answer = [1]
@@ -574,6 +596,7 @@ id = "ts-023"
 module = "ts-type-programming"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 ~~~ts
 type ElementType<T> = T extends readonly (infer Item)[] ? Item : T;
@@ -591,6 +614,7 @@ id = "ts-024"
 module = "ts-type-programming"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Với type User = { id: number; name: string; password: string }, kiểu Pick<User, \"id\" | \"name\"> giữ lại điều gì?"
 options = ["Chỉ id và name", "Chỉ password", "Tất cả thuộc tính nhưng đổi thành optional", "Không thuộc tính nào"]
 answer = [0]
@@ -602,6 +626,7 @@ id = "ts-025"
 module = "ts-type-programming"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Chọn các mô tả đúng về type-level programming."
 options = ["Mapped type có thể lặp qua keyof T", "Conditional type có thể chọn kiểu theo quan hệ extends", "Readonly<T> tự gọi Object.freeze lúc runtime", "Template literal type kết hợp các kiểu chuỗi literal"]
 answer = [0, 1, 3]
@@ -613,6 +638,7 @@ id = "ts-026"
 module = "ts-type-programming"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = '''
 ~~~ts
 type ToArray<T> = T extends unknown ? T[] : never;
@@ -631,6 +657,7 @@ id = "ts-027"
 module = "ts-type-programming"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 Utility type {{blank}} nào lấy kiểu trả về của một function type F?
 '''
@@ -644,6 +671,7 @@ module = "ts-type-programming"
 type = "code"
 lang = "javascript"
 difficulty = 2
+tags = ["level:middle"]
 title = "Deep freeze runtime"
 prompt = '''
 Viết deepFreeze(value) để đệ quy Object.freeze mọi object và array nằm trong cây object, rồi trả lại chính value. Bỏ qua primitive và null. Hàm phải an toàn với tham chiếu vòng, không lặp vô hạn, và không thay đổi cấu trúc dữ liệu.
@@ -696,6 +724,7 @@ module = "ts-type-programming"
 type = "code"
 lang = "javascript"
 difficulty = 2
+tags = ["level:middle"]
 title = "Pick & omit runtime"
 prompt = '''
 Viết pick(object, keys) và omit(object, keys):
@@ -756,6 +785,7 @@ id = "ts-030"
 module = "ts-project"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Lợi ích thiết thực của tsconfig đặt strict: true là gì?"
 options = ["Tự kiểm tra JSON lúc runtime", "Bật nhóm kiểm tra nghiêm ngặt như strictNullChecks và noImplicitAny", "Tự cài dependency còn thiếu", "Bắt buộc phát JavaScript sang ES5"]
 answer = [1]
@@ -767,6 +797,7 @@ id = "ts-031"
 module = "ts-project"
 type = "single"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Ứng dụng được bundler hiện đại xử lý import và không chạy output CommonJS trực tiếp. Hướng cấu hình nào thường phù hợp hơn?"
 options = ["Chọn moduleResolution bundler và module tương thích bundler theo hướng dẫn toolchain", "Luôn ép moduleResolution classic", "Bỏ tsconfig để compiler tự đoán toàn bộ", "Đặt moduleResolution node10 cho mọi dự án mới"]
 answer = [0]
@@ -778,6 +809,7 @@ id = "ts-032"
 module = "ts-project"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Vai trò chính của file declaration .d.ts là gì?"
 options = ["Chứa JavaScript được runtime chạy thay implementation", "Mô tả kiểu của API để compiler và editor hiểu", "Tự kiểm tra giá trị đầu vào khi chạy", "Thay thế package.json"]
 answer = [1]
@@ -789,6 +821,7 @@ id = "ts-033"
 module = "ts-project"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 ~~~ts
 import type { User } from "./models";
@@ -805,6 +838,7 @@ id = "ts-034"
 module = "ts-project"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn các mô tả đúng về cấu hình và declaration trong dự án TypeScript."
 options = ["include giúp xác định file nguồn phù hợp với cấu hình", "declaration có thể yêu cầu compiler phát sinh file .d.ts", "paths thường tự cấu hình alias cho mọi runtime mà không cần bundler hoặc runtime hỗ trợ", "moduleResolution nên xét môi trường Node hoặc bundler đang dùng"]
 answer = [0, 1, 3]
@@ -816,6 +850,7 @@ id = "ts-035"
 module = "ts-project"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 Trong tsconfig, tùy chọn {{blank}} nào bật nhóm kiểm tra strict mode?
 '''
@@ -828,6 +863,7 @@ id = "ts-036"
 module = "ts-project"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 File khai báo chỉ mô tả kiểu, thường có phần mở rộng {{blank}}, không chứa implementation JavaScript.
 '''
@@ -840,6 +876,7 @@ id = "ts-037"
 module = "ts-project"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Một nhóm thêm alias bằng compilerOptions.paths nhưng ứng dụng chạy gặp lỗi không tìm thấy module. Giải thích nguyên nhân có thể và cách kiểm tra."
 keywords = [["paths", "alias"], ["chỉ hỗ trợ compiler", "không đổi runtime", "không tự cấu hình runtime"], ["bundler", "module resolution", "runtime"], ["cấu hình đồng bộ", "đồng bộ cấu hình", "kiểm tra cấu hình"]]
 min_keywords = 3
@@ -855,6 +892,7 @@ module = "ts-project"
 type = "code"
 lang = "javascript"
 difficulty = 3
+tags = ["level:senior"]
 title = "Validator schema tối giản"
 prompt = '''
 Triển khai API JavaScript sau để mô phỏng runtime validation:
@@ -1008,6 +1046,7 @@ id = "typescript-dv001"
 module = "typescript-dv-objects-functions"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 ~~~ts
 interface Profile { name: string; nickname?: string }
@@ -1027,6 +1066,7 @@ id = "typescript-dv002"
 module = "typescript-dv-objects-functions"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 ~~~ts
 interface User { id: number }
@@ -1045,6 +1085,7 @@ id = "typescript-dv003"
 module = "typescript-dv-objects-functions"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Thuộc tính readonly trong một object type đảm bảo điều gì?"
 options = ["Không thể gán lại thuộc tính qua tham chiếu có kiểu đó trong lúc kiểm tra tĩnh", "Object luôn được Object.freeze tự động", "Không thể thay đổi thuộc tính qua bất kỳ alias nào", "Thuộc tính được serialize thành hằng số"]
 answer = [0]
@@ -1056,6 +1097,7 @@ id = "typescript-dv004"
 module = "typescript-dv-objects-functions"
 type = "single"
 difficulty = 3
+tags = ["level:senior"]
 prompt = '''
 Một hàm có hai dạng gọi: nhận một chuỗi thì trả về một số, nhận một số thì trả về chuỗi tương ứng. Kỹ thuật nào mô tả tốt nhất mối liên hệ chính xác giữa từng dạng gọi và kiểu kết quả?
 '''
@@ -1069,6 +1111,7 @@ id = "typescript-dv005"
 module = "typescript-dv-objects-functions"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn các mô tả đúng về interface và type alias trong TypeScript."
 options = ["Cả hai có thể mô tả object shape", "Interface có thể mở rộng bằng extends", "Interface hỗ trợ declaration merging trong cùng phạm vi hợp lệ", "Type alias chỉ có thể đặt tên cho object", "Type alias và interface luôn có cùng quy tắc khai báo lặp"]
 answer = [0, 1, 2]
@@ -1080,6 +1123,7 @@ id = "typescript-dv006"
 module = "typescript-dv-objects-functions"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Chọn các phát biểu đúng về chữ ký hàm và callback."
 options = ["TypeScript có thể suy luận kiểu tham số callback từ ngữ cảnh", "Tham số optional có thể là undefined trong thân hàm", "Rest parameter nhận một mảng các giá trị cùng kiểu", "Union parameter luôn giữ được ánh xạ input-output như overload", "Chữ ký hàm tự xác thực dữ liệu ở runtime"]
 answer = [0, 1, 2]
@@ -1091,6 +1135,7 @@ id = "typescript-dv007"
 module = "typescript-dv-objects-functions"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Trong object type, viết dấu nào sau tên thuộc tính để cho phép thuộc tính đó vắng mặt?
 ~~~ts
@@ -1106,6 +1151,7 @@ id = "typescript-dv008"
 module = "typescript-dv-objects-functions"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Trong phỏng vấn, hãy giải thích khi nào bạn chọn overload và khi nào chọn union parameter cho một API hàm."
 keywords = [["overload", "overloads"], ["union", "union parameter"], ["call site", "nơi gọi", "caller"], ["return type", "kiểu trả về"], ["implementation", "cách xử lý"]]
 min_keywords = 3
@@ -1121,6 +1167,7 @@ module = "typescript-dv-objects-functions"
 type = "code"
 lang = "javascript"
 difficulty = 2
+tags = ["level:middle"]
 title = "Chọn thuộc tính own theo danh sách"
 prompt = '''
 Viết hàm pickOwnProperties(source, keys) trả về object mới chỉ gồm các key được yêu cầu mà source thật sự sở hữu trực tiếp.
@@ -1206,6 +1253,7 @@ id = "typescript-dv009"
 module = "typescript-dv-classes"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 ~~~ts
 interface Serializable { serialize(): string }
@@ -1225,6 +1273,7 @@ id = "typescript-dv010"
 module = "typescript-dv-classes"
 type = "single"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Khác biệt quan trọng giữa thuộc tính private của TypeScript và private field viết bằng # là gì?"
 options = ["private của TypeScript chủ yếu được kiểm tra tĩnh, còn # được JavaScript bảo vệ lúc runtime", "# chỉ dùng được trên interface", "private của TypeScript luôn tạo WeakMap khi phát JavaScript", "Hai cách có cùng mức bảo vệ runtime"]
 answer = [0]
@@ -1236,6 +1285,7 @@ id = "typescript-dv011"
 module = "typescript-dv-classes"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Phát biểu nào mô tả đúng abstract class?"
 options = ["Không thể tạo instance trực tiếp từ class abstract, nhưng lớp con có thể kế thừa implementation", "Luôn bị xóa hoàn toàn khỏi JavaScript và không thể có method", "Chỉ dùng để mô tả object literal", "Tự triển khai mọi method abstract trong runtime"]
 answer = [0]
@@ -1247,6 +1297,7 @@ id = "typescript-dv012"
 module = "typescript-dv-classes"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Khi nào dùng từ khóa override cho method của lớp con?"
 options = ["Khi method chủ ý ghi đè thành viên lớp cha để compiler kiểm tra tên và chữ ký", "Để chuyển method thành static", "Để tự gọi method lớp cha trước khi chạy thân hàm", "Để bỏ qua kiểm tra kiểu trả về"]
 answer = [0]
@@ -1258,6 +1309,7 @@ id = "typescript-dv013"
 module = "typescript-dv-classes"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn các mô tả đúng về thành viên class."
 options = ["Thành viên public là mặc định nếu không ghi modifier khác", "Thành viên static thuộc về constructor thay vì từng instance", "Parameter property có thể khai báo field từ tham số constructor", "implements tự thêm method còn thiếu vào class", "Class tạo ra kiểu instance và giá trị constructor lúc runtime"]
 answer = [0, 1, 2, 4]
@@ -1269,6 +1321,7 @@ id = "typescript-dv014"
 module = "typescript-dv-classes"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Chọn các phát biểu đúng về kiểm soát truy cập và kế thừa."
 options = ["private của TypeScript không cung cấp cùng bảo vệ runtime như #field", "protected cho phép lớp con truy cập theo kiểm tra tĩnh", "readonly tự gọi Object.freeze cho instance", "override giúp compiler kiểm tra thành viên ở lớp cha", "extends và implements đều cung cấp implementation từ loại cha"]
 answer = [0, 1, 3]
@@ -1280,6 +1333,7 @@ id = "typescript-dv015"
 module = "typescript-dv-classes"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 Từ khóa nào thể hiện rõ một thành viên lớp con chủ ý ghi đè thành viên của lớp cha?
 ~~~ts
@@ -1297,6 +1351,7 @@ id = "typescript-dv016"
 module = "typescript-dv-classes"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Trong phỏng vấn, hãy so sánh interface với abstract class khi thiết kế hợp đồng cho nhiều loại service."
 keywords = [["interface"], ["abstract class"], ["implementation", "triển khai"], ["state", "trạng thái"], ["multiple", "nhiều hợp đồng", "nhiều interface"]]
 min_keywords = 3
@@ -1312,6 +1367,7 @@ module = "typescript-dv-classes"
 type = "code"
 lang = "javascript"
 difficulty = 2
+tags = ["level:middle"]
 title = "Counter có trạng thái riêng"
 prompt = '''
 Viết class Counter bằng JavaScript với private field #value:
@@ -1420,11 +1476,67 @@ Khi phát hành package, declaration cần khớp chính xác tên export, tham 
 Lỗi thường gặp là khai báo any quá rộng để dập lỗi, trộn global declaration vào module sai phạm vi, hoặc copy một API tưởng tượng không tồn tại trong runtime. Nên kiểm tra mã nguồn hoặc tài liệu API thật, thử type declaration trong một consumer nhỏ, và cập nhật cùng lúc khi implementation đổi. Declaration không thay cho validation dữ liệu nhận từ mạng hay người dùng.
 '''
 
+[[modules]]
+id = "typescript-lead"
+title = "Góc nhìn Tech Lead"
+description = "Ra quyết định về strictness, migration, monorepo, contract API và quy ước type ở quy mô team."
+sources = ["typescript/docs/handbook/tsconfig-json", "typescript/docs/handbook/project-references", "typescript/docs/handbook/migrating-from-javascript", "typescript/docs/handbook/modules/theory"]
+lesson = '''
+### Quyết định về type system là quyết định về con người và chi phí
+
+Ở vai trò lead, câu hỏi hiếm khi là "tính năng này của TypeScript hoạt động thế nào" mà là "với team này, deadline này, codebase này, ta đầu tư vào kiểm tra kiểu ở đâu để giảm nhiều lỗi nhất với chi phí thấp nhất". Mỗi lựa chọn kỹ thuật cần đi kèm: ai phải học, ai bị chậm lại, rủi ro nếu sai, cách quay lui.
+
+### Khung ra quyết định
+
+1. Nêu ràng buộc thật: số người, kinh nghiệm TypeScript, thời hạn, mức chịu lỗi production, CI hiện có.
+2. Liệt kê 2-3 phương án khả thi, kể cả "không làm gì".
+3. Chọn đơn vị rollout nhỏ nhất có thể đo được (một package, một thư mục, một cờ compiler).
+4. Đặt tiêu chí thành công và điểm dừng (ví dụ số lỗi `any` ngầm giảm theo tuần).
+5. Ghi lại bằng ADR để người sau hiểu vì sao.
+
+| Quyết định | Phương án an toàn cho team lớn | Phương án rủi ro | Dấu hiệu nên đổi |
+|---|---|---|---|
+| Bật `strict` cho code cũ | Bật theo package/thư mục, từng cờ con (`noImplicitAny` trước), chặn code mới | Bật toàn repo một lần, hàng nghìn lỗi | Team ngừng sửa lỗi kiểu mà chỉ thêm `any` |
+| Chia package trong monorepo | Project references + `composite`, build incremental | Một `tsconfig` khổng lồ, type-check cả repo mỗi commit | CI type-check vượt ngân sách thời gian |
+| Kiểu cho API | Sinh kiểu từ OpenAPI/schema, validate runtime ở biên | Viết tay interface rồi ép bằng assertion | Backend đổi mà frontend vỡ ở production |
+| Chia sẻ kiểu giữa các package | Package kiểu nhỏ, ổn định, có version | Import chéo vào file nội bộ | Đổi nhỏ kéo rebuild nhiều package |
+| Quy ước team | Vài luật có lint hỗ trợ (`no-explicit-any`, `consistent-type-imports`) | Tài liệu dài không ai đọc | Review tranh luận lặp lại về cùng một chủ đề |
+
+### Checklist review kiểu ở quy mô team
+
+- Chỗ nào dữ liệu đi vào từ ngoài (HTTP, storage, message queue)? Đã có validation runtime chưa, hay chỉ có assertion?
+- API công khai của package có kiểu trả về tường minh để tránh vô tình lộ kiểu suy luận phức tạp không?
+- Có `any`, `@ts-ignore` mới không, và có `@ts-expect-error` kèm lý do không?
+- Kiểu phức tạp (conditional, mapped lồng nhau) có làm thời gian check tăng đáng kể và có ai bảo trì được không?
+- Thay đổi có phá vỡ consumer ở package khác (breaking change về kiểu cũng là breaking change)?
+
+### ADR mẫu ngắn
+
+```
+Tiêu đề: Bật noImplicitAny theo từng package
+Bối cảnh: 400k dòng JS/TS lẫn lộn, 12 dev, release hai tuần một lần.
+Quyết định: package mới bắt buộc strict; package cũ bật noImplicitAny khi chạm tới; theo dõi số lỗi mỗi tuần.
+Hệ quả: tiến độ chậm hơn nhưng không chặn release; cần lint chặn any mới.
+Phương án đã loại: bật toàn repo (đóng băng feature 2 sprint).
+```
+
+### Anti-pattern ở quy mô team
+
+- Thêm `any` hoặc `@ts-ignore` để "xanh CI" rồi không bao giờ quay lại: nợ kiểu tăng theo lãi kép.
+- Kiểu quá thông minh chỉ một người hiểu: bus factor bằng 1, thông báo lỗi khó đọc.
+- Một lần migration lớn không có điểm dừng: team kiệt sức, nhánh dài hạn xung đột liên tục.
+- Tin kiểu tĩnh là bằng chứng dữ liệu đúng: TypeScript bị xóa khi chạy, nên biên hệ thống vẫn cần validation.
+- Chuẩn hóa bằng mệnh lệnh thay vì công cụ: luật không được lint/CI thực thi sẽ bị bỏ qua dưới áp lực deadline.
+
+Nguyên tắc chung: đổi mặc định của công cụ (compiler option, lint, template package) hiệu quả hơn nhờ người nhớ quy tắc; đo trước và sau để chứng minh giá trị cho cả team lẫn quản lý.
+'''
+
 [[questions]]
 id = "typescript-dv017"
 module = "typescript-dv-declarations"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Vai trò chính của file .d.ts trong một package JavaScript là gì?"
 options = ["Mô tả API và kiểu để compiler kiểm tra caller, không cung cấp implementation runtime", "Thay thế hoàn toàn file JavaScript lúc ứng dụng chạy", "Tự validate mọi input từ mạng", "Tạo một bản sao JavaScript cho mỗi kiểu"]
 answer = [0]
@@ -1436,6 +1548,7 @@ id = "typescript-dv018"
 module = "typescript-dv-declarations"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 Một ứng dụng import package JavaScript legacy-format nhưng compiler không tìm thấy kiểu. Nếu package không thể sửa, cách khai báo nào mô tả module đó?
 '''
@@ -1449,6 +1562,7 @@ id = "typescript-dv019"
 module = "typescript-dv-declarations"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một file .d.ts có top-level export hoặc import thường được xử lý như thế nào?"
 options = ["Như một module với phạm vi module", "Như script global trong mọi trường hợp", "Như JavaScript có thể thực thi trực tiếp", "Bị bỏ qua khi compiler tìm kiểu"]
 answer = [0]
@@ -1460,6 +1574,7 @@ id = "typescript-dv020"
 module = "typescript-dv-declarations"
 type = "single"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Khi phát hành declaration cùng thư viện, điều quan trọng nhất để giữ lời hứa kiểu an toàn là gì?"
 options = ["Declaration phải khớp export và hành vi API runtime thật", "Đặt mọi kết quả thành any để tương thích", "Khai báo thêm method tiện ích dù runtime chưa có", "Chỉ kiểm tra file .d.ts có cú pháp hợp lệ"]
 answer = [0]
@@ -1471,6 +1586,7 @@ id = "typescript-dv021"
 module = "typescript-dv-declarations"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chọn các thực hành tốt khi viết declaration cho thư viện JavaScript."
 options = ["Đối chiếu chữ ký khai báo với implementation runtime", "Mô tả export mà consumer thật sự có thể import", "Dùng any rộng ở mọi vị trí để tránh phải đọc API", "Thử declaration từ project consumer hoặc mẫu nhỏ", "Giữ declaration đồng bộ khi API implementation thay đổi"]
 answer = [0, 1, 3, 4]
@@ -1482,6 +1598,7 @@ id = "typescript-dv022"
 module = "typescript-dv-declarations"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Chọn các mô tả đúng về phạm vi declaration."
 options = ["Ambient module nên nhắm đúng module specifier mà caller import", "declare global có thể dùng trong module để bổ sung global theo cấu trúc hợp lệ", "Module augmentation tự thêm implementation vào JavaScript", "Declaration file có thể mô tả API mà không chứa code triển khai", "File có top-level export vẫn luôn là global script"]
 answer = [0, 1, 3]
@@ -1493,6 +1610,7 @@ id = "typescript-dv023"
 module = "typescript-dv-declarations"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Phần mở rộng phổ biến của TypeScript cho file chỉ chứa khai báo kiểu là {{blank}}.
 '''
@@ -1505,6 +1623,7 @@ id = "typescript-dv024"
 module = "typescript-dv-declarations"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Một package JavaScript không có type khiến ứng dụng TypeScript không import được API. Trình bày cách bạn tìm nguyên nhân và tạo declaration đáng tin cậy."
 keywords = [["declaration file", ".d.ts", "file khai báo"], ["runtime api", "api runtime", "implementation"], ["ambient module", "declare module"], ["module specifier", "tên module"], ["consumer", "project sử dụng"]]
 min_keywords = 3
@@ -1513,3 +1632,962 @@ Trước hết kiểm tra module specifier, export và runtime API thật của 
 '''
 explanation = "Cần phân biệt lỗi tìm module với lỗi thiếu declaration, rồi bảo đảm hợp đồng type phản ánh đúng package thực tế."
 sources = ["typescript/docs/handbook/declaration-files/introduction", "typescript/docs/handbook/declaration-files/consumption"]
+
+[[questions]]
+id = "typescript-lv001"
+module = "typescript-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "strictness"]
+prompt = "Codebase 300k dòng JS/TS lẫn lộn, 10 dev, release mỗi hai tuần. Bật `strict: true` toàn repo cho ra khoảng 4.000 lỗi. Bạn muốn giảm lỗi production liên quan đến null/undefined mà không dừng feature. Chọn cách nào?"
+options = ["Bật từng cờ con theo package (bắt đầu `strictNullChecks` cho package ít phụ thuộc), chặn code mới vi phạm bằng CI và theo dõi số lỗi theo tuần", "Bật `strict` toàn repo và đóng băng feature cho tới khi sửa hết lỗi", "Giữ nguyên cấu hình, chỉ yêu cầu dev cẩn thận khi review", "Thêm `// @ts-nocheck` vào mọi file có lỗi rồi bật `strict` toàn repo"]
+answer = [0]
+explanation = "Rollout theo đơn vị nhỏ có đo lường giữ được tốc độ release và vẫn ngăn nợ mới. Đóng băng feature gây chi phí kinh doanh lớn và rủi ro xung đột nhánh dài; chỉ review cẩn thận không có cơ chế thực thi nên không bền; ts-nocheck che lỗi nên làm cờ strict mất ý nghĩa."
+sources = ["typescript/docs/handbook/tsconfig-json", "typescript/docs/handbook/migrating-from-javascript"]
+
+[[questions]]
+id = "typescript-lv002"
+module = "typescript-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "monorepo"]
+prompt = "Monorepo có 8 package, CI type-check toàn repo mất 14 phút và dev than phiền. Ngân sách là 2 tuần của một người, không muốn đổi bundler. Hướng nào hợp lý nhất?"
+options = ["Chuyển sang project references với `composite` và build incremental (`tsc -b`), để chỉ package bị đổi và phụ thuộc của nó được check lại", "Xóa type-check khỏi CI và chỉ chạy ở máy dev", "Gộp mọi package thành một `tsconfig` duy nhất để compiler tối ưu toàn cục", "Thay mọi kiểu bằng `any` ở package dùng chung"]
+answer = [0]
+explanation = "Project references chia đồ thị build, cho phép incremental và cache, hợp với ngân sách nhỏ. Bỏ type-check khỏi CI làm lỗi lọt vào main; một tsconfig duy nhất chính là nguyên nhân chậm; any dập lỗi chứ không giảm chi phí và làm mất an toàn kiểu."
+sources = ["typescript/docs/handbook/project-references"]
+
+[[questions]]
+id = "typescript-lv003"
+module = "typescript-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "api-contract"]
+prompt = "Frontend và backend do hai team khác nhau, API thường đổi trường mà không báo. Frontend hiện tự viết interface và ép `response.json() as Order`. Team backend đã có OpenAPI spec cập nhật theo release. Quyết định nào có lợi nhất?"
+options = ["Sinh kiểu từ OpenAPI spec trong CI và validate response ở biên bằng schema runtime cho các endpoint quan trọng", "Tiếp tục viết interface tay nhưng thêm comment nhắc cập nhật", "Dùng `any` cho mọi response để frontend không bị chặn khi backend đổi", "Yêu cầu backend import trực tiếp file interface của frontend"]
+answer = [0]
+explanation = "Sinh kiểu từ nguồn sự thật chung giúp phát hiện lệch hợp đồng ở build, còn validation runtime bắt lệch thật khi chạy. Comment không được thực thi; any bỏ hết bảo vệ; ép backend phụ thuộc frontend đảo ngược quyền sở hữu hợp đồng."
+sources = ["typescript/docs/handbook/2/everyday-types"]
+
+[[questions]]
+id = "typescript-lv004"
+module = "typescript-lead"
+type = "multiple"
+difficulty = 3
+tags = ["level:lead", "review"]
+prompt = "Bạn đặt quy ước review kiểu cho team 15 người mà muốn hạn chế tranh luận cảm tính. Những biện pháp nào phù hợp?"
+options = ["Thực thi bằng lint/CI (ví dụ cấm `any` tường minh mới, `consistent-type-imports`) thay vì chỉ ghi tài liệu", "Yêu cầu `@ts-expect-error` phải kèm lý do và ticket", "Cho phép mỗi dev tự chọn quy ước riêng trong package của mình", "Giữ danh sách quy ước ngắn, chỉ gồm luật có tác động rõ lên lỗi hoặc thời gian đọc"]
+answer = [0, 1, 3]
+explanation = "Luật được máy thực thi, có lý do ghi lại và ngắn gọn thì bền dưới áp lực deadline. Mỗi người một quy ước làm codebase khó đọc và biến review thành tranh luận lặp lại."
+sources = ["typescript/docs/handbook/tsconfig-json"]
+
+[[questions]]
+id = "typescript-lv005"
+module = "typescript-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "migration"]
+prompt = "Startup 5 dev cần ship tính năng cho khách hàng trong 6 tuần; codebase JavaScript 60k dòng chưa có TypeScript. Quyết định nào hợp lý nhất?"
+options = ["Bật `allowJs` và `checkJs` cho vùng quan trọng, viết file mới bằng TypeScript, dùng JSDoc cho code cũ khi chạm tới, không có đợt migration riêng", "Dừng feature 3 tuần để chuyển toàn bộ sang TypeScript strict", "Không dùng TypeScript vì team quá nhỏ", "Thuê ngoài chuyển đổi toàn bộ rồi merge một lần vào ngày cuối"]
+answer = [0]
+explanation = "Migration dần theo ranh giới nhỏ phù hợp team nhỏ và thời hạn gấp. Dừng 3 tuần ăn nửa ngân sách thời gian; bỏ TypeScript bỏ lỡ lợi ích tăng dần; merge một lần cuối là rủi ro lớn và gây xung đột."
+sources = ["typescript/docs/handbook/migrating-from-javascript"]
+
+[[questions]]
+id = "typescript-lv006"
+module = "typescript-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "type-design"]
+prompt = "Một senior viết bộ kiểu conditional/mapped lồng 5 tầng cho form builder. Nó chạy đúng nhưng thông báo lỗi dài vài trăm dòng và chỉ tác giả hiểu; thời gian check của package tăng gấp đôi. Bạn xử lý thế nào?"
+options = ["Đơn giản hóa API: giữ kiểu công khai rõ ràng, giảm tầng suy luận, thêm test kiểu và tài liệu; chấp nhận ít 'thông minh' hơn", "Giữ nguyên vì đúng là đủ, chuyển sang đo lường sau", "Xóa toàn bộ kiểu và dùng `any`", "Cấm mọi conditional type trong toàn công ty"]
+answer = [0]
+explanation = "Kiểu phải bảo trì được bởi cả team; chi phí đọc lỗi và thời gian compile là chi phí thật. Giữ nguyên tạo bus factor bằng 1; any mất an toàn; cấm tuyệt đối là phản ứng thái quá vì conditional type có chỗ dùng hợp lý."
+sources = ["typescript/docs/handbook/2/conditional-types"]
+
+[[questions]]
+id = "typescript-lv007"
+module = "typescript-lead"
+type = "fill"
+difficulty = 3
+tags = ["level:lead", "tsconfig"]
+prompt = "Để một package trong monorepo có thể được tham chiếu bởi package khác qua project references, tsconfig của nó cần bật tùy chọn `{{blank}}`."
+blanks = [["composite"]]
+explanation = "`composite` bắt buộc ràng buộc cần thiết (declaration, rootDir...) để `tsc -b` build incremental và các project tham chiếu nhau."
+sources = ["typescript/docs/handbook/project-references"]
+
+[[questions]]
+id = "typescript-lv008"
+module = "typescript-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "dependencies"]
+prompt = "Hai team cùng dùng package kiểu chung `@acme/types`. Team A thường đổi tên trường và release không báo, làm build team B hỏng. Biện pháp nào xử lý gốc rễ trong khi không chặn team A?"
+options = ["Coi thay đổi kiểu công khai là thay đổi API: versioning theo semver, changelog, và kiểm tra breaking change trong CI trước khi publish", "Để team B pin cố định phiên bản cũ mãi mãi", "Sao chép kiểu vào cả hai repo", "Chuyển mọi trường thành optional để không còn lỗi"]
+answer = [0]
+explanation = "Kiểu công khai là hợp đồng; versioning và kiểm tra breaking change làm sự đổi minh bạch. Pin mãi làm team B tụt hậu; sao chép gây lệch và trùng lặp; optional hóa che lỗi và làm kiểu mất giá trị."
+sources = ["typescript/docs/handbook/declaration-files/publishing"]
+
+[[questions]]
+id = "typescript-lv009"
+module = "typescript-lead"
+type = "multiple"
+difficulty = 3
+tags = ["level:lead", "strictness"]
+prompt = "Trong khi bật `strict` dần, dev bắt đầu thêm `any` và `@ts-ignore` để qua CI. Những phản ứng nào của lead là hợp lý?"
+options = ["Đo số `any`/`@ts-ignore` theo thời gian và đặt ngân sách giảm dần", "Chặn thêm `@ts-ignore` mới, cho phép `@ts-expect-error` kèm lý do vì nó báo khi lỗi đã hết", "Cấm hoàn toàn mọi lỗi kiểu và bắt dev ở lại sửa đến hết", "Tìm nguyên nhân chung (thiếu kiểu thư viện, helper kiểu yếu) và sửa tại nguồn"]
+answer = [0, 1, 3]
+explanation = "Đo lường, thay `@ts-ignore` bằng `@ts-expect-error` có lý do và sửa nguyên nhân gốc giảm dần nợ kiểu. Bắt ở lại sửa hết gây kiệt sức và đẩy dev tới cách né tránh tệ hơn."
+sources = ["typescript/docs/handbook/tsconfig-json"]
+
+[[questions]]
+id = "typescript-lv010"
+module = "typescript-lead"
+type = "essay"
+difficulty = 3
+tags = ["level:lead", "adr"]
+prompt = "Team 12 người muốn bật `strict` cho codebase 400k dòng đang chạy production. Viết đề xuất ngắn (kiểu ADR): cách rollout, đo lường, rủi ro và phương án bị loại."
+keywords = [["theo từng package", "từng giai đoạn", "dần dần", "incremental"], ["ci", "lint", "chặn code mới"], ["đo", "theo dõi", "metric"], ["rủi ro", "đóng băng", "rollback", "quay lui"]]
+min_keywords = 3
+model_answer = '''
+Rollout dần theo từng package: package mới bắt buộc `strict`, package cũ bật từng cờ con như `noImplicitAny` rồi `strictNullChecks` khi có người chạm tới. CI và lint chặn code mới vi phạm để nợ không tăng thêm. Theo dõi metric hằng tuần: số lỗi kiểu còn lại, số `any` và `@ts-expect-error`, để chứng minh tiến độ. Rủi ro chính là dev né lỗi bằng `any`, nên đặt ngân sách giảm dần và cho phép quay lui cờ ở package nào gây chặn release. Phương án bị loại: bật toàn repo một lần và đóng băng feature vì chi phí kinh doanh cao và nhánh dài hạn xung đột.
+'''
+explanation = "Đề xuất tốt gắn quyết định với ràng buộc (team, release, rủi ro), có điểm đo và nêu rõ vì sao phương án khác tệ hơn trong bối cảnh này."
+sources = ["typescript/docs/handbook/tsconfig-json", "typescript/docs/handbook/migrating-from-javascript"]
+
+[[questions]]
+id = "typescript-lv011"
+module = "typescript-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "validation"]
+prompt = "Một service nhận webhook từ đối tác, đã gắn kiểu `Payload` bằng `as Payload`. Sau sự cố đối tác gửi trường `amount` dạng chuỗi làm thanh toán sai. Ngân sách: 3 ngày, không muốn thêm thư viện lớn. Hành động nào ưu tiên?"
+options = ["Nhận body như `unknown`, viết hàm validate tập trung ở biên (hoặc dùng schema validator đã có) và trả lỗi 4xx cho dữ liệu sai", "Đổi kiểu `amount` thành `string | number` ở mọi nơi trong codebase", "Bật thêm cờ compiler `strictNullChecks`", "Bắt lỗi chung bằng `try/catch` ở mọi hàm xử lý và bỏ qua"]
+answer = [0]
+explanation = "Lỗi nằm ở ranh giới dữ liệu không tin cậy, kiểu tĩnh bị xóa khi chạy nên cần validation runtime ở một chỗ. Nới kiểu mở rộng lỗi ra khắp nơi; strictNullChecks không liên quan tới sai kiểu giá trị; nuốt lỗi che giấu sự cố."
+sources = ["typescript/docs/handbook/2/narrowing"]
+
+[[questions]]
+id = "typescript-lv012"
+module = "typescript-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "ci"]
+prompt = "CI type-check của một app 200k dòng mất 9 phút và PR bị chậm. Team chỉ có 1 ngày cải thiện. Phương án rủi ro thấp nhất mang lại hiệu quả ngay?"
+options = ["Bật `incremental` với cache `.tsbuildinfo` được lưu giữa các lần chạy CI, và `skipLibCheck` nếu chưa có", "Tắt toàn bộ type-check ở PR, chỉ chạy lúc release", "Viết lại toàn bộ project sang project references trong một ngày", "Đổi mọi kiểu phức tạp thành `any`"]
+answer = [0]
+explanation = "incremental và cache là thay đổi cấu hình nhỏ, ít rủi ro, giảm đáng kể lần chạy lặp. Tắt check ở PR làm lỗi lọt vào main; project references đúng hướng dài hạn nhưng quá lớn cho một ngày; any làm mất giá trị kiểm tra."
+sources = ["typescript/docs/handbook/tsconfig-json"]
+
+[[questions]]
+id = "typescript-lv013"
+module = "typescript-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "hiring"]
+prompt = "Team có nhiều dev mới học TypeScript, thường dùng `as` để làm lỗi biến mất. Lead muốn giảm thói quen này nhưng không muốn bị coi là khắt khe. Biện pháp nào hợp lý nhất?"
+options = ["Thêm lint cảnh báo assertion không cần thiết, dạy narrowing/type guard qua code review có ví dụ và cung cấp helper validate dùng chung", "Cấm hoàn toàn `as` trong mọi trường hợp", "Mặc kệ vì chạy được là đủ", "Chỉ lead được phép viết code có kiểu phức tạp"]
+answer = [0]
+explanation = "Kết hợp công cụ, dạy bằng ví dụ thực và helper dễ dùng thay đổi hành vi mà không tạo rào cản. Cấm tuyệt đối làm dev né bằng cách khác; mặc kệ tích lũy nợ; độc quyền kiểu tạo nút thắt và bus factor."
+sources = ["typescript/docs/handbook/2/narrowing"]
+
+[[questions]]
+id = "typescript-lv014"
+module = "typescript-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "dependencies"]
+prompt = "Dự án phụ thuộc một thư viện JS không có kiểu, dùng ở 40 chỗ. Có hai lựa chọn: tự viết declaration đầy đủ (3 ngày) hoặc khai báo `declare module 'lib'` rỗng (10 phút). Thư viện xử lý tính toán tiền. Chọn thế nào?"
+options = ["Viết declaration cho phần API thực sự dùng, kiểm tra với mã nguồn thật và đặt trong thư mục `types/` của repo; mở rộng khi cần", "Dùng `declare module 'lib'` rỗng để mọi thứ là `any`", "Bỏ thư viện đó và tự viết lại toàn bộ", "Ép kiểu `as any` tại mỗi chỗ gọi"]
+answer = [0]
+explanation = "Với chức năng quan trọng như tính tiền, khai báo kiểu cho phần dùng thật là cân bằng tốt chi phí và an toàn. Khai báo rỗng biến mọi thứ thành any; viết lại thư viện tốn kém và rủi ro; as any phân tán lỗ hổng ra 40 nơi."
+sources = ["typescript/docs/handbook/declaration-files/consumption", "typescript/docs/handbook/declaration-files/templates"]
+
+[[questions]]
+id = "typescript-lv015"
+module = "typescript-lead"
+type = "multiple"
+difficulty = 3
+tags = ["level:lead", "monorepo"]
+prompt = "Bạn thiết kế package kiểu dùng chung cho monorepo 8 package. Những quyết định nào giúp giảm rủi ro?"
+options = ["Giữ package nhỏ, chỉ chứa kiểu ổn định và có chủ sở hữu rõ ràng", "Cho phép package khác import trực tiếp file nội bộ để tiện", "Đặt `declaration` và `composite` để consumer dùng kiểu đã build", "Kiểm tra breaking change của kiểu công khai trong CI"]
+answer = [0, 2, 3]
+explanation = "Package nhỏ có chủ, kiểu đã build và kiểm tra breaking change giữ ranh giới rõ. Import file nội bộ phá vỡ đóng gói nên đổi nhỏ cũng vỡ nhiều nơi."
+sources = ["typescript/docs/handbook/project-references"]
+
+[[questions]]
+id = "typescript-lv016"
+module = "typescript-lead"
+type = "fill"
+difficulty = 3
+tags = ["level:lead", "ts-comments"]
+prompt = "Khi buộc phải bỏ qua một lỗi kiểu, nên dùng `// @{{blank}}` kèm lý do vì compiler sẽ báo lỗi nếu dòng đó không còn lỗi nữa."
+blanks = [["ts-expect-error"]]
+explanation = "`@ts-expect-error` tự báo khi lỗi đã được sửa, nên không để lại chỉ thị cũ vô nghĩa như `@ts-ignore`."
+sources = ["typescript/docs/handbook/migrating-from-javascript"]
+
+[[questions]]
+id = "typescript-lvc01"
+module = "typescript-lead"
+type = "code"
+lang = "javascript"
+difficulty = 3
+tags = ["level:lead", "migration"]
+title = "Chọn package migrate tiếp theo"
+prompt = '''
+Team migrate sang `strict` từng package. Viết hàm nextPackage(packages) chọn package nên làm tiếp theo.
+Mỗi package có dạng { name, errors, deps, done }, trong đó deps là mảng tên package mà nó phụ thuộc.
+- Chỉ xét package chưa done và mọi dep của nó đều đã done.
+- Trong số đó chọn package có errors ít nhất; nếu bằng nhau chọn tên theo thứ tự chữ cái.
+- Trả về tên package, hoặc null nếu không còn package đủ điều kiện.
+'''
+starter = '''
+function nextPackage(packages) {
+  return null;
+}
+'''
+solution = '''
+function nextPackage(packages) {
+  const done = new Set(packages.filter((p) => p.done).map((p) => p.name));
+  const ready = packages.filter((p) => !p.done && p.deps.every((d) => done.has(d)));
+  if (ready.length === 0) return null;
+  ready.sort((a, b) => a.errors - b.errors || (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
+  return ready[0].name;
+}
+'''
+tests = '''
+test('chọn package ít lỗi nhất trong số đủ điều kiện', () => {
+  const pk = [
+    { name: 'core', errors: 5, deps: [], done: false },
+    { name: 'ui', errors: 2, deps: [], done: false },
+  ];
+  expect(nextPackage(pk)).toBe('ui');
+});
+test('bỏ qua package có dependency chưa xong', () => {
+  const pk = [
+    { name: 'core', errors: 50, deps: [], done: false },
+    { name: 'app', errors: 1, deps: ['core'], done: false },
+  ];
+  expect(nextPackage(pk)).toBe('core');
+});
+test('package phụ thuộc vào package đã done thì đủ điều kiện', () => {
+  const pk = [
+    { name: 'core', errors: 0, deps: [], done: true },
+    { name: 'app', errors: 9, deps: ['core'], done: false },
+  ];
+  expect(nextPackage(pk)).toBe('app');
+});
+test('hòa thì chọn theo thứ tự chữ cái', () => {
+  const pk = [
+    { name: 'zeta', errors: 3, deps: [], done: false },
+    { name: 'alpha', errors: 3, deps: [], done: false },
+  ];
+  expect(nextPackage(pk)).toBe('alpha');
+});
+test('không còn package đủ điều kiện thì trả null', () => {
+  expect(nextPackage([{ name: 'a', errors: 1, deps: [], done: true }])).toBeNull();
+  expect(nextPackage([{ name: 'a', errors: 1, deps: ['b'], done: false }, { name: 'b', errors: 1, deps: ['a'], done: false }])).toBeNull();
+});
+'''
+hints = ["Dựng Set tên các package đã done để kiểm tra dep nhanh.", "Lọc rồi sắp xếp theo errors, sau đó theo tên."]
+explanation = "Chọn thứ tự migrate theo đồ thị phụ thuộc giúp mỗi bước mở khóa package tiếp theo; ưu tiên ít lỗi cho kết quả sớm, tạo đà cho team."
+
+[[questions]]
+id = "typescript-lv017"
+module = "typescript-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "tooling"]
+prompt = "Team cân nhắc đổi từ `tsc` sang một transpiler nhanh (esbuild/swc) cho build, giữ `tsc --noEmit` để kiểm tra kiểu. Điểm nào bạn cần xác nhận trước khi quyết định?"
+options = ["Các tính năng TypeScript cần thông tin kiểu để phát code (như `const enum` giữa file, `isolatedModules`) có dùng trong codebase không, và type-check vẫn chạy ở CI", "Transpiler nhanh có kiểm tra kiểu giống tsc nên có thể bỏ type-check", "Chỉ cần so sánh tốc độ build", "Chắc chắn tương thích 100% với mọi cấu hình tsconfig"]
+answer = [0]
+explanation = "Transpiler chỉ xóa kiểu, không type-check, và làm việc từng file nên cần `isolatedModules` và tránh tính năng phụ thuộc thông tin liên file. Chỉ so tốc độ hoặc giả định tương thích hoàn toàn là bỏ qua rủi ro."
+sources = ["typescript/docs/handbook/tsconfig-json"]
+
+[[questions]]
+id = "typescript-lv018"
+module = "typescript-lead"
+type = "essay"
+difficulty = 3
+tags = ["level:lead", "api-contract"]
+prompt = "Frontend và backend thuộc hai team, API đổi trường thường xuyên gây lỗi production. Trình bày cách bạn thiết kế quy trình để giữ kiểu giữa hai bên đồng bộ, nêu đánh đổi."
+keywords = [["openapi", "schema", "hợp đồng", "contract"], ["sinh kiểu", "codegen", "generate"], ["validation", "runtime", "xác thực"], ["ci", "breaking change", "phiên bản", "version"]]
+min_keywords = 3
+model_answer = '''
+Lấy hợp đồng API (OpenAPI hoặc schema) làm nguồn sự thật chung. Dùng codegen để sinh kiểu cho frontend mỗi khi spec đổi, và để CI báo breaking change khi spec đổi không tương thích hoặc kiểu sinh ra làm build vỡ. Kiểu tĩnh bị xóa khi chạy, nên với endpoint quan trọng thêm validation runtime ở biên để bắt dữ liệu lệch thật. Đánh đổi: tốn công duy trì spec và pipeline sinh code, thêm chi phí validate khi chạy, đổi lại giảm lỗi production và tranh cãi giữa hai team.
+'''
+explanation = "Câu trả lời tốt nêu nguồn sự thật chung, tự động hóa trong CI và validation runtime; đồng thời chấp nhận chi phí vận hành thay vì tin vào quy ước miệng."
+sources = ["typescript/docs/handbook/2/everyday-types"]
+
+[[questions]]
+id = "typescript-lv019"
+module = "ts-type-programming"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "conditional-types"]
+prompt = '''
+~~~ts
+type ElementOf<T> = T extends (infer U)[] ? U : never;
+type A = ElementOf<string[] | number>;
+~~~
+Kiểu `A` là gì?
+'''
+options = ["string", "string | number", "string | never, tức là string", "never"]
+answer = [0]
+explanation = "Conditional type phân phối trên union khi tham số kiểu trần: `string[]` cho `string`, còn `number` không khớp nên cho `never`; union `string | never` thu gọn thành `string`."
+sources = ["typescript/docs/handbook/2/conditional-types"]
+
+[[questions]]
+id = "typescript-lv020"
+module = "ts-type-programming"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "conditional-types"]
+prompt = '''
+~~~ts
+type IsString<T> = [T] extends [string] ? "yes" : "no";
+type R = IsString<string | number>;
+~~~
+Kiểu `R` là gì và vì sao họ bọc `[T]`?
+'''
+options = ["\"no\", vì bọc trong tuple tắt tính phân phối nên cả union được so với string một lần", "\"yes\" | \"no\", vì bọc tuple vẫn phân phối", "\"yes\", vì có một thành phần là string", "never"]
+answer = [0]
+explanation = "Không bọc, conditional type phân phối cho kết quả `\"yes\" | \"no\"`. Bọc `[T]` thành kiểu không-trần nên cả `string | number` được kiểm tra một lần và không extends string."
+sources = ["typescript/docs/handbook/2/conditional-types"]
+
+[[questions]]
+id = "typescript-lv021"
+module = "ts-generics"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "variance"]
+prompt = '''
+~~~ts
+interface Animal { name: string }
+interface Dog extends Animal { bark(): void }
+type Handler<T> = (value: T) => void;
+declare let handleAnimal: Handler<Animal>;
+declare let handleDog: Handler<Dog>;
+handleDog = handleAnimal; // (1)
+handleAnimal = handleDog; // (2)
+~~~
+Với `strictFunctionTypes` bật, dòng nào hợp lệ?
+'''
+options = ["Chỉ (1): tham số hàm là contravariant", "Chỉ (2): tham số hàm là covariant", "Cả hai", "Không dòng nào"]
+answer = [0]
+explanation = "Hàm nhận Animal xử lý được mọi Dog nên gán cho Handler<Dog> an toàn. Chiều ngược lại sai vì handleDog có thể gọi bark() trên một Animal bất kỳ."
+sources = ["typescript/docs/handbook/type-compatibility"]
+
+[[questions]]
+id = "typescript-lv022"
+module = "ts-type-programming"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "template-literal"]
+prompt = '''
+~~~ts
+type Getters<T> = {
+  [K in keyof T as `get${Capitalize<string & K>}`]: () => T[K];
+};
+type G = Getters<{ id: number; name: string }>;
+~~~
+`G` có những khóa nào?
+'''
+options = ["getId và getName", "id và name", "Chỉ một khóa duy nhất tên get", "Không có khóa nào vì mapped type không đổi tên khóa"]
+answer = [0]
+explanation = "Mệnh đề `as` trong mapped type đổi tên khóa; `Capitalize` viết hoa chữ đầu nên `id` thành `getId`."
+sources = ["typescript/docs/handbook/2/mapped-types", "typescript/docs/handbook/2/template-literal-types"]
+
+[[questions]]
+id = "typescript-lv023"
+module = "ts-types"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "branded-types"]
+prompt = '''
+Team muốn tránh nhầm `UserId` với `OrderId` (cả hai đều là string) mà không thêm chi phí runtime. Cách nào phù hợp?
+'''
+options = ["Branded type: `type UserId = string & { readonly __brand: \"UserId\" }` cùng hàm tạo có kiểm tra", "Khai báo `type UserId = string` và `type OrderId = string`", "Dùng `enum` string cho mọi id", "Dùng `any` rồi đặt tên biến rõ ràng"]
+answer = [0]
+explanation = "Hai alias của string vẫn gán lẫn cho nhau vì TypeScript là structural. Branded type tạo kiểu danh nghĩa chỉ tồn tại lúc biên dịch; hàm tạo là nơi duy nhất ép và validate."
+sources = ["typescript/docs/handbook/type-compatibility"]
+
+[[questions]]
+id = "typescript-lv024"
+module = "ts-project"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "tsconfig"]
+prompt = '''
+~~~ts
+const scores: Record<string, number> = { ada: 90 };
+const s = scores["bob"];
+s.toFixed(1);
+~~~
+Cờ compiler nào làm `s` có kiểu `number | undefined` để compiler bắt lỗi dòng cuối?
+'''
+options = ["noUncheckedIndexedAccess", "strictNullChecks (tự động áp dụng cho index signature)", "noImplicitAny", "exactOptionalPropertyTypes"]
+answer = [0]
+explanation = "Mặc định truy cập index signature trả về `number`. `noUncheckedIndexedAccess` thêm `undefined` vào kết quả truy cập chỉ mục nên bắt buộc kiểm tra trước khi dùng."
+sources = ["typescript/docs/handbook/tsconfig-json"]
+
+[[questions]]
+id = "typescript-lv025"
+module = "ts-generics"
+type = "multiple"
+difficulty = 3
+tags = ["level:senior", "satisfies"]
+prompt = '''
+~~~ts
+const routes = {
+  home: "/",
+  user: "/user/:id",
+} satisfies Record<string, string>;
+~~~
+Những nhận định nào đúng về `satisfies` ở đây?
+'''
+options = ["Kiểm tra object phù hợp với `Record<string, string>` mà không mở rộng kiểu của biến", "`routes.home` vẫn có kiểu literal hẹp suy luận được, không thành `string` chung chung", "Khóa gõ sai như `hmoe` vẫn được chấp nhận vì kiểu là Record<string, string>", "Biến `routes` được gán kiểu `Record<string, string>` như khi viết chú thích kiểu"]
+answer = [0, 1]
+explanation = "`satisfies` xác nhận tính tương thích nhưng giữ kiểu suy luận cụ thể của biểu thức. Chú thích kiểu mới làm biến mang kiểu rộng; việc cho phép khóa tùy ý là do kiểu Record chứ không phải do satisfies tạo ra."
+sources = ["typescript/docs/handbook/2/everyday-types"]
+
+[[questions]]
+id = "typescript-lv026"
+module = "ts-narrowing"
+type = "multiple"
+difficulty = 3
+tags = ["level:senior", "narrowing"]
+prompt = "Những cách nào cho compiler narrowing đúng một giá trị `unknown` thành `{ id: string }`?"
+options = ["Hàm type predicate `isIdObject(x: unknown): x is { id: string }` có kiểm tra runtime thật", "`x as { id: string }` rồi dùng thẳng", "Kiểm tra `typeof x === 'object' && x !== null && 'id' in x` rồi kiểm tra `typeof x.id === 'string'`", "Assertion function `asserts x is { id: string }` ném lỗi khi dữ liệu sai"]
+answer = [0, 2, 3]
+explanation = "Predicate, kiểm tra thủ công và assertion function đều gắn việc thu hẹp kiểu vào kiểm tra runtime. Phép ép `as` chỉ nói với compiler, không kiểm tra gì."
+sources = ["typescript/docs/handbook/2/narrowing"]
+
+[[questions]]
+id = "typescript-lv027"
+module = "ts-type-programming"
+type = "fill"
+difficulty = 3
+tags = ["level:senior", "utility-types"]
+prompt = '''
+Lấy kiểu trả về của một hàm đã biết: `type R = {{blank}}<typeof fetchUser>` (utility type có sẵn).
+'''
+blanks = [["ReturnType"]]
+explanation = "`ReturnType<typeof fn>` dùng `infer` bên trong để trích kiểu trả về của hàm."
+sources = ["typescript/docs/handbook/utility-types#returntypetype"]
+
+[[questions]]
+id = "typescript-lv028"
+module = "ts-type-programming"
+type = "fill"
+difficulty = 3
+tags = ["level:senior", "conditional-types"]
+prompt = '''
+Trong `type Unwrap<T> = T extends Promise<{{blank}} U> ? U : T`, từ khóa cần điền để suy ra kiểu bên trong Promise là gì?
+'''
+blanks = [["infer"]]
+explanation = "`infer U` khai báo biến kiểu được suy ra khi nhánh extends khớp."
+sources = ["typescript/docs/handbook/2/conditional-types#inferring-within-conditional-types"]
+
+[[questions]]
+id = "typescript-lvc02"
+module = "ts-narrowing"
+type = "code"
+lang = "javascript"
+difficulty = 3
+tags = ["level:senior", "narrowing"]
+title = "Validator schema nhỏ ở biên dữ liệu"
+prompt = '''
+Viết hàm validate(schema, value) kiểm tra dữ liệu không tin cậy (tương tự việc làm type guard ở biên).
+schema là object ánh xạ tên trường sang một trong các chuỗi: 'string', 'number', 'boolean', hoặc dạng tùy chọn có hậu tố '?' (vd. 'number?').
+Trả về mảng thông báo lỗi (rỗng nếu hợp lệ):
+- value không phải object (hoặc null) -> ['value must be an object'].
+- Trường thiếu mà bắt buộc -> `${key} is required`.
+- Sai kiểu -> `${key} must be ${type}`.
+- Trường tùy chọn thiếu hoặc undefined thì bỏ qua. Lỗi liệt kê theo thứ tự khóa của schema. NaN không được coi là number hợp lệ.
+'''
+starter = '''
+function validate(schema, value) {
+  return [];
+}
+'''
+solution = '''
+function validate(schema, value) {
+  if (typeof value !== 'object' || value === null) return ['value must be an object'];
+  const errors = [];
+  for (const key of Object.keys(schema)) {
+    let type = schema[key];
+    const optional = type.endsWith('?');
+    if (optional) type = type.slice(0, -1);
+    const v = value[key];
+    if (v === undefined) {
+      if (!optional) errors.push(`${key} is required`);
+      continue;
+    }
+    const ok = type === 'number' ? typeof v === 'number' && !Number.isNaN(v) : typeof v === type;
+    if (!ok) errors.push(`${key} must be ${type}`);
+  }
+  return errors;
+}
+'''
+tests = '''
+test('dữ liệu hợp lệ không có lỗi', () => {
+  expect(validate({ id: 'string', age: 'number' }, { id: 'a', age: 3 })).toEqual([]);
+});
+test('trường thiếu và sai kiểu', () => {
+  expect(validate({ id: 'string', age: 'number' }, { age: '3' })).toEqual(['id is required', 'age must be number']);
+});
+test('trường tùy chọn', () => {
+  expect(validate({ nick: 'string?' }, {})).toEqual([]);
+  expect(validate({ nick: 'string?' }, { nick: 5 })).toEqual(['nick must be string']);
+});
+test('value không phải object', () => {
+  expect(validate({ a: 'string' }, null)).toEqual(['value must be an object']);
+  expect(validate({ a: 'string' }, 'x')).toEqual(['value must be an object']);
+});
+test('NaN không phải number hợp lệ', () => {
+  expect(validate({ n: 'number' }, { n: NaN })).toEqual(['n must be number']);
+});
+'''
+hints = ["Tách hậu tố '?' ra khỏi tên kiểu trước khi so sánh.", "Dùng typeof, nhớ loại NaN khỏi number."]
+explanation = "Đây là lõi của validator runtime: kiểu tĩnh biến mất khi chạy, nên dữ liệu từ mạng phải được kiểm tra thật rồi mới thu hẹp thành kiểu của bạn."
+
+[[questions]]
+id = "typescript-lv029"
+module = "ts-project"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "modules"]
+prompt = "Một package publish cả ESM lẫn CommonJS. Người dùng dùng `moduleResolution: \"nodenext\"` báo lỗi không tìm thấy kiểu cho import dạng subpath. Cấu hình nào của package là nơi kiểm tra đầu tiên?"
+options = ["Trường `exports` trong package.json với điều kiện `types` đặt đúng chỗ cho từng điều kiện import/require", "Chỉ trường `main`, vì nodenext bỏ qua `exports`", "Cờ `strict` trong tsconfig của người dùng", "Tên thư mục `node_modules/@types`"]
+answer = [0]
+explanation = "Với nodenext/bundler, TypeScript đọc `exports` và điều kiện `types`; điều kiện `types` phải đứng trước `default` trong từng nhánh. `main` chỉ là fallback, strict không ảnh hưởng tìm module."
+sources = ["typescript/docs/handbook/modules/theory", "typescript/docs/handbook/declaration-files/publishing"]
+
+[[questions]]
+id = "typescript-lv030"
+module = "ts-generics"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "generics"]
+prompt = '''
+~~~ts
+function setKey<T, K extends keyof T>(obj: T, key: K, value: T[K]): void {
+  obj[key] = value;
+}
+setKey({ a: 1, b: "x" }, "b", 2);
+~~~
+Lời gọi có lỗi không và vì sao?
+'''
+options = ["Có, vì `value` phải có kiểu `T[\"b\"]` tức string", "Không, vì `2` là kiểu number hợp lệ cho mọi key", "Có, vì `K` không thể suy luận từ chuỗi literal", "Không, vì T[K] luôn là union của mọi thuộc tính"]
+answer = [0]
+explanation = "K được suy luận là \"b\", nên T[K] là string và đối số number bị từ chối. Ràng buộc liên kết key với kiểu giá trị là mục đích của `keyof` cộng indexed access."
+sources = ["typescript/docs/handbook/2/generics", "typescript/docs/handbook/2/indexed-access-types"]
+
+[[questions]]
+id = "typescript-lv031"
+module = "ts-narrowing"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "narrowing"]
+prompt = '''
+~~~ts
+type Shape = { kind: "circle"; r: number } | { kind: "rect"; w: number; h: number };
+function area(s: Shape) {
+  if (s.kind === "circle") return Math.PI * s.r ** 2;
+  return s.w * s.h;
+}
+~~~
+Vì sao `s.w` hợp lệ ở dòng cuối?
+'''
+options = ["Control-flow analysis loại biến thể circle nên s còn lại là rect", "Vì TypeScript bỏ qua kiểm tra thuộc tính trên union", "Vì `w` là thuộc tính chung của mọi biến thể", "Vì hàm không có kiểu trả về tường minh"]
+answer = [0]
+explanation = "Sau nhánh `if` có `return`, compiler thu hẹp s thành biến thể còn lại. Discriminant `kind` là literal nên thu hẹp chính xác."
+sources = ["typescript/docs/handbook/2/narrowing"]
+
+[[questions]]
+id = "typescript-lv032"
+module = "ts-types"
+type = "multiple"
+difficulty = 2
+tags = ["level:middle", "types"]
+prompt = "Những nhận định nào đúng về `unknown` và `any`?"
+options = ["Có thể gán mọi giá trị cho `unknown`", "Phải thu hẹp `unknown` trước khi gọi method trên nó", "`any` tắt kiểm tra kiểu tại nơi nó chảy tới", "`unknown` có thể gán thẳng cho `string` mà không cần kiểm tra"]
+answer = [0, 1, 2]
+explanation = "unknown là top type an toàn; any là lối thoát khỏi hệ thống kiểu. Gán unknown cho string phải qua narrowing hoặc assertion."
+sources = ["typescript/docs/handbook/2/functions#unknown"]
+
+[[questions]]
+id = "typescript-lv033"
+module = "ts-types"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "types"]
+prompt = "Đoạn `let count = 0;` rồi `count = \"five\";` gây lỗi vì lý do nào?"
+options = ["TypeScript suy luận `count` là number từ giá trị khởi tạo", "`let` luôn yêu cầu chú thích kiểu", "Chuỗi không bao giờ gán được cho biến", "`count` có kiểu `any`"]
+answer = [0]
+explanation = "Suy luận kiểu từ giá trị khởi tạo gán `number` cho count; gán string sau đó vi phạm kiểu."
+sources = ["typescript/docs/handbook/type-inference"]
+
+[[questions]]
+id = "typescript-lv034"
+module = "ts-types"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "types"]
+prompt = "Cách khai báo nào là kiểu mảng các số hợp lệ trong TypeScript?"
+options = ["number[]", "array<number>[]", "[number]", "number{}"]
+answer = [0]
+explanation = "`number[]` (hoặc `Array<number>`) là mảng số bất kỳ độ dài; `[number]` là tuple đúng một phần tử."
+sources = ["typescript/docs/handbook/2/everyday-types"]
+
+[[questions]]
+id = "typescript-lv035"
+module = "ts-types"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "types"]
+prompt = "Kiểu union `string | number` có nghĩa là gì?"
+options = ["Giá trị có thể là string hoặc number", "Giá trị phải đồng thời là string và number", "Giá trị luôn là chuỗi chứa số", "Chỉ dùng được với hàm"]
+answer = [0]
+explanation = "Union biểu diễn một trong các kiểu; muốn dùng thành viên riêng của từng kiểu cần thu hẹp bằng `typeof`."
+sources = ["typescript/docs/handbook/2/everyday-types#union-types"]
+
+[[questions]]
+id = "typescript-lv036"
+module = "ts-types"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "types"]
+prompt = "Tham số `age?: number` trong khai báo hàm có nghĩa là gì?"
+options = ["Tham số có thể bỏ qua khi gọi; trong thân hàm nó có kiểu `number | undefined`", "Tham số bắt buộc phải là undefined", "Tham số tự nhận giá trị 0 khi bỏ qua", "Tham số chỉ nhận chuỗi"]
+answer = [0]
+explanation = "Dấu `?` làm tham số tùy chọn; không có giá trị mặc định nên có thể là undefined."
+sources = ["typescript/docs/handbook/2/functions#optional-parameters"]
+
+[[questions]]
+id = "typescript-lv037"
+module = "ts-narrowing"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "narrowing"]
+prompt = '''
+~~~ts
+function len(x: string | string[]) {
+  if (typeof x === "string") {
+    return x.length;
+  }
+  return x.length;
+}
+~~~
+Vì sao dòng thứ hai `x.length` không báo lỗi dù `x` ban đầu là union?
+'''
+options = ["Sau `typeof` guard, compiler biết x còn lại là string[]", "Vì cả hai kiểu đều gán được cho nhau", "TypeScript không kiểm tra thuộc tính `length`", "Vì `x` là `any`"]
+answer = [0]
+explanation = "`typeof x === \"string\"` thu hẹp kiểu trong nhánh đúng, phần còn lại là `string[]`."
+sources = ["typescript/docs/handbook/2/narrowing"]
+
+[[questions]]
+id = "typescript-lv038"
+module = "typescript-dv-objects-functions"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "interfaces"]
+prompt = '''
+~~~ts
+interface User { id: number; name: string }
+const u: User = { id: 1 };
+~~~
+Điều gì xảy ra?
+'''
+options = ["Lỗi biên dịch vì thiếu thuộc tính `name`", "Chạy bình thường, name là undefined", "Lỗi runtime lúc chạy", "TypeScript tự thêm name rỗng"]
+answer = [0]
+explanation = "Interface mô tả hình dạng bắt buộc; thiếu thuộc tính không tùy chọn bị compiler từ chối trước khi chạy."
+sources = ["typescript/docs/handbook/2/objects"]
+
+[[questions]]
+id = "typescript-lv039"
+module = "typescript-dv-objects-functions"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "functions"]
+prompt = "Kiểu trả về `void` của một hàm có ý nghĩa gì?"
+options = ["Hàm không cung cấp giá trị trả về hữu ích cho nơi gọi", "Hàm luôn ném lỗi", "Hàm trả về null", "Hàm không thể gọi"]
+answer = [0]
+explanation = "`void` dành cho hàm chỉ thực hiện tác dụng phụ; `never` mới dành cho hàm không bao giờ trả về."
+sources = ["typescript/docs/handbook/2/functions#void"]
+
+[[questions]]
+id = "typescript-lv040"
+module = "typescript-dv-classes"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "classes"]
+prompt = "Từ khóa nào làm một thuộc tính class chỉ truy cập được bên trong class đó theo kiểm tra của TypeScript?"
+options = ["private", "public", "readonly", "static"]
+answer = [0]
+explanation = "`private` hạn chế truy cập trong class lúc biên dịch; `readonly` chỉ chặn gán lại; `static` thuộc về class."
+sources = ["typescript/docs/handbook/2/classes#member-visibility"]
+
+[[questions]]
+id = "typescript-lv041"
+module = "ts-project"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "tsconfig"]
+prompt = "File `tsconfig.json` ở gốc dự án dùng để làm gì?"
+options = ["Khai báo file nào thuộc dự án và các tùy chọn compiler", "Lưu danh sách package npm", "Chạy test tự động", "Chứa mã nguồn JavaScript đã biên dịch"]
+answer = [0]
+explanation = "tsconfig.json xác định phạm vi file và compilerOptions như `strict`, `target`, `module`."
+sources = ["typescript/docs/handbook/tsconfig-json"]
+
+[[questions]]
+id = "typescript-lv042"
+module = "ts-types"
+type = "multiple"
+difficulty = 1
+tags = ["level:junior", "types"]
+prompt = "Những kiểu nào là kiểu nguyên thủy trong TypeScript?"
+options = ["string", "number", "boolean", "Array"]
+answer = [0, 1, 2]
+explanation = "string, number, boolean là nguyên thủy; Array là kiểu đối tượng."
+sources = ["typescript/docs/handbook/2/everyday-types"]
+
+[[questions]]
+id = "typescript-lv043"
+module = "ts-types"
+type = "fill"
+difficulty = 1
+tags = ["level:junior", "types"]
+prompt = '''
+~~~ts
+let ids: {{blank}}[] = [1, 2, 3];
+~~~
+Điền kiểu phần tử của mảng.
+'''
+blanks = [["number"]]
+explanation = "`number[]` mô tả mảng chỉ chứa số."
+sources = ["typescript/docs/handbook/2/everyday-types"]
+
+[[questions]]
+id = "typescript-lv044"
+module = "ts-types"
+type = "fill"
+difficulty = 1
+tags = ["level:junior", "types"]
+prompt = '''
+~~~ts
+type Status = "idle" | "loading" | "done";
+let s: Status = "idle";
+~~~
+Mỗi giá trị như `"idle"` trong union trên được gọi là kiểu {{blank}}.
+'''
+blanks = [["literal"]]
+explanation = "Literal type giới hạn giá trị chỉ còn đúng chuỗi, số hoặc boolean cụ thể."
+sources = ["typescript/docs/handbook/2/everyday-types#literal-types"]
+
+[[questions]]
+id = "typescript-lv045"
+module = "typescript-dv-objects-functions"
+type = "fill"
+difficulty = 1
+tags = ["level:junior", "interfaces"]
+prompt = '''
+~~~ts
+interface Point { {{blank}} x: number; y: number }
+~~~
+Thêm từ khóa nào trước `x` để không thể gán lại `x` sau khi tạo object?
+'''
+blanks = [["readonly"]]
+explanation = "`readonly` chặn gán lại thuộc tính theo kiểm tra lúc biên dịch."
+sources = ["typescript/docs/handbook/2/objects#readonly-properties"]
+
+[[questions]]
+id = "typescript-lv046"
+module = "ts-project"
+type = "fill"
+difficulty = 1
+tags = ["level:junior", "tsconfig"]
+prompt = "Để bật nhóm kiểm tra nghiêm ngặt như strictNullChecks và noImplicitAny cùng lúc, đặt `\"{{blank}}\": true` trong compilerOptions."
+blanks = [["strict"]]
+explanation = "`strict` là cờ tổng bật nhóm kiểm tra chặt chẽ."
+sources = ["typescript/docs/handbook/tsconfig-json"]
+
+[[questions]]
+id = "typescript-lv047"
+module = "typescript-dv-objects-functions"
+type = "fill"
+difficulty = 1
+tags = ["level:junior", "functions"]
+prompt = '''
+~~~ts
+function greet(name: string): {{blank}} {
+  return "Hi " + name;
+}
+~~~
+Điền kiểu trả về.
+'''
+blanks = [["string"]]
+explanation = "Hàm trả về chuỗi nối, nên kiểu trả về là `string`."
+sources = ["typescript/docs/handbook/2/functions"]
+
+[[questions]]
+id = "typescript-lv048"
+module = "ts-generics"
+type = "fill"
+difficulty = 1
+tags = ["level:junior", "generics"]
+prompt = '''
+~~~ts
+function first<{{blank}}>(items: T[]): T | undefined { return items[0]; }
+~~~
+Điền tên tham số kiểu (generic parameter) mà thân hàm dùng.
+'''
+blanks = [["T"]]
+explanation = "Tham số kiểu `T` giúp hàm bảo toàn kiểu phần tử giữa input và output."
+sources = ["typescript/docs/handbook/2/generics"]
+
+[[questions]]
+id = "typescript-lv049"
+module = "ts-types"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "types"]
+prompt = "Khác biệt chính giữa `let x: any` và `let y: unknown` là gì?"
+options = ["`unknown` buộc phải kiểm tra/thu hẹp trước khi dùng, `any` thì không", "`any` an toàn hơn `unknown`", "Hai kiểu hoàn toàn giống nhau", "`unknown` chỉ dùng cho số"]
+answer = [0]
+explanation = "any tắt kiểm tra; unknown giữ an toàn bằng cách yêu cầu thu hẹp."
+sources = ["typescript/docs/handbook/2/functions#unknown"]
+
+[[questions]]
+id = "typescript-lv050"
+module = "ts-project"
+type = "multiple"
+difficulty = 1
+tags = ["level:junior", "tsconfig"]
+prompt = "Những phát biểu nào đúng về TypeScript và JavaScript?"
+options = ["TypeScript được biên dịch (hoặc bị xóa kiểu) thành JavaScript để chạy", "Kiểu của TypeScript tồn tại ở runtime và có thể truy vấn được", "Mọi JavaScript hợp lệ cũng là TypeScript hợp lệ về cú pháp", "Lỗi kiểu được compiler báo trước khi chạy chương trình"]
+answer = [0, 2, 3]
+explanation = "Kiểu bị xóa khi biên dịch nên không tồn tại ở runtime; vì vậy dữ liệu bên ngoài vẫn cần validation."
+sources = ["typescript/docs/handbook/migrating-from-javascript"]
+
+[[questions]]
+id = "typescript-lv051"
+module = "typescript-dv-classes"
+type = "multiple"
+difficulty = 1
+tags = ["level:junior", "classes"]
+prompt = "Những phát biểu nào đúng về class trong TypeScript?"
+options = ["Class có thể `implements` một interface để cam kết hình dạng", "Class có thể `extends` một class khác để kế thừa", "`private` ngăn truy cập từ code ngoài class theo kiểm tra kiểu", "Class tự động kiểm tra dữ liệu đầu vào lúc runtime"]
+answer = [0, 1, 2]
+explanation = "implements, extends và modifier phạm vi đều là kiểm tra tĩnh; chúng không tự validate dữ liệu runtime."
+sources = ["typescript/docs/handbook/2/classes"]
+
+[[questions]]
+id = "typescript-lv052"
+module = "ts-narrowing"
+type = "fill"
+difficulty = 1
+tags = ["level:junior", "narrowing"]
+prompt = '''
+~~~ts
+if ({{blank}} value === "number") { value.toFixed(2); }
+~~~
+Điền toán tử dùng để kiểm tra kiểu nguyên thủy tại runtime.
+'''
+blanks = [["typeof"]]
+explanation = "`typeof` thu hẹp union nguyên thủy trong nhánh điều kiện."
+sources = ["typescript/docs/handbook/2/narrowing#typeof-type-guards"]
+
+[[questions]]
+id = "typescript-lvc03"
+module = "ts-types"
+type = "code"
+lang = "javascript"
+difficulty = 1
+tags = ["level:junior", "types"]
+title = "Mô tả kiểu của giá trị"
+prompt = '''
+Viết hàm describe(value) trả về chuỗi mô tả kiểu runtime của value (tương tự thu hẹp bằng typeof):
+- null -> 'null'
+- mảng -> 'array'
+- số hữu hạn -> 'number'; NaN hoặc Infinity -> 'invalid-number'
+- chuỗi, boolean, undefined, function -> chính kết quả của typeof
+- object thường -> 'object'
+'''
+starter = '''
+function describe(value) {
+  return 'unknown';
+}
+'''
+solution = '''
+function describe(value) {
+  if (value === null) return 'null';
+  if (Array.isArray(value)) return 'array';
+  if (typeof value === 'number') return Number.isFinite(value) ? 'number' : 'invalid-number';
+  return typeof value;
+}
+'''
+tests = '''
+test('null và mảng', () => {
+  expect(describe(null)).toBe('null');
+  expect(describe([1])).toBe('array');
+});
+test('số hợp lệ và không hợp lệ', () => {
+  expect(describe(3)).toBe('number');
+  expect(describe(NaN)).toBe('invalid-number');
+  expect(describe(Infinity)).toBe('invalid-number');
+});
+test('kiểu nguyên thủy khác', () => {
+  expect(describe('a')).toBe('string');
+  expect(describe(true)).toBe('boolean');
+  expect(describe(undefined)).toBe('undefined');
+});
+test('object và function', () => {
+  expect(describe({})).toBe('object');
+  expect(describe(() => 1)).toBe('function');
+});
+'''
+hints = ["typeof null cho 'object', cần xử lý null trước.", "Dùng Array.isArray và Number.isFinite."]
+explanation = "Hiểu typeof và các trường hợp biên (null, mảng, NaN) là nền tảng của narrowing."
+
+[[questions]]
+id = "typescript-lvc04"
+module = "typescript-dv-objects-functions"
+type = "code"
+lang = "javascript"
+difficulty = 1
+tags = ["level:junior", "functions"]
+title = "Hàm với tham số tùy chọn và mặc định"
+prompt = '''
+Viết hàm makeUser(name, age, role) trả về object { name, age, role }:
+- age tùy chọn: nếu thiếu (undefined) thì dùng null.
+- role tùy chọn: mặc định 'user'.
+- Giữ nguyên age = 0 (không thay bằng null).
+'''
+starter = '''
+function makeUser(name, age, role) {
+  return {};
+}
+'''
+solution = '''
+function makeUser(name, age, role = 'user') {
+  return { name, age: age === undefined ? null : age, role };
+}
+'''
+tests = '''
+test('đủ tham số', () => {
+  expect(makeUser('Ada', 30, 'admin')).toEqual({ name: 'Ada', age: 30, role: 'admin' });
+});
+test('thiếu age và role', () => {
+  expect(makeUser('Ada')).toEqual({ name: 'Ada', age: null, role: 'user' });
+});
+test('age bằng 0 được giữ nguyên', () => {
+  expect(makeUser('Ada', 0).age).toBe(0);
+});
+test('role mặc định chỉ áp dụng khi undefined', () => {
+  expect(makeUser('Ada', 1, undefined).role).toBe('user');
+});
+'''
+hints = ["Dùng giá trị mặc định cho role.", "So sánh age === undefined thay vì kiểm tra falsy."]
+explanation = "Tham số tùy chọn trong TypeScript tương ứng giá trị undefined; phân biệt undefined với 0 tránh lỗi falsy phổ biến."

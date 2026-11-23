@@ -3,6 +3,8 @@
 Bovabon Edu là LMS ôn tập lập trình (Rust/axum). Kho câu hỏi là các file `data/<lộ-trình>.toml`.
 Nhiệm vụ thường gặp: **soạn một lộ trình mới** = tạo đúng **một** file `data/<file>.toml`.
 
+> **Đợt bàn giao hiện tại** (SE Junior → Lead, Luyện thi IELTS 6.5): đọc `docs/codex-handoff.md` trước — trạng thái kho, chỉ tiêu, danh sách job, cách chạy `scripts/codex-handoff.sh`. Khung nội dung: `docs/se-levels.md`, `docs/ielts-6.5-syllabus.md`.
+
 ## Quy tắc bắt buộc
 
 1. **Chỉ tạo/sửa file data được giao.** Không sửa `src/`, `static/`, `tests/`, `Cargo.toml`, file data khác, không chạy `cargo build`/`cargo test` (binary kiểm định đã build sẵn). Có thể tạo file nháp trong `/tmp`.
@@ -23,9 +25,31 @@ Nhiệm vụ thường gặp: **soạn một lộ trình mới** = tạo đúng 
 
 - 4–6 module; mỗi module có `lesson` (Markdown, ≥ 200 ký tự, có bảng/ví dụ/lỗi hay gặp) và `sources`.
 - **35–45 câu hỏi**, đủ 5 dạng: `single` (~40%), `multiple` (~15%), `fill` (~15%), `essay` (2–3 câu), `code` (**5–6 bài**, rải đều các module).
-- `difficulty`: 1 (cơ bản), 2 (trung bình), 3 (nâng cao) — trộn cả ba.
+- `difficulty`: 1 (cơ bản), 2 (trung bình), 3 (nâng cao) — trộn cả ba. `difficulty` phải khớp tag cấp độ (xem "Cấp độ & chỉ tiêu").
 - id câu hỏi: `<tiền-tố>-<số>` duy nhất toàn kho (vd. `vue-001`, `vue-c01`). Tiền tố do người giao việc chỉ định.
 - Câu hỏi hướng **hiểu bản chất & tình huống thực tế** (debug, chọn giải pháp, đọc code), tránh câu đố mẹo.
+
+## Cấp độ & chỉ tiêu
+
+Mỗi câu hỏi mới (và câu cũ khi sửa) phải có **đúng một** tag cấp độ trong `tags`, đặt đầu danh sách; `difficulty` khớp tag:
+
+| Khu | Tag → difficulty | Căn cứ |
+|---|---|---|
+| Lộ trình dev (`area = "dev"`) | `level:junior`→1, `level:middle`→2, `level:senior`→3, `level:lead`→3 | `docs/se-levels.md` |
+| Lộ trình `english-ielts-*` | `band:5.5`→1, `band:6.5`→2, `band:7`→3 | `docs/ielts-6.5-syllabus.md` |
+| Tiếng Anh khác (CEFR, Tiếng Anh cho IT…) | không bắt buộc | `docs/cefr-syllabus.md` |
+
+```toml
+difficulty = 3
+tags = ["level:lead", "caching"]
+```
+
+Đo chỉ tiêu (số câu theo cấp, số bài code/essay, module bắt buộc, độ dài lesson):
+```bash
+python3 scripts/bank-stats.py data/<file>.toml          # liệt kê phần còn thiếu
+python3 scripts/bank-stats.py --check data/<file>.toml  # exit 1 nếu chưa đạt
+```
+Được phép chạy script này bất cứ lúc nào (chỉ đọc). Job "chạy lặp" thêm tối đa ~30 câu mỗi lượt rồi dừng khi `check` ✅ — lượt sau làm tiếp phần còn thiếu theo `bank-stats`.
 
 ## Mở rộng một lộ trình có sẵn
 
@@ -102,6 +126,7 @@ id = "vue-001"
 module = "vue-reactivity"
 type = "single"                  # single | multiple | fill | essay | code
 difficulty = 2
+tags = ["level:middle"]          # tag cấp độ đứng đầu; có thể thêm tag chủ đề
 prompt = "Markdown. Có thể chứa ```code```."
 options = ["A", "B", "C", "D"]   # single/multiple; không trùng nhau
 answer = [1]                     # chỉ số (0-based); single đúng 1, multiple >= 2
@@ -130,7 +155,7 @@ model_answer = '''Đáp án mẫu Markdown…'''
 **code** — bài tập chấm bằng unit test.
 ```toml
 type = "code"
-lang = "javascript"              # javascript | python | rust | php   (KHÔNG dùng go)
+lang = "javascript"              # javascript | python | rust | php; `go` chỉ dùng trong lộ trình Go (biên dịch chậm)
 title = "Tên bài"
 prompt = '''Đề bài: chữ ký hàm, quy tắc, ví dụ input/output, ràng buộc.'''
 starter = '''khung code BIÊN DỊCH/CHẠY ĐƯỢC nhưng sai logic (vd. trả giá trị mặc định)'''

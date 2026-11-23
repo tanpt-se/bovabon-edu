@@ -82,6 +82,8 @@
     'Lộ trình CEFR': 'CEFR path',
     'Tiếng Anh cho IT': 'English for IT',
     'Từ vựng & cụm từ': 'Vocabulary & phrases',
+    'Luyện thi IELTS 6.5': 'IELTS 6.5 prep',
+    'Kiến trúc & Lead': 'Architecture & leadership',
     'Ô trống {n}': 'Blank {n}',
     'Ngoại ngữ': 'Languages',
     'Dễ': 'Easy',

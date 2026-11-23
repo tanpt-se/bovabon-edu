@@ -18,6 +18,8 @@ cargo test --release rust_runner            # single test by name (runner tests 
 ./scripts/devdocs-index.sh <slug>           # download a DevDocs index into .devdocs/ (needed to validate `sources`)
 ./scripts/codex-run.sh -j 4 <job> ...       # run Codex CLI jobs from scripts/codex-jobs/<job>.txt (ui-* jobs get a code-editing preamble)
 ./scripts/codex-pipeline.sh                 # all jobs in phases: ui-redesign→ui-i18n | cefr-* + devdocs-* | then en-* translations
+./scripts/codex-handoff.sh [-j 3] [-r 8] [lane…]  # current handoff (docs/codex-handoff.md): loops lvl-*/system-design/ielts-* jobs until quotas met, then build + en-* + test
+python3 scripts/bank-stats.py [--check] [--i18n] [file]  # per-track quotas: level:* tags (dev), band:* tags (english-ielts-*), missing EN translations
 ```
 
 Before re-bundling, quit the running app: `osascript -e 'quit app "Bovabon Edu"'`.

@@ -121,13 +121,14 @@ console.log('D');
 options = ["A B C D", "A D C B", "A D B C", "A C D B"]
 answer = [1]
 explanation = "Sync trước (A, D) → microtask (C) → macrotask (B)."
-tags = ["event-loop"]
+tags = ["level:middle", "event-loop"]
 
 [[questions]]
 id = "fe-002"
 module = "fe-js"
 type = "single"
-difficulty = 2
+difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Kết quả?
 
@@ -146,6 +147,7 @@ id = "fe-003"
 module = "fe-js"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 In ra gì?
 
@@ -169,6 +171,7 @@ id = "fe-004"
 module = "fe-js"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Kết quả của `typeof null`?"
 options = ["`'null'`", "`'object'`", "`'undefined'`", "`'number'`"]
 answer = [1]
@@ -179,6 +182,7 @@ id = "fe-005"
 module = "fe-js"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "`Promise.all([p1, p2, p3])` hành xử thế nào khi `p2` reject?"
 options = [
   "Đợi tất cả xong rồi trả về mảng kết quả kèm lỗi",
@@ -193,7 +197,8 @@ explanation = "Dùng `Promise.allSettled` nếu cần mọi kết quả. Promise
 id = "fe-006"
 module = "fe-js"
 type = "single"
-difficulty = 2
+difficulty = 1
+tags = ["level:junior"]
 prompt = "Truy cập biến `let` trước khi khai báo trong cùng block gây ra gì?"
 options = ["`undefined`", "`ReferenceError` (Temporal Dead Zone)", "`null`", "`SyntaxError`"]
 answer = [1]
@@ -204,6 +209,7 @@ id = "fe-007"
 module = "fe-js"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Biểu thức nào cho kết quả `true`?"
 options = ["`NaN === NaN`", "`Object.is(NaN, NaN)`", "`null == undefined`", "`null === undefined`", "`[] == false`", "`0.1 + 0.2 === 0.3`"]
 answer = [1, 2, 4]
@@ -214,6 +220,7 @@ id = "fe-008"
 module = "fe-js"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Sao chép nông (shallow copy) object và mảng bằng spread:
 
@@ -230,6 +237,7 @@ id = "fe-009"
 module = "fe-js"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 Huỷ một request `fetch` đang chạy:
 
@@ -247,6 +255,7 @@ id = "fe-010"
 module = "fe-js"
 type = "essay"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Closure là gì? Cho một ví dụ ứng dụng thực tế."
 keywords = [
   ["scope", "phạm vi", "lexical"],
@@ -266,6 +275,7 @@ id = "fe-011"
 module = "fe-js"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 title = "debounce"
 prompt = '''
 Viết `debounce(fn, wait)` trả về hàm mới chỉ gọi `fn` sau khi đã **ngừng gọi** `wait` ms.
@@ -345,6 +355,7 @@ id = "fe-012"
 module = "fe-js"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 title = "throttle"
 prompt = '''
 Viết `throttle(fn, wait)`: gọi `fn` **ngay lần đầu** (leading), sau đó trong khoảng `wait` ms các lần gọi bị bỏ qua, nhưng **lần gọi cuối cùng** trong khoảng đó được thực hiện khi hết `wait` (trailing) với tham số mới nhất.
@@ -422,6 +433,7 @@ id = "fe-013"
 module = "fe-js"
 type = "code"
 difficulty = 3
+tags = ["level:senior"]
 title = "Tự cài đặt Promise.all"
 prompt = '''
 Viết `promiseAll(iterable)` hành xử như `Promise.all`:
@@ -486,6 +498,7 @@ id = "fe-014"
 module = "fe-js"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 title = "EventEmitter"
 prompt = '''
 Viết class `EventEmitter` với các method:
@@ -580,6 +593,7 @@ id = "fe-015"
 module = "fe-js"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 title = "memoize"
 prompt = '''
 Viết `memoize(fn, resolver?)` cache kết quả theo tham số:
@@ -646,6 +660,7 @@ id = "fe-020"
 module = "fe-html-css"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Với `box-sizing: border-box`, `width: 200px; padding: 20px; border: 5px solid` thì chiều rộng hiển thị là?"
 options = ["200px", "250px", "240px", "210px"]
 answer = [0]
@@ -655,7 +670,8 @@ explanation = "border-box: width bao gồm padding + border → content = 200 �
 id = "fe-021"
 module = "fe-html-css"
 type = "single"
-difficulty = 2
+difficulty = 1
+tags = ["level:junior"]
 prompt = "Selector nào có specificity **cao nhất**?"
 options = ["`.nav .item a`", "`#menu a`", "`ul li a:hover`", "`div.nav > ul > li`"]
 answer = [1]
@@ -665,7 +681,8 @@ explanation = "`#menu a` = (1,0,1) — 1 id thắng mọi tổ hợp không có 
 id = "fe-022"
 module = "fe-html-css"
 type = "single"
-difficulty = 2
+difficulty = 1
+tags = ["level:junior"]
 prompt = "Phần tử `position: absolute` được định vị so với đâu?"
 options = [
   "Luôn so với `body`",
@@ -681,6 +698,7 @@ id = "fe-023"
 module = "fe-html-css"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Khi nào chọn CSS Grid thay vì Flexbox?"
 options = [
   "Khi bố cục **2 chiều** (hàng và cột cùng lúc), ví dụ layout trang, gallery",
@@ -695,7 +713,8 @@ explanation = "Flexbox mạnh ở bố cục 1 chiều theo nội dung; Grid m�
 id = "fe-024"
 module = "fe-html-css"
 type = "single"
-difficulty = 2
+difficulty = 1
+tags = ["level:junior"]
 prompt = "Vì sao nên dùng `<button>` thay vì `<div onclick>` cho nút bấm?"
 options = [
   "Vì div không nhận được click",
@@ -710,7 +729,8 @@ explanation = "Muốn div tương đương phải thêm `role=\"button\"`, `tabi
 id = "fe-025"
 module = "fe-html-css"
 type = "multiple"
-difficulty = 2
+difficulty = 3
+tags = ["level:senior"]
 prompt = "Thuộc tính nào tạo **stacking context** mới?"
 options = ["`opacity: 0.9`", "`transform: translateZ(0)`", "`position: relative; z-index: 1`", "`display: block`", "`isolation: isolate`", "`margin: 10px`"]
 answer = [0, 1, 2, 4]
@@ -721,6 +741,7 @@ id = "fe-026"
 module = "fe-html-css"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Căn giữa một phần tử theo cả 2 chiều bằng Flexbox:
 
@@ -741,6 +762,7 @@ id = "fe-027"
 module = "fe-html-css"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 Grid 3 cột co giãn đều, tự xuống hàng responsive với cột tối thiểu 200px:
 
@@ -759,6 +781,7 @@ id = "fe-028"
 module = "fe-html-css"
 type = "essay"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Nêu các nguyên tắc chính để một trang web **accessible** (a11y)."
 keywords = [
   ["semantic", "ngữ nghĩa", "thẻ html"],
@@ -785,6 +808,7 @@ id = "fe-040"
 module = "fe-browser"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Khác biệt giữa `<script defer>` và `<script async>`?"
 options = [
   "Không khác",
@@ -800,6 +824,7 @@ id = "fe-041"
 module = "fe-browser"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Chỉ số Core Web Vitals nào đo **độ phản hồi khi tương tác** (thay thế FID từ 3/2024)?"
 options = ["LCP", "CLS", "INP", "TTFB"]
 answer = [2]
@@ -809,7 +834,8 @@ explanation = "INP (Interaction to Next Paint) — tốt khi ≤ 200ms."
 id = "fe-042"
 module = "fe-browser"
 type = "single"
-difficulty = 2
+difficulty = 3
+tags = ["level:senior"]
 prompt = "Thay đổi thuộc tính CSS nào thường **rẻ nhất** khi làm animation?"
 options = ["`width`/`height`", "`top`/`left`", "`transform` và `opacity`", "`margin`"]
 answer = [2]
@@ -820,6 +846,7 @@ id = "fe-043"
 module = "fe-browser"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Header `Cache-Control: no-cache` có nghĩa là gì?"
 options = [
   "Không bao giờ lưu cache",
@@ -834,7 +861,8 @@ explanation = "`no-store` mới là không lưu. Asset có hash trong tên: `max
 id = "fe-044"
 module = "fe-browser"
 type = "single"
-difficulty = 2
+difficulty = 1
+tags = ["level:junior"]
 prompt = "Event delegation là gì?"
 options = [
   "Gắn listener cho từng phần tử con",
@@ -850,6 +878,7 @@ id = "fe-045"
 module = "fe-browser"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Cách nào giảm **CLS** (layout shift)?"
 options = [
   "Khai báo `width`/`height` hoặc `aspect-ratio` cho ảnh/video",
@@ -866,6 +895,7 @@ id = "fe-046"
 module = "fe-browser"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 Cookie phiên an toàn: không cho JS đọc, chỉ gửi qua HTTPS, chống CSRF:
 
@@ -882,6 +912,7 @@ id = "fe-047"
 module = "fe-browser"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Mô tả điều gì xảy ra từ khi gõ URL vào trình duyệt tới khi trang hiển thị."
 keywords = [
   ["dns"],
@@ -908,6 +939,7 @@ id = "fe-048"
 module = "fe-browser"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 title = "Phân tích query string"
 prompt = '''
 Viết `parseQuery(qs)` chuyển query string thành object:
@@ -961,6 +993,7 @@ id = "fe-060"
 module = "fe-ts"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Khác biệt giữa `unknown` và `any`?"
 options = [
   "Giống nhau",
@@ -975,7 +1008,8 @@ explanation = "Dùng `unknown` cho dữ liệu từ bên ngoài (JSON, catch err
 id = "fe-061"
 module = "fe-ts"
 type = "single"
-difficulty = 2
+difficulty = 1
+tags = ["level:junior"]
 prompt = "`Omit<User, 'password'>` tạo ra kiểu gì?"
 options = ["Chỉ có `password`", "Mọi thuộc tính của `User` trừ `password`", "`User` với `password` optional", "Lỗi"]
 answer = [1]
@@ -986,6 +1020,7 @@ id = "fe-062"
 module = "fe-ts"
 type = "single"
 difficulty = 3
+tags = ["level:senior"]
 prompt = '''
 Mục đích của dòng `const _exhaustive: never = shape;` trong default case?
 
@@ -1013,7 +1048,8 @@ explanation = "Discriminated union + `never` giúp compiler nhắc khi thiếu c
 id = "fe-063"
 module = "fe-ts"
 type = "single"
-difficulty = 2
+difficulty = 3
+tags = ["level:senior"]
 prompt = "Điểm khác biệt chỉ `interface` có mà `type` alias không có?"
 options = ["Kế thừa", "Declaration merging (khai báo 2 lần cùng tên sẽ được gộp)", "Generic", "Union type"]
 answer = [1]
@@ -1024,6 +1060,7 @@ id = "fe-064"
 module = "fe-ts"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Cách nào là **type narrowing** hợp lệ?"
 options = ["`typeof x === 'string'`", "`x instanceof Date`", "`'id' in x`", "`x as string`", "Hàm `isUser(x): x is User`", "`switch (x.kind)` với discriminated union"]
 answer = [0, 1, 2, 4, 5]
@@ -1033,7 +1070,8 @@ explanation = "`as` là type assertion — ép kiểu, không kiểm tra gì ở
 id = "fe-065"
 module = "fe-ts"
 type = "fill"
-difficulty = 2
+difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Định nghĩa hàm generic trả về phần tử đầu tiên của mảng:
 
@@ -1051,6 +1089,7 @@ id = "fe-066"
 module = "fe-ts"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 Lấy kiểu giá trị trả về của hàm (đã unwrap Promise):
 
@@ -1067,6 +1106,7 @@ id = "fe-067"
 module = "fe-ts"
 type = "essay"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Giải thích toán tử `satisfies` trong TypeScript và khác gì so với khai báo kiểu `const x: T = ...`."
 keywords = [
   ["kiểm tra", "check", "validate"],
@@ -1082,7 +1122,8 @@ explanation = "Ví dụ: `const routes = { home: '/', user: '/u' } satisfies Rec
 id = "fe-080"
 module = "fe-tooling"
 type = "single"
-difficulty = 2
+difficulty = 3
+tags = ["level:senior"]
 prompt = "Tree-shaking hoạt động tốt nhất khi:"
 options = [
   "Dùng CommonJS `require`",
@@ -1098,6 +1139,7 @@ id = "fe-081"
 module = "fe-tooling"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "CORS là cơ chế bảo vệ do ai thực thi?"
 options = ["Server", "Trình duyệt", "Firewall", "DNS"]
 answer = [1]
@@ -1108,6 +1150,7 @@ id = "fe-082"
 module = "fe-tooling"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Trong React, code nào có nguy cơ **XSS**?"
 options = [
   "`<p>{userInput}</p>`",
@@ -1123,6 +1166,7 @@ id = "fe-083"
 module = "fe-tooling"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Vì sao Vite dev server khởi động nhanh hơn bundler truyền thống?"
 options = [
   "Vì viết bằng Rust",
@@ -1137,7 +1181,8 @@ explanation = "Bản production Vite build bằng Rollup (Rolldown ở bản m�
 id = "fe-084"
 module = "fe-tooling"
 type = "multiple"
-difficulty = 2
+difficulty = 3
+tags = ["level:senior"]
 prompt = "Biện pháp nào giúp chống **CSRF**?"
 options = ["Cookie `SameSite=Lax/Strict`", "CSRF token trong form/header", "Kiểm tra header `Origin`/`Referer`", "Lưu mật khẩu bằng MD5", "Bật CORS `*`"]
 answer = [0, 1, 2]
@@ -1148,6 +1193,7 @@ id = "fe-085"
 module = "fe-tooling"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 Mock một hàm và kiểm tra nó được gọi với tham số đúng (Vitest):
 
@@ -1166,6 +1212,7 @@ id = "fe-086"
 module = "fe-tooling"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Content Security Policy (CSP) là gì và giúp giảm thiểu tấn công nào?"
 keywords = [
   ["header", "meta"],
@@ -1186,6 +1233,7 @@ id = "fe-087"
 module = "fe-tooling"
 type = "code"
 difficulty = 3
+tags = ["level:senior"]
 title = "deepEqual cho test assertion"
 prompt = '''
 Viết `deepEqual(a, b)` (giống `toEqual`) so sánh sâu:
@@ -1243,6 +1291,7 @@ id = "fe-088"
 module = "fe-tooling"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 title = "Escape HTML chống XSS"
 prompt = '''
 Viết `escapeHtml(str)` thay thế các ký tự nguy hiểm:
@@ -1302,6 +1351,7 @@ id = "fe-dd01"
 module = "fe-js"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Cần gọi 3 API độc lập và hiển thị **mọi** kết quả, kể cả khi một vài API lỗi. Dùng hàm nào?"
 options = ["`Promise.all`", "`Promise.allSettled`", "`Promise.race`", "`Promise.any`"]
 answer = [1]
@@ -1313,6 +1363,7 @@ id = "fe-dd02"
 module = "fe-js"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Biểu thức nào cho kết quả `0`?"
 options = [
   "`0 ?? 5`",
@@ -1330,6 +1381,7 @@ id = "fe-dd03"
 module = "fe-html-css"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Muốn **card** đổi bố cục theo **độ rộng của chính khung chứa nó** (sidebar hẹp vs. vùng chính rộng), không phụ thuộc kích thước viewport. Dùng:"
 options = [
   "`@media (min-width: 600px)`",
@@ -1346,6 +1398,7 @@ id = "fe-dd04"
 module = "fe-html-css"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 Tô viền đỏ cho `.field` **chứa** một input không hợp lệ (bộ chọn "cha" của CSS):
 
@@ -1374,6 +1427,7 @@ id = "fe-dd05"
 module = "fe-browser"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Cách hiệu quả nhất để lazy-load ảnh / tải thêm dữ liệu khi người dùng cuộn gần cuối danh sách?"
 options = [
   "Lắng nghe `scroll` và gọi `getBoundingClientRect()` cho mọi phần tử",
@@ -1390,6 +1444,7 @@ id = "fe-dd06"
 module = "fe-browser"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 Huỷ request cũ khi người dùng gõ từ khoá mới:
 
@@ -1412,6 +1467,7 @@ id = "fe-dd07"
 module = "fe-ts"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = '''
 Cho `type User = { id: number; name: string; email?: string }`. Kiểu nào **chính xác** là `{ id: number; name: string }`?
 '''
@@ -1431,6 +1487,7 @@ id = "fe-dd08"
 module = "fe-html-css"
 type = "essay"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Vì sao nên dùng phần tử `<dialog>` gốc (với `showModal()`) thay vì tự dựng modal bằng `<div>`?"
 keywords = [
   ["focus", "tiêu điểm", "bẫy focus", "focus trap"],
@@ -1457,6 +1514,7 @@ id = "fe-dd09"
 module = "fe-js"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 title = "Polyfill Object.groupBy & Promise.allSettled"
 prompt = '''
 Viết hai hàm (không dùng bản có sẵn):
@@ -1555,6 +1613,7 @@ id = "frontend-dv001"
 module = "frontend-dv-forms"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Một `<input>` có id là email và name là contact. Khi gửi form, key nào biểu diễn giá trị của input?"
 options = ["`email`", "`contact`", "Cả `email` và `contact`", "Không có key nào nếu thiếu `value`"]
 answer = [1]
@@ -1566,6 +1625,7 @@ id = "frontend-dv002"
 module = "frontend-dv-forms"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Trong một form, nút chỉ dùng để mở phần trợ giúp nhưng lại làm trang tải lại khi bấm. Cách sửa phù hợp nhất là gì?"
 options = ["Đặt `type=button` cho nút", "Đặt `method=get` cho form", "Bỏ `name` khỏi nút", "Chuyển nút thành `<a>`"]
 answer = [0]
@@ -1577,6 +1637,7 @@ id = "frontend-dv003"
 module = "frontend-dv-forms"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Những phát biểu nào đúng về constraint validation và việc gửi form?"
 options = [
   "`required` có thể khiến control rỗng không hợp lệ trước khi submit thông thường.",
@@ -1594,6 +1655,7 @@ id = "frontend-dv004"
 module = "frontend-dv-forms"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 Để lấy mọi giá trị có cùng tên `topic` từ một `FormData`, hoàn thành biểu thức:
 
@@ -1610,6 +1672,7 @@ id = "frontend-dv005"
 module = "frontend-dv-forms"
 type = "single"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Một handler cần phát sự kiện `submit` và chạy kiểm tra HTML native trước khi gửi bằng code. Nên gọi API nào?"
 options = ["`form.submit()`", "`form.requestSubmit()`", "Phát một sự kiện click thủ công trên form", "`form.checkValidity()` vì API này tự gửi form"]
 answer = [1]
@@ -1621,6 +1684,7 @@ id = "frontend-dv006"
 module = "frontend-dv-forms"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Khi tự xử lý submit bằng JavaScript, phát biểu nào mô tả đúng các API sự kiện?"
 options = [
   "`preventDefault()` hủy hành vi submit mặc định nếu sự kiện có thể bị hủy.",
@@ -1637,6 +1701,7 @@ id = "frontend-dv007"
 module = "frontend-dv-forms"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Trong một form đăng ký, bạn sẽ phối hợp native constraint validation, thông báo lỗi accessible và kiểm tra ở server như thế nào?"
 keywords = [["constraint validation", "native validation", "required"], ["server validation", "server-side validation"], ["label", "accessible", "aria-live", "accessibility"]]
 min_keywords = 2
@@ -1651,6 +1716,7 @@ id = "frontend-dvc01"
 module = "frontend-dv-forms"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 title = "Validate dữ liệu đăng ký"
 lang = "javascript"
 prompt = '''
@@ -1736,6 +1802,7 @@ id = "frontend-dv008"
 module = "frontend-dv-motion"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Một nút đổi từ `opacity: 0.7` sang `opacity: 1` khi focus. Cơ chế CSS nào phù hợp để nội suy mượt giữa hai trạng thái?"
 options = ["`transition`", "`@keyframes` bắt buộc", "`@font-face`", "`@container`"]
 answer = [0]
@@ -1747,6 +1814,7 @@ id = "frontend-dv009"
 module = "frontend-dv-motion"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một hiệu ứng cần đi qua nhiều mốc thời gian và lặp vô hạn mà không phụ thuộc hover. Nên dùng cấu trúc nào?"
 options = ["`@keyframes` kết hợp `animation`", "Chỉ `transition`", "`@media` kết hợp `display`", "`animation-timeline: view()` cho mọi trường hợp"]
 answer = [0]
@@ -1758,6 +1826,7 @@ id = "frontend-dv010"
 module = "frontend-dv-motion"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Media query nào dùng để điều chỉnh chuyển động theo lựa chọn accessibility của hệ điều hành?"
 options = ["`prefers-reduced-motion`", "`prefers-color-scheme`", "`hover`", "`pointer`"]
 answer = [0]
@@ -1769,6 +1838,7 @@ id = "frontend-dv011"
 module = "frontend-dv-motion"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Những nguyên tắc nào giúp chuyển động trong giao diện dễ tiếp cận hơn?"
 options = [
   "Cung cấp biến thể giảm chuyển động khi `prefers-reduced-motion` là `reduce`.",
@@ -1785,6 +1855,7 @@ id = "frontend-dv012"
 module = "frontend-dv-motion"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Chọn các mô tả đúng về motion gắn với cuộn và View Transitions."
 options = [
   "Scroll timeline có thể gắn tiến độ animation với vị trí cuộn.",
@@ -1802,6 +1873,7 @@ id = "frontend-dv013"
 module = "frontend-dv-motion"
 type = "single"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Một thành phần cũ và mới cần được nhận diện riêng trong View Transition để có thể style snapshot tương ứng. Thuộc tính nào đặt tên nhóm chuyển tiếp cho phần tử?"
 options = ["`view-transition-name`", "`animation-name`", "`transition-property`", "`timeline-scope`"]
 answer = [0]
@@ -1813,6 +1885,7 @@ id = "frontend-dv014"
 module = "frontend-dv-motion"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 Giữ style tại keyframe cuối sau khi animation hoàn tất:
 
@@ -1831,6 +1904,7 @@ id = "frontend-dv015"
 module = "frontend-dv-motion"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Trong phỏng vấn, hãy giải thích cách chọn giữa transition, keyframe animation và scroll-driven animation; nêu cách xử lý người dùng giảm chuyển động."
 keywords = [["transition", "trạng thái"], ["keyframes", "nhiều mốc", "animation"], ["scroll timeline", "view timeline", "scroll-driven"], ["prefers-reduced-motion", "reduced motion", "giảm chuyển động"]]
 min_keywords = 3
@@ -1868,6 +1942,7 @@ id = "frontend-dv016"
 module = "frontend-dv-tsconfig"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Trong `tsconfig`, khác biệt chính giữa `target` và `lib` là gì?"
 options = ["`target` chọn cú pháp JavaScript đầu ra; `lib` cung cấp khai báo kiểu cho API môi trường", "Cả hai đều tự cài polyfill vào runtime", "`lib` chọn định dạng module; `target` chọn cách phân giải import", "`target` chỉ bật kiểm tra kiểu nghiêm ngặt"]
 answer = [0]
@@ -1879,6 +1954,7 @@ id = "frontend-dv017"
 module = "frontend-dv-tsconfig"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một ứng dụng browser được đóng gói bằng Vite cần TypeScript phân giải import theo quy tắc của bundler. Giá trị `moduleResolution` nào phù hợp nhất?"
 options = ["`bundler`", "`classic`", "`node10` cho mọi dự án mới", "`system`"]
 answer = [0]
@@ -1890,6 +1966,7 @@ id = "frontend-dv018"
 module = "frontend-dv-tsconfig"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Vite đã chịu trách nhiệm biến đổi và emit JavaScript. Dự án vẫn muốn TypeScript kiểm tra kiểu nhưng không tạo file JavaScript trùng. Nên cân nhắc tuỳ chọn nào?"
 options = ["`noEmit`", "`skipLibCheck`", "`allowJs`", "`declaration`"]
 answer = [0]
@@ -1901,6 +1978,7 @@ id = "frontend-dv019"
 module = "frontend-dv-tsconfig"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Một file không có import/export đang vô tình chia sẻ khai báo toàn cục với file khác. Cách trực tiếp để đánh dấu file này là module là gì?"
 options = ["Thêm `export {}`", "Thêm `target: ESNext`", "Đổi phần mở rộng thành `.d.ts`", "Thêm `declare global`"]
 answer = [0]
@@ -1912,6 +1990,7 @@ id = "frontend-dv020"
 module = "frontend-dv-tsconfig"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Những điều nào đúng về project references trong một monorepo TypeScript?"
 options = [
   "Một project có thể khai báo phụ thuộc build vào project khác bằng `references`.",
@@ -1929,6 +2008,7 @@ id = "frontend-dv021"
 module = "frontend-dv-tsconfig"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Phát biểu nào đúng về file declaration `.d.ts`?"
 options = [
   "Mô tả kiểu của API để TypeScript kiểm tra tại thời điểm biên dịch.",
@@ -1945,6 +2025,7 @@ id = "frontend-dv022"
 module = "frontend-dv-tsconfig"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Để bật nhóm kiểm tra nghiêm ngặt được TypeScript cung cấp, điền tên compiler option:
 
@@ -1963,6 +2044,7 @@ id = "frontend-dv023"
 module = "frontend-dv-tsconfig"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Bạn sẽ giải thích và chọn `target`, `lib`, `moduleResolution`, `noEmit` và project references ra sao cho ứng dụng được bundler đóng gói?"
 keywords = [["target", "syntax output", "cú pháp đầu ra"], ["lib", "type declarations", "khai báo kiểu api"], ["moduleResolution", "bundler"], ["noEmit", "bundler emit"], ["project references", "composite", "build graph"]]
 min_keywords = 3
@@ -1971,3 +2053,903 @@ Chọn `target` theo runtime được hỗ trợ và `lib` theo API thật sự 
 '''
 explanation = "Cấu hình cần mô tả cả môi trường chạy lẫn pipeline build, không chỉ làm cho một lỗi import biến mất."
 sources = ["typescript/docs/handbook/modules/guides/choosing-compiler-options", "typescript/docs/handbook/project-references", "typescript/tsconfig/index"]
+
+# ============================================================ LEVEL EXPANSION (lv)
+[[modules]]
+id = "frontend-lead"
+title = "Góc nhìn Tech Lead"
+description = "Performance budget & Core Web Vitals làm KPI, chiến lược browser support/polyfill, design system & token, quy chuẩn a11y, quản trị third-party script, migration và review code ở quy mô team."
+sources = ["dom/largestcontentfulpaint", "dom/layoutshift", "dom/performanceeventtiming", "dom/performanceobserver", "css/at-rules/@supports", "dom/cspviolationreport"]
+lesson = '''
+### Khung ra quyết định
+Ở cấp Lead, câu hỏi hiếm khi là "API nào đúng" mà là "phương án nào hợp lý nhất **với ràng buộc của team**": số người, thời hạn, rủi ro, chi phí vận hành, khả năng đảo ngược. Một khung đơn giản:
+1. **Nêu vấn đề bằng số liệu** (ví dụ: LCP p75 trên mobile là 3,8 s, mục tiêu ≤ 2,5 s).
+2. **Liệt kê 2–4 phương án**, kể cả "không làm gì".
+3. **Chấm theo tiêu chí**: tác động người dùng, công sức, rủi ro, khả năng quay lui, chi phí duy trì.
+4. **Chọn, ghi ADR, đặt chỉ số theo dõi** và mốc xem lại.
+
+| Phương án (ví dụ: CSS cho app SSR, team 8 người) | Công sức | Rủi ro runtime | Nhất quán | Đảo ngược |
+|---|---|---|---|---|
+| CSS Modules + design token (CSS variables) | Thấp | Thấp | Trung bình (cần lint) | Dễ |
+| Utility-first (class tiện ích) | Trung bình | Thấp | Cao | Trung bình |
+| CSS-in-JS runtime | Trung bình | Cao (chi phí lúc render, SSR phức tạp) | Cao | Khó |
+
+### Performance budget làm KPI
+- Đo **dữ liệu thực địa (RUM)** ở **p75** theo thiết bị/mạng; dữ liệu lab (Lighthouse) dùng để **chặn hồi quy trong CI**, không thay field data.
+- Ngưỡng tham khảo của Core Web Vitals: LCP ≤ 2,5 s, INP ≤ 200 ms, CLS ≤ 0,1. Budget JS ban đầu (ước lượng): ~170 KB gzip cho route chính trên mobile tầm trung.
+- Gắn mỗi budget với **chủ sở hữu** và quy trình khi vượt (chặn merge, hay cảnh báo + ticket).
+
+### Browser support & polyfill
+Quyết định dựa trên **analytics của chính sản phẩm**, ghi vào `browserslist` dùng chung cho build, lint và polyfill. Ưu tiên progressive enhancement (`@supports`), chỉ polyfill tính năng thực sự dùng, xem lại mỗi quý.
+
+### Checklist review (rút gọn)
+- Tự động hoá phần máy làm được: format, lint, type-check, test, bundle-size diff, axe.
+- Người review tập trung: thiết kế API component, trạng thái lỗi/loading/rỗng, a11y bàn phím, bảo mật (HTML không tin cậy), tác động hiệu năng, khả năng rollback.
+
+### ADR mẫu
+```
+ADR-012: Dùng CSS Modules + design token
+Bối cảnh: SSR, 8 dev, 3 squad, INP đang sát ngưỡng.
+Quyết định: CSS Modules, token qua CSS variables, cấm CSS-in-JS runtime cho code mới.
+Hệ quả: + không tốn runtime; − cần stylelint để giữ nhất quán.
+Xem lại: sau 2 quý hoặc khi đổi framework.
+```
+
+### Anti-pattern ở quy mô team
+- Lấy điểm Lighthouse trên máy dev làm KPI.
+- "Big bang rewrite" trong khi vẫn phải ra tính năng.
+- Design system không có owner, không versioning → mỗi squad fork một bản.
+- Coi a11y là việc audit cuối năm thay vì một phần của Definition of Done.
+- Thêm tag marketing không qua review và không có budget.
+'''
+
+[[questions]]
+id = "frontend-lv001"
+module = "fe-js"
+type = "single"
+difficulty = 1
+tags = ["level:junior"]
+prompt = '''
+Đoạn code sau có lỗi không?
+
+```js
+const items = [1, 2, 3];
+items.push(4);
+console.log(items);
+```
+'''
+options = ["Không lỗi, in `[1, 2, 3, 4]`", "TypeError vì `items` là `const`", "In `[1, 2, 3]` vì `const` làm mảng bất biến", "SyntaxError"]
+answer = [0]
+explanation = "`const` chỉ cấm **gán lại** biến, không làm giá trị bất biến. Muốn chặn thay đổi nội dung phải dùng `Object.freeze` (nông) hoặc cấu trúc bất biến."
+sources = ["javascript/statements/const"]
+
+[[questions]]
+id = "frontend-lv002"
+module = "fe-js"
+type = "single"
+difficulty = 1
+tags = ["level:junior"]
+prompt = '''
+Sau khi chạy, `nums` và `doubled` là gì?
+
+```js
+const nums = [1, 2, 3];
+const doubled = nums.map(n => n * 2);
+```
+'''
+options = ["`nums = [1, 2, 3]`, `doubled = [2, 4, 6]`", "`nums = [2, 4, 6]`, `doubled = [2, 4, 6]`", "`nums = [1, 2, 3]`, `doubled = undefined`", "`nums = [2, 4, 6]`, `doubled = undefined`"]
+answer = [0]
+explanation = "`map` trả về **mảng mới** và không sửa mảng gốc. `forEach` mới là hàm trả về `undefined`."
+sources = ["javascript/global_objects/array/map"]
+
+[[questions]]
+id = "frontend-lv003"
+module = "fe-js"
+type = "fill"
+difficulty = 1
+tags = ["level:junior"]
+prompt = '''
+Kiểm tra mảng có chứa chuỗi `"admin"` hay không (trả về `true`/`false`):
+
+```js
+const isAdmin = roles.{{blank}}("admin");
+```
+'''
+blanks = [["includes"]]
+explanation = "`Array.prototype.includes` trả về boolean và so sánh theo SameValueZero (tìm được cả `NaN`), khác `indexOf`."
+sources = ["javascript/global_objects/array/includes"]
+
+[[questions]]
+id = "frontend-lv004"
+module = "fe-js"
+type = "multiple"
+difficulty = 1
+tags = ["level:junior"]
+prompt = "Giá trị nào là **falsy** trong JavaScript?"
+options = ["`0`", "`\"\"` (chuỗi rỗng)", "`\"0\"`", "`[]`", "`null`", "`NaN`"]
+answer = [0, 1, 4, 5]
+explanation = "Falsy: `false`, `0`, `-0`, `0n`, `\"\"`, `null`, `undefined`, `NaN`. Chuỗi `\"0\"`, mảng rỗng và object rỗng đều truthy — hay gây lỗi khi viết `if (list)` để kiểm tra mảng rỗng."
+
+[[questions]]
+id = "frontend-lv005"
+module = "fe-html-css"
+type = "single"
+difficulty = 1
+tags = ["level:junior"]
+prompt = "Khối chứa các liên kết điều hướng chính của trang nên dùng thẻ nào?"
+options = ["`<nav>`", "`<div class=\"menu\">`", "`<section>`", "`<aside>`"]
+answer = [0]
+explanation = "`<nav>` là landmark điều hướng; trình đọc màn hình cho phép nhảy thẳng tới đó. `<div>` không có ngữ nghĩa, `<aside>` dành cho nội dung phụ."
+sources = ["html/reference/elements/nav"]
+
+[[questions]]
+id = "frontend-lv006"
+module = "fe-html-css"
+type = "single"
+difficulty = 1
+tags = ["level:junior"]
+prompt = "Một ảnh chỉ mang tính trang trí (hoạ tiết nền trong nội dung). Thuộc tính `alt` nên đặt thế nào?"
+options = ["`alt=\"\"` (rỗng) để trình đọc màn hình bỏ qua", "Bỏ hẳn thuộc tính `alt`", "`alt=\"image\"`", "Lặp lại tên file ảnh"]
+answer = [0]
+explanation = "`alt` rỗng báo ảnh là trang trí. Thiếu `alt` khiến một số trình đọc màn hình đọc tên file; `alt=\"image\"` là nhiễu vô ích."
+sources = ["html/reference/elements/img"]
+
+[[questions]]
+id = "frontend-lv007"
+module = "fe-html-css"
+type = "fill"
+difficulty = 1
+tags = ["level:junior"]
+prompt = '''
+Dùng biến CSS `--brand` đã khai báo ở `:root`:
+
+```css
+.btn { background: {{blank}}(--brand); }
+```
+'''
+blanks = [["var"]]
+explanation = "Custom property đọc bằng `var(--name, fallback)`. Biến CSS kế thừa theo cây DOM nên có thể ghi đè theo theme hoặc theo component."
+sources = ["css/values/var"]
+
+[[questions]]
+id = "frontend-lv008"
+module = "fe-browser"
+type = "single"
+difficulty = 1
+tags = ["level:junior"]
+prompt = '''
+In ra gì?
+
+```js
+localStorage.setItem("cart", { id: 1 });
+console.log(localStorage.getItem("cart"));
+```
+'''
+options = ["`\"[object Object]\"`", "`{ id: 1 }`", "`null`", "Ném lỗi TypeError"]
+answer = [0]
+explanation = "`localStorage` chỉ lưu **chuỗi**; object bị ép sang chuỗi `[object Object]`. Hãy dùng `JSON.stringify` khi lưu và `JSON.parse` khi đọc."
+sources = ["dom/window/localstorage", "javascript/global_objects/json/parse"]
+
+[[questions]]
+id = "frontend-lv009"
+module = "fe-browser"
+type = "single"
+difficulty = 1
+tags = ["level:junior"]
+prompt = "`document.querySelector(\".item\")` trả về gì khi trang có 3 phần tử `.item`?"
+options = ["Phần tử `.item` **đầu tiên** theo thứ tự tài liệu", "Một NodeList gồm cả 3 phần tử", "Phần tử `.item` cuối cùng", "Mảng rỗng nếu không có id"]
+answer = [0]
+explanation = "`querySelector` trả về phần tử khớp đầu tiên hoặc `null`; muốn lấy tất cả dùng `querySelectorAll` (NodeList tĩnh)."
+sources = ["dom/document/queryselector"]
+
+[[questions]]
+id = "frontend-lv010"
+module = "fe-browser"
+type = "multiple"
+difficulty = 1
+tags = ["level:junior"]
+prompt = '''
+Người dùng bấm vào `<span>` nằm trong `<button>`. Listener gắn trên `<button>`:
+
+```js
+button.addEventListener("click", (e) => { /* ... */ });
+```
+
+Phát biểu nào đúng?
+'''
+options = ["`e.target` là `<span>` (phần tử được bấm thật)", "`e.currentTarget` là `<button>` (phần tử gắn listener)", "`e.target` luôn bằng `e.currentTarget`", "Listener không chạy vì người dùng bấm vào `<span>`"]
+answer = [0, 1]
+explanation = "Sự kiện nổi bọt từ `<span>` lên `<button>`. `target` là nơi phát sinh, `currentTarget` là nơi listener đang chạy — nền tảng của event delegation."
+sources = ["dom/event/target", "dom/event/currenttarget"]
+
+[[questions]]
+id = "frontend-lv011"
+module = "fe-ts"
+type = "single"
+difficulty = 1
+tags = ["level:junior"]
+prompt = '''
+TypeScript báo gì?
+
+```ts
+let count = 5;
+count = "five";
+```
+'''
+options = ["Lỗi: `string` không gán được cho `number` vì kiểu đã được suy luận là `number`", "Không lỗi vì chưa khai báo kiểu", "Lỗi vì phải dùng `const`", "Không lỗi, `count` có kiểu `any`"]
+answer = [0]
+explanation = "TypeScript suy luận kiểu từ giá trị khởi tạo. `let count = 5` có kiểu `number`; muốn nhận nhiều kiểu phải khai báo union `number | string`."
+sources = ["typescript/docs/handbook/2/everyday-types"]
+
+[[questions]]
+id = "frontend-lv012"
+module = "fe-ts"
+type = "fill"
+difficulty = 1
+tags = ["level:junior"]
+prompt = '''
+Khai báo thuộc tính `email` là **tuỳ chọn** (có thể không có):
+
+```ts
+interface User {
+  id: number;
+  email{{blank}}: string;
+}
+```
+'''
+blanks = [["?"]]
+explanation = "Dấu `?` biến thuộc tính thành optional; kiểu khi đọc là `string | undefined`, nên cần narrowing trước khi dùng."
+sources = ["typescript/docs/handbook/2/everyday-types"]
+
+[[questions]]
+id = "frontend-lvc01"
+module = "fe-js"
+type = "code"
+difficulty = 1
+tags = ["level:junior"]
+title = "Chia mảng thành nhóm (chunk)"
+prompt = '''
+Viết `chunk(arr, size)` chia mảng thành các mảng con dài tối đa `size` phần tử (dùng khi phân trang hay hiển thị lưới).
+- `chunk([1, 2, 3, 4, 5], 2)` → `[[1, 2], [3, 4], [5]]`
+- Mảng rỗng → `[]`
+- Không được sửa mảng gốc
+- `size` không phải số nguyên dương → ném `RangeError`
+'''
+starter = '''
+function chunk(arr, size) {
+  // TODO
+}
+'''
+solution = '''
+function chunk(arr, size) {
+  if (!Number.isInteger(size) || size <= 0) {
+    throw new RangeError("size must be a positive integer");
+  }
+  const result = [];
+  for (let i = 0; i < arr.length; i += size) {
+    result.push(arr.slice(i, i + size));
+  }
+  return result;
+}
+'''
+tests = '''
+test('chia đều và phần dư', () => {
+  expect(chunk([1, 2, 3, 4, 5], 2)).toEqual([[1, 2], [3, 4], [5]]);
+});
+test('mảng rỗng', () => {
+  expect(chunk([], 3)).toEqual([]);
+});
+test('size lớn hơn độ dài', () => {
+  expect(chunk(['a', 'b'], 5)).toEqual([['a', 'b']]);
+});
+test('không sửa mảng gốc', () => {
+  const src = [1, 2, 3];
+  chunk(src, 1);
+  expect(src).toEqual([1, 2, 3]);
+});
+test('size không hợp lệ', () => {
+  expect(() => chunk([1], 0)).toThrow();
+  expect(() => chunk([1], 1.5)).toThrow();
+});
+'''
+hints = ["Vòng `for` với bước nhảy `i += size`.", "`arr.slice(i, i + size)` trả về mảng mới, không sửa `arr`."]
+explanation = "`slice` không đổi mảng gốc, còn `splice` thì có. Kiểm tra tham số sớm giúp tránh vòng lặp vô hạn khi `size = 0`."
+sources = ["javascript/global_objects/array/slice"]
+
+[[questions]]
+id = "frontend-lv013"
+module = "fe-js"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "memory"]
+prompt = '''
+Một SPA lưu metadata cho từng phần tử DOM để tooltip dùng lại. Heap snapshot sau nhiều lần chuyển trang cho thấy hàng nghìn **detached DOM node** còn sống:
+
+```js
+const meta = new Map();
+function attach(el, data) { meta.set(el, data); }
+```
+
+Cách sửa ít xâm lấn nhất?
+'''
+options = ["Đổi `Map` thành `WeakMap` để key là phần tử không giữ phần tử sống", "Gọi `meta.clear()` trong `setInterval` mỗi phút", "Lưu `el.id` làm key thay vì phần tử", "Tăng giới hạn bộ nhớ của tab"]
+answer = [0]
+explanation = "`Map` giữ tham chiếu mạnh tới key nên phần tử bị gỡ khỏi DOM không được thu gom. `WeakMap` cho phép GC thu hồi khi không còn tham chiếu khác. Xoá định kỳ làm mất dữ liệu đang dùng; key là id có thể trùng và vẫn rò rỉ phần `data`."
+sources = ["javascript/global_objects/weakmap"]
+
+[[questions]]
+id = "frontend-lv014"
+module = "fe-js"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "event-loop"]
+prompt = '''
+Đoạn code sau làm tab bị treo, spinner không quay và `setTimeout` không bao giờ chạy. Vì sao?
+
+```js
+function pump() {
+  processChunk();
+  if (hasMore()) queueMicrotask(pump);
+}
+pump();
+setTimeout(() => console.log("tick"), 0);
+```
+'''
+options = ["Microtask queue được xả **hết** trước khi trình duyệt render hay chạy macrotask, nên microtask tự nối tiếp chặn cả hai", "`queueMicrotask` chạy song song trên thread khác và tranh CPU", "`setTimeout(…, 0)` bị trình duyệt làm tròn lên 1 giây", "`queueMicrotask` chỉ chạy sau khi mọi timer đã xong"]
+answer = [0]
+explanation = "Event loop chạy toàn bộ microtask (kể cả microtask mới được thêm) rồi mới tới render và macrotask kế tiếp. Muốn nhường luồng cho render/input, hãy chia việc bằng macrotask (`setTimeout`, `MessageChannel`) hoặc `scheduler.yield()` khi có."
+sources = ["dom/window/queuemicrotask"]
+
+[[questions]]
+id = "frontend-lv015"
+module = "fe-browser"
+type = "multiple"
+difficulty = 3
+tags = ["level:senior", "rendering"]
+prompt = "Chọn các nhận định đúng về rendering pipeline (style → layout → paint → composite)."
+options = [
+  "Đổi `width` của phần tử thường kéo theo layout lại cho phần tử đó và có thể cả các phần tử xung quanh.",
+  "Đọc `el.offsetHeight` ngay sau khi ghi style trong vòng lặp có thể ép **forced synchronous layout** (layout thrashing).",
+  "Animation bằng `transform`/`opacity` thường chỉ cần bước composite nếu phần tử đã ở layer riêng.",
+  "Đặt `will-change: transform` cho mọi phần tử luôn làm trang nhanh hơn.",
+  "`requestAnimationFrame` giúp gom các lần ghi DOM vào đúng thời điểm trước frame kế tiếp."
+]
+answer = [0, 1, 2, 4]
+explanation = "Tách pha đọc và ghi, animate bằng thuộc tính chỉ cần composite, dùng rAF để gom thay đổi. `will-change` tràn lan tạo quá nhiều layer, tốn bộ nhớ GPU và có thể làm chậm hơn."
+sources = ["dom/window/requestanimationframe", "css/properties/will-change"]
+
+[[questions]]
+id = "frontend-lv016"
+module = "fe-html-css"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "performance"]
+prompt = "Trang tài liệu rất dài (hàng trăm section) có thời gian render ban đầu cao dù chỉ phần đầu hiển thị. Thay đổi CSS nào giảm việc render phần ngoài màn hình mà vẫn giữ thanh cuộn ổn định?"
+options = ["`content-visibility: auto` kèm `contain-intrinsic-size` ước lượng cho mỗi section", "`display: none` cho các section ngoài màn hình rồi bật lại bằng JS", "`visibility: hidden` cho các section phía dưới", "`overflow: hidden` trên `body`"]
+answer = [0]
+explanation = "`content-visibility: auto` bỏ qua layout/paint của nội dung ngoài viewport; `contain-intrinsic-size` cung cấp kích thước giữ chỗ để thanh cuộn không nhảy. `display: none` làm mất nội dung khỏi tìm kiếm trên trang và a11y tree; `visibility: hidden` vẫn tốn layout."
+sources = ["css/properties/content-visibility", "css/properties/contain-intrinsic-size"]
+
+[[questions]]
+id = "frontend-lv017"
+module = "fe-html-css"
+type = "multiple"
+difficulty = 3
+tags = ["level:senior", "performance"]
+prompt = "Một widget bình luận được nhúng nhiều lần, thường xuyên cập nhật nội dung bên trong. Áp dụng `contain: layout paint` lên khung widget sẽ mang lại điều gì?"
+options = [
+  "Thay đổi layout bên trong không làm tính lại layout phần còn lại của trang.",
+  "Nội dung tràn ra ngoài khung bị cắt khi vẽ (tương tự clip).",
+  "Phần tử trở thành containing block cho con `position: fixed`.",
+  "Widget tự động được lazy-load khi cuộn tới.",
+  "Có thể bỏ hoàn toàn `width`/`height` mà không ảnh hưởng gì."
+]
+answer = [0, 1, 2]
+explanation = "`contain: layout` cô lập layout và tạo containing block (kể cả cho `fixed`); `paint` cắt phần tràn và giới hạn vùng vẽ lại. Containment không lazy-load gì, và với `size` containment mới cần kích thước tường minh."
+sources = ["css/properties/contain"]
+
+[[questions]]
+id = "frontend-lv018"
+module = "fe-html-css"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "a11y"]
+prompt = "Sau khi lưu form, app hiện toast \"Đã lưu\" ở góc màn hình mà không chuyển focus. Người dùng trình đọc màn hình không nghe thấy gì. Cách sửa phù hợp nhất?"
+options = ["Đặt toast trong một vùng có sẵn từ đầu với `role=\"status\"` (live region polite) rồi cập nhật nội dung", "Chuyển focus sang toast mỗi lần hiện", "Thêm `aria-hidden=\"true\"` cho toast", "Dùng `alert()` của trình duyệt"]
+answer = [0]
+explanation = "Live region phải tồn tại trong DOM **trước** khi nội dung đổi thì mới được thông báo; `status` là polite, không cắt ngang người dùng. Chuyển focus làm mất vị trí đang thao tác; `aria-hidden` ẩn hẳn khỏi trình đọc."
+
+[[questions]]
+id = "frontend-lv019"
+module = "fe-browser"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "web-vitals"]
+prompt = "RUM cho thấy INP p75 = 480 ms trên nút \"Lọc\" của trang danh sách. Profiler: handler click lọc 5.000 dòng rồi render lại trong một task 400 ms. Hướng xử lý nào cải thiện INP trực tiếp nhất?"
+options = ["Cập nhật UI phản hồi ngay (trạng thái đang lọc), rồi **nhường main thread** và chia phần lọc/render thành nhiều task nhỏ", "Bọc handler trong `Promise.resolve().then(...)`", "Thêm `loading=\"lazy\"` cho ảnh trong danh sách", "Preload font của trang"]
+answer = [0]
+explanation = "INP đo từ tương tác tới frame kế tiếp được vẽ. Cho trình duyệt vẽ phản hồi trước rồi chia việc nặng (yield bằng macrotask/`scheduler.yield`, ảo hoá danh sách) rút ngắn độ trễ. Đẩy sang microtask vẫn chặn render; lazy ảnh và font không đụng tới task dài."
+sources = ["dom/performanceeventtiming"]
+
+[[questions]]
+id = "frontend-lv020"
+module = "fe-browser"
+type = "fill"
+difficulty = 3
+tags = ["level:senior", "web-vitals"]
+prompt = '''
+Script RUM được nạp muộn nhưng vẫn cần nhận các entry LCP đã xảy ra **trước** khi observer được tạo:
+
+```js
+new PerformanceObserver((list) => report(list.getEntries()))
+  .observe({ type: "largest-contentful-paint", {{blank}}: true });
+```
+'''
+blanks = [["buffered"]]
+explanation = "`buffered: true` trả về cả các entry đã được ghi trong buffer trước lúc gọi `observe`. Thiếu nó, script RUM tải sau sẽ bỏ lỡ LCP."
+sources = ["dom/performanceobserver/observe", "dom/largestcontentfulpaint"]
+
+[[questions]]
+id = "frontend-lv021"
+module = "fe-js"
+type = "essay"
+difficulty = 3
+tags = ["level:senior", "event-loop"]
+prompt = "Phỏng vấn: giải thích event loop của trình duyệt (macrotask, microtask, rendering) và cách bạn tránh để một tác vụ nặng làm UI bị đơ."
+keywords = [
+  ["call stack", "stack"],
+  ["microtask", "promise", "queuemicrotask"],
+  ["macrotask", "task queue", "settimeout"],
+  ["render", "paint", "frame"],
+  ["chia nhỏ", "chunk", "yield", "nhường", "web worker", "worker"],
+]
+min_keywords = 3
+model_answer = '''
+JavaScript trên main thread chạy trên **call stack**. Mỗi vòng event loop lấy **một macrotask** (sự kiện, `setTimeout`, message), chạy xong thì xả **toàn bộ microtask** (`Promise.then`, `await`, `queueMicrotask`), sau đó trình duyệt có cơ hội **render** frame (style, layout, paint; `requestAnimationFrame` chạy ngay trước đó).
+
+Vì render chỉ xảy ra giữa các task, một task dài (> 50 ms) hoặc chuỗi microtask không dứt sẽ làm UI đơ và INP xấu. Cách tránh: **chia nhỏ** công việc thành nhiều task và **nhường** main thread (`setTimeout`, `MessageChannel`, `scheduler.yield()`), cập nhật phản hồi UI trước khi làm việc nặng, ảo hoá danh sách dài, và chuyển tính toán thuần sang **Web Worker**.
+'''
+explanation = "Điểm cộng: nêu được thứ tự microtask trước render, vì sao microtask đệ quy chặn render, và đo bằng Long Tasks/INP."
+
+[[questions]]
+id = "frontend-lv022"
+module = "fe-ts"
+type = "multiple"
+difficulty = 3
+tags = ["level:senior"]
+prompt = '''
+Cho:
+
+```ts
+const ROUTES = { home: "/", user: "/users/:id" } as const;
+type RouteName = keyof typeof ROUTES;
+type RoutePath = (typeof ROUTES)[RouteName];
+```
+
+Nhận định nào đúng?
+'''
+options = [
+  "`RouteName` là `\"home\" | \"user\"`.",
+  "`RoutePath` là `\"/\" | \"/users/:id\"` nhờ `as const` giữ literal type.",
+  "Không có `as const`, `RoutePath` sẽ chỉ là `string`.",
+  "`as const` làm object bất biến ở runtime giống `Object.freeze`.",
+  "`ROUTES.home = \"/x\"` bị TypeScript báo lỗi vì thuộc tính là `readonly`."
+]
+answer = [0, 1, 2, 4]
+explanation = "`as const` chỉ tác động ở tầng type: literal type + `readonly`. Runtime vẫn là object thường; muốn bất biến thật cần `Object.freeze`."
+sources = ["typescript/docs/handbook/2/everyday-types"]
+
+[[questions]]
+id = "frontend-lv023"
+module = "fe-browser"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "web-vitals"]
+prompt = "Tiêu đề trang dùng web font tuỳ biến. Lab cho thấy chữ tàng hình ~1 s (FOIT) và khi font tải xong thì layout nhảy. Kết hợp nào cân bằng nhất giữa LCP và CLS?"
+options = ["`preload` file font quan trọng + `font-display: swap` + font fallback có metric gần giống (điều chỉnh `size-adjust`)", "`font-display: block` để luôn chờ font", "Nhúng toàn bộ font dạng base64 vào CSS chính", "Tải font bằng JS sau sự kiện `load`"]
+answer = [0]
+explanation = "Preload rút ngắn thời gian tải, `swap` hiện chữ ngay bằng fallback, chỉnh metric fallback giảm dịch chuyển khi đổi font. `block` gây FOIT; base64 làm CSS chặn render nặng hơn; tải sau `load` gây nhảy muộn."
+sources = ["css/at-rules/@font-face/font-display", "html/reference/attributes/rel/preload"]
+
+[[questions]]
+id = "frontend-lv024"
+module = "frontend-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "web-vitals"]
+prompt = "Ban giám đốc muốn \"cải thiện tốc độ web\" thành KPI quý cho team 6 dev. Hiện chỉ có điểm Lighthouse chạy tay trên laptop. Bạn đề xuất cách đặt KPI nào?"
+options = [
+  "KPI = Core Web Vitals **p75 từ RUM** theo nhóm thiết bị (mobile/desktop) cho các trang doanh thu chính; Lighthouse CI với budget dùng để chặn hồi quy trước khi merge",
+  "KPI = điểm Lighthouse ≥ 90 trên laptop của tech lead mỗi tuần",
+  "KPI = tổng dung lượng bundle giảm 50% trong quý, không cần đo người dùng",
+  "KPI = thời gian `DOMContentLoaded` trung bình (mean) toàn site"
+]
+answer = [0]
+explanation = "KPI phải phản ánh trải nghiệm thật và đủ ổn định: field data ở p75, chia theo thiết bị, tập trung trang quan trọng. Lab data rẻ, lặp lại được nên hợp làm cổng CI. Điểm Lighthouse trên máy mạnh không đại diện người dùng; giảm bundle là phương tiện chứ không phải kết quả; mean bị kéo bởi outlier và DCL không phải chỉ số trải nghiệm."
+sources = ["dom/largestcontentfulpaint", "dom/performanceeventtiming"]
+
+[[questions]]
+id = "frontend-lv025"
+module = "frontend-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "browser-support"]
+prompt = "Analytics: 1,2% phiên đến từ trình duyệt cũ không hỗ trợ `:has()` và container query, nhưng nhóm này chiếm 6% doanh thu (khách B2B dùng máy công ty). Team đang muốn dùng hai tính năng này cho layout mới. Quyết định hợp lý nhất?"
+options = [
+  "Dùng progressive enhancement: layout cơ bản chạy được mọi nơi, nâng cấp bằng `@supports`; ghi chính sách hỗ trợ vào `browserslist` + tài liệu, xem lại theo quý",
+  "Cấm dùng `:has()` và container query cho tới khi tỉ lệ trình duyệt cũ về 0",
+  "Dùng thoải mái, nhóm 1,2% tự nâng cấp trình duyệt",
+  "Viết polyfill JS cho `:has()` chạy trên mọi trình duyệt để code chỉ có một nhánh"
+]
+answer = [0]
+explanation = "Nhóm nhỏ về phiên nhưng lớn về doanh thu nên không được bỏ rơi, nhưng cũng không nên vì họ mà đóng băng cả team. Progressive enhancement cho phần lớn người dùng trải nghiệm mới với chi phí thấp. Polyfill `:has()` cho mọi người tốn hiệu năng cho cả nhóm 98,8% đang hỗ trợ sẵn."
+sources = ["css/at-rules/@supports", "css/selectors/:has", "css/at-rules/@container"]
+
+[[questions]]
+id = "frontend-lv026"
+module = "frontend-lead"
+type = "multiple"
+difficulty = 3
+tags = ["level:lead", "design-system"]
+prompt = "Công ty có 3 squad, mỗi squad tự định nghĩa màu và spacing. Bạn được giao dựng design token dùng chung. Những quyết định nào hợp lý?"
+options = [
+  "Tách 2 tầng: token **nguyên thuỷ** (`blue-600`) và token **ngữ nghĩa** (`color-action-primary`); component chỉ dùng token ngữ nghĩa.",
+  "Phát hành token dưới dạng package có **semver** và changelog; đổi tên/xoá token là breaking change.",
+  "Xuất token ra CSS custom properties để đổi theme (dark mode, brand) không cần build lại component.",
+  "Bắt mọi squad chuyển sang token trong một sprint, khoá merge mọi PR chưa chuyển.",
+  "Chỉ định owner (nhóm nhỏ hoặc luân phiên) và quy trình đề xuất token mới."
+]
+answer = [0, 1, 2, 4]
+explanation = "Hai tầng token cho phép đổi bảng màu mà không sửa component; semver + owner giữ cho hệ thống không bị fork. Ép chuyển đổi trong một sprint là big bang rủi ro cao — nên lint cảnh báo màu hard-code rồi chuyển dần theo khu vực."
+sources = ["css/values/var"]
+
+[[questions]]
+id = "frontend-lv027"
+module = "frontend-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "a11y"]
+prompt = "Sản phẩm vừa nhận khiếu nại về accessibility từ khách hàng doanh nghiệp, cần đạt WCAG 2.2 AA trong 2 quý. Team 8 dev, chưa ai chuyên a11y. Chiến lược nào bền vững nhất?"
+options = [
+  "Đưa tiêu chí AA vào Definition of Done, chạy axe tự động trong CI, checklist kiểm thử bàn phím + trình đọc màn hình cho luồng quan trọng, sửa ở component dùng chung trước, đào tạo 1–2 người làm champion",
+  "Cài một widget \"accessibility overlay\" của bên thứ ba để tự sửa giao diện",
+  "Thuê audit một lần vào cuối quý 2 rồi sửa theo báo cáo",
+  "Chỉ dựa vào axe trong CI vì công cụ tự động bắt được mọi lỗi"
+]
+answer = [0]
+explanation = "Lỗi a11y sinh ra liên tục cùng tính năng mới, nên phải nằm trong quy trình. Sửa ở component dùng chung có đòn bẩy lớn nhất. Overlay không sửa được semantic và thường gây thêm lỗi; audit cuối kỳ phát hiện quá muộn; công cụ tự động chỉ bắt được một phần lỗi (ước lượng ~30–40%), phần còn lại cần kiểm thử thủ công."
+
+[[questions]]
+id = "frontend-lv028"
+module = "frontend-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "third-party"]
+prompt = "Marketing tự thêm 9 tag qua tag manager; INP trang sản phẩm tăng từ 180 ms lên 320 ms. Marketing cần các tag này để đo chiến dịch. Bạn chọn cách nào?"
+options = [
+  "Lập quy trình quản trị: mỗi tag có owner và mục đích, review trước khi thêm, budget main-thread cho third-party; trì hoãn tag không thiết yếu sau consent/tương tác đầu, gỡ tag trùng lặp",
+  "Xoá toàn bộ tag manager khỏi site",
+  "Giữ nguyên vì marketing là bên trả tiền",
+  "Chuyển tất cả tag sang `<script async>` là đủ"
+]
+answer = [0]
+explanation = "Đây là bài toán quản trị giữa hai bên có mục tiêu chính đáng; cần quy tắc và số liệu chứ không phải cấm hay buông. `async` chỉ bỏ chặn parse, script vẫn chiếm main thread khi chạy nên INP vẫn xấu."
+sources = ["html/reference/elements/script"]
+
+[[questions]]
+id = "frontend-lv029"
+module = "frontend-lead"
+type = "multiple"
+difficulty = 3
+tags = ["level:lead", "code-review"]
+prompt = "Review PR đang mất trung bình 2 ngày, phần lớn comment là về format và đặt tên import. Những thay đổi nào nên làm?"
+options = [
+  "Tự động hoá format/lint/type-check trong pre-commit hoặc CI để reviewer không phải bình luận các mục đó.",
+  "Thêm báo cáo diff bundle size và axe vào PR để có số liệu khách quan.",
+  "Có checklist ngắn cho reviewer: trạng thái loading/lỗi/rỗng, a11y bàn phím, bảo mật dữ liệu không tin cậy, khả năng rollback.",
+  "Yêu cầu mọi PR phải có 4 người approve để chắc chắn chất lượng.",
+  "Khuyến khích PR nhỏ (ví dụ < 400 dòng thay đổi) và đặt SLA phản hồi review."
+]
+answer = [0, 1, 2, 4]
+explanation = "Máy làm việc của máy, người tập trung vào thiết kế và rủi ro; PR nhỏ + SLA giảm thời gian chờ. Tăng số người approve làm chậm thêm mà không cải thiện chất lượng tương xứng."
+
+[[questions]]
+id = "frontend-lv030"
+module = "frontend-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "migration"]
+prompt = "App nội bộ jQuery 8 năm tuổi (~60 màn hình) khó bảo trì. Team 3 dev vẫn phải ra tính năng hằng tháng. Kế hoạch hiện đại hoá nào rủi ro thấp nhất?"
+options = [
+  "Strangler: dựng shell mới, chuyển dần theo route/màn hình ưu tiên (hay sửa nhất, lỗi nhiều nhất), hai phần cùng chạy, đo tiến độ bằng % màn hình đã chuyển",
+  "Đóng băng tính năng 6 tháng để viết lại toàn bộ",
+  "Giữ jQuery mãi mãi vì app vẫn chạy",
+  "Thuê ngoài viết lại song song, khi xong thì chuyển một lần"
+]
+answer = [0]
+explanation = "Chuyển dần cho phép giao giá trị liên tục, quay lui từng phần và học trong quá trình. Big bang (tự làm hay thuê ngoài) có rủi ro lệch nghiệp vụ và trễ hạn cao; giữ nguyên thì nợ kỹ thuật tiếp tục tăng chi phí mỗi tính năng."
+
+[[questions]]
+id = "frontend-lv031"
+module = "frontend-lead"
+type = "essay"
+difficulty = 3
+tags = ["level:lead", "adr"]
+prompt = "Viết một ADR ngắn chọn chiến lược CSS cho app SSR mới (team 8 người, 3 squad, INP đang sát ngưỡng): so sánh ít nhất CSS Modules, utility-first và CSS-in-JS runtime."
+keywords = [
+  ["bối cảnh", "context"],
+  ["css modules", "css module"],
+  ["utility", "tailwind"],
+  ["runtime", "css-in-js"],
+  ["token", "biến css", "custom propert"],
+  ["hệ quả", "trade-off", "đánh đổi", "consequence"],
+  ["xem lại", "review", "đánh giá lại"],
+]
+min_keywords = 4
+model_answer = '''
+**ADR-012: Chiến lược CSS cho app SSR**
+
+**Bối cảnh:** SSR, 8 dev chia 3 squad, INP p75 đang ~190 ms, cần giao diện nhất quán và đổi theme.
+
+**Phương án:**
+- **CSS Modules + design token** (CSS custom properties): không tốn runtime, scope theo file, dễ SSR; nhất quán phụ thuộc lint.
+- **Utility-first**: nhất quán cao, ít CSS chết; cần thời gian làm quen, markup dài.
+- **CSS-in-JS runtime**: linh hoạt theo props nhưng tốn chi phí tính style khi render, SSR và streaming phức tạp hơn — rủi ro với INP.
+
+**Quyết định:** CSS Modules + token; cho phép một số utility class do design system cung cấp; không dùng CSS-in-JS runtime cho code mới.
+
+**Hệ quả:** + không có chi phí runtime, dễ debug; − cần stylelint và review để tránh giá trị hard-code (đánh đổi chấp nhận được).
+
+**Xem lại:** sau 2 quý, dựa trên số lỗi UI không nhất quán và INP.
+'''
+explanation = "ADR tốt nêu bối cảnh có số liệu, các phương án bị loại và lý do, hệ quả cả tốt lẫn xấu, và mốc xem lại."
+
+[[questions]]
+id = "frontend-lv032"
+module = "frontend-lead"
+type = "essay"
+difficulty = 3
+tags = ["level:lead", "web-vitals"]
+prompt = "Trình bày kế hoạch 1 quý để đưa performance budget và Core Web Vitals thành quy trình của team (đo lường, cổng CI, phân trách nhiệm, xử lý khi vượt budget)."
+keywords = [
+  ["rum", "field", "người dùng thật", "thực địa"],
+  ["p75", "percentile", "phân vị"],
+  ["lighthouse", "lab", "ci"],
+  ["budget", "ngân sách"],
+  ["owner", "chủ sở hữu", "trách nhiệm"],
+  ["dashboard", "cảnh báo", "alert"],
+]
+min_keywords = 4
+model_answer = '''
+**Tháng 1 – Đo:** gắn RUM (thư viện web-vitals hoặc PerformanceObserver) gửi LCP, INP, CLS kèm loại thiết bị, route; dashboard theo **p75** cho mobile/desktop. Chọn 5 trang ảnh hưởng doanh thu nhất làm phạm vi.
+
+**Tháng 2 – Cổng CI:** Lighthouse CI (lab) chạy trên preview của PR với **budget**: JS route chính, LCP lab, số request bên thứ ba. Vượt budget → PR bị đánh dấu, cần lý do được approve.
+
+**Tháng 3 – Quy trình:** mỗi trang có **owner**; **cảnh báo** khi p75 xấu đi quá ngưỡng 2 tuần liên tục → tạo ticket ưu tiên; 10–15% capacity mỗi sprint cho việc hiệu năng; báo cáo tháng cho stakeholder.
+
+Rủi ro: lab và field lệch nhau → luôn ra quyết định theo field, lab chỉ chặn hồi quy.
+'''
+explanation = "Điểm mấu chốt: field data làm KPI, lab data làm cổng; budget có owner và hệ quả rõ ràng khi vượt."
+
+[[questions]]
+id = "frontend-lv033"
+module = "frontend-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "security"]
+prompt = "Sau một sự cố XSS, bạn muốn bật CSP nghiêm ngặt cho site lớn có nhiều inline script cũ và script bên thứ ba. Lộ trình triển khai nào an toàn nhất?"
+options = [
+  "Bật `Content-Security-Policy-Report-Only` với policy mục tiêu, thu báo cáo vi phạm vài tuần, chuyển inline script sang nonce/file, rồi mới bật chế độ chặn theo từng phần",
+  "Bật ngay `script-src 'self'` ở chế độ chặn cho toàn site trong một release",
+  "Thêm `'unsafe-inline'` vào policy để không vỡ gì",
+  "Bỏ CSP, chỉ dựa vào escape output"
+]
+answer = [0]
+explanation = "Report-only cho thấy policy sẽ chặn những gì mà không làm vỡ trang, từ đó dọn dẹp có kế hoạch. Bật chặn ngay dễ làm hỏng thanh toán/analytics; `unsafe-inline` vô hiệu hoá phần lớn tác dụng chống XSS; escape output vẫn cần nhưng CSP là lớp phòng thủ thứ hai."
+sources = ["dom/cspviolationreport"]
+
+[[questions]]
+id = "frontend-lv034"
+module = "frontend-lead"
+type = "fill"
+difficulty = 3
+tags = ["level:lead", "security"]
+prompt = '''
+Header dùng để **thử nghiệm** một Content Security Policy: trình duyệt chỉ gửi báo cáo vi phạm, không chặn tài nguyên.
+
+```
+{{blank}}: script-src 'self' 'nonce-r4nd0m'; report-to csp-endpoint
+```
+'''
+blanks = [["Content-Security-Policy-Report-Only"]]
+explanation = "Chạy song song header report-only với policy mới trong khi giữ policy cũ (hoặc chưa có) giúp đo tác động trước khi bắt buộc."
+sources = ["dom/cspviolationreport"]
+
+[[questions]]
+id = "frontend-lv035"
+module = "frontend-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "observability"]
+prompt = "Lighthouse CI xanh, nhưng RUM báo LCP p75 của thị trường mới (chủ yếu Android tầm thấp, mạng 3G/4G yếu) là 4,6 s. Team muốn biết nên đầu tư vào đâu trước. Bước tiếp theo hợp lý nhất?"
+options = [
+  "Phân rã LCP trong RUM theo pha (TTFB, trễ tải tài nguyên, thời gian tải, trễ render) và theo phần tử LCP cho phân khúc đó, rồi ưu tiên pha chiếm nhiều nhất",
+  "Tăng cấu hình máy chạy Lighthouse CI",
+  "Bỏ qua thị trường mới vì CI đã đạt",
+  "Viết lại toàn bộ frontend bằng framework khác"
+]
+answer = [0]
+explanation = "Field data đã chỉ ra vấn đề; việc cần làm là chẩn đoán đúng nguyên nhân cho đúng phân khúc trước khi chi tiền. Nếu TTFB chiếm phần lớn thì CDN/edge quan trọng hơn tối ưu JS, và ngược lại."
+sources = ["dom/largestcontentfulpaint", "dom/largestcontentfulpaint/element"]
+
+[[questions]]
+id = "frontend-lv036"
+module = "frontend-lead"
+type = "multiple"
+difficulty = 3
+tags = ["level:lead", "tech-debt"]
+prompt = "Backlog nợ kỹ thuật frontend có 70 mục, PM luôn ưu tiên tính năng. Những cách nào giúp xử lý nợ một cách bền vững?"
+options = [
+  "Gắn mỗi mục nợ với tác động đo được (thời gian build, tỉ lệ bug, thời gian onboard, CWV) để so sánh được với tính năng.",
+  "Thoả thuận một tỉ lệ capacity cố định mỗi sprint (ví dụ 15–20%) cho nợ kỹ thuật.",
+  "Gộp sửa nợ vào tính năng chạm cùng khu vực code (\"để lại code sạch hơn\").",
+  "Dừng mọi tính năng một quý để trả hết 70 mục.",
+  "Xoá các mục nợ không còn liên quan sau khi rà soát định kỳ."
+]
+answer = [0, 1, 2, 4]
+explanation = "Nợ cần ngôn ngữ chung với business (chi phí, rủi ro) và một dòng ngân sách đều đặn. Dừng hẳn tính năng hiếm khi được chấp nhận và không bền: nợ mới vẫn sinh ra."
+
+[[questions]]
+id = "frontend-lv037"
+module = "frontend-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "typescript"]
+prompt = "Codebase JavaScript 200k dòng, bug kiểu dữ liệu chiếm nhiều sự cố. Team 10 người không thể dừng tính năng. Lộ trình áp dụng TypeScript nào hợp lý?"
+options = [
+  "Bật `allowJs` (+ `checkJs` theo thư mục), code mới viết `.ts` với `strict`, chuyển dần module có nhiều bug/được sửa nhiều nhất, theo dõi số file đã chuyển và lỗi type còn lại",
+  "Đổi đuôi toàn bộ file sang `.ts` trong một PR và thêm `any` ở mọi chỗ lỗi",
+  "Chỉ dùng JSDoc mãi mãi, không bao giờ chuyển",
+  "Chuyển toàn bộ trong một sprint với `strict: true` ngay từ đầu"
+]
+answer = [0]
+explanation = "Chuyển dần với code mới strict tránh thêm nợ, còn code cũ được nâng cấp theo mức độ rủi ro. Đổi đuôi hàng loạt + `any` tạo cảm giác an toàn giả; strict toàn bộ trong một sprint gây hàng nghìn lỗi và chặn delivery."
+sources = ["typescript/docs/handbook/2/everyday-types"]
+
+[[questions]]
+id = "frontend-lv038"
+module = "frontend-lead"
+type = "essay"
+difficulty = 3
+tags = ["level:lead", "design-system"]
+prompt = "Phỏng vấn: 3 squad đang dùng 3 thư viện UI khác nhau, giao diện thiếu nhất quán và bug a11y lặp lại. Bạn có đề xuất làm design system không? Trình bày cách ra quyết định, phạm vi giai đoạn đầu và cách đo thành công."
+keywords = [
+  ["chi phí", "cost", "công sức", "effort"],
+  ["token"],
+  ["component", "thành phần"],
+  ["owner", "chủ sở hữu", "đội nền tảng", "platform"],
+  ["đo", "metric", "chỉ số", "adoption", "tỉ lệ"],
+  ["dần", "từng bước", "incremental", "giai đoạn"],
+  ["a11y", "accessibility", "tiếp cận"],
+]
+min_keywords = 4
+model_answer = '''
+Trước hết đo **chi phí** hiện tại: số bug UI/a11y trùng lặp, thời gian làm cùng một component ở 3 nơi, phản hồi của người dùng về sự thiếu nhất quán. Nếu chi phí đó lớn hơn công sức duy trì một design system (cần ít nhất 1–2 người **owner** bán thời gian), thì đề xuất làm.
+
+**Giai đoạn đầu** (1 quý): thống nhất **token** (màu, spacing, typography) và 8–10 **component** dùng nhiều nhất (Button, Input, Select, Dialog, Toast…) với chuẩn **a11y** đã kiểm thử, bọc lại thư viện hiện có nếu được để giảm công sức. Áp dụng **dần**: code mới dùng design system, code cũ chuyển khi chạm vào.
+
+**Đo thành công**: tỉ lệ adoption (% màn hình dùng component chung), số bug a11y/UI mỗi tháng, thời gian làm màn hình mới, khảo sát dev. Có changelog, semver và kênh đề xuất để squad không fork.
+'''
+explanation = "Câu trả lời tốt không mặc định \"có\": cân chi phí duy trì với lợi ích, bắt đầu nhỏ và có số liệu."
+
+[[questions]]
+id = "frontend-lv039"
+module = "frontend-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "release"]
+prompt = "Trang checkout được làm lại hoàn toàn, chiếm 70% doanh thu. Ra mắt vào mùa cao điểm sau 3 tuần. Chiến lược release nào phù hợp nhất?"
+options = [
+  "Đặt sau feature flag, rollout theo % (1% → 10% → 50% → 100%), so sánh tỉ lệ chuyển đổi, lỗi JS và CWV giữa hai bản, có kill switch tắt ngay không cần deploy",
+  "Deploy 100% vào đêm trước mùa cao điểm",
+  "Chỉ test kỹ trên staging rồi deploy 100%",
+  "Hoãn vô thời hạn cho tới khi không còn bug nào"
+]
+answer = [0]
+explanation = "Rollout dần giới hạn phạm vi ảnh hưởng và cho số liệu thật để quyết định; kill switch giảm thời gian khắc phục. Staging không tái hiện được mọi trình duyệt, dữ liệu và tải thực tế; chờ \"không bug\" thì không bao giờ ra mắt."
+
+[[questions]]
+id = "frontend-lv040"
+module = "frontend-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "dependencies"]
+prompt = "Bundle analyzer cho thấy thư viện ngày giờ cũ chiếm 70 KB gzip (gồm mọi locale) và được import ở 120 file. Thư viện không còn được phát triển. Bạn chọn hướng nào?"
+options = [
+  "Tạo module bọc nội bộ (`formatDate`, `addDays`…) dùng `Intl` + thư viện nhỏ tree-shakeable, chuyển các import bằng codemod theo đợt, thêm lint cấm import trực tiếp thư viện cũ",
+  "Giữ nguyên vì vẫn chạy",
+  "Sửa tay 120 file trong một PR lớn sang thư viện mới",
+  "Copy mã nguồn thư viện cũ vào repo và tự bảo trì"
+]
+answer = [0]
+explanation = "Lớp bọc nội bộ giảm phụ thuộc trực tiếp vào thư viện, giúp lần thay sau rẻ hơn; codemod + lint giúp chuyển an toàn và chặn tái phát. PR khổng lồ khó review; fork thư viện chết là nhận thêm nợ bảo trì và bảo mật."
+sources = ["javascript/global_objects/intl"]
+
+[[questions]]
+id = "frontend-lvc02"
+module = "frontend-lead"
+type = "code"
+difficulty = 3
+tags = ["level:lead", "web-vitals"]
+title = "Cổng kiểm tra performance budget (p75)"
+prompt = '''
+Viết `checkBudget(samples, budget)` dùng trong job CI/RUM hằng ngày để quyết định có cảnh báo team hay không.
+
+- `samples`: object `{ LCP: number[], INP: number[], CLS: number[] , ... }` — mẫu đo từ người dùng thật.
+- `budget`: object `{ LCP: 2500, INP: 200, CLS: 0.1 }` — ngưỡng tối đa cho phép.
+- Với **mỗi metric trong `budget`** (giữ thứ tự key của `budget`), tính **p75** bằng phương pháp nearest-rank: sắp xếp tăng dần, lấy phần tử thứ `ceil(0.75 * n)` (đếm từ 1).
+- Trả về `{ pass, report }`, trong đó `report` là mảng `{ metric, p75, limit, ok }` với `ok = p75 <= limit`.
+- Metric không có mẫu (thiếu hoặc mảng rỗng) → `p75: null`, `ok: false` (thiếu dữ liệu cũng là tín hiệu xấu).
+- `pass` là `true` khi mọi dòng `ok`.
+- Không được sửa mảng mẫu đầu vào.
+'''
+starter = '''
+function checkBudget(samples, budget) {
+  // TODO
+  return { pass: true, report: [] };
+}
+'''
+solution = '''
+function p75(values) {
+  if (!Array.isArray(values) || values.length === 0) return null;
+  const sorted = [...values].sort((a, b) => a - b);
+  return sorted[Math.ceil(0.75 * sorted.length) - 1];
+}
+
+function checkBudget(samples, budget) {
+  const report = Object.keys(budget).map((metric) => {
+    const value = p75(samples[metric]);
+    const limit = budget[metric];
+    return { metric, p75: value, limit, ok: value !== null && value <= limit };
+  });
+  return { pass: report.every((r) => r.ok), report };
+}
+'''
+tests = '''
+test('tính p75 nearest-rank', () => {
+  const r = checkBudget({ LCP: [4000, 1000, 2000, 3000] }, { LCP: 2500 });
+  expect(r.report).toEqual([{ metric: 'LCP', p75: 3000, limit: 2500, ok: false }]);
+  expect(r.pass).toBe(false);
+});
+test('đạt mọi budget', () => {
+  const r = checkBudget(
+    { LCP: [1800, 2100, 2400, 1500], INP: [120, 90, 150, 180], CLS: [0.01, 0.05, 0.02, 0.08] },
+    { LCP: 2500, INP: 200, CLS: 0.1 }
+  );
+  expect(r.pass).toBe(true);
+  expect(r.report.map((x) => x.metric)).toEqual(['LCP', 'INP', 'CLS']);
+  expect(r.report[1].p75).toBe(150);
+});
+test('thiếu dữ liệu là không đạt', () => {
+  const r = checkBudget({ LCP: [1000], INP: [] }, { LCP: 2500, INP: 200, CLS: 0.1 });
+  expect(r.report[1]).toEqual({ metric: 'INP', p75: null, limit: 200, ok: false });
+  expect(r.report[2].p75).toBe(null);
+  expect(r.pass).toBe(false);
+});
+test('bằng ngưỡng vẫn đạt', () => {
+  const r = checkBudget({ INP: [200, 200, 200, 200] }, { INP: 200 });
+  expect(r.pass).toBe(true);
+});
+test('không sửa mảng mẫu', () => {
+  const lcp = [3, 1, 2];
+  checkBudget({ LCP: lcp }, { LCP: 5 });
+  expect(lcp).toEqual([3, 1, 2]);
+});
+test('bỏ qua metric không có trong budget', () => {
+  const r = checkBudget({ LCP: [1], TTFB: [9999] }, { LCP: 2500 });
+  expect(r.report.length).toBe(1);
+  expect(r.pass).toBe(true);
+});
+'''
+hints = ["Sao chép trước khi sort: `[...values].sort((a, b) => a - b)` — sort mặc định so sánh như chuỗi.", "Duyệt `Object.keys(budget)` để giữ thứ tự và bỏ qua metric thừa."]
+explanation = "Dùng p75 thay vì trung bình để không bị outlier kéo lệch và khớp cách Core Web Vitals đánh giá. Coi thiếu dữ liệu là \"không đạt\" giúp phát hiện script RUM hỏng thay vì lặng lẽ báo xanh."

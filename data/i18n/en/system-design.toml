@@ -1,0 +1,1087 @@
+[modules.sd-fundamentals]
+title = "System Design fundamentals"
+description = "Latency vs throughput, back-of-the-envelope capacity estimation, CAP/PACELC, and consistency models."
+lesson = '''
+### Latency, throughput and percentiles
+- **Latency**: the time a request takes to travel through the system (measured in ms). **Throughput**: the amount of work handled per unit of time (RPS, QPS, MB/s).
+- Do not use the mean to talk about latency: a few slow requests get "hidden". Use **percentiles**: p50 (median), **p95**, **p99**. A user whose page needs 20 backend requests will "hit" p99 quite often — this is called **tail latency**.
+- **Little's Law**: `L = λ × W` — requests in flight = arrival rate × time in the system. Example: 2,000 RPS at 50 ms each → about 100 requests "in the system" at once, so you need a connection/worker pool to match.
+
+### Reference latencies (orders of magnitude, approximate)
+| Operation | Order of magnitude |
+|---|---|
+| Read from RAM | ~100 ns |
+| Random SSD read | ~100 µs |
+| Round trip within one data center | ~0.5 ms |
+| HDD seek | ~10 ms |
+| Intercontinental round trip | ~100–150 ms |
+
+Takeaway: a network call is thousands of times more expensive than a memory read → batch requests, cache close to where data is used, and avoid "chatty" service-to-service calls.
+
+### Back-of-the-envelope
+Rule of thumb: 1 day ≈ **86,400 s ≈ 10^5 s**. 10 million requests/day ≈ **~115 RPS** on average; peak is usually taken as ×2–×5.
+Example (estimate): 1 million posts/day × 1 KB = 1 GB/day ≈ 365 GB/year; ×3 replicas ≈ 1.1 TB/year. The goal is the **right order of magnitude** to pick an architecture (one machine or a cluster), not precision.
+
+### CAP and PACELC
+- **CAP**: during a **network partition (P)**, the system must choose **C** (consistency — refuse/wait rather than return stale data) or **A** (availability — keep answering, possibly with stale data). In a distributed system, partitions are not something you can "opt out" of.
+- **PACELC**: if Partition, choose A or C; **Else** (normal operation) you still trade **Latency** against **Consistency** (e.g. waiting for a synchronous write quorum increases latency).
+
+### Consistency models (strongest to weakest)
+| Model | Guarantee | Typical use |
+|---|---|---|
+| Linearizable (strong) | every read sees the latest write in real time | account balances, distributed locks |
+| Sequential / causal | preserves causal order (an answer after its question) | comments, chat |
+| Read-your-writes | a writer always sees their own writes | editing a profile |
+| Eventual | replicas eventually converge | like counts, feeds |
+
+### Common mistakes
+- Designing for the "average" and forgetting peak and tail latency.
+- Saying "choose CA" for a distributed system — partitions can always happen.
+- Demanding strong consistency for everything → slow and expensive; choose **per data type**.
+- Forgetting units (bits vs bytes, ms vs µs) when estimating.
+'''
+
+[questions.sd-001]
+prompt = '''Distinguish **latency** from **throughput**. Which statement is correct?'''
+options = ["Latency is the time for one request to complete; throughput is the number of requests handled per unit of time", "Latency and throughput are two names for the same metric", "Throughput is the time spent waiting in a queue; latency is the number of CPU cores", "Increasing throughput always reduces latency"]
+explanation = '''Latency measures **how long one request takes** (ms); throughput measures **processing capacity** (RPS). They are related but not the same: batching can raise throughput while making each request wait longer (higher latency), so "increasing throughput always reduces latency" is false.'''
+
+[questions.sd-002]
+prompt = '''Roughly how many seconds are there in a day (the value commonly used for quick estimates)?'''
+options = ["~10^3 (1,000)", "~10^5 (86,400)", "~10^7", "~3.6 × 10^3"]
+explanation = '''1 day = 24 × 3,600 = 86,400 s ≈ 10^5. So 10 million requests/day ≈ 10^7 / 10^5 ≈ 100 RPS (~115 exactly). 3,600 is the number of seconds in **one hour**.'''
+
+[questions.sd-003]
+prompt = '''Ordering by magnitude: which operation is the **slowest**?'''
+options = ["Reading a value from RAM", "Randomly reading a block from an SSD", "A network round trip within the same data center", "A network round trip between two continents"]
+explanation = '''Orders of magnitude (approximate): RAM ~100 ns, SSD ~100 µs, same data center ~0.5 ms, intercontinental ~100+ ms (bounded by the speed of light in fiber). That is why global systems put data/CDNs close to users.'''
+
+[questions.sd-004]
+prompt = '''The latency figure that 99% of requests are faster than (or equal to) is called `p{{blank}}`.'''
+explanation = '''p99 is the 99th percentile. Percentiles reveal the **tail latency** that the mean hides: a 50 ms mean can still come with a p99 of 2 s.'''
+
+[questions.sd-005]
+prompt = '''What is **vertical scaling**?'''
+options = ["Adding more machines running in parallel behind a load balancer", "Upgrading a single machine to be more powerful (more CPU, RAM, faster disks)", "Splitting data by column into multiple tables", "Running the application in containers"]
+explanation = '''Vertical scaling (scale up) = a bigger machine: simple, no architecture change, but it has a hardware ceiling and is still a single point of failure. Adding machines is **horizontal scaling** (scale out).'''
+
+[questions.sd-c01]
+title = "Estimating QPS and storage"
+prompt = '''Write `estimate(dau, actions_per_user, peak_factor, bytes_per_action)` that returns a `dict`:
+- `total = dau * actions_per_user` (requests per day); one day = `86400` seconds
+- `"avg_rps"`: `total / 86400` rounded to **2 decimal places** (`round(x, 2)`)
+- `"peak_rps"`: `total / 86400 * peak_factor` **rounded up** to an integer (`math.ceil`) — the system must survive the peak
+- `"storage_gb_per_day"`: `total * bytes_per_action / 10**9` rounded to 2 decimal places
+- If `dau < 0`, `actions_per_user < 0` or `peak_factor < 1` → `raise ValueError("invalid input")`
+
+Example: `estimate(1_000_000, 10, 3, 500)` → `{"avg_rps": 115.74, "peak_rps": 348, "storage_gb_per_day": 5.0}`.
+'''
+explanation = '''Back-of-the-envelope math helps you pick an architecture of the right scale: ~350 RPS at peak is fine for a small cluster, ~35,000 RPS means thinking about caching and sharding. Design for the **peak**, not the average.'''
+hints = ["Compute `per_sec = total / 86400` once and reuse it.", "`math.ceil(per_sec * peak_factor)` for the peak."]
+
+[questions.sd-007]
+prompt = '''An app has 20 million daily active users, each loading the feed ~5 times/day, with peak at 3× the average. What is the closest estimate of the **peak QPS** for feed reads?
+'''
+options = ["~350", "~3,500", "~35,000", "~350,000"]
+explanation = '''20 million × 5 = 10^8 requests/day; divided by 10^5 s ≈ 1,000–1,160 RPS on average; × 3 ≈ ~3,500 RPS. The point of estimating is getting the right **order of magnitude** to decide on instances, caching and the database.'''
+
+[questions.sd-008]
+prompt = '''A service has a **mean latency of 40 ms**, but users complain that pages are slow. Each page makes 30 backend requests in parallel and must wait for the slowest one. Which assessment is most reasonable?
+'''
+options = ["A 40 ms mean is good, so the problem must be in the browser", "Look at p99: with 30 parallel calls, the probability that at least one lands in the slowest 1% is about 26%", "Just add more CPUs so the mean drops and the slowness goes away", "Calling sequentially instead of in parallel would be faster"]
+explanation = '''The page waits for the slowest call, so it suffers from **tail latency**. P(at least 1 of 30 in the slowest 1%) = 1 − 0.99^30 ≈ 26%. The mean hides the tail; you must measure p95/p99. Sequential calls are even worse because latencies add up.'''
+
+[questions.sd-009]
+prompt = '''According to CAP, when a network **{{blank}}** occurs, a distributed system must choose between consistency and availability.'''
+blanks = [["partition", "network partition", "network split"]]
+explanation = '''CAP only "forces a choice" when there is a partition (P). Partitions cannot be eliminated in a distributed system, so the practical choice is CP or AP when the network is split.'''
+
+[questions.sd-010]
+prompt = '''Select the data for which **eventual consistency** is usually acceptable:'''
+options = ["The like count of a post", "An account balance when charging a payment", "The list of posts in a news feed", "Stock count when confirming an order for the last unit", "Video view counts"]
+explanation = '''Likes, feeds and view counts being a few seconds off causes no harm. Charging money and confirming the last unit of stock need **strong consistency** (or at least an atomic conditional check) to avoid negative balances or overselling.'''
+
+[questions.sd-011]
+prompt = '''A user changes their display name, reloads the page and still sees the old name (because the read came from a replica that had not caught up). Which guarantee is violated?'''
+explanation = '''**Read-your-writes**: a writer must see their own writes. Fixes: read from the leader for a short time after writing, or only read from a replica that has reached the version/LSN of that write. Durability is about acknowledged data not being lost.'''
+
+[questions.sd-c02]
+title = "Computing latency percentiles"
+prompt = '''Write `percentile(values, p)` using the **nearest-rank** method:
+- sort ascending; `rank = ceil(p / 100 * n)`; return `sorted_values[rank - 1]`
+- `p == 0` → return the smallest element; `p` outside `[0, 100]` → `raise ValueError("bad p")`
+- empty `values` → `raise ValueError("empty")`
+- do **not** modify the input list
+
+And `summarize(values)` returning `{"p50": ..., "p95": ..., "p99": ..., "max": ...}`.
+
+Example: `percentile([5, 1, 3, 2, 4], 50)` → `3`; for the 100 values `1..100`, `p95` → `95`.
+'''
+explanation = '''Percentiles are the right way to talk about latency. A practical note: you cannot average the p99s of several instances; you need to merge **histograms** and compute the percentile on the merged data.'''
+hints = ["`sorted(values)` returns a new list without modifying the original.", "Rank starts at 1, so the element is `s[rank - 1]`."]
+
+[questions.sd-013]
+prompt = '''A distributed DB is configured so that writes must be acknowledged by a **quorum across 3 regions** before responding. The network is healthy with no partition, but write latency rises to ~150 ms. Which theoretical framework correctly describes this trade-off?
+'''
+options = ["CAP — the system is choosing availability", "PACELC — when there is no partition (Else) you still trade Latency for Consistency", "ACID — because a quorum write is a transaction", "BASE — because the system is eventually consistent"]
+explanation = '''CAP only talks about what happens during a partition. PACELC adds: **Else** (normal operation) the system chooses between **L**atency and **C**onsistency. Waiting for a cross-region quorum chooses C and pays with latency. This is not eventual consistency, because a subsequent quorum read will see the new data.'''
+
+[questions.sd-014]
+prompt = '''Select the **correct** statements about consistency models:'''
+options = ["Linearizability guarantees every operation appears to take effect instantaneously at some point between its invocation and its response, in real time", "Causal consistency guarantees a reply never appears before the question it answers", "Eventual consistency guarantees reads always see the latest value within at most 1 second", "Distributed locks (leader election, locking) need a linearizable foundation such as consensus (Raft/Paxos)", "Strong consistency has no latency cost if you use SSDs"]
+explanation = '''Eventual consistency does **not** promise any specific deadline, only convergence once writes stop. Strong consistency costs network coordination (quorum round trips), which SSDs cannot remove. Locks/leader election need linearizability — usually built on Raft/Paxos (etcd, ZooKeeper).'''
+
+[questions.sd-015]
+prompt = '''A service receives **2,000 RPS**, and each request holds a DB connection for **25 ms** on average. According to Little's Law, roughly how large must the DB connection pool be (across all instances) to avoid queuing in steady state?
+'''
+options = ["~5", "~50", "~500", "~2,000"]
+explanation = '''L = λ × W = 2,000/s × 0.025 s = 50 concurrent connections on average. In practice you want headroom (e.g. ×1.5–2) for fluctuations, but not 2,000: too many connections cost the DB memory and lock contention. Little's Law also tells you that if DB latency quadruples, the pool needs to quadruple.'''
+
+[questions.sd-016]
+prompt = '''Interview: "Estimate the storage and bandwidth for a photo-sharing service with 10 million daily active users." Describe your approach (assumptions, formulas, and conclusions that affect the architecture).'''
+keywords = [["assumption", "assume", "suppose"], ["86400", "86,400", "10^5", "seconds per day"], ["peak"], ["replica", "replication", "copies", "x3", "×3"], ["bandwidth", "egress"], ["cdn", "object storage", "s3"]]
+model_answer = '''1. **State assumptions** clearly: 10 million DAU, 10% upload a photo daily → 1 million photos/day; a compressed photo is ~500 KB plus 2 thumbnails of ~50 KB; each user views ~50 photos/day (estimates).
+2. **Storage**: 1 million × ~600 KB ≈ 600 GB/day ≈ 220 TB/year; multiplied by **replica ×3** (or erasure coding ~1.5×) → hundreds of TB/year → it must go into **object storage** (S3-like), not the DB; the DB only keeps metadata (~1 KB/photo).
+3. **QPS**: uploads 1 million/86400 ≈ 12/s on average, **peak** ×3–5 ≈ 50/s; 500 million views/day ≈ 6,000/s, peak ~20,000/s.
+4. Read **bandwidth**: 6,000/s × ~100 KB (most views are thumbnails/medium size) ≈ 600 MB/s ≈ ~5 Gbps on average → a **CDN** is mandatory to reduce origin egress.
+5. **Architectural conclusions**: reads ≫ writes → optimize the read path (CDN, metadata cache); upload directly to object storage with pre-signed URLs; generate thumbnails asynchronously through a queue.
+'''
+explanation = '''Key points: state assumptions, get the order of magnitude right, account for replicas and peak, and **draw architectural consequences** (object storage + CDN, reads ≫ writes). The absolute numbers matter less than the reasoning.'''
+
+[questions.sd-017]
+prompt = '''A team of 5 is building an event ticketing marketplace (launching in 3 months). Product wants "all data to be perfectly consistent across 3 regions at all times". The infrastructure budget is limited and most users are in one country. Which proposal is most reasonable?
+'''
+options = ["Use a multi-region distributed DB with strong consistency for every table from day one", "One primary region (multi-AZ) with strong consistency for booking/payment; display data (event listings, images) cached/CDN-served with eventual consistency accepted; DR to another region via backups/asynchronous replicas", "Eventual consistency for everything including seat holds, handling double-booked seats with manual refunds", "An independent DB per region, synchronized nightly"]
+explanation = '''Choose consistency **per data type**: seat holds/payment need strong consistency (to avoid double-selling), while the event catalog can be a few seconds stale. With users concentrated in one country, active-active multi-region only adds write latency, cost and complexity that a 5-person team can hardly operate within 3 months. Eventual consistency for seat holds causes double-selling (hurting trust); nightly sync leaves data diverged for a whole day.'''
+
+[modules.sd-scaling-data]
+title = "Scaling the data tier"
+description = "Replication, partitioning/sharding, consistent hashing, read/write splitting, and hot keys."
+lesson = '''
+### Scale up vs scale out
+- **Vertical scaling** (a bigger machine): simple, no code changes, but it has a ceiling and is a single point of failure.
+- **Horizontal scaling** (more machines): almost no ceiling, but you must deal with data distribution, consistency and rebalancing.
+A sensible order is usually: optimize queries/indexes → cache → read replicas → functional partitioning → sharding.
+
+### Replication
+| Type | Pros | Cons |
+|---|---|---|
+| Leader–follower (single-leader) | simple, ordered writes | writes concentrate on the leader, **replication lag** when reading from followers |
+| Multi-leader | writes in multiple regions | write conflicts must be resolved (LWW, CRDTs…) |
+| Leaderless (quorum) | good fault tolerance | you must choose N, W, R; reads may be stale if `W + R ≤ N` |
+
+Quorum: with N replicas, choosing **W + R > N** makes write and read sets overlap → reads see the latest write (under normal conditions). Example: N=3, W=2, R=2.
+**Sync vs async replication**: synchronous is safer but increases write latency; asynchronous can lose acknowledged data when the leader dies (RPO > 0).
+
+### Read/write splitting and replication lag
+Reading from replicas raises read throughput, but a user who just wrote may read back stale data. Fixes: read from the leader for a few seconds after a write (read-your-writes), or attach a version/LSN and only read from replicas that have caught up.
+
+### Partitioning / sharding
+| Strategy | Pros | Cons |
+|---|---|---|
+| Range (by key range) | efficient range queries | prone to **hot partitions** (monotonically increasing keys such as time) |
+| Hash (`hash(key) % N`) | even distribution | changing N **moves almost every** key; no range queries |
+| Consistent hashing | adding/removing a node moves only ~1/N of keys | needs **virtual nodes** for balance |
+| Directory/lookup | complete flexibility | an extra lookup service that must be HA |
+
+The **shard key** is a hard-to-reverse decision: pick a key with **high cardinality**, even distribution, and that matches common queries (e.g. `tenant_id` for SaaS, `user_id` for personal data). Queries without the shard key become **scatter-gather** across every shard.
+
+### Hot keys
+A single key receives too much traffic (a celebrity, a flash-sale product). Remedies: local caching, replicating read-heavy keys, **key salting** (split `counter:42` into `counter:42#0..9` and sum them on read), and batching writes.
+
+### Common mistakes
+- Sharding too early when a single well-indexed instance is still enough (operational complexity rises sharply).
+- Using `% N` and then having to add a node in the middle of peak season.
+- Cross-shard joins/transactions that cancel out the benefits of sharding.
+- Not measuring replication lag; reading from replicas in the payment flow.
+'''
+
+[questions.sd-018]
+prompt = '''What is the main purpose of **replication** (copying data to multiple machines)?'''
+options = ["Improving fault tolerance and scaling reads", "Reducing the storage required", "Making every write faster", "Replacing backups"]
+explanation = '''Replication keeps multiple copies: if one machine dies, others remain (availability), and reads can be served from many replicas (read scaling). It **increases** storage, does not make writes faster, and **does not replace backups**: an accidental delete is replicated to every replica immediately.'''
+
+[questions.sd-019]
+prompt = '''What is **sharding** (horizontal partitioning)?'''
+options = ["Copying the whole DB to another machine", "Splitting the rows of a dataset across multiple DBs/nodes, each node holding a portion", "Splitting a table into multiple columns", "Compressing data to save disk space"]
+explanation = '''Sharding splits data by a **shard key** (e.g. `user_id`) so that each node stores and processes only a portion → it scales both writes and storage. Copying everything is replication.'''
+
+[questions.sd-020]
+prompt = '''In the leader–follower model, copies that only serve reads are usually called read {{blank}}.'''
+explanation = '''Read replicas receive changes from the leader (usually asynchronously) and serve read queries, taking load off the leader. The trade-off is **replication lag**.'''
+
+[questions.sd-021]
+prompt = '''Data is split with `shard = hash(key) % N` where N = 4. A 5th node is added (N = 5). What happens?
+'''
+options = ["Only about 1/5 of keys have to move", "About 80% of keys change shard and have to move", "No keys have to move", "Only keys written afterwards go to node 5"]
+explanation = '''With `% N`, a key stays put only if `h % 4 == h % 5`, with probability ~1/5 → ~80% of keys must move. This is why you use **consistent hashing** (only ~1/N of keys move) or pre-split into many fixed logical partitions and assign partitions to nodes.'''
+
+[questions.sd-022]
+prompt = '''A leaderless system has N = 3 replicas and writes need W = 2 acknowledgements. The **smallest** R that guarantees the read set overlaps the write set is R = {{blank}}.'''
+explanation = '''The condition W + R > N → 2 + R > 3 → R ≥ 2. Then every 2-node read set contains at least one node that received the latest write (absent unusual failures such as sloppy quorums).'''
+
+[questions.sd-023]
+prompt = '''Select the characteristics of a **good shard key**:'''
+options = ["High cardinality (many distinct values)", "Evenly distributed traffic, not concentrated on a few values", "Present in most important queries so you avoid querying every shard", "Monotonically increasing over time so new data lives in one place", "A boolean column so it is easy to split in two"]
+explanation = '''Monotonically increasing keys (timestamps, auto-increment) send every new write to the last shard (**hot partition**). A boolean has only 2 values → at most 2 shards, and skewed. A good key has high cardinality, even distribution and matches the queries.'''
+
+[questions.sd-024]
+prompt = '''After moving reads to read replicas, customers report: right after placing an order, the "My orders" page does not show the new order; it appears a few seconds later. What is the most reasonable fix?
+'''
+options = ["Turn off the replicas and read everything from the leader", "Route that user's own reads to the leader for a short time after they write (or read from a replica that has caught up to the write's version)", "Add `sleep(5)` after creating the order", "Add more replicas to reduce lag"]
+explanation = '''This is a **read-your-writes** violation caused by replication lag. You only need to read from the leader for the user who just wrote (or by LSN/version); most other read traffic still goes to replicas. Turning replicas off throws away their benefit; sleep slows everyone down; more replicas do not reduce lag (and even add load to the leader).'''
+
+[questions.sd-025]
+prompt = '''An event log table is **range-partitioned by `created_at`**. Which symptom is most likely as write volume grows?'''
+options = ["All new writes pile onto the newest partition → one hot node while the others sit idle", "Time-range queries become slower than with hash partitioning", "Old data can no longer be deleted", "Data is lost when the day rolls over"]
+explanation = '''Increasing key + range partitioning = a **hot partition** at the write head. The upside of time-based ranges is that time-range queries and deleting old data (drop partition) are very cheap. To cool it down: add a distributing prefix (e.g. `(source_id, created_at)`), or accept it if one node can handle the write volume.'''
+
+[questions.sd-c03]
+title = "Consistent hashing ring with virtual nodes"
+prompt = '''Implement `class HashRing` with `constructor(vnodes = 100)`:
+- `addNode(name)`: add a node, creating `vnodes` points on the ring; point `i` is at position `hash32(name + '#' + i)` (the `hash32` function is provided in the starter and returns an unsigned 32-bit integer)
+- `removeNode(name)`: remove all of that node's points
+- `getNode(key)`: compute `h = hash32(key)` and return the node name of the **first point whose position is ≥ h** going upward; if there is none, wrap around to the smallest point. Empty ring → `null`
+- Adding/removing a node may only move the keys related to that node (the defining property of consistent hashing)
+
+Performance hint: keep a sorted array of points and use binary search.
+'''
+explanation = '''Consistent hashing places nodes and keys on the same hash ring; a new node only "takes over" the ring segments just before its points, so only ~1/N of keys move. Virtual nodes split each node into many points to balance load, and so that when a node leaves, its share is spread evenly over the remaining nodes.'''
+hints = ["Store points as `{ pos, node }` and sort by `pos`.", "Find the first position with `pos >= h` using binary search; if you run past the end of the array, take element 0."]
+
+[questions.sd-026]
+prompt = '''A PostgreSQL leader replicates **asynchronously** to 1 follower. The leader dies suddenly and the system automatically promotes the follower. What is the main risk to communicate to stakeholders?
+'''
+options = ["There is no risk; the follower has all the data", "Transactions that were committed (OK returned to the client) but not yet replicated are lost — RPO > 0; and if the old leader comes back there is a risk of split-brain", "The follower cannot accept writes after promotion", "All data will be rolled back to the latest backup"]
+explanation = '''Async replication acknowledges writes before the follower receives them → on failover you can lose the last few seconds of writes (RPO > 0). You need fencing so the old leader does not keep accepting writes (split-brain). If data must not be lost (payments), use synchronous replication to at least one replica and accept higher write latency.'''
+
+[questions.sd-027]
+prompt = '''A view counter `views:video:42` on a Redis cluster receives 200,000 `INCR` commands/second because a video went viral, overloading one node. Select the **appropriate** measures:'''
+options = ["Key salting: write to a random key among `views:video:42#0..15`, and sum the 16 keys on read", "Aggregate counts locally in each app instance and flush periodically (e.g. every second) with `INCRBY`", "Add a read replica for that node", "Increase the key's TTL", "Accept an approximate count and refresh the displayed value periodically"]
+explanation = '''The problem is **hot writes** to one key: salting spreads the writes across many slots/nodes; local aggregation cuts the number of commands by hundreds of times; view counts can be approximate. A read replica does not help because replicas do not accept writes. TTL has nothing to do with load.'''
+
+[questions.sd-028]
+prompt = '''The `orders` table is sharded by `user_id`. The support team needs low-latency lookups by `order_number` (which does not contain the user_id). What is the best approach?
+'''
+options = ["Send every lookup to all shards and merge the results", "Maintain a global lookup table `order_number → user_id` (a global secondary index), or embed the shard id in the order_number when generating it", "Reshard everything by `order_number`", "Go back to a single DB"]
+explanation = '''A query without the shard key becomes **scatter-gather**: latency follows the slowest shard and load is multiplied by N. A global lookup table (updated when the order is created, eventually consistent) or encoding the shard id into `order_number` allows routing directly. Resharding by order_number breaks the main query, "my orders".'''
+
+[questions.sd-029]
+prompt = '''The primary PostgreSQL DB sits at 85% CPU at peak hours, and traffic is expected to triple within 6 months. Lay out your data-tier scaling roadmap in the order you would do it, with reasons.'''
+keywords = [["query", "index", "explain", "slow quer"], ["cache", "redis"], ["read replica", "replica", "read/write split"], ["connection pool", "pgbouncer", "pool"], ["partition"], ["shard", "sharding"], ["measure", "metric", "profil", "pg_stat_statements"]]
+model_answer = '''1. **Measure first**: use `pg_stat_statements`/metrics to find the top CPU-consuming queries; often 20% of queries cause 80% of the load.
+2. **Optimize queries & indexes**: add missing indexes, fix N+1, drop `SELECT *`, check `EXPLAIN ANALYZE`. The cheapest step and often the biggest win.
+3. **Connection pool** (PgBouncer): cut the overhead of thousands of connections.
+4. **Cache** read-heavy data (Redis, cache-aside with TTL) to reduce read load.
+5. **Read replica + read/write split** for queries that tolerate replication lag (reports, listings), keeping read-after-write on the leader.
+6. **Partition** large tables by time and archive old data; split by function (move log/analytics tables to another system).
+7. Only **shard** when writes still exceed what one leader can handle, because sharding changes the query model, transactions and operations — a hard-to-reverse decision.
+In parallel: a temporary vertical upgrade to buy time, and capacity alert thresholds.
+'''
+explanation = '''A good answer goes from cheap & easily reversible to expensive & hard to reverse, always starting with measurement. Jumping straight to sharding signals a lack of operational experience.'''
+
+[questions.sd-030]
+prompt = '''B2B SaaS: 2,000 tenants, a 1.5 TB DB, ~800 writes/s, ~6,000 reads/s (mostly dashboard reads). A developer proposes sharding by `tenant_id` this quarter. The team has 4 backend engineers with 2 large features committed to customers. What is the most reasonable choice?
+'''
+options = ["Shard by tenant_id now since it will have to happen sooner or later", "Add read replicas for dashboards, caching, time-partition large tables and upgrade the machine; prepare for sharding by making sure every query includes tenant_id, and revisit when write/storage metrics hit agreed thresholds", "Move to NoSQL so it scales automatically", "Do nothing until the DB goes down"]
+explanation = '''800 writes/s and 1.5 TB are still within what an optimized Postgres leader can handle; the load is mostly **reads** → replicas + caching address the right spot. Sharding now would consume months of a 4-person team and threaten customer commitments. Cheap preparation (queries always carrying tenant_id, clear trigger thresholds) keeps the option open for later. Switching to NoSQL is a high-risk migration that does not solve the read problem; waiting for an outage is unacceptable.'''
+
+[questions.sd-031]
+prompt = '''The system is already sharded by `tenant_id` (hash). The 3 largest tenants account for 40% of traffic and keep overloading their shards, affecting the small tenants on the same shards. What do you propose for next quarter's roadmap?
+'''
+options = ["Increase the shard count from 16 to 64 by hash, hoping large tenants get split up", "Move to lookup/directory-based placement: put large tenants on dedicated shards (or clusters) and small tenants on shared shards; add per-tenant quotas", "Decline contracts with large tenants", "Reshard everything by `user_id`"]
+explanation = '''Hashing by tenant cannot split **a single** tenant — more shards do not help a large tenant. Directory-based placement lets you put large tenants on dedicated infrastructure (isolating noisy neighbors, possibly selling an enterprise tier) without touching small tenants. Sharding by user_id breaks tenant-scoped queries and data isolation; declining customers is a business decision, not a technical one.'''
+
+[modules.sd-caching]
+title = "Caching"
+description = "Cache-aside, write-through, write-back, TTL & invalidation, cache stampede, CDN, eviction."
+lesson = '''
+### Why cache
+A cache keeps hot data close to where it is used to reduce latency and load on the source (DB, service). Its effectiveness is measured by the **hit ratio**. Example (estimate): a DB receives 2,000 QPS; with a 95% hit ratio only ~100 QPS reach the DB; if the hit ratio drops to 80%, DB load quadruples (400 QPS) — a dead cache is a DB incident.
+
+### Patterns
+| Pattern | How it works | Pros | Cons |
+|---|---|---|---|
+| Cache-aside (lazy loading) | the app reads the cache; on a miss it reads the DB and writes the cache | simple, only caches what is read | first miss is slow, prone to staleness |
+| Read-through | the library/cache loads on a miss by itself | cleaner app code | depends on the cache provider |
+| Write-through | write cache and DB synchronously | cache is always fresh | slower writes, also caches rarely read data |
+| Write-back (write-behind) | write the cache, flush to the DB later | very fast writes, coalesced writes | **data loss** if the cache dies before flushing |
+| Write-around | write straight to the DB, not the cache | avoids polluting the cache | a read right after a write misses |
+
+### Invalidation and TTL
+- "Delete the cache entry on write" (delete instead of update) is usually safer than updating, because it avoids a race where two writes overwrite each other with an old value.
+- **TTL** is the safety net: even if an invalidation is missed, stale data lives at most for the TTL. Add **jitter** to TTLs so keys do not expire at the same moment.
+- For important data, put a version in the key (`user:42:v7`) to switch versions atomically.
+
+### Cache stampede (thundering herd)
+A hot key expires → thousands of requests miss at once and all hit the DB. Defenses:
+- **Request coalescing / single-flight**: only one request reloads, the others wait for its result.
+- A **lock/lease** on the key while reloading.
+- **Stale-while-revalidate**: serve the old value while refreshing in the background.
+- Probabilistic early refresh before expiry.
+
+### Eviction
+LRU (least recently used), LFU (least frequently used), FIFO, TTL. LRU is implemented with a hash map + doubly linked list for O(1).
+
+### CDN
+A CDN caches static content (and public APIs too) at the edge near users. It is controlled with `Cache-Control` (`max-age`, `s-maxage`, `stale-while-revalidate`), the **cache key** (URL + varied headers) and purges. Assets should have hashed file names (`app.3f9a.js`) so they can be cached for a long time without purging.
+
+### Common mistakes
+- Caching personal data in a shared cache/CDN (leaking data between users).
+- No TTL → stale data forever when an invalidation is forgotten.
+- Caching error/empty results for too long, or not caching empty results at all and suffering **cache penetration** (constant queries for non-existent keys).
+- Treating the cache as the only source of truth.
+'''
+
+[questions.sd-032]
+prompt = '''What does a cache **hit ratio of 90%** mean?'''
+options = ["90% of requests find the data in the cache, 10% must read from the source", "The cache uses 90% of the machine's RAM", "90% of the data in the DB has been cached", "The cache is 90% faster than the DB"]
+explanation = '''Hit ratio = cache hits / total reads. It determines the remaining load on the source: going from 90% to 99% cuts DB load **10×** (10% → 1%).'''
+
+[questions.sd-033]
+prompt = '''In the **cache-aside** pattern, what does the application do when a key read **misses**?'''
+options = ["Return a 404 error to the user", "Read from the DB, write the result into the cache (with a TTL), then return it", "Wait for the cache to load the data by itself", "Flush the entire cache"]
+explanation = '''Cache-aside (lazy loading): the application manages it — read the cache, on a miss read the source and put it in the cache. The next read will hit. "The cache loads by itself" is read-through.'''
+
+[questions.sd-034]
+prompt = '''The time an entry is kept in the cache before it expires automatically is usually abbreviated as {{blank}}.'''
+explanation = '''TTL (time to live) is the safety net: even if you forget to invalidate, stale data lives at most for the TTL.'''
+
+[questions.sd-c05]
+title = "A cache with TTL"
+prompt = '''Implement `class TtlCache` with `constructor(ttlMs)`:
+- `set(key, value)`: store the value, expiring `ttlMs` milliseconds after the `set` (use `Date.now()`)
+- `get(key)`: return the value if still valid; if missing or expired (`Date.now() >= expiry time`) → return `undefined` and delete the entry
+- `size()`: the number of **still valid** entries right now
+- calling `set` again for the same key overwrites the value and resets the expiry
+'''
+explanation = '''This is lazy expiration (checked on read). Redis combines lazy expiration with periodic random sampling to clean up expired keys that nobody reads.'''
+hints = ["Store `{ value, expiresAt }` instead of just the value.", "Compare `Date.now() >= expiresAt` on read."]
+
+[questions.sd-035]
+prompt = '''What is the biggest risk of a **write-back (write-behind)** cache?'''
+options = ["Reads are slower than cache-aside", "Data acknowledged to the client can be lost if the cache node dies before flushing to the DB", "TTLs cannot be used", "It uses more DB write bandwidth than write-through"]
+explanation = '''Write-back returns OK as soon as the cache is written and flushes to the DB later → very fast writes that can be coalesced (less DB load), but data is lost if the cache dies. It only suits data where losing a little is acceptable (counters, metrics), or caches with persistence/replication.'''
+
+[questions.sd-036]
+prompt = '''When updating the DB, why do many teams choose to **delete the cache key** (`DEL`) instead of **writing the new value to the cache** (`SET`)?
+'''
+options = ["Because DEL is faster than SET", "Because two concurrent updates can SET the cache in the reverse order of their DB writes, leaving an old value forever; DEL lets the next read reload from the DB", "Because SET does not support TTL", "Because DEL guarantees absolute strong consistency"]
+explanation = '''With SET: A writes DB=1, B writes DB=2, B sets cache=2, A sets cache=1 → the cache is wrong until the TTL expires. DEL greatly narrows the window (a rare race between read-reload and delete remains, so TTL is still needed; delayed double delete or versioning can help). There is no way to get absolute strong consistency between cache and DB without a coordination mechanism.'''
+
+[questions.sd-037]
+prompt = '''Select the **correct** statements about CDNs and HTTP caching:'''
+options = ["Assets with a hash in the file name (`app.3f9a.js`) can use a very long `Cache-Control: max-age` because a content change changes the name", "Responses containing user-specific data must be marked `private` (or `no-store`) so shared caches/CDNs do not store them", "`s-maxage` applies to shared caches such as CDNs", "CDNs can only cache images, not API responses", "`no-cache` means the response must never be stored"]
+explanation = '''CDNs can also cache public API responses if the headers allow it. `no-cache` means **it may be stored but must be revalidated** before use; not storing is `no-store`.'''
+
+[questions.sd-038]
+prompt = '''A bot keeps calling `GET /products/{id}` with random **non-existent** ids. Every call misses the cache and queries the DB. What is the most appropriate measure?
+'''
+options = ["Increase the TTL of existing keys", "Cache \"not found\" results too with a short TTL, combined with a Bloom filter of valid ids and per-client rate limiting", "Disable caching for this endpoint", "Add a read replica"]
+explanation = '''This is **cache penetration**: with cache-aside, a non-existent key never hits. Cache empty results (negative caching, with a short TTL so a newly created product shows up soon), use a Bloom filter to quickly reject ids that definitely do not exist, and rate-limit the bot. Raising the TTL of existing keys is irrelevant; disabling the cache or adding replicas only shifts load without blocking the root cause.'''
+
+[questions.sd-c04]
+title = "O(1) LRU cache"
+prompt = '''Implement `class LRUCache` with `constructor(capacity)` (capacity ≥ 1):
+- `get(key)`: return the value or `undefined`; a successful `get` makes the key the **most recently used**
+- `put(key, value)`: insert or update (an update also counts as most recently used). If `capacity` is exceeded → evict the **least recently used** key
+- `keys()`: an array of keys ordered **from oldest to newest**
+- `get`/`put` must be O(1) on average (hint: `Map` preserves insertion order, or use a hash map + doubly linked list)
+'''
+explanation = '''The classic LRU uses a hash map + doubly linked list; JS `Map` gives you both out of the box. Redis uses an **approximate** LRU (sampling a few keys) to save memory instead of keeping a full list.'''
+hints = ["JS `Map` keeps insertion order: delete then set again to move a key to the end.", "The oldest key is `map.keys().next().value`."]
+
+[questions.sd-039]
+prompt = '''The key `homepage:v1` (heavy, takes 2 s to compute) expires at a peak of 5,000 RPS. The DB is flooded with thousands of identical queries and goes down. Which option best fixes the **root** cause?
+'''
+options = ["Increase the TTL from 60 s to 600 s", "Request coalescing (single-flight/lock) so only one request recomputes, combined with stale-while-revalidate to serve the old value while refreshing", "Add more app servers", "Lower the DB query timeout to 100 ms"]
+explanation = '''This is a **cache stampede**. A longer TTL only makes the incident rarer, not gone. More app servers increase concurrent requests to the DB. A lower timeout makes the 2 s query always fail → the cache can never be reloaded. Single-flight + serving the old value ensures the DB receives ~1 query and users do not wait.'''
+
+[questions.sd-c06]
+title = "Single-flight against cache stampedes"
+prompt = '''Implement `class SingleFlightCache`:
+- `constructor()` — an in-memory cache (no TTL needed)
+- `async get(key, loader)`:
+  - if the key already has a value in the cache → return it, **without** calling `loader`
+  - if a load for that key is already in progress → share that promise (**do not** call `loader` again)
+  - otherwise call `loader()` (returns a Promise) exactly once; on success store it in the cache; **on failure do not store it**, so the next call reloads; everyone waiting receives the same error
+- `inflight()`: the number of keys currently loading
+'''
+explanation = '''This is the idea behind Go's `singleflight` and request coalescing in CDNs. Be careful not to cache errors (or only cache them very briefly), otherwise a transient failure gets "frozen" in the cache.'''
+hints = ["Store the running promise in a separate `Map` (`pending`) **before** awaiting.", "Remove it from `pending` on both success and failure; only write to `cache` on success."]
+
+[questions.sd-040]
+prompt = '''Select the **correct** statements about running caches at large scale:'''
+options = ["Adding random jitter to TTLs helps avoid many keys expiring at the same time after a warm-up or deploy", "If the DB can only handle the load when the hit ratio is ≥ 95%, restarting the whole cache cluster at once can cause a DB incident", "Putting a version in the key (`user:42:v7`) helps switch to new data/formats without mass deletion", "Per-process (in-process) local caches are always consistent across instances", "The cache is the source of truth, so that data may not need a DB"]
+explanation = '''In-process caches on each instance can diverge (each instance loads at a different time); you need short TTLs or an invalidation channel (pub/sub). A cache is not a source of truth — entries can be evicted at any time. Restarting the cache all at once = cold cache → the DB takes the full load: do rolling restarts and warm-ups.'''
+
+[questions.sd-041]
+prompt = '''Interview: the product detail page of an e-commerce marketplace receives 20,000 read RPS, and prices and stock change frequently. How would you design caching (which layer caches what, invalidation, risks)?'''
+keywords = [["cdn", "edge"], ["redis", "cache-aside", "distributed cache"], ["ttl"], ["invalidat", "purge", "event"], ["inventory", "stock", "price"], ["stampede", "single-flight", "coalesc", "thundering"], ["hot key", "local cache", "in-process"]]
+model_answer = '''- **Split data by rate of change**: descriptions, images and specs (rarely change) are different from **price and stock** (constantly changing).
+- **CDN/edge**: images and static assets cached for a long time (hashed file names); the product page HTML/JSON shell cached briefly with `stale-while-revalidate`.
+- **Redis (cache-aside)** for product data, **TTL** of a few minutes + jitter; when a product is edited, publish an **event** to delete the key (invalidation) and purge the CDN if needed.
+- **Price/stock**: a very short TTL (a few seconds) or fetched separately via a lightweight API; the "in stock" label can be approximate, but **at checkout always re-check in the DB** with an atomic operation (never trust the cache).
+- **Risks**: a stampede when a hot product key expires → single-flight/lock + serve the stale value; a **hot key** during a flash sale → add an in-process local cache for a few seconds; cache penetration with junk ids → negative caching; cache outage → the DB must cope, or have rate limiting/fallbacks.
+- Measure hit ratio, latency and reloads per key to tune it.
+'''
+explanation = '''The key idea: do not cache everything the same way; data that affects money/stock is cached only for **display**, while the final decision always happens at the source of truth.'''
+
+[questions.sd-042]
+prompt = '''Postmortem: the Redis cluster failed over for 3 minutes, the hit ratio dropped from 97% to 0, the DB was overloaded and the whole site was down for 20 minutes (far longer than Redis's 3-minute outage). The team has 1 sprint for action items. What is the most reasonable priority?
+'''
+options = ["Switch to a different cache product", "Protect the DB when the cache is cold: concurrency limits on DB access with load shedding, single-flight on reload, warming hot keys, and a game day rehearsing cache loss", "Buy a DB 30× larger to handle 100% of the load without a cache", "Adding an alert when Redis goes down is enough"]
+explanation = '''The root problem is that the system had **no self-protection** when the cache went cold: the DB got so overloaded that it could not recover even after Redis came back. Concurrency limits + shedding let the DB serve part of the traffic and recover; single-flight/warm-up shorten the cold period; a game day validates it. Switching cache products does not fix the root cause; scaling the DB ×30 is too expensive; an alert only tells you sooner without reducing impact.'''
+
+[modules.sd-async-messaging]
+title = "Asynchronous processing & messaging"
+description = "Queue vs log (Kafka-style), delivery semantics, idempotent consumers, outbox, saga, backpressure."
+lesson = '''
+### Why asynchronous
+Move slow work, or work that does not need an immediate answer (sending email, resizing images, computing scores), out of the request: lower latency, **smoothed load peaks** (the queue absorbs bursts), and fault isolation between services.
+
+### Queue vs log
+| | Message queue (RabbitMQ, SQS) | Partitioned log (Kafka-style) |
+|---|---|---|
+| Model | messages are deleted after ack | messages kept per retention, consumers track their own **offset** |
+| Replay | no (except via a DLQ) | yes, re-read from an older offset |
+| Ordering | usually not guaranteed with multiple consumers | guaranteed **within a partition** |
+| Scaling consumers | add competing workers | max consumers per group = number of partitions |
+| Good for | tasks/jobs | event streams, many independent consumers, event sourcing |
+
+Per-entity ordering: use a **partition key** (e.g. `order_id`) so all events of one order land in the same partition.
+
+### Delivery semantics
+- **At-most-once**: may be lost, never duplicated.
+- **At-least-once**: never lost but **may be duplicated** — the most common.
+- End-to-end **exactly-once** is a hard problem; in practice you get "effectively exactly-once" with **at-least-once + an idempotent consumer**.
+
+### Idempotent consumers
+Store the processed `message_id` (in a table with a unique constraint) **in the same transaction** as the business change, or design naturally idempotent operations (`SET status = 'paid'` instead of `balance = balance + 10`).
+
+### Dual writes and the Transactional Outbox
+Writing to the DB and then publishing a message is a **dual write**: a crash between the two steps → the DB has the order but no event (or vice versa). **Outbox**: in the same transaction, write the business data and a row into an `outbox` table; a **relay** (polling or CDC) reads the outbox, publishes, and marks rows as sent. The relay may publish duplicates → consumers must be idempotent.
+
+### Saga
+A transaction spanning multiple services without 2PC: a sequence of local steps, each with a **compensating action** (refund, release stock). Two styles: **orchestration** (a coordinator issues commands — easy to follow) and **choreography** (services react to events — no central dependency, but hard to see the whole flow).
+
+### Backpressure, retries and DLQs
+- Monitor **consumer lag** (distance behind the head of the log) and queue length — signals for scaling workers.
+- A repeatedly failing message (poison message) → after N attempts move it to a **dead-letter queue** so it does not block the whole queue.
+
+### Common mistakes
+- Assuming duplicates never arrive.
+- Adding more consumers than partitions and wondering why it is not faster.
+- Acking before processing finishes (messages lost on crash).
+- Using a queue to hide a service that is always overloaded — a queue only postpones the problem; lag will grow forever.
+'''
+
+[questions.sd-043]
+prompt = '''The sign-up API must send a welcome email (the email provider takes 1–3 s). Why should sending the email be pushed into a **message queue**?'''
+options = ["So the email arrives faster", "So the API responds immediately, the email is sent in the background, and it can be retried when the provider fails without breaking sign-up", "Because the queue encrypts the email content", "Because the queue guarantees the email is never duplicated"]
+explanation = '''A queue moves slow/non-essential synchronous work out of the request: lower latency, isolation from provider failures, and retries. Queues usually deliver **at-least-once**, so the email may still be sent twice if the consumer is not idempotent.'''
+
+[questions.sd-044]
+prompt = '''What do **at-least-once** delivery semantics mean?'''
+options = ["Each message is delivered exactly once", "Messages are not lost but may be delivered more than once", "Messages may be lost but are never duplicated", "Each message is delivered at least once per second"]
+explanation = '''At-least-once: the broker redelivers when it has not received an ack (consumer crash, timeout) → nothing is lost but messages may be **duplicated**. That is why consumers must be idempotent.'''
+
+[questions.sd-045]
+prompt = '''A message that fails more times than allowed is usually moved to a separate queue called a dead-letter {{blank}} (DLQ).'''
+explanation = '''A DLQ holds "poison messages" so they do not block the whole queue; you need alerts when the DLQ has messages and tooling to inspect/replay them after fixing the bug.'''
+
+[questions.sd-046]
+prompt = '''A Kafka topic has **6 partitions**. The team grows the consumer group from 6 to 12 instances to process faster. What happens?'''
+options = ["Throughput doubles", "6 instances get partitions and the other 6 sit idle — throughput is roughly unchanged", "Every message is processed twice", "Kafka automatically increases the partition count to 12"]
+explanation = '''Within a consumer group, each partition is assigned to at most **one** consumer → the maximum number of useful consumers = the number of partitions. For more parallelism you must add partitions (note this changes the key → partition mapping) or parallelize inside the consumer while keeping per-key order.'''
+
+[questions.sd-047]
+prompt = '''The `OrderCreated`, `OrderPaid`, `OrderShipped` events of **the same order** must be processed in order. What is the simplest approach with a partitioned (Kafka-style) log?'''
+options = ["Use 1 partition for the whole topic", "Use `order_id` as the message key so all events of one order go to the same partition", "Attach timestamps and let the consumer reorder them", "Send the events with increasing delays"]
+explanation = '''Kafka guarantees ordering **within a partition**; identical keys → the same partition. One partition for the whole topic keeps global order but loses parallelism. Reordering by timestamp in the consumer is complex and wrong when clocks drift.'''
+
+[questions.sd-048]
+prompt = '''A consumer has this code:
+```python
+msg = queue.receive()
+queue.ack(msg)
+process(msg)   # writes to the DB, calls an API
+```
+What can go wrong?
+'''
+options = ["Messages are processed twice", "If process crashes after the ack, the message is lost forever (it becomes at-most-once)", "The queue will fill up", "Nothing is wrong"]
+explanation = '''Acking first means the broker has already deleted the message; a crash midway means nobody reprocesses it. The correct order for at-least-once: **finish processing, then ack**, and make processing idempotent so redelivery is harmless.'''
+
+[questions.sd-049]
+prompt = '''Select the **correct** statements comparing a message queue (SQS/RabbitMQ style) with a partitioned log (Kafka style):'''
+options = ["With a log, several independent consumer groups can read the same data, each group keeping its own offset", "With a log, old events can be replayed within the retention period", "Traditional queues usually delete a message after it is acked", "A log guarantees no ordering at any level", "A queue cannot have multiple workers taking jobs"]
+explanation = '''A log guarantees ordering **within a partition**. Queues are built precisely for multiple workers competing for jobs (competing consumers).'''
+
+[questions.sd-c08]
+title = "Idempotent consumer with SQLite"
+prompt = '''The broker delivers messages **at-least-once**. Write `class PaymentConsumer`:
+- `__init__(self, conn)`: takes a `sqlite3.Connection` and creates (if missing) the tables `processed(message_id TEXT PRIMARY KEY)` and `balances(account TEXT PRIMARY KEY, amount INTEGER NOT NULL)`
+- `handle(self, msg) -> bool`: `msg` is a dict `{"id": str, "account": str, "amount": int}`
+  - if `msg["id"]` has already been processed → return `False` and **do not** change the balance
+  - if `amount` is not an `int` or is `<= 0` → `raise ValueError("bad amount")` and **record nothing** (the message may be redelivered after a fix)
+  - otherwise add `amount` to the `account` balance and record the id — **in the same transaction** — then return `True`
+- `balance(self, account) -> int`: the balance, `0` if none yet
+'''
+explanation = '''Recording the processed id and the business change in **the same transaction** is what achieves "effectively exactly-once" on top of at-least-once. If the two live in different systems (e.g. Redis + DB), a failure window remains.'''
+hints = ["`with conn:` opens a transaction, commits automatically when there is no error and rolls back on an exception.", "Insert `message_id` into a table with a PRIMARY KEY: a duplicate raises `sqlite3.IntegrityError`."]
+
+[questions.sd-050]
+prompt = '''```python
+db.insert(order)            # commit
+broker.publish("order.created", order)
+```
+Occasionally an order exists in the DB but the inventory service never receives the event. Which standard solution fixes the root cause?
+'''
+options = ["Swap the order: publish first, then insert", "Transactional outbox: write the order and an outbox row in the same transaction; a separate relay reads the outbox and publishes (at-least-once)", "Wrap both calls in try/except and log the error", "Use a 2PC distributed transaction between the DB and every broker"]
+explanation = '''This is a **dual write**: two systems without a shared transaction, so a crash between the steps causes divergence. Swapping the order only changes the failure mode (events about orders that do not exist). Logging the error does not recover anything. Few brokers support 2PC, and it is slow and reduces availability. The outbox turns publishing into "reading committed data"; the relay may publish duplicates, so consumers must be idempotent.'''
+
+[questions.sd-c07]
+title = "Transactional outbox + relay"
+prompt = '''The provided `setup(conn)` function creates the tables `orders(id TEXT PRIMARY KEY, total INTEGER)` and `outbox(seq INTEGER PRIMARY KEY AUTOINCREMENT, topic TEXT, payload TEXT, sent INTEGER DEFAULT 0)`.
+
+Write:
+1. `create_order(conn, order_id, total)`: in **one transaction**, insert the order and an outbox row with `topic = "order.created"`, `payload = json.dumps({"id": order_id, "total": total})`. If inserting the order fails (duplicate id → `sqlite3.IntegrityError`), **no** outbox row may remain, and the exception propagates.
+2. `relay(conn, publish, batch_size=100) -> int`: fetch up to `batch_size` rows with `sent = 0` ordered by ascending `seq`; for each row call `publish(topic, payload_dict)` and then mark it `sent = 1` (committing right after each row). If `publish` raises, **stop** (preserving order, leaving that row and the following ones for next time) and return the number of rows successfully published in this run (without raising).
+'''
+explanation = '''The relay can crash **after** publishing but **before** marking `sent` → the event is sent again; that is why an outbox always comes with idempotent consumers. At large scale, replace polling with CDC (reading the WAL/binlog).'''
+hints = ["`with conn:` groups several statements into one transaction and rolls back on an exception.", "In the relay, catch the exception from `publish` and `break` to preserve order."]
+
+[questions.sd-051]
+prompt = '''An order saga: (1) reserve stock in Inventory, (2) charge in Payment, (3) create a shipment in Shipping. Step (3) fails permanently. What should the system do?
+'''
+options = ["Roll back the shared DB transaction of the three services", "Run compensating actions in reverse order: refund in Payment, then release stock in Inventory, and mark the order as failed", "Retry step (3) forever", "Ignore it and leave the order in the charged state"]
+explanation = '''A saga has no shared transaction; each step has already committed locally, so it must be **compensated** with reverse business actions (refund, release stock). Compensations must also be idempotent and retried. Retrying a permanent failure forever keeps the customer's money held.'''
+
+[questions.sd-052]
+prompt = '''Select the **correct** statements about "exactly-once":'''
+options = ["In practice, \"effectively exactly-once\" is usually achieved with at-least-once plus idempotent processing", "Kafka transactions provide exactly-once for read–process–write between Kafka topics, but do not automatically cover side effects in external systems (sending email, calling a payment API)", "Just enabling exactly-once on the broker means the consumer never sees duplicates even when writing to an external DB", "Storing the offset in the same DB transaction as the processing result is one way to avoid duplicate processing", "At-most-once is the safest choice for payments"]
+explanation = '''The broker cannot control external side effects, so consumers must still be idempotent or store offsets atomically with results. At-most-once can **lose** transactions — unsafe for payments.'''
+
+[questions.sd-053]
+prompt = '''Compare **orchestration** and **choreography** sagas for an order flow involving Inventory, Payment and Shipping. When would you choose each?'''
+keywords = [["orchestrat", "coordinator"], ["choreograph", "event"], ["compensat", "refund"], ["coupling", "dependen"], ["track", "observab", "state", "debug", "global"], ["idempot"]]
+model_answer = '''- **Orchestration**: an Order Orchestrator holds the saga's state machine, sends commands to each service and decides the next step/compensation. Pros: the flow lives in one place, easy to track the global state, debug and add timeouts; cons: the orchestrator is a central component and risks absorbing other services' business logic.
+- **Choreography**: each service reacts to events (`OrderCreated` → Inventory reserves stock → `StockReserved` → Payment charges…). Pros: less coupling to a central component, easy to add new consumers; cons: the flow is scattered everywhere, it is hard to know where an order is, and event loops are easy to create.
+- Both need **compensating actions** (refund, release stock), **idempotent** messages/commands, timeouts and persisted saga state.
+- Choice: important, multi-step business flows that need control and reporting (ordering, payment) → orchestration; simple 1–2 step reactions with many interested parties (notifications, analytics updates) → choreography. They can be combined.
+'''
+explanation = '''A good answer states the trade-off in coupling and observability, and mentions compensation and idempotency because they are what make any saga work correctly.'''
+
+[questions.sd-054]
+prompt = '''A 6-developer startup with no dedicated SRE needs to process ~200 background jobs/s (sending email, generating PDFs, webhooks). A developer wants to run a self-managed Kafka cluster on VMs "to do it properly". What do you decide?
+'''
+options = ["Agree to self-managed Kafka because Kafka scales best", "Use a managed queue (e.g. SQS/Cloud Tasks) or a queue on the existing Redis/Postgres, with a DLQ and retries; revisit when there is a need for event streams/replay with many consumers", "No queue, process synchronously in the request", "Write a custom broker tailored to the business"]
+explanation = '''The need is a **job queue** at small scale; a managed service or existing infrastructure covers it with near-zero operational cost. Self-managed Kafka (brokers, replication, upgrades, monitoring) is a heavy burden for a team without SRE, and its advantages (replay, many consumer groups, very high throughput) are not needed yet. Synchronous processing slows requests and cannot retry; writing your own broker is an unnecessary risk.'''
+
+[questions.sd-055]
+prompt = '''Consumer lag on the `payments` topic has grown steadily for 3 days (from a few seconds to 40 minutes) with no errors. Producer volume is up 30% due to a marketing campaign running for 2 weeks. What do you decide first?
+'''
+options = ["Reduce the topic retention so lag goes down", "Identify the consumer bottleneck (DB writes, external API, sequential processing) and scale the right part: add partitions/consumers if consumer CPU is the limit, batch DB writes if the DB is the limit; set alerts on lag/wait time", "Ignore it since there are no errors", "Move payments to synchronous processing"]
+explanation = '''Steadily growing lag means consumer throughput < arrival rate — it will not clear by itself during the 2-week campaign, and for payments a 40-minute delay is user impact. Find the bottleneck before scaling (more consumers do not help if the DB is the limit). Reducing retention can **delete unprocessed messages**. Synchronous processing shifts the pressure onto users.'''
+
+[modules.sd-reliability]
+title = "Reliability and fault tolerance"
+description = "Timeouts, retries with exponential backoff and jitter, circuit breakers, bulkheads, rate limiting, load shedding, and graceful degradation."
+lesson = '''
+### Every network call can be slow or fail
+Design assuming dependencies will fail. Every outbound call needs a timeout: otherwise threads and connections may be held indefinitely and cause cascading failures. Set timeouts from measured dependency latency (for example, slightly above p99) and the overall request **deadline**, propagated downstream.
+
+### Retries, backoff, and jitter
+- Retry only **transient** failures (timeouts, 503, 429) and **idempotent** operations, or operations protected by an idempotency key.
+- Exponential backoff waits `base × 2^attempt`, capped at `max`. **Jitter** randomizes waits so thousands of clients do not retry in sync.
+- Retries at multiple layers multiply: 3 layers × 3 retries can mean 27 calls to an unhealthy dependency, creating a **retry storm**. Retry at one layer and set a **retry budget** (for example, retries at most 10% of requests).
+
+### Circuit breaker
+| State | Behavior |
+|---|---|
+| Closed | Call normally and count failures |
+| Open | Fail fast for a cool-down period |
+| Half-open | Allow a few probes; success closes the breaker, failure opens it again |
+It gives the dependency time to recover and frees resources on the caller.
+
+### Bulkheads and rate limits
+Partition thread/connection pools by dependency or customer class so one failing area cannot consume resources needed elsewhere. Rate limits can use token bucket (controlled bursts), leaky bucket (smooth output), fixed windows (simple but can double quota at a boundary), or sliding windows (more accurate, more memory). Return **429** with `Retry-After`; distributed limits commonly use atomic Redis operations or accept per-node approximation.
+
+### Load shedding, degradation, and redundancy
+**Load shedding** rejects lower-priority work early during overload to preserve critical work (payments over recommendations). **Graceful degradation** returns a reduced result when an optional dependency fails (hide recommendations or use stale cached data) rather than failing the whole page. Remove **single points of failure** with multiple AZs, health checks, and automatic failover. Replicas help only when failures are independent; a shared bad deployment can take every replica down.
+
+### Common mistakes
+- A client timeout longer than the load balancer or gateway timeout.
+- Retrying a non-idempotent operation (charging twice).
+- No jitter, or one circuit breaker shared by every endpoint of a dependency.
+'''
+
+[questions.sd-056]
+prompt = '''Service A calls service B over HTTP **without a timeout**. B hangs (does not reply or close the connection). What is most likely to happen to A?'''
+options = ["A receives an immediate error and is unaffected", "A's threads/connections remain occupied, its pool gradually runs out, and A stops serving other requests too", "The load balancer automatically fixes B", "The request is automatically rerouted to B in another region"]
+explanation = '''Without a timeout, each hung call holds a resource (thread, connection, memory). When the pool is exhausted, A can fail despite having no local bug: a **cascading failure**. Every network call needs a timeout tied to the request deadline.'''
+
+[questions.sd-057]
+prompt = '''When a client exceeds its rate limit, the API should return HTTP status `{{blank}}` (Too Many Requests), usually with a `Retry-After` header.'''
+explanation = '''429 Too Many Requests tells clients to slow down; `Retry-After` says how long to wait. Returning 500/503 can make clients mistake this for a server failure and retry aggressively.'''
+
+[questions.sd-058]
+prompt = '''A product detail page calls a **recommendation service** (non-critical), and that service is failing. Which response demonstrates **graceful degradation**?'''
+options = ["Return a 500 error for the entire page", "Keep showing the product page and hide the recommendations (or use stale cached recommendations)", "Retry the recommendation service continuously until it succeeds", "Redirect the user to the home page"]
+explanation = '''Graceful degradation lets an optional component fail while the main function still works. Set a short timeout on the optional call so it does not slow the whole page. Continuous retries add load to an unhealthy dependency.'''
+
+[questions.sd-059]
+prompt = '''A client gets a **timeout** and cannot tell whether the server processed the request. Which calls can be **retried safely** without additional mechanisms?'''
+options = ['`GET /orders/42`', '`PUT /users/7/email` with the new email as the complete replacement value', '`POST /payments` to charge 100,000 VND (no idempotency key)', '`DELETE /cart/items/9`', '`POST /counters/likes/increment`']
+explanation = '''GET, replacement PUT, and DELETE are **idempotent**: repeating them leads to the same final state. Charging money and incrementing a counter with POST are not idempotent; retries can charge or increment twice. Use an **idempotency key** or redesign the operation.'''
+
+[questions.sd-060]
+prompt = '''An API gateway uses **one** 200-connection pool for every dependency. A slow, non-critical reporting service takes 30 seconds to respond and fills the pool, causing payment calls to fail too. Which pattern directly prevents this?'''
+options = ["Bulkhead: give each dependency a separate pool/concurrency limit (for example, at most 20 reporting calls)", "Increase the pool to 2,000 connections", "Add a cache in front of the payment service", "Switch to HTTP/2"]
+explanation = '''A **bulkhead** partitions resources like compartments in a ship: a full reporting compartment only rejects reporting requests. Increasing the pool merely delays the problem and costs memory; also use a short timeout for reporting.'''
+
+[questions.sd-c09]
+title = "Retry with exponential backoff and full jitter"
+prompt = '''Implement `retry(op, { retries, baseMs, maxMs, random = Math.random }, done)`:
+- Call `op()` **immediately** (synchronously). `op` returns a value or throws.
+- On success, call `done(null, value)`.
+- On failure number `n` (n = 1, 2, …), call `done(err)` with the final error if `err.retryable === false` or all `retries` retries have been used. Otherwise schedule a retry with `setTimeout` after `delay = Math.floor(random() * Math.min(maxMs, baseMs * 2 ** (n - 1)))`.
+- At most `retries + 1` calls to `op`; call `done` **exactly once**.
+
+Example: with `baseMs = 100` and `random = () => 0.5`, waits are 50, 100, 200 ms…
+'''
+explanation = '''Full jitter spreads retries from thousands of clients over time, preventing them from hitting a dependency in lockstep. Cap waits with `maxMs`; do not retry permanent errors (4xx).'''
+hints = ["Count failures in `failures`; stop when `failures > retries`.", "For failure n, use `Math.floor(random() * Math.min(maxMs, baseMs * 2 ** (n - 1)))`."]
+
+[questions.sd-c10]
+title = "Three-state circuit breaker"
+prompt = '''Implement `class CircuitBreaker(failure_threshold, reset_timeout, clock)` where `clock()` returns the current time in seconds:
+- `call(fn)` invokes `fn()` according to state:
+  - **closed**: call normally. If `fn` throws, increment consecutive failures and rethrow; when the count reaches `failure_threshold`, transition to **open** and record the opening time. On success, reset the count to 0.
+  - **open**: before `reset_timeout` seconds have elapsed, do not call `fn`; throw `CircuitOpenError`. Once elapsed (`clock() - opened_at >= reset_timeout`), treat the state as **half_open**.
+  - **half_open**: allow **one** probe call. Success closes the breaker and resets failures to 0. Failure opens it again with a new opening time and rethrows.
+- `state` returns `"closed"`, `"open"`, or `"half_open"` (report `"half_open"` once an open breaker has cooled down).
+'''
+explanation = '''A circuit breaker **fails fast** when a dependency is down: callers do not waste threads waiting for timeouts, and the dependency gets time to recover. Half-open allows a probe (or a few) to avoid a surge when service returns.'''
+hints = ["Store `failures` and `opened_at`; derive `state` from `opened_at` and `clock()`.", "In half-open, one failure is enough to reopen; do not wait for the threshold."]
+
+[questions.sd-061]
+prompt = '''Call chain: Mobile → API Gateway → Order Service → Inventory Service. Each layer retries up to 3 times (4 total calls) when its downstream layer fails. Inventory is completely down. What is the maximum number of calls to Inventory from one user request, and what should change?'''
+options = ["4 calls; no change needed", "12 calls; increase retries at the last layer", "64 calls (4×4×4); retry at only one layer (near the failure), have other layers fail fast, and add a retry budget and circuit breaker", "64 calls; remove timeouts to reduce retries"]
+explanation = '''Retries multiply across layers: 4 × 4 × 4 = 64 calls to a **down** dependency. This retry storm can prevent recovery. Retry at one layer, limit it with a retry budget (for example, ≤10% of traffic), and use a circuit breaker to stop when failures persist.'''
+
+[questions.sd-062]
+prompt = '''Interview: "Your checkout service calls four dependencies (inventory, pricing, payment, recommendation). Design it to remain reliable when a dependency is slow or down." Describe the mechanisms and distinguish critical from optional dependencies.'''
+explanation = '''A strong answer connects each pattern to dependency criticality and mentions idempotency when retrying payments.'''
+model_answer = '''1. **Classify dependencies**: payment and inventory are critical (checkout cannot complete without them); pricing matters but may use a brief cached value; recommendations are optional.
+2. **Timeouts and deadline**: set an overall checkout deadline (for example, an estimated 2 seconds) and propagate it. Set each dependency timeout based on its p99; keep recommendations very short (~100 ms).
+3. **Controlled retries**: retry only transient failures, with exponential backoff, jitter, and a retry budget. Retry payment only with an **idempotency key** to avoid double charges.
+4. Use a **circuit breaker** per dependency to fail fast and **bulkheads** (separate pools/semaphores) so slow recommendations cannot consume payment resources.
+5. **Graceful degradation/fallback**: hide recommendations when unavailable; use an unexpired cached price or ask the user to retry if pricing fails; if payment remains unavailable, allow a pending-payment order and process asynchronously only if the business allows it.
+6. **Observability**: collect per-dependency error, latency, and breaker-state metrics; alert against checkout SLOs.'''
+
+[questions.sd-063]
+prompt = '''A public API rate limiter depends on Redis, and the Redis cluster is down for 5 minutes. The API serves (a) product catalog reads and (b) an SMS OTP endpoint (each SMS costs money and has been abused before). What should happen while the rate limiter is unavailable?'''
+options = ["Fail closed for every endpoint: block everything for safety", "Fail open for every endpoint to avoid affecting users", "Fail open for catalog reads (possibly with per-instance local limits); fail closed or use a very strict local limit for OTP; record the decision in an ADR and alert when the limiter fails", "Disable both endpoints until Redis recovers"]
+explanation = '''Fail-open vs. fail-closed depends on **each endpoint's risk**: five minutes of excess catalog reads cost resources, while abused OTP sends cost money and enable spam. A per-instance in-memory limit is a cheap fallback. One policy for every endpoint ignores this trade-off.'''
+
+[modules.sd-api-design]
+title = "API design"
+description = "REST vs. gRPC vs. GraphQL, pagination, versioning, idempotency keys, webhooks, and backward compatibility."
+lesson = '''
+### Choosing an API style
+| | REST/JSON | gRPC (HTTP/2 + Protobuf) | GraphQL |
+|---|---|---|---|
+| Fits | Public, simple APIs and HTTP caching | Service-to-service, low latency, streaming | Clients composing flexible data across screens |
+| Strengths | Easy to use, broad tooling, CDN caching | Strict schema, code generation, compact messages, bidirectional streaming | One request can fetch exactly needed fields |
+| Costs | Over-fetching, multiple round trips | Browser use may need gRPC-Web; harder to inspect | HTTP caching is harder; bound query depth/cost; watch resolver N+1 |
+
+### Pagination
+**Offset/limit** allows jumping to a page, but a large OFFSET makes the DB scan past rows and shifts when new rows are inserted. **Cursor/keyset** pagination uses a stable indexed key, e.g. filter by `(created_at, id)` and order descending. Keep cursors **opaque** (such as base64 encoding) so the server can change their format.
+
+### Versioning and compatibility
+Usually safe: add an optional response field or endpoint; add an enum value only if clients ignore unknown values. Breaking: rename/remove a field, change its type or meaning, or add a required request field. Version through URL, headers, or dates; publish a deprecation policy with Deprecation/Sunset headers and track old clients. In Protobuf, reserve removed field numbers.
+
+### Idempotency keys and webhooks
+For payment creation, accept an idempotency key and store its state, response, and body hash. Repeated keys return the saved response; the same key with a different body returns 422/409; in-progress requests return 409. Expire keys according to business needs.
+Sign webhook payloads with per-customer HMAC secrets and timestamps to limit replay. Deliver at-least-once with retries/backoff; receivers deduplicate by event_id, return 2xx quickly, and process asynchronously. Ordering is not guaranteed, so include a version/time or let receivers fetch current state.
+
+### Errors and contracts
+Use a consistent error format (for example, Problem Details, RFC 9457), stable machine-readable codes, and request_id for log lookup. Describe APIs with OpenAPI/Protobuf and check compatibility in CI with contract tests.
+
+### Common mistakes
+- Using GET for side effects.
+- Returning 200 with an error object.
+- Changing a field type and breaking old mobile clients that cannot be force-updated.
+'''
+[questions.sd-064]
+prompt = '''Which endpoint is **incorrectly** designed according to HTTP semantics?'''
+options = ['GET /orders?status=paid to filter orders', 'GET /orders/42/cancel to cancel order 42', 'POST /orders to create an order', 'DELETE /orders/42/items/3 to remove an order line']
+explanation = '''GET must be **safe** (have no side effects): crawlers, browser prefetching, caches, and automatic retries may call it at any time. Cancellation should use POST for the action or PATCH with the new state.'''
+[questions.sd-065]
+prompt = '''When POST /users successfully creates a resource, the most appropriate status code is {{blank}} (Created), usually with a Location header pointing to the new resource.'''
+explanation = '''201 Created clearly reports resource creation. 200 can work but loses that semantic; 202 Accepted means the request was accepted for asynchronous processing.'''
+[questions.sd-c11]
+title = "Cursor pagination (keyset)"
+prompt = '''Implement paginate(items, limit, cursor=None) for a list of dictionaries with unique integer id values in unsorted order:
+- Sort by id ascending without modifying the input list.
+- cursor=None starts at the beginning; otherwise cursor is produced by encode_cursor(last_id), and only items with id > last_id are eligible.
+- Return a dict with data (up to limit items) and next_cursor (encoded id of the last item, or None if no items remain after this page).
+- If limit is outside 1..100, raise ValueError("bad limit").
+
+encode_cursor and decode_cursor (base64, opaque to the client) are provided in the starter.'''
+explanation = '''Keyset pagination filters on the last item's key, so inserts/deletes do not shift pages and an index keeps it fast. OFFSET must scan past preceding rows. An opaque cursor lets the server change its encoding without changing clients.'''
+hints = ["Sorting with a key returns a new list without changing the input.", "A next page exists when more than limit items remain after the cursor."]
+[questions.sd-066]
+prompt = '''Why is a query ordering by id with LIMIT 20 and OFFSET 200000 often slow on a large table?'''
+options = ["LIMIT cannot use an index", "The database still has to read and skip 200,000 preceding rows before returning the 20 requested rows", "OFFSET locks the whole table", "ORDER BY id always sorts the entire table in memory"]
+explanation = '''Large OFFSET values cost work proportional to offset plus limit. Cursor/keyset pagination seeks to the position using an index, keeping work nearly constant.'''
+[questions.sd-067]
+prompt = '''A JSON API is used by many older mobile app versions. Which changes are **breaking**?'''
+options = ["Add an optional discount field to the response", "Change price from a number to a string", "Rename user_name to username", "Add a **required** currency field to the POST orders request body", "Add a new invoice endpoint"]
+explanation = '''Changing a type or name and adding a required request field can break old clients. Adding an optional response field or new endpoint is normally backward-compatible if clients ignore unknown fields.'''
+
+[questions.sd-068]
+prompt = '''POST /payments supports an Idempotency-Key header. The client resends the same key k1 but with a **different body** (amount 200,000 instead of 100,000). What should the server do?'''
+options = ["Process it as a new payment", "Return the first request's response as if this one succeeded", "Reject it (for example, with 422/409) because this key was used with different request content", "Overwrite the original payment with the new amount"]
+explanation = '''The server stores a **body hash** with the key. Same key and same body returns the saved response; same key with a different body is almost certainly a client error, so report it rather than guessing. Processing it as new or overwriting breaks idempotency semantics.'''
+[questions.sd-069]
+prompt = '''About 30 internal microservices call one another at high volume and need low latency, strict schemas, and bidirectional streaming. Which protocol best fits **service-to-service** communication?'''
+options = ["GraphQL for every internal call", "gRPC with Protobuf", "SOAP/XML", "Unspecified REST/JSON without a schema"]
+explanation = '''gRPC (HTTP/2 + Protobuf) offers compact payloads, schema-based code generation, streaming, and deadlines, making it suitable for internal services. GraphQL fits clients composing flexible data; REST/JSON often fits public APIs.'''
+[questions.sd-070]
+prompt = '''You are designing a **webhook** that sends payment.succeeded events to customers. Which practices should it include?'''
+options = ["Sign payloads with a per-customer HMAC secret and include a timestamp to prevent replay", "Retry with backoff when the receiver does not return 2xx, and include event_id for receiver deduplication", "Guarantee strict ordering and exactly-once delivery", "Recommend that receivers return 2xx quickly and process asynchronously", "Include the customer's full card number for reconciliation"]
+explanation = '''Webhooks are practically **at-least-once** and do not guarantee order, so receivers need event_id-based idempotency and version/time information. HMAC signatures let receivers verify the sender. Never send sensitive card data in a webhook.'''
+[questions.sd-071]
+prompt = '''A public GraphQL API allows arbitrarily nested queries. A client's deeply nested friends/posts/comments query overloads the database. Which mitigation is **most appropriate**?'''
+options = ["Move everything to REST", "Limit query depth and **complexity/cost**, require pagination for lists, use DataLoader to batch queries, and consider persisted queries for third-party clients", "Increase the server timeout to 5 minutes", "Cache every GraphQL response at the CDN by URL"]
+explanation = '''GraphQL's major risk is that clients can construct expensive queries. Analyze cost/depth before execution, require pagination, and batch with DataLoader to avoid N+1 queries. CDN caching is difficult because GraphQL often uses POST and queries vary widely.'''
+[questions.sd-072]
+prompt = '''You need to replace the string address field with a shipping_address object in a public API used by hundreds of customers. Which plan is safest?'''
+options = ["Change it in the next deployment and send an email", "Add shipping_address alongside it, deprecate address (docs and Deprecation/Sunset headers), measure who still reads address, contact customers, and remove it only after the announced deadline", "Keep address forever and do not add a new field", "Create /v2 for the entire API just for this field"]
+explanation = '''Use **expand → migrate → contract**: add the replacement alongside the old field, allow time to migrate, and measure actual use before removal. A whole /v2 for one field adds maintenance cost; keeping it forever accumulates technical debt.'''
+[questions.sd-073]
+prompt = '''A mobile team (two apps with many screens combining data from five services) wants GraphQL. The four-person backend team has no production GraphQL experience; REST works well, but the main screen needs seven requests. What do you recommend?'''
+options = ["Move every API to GraphQL this quarter", "Refuse and tell mobile to combine requests themselves", "Start with a backend-for-frontend endpoint for the main screen or time-box a GraphQL gateway pilot for one screen; measure latency and operational complexity before expanding", "Rewrite the services in another language"]
+explanation = '''The actual issue is **multiple round trips on one screen**. A BFF or small GraphQL pilot is a reversible decision and produces data for the next decision. Moving everything at once brings operational risks (N+1, caching, query security) for an inexperienced team.'''
+
+[modules.sd-observability]
+title = "Observability and operations"
+description = "Logs, metrics, traces, SLI/SLO/error budgets, useful alerts, incident response, and blameless postmortems."
+lesson = '''
+### Three pillars
+| Signal | Question answered | Note |
+|---|---|---|
+| Metric | Is there a problem, and how large? | Cheap aggregation; avoid high-cardinality labels such as user_id |
+| Log | What happened in this request? | Structured JSON with trace_id; never log secrets or PII |
+| Trace | Where did time go across services? | Propagate context (W3C traceparent); sample carefully |
+OpenTelemetry is a widely used open standard for collecting all three.
+
+Use **RED** for services (Rate, Errors, Duration), **USE** for resources (Utilization, Saturation, Errors), or the four golden signals (latency, traffic, errors, saturation). Measure latency with histograms: p99s from instances cannot be averaged.
+
+### SLI, SLO, SLA, and error budget
+An **SLI** is a measured indicator, such as the share of successful requests completed under 300 ms. An **SLO** is an internal target over a window (e.g. 99.9% over 30 days). An **SLA** is a customer commitment with consequences, usually looser than the SLO. **Error budget** = 1 − SLO: 99.9% over 30 days allows about **43 minutes** of errors; 99.99% allows 4.3 minutes. While budget remains, release faster; when exhausted, prioritize stability.
+
+### Alerts and incident response
+Alert on **user-visible symptoms** (SLO burn), not isolated causes such as CPU at 80%. Burn rate 1 uses the budget exactly by the end of its window. Page urgently on high burn over a short window; use slower alerts for sustained low burn. Every alert must be actionable and have a runbook, or it causes alert fatigue.
+Assign an **Incident Commander**, technical responders, and communications owner. Reduce impact first (rollback, disable a flag, shift traffic), then find root cause; keep a timeline. Track MTTD (detection) and MTTR (recovery).
+
+### Blameless postmortems
+Focus on system and process conditions, not individuals. Record impact, timeline, contributing causes, what went well, and action items with owners and due dates.
+
+### Common mistakes
+- Dashboards with no agreed SLO.
+- User IDs as metric labels, creating huge storage cost.
+- A postmortem that blames one person instead of improving the system.
+'''
+[questions.sd-074]
+prompt = '''A user reports "payments are slow." You need to identify how much time a **specific request** spent in each service (gateway, order, payment, DB). Which signal is most useful?'''
+options = ["CPU metrics for each machine", "A distributed trace for that request", "Log lines per minute", "A dashboard of online users"]
+explanation = '''A trace records **spans** across services and their durations, showing where time went. Metrics provide an aggregate view; logs capture events. Add trace_id to logs to connect the two.'''
+[questions.sd-075]
+prompt = '''If the availability SLO is 99.9%, the error {{blank}} is 0.1%: the errors allowed within the measurement window.'''
+explanation = '''Error budget = 1 − SLO. At 99.9% over 30 days, the budget is about 43 minutes of errors. While budget remains, releases can move faster; once exhausted, prioritize stability.'''
+[questions.sd-076]
+prompt = '''Which log line is **best** for a multi-service system?'''
+options = ['`print("something broke!!!")`', '`{"level":"error","msg":"payment declined","order_id":"o-91","trace_id":"4bf9…","provider_code":"insufficient_funds"}`', '`ERROR: user 7 password=hunter2 login failed`', 'Log every request and response body at info level']
+explanation = '''Structured **JSON** with a clear level/message, business identifier, and trace_id is searchable and linkable to traces. Never log passwords, secrets, or PII; logging every body is costly and can expose sensitive data.'''
+[questions.sd-077]
+prompt = '''A developer adds user_id (5 million users) to the Prometheus metric http_requests_total{route,status,user_id}. What is the main problem?'''
+options = ["No problem; more labels always provide better detail", "A **cardinality explosion**: each label combination becomes a time series, causing millions of series, high memory use, slow queries, and possible metrics-system failure", "Prometheus does not support numeric labels", "It only makes dashboards harder to read"]
+explanation = '''Series count is roughly the product of label values. Metrics should aggregate over low-cardinality labels (route, status, region). Use logs or traces with user_id for per-user investigation.'''
+[questions.sd-078]
+prompt = '''Which alerts **should** wake the on-call engineer at 3 a.m.?'''
+options = ["Checkout failures exceed the threshold and rapidly burn the error budget", "One autoscaled instance has 85% CPU for 2 minutes", "Login API p99 latency has breached its SLO continuously for 15 minutes", "The primary DB disk is forecast to fill in 2 hours", "A weekly internal report job is slower than usual"]
+explanation = '''Page for **user impact** or an imminent incident that needs immediate action (disk full in 2 hours). High CPU in an autoscaling group can be normal; a slow internal job can be ticketed for business hours. Non-actionable alerts cause alert fatigue.'''
+[questions.sd-079]
+prompt = '''There are 10 instances, each reporting its own p99 latency. How do you correctly calculate the **system-wide p99**?'''
+options = ["Average the 10 p99 values", "Take the largest p99", "Collect latency histograms at each instance, sum their buckets, then calculate the percentile from the combined histogram", "Use the p99 of the instance with the most requests"]
+explanation = '''Percentiles cannot be added or averaged. Histograms can be combined by summing bucket counts, then used to estimate the merged percentile (with bucket-width error). Averaging p99s can be very wrong when instance loads differ.'''
+[questions.sd-080]
+prompt = '''A 14:00 deployment caused 30% of payment requests to fail for 25 minutes. Describe how you would handle the live incident and what the later postmortem should contain.'''
+explanation = '''The two key ideas are to restore service before investigating root cause and to write a blameless postmortem with owned action items.'''
+model_answer = '''**During the incident**
+1. Declare an incident; assign an **Incident Commander** and communications owner, open a channel, and record a **timeline**.
+2. Reduce impact first: since the deployment is the latest change, **roll it back** (or disable the feature flag) before investigating root cause.
+3. Confirm recovery with metrics; reconcile any incomplete orders/payments.
+4. Update the status page and stakeholders on a regular cadence.
+
+**Blameless postmortem**
+- Impact: 25 minutes, about 30% payment failures, affected orders/revenue (estimate).
+- Timeline: deployment, detection, rollback, recovery; measure MTTD and MTTR.
+- Root cause and contributing factors (why tests/canary missed it, why detection took X minutes).
+- Focus on system conditions, not individual blame.
+- Owned and dated actions: add canary and automatic rollback by error rate, test the failure case, and alert on burn rate.'''
+[questions.sd-081]
+prompt = '''The SLO is 99.9% over 30 days. During the last hour, the error rate was 1.44%. What is the burn rate, and if it continues, when will the 30-day error budget run out?'''
+options = ["Burn rate 1.44; exhausted in about 21 days", "Burn rate 14.4; exhausted in about 2 days (~50 hours)", "Burn rate 144; exhausted in about 5 hours", "Burn rate 0.144; it will never run out"]
+explanation = '''Burn rate = error rate / budget = 1.44% / 0.1% = 14.4. A budget lasts 30 days at burn rate 1, so at 14.4 it lasts 30/14.4 ≈ 2.08 days (~50 hours). This is a common urgent-alert threshold over a one-hour window.'''
+[questions.sd-082]
+prompt = '''A system handles 50,000 requests/s; storing every trace is too expensive. You still want to retain traces for **errors** or **very slow requests**. Which sampling strategy fits?'''
+options = ["Random 1% head-based sampling at the gateway", "Tail-based sampling: the collector temporarily keeps spans for each trace and decides after completion (retain all errors/slow traces and a small share of normal ones)", "Disable tracing and use logs only", "Have each service independently sample at random"]
+explanation = '''Head-based sampling decides at the start and can miss rare failing traces. Tail-based sampling decides after seeing the result, but the collector must temporarily retain spans in memory. Independent sampling at each service can fragment traces.'''
+[questions.sd-083]
+prompt = '''A ticketing service has spent 110% of this month's error budget after two incidents. Product wants a major feature released next week for an advertised campaign. Under the team's agreed error-budget policy, what do you recommend?'''
+options = ["Release as usual; the error budget is just a reference", "Freeze all changes for three months", "Pause non-urgent releases and prioritize reliability actions; negotiate the campaign feature with a feature flag, small canary, rollback plan, explicit product approval, and a recorded exception", "Lower the SLO to 99% to create more budget"]
+explanation = '''The error budget is an **agreement tool** balancing delivery speed and stability. Ignoring it voids the policy, while a rigid freeze ignores business commitments. Reduce risk with a flag, canary, and rollback, and make exceptions transparent. Lowering the SLO is appropriate only if it no longer reflects user needs, not as a loophole.'''
+
+[modules.sd-security]
+title = "Security in system architecture"
+description = "Architecture-level authentication and authorization, secrets management, threat modeling, least privilege, and multi-tenant isolation."
+lesson = '''
+### Authentication and authorization
+**Authentication (authn)** establishes who you are (login, tokens, service mTLS). **Authorization (authz)** determines what you may do. Enforce it on the **server**, for **each resource** (prevent IDOR such as accessing someone else's invoice). Common models: **RBAC** (roles), **ABAC** (attributes such as department/region), and **ReBAC** (relationships, such as document sharing).
+
+### Identity and secrets
+Use OIDC/OAuth 2.0 with an identity provider. Web apps can use HttpOnly, Secure, SameSite session cookies or short-lived access tokens with rotating refresh tokens. JWTs are convenient but **hard to revoke**: use short TTLs and verify signature, exp, aud, and iss; reject alg:none. For service-to-service identity, prefer **mTLS** and workload identity over shared API keys.
+Never put secrets in code, images, or logs. Use a secrets manager, grant minimum read access, rotate regularly and after suspected exposure, and prefer short-lived dynamic credentials. Scan repositories and CI for secrets.
+
+### Threat modeling and defense in depth
+Map data flows and trust boundaries early; use **STRIDE**: Spoofing (strong auth), Tampering (signatures/TLS), Repudiation (immutable audit logs), Information disclosure (encryption/access controls), Denial of service (limits/quotas), Elevation of privilege (least privilege/authz checks).
+Give each person/service only necessary permissions (separate IAM roles and DB users). **Defense in depth** layers WAF, authn, authz, encryption, and network policy. Zero trust means internal networks are not trusted by default.
+
+### Tenant isolation and encryption
+| Model | Isolation | Cost |
+|---|---|---|
+| Shared DB with tenant_id | Lowest; relies on code/RLS | Lowest |
+| Schema per tenant | Medium | Medium |
+| Separate DB/cluster (silo) | Highest | Higher operations cost |
+For shared DB, enforce tenant_id in data access, use **Row-Level Security**, test against cross-tenant access, and set per-tenant quotas to limit noisy neighbors. Encrypt **in transit** (TLS) and **at rest** (KMS/envelope encryption). Hash user passwords with a slow salted algorithm (Argon2id, bcrypt); never use reversible encryption.
+
+### Common mistakes
+- Hiding a UI button without enforcing permission in the API.
+- Sharing one admin API key across services.
+- Logging tokens or passwords.
+'''
+[questions.sd-084]
+prompt = '''User A is properly logged in, changes the URL from /api/invoices/1001 to /api/invoices/1002, and can see user B's invoice. What vulnerability is this?'''
+options = ["Authentication failure: A logged in incorrectly", "IDOR (Insecure Direct Object Reference): missing per-resource **authorization**", "SQL injection", "CORS failure"]
+explanation = '''A was authenticated correctly, but the server did not check whether A could access invoice 1002. Check authorization on every resource at the server (for example, query by both id and owner_id); unpredictable IDs are only an extra layer, not a substitute for authz.'''
+[questions.sd-085]
+prompt = '''Which method correctly stores user passwords?'''
+options = ["Encrypt with one shared AES key so passwords can be decrypted when forgotten", "Hash once with SHA-256 and no salt", "Hash with a deliberately slow salted algorithm such as Argon2id or bcrypt", "Store plaintext but let only admins read the table"]
+explanation = '''Passwords need to be **verified**, not decrypted, so use a one-way hash. Fast hashes such as SHA-256 are easy to brute-force with GPUs; Argon2id/bcrypt are deliberately slow and use per-password salts to resist rainbow tables. Let users reset forgotten passwords rather than retrieving the old one.'''
+[questions.sd-086]
+prompt = '''The principle of giving each user/service only the **minimum permissions** needed for its work is called least {{blank}}.'''
+explanation = '''Least privilege limits damage if an account or service is compromised: a reporting service that only needs DB read access should not be able to write or delete.'''
+[questions.sd-087]
+prompt = '''A service receives a client JWT access token. Which checks are **required**?'''
+options = ["Verify the signature with a preconfigured key/algorithm (do not trust arbitrary alg values; reject none)", "Check exp (expiration)", "Check aud and iss against the expected service/identity provider", "Only decode the base64 payload to read user_id", "Store the complete JWT in the server's localStorage"]
+explanation = '''Trust a JWT only when its signature is valid, it has not expired, and it was issued for the right service (aud) by the expected identity provider (iss). Decoding without signature verification lets anyone forge a token.'''
+[questions.sd-088]
+prompt = '''A developer accidentally commits an AWS access key to a public repository. It is discovered after 10 minutes and the commit has been force-pushed away. What should be done **first**?'''
+options = ["Nothing; the commit was deleted", "Revoke/disable the key immediately, issue a replacement through a secrets manager, then inspect activity logs for the exposure window", "Make the repository private", "Email the developer a reminder"]
+explanation = '''Bots scan public repositories within seconds; deleting a commit does not revoke copies. Treat the key as **exposed**: revoke and rotate it, then inspect audit logs (such as CloudTrail) for misuse. Follow up with secret scanning and short-lived credentials.'''
+[questions.sd-089]
+prompt = '''Thirty internal services currently call one another using **a single shared API key** stored in environment variables. What replacement most improves security?'''
+options = ["Rotate the shared key once a year", "Give each service its own identity (mTLS through a service mesh or short-lived workload token) and define which services may call which", "Put every service in one VPC; that is sufficient", "Base64-encode the API key"]
+explanation = '''A shared key does not identify **which service** called and cannot scope permissions; one leak exposes everything. Per-workload identity and service authorization (zero trust) limit damage. Base64 is not encryption, and trusting the internal network violates zero-trust principles.'''
+[questions.sd-090]
+prompt = '''A new feature lets users upload profile photos. Under STRIDE, select the correctly matched threat/mitigation pairs:'''
+options = ["Denial of service (uploading a 5 GB file) → limit file size and rate-limit by user", "Tampering (malware disguised as an image) → check magic bytes, process/re-encode in isolation, scan for malware", "Information disclosure (photo contains GPS metadata) → strip EXIF during processing", "Elevation of privilege → increase bucket capacity", "Spoofing (uploading to another user's account) → verify ownership in the API that issues the pre-signed URL"]
+explanation = '''Threat modeling is systematic. Increasing bucket capacity does not address privilege escalation; an appropriate E mitigation is least privilege (for example, the image worker cannot read unrelated data).'''
+[questions.sd-091]
+prompt = '''A B2B SaaS shares one PostgreSQL database; every table has tenant_id. A bug that omitted WHERE tenant_id = ? once exposed another tenant's data. Which measure **systematically reduces risk** without a separate DB per tenant?'''
+options = ["Remind the team to review more carefully", "Enable Row-Level Security with a policy using tenant_id set by the data-access layer for each request, plus automated cross-tenant access tests", "Encrypt the tenant_id column", "Change tenant_id to a UUID"]
+explanation = '''RLS enforces tenant filtering in the database, so a query that forgets its filter still cannot read another tenant's rows (defense in depth). Ensure the app role cannot bypass RLS and reset session variables on pooled connections. Manual review is not a system-level control.'''
+[questions.sd-092]
+prompt = '''Requirement: when an admin locks a compromised account, all of its sessions must become invalid **within one minute**. The system uses stateless JWT access tokens with a 24-hour TTL. Which design is reasonable?'''
+options = ["Keep 24-hour TTL and trust that the attacker will not use the token for long", "Reduce access-token TTL to about 5 minutes, use revocable server-side refresh tokens, and check a short-lived denylist (by jti/user in Redis) until old tokens expire", "Change the JWT signing secret whenever one account is locked", "Delete the attacker's browser cookie"]
+explanation = '''Stateless JWTs are hard to revoke. A common design uses short TTLs and server-controlled refresh tokens, with a temporary denylist for near-immediate revocation. Rotating the signing key logs **everyone** out; the server cannot delete a cookie on an attacker's machine.'''
+[questions.sd-093]
+prompt = '''A SaaS has 2,000 small tenants sharing a DB. A bank (projected to provide 25% of revenue) requires physical data isolation, a dedicated encryption key, and an optional region. The team has eight people. What do you propose?'''
+options = ["Move all 2,000 tenants to separate databases for consistency", "Reject the customer because it complicates the architecture", "Use a hybrid model: keep small tenants in a shared pool and offer premium tenants a silo (dedicated DB/cluster, KMS key, optional region), route by tenant at the data-access layer, and automate provisioning with the operating cost reflected in pricing", "Promise isolation but keep the shared DB and only add column encryption"]
+explanation = '''A **pool + silo** model keeps costs low for most tenants and gives stronger isolation to those paying for it. Automate provisioning and migrations across databases and price the operational burden. A false promise breaks a contract; moving every tenant to a silo multiplies operating cost.'''
+
+[modules.sd-case-studies]
+title = "System design interview case studies"
+description = "Step-by-step designs for URL shorteners, news feeds, chat, rate limiters, notifications, and file uploads."
+lesson = '''
+### A framework for a ~45-minute design interview
+1. **Clarify requirements** (5 min): functional and non-functional needs (latency, availability, consistency, scale); ask about users and read/write ratio.
+2. **Estimate** (5 min): QPS, storage, bandwidth; get the order of magnitude right.
+3. **API and data model**: key endpoints, tables/collections, access keys.
+4. **High-level design**: client → load balancer → service → cache/DB/queue.
+5. **Deep dive** on the 1–2 hardest areas (often what the interviewer cares about).
+6. Explain **trade-offs, failure points, and scaling**.
+
+### Common patterns
+- **URL shortener**: at 100 million links/month and read:write ~100:1, writes are ~40/s and reads ~4,000/s average. Seven base62 characters give 62^7 ≈ 3.5 trillion codes. Generate via distributed IDs plus base62 (unique but guessable), or hash with collision checks. Cache hot reads. 301 redirects are cacheable (less load, less analytics); 302 keeps clicks observable.
+- **News feed**: fan-out on write gives fast reads but celebrity posts create huge write bursts. Fan-out on read saves writes but makes reads expensive. Hybrid pushes ordinary users' posts and pulls celebrity posts at read time.
+- **Chat**: persistent WebSocket connections to gateways; keep a user-to-gateway registry. Partition messages by conversation_id and order by increasing per-conversation ID. Track delivery/read states and push-notify offline users.
+- **Rate limiter**: put at the gateway; use an atomic Redis token bucket keyed by api_key and route; return 429 and Retry-After. Choose fail-open or fail-closed based on risk if Redis fails.
+- **Notifications**: API → queue → channel-specific workers → provider. Respect preferences, deduplicate by idempotency key, retry with DLQ, rate-limit providers, and use templates.
+- **File upload**: issue a **pre-signed URL** for direct client-to-object-storage upload; multipart upload supports resuming large files. Queue post-upload virus scanning and thumbnail work; serve via CDN.
+
+### Common interview mistakes
+- Drawing Kafka/Kubernetes before clarifying requirements.
+- Listing technologies without trade-offs.
+- Ignoring failure points, hot data, and behavior when dependencies fail.
+'''
+[questions.sd-094]
+prompt = '''The interviewer says, "Design a URL shortener." What should you do first?'''
+options = ["Immediately draw Kafka, Kubernetes, and Cassandra", "Clarify requirements: features (custom aliases, expiration, analytics), scale (links/month, read/write ratio), latency and availability needs", "Write a base62 code generator", "Immediately choose SQL or NoSQL"]
+explanation = '''Without requirements there is no basis for trade-offs. A few minutes clarifying functional and non-functional needs drives the design (for example, read-heavy workloads favor caching the read path).'''
+[questions.sd-095]
+prompt = '''The short code uses a base{{blank}} alphabet with a–z, A–Z, and 0–9; seven characters provide about 3.5 trillion codes.'''
+explanation = '''There are 26 + 26 + 10 = 62 characters; 62^7 ≈ 3.5 × 10^12 codes, enough for decades at 100 million links/month (estimate).'''
+[questions.sd-096]
+prompt = '''A URL shortener must count **every click accurately** for analytics. Which redirect should it return?'''
+options = ["301 Moved Permanently, so browsers can cache it and reduce server load", "302 Found (or 307), so each click reaches the server and can be recorded", "200 with the destination page content", "404, then redirect with JavaScript"]
+explanation = '''Browsers can cache 301, so later clicks go directly to the destination and are **not counted**. 302 adds server load, but redirect handling is light (cache lookup → URL). Enqueue click recording so it does not delay redirects.'''
+[questions.sd-097]
+prompt = '''A one-to-one and group chat needs fast conversation history reads with ordering preserved. What is a good message-table **partition key**?'''
+options = ["Partition by random message_id for even distribution", "Partition by conversation_id and sort within each partition by a time-increasing ID (e.g. Snowflake/ULID)", "Partition by send date", "Partition by sender_id"]
+explanation = '''The main query is "get the latest N messages for conversation X"; one ordered partition serves it. Date partitioning can create hot partitions; sender partitioning requires merging multiple partitions. Very large groups may also need time buckets.'''
+[questions.sd-098]
+prompt = '''Design video upload (up to 5 GB) for a mobile app. Select the **reasonable** decisions:'''
+options = ["The server issues a pre-signed URL so the client uploads directly to object storage", "Use multipart upload so interrupted parts can be retried", "Send the whole file through the application server before storage", "Put the upload-complete event on a queue so workers transcode asynchronously", "Store video files in a BLOB column in the primary database"]
+explanation = '''Direct object-storage upload saves app-server bandwidth and memory; multipart upload supports resume; slow transcoding belongs in asynchronous workers. Large DB blobs bloat backups, replication, and DB caches.'''
+[questions.sd-099]
+prompt = '''A social network's average user has 200 followers, but about 1,000 celebrities have 10–50 million followers. Feed reads are heavy. Which feed-generation strategy fits?'''
+options = ["Fan-out on write for everyone, including celebrities", "Fan-out on read for everyone", "Hybrid: push ordinary users' posts into follower feed caches; pull celebrity posts at read time and merge them", "Scan the entire posts table on every feed read"]
+explanation = '''Pushing a celebrity post creates tens of millions of writes; pulling every account makes each read aggregate hundreds of sources. Hybrid pushes where fan-out is cheap and pulls where fan-out is huge, handling skew.'''
+[questions.sd-100]
+prompt = '''A notification system sends about 5 million push messages/emails in 10 minutes during a promotion. The email provider caps traffic at 1,000 emails/s, and workers sometimes crash mid-job. Which design avoids **duplicates** and **rate-limit violations**?'''
+options = ["One sequential cron loop", "Queue by channel; workers process batches, deduplicate by notification_id for idempotency, enforce a provider token-bucket limit, retry with backoff, and use a DLQ", "Send with unlimited parallelism", "Send simultaneously through two providers to guarantee delivery"]
+explanation = '''Queues and workers scale horizontally; dedupe lets a restarted worker safely handle at-least-once jobs; token bucket enforces provider limits; DLQ holds permanent failures. Note that 5 million emails at 1,000/s takes about 83 minutes, so align expectations or obtain a higher quota.'''
+[questions.sd-101]
+prompt = '''Interview: "Design a distributed rate limiter for an API gateway at 100,000 requests/s, limited by API key and route." Describe the algorithm, state storage, behavior if storage fails, and client response.'''
+explanation = '''Strong answers use atomic operations, state the acceptable error margin, and define a clear fallback if the limiter itself fails.'''
+model_answer = '''1. **Requirements**: limit by (api_key, route), allow brief bursts, add <1–2 ms latency (estimate), and accept small approximation.
+2. **Algorithm**: token bucket (capacity = burst, refill rate = average quota) or sliding-window counter; avoid fixed windows, which can double quota at boundaries.
+3. **State**: Redis cluster, keyed by rate-limit identity; update atomically (e.g. Lua script) to avoid races across gateways. Distribute 100,000 requests/s across shards.
+4. **Reduce Redis load**: for hot keys, keep per-gateway local counters and batch synchronization, accepting approximation.
+5. **Redis failure**: choose by endpoint risk—fail open for ordinary reads, fail closed or strict local limit for costly/sensitive endpoints; alert.
+6. **Response**: 429 with Retry-After and RateLimit-Remaining; document quotas for customers.'''
+[questions.sd-102]
+prompt = '''Tech Lead interview: "A ticketing monolith handles 500 orders/minute, and the business expects 10× growth in 12 months. The CTO wants to split into microservices immediately." How would you assess this and propose a path?'''
+explanation = '''A strong Lead answer uses measurements, chooses reversible options first, considers team capacity, and explains trade-offs to decision-makers rather than agreeing or objecting emotionally.'''
+model_answer = '''1. **Measure first**: 10× is ~5,000 orders/minute or ~85/s (estimate), not necessarily a huge load. Profile for the real bottleneck (seat-locking DB, slow queries, synchronous payment).
+2. **Fix the bottleneck**: indexes/queries, cache read-heavy data (showtimes), read replicas, move slow work (email, PDF tickets) to a queue, and scale a stateless monolith horizontally.
+3. **Modularize the monolith**: define bounded contexts (booking, payment, catalog), separate logical schemas, and avoid direct cross-module calls.
+4. **Extract gradually (strangler fig)** only where justified: independent scaling, a separate team, or different release cadence. Use feature flags, parallel operation, and rollback at each step.
+5. **Team and operations**: microservices require tracing, CI/CD, and on-call; include these costs if capabilities are missing.
+6. Present an ADR to the CTO with options, trade-offs, costs, risks, and a measurable trigger for what to extract if step 2 misses the target.'''
+[questions.sd-103]
+prompt = '''There are 15 minutes left in a ride-hailing system-design interview; you have finished the high-level design. The interviewer asks, "Which area would you like to explore?" Which answer shows the best judgment?'''
+options = ["Explore the frontend framework choice", "Choose the riskiest/hardest part: matching drivers and riders by real-time location (geo-index, frequent location updates) while preventing one driver from being assigned two trips; explain why this area matters", "List every technology that could be used", "Discuss how to write API unit tests"]
+explanation = '''A deep dive should target a **decision that determines system success** and explain the priority. This shows time allocation and risk awareness expected of a Lead; listing technologies does not show trade-off judgment.'''
+
+[modules.system-design-lead]
+title = "Tech Lead perspective"
+description = "ADRs, trade-off analysis, estimation and risk management, code review, technical debt, mentoring, and stakeholder communication."
+lesson = '''
+### Architecture decisions
+There is no universally "best" architecture, only one **fit for constraints**: actual scale, team capability, deadline, budget, and acceptable risk. Prefer **reversible** choices when uncertain (two-way doors); analyze hard-to-reverse choices deeply (primary DB, shard key, public API contract).
+
+Use a weighted decision matrix to expose assumptions, not mechanically pick the largest score. An **Architecture Decision Record (ADR)** is a short, immutable repo document with status, context, decision, alternatives, and consequences. A new decision supersedes the old ADR rather than rewriting history.
+
+### Estimation, risk, and review
+Break work down, estimate ranges (best/worst/likely), and state assumptions. Time-box a **spike** for unknowns. Track risk as probability × impact with an owner and mitigation; de-risk the riskiest area early. Roll out with feature flags, canaries/dark launches, rollback plans, and clear stop criteria.
+Code review should improve quality and share knowledge, not act as a personal gate. Keep PRs small and explain why. Automate lint, formatting, tests, and security scans so reviewers can focus on design, correctness, and operability. Check errors/timeouts, idempotency, backward-compatible migrations, logs/metrics, authorization/input validation, and edge-case tests.
+
+### Technical debt, mentoring, and communication
+Intentional debt is recorded speed with a known cost; careless debt is not. Track debt with its **interest cost** (incidents and slower delivery), reserve capacity (for example, 15–20% per sprint as a guideline), and repay it when work touches that area. Big rewrites rarely help; prefer gradual strangler replacement.
+Give people stretch assignments with pairing and reviewed design ownership. Explain decisions to stakeholders through **business impact** (lost orders, launch time, cost) and offer 2–3 options with trade-offs.
+
+### Team anti-patterns
+- Resume-driven development: choosing technology to learn rather than solve a problem.
+- One person is the only system expert (bus factor = 1).
+- Decisions happen in private messages, leaving no record of why six months later.
+'''
+[questions.sd-lead-001]
+prompt = '''A Tech Lead receives two feature requests: A takes two days of coding; B takes two weeks because it requires an architectural change. Product wants both next week. What should happen first?'''
+options = ["Start A to get real user feedback quickly", "Start B because it addresses a larger bottleneck", "Split A into three smaller delivery steps", "Delay both until the team is ready"]
+explanation = '''B may have greater business impact or unlock future capability. The Lead should assess the trade-off between delivery speed and architectural impact, and clarify the business value and constraints before committing.'''
+[questions.sd-lead-002]
+prompt = '''The backlog has three technical-debt items: X (refactor the cache module), Y (add payment test coverage), and Z (upgrade to a beta framework). The sprint can fund only one. Which should be prioritized?'''
+options = ["Y, because payment failure can cause serious financial loss", "X, because the cache is central to the system", "Z, because a framework upgrade has long-term benefits", "Do X and Y in parallel to reduce cost"]
+explanation = '''Payment failures and data-integrity issues can cause direct financial loss. Test coverage helps detect and prevent defects in a high-risk area. A Lead prioritizes by risk and impact.'''
+[questions.sd-lead-003]
+prompt = '''A stakeholder does not support investment in a new microservice. How should you present the case?'''
+options = ["Microservices help teams work independently and reduce bottlenecks", "Microservices are always faster than a monolith", "It is an industry standard every startup uses", "The team succeeded with microservices on another project"]
+explanation = '''A Tech Lead should discuss concrete impact: independent delivery, review time, and scalability improvements tied to the current problem. Avoid appeals to fashion or unrelated examples; explain the problem this change would solve.'''
+[questions.sd-104]
+prompt = '''What is an **ADR** (Architecture Decision Record) used for?'''
+options = ["Recording an architecture decision: context, decision, alternatives considered, and consequences", "Listing sprint tasks", "Documenting how to install a development environment", "Reporting a production incident"]
+explanation = '''A short ADR kept with the repository helps future contributors understand **why** the system is the way it is. When a decision changes, write a superseding ADR rather than editing the old one.'''
+[questions.sd-105]
+prompt = '''A 2,400-line PR combines a refactor, a new feature, and formatting changes. What is the most useful reviewer feedback?'''
+options = ["Approve because it is too long to read", "Ask to split it into small PRs (formatting, refactor, feature separately) so design and correctness can be reviewed", "Leave 200 comments about variable names", "Rewrite the PR in your preferred style"]
+explanation = '''Large PRs mixing change types lead to shallow reviews and difficult rollbacks. Small, single-purpose PRs let reviewers focus on design; formatting should be handled by automation.'''
+[questions.sd-106]
+prompt = '''An eight-year-old pricing module has no tests, and changes cause an average of one incident per month. What is the most reasonable approach?'''
+options = ["Rewrite everything in six months and freeze features", "Never touch it again", "Add characterization tests for important existing behavior, then gradually extract/replace pieces when feature work touches them; track incident counts to show progress", "Add a warning comment at the top of the file"]
+explanation = '''A big rewrite is risky and can lose hidden behavior. Characterization tests capture current behavior so changes are safer; gradual replacement alongside real work repays debt while delivering features. Monthly incidents measure the debt's interest and help explain it to stakeholders.'''
+[questions.sd-107]
+prompt = '''Which decision is a **one-way door** (hard to reverse) and deserves the most analysis?'''
+options = ["Choosing a logging library for an internal service", "Choosing a shard key for a trillion-row order table and the public ID format in a partner API", "Changing a button color in the admin UI", "Trying a new cache TTL behind a feature flag"]
+explanation = '''Changing a shard key or public API contract is costly (huge data migration and partner changes). The other decisions are reversible; decide, experiment, and measure instead of prolonged meetings.'''
+[questions.sd-108]
+prompt = '''You are leading a payment DB migration from MySQL to PostgreSQL. Which actions significantly **reduce risk**?'''
+options = ["De-risk early with a time-boxed spike on type/collation differences and key-query performance", "Dual-write or use CDC to the new DB and compare results (shadow reads) before switching reads", "Move 100% of traffic overnight with no rollback path", "Shift gradually by traffic share/tenant with stop criteria and a rehearsed rollback plan", "Keep the plan in the Lead's head to avoid debate"]
+explanation = '''De-risk early, validate with real data, and roll out gradually with stop criteria and a rehearsed rollback. A no-rollback big bang and an undocumented plan (bus factor = 1) greatly increase risk.'''
+[questions.sd-109]
+prompt = '''Product asks for a "real-time report across all data" in two weeks. The team estimates two months to build it safely without taking down the primary DB. How do you respond?'''
+options = ['"We cannot do it."', "Agree to two weeks and make the team work overtime", "Clarify the real need (users, acceptable freshness), then offer 2–3 options with trade-offs: e.g. a 15-minute-lag report from a read replica in two weeks, or full real-time via a separate pipeline in two months", "Build it alone over the weekend"]
+explanation = '''A Lead turns conflict into an informed choice: clarify the business goal, explain impact (DB outage risk and timing), and offer options rather than refusing or overpromising. Often "real-time" means "fresh enough."'''
+[questions.sd-110]
+prompt = '''Only one senior engineer understands the billing system, and they will be on leave for a month. Which action most sustainably reduces risk?'''
+options = ["Cancel their leave", "Ban billing deployments for the month and hope nothing fails", "Plan a handoff: pair two others on real tasks, write short runbooks for common incidents, and let them join on-call with senior backup before the leave", "Ask the engineer to write a 100-page document in a week"]
+explanation = '''Bus factor = 1 is an organizational risk. Knowledge transfers best through **real work** (pairing, supported on-call) with short, actionable runbooks. Rushed long documents are rarely read; freezing work only postpones the issue.'''
+[questions.sd-111]
+prompt = '''The team is debating whether to keep PostgreSQL or move a new product-catalog service to a NoSQL document DB. Outline an ADR and describe how you would lead the decision.'''
+explanation = '''A Lead separates the problem from the technology, uses criteria and evidence, considers operating cost and team capability, and records the decision so the organization retains context.'''
+model_answer = '''**ADR outline**
+- Title, status (Proposed/Accepted), date.
+- **Context**: catalog requirements (attributes vary by category, reads ≫ writes, search/filter needs), estimated scale, team constraints.
+- **Options**: (1) PostgreSQL + JSONB for flexible attributes, (2) document DB, (3) Postgres plus a separate search engine.
+- **Weighted criteria**: data-model fit, key-query performance, **operations** (backup, monitoring, team experience), cost, reversibility.
+- **Decision and consequences/trade-offs**: accepted trade-offs, risks, follow-up work.
+
+**Facilitation**
+1. Agree on the problem and criteria **before** discussing technology, so debate tests assumptions rather than preferences.
+2. Time-box a spike/benchmark with realistic data for uncertain assumptions (e.g. JSONB performance).
+3. Ask a skeptic to write alternatives and document why options were rejected.
+4. Decide on time (disagree and commit), save the ADR in the repo, and set a review trigger for changed conditions.'''
+[questions.sd-c12]
+title = "Canary decision gate"
+prompt = '''Your team wants to automate canary decisions. Implement decide(baseline, canary, policy) returning a (decision, reason) tuple.
+baseline/canary: dicts with requests (int), errors (int), p99_ms (float).
+policy: min_requests, max_error_rate, max_error_delta, max_p99_ms, max_p99_ratio.
+
+Error rate = errors / requests (requests = 0 gives 0). Apply checks **in this exact order**:
+1. Canary error rate > max_error_rate **and** canary has at least 10 errors → ("rollback", "error_rate") (stop immediately for clear failures, even before enough traffic).
+2. canary requests < min_requests → ("wait", "insufficient_traffic").
+3. Canary error rate > max_error_rate → ("rollback", "error_rate").
+4. Canary rate − baseline rate > max_error_delta → ("rollback", "regression_vs_baseline").
+5. Canary p99 > max_p99_ms **or** canary p99 > baseline p99 × max_p99_ratio → ("rollback", "latency").
+6. Otherwise → ("promote", "ok").'''
+explanation = '''A canary gate turns rollout policy into reviewable, testable code: wait for a sufficient sample to avoid noise, but stop immediately for clear failures; compare against a simultaneous baseline to account for shared traffic changes. At Lead level, agreeing on thresholds with product and on-call is the hard part.'''
+hints = ["Write a helper rate(m) that handles requests == 0.", "Check order is part of the policy; step 1 is the emergency circuit breaker before waiting for enough traffic."]
+[questions.sd-112]
+prompt = '''A five-person team needs full-text search across 2 million products with attribute filtering. What is the most reasonable starting point?'''
+options = ["Build a custom search engine with its own inverted index", "Use PostgreSQL full-text search or a managed search service; operate a search cluster only if measurements show it is needed", "Run LIKE '%keyword%' across every column", "Buy the most expensive enterprise solution to be safe"]
+explanation = '''Build vs. buy: 2 million records are within reach of PostgreSQL full-text search or a managed service at low operating cost. Custom search distracts from the product; a leading-wildcard LIKE cannot use an index or rank results.'''

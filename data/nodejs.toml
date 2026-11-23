@@ -67,12 +67,68 @@ lesson = '''
 - Log có cấu trúc (pino), cấu hình qua biến môi trường (12-factor).
 '''
 
+[[modules]]
+id = "nodejs-lead"
+title = "Góc nhìn Tech Lead"
+description = "Ra quyết định kiến trúc và vận hành Node.js ở quy mô team: ADR, đánh đổi, rollout, sự cố, chi phí."
+sources = ["node/process", "node/worker_threads", "node/cluster", "node/diagnostics_channel"]
+lesson = '''
+### Tech Lead không chọn "công nghệ tốt nhất" mà chọn phương án chịu được ràng buộc của team
+
+Một quyết định tốt trả lời được bốn câu hỏi: **ràng buộc là gì** (số người, thời gian, ngân sách, mức rủi ro chấp nhận), **phương án nào khả thi**, **đánh đổi từng phương án**, và **làm sao biết ta sai để quay lui**. Câu trả lời "dùng X vì X hiện đại" gần như luôn thiếu phần ràng buộc.
+
+#### Khung ra quyết định
+
+1. Viết rõ vấn đề và tiêu chí (latency P99, thời gian delivery, chi phí vận hành, kỹ năng team).
+2. Liệt kê 2–3 phương án, gồm cả "không làm gì" hoặc "làm nhỏ nhất".
+3. Chấm theo tiêu chí, ghi rủi ro và cách giảm rủi ro.
+4. Chọn, ghi ADR, đặt mốc xem lại.
+5. Rollout nhỏ, có metric và đường lui.
+
+| Tình huống | Phương án thường bị chọn sai | Phương án hợp lý hơn trong ngữ cảnh nhỏ |
+|---|---|---|
+| Team 5 người, MVP 3 tháng | Microservice từ đầu | Modular monolith, ranh giới module rõ, một pipeline deploy |
+| API CPU-bound làm chặn event loop | Viết lại sang ngôn ngữ khác | Tách việc nặng sang worker pool hoặc queue, đo trước |
+| Downstream chập chờn | Retry vô hạn, không jitter | Timeout + retry có budget + backoff jitter + circuit breaker |
+| Nâng Node major cho nhiều service | Nâng đồng loạt một đêm | Canary từng service, chạy CI trên 2 phiên bản, có rollback |
+
+#### ADR mẫu ngắn
+
+```md
+# ADR-014: Gửi email hóa đơn qua queue
+Trạng thái: Chấp nhận (2026-03)
+Bối cảnh: gọi SMTP đồng bộ làm P99 /checkout 4s khi nhà cung cấp chậm.
+Quyết định: ghi outbox trong cùng transaction, worker gửi bất đồng bộ, idempotency key = invoiceId.
+Hệ quả: thêm một thành phần vận hành; email có thể trễ vài phút; cần dead-letter queue và cảnh báo.
+Xem lại: sau 2 quý hoặc khi volume > 10k/ngày.
+```
+
+#### Checklist review ở mức team
+
+- Có timeout cho mọi cuộc gọi ra ngoài? Có giới hạn kích thước body và số kết nối?
+- Lỗi được phân loại (có thể retry / không) và log có correlation id, không chứa secret?
+- Thay đổi có tương thích ngược (additive), có feature flag và cách rollback?
+- Có metric cho luồng mới (rate, error, duration) và cảnh báo gắn với runbook?
+- Test bao phủ nhánh lỗi, không chỉ happy path?
+
+#### Anti-pattern thường gặp ở quy mô team
+
+- **Resume-driven architecture**: chọn công nghệ để học thay vì để giải quyết vấn đề.
+- **Hero culture**: một người giữ mọi kiến thức vận hành; không có runbook.
+- **Big-bang migration**: viết lại toàn bộ, không có điểm kiểm tra giữa chừng.
+- **Alert fatigue**: cảnh báo không hành động được khiến người trực bỏ qua cảnh báo thật.
+- **Tối ưu trước khi đo**: tốn tuần làm việc cho chỗ không phải nút cổ chai.
+
+Khi nghi vấn, hãy nhớ: quyết định đảo ngược được thì quyết nhanh; quyết định khó đảo ngược (schema dữ liệu, hợp đồng API công khai, ranh giới service) thì dành thời gian viết ADR và xin review.
+'''
+
 # ------------------------------------------------------------ CORE
 [[questions]]
 id = "node-001"
 module = "node-core"
 type = "single"
 difficulty = 3
+tags = ["level:senior"]
 prompt = '''
 Thứ tự in ra trong Node.js (file chạy trực tiếp, CommonJS)?
 
@@ -99,6 +155,7 @@ id = "node-002"
 module = "node-core"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Một API Node tính hash bcrypt đồng bộ (`bcrypt.hashSync`) trong mỗi request. Vấn đề là gì?"
 options = [
   "Không có vấn đề vì Node đa luồng",
@@ -114,6 +171,7 @@ id = "node-003"
 module = "node-core"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Khác biệt giữa `worker_threads` và `cluster`?"
 options = [
   "Giống nhau",
@@ -130,6 +188,7 @@ id = "node-004"
 module = "node-core"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Phát biểu nào đúng về ES Modules trong Node.js?"
 options = [
   "Bật bằng đuôi `.mjs` hoặc `\"type\": \"module\"` trong package.json",
@@ -147,6 +206,7 @@ id = "node-005"
 module = "node-core"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 Huỷ `fetch` nếu quá 3 giây (Node 18+):
 
@@ -163,6 +223,7 @@ id = "node-006"
 module = "node-core"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "Giải thích vì sao Node.js xử lý được nhiều kết nối đồng thời dù JavaScript chạy đơn luồng."
 keywords = [
   ["event loop"],
@@ -184,6 +245,7 @@ id = "node-007"
 module = "node-core"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 title = "promisify callback-style API"
 prompt = '''
 Viết `promisify(fn)` giống `util.promisify`: chuyển hàm dạng callback **error-first** `fn(...args, (err, value) => {})` thành hàm trả về Promise.
@@ -244,6 +306,7 @@ id = "node-020"
 module = "node-io"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Vì sao nên stream file 2GB thay vì `fs.readFile` rồi `res.end(data)`?"
 options = [
   "readFile không đọc được file lớn hơn 1MB",
@@ -260,6 +323,7 @@ id = "node-021"
 module = "node-io"
 type = "single"
 difficulty = 3
+tags = ["level:senior"]
 prompt = "\"Backpressure\" trong stream là gì?"
 options = [
   "Lỗi khi stream bị đóng",
@@ -276,6 +340,7 @@ id = "node-022"
 module = "node-io"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "EventEmitter phát sự kiện `'error'` mà không có listener nào. Điều gì xảy ra?"
 options = ["Bị bỏ qua", "Lỗi được ném ra — nếu không bắt sẽ làm crash process", "In warning", "Tự động retry"]
 answer = [1]
@@ -287,6 +352,7 @@ id = "node-023"
 module = "node-io"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''
 Nối stream an toàn (tự huỷ các stream và trả lỗi khi một bước thất bại):
 
@@ -304,6 +370,7 @@ id = "node-024"
 module = "node-io"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 title = "Xử lý dữ liệu theo chunk (line splitter)"
 prompt = '''
 Mô phỏng Transform stream tách dòng. Viết `createLineSplitter(onLine)` trả về object:
@@ -370,6 +437,7 @@ id = "node-040"
 module = "node-express"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = "Express nhận diện middleware xử lý lỗi bằng cách nào?"
 options = ["Tên hàm bắt đầu bằng `error`", "Hàm có **4 tham số** `(err, req, res, next)`", "Đăng ký bằng `app.error()`", "Đặt trong thư mục errors"]
 answer = [1]
@@ -381,6 +449,7 @@ id = "node-041"
 module = "node-express"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Middleware không gọi `next()` và cũng không gửi response. Điều gì xảy ra?"
 options = ["Express tự gọi next", "Request bị treo cho tới khi client timeout", "Trả 404", "Trả 500"]
 answer = [1]
@@ -392,6 +461,7 @@ id = "node-042"
 module = "node-express"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Trong **Express 4**, handler `async` ném lỗi (promise reject) thì sao?"
 options = [
   "Tự chuyển tới error middleware",
@@ -408,6 +478,7 @@ id = "node-043"
 module = "node-express"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Biện pháp nào giúp API Express an toàn hơn ở production?"
 options = [
   "`helmet()` thiết lập security headers",
@@ -425,6 +496,7 @@ id = "node-044"
 module = "node-express"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''
 Đọc tham số route và trả 404:
 
@@ -445,6 +517,7 @@ id = "node-045"
 module = "node-express"
 type = "code"
 difficulty = 3
+tags = ["level:senior"]
 title = "compose middleware (mô hình onion)"
 prompt = '''
 Viết `compose(middlewares)` giống `koa-compose`: trả về hàm `(ctx) => Promise`.
@@ -526,6 +599,7 @@ id = "node-046"
 module = "node-express"
 type = "code"
 difficulty = 2
+tags = ["level:middle"]
 title = "Mini router Express với params"
 prompt = '''
 Viết `createRouter()` trả về `{ get(path, handler), post(path, handler), handle(method, url) }`:
@@ -603,6 +677,7 @@ id = "node-060"
 module = "node-ops"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Khi xảy ra `uncaughtException`, cách xử lý được khuyến nghị là:"
 options = [
   "Bỏ qua và chạy tiếp",
@@ -619,6 +694,7 @@ id = "node-061"
 module = "node-ops"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = "Vì sao retry nên dùng **exponential backoff + jitter**?"
 options = [
   "Để code ngắn hơn",
@@ -634,6 +710,7 @@ id = "node-062"
 module = "node-ops"
 type = "code"
 difficulty = 3
+tags = ["level:senior"]
 title = "Rate limiter token bucket"
 prompt = '''
 Viết `createRateLimiter({ capacity, refillPerSec, now })`:
@@ -722,6 +799,7 @@ id = "node-063"
 module = "node-ops"
 type = "code"
 difficulty = 3
+tags = ["level:senior"]
 title = "LRU cache có TTL"
 prompt = '''
 Viết class `LRUCache` với `constructor(max, { ttlMs = Infinity, now = Date.now } = {})`:
@@ -852,6 +930,7 @@ id = "nodejs-dv001"
 module = "nodejs-dv-modules"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''Một package khai báo type=module ở package.json gần nhất. src/index.js dùng format nào theo cấu hình đó?'''
 options = ["ESM", "CommonJS", "Node chọn ngẫu nhiên theo cách chạy", "File không được nạp"]
 answer = [0]
@@ -863,6 +942,7 @@ id = "nodejs-dv002"
 module = "nodejs-dv-modules"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''Trong package có type=module, file nào vẫn được Node diễn giải tường minh là CommonJS?'''
 options = ["index.js", "index.mjs", "index.cjs", "index.json"]
 answer = [2]
@@ -874,6 +954,7 @@ id = "nodejs-dv003"
 module = "nodejs-dv-modules"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''Một thư viện thêm trường exports trong package.json. Hệ quả nào đúng?'''
 options = ["Có thể khai báo entry point khác nhau theo điều kiện import và require", "Node tự chuyển mã CommonJS sang ESM", "Các subpath không được công khai có thể bị chặn khi consumer deep import", "Mọi file trong thư mục package tự động trở thành API công khai", "exports luôn bắt buộc phải trỏ tới đúng một file"]
 answer = [0, 2]
@@ -885,6 +966,7 @@ id = "nodejs-dv004"
 module = "nodejs-dv-modules"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''Với file .js, trường package.json nào khai báo format mặc định cho các file trong package: {{blank}}?'''
 blanks = [["type"]]
 explanation = "type nhận module hoặc commonjs; dùng .mjs/.cjs khi cần chỉ định format ngay trên tên file."
@@ -895,6 +977,7 @@ id = "nodejs-dv005"
 module = "nodejs-dv-modules"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''Trong ESM, API nào từ node:module tạo một hàm require gắn với URL của module hiện tại: {{blank}}?'''
 blanks = [["createRequire"]]
 explanation = "createRequire(import.meta.url) hữu ích khi cần tương thích API CommonJS trong một module ESM."
@@ -905,6 +988,7 @@ id = "nodejs-dv006"
 module = "nodejs-dv-modules"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''Trong Node ESM, cách nào phù hợp để import file JavaScript tương đối db.js?'''
 options = ["import db from './db'", "import db from './db.js'", "import db from 'db.js'", "require('./db.js') luôn khả dụng không cần thiết lập"]
 answer = [1]
@@ -916,6 +1000,7 @@ id = "nodejs-dv007"
 module = "nodejs-dv-modules"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = '''Trong buổi phỏng vấn, hãy giải thích các khác biệt thực tế giữa CommonJS và ESM trong Node, rồi nêu cách bạn thiết kế package để hỗ trợ consumer mà không để lộ file nội bộ.'''
 keywords = [["commonjs", "cjs", "module.exports"], ["esm", "ecmascript modules", "import/export"], ["package.json type", "type field"], ["exports", "conditional exports"], ["public api", "interoperability", "tương thích"]]
 min_keywords = 3
@@ -929,6 +1014,7 @@ module = "nodejs-dv-modules"
 type = "code"
 lang = "javascript"
 difficulty = 2
+tags = ["level:middle"]
 title = "Phân tích bare package specifier"
 prompt = '''Viết parsePackageSpecifier(specifier) cho một bare package specifier của Node. Trả về { packageName, subpath }, trong đó package root có subpath: ".", còn subpath như pkg/fs/read có subpath: "./fs/read". Hỗ trợ package scoped như @team/logger và @team/logger/json.
 
@@ -1004,6 +1090,7 @@ id = "nodejs-dv008"
 module = "nodejs-dv-http"
 type = "single"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''Trong callback của http.createServer, req là đối tượng gì?'''
 options = ["Readable stream đại diện request đến", "JSON đã parse", "Writable stream của response", "Một worker thread"]
 answer = [0]
@@ -1015,6 +1102,7 @@ id = "nodejs-dv009"
 module = "nodejs-dv-http"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''Bạn muốn biết response đã bắt đầu gửi headers chưa để tránh ghi status lần hai. Thuộc tính nào kiểm tra điều đó?'''
 options = ["res.headersSent", "res.writableEnded", "req.complete", "req.aborted"]
 answer = [0]
@@ -1026,6 +1114,7 @@ id = "nodejs-dv010"
 module = "nodejs-dv-http"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''Một HTTP Agent phía client có thể hỗ trợ những việc nào?'''
 options = ["Tái sử dụng socket theo cơ chế keep-alive", "Giới hạn số socket đồng thời tới một origin", "Tự retry mọi request lỗi mà không xét idempotency", "Parse JSON response thành object", "Quản lý pool socket outbound"]
 answer = [0, 1, 4]
@@ -1037,6 +1126,7 @@ id = "nodejs-dv011"
 module = "nodejs-dv-http"
 type = "fill"
 difficulty = 1
+tags = ["level:junior"]
 prompt = '''Sau khi ghi xong body qua res.write(), gọi phương thức nào để kết thúc response? res.{{blank}}()'''
 blanks = [["end"]]
 explanation = "response.end() báo rằng không còn dữ liệu nào được ghi thêm."
@@ -1047,6 +1137,7 @@ id = "nodejs-dv012"
 module = "nodejs-dv-http"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''Trong Node, module nào cung cấp createServer() để tạo server TLS qua HTTPS? node:{{blank}}'''
 blanks = [["https"]]
 explanation = "node:https bọc luồng HTTP bằng TLS; chứng chỉ và khóa phải được cấu hình phù hợp."
@@ -1057,6 +1148,7 @@ id = "nodejs-dv013"
 module = "nodejs-dv-http"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''Bạn cần dựng HTTP/2 server có TLS. API nào đúng?'''
 options = ["https.createServer()", "http2.createSecureServer()", "http.createServer({ http2: true })", "net.createServer({ tls: true })"]
 answer = [1]
@@ -1068,6 +1160,7 @@ id = "nodejs-dv014"
 module = "nodejs-dv-http"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = '''Hãy mô tả vòng đời request-response trong Node core HTTP, rồi giải thích khi nào bạn chọn HTTP/1.1, HTTPS, HTTP/2 hoặc Express và cần lưu ý gì về body lớn, timeout, client ngắt kết nối.'''
 keywords = [["incomingmessage", "readable stream", "request stream"], ["serverresponse", "writable stream", "response"], ["backpressure", "stream"], ["timeout", "headerstimeout", "requesttimeout"], ["https", "tls"], ["http2", "multiplexing"], ["express", "middleware"]]
 min_keywords = 4
@@ -1081,6 +1174,7 @@ module = "nodejs-dv-http"
 type = "code"
 lang = "javascript"
 difficulty = 2
+tags = ["level:middle"]
 title = "Gộp Vary header"
 prompt = '''Viết mergeVary(current, field). current là giá trị Vary hiện tại (chuỗi hoặc undefined); field là một tên header đơn hợp lệ. Trả về chuỗi Vary mới:
 - Tách danh sách hiện tại theo dấu phẩy, bỏ khoảng trắng thừa và giữ thứ tự ban đầu.
@@ -1147,6 +1241,7 @@ id = "nodejs-dv015"
 module = "nodejs-dv-express-prod"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''Express chạy sau load balancer. Vì sao cần cấu hình trust proxy đúng topology?'''
 options = ["Để Express có thể tin có điều kiện các header forwarded khi xác định client IP/protocol/hostname", "Để tự bật HTTPS giữa mọi service", "Để thay thế middleware xác thực", "Để tự giới hạn kích thước request body"]
 answer = [0]
@@ -1158,6 +1253,7 @@ id = "nodejs-dv016"
 module = "nodejs-dv-express-prod"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''Khác biệt chính giữa liveness và readiness check là gì?'''
 options = ["Liveness cho biết process còn sống; readiness cho biết instance hiện có thể nhận traffic mới", "Readiness chỉ chạy khi deploy, liveness chỉ chạy ở local", "Liveness luôn phải truy vấn database; readiness không được truy cập dependency", "Hai endpoint bắt buộc trả cùng mã trạng thái"]
 answer = [0]
@@ -1169,6 +1265,7 @@ id = "nodejs-dv017"
 module = "nodejs-dv-express-prod"
 type = "multiple"
 difficulty = 3
+tags = ["level:senior"]
 prompt = '''Ứng dụng Express nằm sau một reverse proxy do nhóm bạn quản lý. Cách cấu hình nào giảm nguy cơ giả mạo forwarded headers?'''
 options = ["Proxy biên xóa hoặc ghi đè X-Forwarded-* do client gửi trước khi đặt giá trị đáng tin", "Giới hạn trust proxy theo subnet/hop đúng với topology", "Giả định req.ip luôn là địa chỉ socket gốc trong mọi cấu hình", "Bảo đảm app không có đường truy cập trực tiếp bỏ qua proxy nếu dựa vào header forwarded", "Luôn đặt trust proxy=true dù không biết proxy chain"]
 answer = [0, 1, 3]
@@ -1180,6 +1277,7 @@ id = "nodejs-dv018"
 module = "nodejs-dv-express-prod"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''Khi nhận SIGTERM trong lúc deploy, thứ tự nào giúp hạn chế cắt request đang xử lý?'''
 options = ["Đánh dấu readiness thất bại, ngừng nhận kết nối mới, drain request đang chạy rồi đóng dependency pool", "Đóng database trước rồi tiếp tục nhận HTTP request", "Gọi process.exit ngay lập tức", "Bỏ qua signal và chờ supervisor gửi SIGKILL"]
 answer = [0]
@@ -1191,6 +1289,7 @@ id = "nodejs-dv019"
 module = "nodejs-dv-express-prod"
 type = "multiple"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''Biện pháp nào phù hợp khi hardening Express cho production?'''
 options = ["Cập nhật framework và dependency theo quy trình hỗ trợ", "Giới hạn body size và validate input ở biên", "Trả err.stack cho client để hỗ trợ debug", "Dùng security headers và rate limit phù hợp endpoint", "Ghi access token nguyên văn vào log để đối chiếu"]
 answer = [0, 1, 3]
@@ -1202,6 +1301,7 @@ id = "nodejs-dv020"
 module = "nodejs-dv-express-prod"
 type = "fill"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''Topology được cố định: app chỉ nhận kết nối từ đúng một reverse proxy đã tin cậy. Giá trị hop count nào có thể dùng trong cấu hình sau? app.set('trust proxy', {{blank}})'''
 blanks = [["1"]]
 explanation = "Một hop phù hợp với topology đã nêu; nếu đường đi có số hop khác nhau hoặc app có đường vào trực tiếp, hãy dùng cấu hình proxy cụ thể hơn."
@@ -1212,6 +1312,7 @@ id = "nodejs-dv021"
 module = "nodejs-dv-express-prod"
 type = "essay"
 difficulty = 3
+tags = ["level:senior"]
 prompt = '''Hãy phác thảo cách triển khai Express sau reverse proxy an toàn và cách xử lý shutdown khi deploy: nêu trust boundary, forwarded headers, readiness/liveness, thứ tự drain và đóng dependency.'''
 keywords = [["trust proxy", "trusted proxy", "proxy tin cậy"], ["forwarded headers", "x-forwarded-for", "x-forwarded-proto"], ["readiness", "not-ready"], ["liveness"], ["sigterm", "graceful shutdown", "shutdown"], ["drain", "in-flight requests", "request đang chạy"], ["close database", "đóng pool"]]
 min_keywords = 5
@@ -1224,8 +1325,1174 @@ id = "nodejs-dv022"
 module = "nodejs-dv-express-prod"
 type = "single"
 difficulty = 2
+tags = ["level:middle"]
 prompt = '''Health endpoint trả chi tiết lỗi database, hostname nội bộ và environment variables cho mọi client. Nhận định nào phù hợp?'''
 options = ["Nên trả trạng thái tối thiểu cần cho probe; chi tiết vận hành giữ trong telemetry/log được kiểm soát", "Đây là cách tốt để client tự sửa database", "Nên thêm access token để probe xác thực", "Endpoint health không cần giới hạn nội dung vì không có dữ liệu người dùng"]
 answer = [0]
 explanation = "Health endpoint công khai quá nhiều chi tiết tạo thêm bề mặt lộ thông tin; probe chỉ cần trạng thái cần thiết."
 sources = ["express/advanced/best-practice-security", "express/advanced/healthcheck-graceful-shutdown"]
+
+[[questions]]
+id = "nodejs-lv001"
+module = "nodejs-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "architecture"]
+prompt = '''
+Team 5 người phải ra MVP trong 3 tháng, chưa biết miền nghiệp vụ nào sẽ phình to. Đề xuất nào hợp lý nhất cho backend Node.js?
+'''
+options = ["Modular monolith: một deploy, module có ranh giới và API nội bộ rõ, tách service khi có dấu hiệu đo được", "Microservice theo từng bảng dữ liệu ngay từ đầu để sau này dễ scale", "Một file server.js lớn, không chia module để nhanh nhất", "Serverless function riêng cho từng endpoint, mỗi function một repo"]
+answer = [0]
+explanation = "Với 5 người và 3 tháng, chi phí vận hành nhiều service (deploy, tracing, contract, on-call) ăn hết thời gian làm tính năng. Modular monolith giữ ranh giới module rõ nên vẫn tách được sau khi có số liệu. Microservice từ đầu là chia ranh giới khi chưa hiểu miền; 'viết nhanh một cục không ranh giới' tạo nợ khó trả."
+
+[[questions]]
+id = "nodejs-lv002"
+module = "nodejs-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "performance"]
+prompt = '''
+API xuất báo cáo CSV 50.000 dòng làm event loop bị chặn ~3 giây, P99 các endpoint khác tăng vọt. Team 4 người, không có thời gian cho dự án lớn. Bước nào nên ưu tiên?
+'''
+options = ["Xác nhận bằng profile/event loop delay, rồi đẩy việc tạo báo cáo sang worker pool hoặc queue và trả 202 kèm trạng thái job", "Viết lại toàn bộ service sang Go", "Nhân đôi số instance và hy vọng tải được chia đều", "Tăng timeout của load balancer lên 60 giây"]
+answer = [0]
+explanation = "Đo xác nhận nguyên nhân là CPU đồng bộ rồi đưa việc nặng ra khỏi event loop (worker_threads/piscina hoặc job queue). Cách này nhỏ, đảo ngược được. Viết lại bằng ngôn ngữ khác tốn rất nhiều công; thêm instance chỉ che triệu chứng vì mỗi instance vẫn bị chặn; tăng timeout không giải quyết việc chặn."
+
+[[questions]]
+id = "nodejs-lv003"
+module = "nodejs-lead"
+type = "multiple"
+difficulty = 3
+tags = ["level:lead", "adr"]
+prompt = '''
+Một ADR (Architecture Decision Record) hữu ích nên chứa những mục nào?
+'''
+options = ["Bối cảnh và ràng buộc", "Các phương án đã cân nhắc cùng đánh đổi", "Toàn bộ mã nguồn triển khai", "Hệ quả, rủi ro và điều kiện xem lại quyết định", "Tên người sẽ bị quy trách nhiệm nếu quyết định sai"]
+answer = [0, 1, 3]
+explanation = "ADR ghi lại vì sao chọn, không chỉ chọn gì: bối cảnh/ràng buộc, phương án đã xét, quyết định, hệ quả và mốc xem lại. Mã nguồn đầy đủ hay tên người chịu lỗi không phải nội dung cốt lõi của ADR."
+
+[[questions]]
+id = "nodejs-lv004"
+module = "nodejs-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "upgrade"]
+prompt = '''
+Công ty có 40 service Node.js đang chạy Node cũ sắp hết hỗ trợ. CTO muốn nâng tất cả lên LTS mới trong một đêm cuối tuần. Cách tiếp cận của Tech Lead nên là gì?
+'''
+options = ["Nâng theo đợt: ma trận CI hai phiên bản, canary vài service rủi ro thấp, theo dõi metric, giữ đường rollback", "Nâng đồng loạt cả 40 service trong một đêm để xong sớm", "Không nâng cho tới ngày hết hỗ trợ rồi mới xử lý", "Chỉ đổi dòng engines trong package.json và không chạy test"]
+answer = [0]
+explanation = "Nâng theo đợt: CI chạy ma trận hai phiên bản, canary từ service ít rủi ro, theo dõi lỗi/latency/memory, có rollback bằng image cũ. Big-bang dồn rủi ro vào một thời điểm và khó xác định service nào gây lỗi; chờ đến hết hạn mới nâng làm mất cửa sổ an toàn."
+
+[[questions]]
+id = "nodejs-lv005"
+module = "nodejs-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "resilience"]
+prompt = '''
+Service thanh toán gọi nhà cung cấp bên thứ ba; khi họ chậm, service retry ngay 5 lần không chờ và toàn hệ thống sập dây chuyền (retry storm). Thay đổi nào có tác dụng nhất?
+'''
+options = ["Timeout ngắn + backoff mũ có jitter + retry budget + circuit breaker", "Tăng số lần retry lên 10 để chắc chắn thành công", "Retry cách đều đúng 1 giây cho mọi client", "Bỏ timeout để chờ nhà cung cấp phản hồi"]
+answer = [0]
+explanation = "Cần timeout, backoff mũ có jitter, giới hạn tổng retry (retry budget) và circuit breaker để ngừng gọi khi lỗi liên tục. Tăng số lần retry làm bão tệ hơn; retry cố định không jitter khiến các client đồng bộ đập vào cùng thời điểm; bỏ timeout làm kết nối treo tích tụ."
+
+[[questions]]
+id = "nodejs-lv006"
+module = "nodejs-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "decision"]
+prompt = '''
+Codebase Express 200 route chạy ổn, đội 8 người đã quen. Một thành viên đề xuất viết lại toàn bộ sang framework khác vì benchmark nhanh hơn 20%. Hiện P99 đạt SLO với tải gấp 3 lần hiện tại. Quyết định hợp lý?
+'''
+options = ["Giữ Express, tiếp tục cải thiện tăng dần; xem lại khi số liệu cho thấy nút cổ chai do framework", "Viết lại toàn bộ trong một quý để tận dụng 20% hiệu năng", "Dừng toàn bộ tính năng mới cho tới khi viết lại xong", "Cho mỗi người tự chọn framework riêng cho route mình viết"]
+answer = [0]
+explanation = "Không có vấn đề đo được cần giải quyết; viết lại tốn nhiều tháng, rủi ro hồi quy và chi phí đào tạo. Giữ Express, ghi nhận đề xuất, chỉ dùng framework mới cho service mới nếu có lý do rõ. Viết lại 'vì nhanh hơn' khi đã đạt SLO là tối ưu sai chỗ."
+
+[[questions]]
+id = "nodejs-lv007"
+module = "nodejs-lead"
+type = "multiple"
+difficulty = 3
+tags = ["level:lead", "review"]
+prompt = '''
+Checklist review PR thêm một endpoint ghi dữ liệu mới. Mục nào nên kiểm tra?
+'''
+options = ["Validate body và giới hạn kích thước", "Kiểm tra quyền (authorization) theo resource", "Có xử lý gửi lặp (idempotency key hoặc ràng buộc unique)", "Tên biến cục bộ có trùng sở thích người review", "Log có correlation id nhưng không chứa token/PII"]
+answer = [0, 1, 2, 4]
+explanation = "Endpoint ghi cần validate input ở biên, authorization, idempotency/xử lý lặp, timeout/giới hạn và log/metric không lộ secret. Đặt tên biến theo ý thích cá nhân không phải rủi ro vận hành."
+
+[[questions]]
+id = "nodejs-lv008"
+module = "nodejs-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "rate-limit"]
+prompt = '''
+API công khai cần rate limit. Nhiều khách hàng doanh nghiệp đi qua cùng một IP NAT, hệ thống chạy 6 instance. Thiết kế nào hợp lý?
+'''
+options = ["Theo API key/tenant với bộ đếm dùng chung như Redis, trả 429 kèm Retry-After", "Theo IP với bộ đếm trong bộ nhớ từng instance", "Không rate limit, chỉ tăng số instance khi bị quá tải", "Chỉ rate limit ở phía client SDK"]
+answer = [0]
+explanation = "Giới hạn theo API key/tenant (định danh thật) và dùng store chung (Redis) để quota đúng khi có nhiều instance. Limit theo IP làm khách sau NAT chặn nhau; bộ đếm trong RAM mỗi instance cho tổng quota sai và mất khi restart."
+
+[[questions]]
+id = "nodejs-lv009"
+module = "nodejs-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "api-versioning"]
+prompt = '''
+Mobile app không thể ép người dùng cập nhật; bạn cần đổi hình dạng response của API đang có hàng triệu người dùng. Chiến lược versioning nào hợp lý?
+'''
+options = ["Thêm field mới tương thích ngược, bản phá vỡ ra /v2 song song, thông báo deprecation, đo lượng dùng v1 trước khi tắt", "Đổi response ngay và yêu cầu người dùng cập nhật app", "Giữ mọi phiên bản mãi mãi và không đo lượng dùng", "Đổi tên field ở /v1 mỗi khi cần"]
+answer = [0]
+explanation = "Thay đổi cộng thêm (additive) không phá vỡ; thay đổi phá vỡ thì ra phiên bản mới song song, thông báo deprecation với cửa sổ đủ dài, đo mức dùng bản cũ rồi mới tắt. Đổi thẳng khiến app cũ hỏng; giữ vô hạn mọi phiên bản làm chi phí bảo trì phình to."
+
+[[questions]]
+id = "nodejs-lv010"
+module = "nodejs-lead"
+type = "fill"
+difficulty = 3
+tags = ["level:lead", "api-versioning"]
+prompt = '''
+Header HTTP nào cho client biết thời điểm một API/endpoint sẽ ngừng hoạt động (RFC 8594)? Điền tên header: {{blank}}
+'''
+blanks = [["Sunset"]]
+explanation = "Header Sunset cho biết thời điểm dự kiến ngừng; thường đi kèm Deprecation và liên kết tài liệu migration."
+
+[[questions]]
+id = "nodejs-lv011"
+module = "nodejs-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "incident"]
+prompt = '''
+Lúc 02:00 cảnh báo: bộ nhớ service Node tăng đều và pod bị OOMKilled mỗi ~2 giờ, khách hàng đã bị ảnh hưởng. Bạn là người điều phối sự cố. Thứ tự hành động nào đúng?
+'''
+options = ["Giảm tác động (rollback/restart có kiểm soát), lưu heap snapshot và metric, điều tra nguyên nhân sau, viết postmortem", "Tìm nguyên nhân gốc cho tới khi xong, để khách hàng chịu lỗi", "Xóa log cũ để tiết kiệm dung lượng rồi chờ xem", "Tắt cảnh báo OOM cho đỡ ồn"]
+answer = [0]
+explanation = "Giảm tác động trước (rollback bản mới nhất hoặc tăng instance/restart có kiểm soát), giữ bằng chứng (heap snapshot/metric), sau đó mới điều tra nguyên nhân và viết postmortem không đổ lỗi. Điều tra sâu trước khi giảm tác động kéo dài sự cố; xóa log mất bằng chứng."
+
+[[questions]]
+id = "nodejs-lv012"
+module = "nodejs-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "observability"]
+prompt = '''
+Tần suất sự cố tăng vì mỗi dịch vụ log request body đầy đủ, chi phí log tăng 5 lần và khó tìm lỗi. Hướng cải thiện hợp lý?
+'''
+options = ["Log có cấu trúc kèm correlation id, lấy mẫu log chi tiết, che PII, đẩy chi tiết sang trace/metric", "Giữ nguyên và mua thêm dung lượng lưu trữ", "Tắt toàn bộ log ở production", "Chỉ dùng console.log không định dạng"]
+answer = [0]
+explanation = "Log có cấu trúc, mức độ hợp lý, correlation id xuyên service, lấy mẫu cho log chi tiết, che dữ liệu nhạy cảm. Ghi toàn bộ body vừa tốn tiền vừa rò rỉ PII; tắt hết log làm mất khả năng điều tra."
+
+[[questions]]
+id = "nodejs-lv013"
+module = "nodejs-lead"
+type = "multiple"
+difficulty = 3
+tags = ["level:lead", "architecture"]
+prompt = '''
+Dấu hiệu nào cho thấy nên tách một phần khỏi monolith thành service riêng?
+'''
+options = ["Module cần scale/tài nguyên rất khác phần còn lại", "Một team riêng sở hữu và cần release độc lập", "Muốn thử một framework mới cho vui", "Cần cô lập lỗi/bảo mật cho một miền nhạy cảm", "Số service nhiều trông hiện đại hơn"]
+answer = [0, 1, 3]
+explanation = "Nên tách khi có lý do đo được: scale/tài nguyên khác hẳn, nhịp release độc lập do team khác sở hữu, yêu cầu cô lập lỗi hoặc bảo mật. 'Muốn dùng công nghệ mới' hay 'thấy nhiều service trông hiện đại' không phải lý do."
+
+[[questions]]
+id = "nodejs-lv014"
+module = "nodejs-lead"
+type = "single"
+difficulty = 3
+tags = ["level:lead", "queue"]
+prompt = '''
+Tác vụ gửi email hóa đơn gọi SMTP đồng bộ trong request /checkout; khi nhà cung cấp chậm, checkout chậm theo. Giải pháp phù hợp ngân sách nhỏ?
+'''
+options = ["Outbox cùng transaction + worker gửi bất đồng bộ, idempotency key, retry và dead-letter queue", "Tăng timeout SMTP lên 60 giây", "Nuốt lỗi gửi email và coi như thành công", "Gửi email trước rồi mới ghi đơn hàng"]
+answer = [0]
+explanation = "Ghi outbox trong cùng transaction rồi worker gửi bất đồng bộ với idempotency key, retry và dead-letter; checkout không phụ thuộc SMTP. Gọi đồng bộ với timeout dài hay bỏ qua lỗi gửi đều làm mất email hoặc chặn thanh toán."
+
+[[questions]]
+id = "nodejs-lv015"
+module = "nodejs-lead"
+type = "essay"
+difficulty = 3
+tags = ["level:lead", "architecture", "migration"]
+prompt = '''
+Hãy trình bày cách bạn dẫn dắt team tách một module thanh toán khỏi monolith Node.js (strangler): nêu tiêu chí quyết định tách, các bước rollout, cách đo và đường lui.
+'''
+keywords = [["strangler", "tách dần", "từng bước"], ["ranh giới", "boundary", "api nội bộ", "contract"], ["feature flag", "cờ tính năng", "canary"], ["metric", "đo", "slo", "latency"], ["rollback", "đường lui", "quay lui"], ["dữ liệu", "database", "schema", "dual write"]]
+min_keywords = 4
+model_answer = '''
+Trước hết tôi xác định lý do tách bằng số liệu (nhịp release, tải, rủi ro) và ghi ADR. Tôi làm rõ ranh giới và contract của module thanh toán trong monolith, rồi áp dụng strangler: chuyển từng luồng sang service mới sau một facade, dùng feature flag/canary để tăng dần lưu lượng. Dữ liệu được tách có kế hoạch (dual write hoặc outbox, không chia sẻ bảng lâu dài). Tôi theo dõi metric như latency, error rate và SLO của hai bên; nếu vượt ngưỡng thì rollback bằng cách tắt flag. Chỉ khi ổn định mới dọn code cũ.
+'''
+explanation = "Câu trả lời tốt đi từ lý do đo được, tách dần qua ranh giới/API, chạy song song, và có rollback; không big-bang."
+
+[[questions]]
+id = "nodejs-lv016"
+module = "nodejs-lead"
+type = "essay"
+difficulty = 3
+tags = ["level:lead", "supply-chain"]
+prompt = '''
+Mô tả chính sách quản lý dependency và supply chain cho một team Node.js 15 người: nêu lockfile, cài đặt trong CI, cập nhật định kỳ, kiểm tra lỗ hổng và review dependency mới.
+'''
+keywords = [["lockfile", "package-lock"], ["npm ci", "tái lập", "reproducible"], ["renovate", "dependabot", "cập nhật định kỳ"], ["audit", "sca", "lỗ hổng", "vulnerab"], ["review", "phê duyệt", "đánh giá dependency"], ["provenance", "ignore-scripts", "install script", "quyền"]]
+min_keywords = 4
+model_answer = '''
+Mọi repo commit lockfile; CI dùng npm ci để cài đặt tái lập và fail khi lockfile lệch. Bot như Renovate hoặc Dependabot mở PR nhỏ theo lịch, tự động merge bản vá khi test xanh. Pipeline chạy npm audit/SCA và chặn lỗ hổng nghiêm trọng có bản vá. Dependency mới phải qua review: mục đích, độ phổ biến, bảo trì, giấy phép, số dependency kéo theo. Với rủi ro cao, tắt install script không cần thiết (ignore-scripts), ghim phiên bản và kiểm tra provenance/chữ ký nếu có.
+'''
+explanation = "Ý chính: lockfile + npm ci tái lập, bot cập nhật nhỏ thường xuyên, audit/SCA, review dependency mới, giảm quyền script cài đặt."
+
+[[questions]]
+id = "nodejs-lv017"
+module = "nodejs-lead"
+type = "essay"
+difficulty = 3
+tags = ["level:lead", "incident"]
+prompt = '''
+P99 latency của API Node.js tăng gấp 4 lúc cao điểm. Hãy viết runbook điều tra và giảm thiểu: thứ tự kiểm tra, công cụ, quyết định tạm thời và hành động sau sự cố.
+'''
+keywords = [["dashboard", "metric", "apm"], ["event loop", "event loop lag", "eventloop delay"], ["cpu", "memory", "gc"], ["database", "downstream", "dependency", "pool"], ["rollback", "scale", "giảm tải", "tạm thời"], ["postmortem", "sau sự cố", "runbook"]]
+min_keywords = 4
+model_answer = '''
+Bắt đầu từ dashboard: so sánh rate/error/duration và xem có deploy hoặc thay đổi cấu hình gần đây không. Tôi kiểm tra event loop delay, CPU và memory/GC của process, sau đó đến dependency: pool database bị cạn, downstream chậm, hit rate cache. Nếu nghi deploy thì rollback; nếu quá tải thì scale out hoặc bật giảm tải (shed load, tắt tính năng nặng). Tôi chụp profile/trace trong lúc sự cố để có bằng chứng. Sau sự cố viết postmortem không đổ lỗi, cập nhật runbook, thêm cảnh báo và test tải.
+'''
+explanation = "Runbook tốt đi từ triệu chứng sang nguyên nhân theo thứ tự rẻ-nhanh trước, có biện pháp giảm nhẹ và việc sau sự cố."
+
+[[questions]]
+id = "nodejs-lv018"
+module = "nodejs-lead"
+type = "essay"
+difficulty = 3
+tags = ["level:lead", "queue"]
+prompt = '''
+Nên xử lý một tác vụ chậm (tạo PDF hóa đơn) bằng HTTP đồng bộ hay hàng đợi bất đồng bộ? Hãy phân tích theo ràng buộc về UX, độ tin cậy, chi phí vận hành và nêu cách thiết kế khi chọn queue.
+'''
+keywords = [["đồng bộ", "synchronous", "sync"], ["bất đồng bộ", "queue", "hàng đợi"], ["idempotency", "idempotent", "gửi lặp"], ["retry", "dead-letter", "dlq"], ["trạng thái", "status", "202", "polling", "webhook"], ["chi phí vận hành", "vận hành", "monitor"]]
+min_keywords = 4
+model_answer = '''
+Nếu tác vụ dưới vài trăm ms và người dùng cần kết quả ngay thì xử lý đồng bộ là đơn giản nhất. Khi tác vụ chậm, biến động hoặc phụ thuộc bên ngoài, queue giúp request trả 202 nhanh và tách tải khỏi API, đổi lại tăng chi phí vận hành. Thiết kế phải có idempotency key vì message có thể giao lặp, retry với backoff, dead-letter queue cho message hỏng, và endpoint/webhook/polling để báo trạng thái job. Cần metric độ sâu hàng đợi và cảnh báo để team vận hành được.
+'''
+explanation = "Câu trả lời phải nêu đánh đổi và các yêu cầu khi dùng queue: idempotency, retry, dead-letter, theo dõi trạng thái."
+
+[[questions]]
+id = "nodejs-lv019"
+module = "nodejs-lead"
+type = "code"
+difficulty = 3
+tags = ["level:lead", "resilience"]
+title = "Circuit breaker có đồng hồ tiêm vào"
+prompt = '''
+Viết `createCircuitBreaker({ failureThreshold, cooldownMs, now })` trả về hàm `exec(fn)` (fn trả Promise). Khi số lần lỗi liên tiếp đạt `failureThreshold`, breaker MỞ: `exec` từ chối ngay với `Error('circuit open')` mà không gọi `fn`. Sau `cooldownMs` (đo bằng `now()` được truyền vào) breaker cho thử một lần (half-open): thành công thì đóng và reset, thất bại thì mở lại. Thành công làm reset bộ đếm lỗi.
+'''
+starter = '''
+function createCircuitBreaker({ failureThreshold, cooldownMs, now }) {
+  // TODO
+}
+'''
+solution = '''
+function createCircuitBreaker({ failureThreshold, cooldownMs, now }) {
+  let failures = 0;
+  let openedAt = null;
+  return async function exec(fn) {
+    if (openedAt !== null) {
+      if (now() - openedAt < cooldownMs) throw new Error('circuit open');
+    }
+    try {
+      const result = await fn();
+      failures = 0;
+      openedAt = null;
+      return result;
+    } catch (e) {
+      failures += 1;
+      if (openedAt !== null || failures >= failureThreshold) openedAt = now();
+      throw e;
+    }
+  };
+}
+'''
+tests = '''
+async function fails(fn) { try { await fn(); } catch (e) { return e; } return null; }
+test('mở sau N lỗi liên tiếp và không gọi fn', async () => {
+  let t = 0, calls = 0;
+  const exec = createCircuitBreaker({ failureThreshold: 2, cooldownMs: 100, now: () => t });
+  const bad = () => { calls++; return Promise.reject(new Error('down')); };
+  await fails(() => exec(bad));
+  await fails(() => exec(bad));
+  const e = await fails(() => exec(bad));
+  expect(e.message).toBe('circuit open');
+  expect(calls).toBe(2);
+});
+test('thành công reset bộ đếm lỗi', async () => {
+  let t = 0;
+  const exec = createCircuitBreaker({ failureThreshold: 2, cooldownMs: 100, now: () => t });
+  await fails(() => exec(() => Promise.reject(new Error('x'))));
+  expect(await exec(() => Promise.resolve('ok'))).toBe('ok');
+  await fails(() => exec(() => Promise.reject(new Error('x'))));
+  expect(await exec(() => Promise.resolve('still closed'))).toBe('still closed');
+});
+test('half-open thành công thì đóng lại', async () => {
+  let t = 0;
+  const exec = createCircuitBreaker({ failureThreshold: 1, cooldownMs: 100, now: () => t });
+  await fails(() => exec(() => Promise.reject(new Error('x'))));
+  t = 150;
+  expect(await exec(() => Promise.resolve(1))).toBe(1);
+  expect(await exec(() => Promise.resolve(2))).toBe(2);
+});
+test('half-open thất bại thì mở lại và đếm cooldown mới', async () => {
+  let t = 0, calls = 0;
+  const exec = createCircuitBreaker({ failureThreshold: 1, cooldownMs: 100, now: () => t });
+  const bad = () => { calls++; return Promise.reject(new Error('x')); };
+  await fails(() => exec(bad));
+  t = 150;
+  const e1 = await fails(() => exec(bad));
+  expect(e1.message).toBe('x');
+  t = 200;
+  const e2 = await fails(() => exec(bad));
+  expect(e2.message).toBe('circuit open');
+  expect(calls).toBe(2);
+});
+'''
+hints = ["Lưu `openedAt` (thời điểm mở) và `failures`.", "Nếu đang mở mà chưa hết cooldown thì ném `circuit open` trước khi gọi fn.", "Thất bại ở half-open phải đặt lại `openedAt = now()`."]
+explanation = "Circuit breaker giúp tránh retry storm: ngừng gọi dependency đang hỏng, cho nó thời gian hồi phục, rồi thăm dò nhẹ."
+
+[[questions]]
+id = "nodejs-lv020"
+module = "node-core"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "event-loop"]
+prompt = '''
+Trong một lần lặp của event loop, đoạn code sau in thứ tự nào khi chạy từ module CommonJS?
+```js
+setTimeout(() => console.log('timeout'), 0);
+setImmediate(() => console.log('immediate'));
+process.nextTick(() => console.log('tick'));
+Promise.resolve().then(() => console.log('promise'));
+```
+'''
+options = ["tick, promise, rồi timeout/immediate (thứ tự hai cái cuối không đảm bảo)", "timeout, immediate, tick, promise", "promise, tick, immediate, timeout", "immediate, timeout, tick, promise"]
+answer = [0]
+explanation = "nextTick queue chạy trước, rồi microtask promise, sau đó mới tới các phase của event loop. Thứ tự timeout và immediate ở main module không được đảm bảo (phụ thuộc hiệu năng process); vì vậy chỉ hai dòng đầu là cố định."
+
+[[questions]]
+id = "nodejs-lv021"
+module = "node-core"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "event-loop"]
+prompt = '''
+Trong callback I/O (ví dụ bên trong fs.readFile callback), setTimeout(fn, 0) và setImmediate(fn) được gọi cùng lúc. Điều nào đúng?
+'''
+options = ["setImmediate luôn chạy trước", "setTimeout luôn chạy trước", "Thứ tự ngẫu nhiên giống main module", "Cả hai bị bỏ qua trong I/O callback"]
+answer = [0]
+explanation = "Trong callback I/O, phase poll kết thúc rồi chuyển sang check nên setImmediate luôn chạy trước timer 0ms của vòng lặp kế tiếp."
+
+[[questions]]
+id = "nodejs-lv022"
+module = "node-core"
+type = "multiple"
+difficulty = 3
+tags = ["level:senior", "worker-threads"]
+prompt = '''
+Việc nào nên chuyển ra worker_threads (hoặc process riêng) thay vì chạy trên main thread của server HTTP?
+'''
+options = ["Băm mật khẩu bằng thuật toán nặng ở thể đồng bộ", "Parse JSON hàng chục MB mỗi request", "Gọi fetch tới một API ngoài", "Resize ảnh bằng JS thuần", "Đọc file nhỏ bằng fs/promises"]
+answer = [0, 1, 3]
+explanation = "Việc CPU-bound đồng bộ (nén, hash nặng, parse khối lớn, xử lý ảnh) chặn event loop. I/O mạng/ổ đĩa đã bất đồng bộ nhờ libuv nên đưa sang worker thường không lợi."
+
+[[questions]]
+id = "nodejs-lv023"
+module = "node-core"
+type = "fill"
+difficulty = 3
+tags = ["level:senior", "worker-threads"]
+prompt = '''
+Hàm nào của module worker_threads cho phép worker gửi dữ liệu về luồng cha? Điền: parentPort.{{blank}}(result)
+'''
+blanks = [["postMessage"]]
+explanation = "parentPort.postMessage gửi message (structured clone, có thể chuyển ArrayBuffer qua transferList) tới luồng cha."
+
+[[questions]]
+id = "nodejs-lv024"
+module = "node-io"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "stream"]
+prompt = '''
+Pipeline đọc file lớn → gzip → ghi file đích bằng `src.pipe(gzip).pipe(dest)`. Khi gzip lỗi, vì sao pipe() thủ công dễ gây rò rỉ?
+'''
+options = ["pipe() không tự đóng/hủy stream còn lại khi có lỗi; pipeline() làm việc đó và báo lỗi tập trung", "pipe() luôn đọc toàn bộ file vào RAM", "pipeline() chỉ chạy được với file dưới 64KB", "Gzip stream không phát sinh lỗi"]
+answer = [0]
+explanation = "pipe() không tự hủy các stream khác khi một stream lỗi nên file descriptor có thể bị giữ. stream.pipeline (hoặc stream/promises) lan truyền lỗi, hủy toàn bộ và gọi callback một lần."
+
+[[questions]]
+id = "nodejs-lv025"
+module = "node-io"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "stream", "backpressure"]
+prompt = '''
+Writable.write() trả về false. Hành động đúng của producer là gì?
+'''
+options = ["Ngừng ghi và chờ sự kiện 'drain' rồi mới tiếp tục", "Tiếp tục ghi vì dữ liệu sẽ bị bỏ nếu quá tải", "Gọi end() ngay", "Tăng highWaterMark lên vô hạn"]
+answer = [0]
+explanation = "false nghĩa là buffer nội bộ vượt highWaterMark; nên tạm dừng ghi cho tới sự kiện 'drain' để áp dụng backpressure. Bỏ qua sẽ làm RAM phình."
+
+[[questions]]
+id = "nodejs-lv026"
+module = "node-io"
+type = "fill"
+difficulty = 3
+tags = ["level:senior", "stream"]
+prompt = '''
+Hàm nào trong `node:stream/promises` nối các stream, truyền lỗi và hủy chúng khi lỗi? Điền: await {{blank}}(readable, transform, writable)
+'''
+blanks = [["pipeline"]]
+explanation = "pipeline từ stream/promises trả Promise và xử lý cleanup khi lỗi."
+
+[[questions]]
+id = "nodejs-lv027"
+module = "node-io"
+type = "multiple"
+difficulty = 3
+tags = ["level:senior", "stream"]
+prompt = '''
+Bạn muốn đọc file log 5GB và đếm dòng chứa 'ERROR' mà RAM chỉ có 512MB. Cách nào phù hợp?
+'''
+options = ["fs.createReadStream kết hợp readline.createInterface", "for await (const line of rl) với bộ đếm", "fs.readFileSync rồi split('\\n')", "fs.promises.readFile rồi lọc", "Đọc theo chunk bằng stream và tự xử lý ranh giới dòng"]
+answer = [0, 1, 4]
+explanation = "Dùng stream (createReadStream + readline hoặc for await trên async iterable) để xử lý theo khối. readFile nạp toàn bộ vào RAM và có thể vượt giới hạn."
+
+[[questions]]
+id = "nodejs-lv028"
+module = "node-ops"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "memory"]
+prompt = '''
+Pod Node.js bị OOMKilled sau vài giờ, heap tăng đều sau mỗi lần GC. Dấu hiệu này gợi ý điều gì và bước chẩn đoán đầu tiên là gì?
+'''
+options = ["Rò rỉ bộ nhớ; chụp và so sánh heap snapshot để tìm retainers", "Event loop quá nhanh; thêm setTimeout", "Cần gọi global.gc() mỗi giây", "Chỉ cần tăng giới hạn bộ nhớ pod gấp đôi"]
+answer = [0]
+explanation = "Heap tăng đều sau GC là dấu hiệu rò rỉ (đối tượng còn được tham chiếu). Chụp hai heap snapshot cách nhau và so sánh (retainers) để tìm đối tượng tăng. Tăng RAM chỉ trì hoãn; GC thủ công không giải quyết tham chiếu còn sống."
+
+[[questions]]
+id = "nodejs-lv029"
+module = "node-ops"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "memory", "cache"]
+prompt = '''
+Một Map dùng làm cache theo userId không có giới hạn kích thước và TTL. Vấn đề dài hạn là gì và hướng sửa?
+'''
+options = ["Bộ nhớ tăng không giới hạn; dùng LRU/TTL với kích thước tối đa hoặc cache ngoài", "Map tự xóa key cũ khi GC chạy", "Chỉ lỗi khi dùng Map, object thường thì ổn", "Không có vấn đề vì V8 nén bộ nhớ"]
+answer = [0]
+explanation = "Cache không giới hạn là nguồn rò rỉ logic: số key tăng mãi. Dùng LRU/TTL có kích thước tối đa hoặc cache ngoài như Redis. WeakMap không giúp khi key là chuỗi/số."
+
+[[questions]]
+id = "nodejs-lv030"
+module = "node-express"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "express"]
+prompt = '''
+Express 5 trở lên xử lý handler async như thế nào khi Promise bị reject?
+'''
+options = ["Lỗi tự động được chuyển tới error-handling middleware", "Process luôn crash ngay lập tức", "Lỗi bị nuốt, request treo mãi", "Chỉ hoạt động nếu dùng thư viện express-async-errors"]
+answer = [0]
+explanation = "Từ Express 5, nếu handler/middleware trả về Promise bị reject (hoặc async function ném lỗi), lỗi được chuyển tới next(err) tự động, nên không cần try/catch chỉ để gọi next. Ở Express 4 phải tự bắt."
+
+[[questions]]
+id = "nodejs-lv031"
+module = "node-express"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "express"]
+prompt = '''
+Thứ tự đăng ký middleware trong Express: error handler 4 tham số (err, req, res, next) cần đặt ở đâu?
+'''
+options = ["Sau các route và middleware khác", "Trước mọi route", "Bất kỳ đâu vì Express sắp xếp lại", "Chỉ trong file app.listen"]
+answer = [0]
+explanation = "Error-handling middleware phải được đăng ký sau các route/middleware mà nó muốn bắt lỗi; Express nhận biết nó qua đủ 4 tham số."
+
+[[questions]]
+id = "nodejs-lv032"
+module = "node-express"
+type = "multiple"
+difficulty = 3
+tags = ["level:senior", "express", "security"]
+prompt = '''
+Biện pháp nào giúp API Express chống request quá lớn hoặc chậm làm cạn tài nguyên?
+'''
+options = ["express.json({ limit: '100kb' })", "Đặt server.requestTimeout/headersTimeout hợp lý", "Rate limit theo định danh client", "Tắt mọi validation để xử lý nhanh", "Cho phép body không giới hạn"]
+answer = [0, 1, 2]
+explanation = "Giới hạn kích thước body, đặt timeout cho server/request, và rate limit. Tắt validation hay bỏ giới hạn làm tình hình xấu đi."
+
+[[questions]]
+id = "nodejs-lv033"
+module = "node-ops"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "shutdown"]
+prompt = '''
+Khi nhận SIGTERM trong Kubernetes, `server.close()` được gọi nhưng pod vẫn nhận request mới trong vài giây đầu. Nguyên nhân thường gặp?
+'''
+options = ["Việc gỡ pod khỏi load balancer bất đồng bộ; cần fail readiness và chờ trước khi drain", "server.close() không hoạt động với HTTP", "Node không xử lý được SIGTERM", "Kubernetes luôn gửi SIGKILL trước"]
+answer = [0]
+explanation = "Endpoint được gỡ khỏi Service/LB không tức thời; nên đánh dấu readiness thất bại, chờ vài giây (preStop/sleep) rồi mới đóng listener. keep-alive connections cũng cần được đóng sau khi drain."
+
+[[questions]]
+id = "nodejs-lv034"
+module = "node-ops"
+type = "fill"
+difficulty = 3
+tags = ["level:senior", "memory"]
+prompt = '''
+Cờ `--max-old-space-size` của Node đặt giới hạn heap cũ của V8. Giá trị `1024` trong `node --max-old-space-size=1024 server.js` có đơn vị là gì? Điền: {{blank}}
+'''
+blanks = [["MB", "megabyte", "megabytes"]]
+explanation = "Giá trị tính bằng megabyte (MB)."
+
+[[questions]]
+id = "nodejs-lv035"
+module = "node-ops"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "cluster", "rate-limit"]
+prompt = '''
+Bạn dùng cluster/PM2 với 4 worker nhưng mỗi worker giữ một bộ đếm rate limit trong RAM. Hệ quả?
+'''
+options = ["Quota thực tế khoảng 4 lần cấu hình và không nhất quán; cần store chung", "Quota chính xác vì cluster chia sẻ bộ nhớ", "Chỉ worker đầu tiên đếm", "Node tự đồng bộ biến toàn cục giữa worker"]
+answer = [0]
+explanation = "Mỗi worker đếm riêng nên tổng quota thực tế gấp N lần và không nhất quán; cần store chung (Redis) hoặc giới hạn ở tầng LB."
+
+[[questions]]
+id = "nodejs-lv036"
+module = "nodejs-dv-http"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "http", "timeout"]
+prompt = '''
+Fetch tới API ngoài thường treo khi mạng chập chờn. Cách an toàn nhất để giới hạn thời gian chờ?
+'''
+options = ["Truyền signal: AbortSignal.timeout(5000) vào fetch", "Chờ vô hạn vì TCP sẽ tự báo lỗi", "Dùng setInterval kiểm tra mỗi giây", "Bọc fetch trong try/catch là đủ"]
+answer = [0]
+explanation = "AbortSignal.timeout(ms) (hoặc AbortController) hủy request khi quá hạn; luôn đặt timeout cho cuộc gọi ra ngoài."
+
+[[questions]]
+id = "nodejs-lv037"
+module = "nodejs-dv-http"
+type = "multiple"
+difficulty = 3
+tags = ["level:senior", "http", "cache"]
+prompt = '''
+Header nào liên quan trực tiếp đến cache HTTP có điều kiện (conditional request)?
+'''
+options = ["ETag", "If-None-Match", "Last-Modified", "Content-Length", "Host"]
+answer = [0, 1, 2]
+explanation = "ETag/If-None-Match và Last-Modified/If-Modified-Since cho phép 304 Not Modified. Content-Length hay Host không phải cơ chế validator."
+
+[[questions]]
+id = "nodejs-lv038"
+module = "nodejs-dv-http"
+type = "single"
+difficulty = 3
+tags = ["level:senior", "http", "idempotency"]
+prompt = '''
+API nhận POST tạo đơn hàng; mạng khiến client gửi lặp cùng request. Cách phòng đơn trùng chuẩn nhất?
+'''
+options = ["Idempotency-Key lưu cùng kết quả, trả lại kết quả cũ khi lặp", "Chặn mọi request POST thứ hai trong 1 giờ theo IP", "Tin rằng client không bao giờ gửi lặp", "Dùng GET thay POST"]
+answer = [0]
+explanation = "Client gửi Idempotency-Key; server lưu kết quả theo key (hoặc ràng buộc unique) để request lặp trả cùng kết quả thay vì tạo thêm đơn."
+
+[[questions]]
+id = "nodejs-lv039"
+module = "node-core"
+type = "code"
+difficulty = 3
+tags = ["level:senior", "concurrency"]
+title = "Serializer theo key"
+prompt = '''
+Viết `createKeyedSerializer()` trả về hàm `run(key, task)`: các task cùng `key` chạy tuần tự theo thứ tự gọi (task sau chỉ bắt đầu khi task trước đã xong, kể cả khi task trước reject), task khác key chạy song song. `run` trả Promise với kết quả/lỗi của task. Không rò rỉ: khi hàng đợi một key rỗng thì giải phóng key khỏi Map.
+'''
+starter = '''
+function createKeyedSerializer() {
+  // TODO: return function run(key, task)
+}
+'''
+solution = '''
+function createKeyedSerializer() {
+  const tails = new Map();
+  return function run(key, task) {
+    const prev = tails.get(key) || Promise.resolve();
+    const result = prev.then(() => task());
+    const tail = result.then(() => {}, () => {});
+    tails.set(key, tail);
+    tail.then(() => {
+      if (tails.get(key) === tail) tails.delete(key);
+    });
+    return result;
+  };
+}
+'''
+tests = '''
+function deferred() { let resolve, reject; const p = new Promise((a, b) => { resolve = a; reject = b; }); return { p, resolve, reject }; }
+test('cùng key chạy tuần tự', async () => {
+  const run = createKeyedSerializer();
+  const log = [];
+  const d1 = deferred();
+  const p1 = run('a', async () => { log.push('start1'); await d1.p; log.push('end1'); return 1; });
+  const p2 = run('a', async () => { log.push('start2'); return 2; });
+  await Promise.resolve(); await Promise.resolve();
+  expect(log).toEqual(['start1']);
+  d1.resolve();
+  expect(await p1).toBe(1);
+  expect(await p2).toBe(2);
+  expect(log).toEqual(['start1', 'end1', 'start2']);
+});
+test('khác key chạy song song', async () => {
+  const run = createKeyedSerializer();
+  const log = [];
+  const d = deferred();
+  const p1 = run('a', async () => { log.push('a'); await d.p; });
+  const p2 = run('b', async () => { log.push('b'); });
+  await p2;
+  expect(log).toEqual(['a', 'b']);
+  d.resolve();
+  await p1;
+});
+test('task reject không chặn task sau', async () => {
+  const run = createKeyedSerializer();
+  const p1 = run('k', () => Promise.reject(new Error('boom')));
+  const p2 = run('k', () => Promise.resolve('ok'));
+  let err;
+  try { await p1; } catch (e) { err = e; }
+  expect(err.message).toBe('boom');
+  expect(await p2).toBe('ok');
+});
+test('trả đúng kết quả của từng task', async () => {
+  const run = createKeyedSerializer();
+  const rs = await Promise.all([run('x', () => 1), run('x', () => 2), run('y', () => 3)]);
+  expect(rs).toEqual([1, 2, 3]);
+});
+'''
+hints = ["Giữ Map key → promise cuối hàng đợi (đã nuốt lỗi).", "Nối task mới bằng `prev.then(() => task())`.", "Xóa key khi tail hiện tại vẫn là tail mới nhất."]
+explanation = "Mẫu này dùng để tuần tự hóa thao tác theo tài khoản/đơn hàng trong một process mà không khóa toàn cục."
+
+[[questions]]
+id = "nodejs-lv040"
+module = "node-core"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "basics"]
+prompt = '''
+Node.js là gì?
+'''
+options = ["Runtime JavaScript phía server dựa trên V8 và libuv", "Một framework CSS", "Một cơ sở dữ liệu quan hệ", "Trình biên dịch Java"]
+answer = [0]
+explanation = "Node.js là runtime JavaScript chạy ngoài trình duyệt, dựa trên engine V8 và libuv cho I/O bất đồng bộ."
+
+[[questions]]
+id = "nodejs-lv041"
+module = "node-core"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "event-loop"]
+prompt = '''
+Vì sao Node.js xử lý được nhiều kết nối đồng thời chỉ với một luồng JavaScript chính?
+'''
+options = ["I/O bất đồng bộ và event loop, không chặn luồng JS khi chờ", "Mỗi kết nối tạo một luồng JS riêng", "Node chạy mọi request trên GPU", "Node bỏ qua kết nối thứ hai"]
+answer = [0]
+explanation = "Các thao tác I/O được giao cho hệ điều hành/libuv, kết quả quay lại qua event loop; luồng JS không bị chặn trong lúc chờ."
+
+[[questions]]
+id = "nodejs-lv042"
+module = "node-core"
+type = "fill"
+difficulty = 1
+tags = ["level:junior", "npm"]
+prompt = '''
+Lệnh nào cài đặt các dependency khai báo trong package.json? Điền: npm {{blank}}
+'''
+blanks = [["install", "i"]]
+explanation = "`npm install` (viết tắt `npm i`) cài dependency; trong CI nên dùng `npm ci` để tái lập từ lockfile."
+
+[[questions]]
+id = "nodejs-lv043"
+module = "node-core"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "modules"]
+prompt = '''
+Câu lệnh nào nhập module `fs` có sẵn của Node theo ESM, theo khuyến nghị dùng tiền tố `node:`?
+'''
+options = ["import fs from 'node:fs'", "import fs from 'fs-package'", "include <fs>", "using fs"]
+answer = [0]
+explanation = "Tiền tố `node:` làm rõ module lõi, tránh nhầm với package npm cùng tên."
+
+[[questions]]
+id = "nodejs-lv044"
+module = "node-core"
+type = "multiple"
+difficulty = 1
+tags = ["level:junior", "process"]
+prompt = '''
+Những mục nào có trong object `process` của Node?
+'''
+options = ["process.argv", "process.env", "process.exit()", "process.window", "process.document"]
+answer = [0, 1, 2]
+explanation = "process.argv, process.env và process.exit là API chuẩn; window và document thuộc trình duyệt."
+
+[[questions]]
+id = "nodejs-lv045"
+module = "node-core"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "config"]
+prompt = '''
+Đoạn `const PORT = process.env.PORT || 3000;` nhằm mục đích gì?
+'''
+options = ["Lấy cổng từ môi trường, nếu thiếu thì dùng 3000", "Luôn bắt buộc cổng 3000", "Mở 3000 cổng cùng lúc", "Xóa biến PORT"]
+answer = [0]
+explanation = "Đọc cổng từ biến môi trường và dùng 3000 làm mặc định, giúp cấu hình khác nhau giữa môi trường mà không sửa code."
+
+[[questions]]
+id = "nodejs-lv046"
+module = "node-io"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "fs"]
+prompt = '''
+Khác biệt giữa fs.readFileSync và fs.promises.readFile?
+'''
+options = ["readFileSync chặn event loop; promises.readFile thì không", "Hai hàm giống hệt về hành vi", "readFileSync chạy nhanh hơn trên server nhiều người dùng nên luôn tốt hơn", "promises.readFile chỉ đọc được file text"]
+answer = [0]
+explanation = "Bản Sync chặn event loop cho tới khi xong; bản promises không chặn và trả Promise. Trên server nên tránh Sync trong request handler."
+
+[[questions]]
+id = "nodejs-lv047"
+module = "node-io"
+type = "fill"
+difficulty = 1
+tags = ["level:junior", "path"]
+prompt = '''
+Hàm nào của module path ghép các đoạn đường dẫn đúng theo hệ điều hành? Điền: path.{{blank}}('a','b','c.txt')
+'''
+blanks = [["join"]]
+explanation = "path.join ghép đoạn và chuẩn hóa dấu phân cách."
+
+[[questions]]
+id = "nodejs-lv048"
+module = "node-io"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "stream"]
+prompt = '''
+Stream giúp gì khi xử lý file rất lớn?
+'''
+options = ["Xử lý theo từng khối, tiết kiệm bộ nhớ", "Tự nén file thành nhỏ hơn", "Bắt buộc đọc toàn bộ file trước", "Chỉ dùng được cho file JSON"]
+answer = [0]
+explanation = "Stream xử lý dữ liệu theo từng khối nên bộ nhớ dùng thấp và bắt đầu xử lý sớm, thay vì nạp toàn bộ vào RAM."
+
+[[questions]]
+id = "nodejs-lv049"
+module = "node-io"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "buffer"]
+prompt = '''
+Buffer trong Node dùng để làm gì?
+'''
+options = ["Lưu dãy byte nhị phân", "Lưu hàm callback", "Lưu cấu hình CSS", "Đệm cho console.log"]
+answer = [0]
+explanation = "Buffer biểu diễn dãy byte thô (dữ liệu nhị phân) như nội dung file, gói TCP, hình ảnh."
+
+[[questions]]
+id = "nodejs-lv050"
+module = "node-io"
+type = "multiple"
+difficulty = 1
+tags = ["level:junior", "json"]
+prompt = '''
+Phương thức nào của JSON dùng để chuyển giữa chuỗi và object?
+'''
+options = ["JSON.parse", "JSON.stringify", "JSON.toObject", "JSON.decodeFile"]
+answer = [0, 1]
+explanation = "JSON.parse chuỗi → object, JSON.stringify object → chuỗi."
+
+[[questions]]
+id = "nodejs-lv051"
+module = "node-express"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "express"]
+prompt = '''
+Trong Express, `app.get('/users', handler)` có nghĩa là gì?
+'''
+options = ["Xử lý request GET tới /users", "Xử lý mọi phương thức tới /users", "Lấy biến app từ database", "Tạo bảng users"]
+answer = [0]
+explanation = "Đăng ký handler cho request HTTP GET tới đường dẫn /users."
+
+[[questions]]
+id = "nodejs-lv052"
+module = "node-express"
+type = "fill"
+difficulty = 1
+tags = ["level:junior", "express"]
+prompt = '''
+Middleware nào của Express parse JSON body trong request? Điền: app.use(express.{{blank}}())
+'''
+blanks = [["json"]]
+explanation = "express.json() parse body có Content-Type application/json vào req.body."
+
+[[questions]]
+id = "nodejs-lv053"
+module = "node-express"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "http"]
+prompt = '''
+Mã trạng thái HTTP nào phù hợp khi client gửi dữ liệu thiếu field bắt buộc?
+'''
+options = ["400", "200", "500", "301"]
+answer = [0]
+explanation = "400 Bad Request (hoặc 422) cho dữ liệu không hợp lệ; 500 dành cho lỗi phía server."
+
+[[questions]]
+id = "nodejs-lv054"
+module = "node-express"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "express"]
+prompt = '''
+Hàm `next()` trong middleware Express làm gì?
+'''
+options = ["Chuyển sang middleware/route kế tiếp", "Kết thúc process", "Khởi động lại server", "Xóa response"]
+answer = [0]
+explanation = "next() chuyển điều khiển cho middleware/route kế tiếp; nếu không gọi và không trả response, request sẽ treo."
+
+[[questions]]
+id = "nodejs-lv055"
+module = "node-express"
+type = "multiple"
+difficulty = 1
+tags = ["level:junior", "express"]
+prompt = '''
+Phương thức nào của res kết thúc và gửi phản hồi trong Express?
+'''
+options = ["res.json()", "res.send()", "res.sendStatus(204)", "req.body"]
+answer = [0, 1, 2]
+explanation = "res.json, res.send và res.sendStatus gửi response; req.body chỉ là dữ liệu request."
+
+[[questions]]
+id = "nodejs-lv056"
+module = "node-ops"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "security"]
+prompt = '''
+Vì sao không nên commit file `.env` chứa secret lên git?
+'''
+options = ["Secret có thể bị lộ vĩnh viễn trong lịch sử git", "Git không đọc được file .env", "Node không đọc được .env", "Làm chậm npm install"]
+answer = [0]
+explanation = "File .env thường chứa mật khẩu/khóa API; lộ trong lịch sử git là rủi ro bảo mật, cần dùng secret manager/biến môi trường của môi trường chạy."
+
+[[questions]]
+id = "nodejs-lv057"
+module = "node-ops"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "tooling"]
+prompt = '''
+Lệnh `node --watch server.js` làm gì (Node hiện đại)?
+'''
+options = ["Tự khởi động lại khi file thay đổi", "Chạy server ở chế độ production", "Mở debugger từ xa", "Xóa cache npm"]
+answer = [0]
+explanation = "--watch tự khởi động lại process khi file được theo dõi thay đổi; phục vụ phát triển."
+
+[[questions]]
+id = "nodejs-lv058"
+module = "node-ops"
+type = "multiple"
+difficulty = 1
+tags = ["level:junior", "lts"]
+prompt = '''
+Phiên bản Node nào nên dùng cho production?
+'''
+options = ["Bản LTS đang được hỗ trợ", "Bản Current số lẻ cho production quan trọng", "Bản đã hết hỗ trợ miễn đang chạy ổn", "Bản LTS Active"]
+answer = [0, 3]
+explanation = "Dùng bản LTS đang được hỗ trợ (Active hoặc Maintenance); bản Current lẻ không phải LTS."
+
+[[questions]]
+id = "nodejs-lv059"
+module = "node-ops"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "errors"]
+prompt = '''
+Khi một Promise bị reject mà không có catch, Node hiện đại (>=15) mặc định làm gì?
+'''
+options = ["Ném lỗi và kết thúc process", "Bỏ qua im lặng", "Tự động retry", "Chuyển thành cảnh báo trong console"]
+answer = [0]
+explanation = "Mặc định unhandled rejection làm process thoát với lỗi (--unhandled-rejections=throw); cần xử lý lỗi hoặc ghi log rồi thoát có kiểm soát."
+
+[[questions]]
+id = "nodejs-lv060"
+module = "nodejs-dv-modules"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "modules"]
+prompt = '''
+Trong CommonJS, bạn xuất một hàm bằng cách nào?
+'''
+options = ["module.exports = fn", "export default fn (chỉ trong .cjs)", "return fn ở đầu file", "global.fn = fn là cách chuẩn"]
+answer = [0]
+explanation = "module.exports = fn xuất giá trị từ module CommonJS; consumer dùng require."
+
+[[questions]]
+id = "nodejs-lv061"
+module = "nodejs-dv-http"
+type = "single"
+difficulty = 1
+tags = ["level:junior", "http"]
+prompt = '''
+Khác biệt giữa mã 401 và 403?
+'''
+options = ["401 chưa xác thực, 403 không đủ quyền", "Hai mã giống nhau", "401 là lỗi server, 403 là lỗi client mạng", "403 nghĩa là không tìm thấy"]
+answer = [0]
+explanation = "401 nghĩa là chưa xác thực/xác thực không hợp lệ; 403 nghĩa là đã xác thực nhưng không đủ quyền."
+
+[[questions]]
+id = "nodejs-lv062"
+module = "node-core"
+type = "code"
+difficulty = 1
+tags = ["level:junior", "config"]
+title = "Đọc số nguyên từ biến môi trường"
+prompt = '''
+Viết `readIntEnv(env, name, fallback)`: đọc biến môi trường `name` từ object `env` và trả số nguyên. Nếu thiếu, rỗng, hoặc không phải số nguyên hợp lệ (vd. 'abc', '12.5', '3000x') thì trả `fallback`. Chấp nhận số âm. Bỏ khoảng trắng đầu/cuối.
+'''
+starter = '''
+function readIntEnv(env, name, fallback) {
+  // TODO
+}
+'''
+solution = '''
+function readIntEnv(env, name, fallback) {
+  const raw = env[name];
+  if (typeof raw !== 'string') return fallback;
+  const v = raw.trim();
+  if (!/^-?\d+$/.test(v)) return fallback;
+  return Number(v);
+}
+'''
+tests = '''
+test('đọc số hợp lệ', () => {
+  expect(readIntEnv({ PORT: '3000' }, 'PORT', 8080)).toBe(3000);
+});
+test('thiếu hoặc rỗng thì dùng fallback', () => {
+  expect(readIntEnv({}, 'PORT', 8080)).toBe(8080);
+  expect(readIntEnv({ PORT: '' }, 'PORT', 8080)).toBe(8080);
+});
+test('không phải số nguyên thì dùng fallback', () => {
+  expect(readIntEnv({ PORT: 'abc' }, 'PORT', 1)).toBe(1);
+  expect(readIntEnv({ PORT: '12.5' }, 'PORT', 1)).toBe(1);
+  expect(readIntEnv({ PORT: '3000x' }, 'PORT', 1)).toBe(1);
+});
+test('số âm và khoảng trắng', () => {
+  expect(readIntEnv({ N: ' -7 ' }, 'N', 0)).toBe(-7);
+});
+'''
+hints = ["Kiểm tra bằng regex `^-?\\\\d+$` sau khi trim.", "`parseInt` chấp nhận '3000x' nên không phù hợp."]
+explanation = "Parse cấu hình chặt chẽ tránh lỗi âm thầm như parseInt('3000x') === 3000."
+
+[[questions]]
+id = "nodejs-lv063"
+module = "node-core"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "async"]
+prompt = '''
+`await Promise.all([a(), b()])` khác gì so với `await a(); await b();`?
+'''
+options = ["Promise.all chạy hai việc song song, bản tuần tự chạy nối tiếp", "Hai cách luôn có thời gian bằng nhau", "Promise.all luôn chờ đủ cả hai kể cả khi một cái reject", "Tuần tự nhanh hơn vì ít Promise hơn"]
+answer = [0]
+explanation = "Promise.all chạy song song và chờ cả hai (reject ngay khi một cái lỗi); await tuần tự chờ a xong mới chạy b nên chậm hơn khi hai việc độc lập."
+
+[[questions]]
+id = "nodejs-lv064"
+module = "node-core"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "async"]
+prompt = '''
+Cần chờ mọi Promise hoàn tất và biết cái nào lỗi cái nào thành công mà không dừng giữa chừng. Dùng gì?
+'''
+options = ["Promise.allSettled", "Promise.race", "Promise.all", "Promise.any"]
+answer = [0]
+explanation = "Promise.allSettled trả trạng thái từng Promise; Promise.all dừng sớm khi có lỗi."
+
+[[questions]]
+id = "nodejs-lv065"
+module = "node-core"
+type = "fill"
+difficulty = 2
+tags = ["level:middle", "async"]
+prompt = '''
+API nào cho phép hủy một fetch hoặc tác vụ bất đồng bộ? Điền: new {{blank}}()
+'''
+blanks = [["AbortController"]]
+explanation = "AbortController tạo signal để hủy; gắn signal vào fetch, timers/promises, events.once..."
+
+[[questions]]
+id = "nodejs-lv066"
+module = "node-io"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "concurrency"]
+prompt = '''
+Để chạy hàng nghìn tác vụ I/O với tối đa 10 tác vụ song song, cách nào hợp lý?
+'''
+options = ["Dùng bộ giới hạn đồng thời (limit/semaphore) xử lý theo lô hoặc hàng đợi", "Promise.all trên toàn bộ 1000 tác vụ", "setTimeout ngẫu nhiên mỗi tác vụ", "Chạy tuần tự từng cái, không thể nhanh hơn"]
+answer = [0]
+explanation = "Cần bộ giới hạn đồng thời (pool/semaphore). Promise.all trên toàn bộ mở hàng nghìn kết nối cùng lúc và có thể cạn tài nguyên."
+
+[[questions]]
+id = "nodejs-lv067"
+module = "node-express"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "http"]
+prompt = '''
+Khi nào dùng PUT và khi nào dùng PATCH?
+'''
+options = ["PUT thay thế toàn bộ, PATCH cập nhật một phần", "PATCH xóa resource", "PUT dùng để đọc dữ liệu", "Hai phương thức khác nhau chỉ ở tên"]
+answer = [0]
+explanation = "PUT thay thế toàn bộ resource (idempotent); PATCH cập nhật một phần."
+
+[[questions]]
+id = "nodejs-lv068"
+module = "node-express"
+type = "multiple"
+difficulty = 2
+tags = ["level:middle", "validation"]
+prompt = '''
+Validation request ở biên Express nên làm gì?
+'''
+options = ["Validate schema body/query/params", "Trả 400 kèm thông báo lỗi không lộ chi tiết nội bộ", "Chỉ validate ở frontend", "Chuẩn hóa/giới hạn độ dài chuỗi", "Tin tưởng mọi header từ client"]
+answer = [0, 1, 3]
+explanation = "Validate type/độ dài/enum, từ chối sớm với 400, không tin client; chỉ kiểm tra ở frontend là chưa đủ."
+
+[[questions]]
+id = "nodejs-lv069"
+module = "node-ops"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "logging"]
+prompt = '''
+Pino hoặc Winston khác gì `console.log` cho production?
+'''
+options = ["Log có cấu trúc, có mức độ, dễ tổng hợp và truy vấn", "Chỉ chạy được trên Windows", "Nhanh hơn vì không ghi gì", "Không thể ghi ra stdout"]
+answer = [0]
+explanation = "Logger có cấu trúc (JSON), mức độ, và đích ghi cho phép lọc/tổng hợp; console.log không có cấu trúc/mức độ."
+
+[[questions]]
+id = "nodejs-lv070"
+module = "node-ops"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "observability"]
+prompt = '''
+Một request xuyên nhiều service. Làm sao liên kết log của chúng?
+'''
+options = ["Sinh và truyền correlation id qua header, ghi vào mọi dòng log", "Dựa vào thứ tự thời gian của log", "Dùng IP client làm id", "Không thể liên kết"]
+answer = [0]
+explanation = "Truyền correlation/trace id qua header (ví dụ traceparent) và đưa vào mọi dòng log."
+
+[[questions]]
+id = "nodejs-lv071"
+module = "nodejs-dv-http"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "http"]
+prompt = '''
+Vì sao nên đặt `keepAlive` agent khi gọi API nội bộ với tần suất cao?
+'''
+options = ["Tái sử dụng kết nối, giảm handshake và độ trễ", "Để mã hóa dữ liệu", "Để tăng kích thước body tối đa", "Để request luôn tuần tự"]
+answer = [0]
+explanation = "Tái sử dụng kết nối TCP/TLS giảm handshake và độ trễ; tạo kết nối mới cho mỗi request tốn tài nguyên."
+
+[[questions]]
+id = "nodejs-lv072"
+module = "nodejs-dv-modules"
+type = "single"
+difficulty = 2
+tags = ["level:middle", "esm"]
+prompt = '''
+Dự án có `"type": "module"`; bạn cần __dirname. Cách chuẩn trong ESM?
+'''
+options = ["import.meta.dirname hoặc fileURLToPath(import.meta.url)", "require('__dirname')", "process.__dirname", "Không thể lấy thư mục hiện tại"]
+answer = [0]
+explanation = "ESM không có __dirname; dùng import.meta.dirname (Node mới) hoặc fileURLToPath(new URL('.', import.meta.url))."
+
+[[questions]]
+id = "nodejs-lv073"
+module = "node-core"
+type = "code"
+difficulty = 2
+tags = ["level:middle", "concurrency"]
+title = "Giới hạn số tác vụ song song"
+prompt = '''
+Viết `limitConcurrency(tasks, limit)`: `tasks` là mảng hàm trả Promise. Chạy tối đa `limit` tác vụ cùng lúc, trả Promise mảng kết quả **theo đúng thứ tự** của `tasks`. Nếu một tác vụ reject thì promise tổng reject với lỗi đó.
+'''
+starter = '''
+async function limitConcurrency(tasks, limit) {
+  // TODO
+}
+'''
+solution = '''
+async function limitConcurrency(tasks, limit) {
+  const results = new Array(tasks.length);
+  let next = 0;
+  async function worker() {
+    while (next < tasks.length) {
+      const i = next++;
+      results[i] = await tasks[i]();
+    }
+  }
+  const n = Math.min(limit, tasks.length);
+  await Promise.all(Array.from({ length: n }, worker));
+  return results;
+}
+'''
+tests = '''
+test('kết quả đúng thứ tự', async () => {
+  const tasks = [3, 1, 2].map((v) => () => Promise.resolve(v * 10));
+  expect(await limitConcurrency(tasks, 2)).toEqual([30, 10, 20]);
+});
+test('không vượt quá limit', async () => {
+  let running = 0, peak = 0;
+  const mk = (v) => async () => {
+    running++; peak = Math.max(peak, running);
+    await Promise.resolve(); await Promise.resolve();
+    running--; return v;
+  };
+  const out = await limitConcurrency([1, 2, 3, 4, 5].map(mk), 2);
+  expect(out).toEqual([1, 2, 3, 4, 5]);
+  expect(peak).toBe(2);
+});
+test('mảng rỗng', async () => {
+  expect(await limitConcurrency([], 3)).toEqual([]);
+});
+test('reject khi một tác vụ lỗi', async () => {
+  const tasks = [() => Promise.resolve(1), () => Promise.reject(new Error('bad')), () => Promise.resolve(3)];
+  let err;
+  try { await limitConcurrency(tasks, 2); } catch (e) { err = e; }
+  expect(err.message).toBe('bad');
+});
+'''
+hints = ["Dùng chỉ số chung `next` và `limit` worker lặp lấy việc.", "`Promise.all` trên các worker."]
+explanation = "Giới hạn đồng thời là kỹ năng thường dùng để tránh cạn socket/kết nối database."

@@ -102,6 +102,336 @@ explanation = "PSR-4 defines how classes map to paths; it does not check logic q
 prompt = "Which PHP keyword declares a method contract that a class can implement: {{blank}}?"
 explanation = "An interface declares the contract; a class provides the implementation."
 
+[modules.php-laravel-lead]
+title = "A Tech Lead's Perspective"
+description = "Make architectural decisions for Laravel applications at team scale: domain modules, Octane, queue and Horizon strategies, and framework upgrades."
+lesson = '''### A decision-making framework
+At Tech Lead level, the question is rarely “How do I use this API?” It is “Which option should we choose, what trade-offs are acceptable, and how can we roll back if it is wrong?” A simple framework has five steps:
+
+1. **State the problem with measurements**: p95 latency, queued job count, weekly merge conflicts, or onboarding time.
+2. **List constraints**: team size, infrastructure budget, SLA, existing skills, and business deadline.
+3. **Compare at least two options**, including doing nothing.
+4. **Choose the smallest reversible step**: a feature flag, canary, or parallel run.
+5. **Record the decision in an ADR** so future teammates understand the reasoning.
+
+### Common decision trade-offs
+| Decision | When it may fit | When it may not | Main risk |
+|---|---|---|---|
+| Modular monolith organized by domain | Team over six, frequent conflicts in `app/Models` | Small app maintained by one person | Hidden cross-module dependencies through Eloquent relations |
+| Split into microservices | Domains have distinct deployment lifecycles and load | Domain boundaries are unclear | Distributed transactions and operational complexity |
+| Laravel Octane | Measurements show bootstrap dominates request time | Database or external API is the bottleneck | State leakage between requests and memory growth |
+| Separate priority queues with Horizon | Slow jobs delay critical work | Very low job volume | Incorrect worker allocation can starve a queue |
+| Internal Composer package | Several apps share code and release independently | Only one app uses it | Semver and release overhead |
+
+### Team-scale review checklist
+- Is a new job idempotent? Are `tries`, `backoff`, and `failed()` behavior explicit?
+- Do new queries eager-load needed relations and have suitable indexes?
+- Could singleton or static state leak between requests, especially under Octane?
+- Can migrations deploy without downtime, such as adding a nullable column before removing an old one?
+- Is there a feature flag or rollback path?
+- Does CI check formatting and static analysis so reviewers can focus on design and behavior?
+
+### Short ADR example
+```text
+ADR-007: Separate queues by SLA
+Context: Password reset email is delayed 20 minutes by report export jobs on the default queue.
+Decision: Use high/default/reports queues with separate Horizon supervisors and automatic balancing.
+Alternative: Add shared workers (does not address priority).
+Consequences: More Horizon configuration; alert when reports queue backs up.
+```
+
+### Framework upgrades
+Read the upgrade guide, update dependencies first (`composer outdated`), fix deprecations in small tested pull requests, run staging with representative data, then release with a rollback path using the previous build artifact.
+
+### Team-scale anti-patterns
+- Every developer invents a different folder structure.
+- A thousands-line controller contains all business logic.
+- A retried, non-idempotent job can charge a customer twice.
+- Octane or microservices are adopted because they sound faster, without measurements.
+- A major upgrade lands in one enormous pull request that nobody can review effectively.'''
+
+[questions.php-laravel-lv001]
+prompt = "A 12-developer team works on one Laravel monolith. They have weekly conflicts in `app/Models` and `app/Services`, and Billing changes often break Catalog. What is the most reasonable first step?"
+options = ["Reorganize into a domain-based modular monolith with module owners and public interfaces/services", "Immediately split into six microservices, one per team", "Rewrite the app in a framework with stricter structure", "Ban new models until conflicts stop"]
+explanation = "A modular monolith clarifies boundaries and ownership at low cost and remains reversible. Microservices add operational and distributed-transaction costs while domain boundaries are still unclear."
+
+[questions.php-laravel-lv002]
+prompt = "Profiling shows 80% of request time is spent on slow database queries, and the app has many singletons that retain user-specific state. A developer proposes Laravel Octane. What is the sound decision?"
+options = ["Do not adopt Octane yet; optimize queries and indexes first because Octane mainly reduces bootstrap cost and adds state-leak risks", "Adopt Octane immediately because it makes database queries faster", "Adopt Octane and remove the cache", "Adopt Octane and set `max_requests` to unlimited"]
+explanation = "Octane keeps the app in memory and reduces framework startup overhead; it does not make queries faster. With a database bottleneck and stateful singletons, the likely benefit is low and the risk is high."
+
+[questions.php-laravel-lv003]
+prompt = "The team decides to trial Octane for a high-traffic API. Select the preparations needed before production."
+options = ["Review singletons and static state that retain request-, user-, or request-specific configuration", "Load-test before and after with the same scenario", "Monitor worker memory and cap requests per worker to limit memory-leak impact", "Remove queue workers because Octane replaces background jobs"]
+explanation = "Because Octane keeps the app alive between requests, stale state and memory growth are key risks; measurements must demonstrate value. Octane does not replace queues."
+
+[questions.php-laravel-lv004]
+prompt = "All jobs use the `default` queue. A large report-export job makes password-reset emails arrive 20 minutes late. Which strategy addresses the root cause?"
+options = ["Separate queues by SLA, such as high/default/reports, with dedicated Horizon supervisors", "Increase the timeout for every job", "Send password-reset email synchronously in the request", "Set report-job retries to zero"]
+explanation = "Jobs with different service expectations are competing in one queue. Separate queues and worker capacity keep critical jobs from being blocked by heavy work."
+
+[questions.php-laravel-lv005]
+prompt = "A large Laravel app (300,000 lines, 60% coverage) must move to a new major version before the old one loses security support. Which plan has the least risk?"
+options = ["Follow the upgrade guide, update dependencies first, fix deprecations in small tested changes, stage, and keep a rollback path", "Upgrade everything in one huge pull request and merge it on a weekend", "Wait until the entire app has been rewritten", "Edit code directly in `vendor/`"]
+explanation = "Small changes are easier to review and diagnose; staging and rollback limit impact. Changes in `vendor/` disappear when Composer reinstalls dependencies."
+
+[questions.php-laravel-lv006]
+prompt = "What should a good Architecture Decision Record for “separate queues by SLA” include?"
+options = ["Context and problem, supported by measurements", "The chosen decision", "Alternatives considered and why they were rejected", "Consequences and accepted trade-offs", "The complete Horizon configuration source code"]
+explanation = "An ADR records the reasoning and trade-offs for future readers; source code belongs in the repository."
+
+[questions.php-laravel-lv007]
+prompt = "The Order team directly uses Billing's `Invoice` model and joins its table; every Billing schema change breaks Order. What is a durable approach?"
+options = ["Billing publishes a contract, such as an interface/service or event, and Order depends on that contract", "Copy the Invoice model into Order", "Prohibit Billing from changing its schema", "Merge the two teams"]
+explanation = "Depending on a public contract instead of storage details lets each module change internally. Laravel's container can bind an interface to an implementation."
+
+[questions.php-laravel-lv008]
+prompt = '''Provide the balancing strategy that lets Horizon adjust process counts across queues based on pending workload:
+
+```php
+'supervisor-1' => [
+    'connection' => 'redis',
+    'queue' => ['high', 'default', 'reports'],
+    'balance' => '{{blank}}',
+    'maxProcesses' => 20,
+],
+```'''
+explanation = "The `auto` strategy can move processes toward a queue with a larger backlog; `simple` splits them evenly, while `false` processes queues in order."
+
+[questions.php-laravel-lv009]
+prompt = "When reviewing a `ChargeSubscription` job that calls a payment API, what is the most important requirement before merging?"
+options = ["The job is idempotent, uses an idempotency key, has bounded `tries`/`backoff`, and handles final failure clearly", "Rename the class to match a naming convention", "Add a comment to every line", "Run the job synchronously in the controller"]
+explanation = "A queued job may run again. Without idempotency, a customer could be charged twice. Formatting should be handled by automation."
+
+[questions.php-laravel-lv010]
+prompt = "Executives ask: “Should we move the entire API to Laravel Octane?” Explain how you would decide and roll it out safely."
+keywords = [["profiling", "measure request time"], ["bootstrap", "framework startup"], ["state leakage", "singleton state"], ["load test", "benchmark"], ["canary", "gradual rollout"], ["rollback", "revert"]]
+model_answer = "First, profile whether request time is spent in framework bootstrap or in the database/external APIs, because Octane mainly reduces bootstrap overhead. If the bottleneck is the database, optimize queries first. If the benefit is clear, review singletons and static state that retain request-specific user, tenant, or configuration data, and use scoped bindings where appropriate. Then load-test before and after, monitor worker memory, and cap requests per worker to limit memory leaks. Deploy to a canary portion of traffic, compare with PHP-FPM, and keep a fast rollback path. Record the decision and measurements in an ADR."
+explanation = "A good answer is based on measurements, recognizes state and memory risks, and proposes a gradual, reversible rollout."
+
+[questions.php-laravel-lv011]
+prompt = "Plan a major Laravel upgrade for a large application without stopping the team's feature development."
+keywords = [["upgrade guide", "breaking changes"], ["dependencies", "composer packages"], ["small pull requests", "incremental changes"], ["tests", "ci"], ["staging", "pre-production"], ["rollback", "previous build"]]
+model_answer = "I read the upgrade guide to identify breaking changes and check Composer for packages that do not support the new version. Before upgrading, I improve coverage for critical flows and ensure CI runs the required tests. I fix deprecations on the current version through small pull requests so feature work can continue. I keep the upgrade branch current, then deploy it to staging with representative data and monitor errors. I release during a low-traffic window and retain the previous build artifact for rollback."
+explanation = "A sound plan reduces risk in increments, relies on tests and CI, and preserves a rollback path."
+
+[questions.php-laravel-lv012]
+prompt = "Three company Laravel apps share tax-calculation logic, but each releases on its own schedule. The implementations have been copied and are drifting apart. What fits best?"
+options = ["Create an internal Composer package with semantic versioning so each app upgrades when ready", "Keep copying code and remind developers to update all three copies", "Combine the apps and deploy them together", "Put the tax logic in a shared `.env` file"]
+explanation = "A versioned package provides one source of truth while letting each app choose when to upgrade."
+
+[questions.php-laravel-lv013]
+prompt = "Team pull-request reviews take too long because of code-format debates and small type errors. Which process change is most effective?"
+options = ["Make Pint and static analysis required CI checks so reviewers can focus on design and business behavior", "Require three reviewers for every pull request", "Skip reviews to move faster", "Write a long style guide and require everyone to memorize it"]
+explanation = "Automating machine-checkable concerns lets reviews focus on decisions that need human judgment."
+
+[questions.php-laravel-lv014]
+prompt = "Select the team-scale anti-patterns a Tech Lead should prioritize."
+options = ["A retried job that is not idempotent", "Every developer chooses a different folder structure for new features", "A thousands-line controller contains all business logic", "Writing ADRs for major architecture decisions"]
+explanation = "The first three lead to data errors, difficult onboarding, and hard-to-test code. An ADR is a useful practice, not an anti-pattern."
+
+[questions.php-laravel-lv015]
+prompt = "A B2B SaaS has 20 enterprise customers whose contracts require strong data isolation and separate backup and restoration. Which multi-tenancy model should it choose?"
+options = ["A separate database per tenant, selecting the connection for each request/job", "Shared tables with a `tenant_id` column and global scope", "Store tenant data in the session", "Use one database and a cache prefix per tenant"]
+explanation = "With few tenants and strict isolation and recovery requirements, separate databases can justify their operational cost. A `tenant_id` column often suits many small tenants with lower isolation requirements."
+
+[questions.php-laravel-lv016]
+prompt = "The team enables a read replica to reduce load. What risk should it address first, and how?"
+options = ["Reads immediately after writes may be stale due to replica lag; enable `sticky` or route critical reads to the primary", "The replica loses writes, so disable all writes", "The replica runs migrations twice, so remove migrations", "A replica requires Octane"]
+explanation = "Replication lag can hide recently written data. The `sticky` option keeps subsequent reads in the same request on the write connection."
+
+[questions.php-laravel-lv017]
+prompt = "A new checkout flow changes price calculations; a mistake could affect revenue. What release approach fits?"
+options = ["Roll out gradually with a feature flag, monitor metrics, and keep a quick off switch", "Deploy to 100% of users on Friday night", "Keep a separate branch for six months and merge it once", "Let users choose old or new behavior in the URL"]
+explanation = "A gradual rollout limits the impact and allows the change to be disabled without another deployment."
+
+[questions.php-laravel-lvc01]
+title = "Stable percentage rollout"
+prompt = "Implement `inRollout(string $key, int $percent): bool` to decide whether a user is included in a rollout. Return `false` when `$percent <= 0` and `true` when `$percent >= 100`. Otherwise, calculate the bucket as `crc32($key) % 100` and return whether it is less than `$percent`. The same key must always get the same result, and users included at 10% remain included when the rollout increases to 30%."
+explanation = "Hashing a key into a stable bucket makes rollout decisions consistent across requests and provides a basis for gradual releases and canaries."
+hints = ["Handle the 0 and 100 boundaries first.", "A stable bucket per key means increasing the percentage only adds users."]
+
+[questions.php-laravel-lv018]
+prompt = "After Octane is enabled, user A occasionally sees user B's cart. `CartContext` is registered with `$this->app->singleton(...)` and stores the current user. What is the right fix?"
+options = ["Register it as `scoped` so a new instance is created for each request/job", "Switch to `bind` but keep the user in a static property", "Increase the number of Octane workers", "Clear the config cache"]
+explanation = "A singleton lives for the worker's lifetime, so user state can leak into later requests. A scoped binding is cleared when a new request/job lifecycle begins."
+
+[questions.php-laravel-lv019]
+prompt = '''Provide the binding method so `TenantContext` is resolved once per request or job and refreshed when a new lifecycle begins:
+
+```php
+$this->app->{{blank}}(TenantContext::class, fn () => new TenantContext());
+```'''
+explanation = "`scoped` behaves like a singleton within one lifecycle but is flushed when a new request/job starts, which suits Octane and queue workers."
+
+[questions.php-laravel-lv020]
+prompt = "A list of users is iterated over, and each iteration reads `user->posts` without eager loading. What is the most likely symptom?"
+options = ["One fixed query for the entire system", "N+1 queries because each user triggers another relationship query", "The migration runs again on every iteration", "The cache invalidates itself"]
+explanation = "Accessing an unloaded relationship inside a loop can issue one query per model."
+
+[questions.php-laravel-lv021]
+prompt = "You need a list of users with their posts while avoiding a lazy query for each user. What should you use?"
+options = ["`User::with('posts')->get()`", "Call `User::all()` and then access posts in a loop", "Run a migration before every request", "Cache all data forever"]
+explanation = "`with` eager-loads the relationship in a batch before iterating over the collection."
+
+[questions.php-laravel-lv022]
+prompt = "When a user chooses a sort column, why should you not insert the input column name directly into raw SQL?"
+options = ["Column names are always bound automatically like values", "Bound values cannot replace identifiers; map to or whitelist valid column names", "The Query Builder does not support `orderBy`", "Migrations escape all input"]
+explanation = "Parameter binding protects values; it does not make an arbitrary identifier a safe column name."
+
+[questions.php-laravel-lv023]
+prompt = "A job processes a payment and is retried after a timeout. What property is most important to prevent charging the customer twice?"
+options = ["Idempotency", "A longer queue name", "A Blade view", "A database seed"]
+explanation = "Retries can repeat work after an uncertain outcome; an idempotent operation or idempotency key prevents duplicate effects."
+
+[questions.php-laravel-lv024]
+prompt = '''Provide the interface that marks a Laravel job for queue execution:
+
+```php
+class SendReceipt implements {{blank}} {
+}
+```'''
+explanation = "Implementing `ShouldQueue` tells Laravel to dispatch the job to a queue worker."
+
+[questions.php-laravel-lv025]
+prompt = "Which Laravel testing tool can fake queue dispatches so a test does not run a real background job?"
+options = ["`Queue::fake()`", "`DB::seed()`", "`Blade::compile()`", "`Route::fallback()`"]
+explanation = "`Queue::fake` records queue interactions and provides assertions without sending jobs to a real queue."
+
+[questions.php-laravel-lv026]
+prompt = "Select sound practices for a queued job that sends a receipt."
+options = ["Use bounded retries for temporary failures", "Make repeated execution safe", "Test dispatch with a queue fake", "Retry forever without recording failures"]
+explanation = "Bounded retries, idempotent behavior, and queue fakes make background work safer and testable."
+
+[questions.php-laravel-lv027]
+prompt = "A request validates an email address and then performs business logic. Which data should normally be passed to that logic?"
+options = ["Only the validated input", "The entire raw request body", "The session cookie", "The query string regardless of validation"]
+explanation = "Passing validated data keeps untrusted input outside the business layer."
+
+[questions.php-laravel-lv028]
+prompt = "A user is signed in but tries to delete another customer's invoice. Which Laravel concern should decide whether this action is allowed?"
+options = ["Authorization through a policy or gate", "Authentication alone", "Route naming", "Blade compilation"]
+explanation = "Authentication establishes identity; authorization decides whether that identity may perform the action."
+
+[questions.php-laravel-lv029]
+prompt = "An exception occurs while processing an HTTP request. What is the appropriate place to convert it into a user-facing HTTP response?"
+options = ["The exception handling layer", "A database migration", "A queue retry delay", "A Composer autoload map"]
+explanation = "Central exception handling maps failures to suitable HTTP responses and keeps controllers focused on request behavior."
+
+[questions.php-laravel-lv030]
+prompt = "An API endpoint creates a resource successfully. Which status code is the clearest response?"
+options = ["201 Created", "204 No Content", "404 Not Found", "503 Service Unavailable"]
+explanation = "`201 Created` communicates that the request created a resource."
+
+[questions.php-laravel-lv031]
+prompt = "A Laravel HTTP client call to a payment partner may hang. Which protection should be configured?"
+options = ["A finite timeout", "An unlimited retry loop", "A Blade escape directive", "A route model binding"]
+explanation = "A finite timeout prevents a slow partner from tying up a worker indefinitely."
+
+[questions.php-laravel-lv032]
+prompt = "Explain how eager loading helps avoid the N+1 problem and mention one trade-off to monitor."
+keywords = [["eager loading", "preload relationships"], ["N+1", "one query per model"], ["query count", "fewer queries"], ["memory", "larger result set"]]
+model_answer = "Eager loading with `with` fetches a relationship for a set of models in a batch, avoiding one additional query per model in a loop. This reduces the N+1 query count, though loading too much related data can increase memory use, so the selected relations and result size should be measured."
+explanation = "A strong answer explains the query pattern and recognizes that eager loading can trade query count for memory and data volume."
+
+[questions.php-laravel-lvc02]
+title = "Bounded exponential backoff"
+prompt = "Implement `retryDelayMs(int $attempt, int $baseMs, int $maxMs): int` using exponential backoff. Attempts start at 1; the first delay is `baseMs` and each later delay doubles, capped at `maxMs`. `attempt` must be 1 through 20, and both millisecond values must be non-negative. Throw `InvalidArgumentException` for out-of-range values."
+explanation = "Bounded backoff reduces retry bursts; real integrations should also use timeouts and retry only temporary failures."
+hints = ["Validate all bounds before calculating.", "Stop when the delay reaches `maxMs` or another multiplication could exceed it."]
+
+[questions.php-laravel-lv033]
+prompt = "What does `match ('1') { 1 => 'int', '1' => 'string', default => 'other' }` return?"
+options = ["`'string'`", "`'int'`", "`'other'`", "Throws `UnhandledMatchError`"]
+explanation = "`match` uses strict comparison (`===`), so the string `'1'` matches only the `'1'` arm."
+
+[questions.php-laravel-lv034]
+prompt = '''Provide the operator so the expression returns `null` instead of an error when `$user` is `null`:
+
+```php
+$city = $user{{blank}}address?->city;
+```'''
+explanation = "The nullsafe operator `?->` stops the access chain and returns null when its left-hand side is null."
+
+[questions.php-laravel-lv035]
+prompt = "In `composer.json`, `App\\` maps to `app/` through PSR-4. Where will Composer look for `App\\Services\\PriceCalculator`?"
+options = ["`app/Services/PriceCalculator.php`", "`src/App/Services/PriceCalculator.php`", "`app/PriceCalculator.php`", "`vendor/App/Services/PriceCalculator.php`"]
+explanation = "PSR-4 maps the `App\\` prefix to `app/` and converts the remaining namespace segments into subdirectories and the class filename."
+
+[questions.php-laravel-lv036]
+prompt = "You added a route, but visiting it returns 404. Which Artisan command quickly lists the registered routes?"
+options = ["`php artisan route:list`", "`php artisan make:route`", "`php artisan serve --routes`", "`php artisan migrate`"]
+explanation = "`route:list` shows each route's method, URI, name, and action, helping confirm whether it was loaded."
+
+[questions.php-laravel-lv037]
+prompt = "Which Eloquent method is commonly used to eager-load a relationship as part of a query: {{blank}}?"
+explanation = "`with('relationship')` loads a relationship alongside the model query."
+
+[questions.php-laravel-lv038]
+prompt = "When is a database migration preferable to manually changing a production schema?"
+options = ["When schema changes need to be recorded and applied consistently across environments", "When application code should bypass version control", "When a query needs a shorter variable name", "When a cache key must expire"]
+explanation = "Migrations version schema changes so they can be reviewed and applied consistently."
+
+[questions.php-laravel-lv039]
+prompt = "Select the supported cache stores for cache tags."
+options = ["Redis", "Memcached", "File", "Database"]
+explanation = "Cache tags are supported by stores such as Redis and Memcached, but not by the file or database drivers."
+
+[questions.php-laravel-lv040]
+prompt = "A cache contains a user's permissions, but the permissions can change during the day. What should the design include?"
+options = ["A clear expiration and invalidation strategy", "A permanent cache entry with no key", "A database migration on each read", "A retry loop in the view"]
+explanation = "Permission data must not remain stale indefinitely; define its key, TTL, and invalidation behavior."
+
+[questions.php-laravel-lv041]
+prompt = "Which test type is best suited to verify that an HTTP endpoint, middleware, and database behavior work together?"
+options = ["Feature test", "A pure unit test of one function only", "A Composer autoload dump", "A database seeder"]
+explanation = "A feature test exercises application components together through a realistic request or workflow."
+
+[questions.php-laravel-lv042]
+prompt = "An API returns an error response for invalid input. What makes the error contract useful to clients?"
+options = ["A consistent structure and appropriate status code", "A different undocumented format on every endpoint", "A stack trace containing secrets", "Always returning status 200"]
+explanation = "A stable error shape and meaningful status code let clients handle failures predictably."
+
+[questions.php-laravel-lvc03]
+title = "Normalize an email address"
+prompt = "Implement `normalizeEmail(string $email): string`. Trim spaces, tabs, and newlines from both ends, then convert the result to lowercase so `\" Bob@Mail.COM \"` and `\"bob@mail.com\"` are treated as the same address."
+explanation = "Normalizing an email before storing or looking it up helps avoid duplicate accounts caused by whitespace or case differences."
+hints = ["PHP provides built-in functions for trimming surrounding whitespace and converting text to lowercase."]
+
+[questions.php-laravel-lv043]
+prompt = "Given the route `Route::get('/posts/{post}', [PostController::class, 'show'])` and action `show(Post $post)`, what happens if the ID does not exist?"
+options = ["Route model binding automatically returns a 404", "`$post` is null and the controller must check", "Laravel creates a new Post", "A 500 error is returned"]
+explanation = "Implicit binding looks up the model by its key and throws `ModelNotFoundException`, which Laravel converts to a 404."
+
+[questions.php-laravel-lv044]
+prompt = "A query accesses a relationship for each model in a collection. Which change most directly reduces N+1 queries?"
+options = ["Eager-load the relationship before iterating", "Add a migration inside the loop", "Disable database indexes", "Render each model in a separate request"]
+explanation = "Eager loading retrieves the needed relationship data in a batch rather than issuing a query per model."
+
+[questions.php-laravel-lv045]
+prompt = "A queued job may fail temporarily while calling an external service. Which retry policy is appropriate?"
+options = ["Use bounded retries with backoff and handle final failure", "Retry forever with no delay", "Ignore the exception and mark the job successful", "Retry only by blocking the user's HTTP request"]
+explanation = "Bounded retries with backoff handle transient failures while preventing endless work; final failure should be observable."
+
+[questions.php-laravel-lv046]
+prompt = '''Provide the facade used to fake outbound HTTP responses in a Laravel test:
+
+```php
+{{blank}}::fake();
+```'''
+explanation = "`Http::fake` intercepts HTTP client requests so tests can define responses without calling a real service."
+
+[questions.php-laravel-lv047]
+prompt = "Select reasonable checks for a database query that lists many models and their relationships."
+options = ["Eager-load relationships used in the loop", "Inspect query count for N+1 behavior", "Check whether useful indexes support filters and sorting", "Interpolate arbitrary user-provided column names into raw SQL"]
+explanation = "Eager loading, query-count inspection, and suitable indexes help performance. User-controlled identifiers should be mapped or whitelisted."
+
+[questions.php-laravel-lv048]
+prompt = "A request fails because a required record does not exist. Which HTTP response is usually appropriate?"
+options = ["404 Not Found", "201 Created", "204 No Content", "301 Moved Permanently"]
+explanation = "A 404 response communicates that the requested resource could not be found."
+
+
 [modules.laravel-core]
 title = "Laravel Fundamentals"
 description = "Routing, controllers, the request lifecycle, the middleware onion, and Blade."
